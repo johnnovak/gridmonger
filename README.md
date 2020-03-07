@@ -1,8 +1,12 @@
 <img src="data/logo-big-bw.png" width="100%" alt="Gridmonger" />
 
-<p align="center"><em><font size="20">Your trusty old-school CRPG companion</font></em></p>
+<p align="center"><em>Your trusty old-school CRPG companion</em></p>
 
-**Work in progress, not ready for public use yet!**
+<p align="center"><b>Work in progress, not ready for public use yet!</b></p>
+
+# Overview
+
+TODO
 
 ## License
 
