@@ -1,6 +1,6 @@
 <img src="data/logo-big-bw.png" width="100%" alt="Gridmonger" />
 
-*Your trusty old-school CRPG companion*
+<p align="center">*Your trusty old-school CRPG companion*</p>
 
 **Work in progress, not ready for public use yet!**
 
