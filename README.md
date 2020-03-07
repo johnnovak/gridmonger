@@ -4,10 +4,6 @@
 
 <p align="center"><b>Work in progress, not ready for public use yet!</b></p>
 
-# Overview
-
-TODO
-
 ## License
 
 Copyright © 2020 John Novak <<john@johnnovak.net>>
