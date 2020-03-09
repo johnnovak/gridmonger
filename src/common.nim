@@ -2,10 +2,14 @@ import options
 
 type
   Orientation* = enum
-    Horiz, Vert
+    Horiz = (0, "horiz")
+    Vert  = (1, "vert")
 
   Direction* = enum
-    North, East, South, West
+    North = (0, "North")
+    East  = (1, "East")
+    South = (2, "South")
+    West  = (3, "West")
 
 
 type
@@ -49,46 +53,46 @@ func contains*[T: SomeNumber | Natural](r: Rect[T], x, y: T): bool =
 
 
 type
-  # TODO rename go ground?
-  Floor* = enum
-    fNone                = (  0, "blank"),
-    fEmptyFloor          = ( 10, "empty"),
-    fClosedDoor          = ( 20, "closed door"),
-    fOpenDoor            = ( 21, "open door"),
-    fPressurePlate       = ( 30, "pressure plate"),
-    fHiddenPressurePlate = ( 31, "hidden pressure plate"),
-    fClosedPit           = ( 40, "closed pit"),
-    fOpenPit             = ( 41, "open pit"),
-    fHiddenPit           = ( 42, "hidden pit"),
-    fCeilingPit          = ( 43, "ceiling pit"),
-    fStairsDown          = ( 50, "stairs down"),
-    fStairsUp            = ( 51, "stairs up"),
-    fSpinner             = ( 60, "spinner"),
-    fTeleport            = ( 70, "teleport"),
-    fCustom              = (999, "custom")
+  Ground* = enum
+    gNone                = (  0, "blank"),
+    gEmpty               = (  1, "empty"),
+    gClosedDoor          = (  2, "closed door"),
+    gOpenDoor            = (  3, "open door"),
+    gPressurePlate       = (  4, "pressure plate"),
+    gHiddenPressurePlate = (  5, "hidden pressure plate"),
+    gClosedPit           = (  6, "closed pit"),
+    gOpenPit             = (  7, "open pit"),
+    gHiddenPit           = (  8, "hidden pit"),
+    gCeilingPit          = (  9, "ceiling pit"),
+    gStairsDown          = ( 10, "stairs down"),
+    gStairsUp            = ( 11, "stairs up"),
+    gSpinner             = ( 12, "spinner"),
+    gTeleport            = ( 13, "teleport"),
+    gCustom              = (255, "custom")
 
   Wall* = enum
     wNone          = ( 0, "none"),
-    wWall          = (10, "wall"),
-    wIllusoryWall  = (11, "illusory wall"),
-    wInvisibleWall = (12, "invisible wall")
-    wOpenDoor      = (20, "closed door"),
-    wClosedDoor    = (21, "open door"),
-    wSecretDoor    = (22, "secret door"),
-    wLever         = (30, "statue")
-    wNiche         = (40, "niche")
-    wStatue        = (50, "statue")
+    wWall          = ( 1, "wall"),
+    wIllusoryWall  = ( 2, "illusory wall"),
+    wInvisibleWall = ( 3, "invisible wall")
+    wOpenDoor      = ( 4, "closed door"),
+    wClosedDoor    = ( 5, "open door"),
+    wSecretDoor    = ( 6, "secret door"),
+    wLever         = ( 7, "statue")
+    wNiche         = ( 8, "niche")
+    wStatue        = ( 9, "statue")
 
   Cell* = object
-    floor*:            Floor
-    floorOrientation*: Orientation
-    wallN*, wallW*:    Wall
-    customChar*:       char
+    ground*:            Ground
+    groundOrientation*: Orientation
+    wallN*, wallW*:     Wall
+    customChar*:        char
     # TODO store separately
 #    notes*:            string
 
   # (0,0) is the top-left cell of the map
   Map* = ref object
+    name*:  string
     cols*:  Natural
     rows*:  Natural
     cells*: seq[Cell]

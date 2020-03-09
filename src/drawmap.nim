@@ -41,9 +41,9 @@ type
     cursorColor*:         Color
     cursorGuideColor*:    Color
     defaultFgColor*:      Color
-    floorColor*:          Color
+    groundColor*:         Color
     gridColorBackground*: Color
-    gridColorFloor*:      Color
+    gridColorGround*:     Color
     mapBackgroundColor*:  Color
     mapOutlineColor*:     Color
     pastePreviewColor*:   Color
@@ -314,7 +314,7 @@ proc drawOutline(m: Map, ctx) =
   func check(col, row: int): bool =
     let c = max(min(col, m.cols-1), 0)
     let r = max(min(row, m.rows-1), 0)
-    m.getFloor(c,r) != fNone
+    m.getGround(c,r) != gNone
 
   func isOutline(c, r: Natural): bool =
     check(c,   r+1) or
@@ -356,7 +356,7 @@ proc drawGround(x, y: float, color: Color, ctx) =
 
   vg.beginPath()
   vg.fillColor(color)
-  vg.strokeColor(ms.gridColorFloor)
+  vg.strokeColor(ms.gridColorGround)
   vg.strokeWidth(sw)
   vg.rect(snap(x, sw), snap(y, sw), dp.gridSize, dp.gridSize)
   vg.fill()
@@ -614,9 +614,9 @@ proc setVertTransform(x, y: float, ctx) =
   vg.translate(0, dp.vertTransformYFudgeFactor)
 
 # }}}
-# {{{ drawFloor()
-proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
-               cursorActive: bool, ctx) =
+# {{{ drawGround()
+proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
+                cursorActive: bool, ctx) =
 
   let ms = ctx.ms
   let dp = ctx.dp
@@ -627,7 +627,7 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
 
   template drawOriented(drawProc: untyped) =
     drawBg()
-    case viewBuf.getFloorOrientation(viewCol, viewRow):
+    case viewBuf.getGroundOrientation(viewCol, viewRow):
     of Horiz:
       drawProc(x, y + dp.gridSize/2, ctx)
     of Vert:
@@ -640,29 +640,29 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
     drawProc(x, y, ctx)
 
   proc drawBg() =
-    drawGround(x, y, ms.floorColor, ctx)
+    drawGround(x, y, ms.groundColor, ctx)
     if cursorActive:
       drawCursor(x, y, ctx)
 
-  case viewBuf.getFloor(viewCol, viewRow)
-  of fNone:
+  case viewBuf.getGround(viewCol, viewRow)
+  of gNone:
     if cursorActive:
       drawCursor(x, y, ctx)
 
-  of fEmptyFloor:          drawBg()
-  of fClosedDoor:          drawOriented(drawClosedDoorHoriz)
-  of fOpenDoor:            drawOriented(drawOpenDoorHoriz)
-  of fPressurePlate:       draw(drawPressurePlate)
-  of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
-  of fClosedPit:           draw(drawClosedPit)
-  of fOpenPit:             draw(drawOpenPit)
-  of fHiddenPit:           draw(drawHiddenPit)
-  of fCeilingPit:          draw(drawCeilingPit)
-  of fStairsDown:          draw(drawStairsDown)
-  of fStairsUp:            draw(drawStairsUp)
-  of fSpinner:             draw(drawSpinner)
-  of fTeleport:            draw(drawTeleport)
-  of fCustom:              draw(drawCustom)
+  of gEmpty:               drawBg()
+  of gClosedDoor:          drawOriented(drawClosedDoorHoriz)
+  of gOpenDoor:            drawOriented(drawOpenDoorHoriz)
+  of gPressurePlate:       draw(drawPressurePlate)
+  of gHiddenPressurePlate: draw(drawHiddenPressurePlate)
+  of gClosedPit:           draw(drawClosedPit)
+  of gOpenPit:             draw(drawOpenPit)
+  of gHiddenPit:           draw(drawHiddenPit)
+  of gCeilingPit:          draw(drawCeilingPit)
+  of gStairsDown:          draw(drawStairsDown)
+  of gStairsUp:            draw(drawStairsUp)
+  of gSpinner:             draw(drawSpinner)
+  of gTeleport:            draw(drawTeleport)
+  of gCustom:              draw(drawCustom)
 
 # }}}
 # {{{ drawWall()
@@ -695,16 +695,16 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
 proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
   let dp = ctx.dp
 
-  let floorEmpty = viewBuf.getFloor(viewCol, viewRow) == fNone
+  let groundEmpty = viewBuf.getGround(viewCol, viewRow) == gNone
 
-  if viewRow > 0 or (viewRow == 0 and not floorEmpty):
+  if viewRow > 0 or (viewRow == 0 and not groundEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
       viewBuf.getWall(viewCol, viewRow, North), Horiz, ctx
     )
 
-  if viewCol > 0 or (viewCol == 0 and not floorEmpty):
+  if viewCol > 0 or (viewCol == 0 and not groundEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
@@ -712,7 +712,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     )
 
   let viewEndCol = dp.viewCols-1
-  if viewCol < viewEndCol or (viewCol == viewEndCol and not floorEmpty):
+  if viewCol < viewEndCol or (viewCol == viewEndCol and not groundEmpty):
     drawWall(
       cellX(viewCol+1, dp),
       cellY(viewRow, dp),
@@ -720,7 +720,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     )
 
   let viewEndRow = dp.viewRows-1
-  if viewRow < viewEndRow or (viewRow == viewEndRow and not floorEmpty):
+  if viewRow < viewEndRow or (viewRow == viewEndRow and not groundEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow+1, dp),
@@ -769,8 +769,6 @@ proc drawSelection(ctx) =
 proc drawPastePreviewHighlight(ctx) =
   let dp = ctx.dp
   let ms = ctx.ms
-
-  echo "*"
 
   let
     sel = dp.pastePreview.get.selection
@@ -822,7 +820,7 @@ proc drawMap*(m: Map, ctx) =
     for c in 0..<dp.viewCols:
       let cursorActive = dp.viewStartCol+c == dp.cursorCol and
                          dp.viewStartRow+r == dp.cursorRow
-      drawFloor(viewBuf, c, r, cursorActive, ctx)
+      drawGround(viewBuf, c, r, cursorActive, ctx)
       drawWalls(viewBuf, c, r, ctx)
 
   if dp.drawCursorGuides:

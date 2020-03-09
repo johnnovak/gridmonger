@@ -9,6 +9,7 @@ import glfw
 from glfw/wrapper import showWindow
 import koi
 import nanovg
+import osdialog
 
 import actions
 import common
@@ -29,7 +30,7 @@ type
     emExcavate,
     emDrawWall,
     emEraseCell,
-    emClearFloor,
+    emClearGround,
     emSelectDraw,
     emSelectRect
     emPastePreview
@@ -287,8 +288,8 @@ proc handleEvents(a) =
         eraseCellAction(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
-        a.editMode = emClearFloor
-        setFloorAction(m, curX, curY, fEmptyFloor, um)
+        a.editMode = emClearGround
+        setGroundAction(m, curX, curY, gEmpty, um)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
@@ -297,37 +298,37 @@ proc handleEvents(a) =
         eraseCellWallsAction(m, curX, curY, um)
 
       elif ke.isKeyDown(key1):
-        if m.getFloor(curX, curY) == fClosedDoor:
-          toggleFloorOrientationAction(m, curX, curY, um)
+        if m.getGround(curX, curY) == gClosedDoor:
+          toggleGroundOrientationAction(m, curX, curY, um)
         else:
-          setFloorAction(m, curX, curY, fClosedDoor, um)
+          setGroundAction(m, curX, curY, gClosedDoor, um)
 
       elif ke.isKeyDown(key2):
-        if m.getFloor(curX, curY) == fOpenDoor:
-          toggleFloorOrientationAction(m, curX, curY, um)
+        if m.getGround(curX, curY) == gOpenDoor:
+          toggleGroundOrientationAction(m, curX, curY, um)
         else:
-          setFloorAction(m, curX, curY, fOpenDoor, um)
+          setGroundAction(m, curX, curY, gOpenDoor, um)
 
       elif ke.isKeyDown(key3):
-        setFloorAction(m, curX, curY, fPressurePlate, um)
+        setGroundAction(m, curX, curY, gPressurePlate, um)
 
       elif ke.isKeyDown(key4):
-        setFloorAction(m, curX, curY, fHiddenPressurePlate, um)
+        setGroundAction(m, curX, curY, gHiddenPressurePlate, um)
 
       elif ke.isKeyDown(key5):
-        setFloorAction(m, curX, curY, fClosedPit, um)
+        setGroundAction(m, curX, curY, gClosedPit, um)
 
       elif ke.isKeyDown(key6):
-        setFloorAction(m, curX, curY, fOpenPit, um)
+        setGroundAction(m, curX, curY, gOpenPit, um)
 
       elif ke.isKeyDown(key7):
-        setFloorAction(m, curX, curY, fHiddenPit, um)
+        setGroundAction(m, curX, curY, gHiddenPit, um)
 
       elif ke.isKeyDown(key8):
-        setFloorAction(m, curX, curY, fCeilingPit, um)
+        setGroundAction(m, curX, curY, gCeilingPit, um)
 
       elif ke.isKeyDown(key9):
-        setFloorAction(m, curX, curY, fStairsDown, um)
+        setGroundAction(m, curX, curY, gStairsDown, um)
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
@@ -360,7 +361,7 @@ proc handleEvents(a) =
         g_newMapDialog_rows = $g_app.map.rows
         openDialog(NewMapDialogTitle)
 
-    of emExcavate, emEraseCell, emClearFloor:
+    of emExcavate, emEraseCell, emClearGround:
       proc handleMoveKey(dir: Direction, a) =
         if a.editMode == emExcavate:
           moveCursor(dir, a)
@@ -370,9 +371,9 @@ proc handleEvents(a) =
           moveCursor(dir, a)
           eraseCellAction(m, curX, curY, um)
 
-        elif a.editMode == emClearFloor:
+        elif a.editMode == emClearGround:
           moveCursor(dir, a)
-          setFloorAction(m, curX, curY, fEmptyFloor, um)
+          setGroundAction(m, curX, curY, gEmpty, um)
 
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(West, a)
       if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(East, a)
@@ -569,9 +570,9 @@ proc createDefaultMapStyle(): MapStyle =
   ms.cursorColor         = rgb(1.0, 0.65, 0.0)
   ms.cursorGuideColor    = rgba(1.0, 0.65, 0.0, 0.2)
   ms.defaultFgColor      = gray(0.1)
-  ms.floorColor          = gray(0.9)
+  ms.groundColor         = gray(0.9)
   ms.gridColorBackground = gray(0.0, 0.3)
-  ms.gridColorFloor      = gray(0.0, 0.2)
+  ms.gridColorGround     = gray(0.0, 0.2)
   ms.mapBackgroundColor  = gray(0.0, 0.7)
   ms.mapOutlineColor     = gray(0.23)
   ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
@@ -590,7 +591,7 @@ proc initDrawMapParams(a) =
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
   cfg.size = (w: 800, h: 800)
-  cfg.title = "GridMonger v0.1 alpha"
+  cfg.title = "Gridmonger v0.1"
   cfg.resizable = true
   cfg.visible = false
   cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)

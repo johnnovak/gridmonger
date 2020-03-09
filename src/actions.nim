@@ -74,45 +74,45 @@ proc setWallAction*(currMap; c, r: Natural, dir: Direction, w: Wall, um) =
     m.setWall(c, r, dir, w)
 
 # }}}
-# {{{ setFloorAction*()
-proc setFloorAction*(currMap; c, r: Natural, f: Floor, um) =
+# {{{ setGroundAction*()
+proc setGroundAction*(currMap; c, r: Natural, g: Ground, um) =
   singleCellAction(currMap, c, r, um, m):
-    m.setFloor(c, r, f)
+    m.setGround(c, r, g)
 
 # }}}
 # {{{ excavateAction*()
 proc excavateAction*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
-    if m.getFloor(c,r) == fNone:
-      m.setFloor(c,r, fEmptyFloor)
+    if m.getGround(c,r) == gNone:
+      m.setGround(c,r, gEmpty)
 
-    if r == 0 or m.getFloor(c,r-1) == fNone:
+    if r == 0 or m.getGround(c,r-1) == gNone:
       m.setWall(c,r, North, wWall)
     else:
       m.setWall(c,r, North, wNone)
 
-    if c == 0 or m.getFloor(c-1,r) == fNone:
+    if c == 0 or m.getGround(c-1,r) == gNone:
       m.setWall(c,r, West, wWall)
     else:
       m.setWall(c,r, West, wNone)
 
-    if r == m.rows-1 or m.getFloor(c,r+1) == fNone:
+    if r == m.rows-1 or m.getGround(c,r+1) == gNone:
       m.setWall(c,r, South, wWall)
     else:
       m.setWall(c,r, South, wNone)
 
-    if c == m.cols-1 or m.getFloor(c+1,r) == fNone:
+    if c == m.cols-1 or m.getGround(c+1,r) == gNone:
       m.setWall(c,r, East, wWall)
     else:
       m.setWall(c,r, East, wNone)
 
 # }}}
-# {{{ toggleFloorOrientationAction*()
+# {{{ toggleGroundOrientationAction*()
 # TODO unnecessary
-proc toggleFloorOrientationAction*(currMap; c, r: Natural, um) =
+proc toggleGroundOrientationAction*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
-    let newOt = if m.getFloorOrientation(c, r) == Horiz: Vert else: Horiz
-    m.setFloorOrientation(c, r, newOt)
+    let newOt = if m.getGroundOrientation(c, r) == Horiz: Vert else: Horiz
+    m.setGroundOrientation(c, r, newOt)
 
 # }}}
 

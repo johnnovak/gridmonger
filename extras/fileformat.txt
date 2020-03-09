@@ -1,5 +1,5 @@
 
-RIFF ('GRDM'            # Gridmonger file
+RIFF ('GRDM'            # Gridmonger map file
     LIST ('INFO'
         'TVER'          # Version
         'INAM'          # Name
@@ -29,11 +29,11 @@ RIFF ('GRDM'            # Gridmonger file
 'data'
     (numRows * numColums) records of:
 
-    UINT16  floor
-    BYTE    floorOrientation
-    UINT16  wallNorth
-    UINT16  wallWest
-    BYTE    customChar
+    BYTE  floor
+    BYTE  floorOrientation
+    BYTE  wallNorth
+    BYTE  wallWest
+    BYTE  customChar
 
 'anno'
     UINT16  numAnnotations

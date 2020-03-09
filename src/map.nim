@@ -1,18 +1,10 @@
 import options
-import streams
 
 import common
 import selection
 
 
 using m: Map
-
-func cols*(m): Natural =
-  result = m.cols
-
-func rows*(m): Natural =
-  result = m.rows
-
 
 proc cellIndex(m; c, r: Natural): Natural =
   # We need to be able to address the bottommost & rightmost "edge" columns
@@ -112,25 +104,25 @@ proc newMapFrom*(m): Map =
   newMapFrom(m, rectN(0, 0, m.cols, m.rows))
 
 
-proc getFloor*(m; c, r: Natural): Floor =
+proc getGround*(m; c, r: Natural): Ground =
   assert c < m.cols
   assert r < m.rows
-  m[c,r].floor
+  m[c,r].ground
 
-proc getFloorOrientation*(m; c, r: Natural): Orientation =
+proc getGroundOrientation*(m; c, r: Natural): Orientation =
   assert c < m.cols
   assert r < m.rows
-  m[c,r].floorOrientation
+  m[c,r].groundOrientation
 
-proc setFloorOrientation*(m; c, r: Natural, ot: Orientation) =
+proc setGroundOrientation*(m; c, r: Natural, ot: Orientation) =
   assert c < m.cols
   assert r < m.rows
-  m[c,r].floorOrientation = ot
+  m[c,r].groundOrientation = ot
 
-proc setFloor*(m; c, r: Natural, f: Floor) =
+proc setGround*(m; c, r: Natural, f: Ground) =
   assert c < m.cols
   assert r < m.rows
-  m[c,r].floor = f
+  m[c,r].ground = f
 
 
 proc getWall*(m; c, r: Natural, dir: Direction): Wall =
@@ -149,17 +141,17 @@ proc isNeighbourCellEmpty*(m; c, r: Natural, dir: Direction): bool =
   assert r < m.rows
 
   case dir
-  of North: r == 0        or m[c,   r-1].floor == fNone
-  of West:  c == 0        or m[c-1, r  ].floor == fNone
-  of South: r == m.rows-1 or m[c,   r+1].floor == fNone
-  of East:  c == m.cols-1 or m[c+1, r  ].floor == fNone
+  of North: r == 0        or m[c,   r-1].ground == gNone
+  of West:  c == 0        or m[c-1, r  ].ground == gNone
+  of South: r == m.rows-1 or m[c,   r+1].ground == gNone
+  of East:  c == m.cols-1 or m[c+1, r  ].ground == gNone
 
 
 proc canSetWall*(m; c, r: Natural, dir: Direction): bool =
   assert c < m.cols
   assert r < m.rows
 
-  m[c,r].floor != fNone or not isNeighbourCellEmpty(m, c, r, dir)
+  m[c,r].ground != gNone or not isNeighbourCellEmpty(m, c, r, dir)
 
 
 proc setWall*(m; c, r: Natural, dir: Direction, w: Wall) =
@@ -188,7 +180,7 @@ proc eraseOrphanedWalls*(m; c, r: Natural) =
     if m.isNeighbourCellEmpty(c,r, dir):
       m.setWall(c,r, dir, wNone)
 
-  if m.getFloor(c,r) == fNone:
+  if m.getGround(c,r) == gNone:
     cleanWall(North)
     cleanWall(West)
     cleanWall(South)
@@ -200,7 +192,7 @@ proc eraseCell*(m; c, r: Natural) =
   assert r < m.rows
 
   m.eraseCellWalls(c, r)
-  m.setFloor(c, r, fNone)
+  m.setGround(c, r, gNone)
 
 
 proc paste*(m; destCol, destRow: Natural, src: Map, sel: Selection) =
@@ -216,28 +208,19 @@ proc paste*(m; destCol, destRow: Natural, src: Map, sel: Selection) =
     for c in 0..<rect.get.width:
       for r in 0..<rect.get.height:
         if sel[c,r]:
-          let floor = src.getFloor(c,r)
-          m.setFloor(destCol+c, destRow+r, floor)
+          let ground = src.getGround(c,r)
+          m.setGround(destCol+c, destRow+r, ground)
 
           template copyWall(dir: Direction) =
             let w = src.getWall(c,r, dir)
             m.setWall(destCol+c, destRow+r, dir, w)
 
-          if floor == fNone:
+          if ground == gNone:
             m.eraseOrphanedWalls(destCol+c, destRow+r)
           else:
             copyWall(North)
             copyWall(West)
             copyWall(South)
             copyWall(East)
-
-# TODO
-proc serialize(m; s: var Stream) =
-  discard
-
-# TODO
-proc deserialize(s: Stream): Map =
-  discard
-
 
 # vim: et:ts=2:sw=2:fdm=marker
