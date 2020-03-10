@@ -1,74 +1,124 @@
 import binstreams
+import options
+import strformat
+
+import riff
 
 import common
 import map
 
 
-type Stream = FileStream
-
-using s: Stream
+using rr: RiffReader
 
 
 const
   FourCC_GRDM_maph     = "maph"
   FourCC_GRDM_mapl     = "mapl"
-  FourCC_GRDM_map      = "map"
+  FourCC_GRDM_map      = "map "
   FourCC_GRDM_map_prop = "prop"
   FourCC_GRDM_map_data = "data"
   FourCC_GRDM_map_anno = "anno"
+  FourCC_GRDM_thme     = "thme"
 
 type MapReadError* = object of Exception
 
+proc raiseMapReadError(s: string) =
+  raise newException(MapReadError, s)
+
 # {{{ Read
 # {{{ V1
-proc readMapProperties_V1(s): (Natural, Natural, string) =
+proc readMapProperties_V1(rr): (Natural, Natural, string) =
   let
-    rows = s.read(uint16).Natural
-    cols = s.read(uint16).Natural
-    nameLen = s.read(uint16)
-    name = s.readStr(nameLen)  # TODO read bstr & bzstr
+    rows = rr.read(uint16).Natural
+    cols = rr.read(uint16).Natural
+    nameLen = rr.read(uint16)
+    name = rr.readStr(nameLen)  # TODO read bstr & bzstr
 
   result = (rows, cols, name)
 
 
-proc readMapData_V1(s; numCells: Natural): seq[Cell] =
+proc readMapData_V1(rr; numCells: Natural): seq[Cell] =
   result = newSeqOfCap[Cell](numCells)
   for i in 0..<numCells:
     var c: Cell
-    c.ground = s.read(uint8).Natural
-    c.groundOrientation = s.read(uint8).Natural
-    c.wallN = s.read(uint8).Natural
-    c.wallW = s.read(uint8).Natural
-    c.customChar = s.readChar(uint8)
+    c.ground = rr.read(uint8).Ground
+    c.groundOrientation = rr.read(uint8).Orientation
+    c.wallN = rr.read(uint8).Wall
+    c.wallW = rr.read(uint8).Wall
+    c.customChar = rr.readChar()
     result.add(c)
 
 proc readMapAnnotations_V1(s; m: Map) =
   discard  # TODO
 
 
-proc readMapChunk_V1(s; m: Map) =
+proc chunkOnlyOnceError(chunkId: string,
+                        containerChunkId: Option[string] = string.none) =
+  var msg = fmt"'{chunkId}' chunk can only appear once"
+  if containerChunkId.isSome:
+    msg &= fmt" in '{containerChunkId.get}' group chunk"
+  raiseMapReadError(msg)
+
+proc chunkNotFoundError(chunkId: string,
+                        containerChunkId: Option[string] = string.none) =
+  var msg = fmt"'{chunkId}' chunk not found"
+  if containerChunkId.isSome:
+    msg &= fmt" in '{containerChunkId.get}' group chunk"
+  raiseMapReadError(msg)
+
+proc chunkInvalidNestingError(chunkId, containerChunkId: string) =
+  raiseMapReadError(
+    fmt"'{chunkId}' chunk is not allowed inside " &
+    fmt"'{containerChunkId}' group chunk")
+
+proc readMapChunk(r: RiffReader): Map =
+  let containerChunkId = FourCC_GRDM_mapl.some
   var
-    rows, cols: Natural
-    name: string
-    cells: seq[Cell]
+    propCursor = Cursor.none
+    dataCursor = Cursor.none
+    annoCursor = Cursor.none
 
-  case id
-  of FourCC_GRDM_map_prop:
-    (rows, cols, name) = s.readMapProperties_V1()
+  while r.hasNextChunk():
+    let ci = r.nextChunk()
+    if ci.kind == ckChunk:
+      case ci.id
+      of FourCC_GRDM_map_prop:
+        if propCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_map_prop, containerChunkId)
+        propCursor = r.cursor.some
 
-  of FourCC_GRDM_map_data:
-    cells = s.readMapData(m)
+      of FourCC_GRDM_map_data:
+        if dataCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_map_data, containerChunkId)
+        dataCursor = r.cursor.some
 
-  of FourCC_GRDM_map_anno:
-    discard s.readMapAnnotations(m)   # TODO
+      of FourCC_GRDM_map_anno:
+        if annoCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_map_anno, containerChunkId)
+        annoCursor = r.cursor.some
+      else:
+        chunkInvalidNestingError(ci.id, FourCC_GRDM_mapl)
+    else:
+      raiseMapReadError(
+        fmt"'{ci.formatTypeId}' group chunk is " &
+        fmt"'not allowed inside a {FourCC_GRDM_mapl}' group chunk")
 
-  else raise newException(MapReadError,
-    fmt"Invalid subchunk ID while reading '{FourCC_GRDM_map}' chunk: " &
-    fourCCToCharStr(id)
+  if   propCursor.isNone: chunkNotFoundError(FourCC_GRDM_map_prop)
+  elif dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_map_data)
 
+  r.cursor = propCursor.get
+  let (rows, cols, name) = readMapProperties_V1(r)
+  result = new Map
+  result.name = name
+  result.cols = cols
+  result.rows = rows
 
-proc raiseMapReadError(s: string) =
-  raise newException(MapReadError, s)
+  r.cursor = dataCursor.get
+  result.cells = readMapData_V1(r)
+
+  if annoCursor.isSome:
+    r.cursor = annoCursor.get
+    readMapAnnotations_V1(r)  # TODO
 
 
 proc read(filename: string): Map =
@@ -77,65 +127,12 @@ proc read(filename: string): Map =
   defer: r.close()
 
   var
-    maplChunkCount = 0
-    readingMaps: false
-    mapRows, mapCols: Natural
-    mapName: String
-    mapCells = seq[Cell]
+    maphCursor = Cursor.none
+    maplCursor = Cursor.none
+    thmeCursor = Cursor.none
+    readingMaps = false
 
-  proc readMap(r: RiffReader): Map =
-    var
-      numPropChunks = 0
-      numDataChunks = 0
-      numAnnoChunks = 0
-      propCursor, dataCursor, annoCursor: Cursor
-
-    while r.hasNextChunk()
-      let ci = r.nextChunk()
-      if ci.kind == ckChunk:
-        case ci.id
-        of FourCC_GRDM_map_prop:
-          if numPropChunks > 0:
-            raiseMapReadError(
-              fmt"'{FourCC_GRDM_map_prop}' chunk can only appear once "
-              fmt"in a {FourCC_GRDM_map} group chunk")
-          else:
-            propCursor = r.cursor
-            inc(numPropChunks)
-
-        of FourCC_GRDM_map_data:
-          if numDataChunks > 0:
-            raiseMapReadError(
-              fmt"'{FourCC_GRDM_map_data}' chunk can only appear once "
-              fmt"in a {FourCC_GRDM_map} group chunk")
-          else:
-            dataCursor = r.cursor
-            inc(numDataChunks)
-
-        of FourCC_GRDM_map_anno:
-          if numAnnoChunks > 0:
-            raiseMapReadError(
-              fmt"'{FourCC_GRDM_map_anno}' chunk can only appear once "
-              fmt"in a {FourCC_GRDM_map} group chunk")
-          else:
-            annoCursor = r.cursor
-            inc(numAnnoChunks)
-        else:
-          raiseMapReadError(
-            fmt"{fourCCToCharStr(ci.id)} chunk is not allowed inside a " &
-            fmt"'{FourCC_GRDM_mapl}' group chunk"
-          )
-      else:
-        raiseMapReadError(
-          fmt"{fourCCToCharStr(ci.formatTypeId)} group chunk is " &
-          fmt"'not allowed inside a {FourCC_GRDM_mapl}' group chunk"
-        )
-
-    (mapRows, mapCols, mapName) = readMapProperties_V1(r)
-    mapCells = readMapData_V1(r)
-
-
-  proc walkChunks(m: var Map, depth: Natural = 1) =
+  proc walkChunks(m: var Map) =
     while r.hasNextChunk():
       let ci = r.nextChunk()
 
@@ -147,38 +144,37 @@ proc read(filename: string): Map =
 
           of FourCC_GRDM_mapl:
             if r.cursor.path.len == 1:
-              if maplChunkCount > 1:
-              raiseMapReadError(
-                fmt"'{FourCC_GRDM_mapl}' chunk can only appear once")
-
-              inc(maplChunkCount)
+              if maplCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_mapl)
               r.enterGroup()
-              walkChunks(m, depth+1)
+              walkChunks(m)
             else:
               raiseMapReadError(
-                fmt"'{FourCC_GRDM_mapl}' chunk can only appear at the root level")
+                fmt"'{FourCC_GRDM_mapl}' chunk can only appear at root level")
 
           of FourCC_GRDM_map:
             if r.cursor.path.len < 2:
               raiseMapReadError(
                 fmt"'{FourCC_GRDM_map}' cannot appear at the root level")
-            else:
-              let parentChunk = r.cursor.path[^2]  # TODO
-              if parentChunk.formatTypeId != FourCC_GRDM_mapl:
-                raiseMapReadError(
-                  fmt"'{FourCC_GRDM_map}' chunk can only appear inside a " &
-                  fmt"'{FourCC_GRDM_mapl}' group chunk"
-                )
 
-              r.enterGroup()
-              readingMaps = true
+            let parentChunk = r.cursor.path[^2]  # TODO
+            if parentChunk.formatTypeId != FourCC_GRDM_mapl:
+              chunkInvalidNestingError(FourCC_GRDM_map, FourCC_GRDM_mapl)
+            r.enterGroup()
+            readingMaps = true
+            walkChunks(m)
           else:
-            discard
+            discard   # skip unknown top level chunks
+
+        elif ci.kind == ckChunk:
+          case ci.id
+          of FourCC_GRDM_maph:
+          of FourCC_GRDM_thme:
 
       elif readingMaps:
-        readMap
+        let map = r.readMapChunk()
 
     r.exitGroup()
+
 
   let ci = r.currentChunk
   if ci.formatTypeId != FourCC_GRDM_map:
@@ -187,7 +183,6 @@ proc read(filename: string): Map =
 
   result = new Map
   walkChunks()
-
 
 # }}}
 # }}}

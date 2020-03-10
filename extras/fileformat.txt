@@ -17,7 +17,7 @@ RIFF ('GRDM'            # Gridmonger map file
         )
         ...
     )
-    'them'              # Theme settings
+    'thme'              # Theme settings
 )
 
 
