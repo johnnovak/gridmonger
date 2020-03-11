@@ -821,6 +821,9 @@ proc drawMap*(m: Map, ctx) =
       let cursorActive = dp.viewStartCol+c == dp.cursorCol and
                          dp.viewStartRow+r == dp.cursorRow
       drawGround(viewBuf, c, r, cursorActive, ctx)
+
+  for r in 0..<dp.viewRows:
+    for c in 0..<dp.viewCols:
       drawWalls(viewBuf, c, r, ctx)
 
   if dp.drawCursorGuides:
