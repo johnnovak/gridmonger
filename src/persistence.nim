@@ -1,11 +1,9 @@
-import binstreams
 import options
 import strformat
 
 import riff
 
 import common
-import map
 
 
 # TODO use app version instead
@@ -138,7 +136,7 @@ proc readMap(rr): Map =
 
 
 proc readMapList(rr): seq[Map] =
-  var maps = newSeq[Map]()
+  result = newSeq[Map]()
 
   while rr.hasNextChunk():
     let ci = rr.nextChunk()
@@ -146,7 +144,7 @@ proc readMapList(rr): seq[Map] =
       case ci.formatTypeId
       of FourCC_GRDM_map:
         rr.enterGroup()
-        maps.add(readMap(rr))
+        result.add(readMap(rr))
       else:
         invalidListChunkError(ci.formatTypeId, FourCC_GRDM_mapl)
     else:
@@ -162,7 +160,7 @@ proc readMapHeader(rr): MapHeaderInfo =
 
 
 # TODO return more than just a single map
-proc read(filename: string): Map =
+proc readMap*(filename: string): Map =
   var rr: RiffReader
   try:
     rr = openRiffFile(filename)
@@ -214,6 +212,7 @@ proc read(filename: string): Map =
     rr.cursor = mapListCursor.get
     rr.enterGroup()
     let maps = readMapList(rr)
+    echo maps.len
     result = maps[0]  # TODO
 
   except CatchableError as e:
@@ -271,7 +270,7 @@ proc writeMapHeader(rw) =
   rw.endChunk()
 
 
-proc write(m: Map, filename: string) =
+proc writeMap*(m: Map, filename: string) =
   var rw: RiffWriter
   try:
     rw = createRiffFile(filename, FourCC_GRDM)

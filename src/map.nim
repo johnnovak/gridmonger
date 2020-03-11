@@ -40,6 +40,7 @@ proc fill*(m; cell: Cell) =
   m.fill(rect, cell)
 
 proc initMap(m; cols, rows: Natural) =
+  m.name = "Untitled"
   m.cols = cols
   m.rows = rows
 

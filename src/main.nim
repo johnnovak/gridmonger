@@ -15,6 +15,8 @@ import actions
 import common
 import drawmap
 import map
+import persistence
+import persistence
 import selection
 import undomanager
 import utils
@@ -355,11 +357,20 @@ proc handleEvents(a) =
         a.drawMapParams.decZoomLevel()
         updateViewStartAndCursorPosition(a)
 
-      elif ke.isKeyDown(keyN, {mkCtrl}):
+      elif ke.isKeyDown(keyN, {mkSuper}):
         g_newMapDialog_name = "Level 1"
         g_newMapDialog_cols = $g_app.map.cols
         g_newMapDialog_rows = $g_app.map.rows
         openDialog(NewMapDialogTitle)
+
+      elif ke.isKeyDown(keyO, {mkSuper}):
+        let filename = fileDialog(fdOpenFile, filters="Gridmonger Map:grm")
+        a.map = readMap(filename)
+
+      elif ke.isKeyDown(keyS, {mkSuper}):
+        let filename = fileDialog(fdSaveFile, filters="Gridmonger Map:grm")
+        writeMap(a.map, filename)
+
 
     of emExcavate, emEraseCell, emClearGround:
       proc handleMoveKey(dir: Direction, a) =
