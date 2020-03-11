@@ -8,7 +8,7 @@ using m: Map
 
 proc cellIndex(m; c, r: Natural): Natural =
   # We need to be able to address the bottommost & rightmost "edge" columns
-  # & :ows within the module.
+  # & rows within the module.
   let w = m.cols+1
   let h = m.rows+1
   assert c < w+1

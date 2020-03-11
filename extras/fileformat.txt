@@ -1,7 +1,6 @@
 
 RIFF ('GRDM'            # Gridmonger map file
     LIST ('INFO'
-        'TVER'          # Version
         'INAM'          # Name
         'IART'          # Artist
         'ICMT'          # Comments
@@ -12,13 +11,17 @@ RIFF ('GRDM'            # Gridmonger map file
     LIST ('mapl'        # List of maps
         LIST ('map '    # Map
             'prop'      # Map properties
-            'data'      # Map data
+            'cell'      # Map cells
             'anno'      # Annotations
         )
         ...
     )
-    'thme'              # Theme settings
+    'them'              # Theme settings
 )
+
+
+'maph'
+    UINT8  format version
 
 
 'prop'
