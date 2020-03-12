@@ -1,4 +1,11 @@
 import options
+import tables
+
+import nanovg
+import glfw
+
+import undomanager
+
 
 type
   Orientation* = enum
@@ -90,12 +97,24 @@ type
     # TODO store separately
 #    notes*:            string
 
+
+  NoteKind* = enum
+    nkIndex, nkId, nkEdge
+
+  Note* = object
+    text*: string
+    case kind*: NoteKind
+    of nkIndex: idx*: Natural
+    of nkId:    id*: string
+    of nkEdge:  discard
+
   # (0,0) is the top-left cell of the map
   Map* = ref object
     name*:  string
     cols*:  Natural
     rows*:  Natural
     cells*: seq[Cell]
+    notes*: Table[Natural, Note]
 
 
 type

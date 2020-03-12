@@ -16,18 +16,16 @@ import common
 import drawmap
 import map
 import persistence
-import persistence
 import selection
 import undomanager
 import utils
 
 
-const
-  DefaultZoomLevel = 5
+const DefaultZoomLevel = 5
 
 # {{{ AppContext
 type
-  EditMode = enum
+  EditMode* = enum
     emNormal,
     emExcavate,
     emDrawWall,
@@ -61,92 +59,20 @@ type
     copyBuf:        Option[CopyBuffer]
     drawMapParams:  DrawMapParams
 
-
 var g_app: AppContext
 
 using a: var AppContext
 
 # }}}
 
-# {{{ Dialogs
-
-# {{{ New map dialog
-const NewMapDialogTitle = "New map"
-
-var
-  g_newMapDialog_name: string
-  g_newMapDialog_cols: string
-  g_newMapDialog_rows: string
-
-proc newMapDialog() =
-  koi.dialog(350, 220, NewMapDialogTitle):
-    let
-      dialogWidth = 350.0
-      dialogHeight = 220.0
-      h = 24.0
-      labelWidth = 70.0
-      buttonWidth = 70.0
-      buttonPad = 15.0
-
-    var
-      x = 30.0
-      y = 60.0
-
-    koi.label(x, y, labelWidth, h, "Name", gray(0.70), fontSize=14.0)
-    g_newMapDialog_name = koi.textField(
-      x + labelWidth, y, 220.0, h, tooltip = "", g_newMapDialog_name
-    )
-
-    y = y + 50
-    koi.label(x, y, labelWidth, h, "Columns", gray(0.70), fontSize=14.0)
-    g_newMapDialog_cols = koi.textField(
-      x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_cols
-    )
-
-    y = y + 30
-    koi.label(x, y, labelWidth, h, "Rows", gray(0.70), fontSize=14.0)
-    g_newMapDialog_rows = koi.textField(
-      x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_rows
-    )
-
-    x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-    y = dialogHeight - h - buttonPad
-
-    # TODO make it undoable
-    let okAction = proc () =
-      g_app.map = newMap(
-        parseInt(g_newMapDialog_cols),
-        parseInt(g_newMapDialog_rows)
-      )
-      g_app.cursorCol = 0
-      g_app.cursorRow = 0
-      g_app.drawMapParams.viewStartCol = 0
-      g_app.drawMapParams.viewStartRow = 0
-      closeDialog()
-
-    let cancelAction = proc () =
-      closeDialog()
-
-    if koi.button(x, y, buttonWidth, h, "OK", color = gray(0.4)):
-      okAction()
-
-    x += buttonWidth + 10
-    if koi.button(x, y, buttonWidth, h, "Cancel", color = gray(0.4)):
-      cancelAction()
-
-    for ke in koi.keyBuf():
-      if ke.action == kaDown and ke.key == keyEscape:
-        cancelAction()
-      elif ke.action == kaDown and ke.key == keyEnter:
-        okAction()
+# {{{ resetCursorAndViewStart()
+proc resetCursorAndViewStart(a) =
+  a.cursorCol = 0
+  a.cursorRow = 0
+  a.drawMapParams.viewStartCol = 0
+  a.drawMapParams.viewStartRow = 0
 
 # }}}
-
-template defineDialogs() =
-  newMapDialog()
-
-# }}}
-
 # {{{ updateViewStartAndCursorPosition()
 proc updateViewStartAndCursorPosition(a) =
   alias(dp, a.drawMapParams)
@@ -259,6 +185,82 @@ func isKeyUp(ke: KeyEvent, keys: set[Key]): bool =
 
 # }}}
 
+# {{{ Dialogs
+
+# {{{ New map dialog
+const NewMapDialogTitle = "New map"
+
+var
+  g_newMapDialog_name: string
+  g_newMapDialog_cols: string
+  g_newMapDialog_rows: string
+
+proc newMapDialog() =
+  koi.dialog(350, 220, NewMapDialogTitle):
+    let
+      dialogWidth = 350.0
+      dialogHeight = 220.0
+      h = 24.0
+      labelWidth = 70.0
+      buttonWidth = 70.0
+      buttonPad = 15.0
+
+    var
+      x = 30.0
+      y = 60.0
+
+    koi.label(x, y, labelWidth, h, "Name", gray(0.70), fontSize=14.0)
+    g_newMapDialog_name = koi.textField(
+      x + labelWidth, y, 220.0, h, tooltip = "", g_newMapDialog_name
+    )
+
+    y = y + 50
+    koi.label(x, y, labelWidth, h, "Columns", gray(0.70), fontSize=14.0)
+    g_newMapDialog_cols = koi.textField(
+      x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_cols
+    )
+
+    y = y + 30
+    koi.label(x, y, labelWidth, h, "Rows", gray(0.70), fontSize=14.0)
+    g_newMapDialog_rows = koi.textField(
+      x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_rows
+    )
+
+    x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+    y = dialogHeight - h - buttonPad
+
+    let okAction = proc () =
+      initUndoManager(g_app.undoManager)
+      g_app.map = newMap(
+        parseInt(g_newMapDialog_cols),
+        parseInt(g_newMapDialog_rows)
+      )
+      resetCursorAndViewStart(g_app)
+      closeDialog()
+
+    let cancelAction = proc () =
+      closeDialog()
+
+    if koi.button(x, y, buttonWidth, h, "OK", color = gray(0.4)):
+      okAction()
+
+    x += buttonWidth + 10
+    if koi.button(x, y, buttonWidth, h, "Cancel", color = gray(0.4)):
+      cancelAction()
+
+    for ke in koi.keyBuf():
+      if ke.action == kaDown and ke.key == keyEscape:
+        cancelAction()
+      elif ke.action == kaDown and ke.key == keyEnter:
+        okAction()
+
+# }}}
+
+template defineDialogs() =
+  newMapDialog()
+
+# }}}
+
 # {{{ handleEvents()
 proc handleEvents(a) =
   alias(curX, a.cursorCol)
@@ -283,54 +285,54 @@ proc handleEvents(a) =
 
       if ke.isKeyDown(keyD):
         a.editMode = emExcavate
-        excavateAction(m, curX, curY, um)
+        actions.excavate(m, curX, curY, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
-        eraseCellAction(m, curX, curY, um)
+        actions.eraseCell(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearGround
-        setGroundAction(m, curX, curY, gEmpty, um)
+        actions.setGround(m, curX, curY, gEmpty, um)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
 
       elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
-        eraseCellWallsAction(m, curX, curY, um)
+        actions.eraseCellWalls(m, curX, curY, um)
 
       elif ke.isKeyDown(key1):
         if m.getGround(curX, curY) == gClosedDoor:
-          toggleGroundOrientationAction(m, curX, curY, um)
+          actions.toggleGroundOrientation(m, curX, curY, um)
         else:
-          setGroundAction(m, curX, curY, gClosedDoor, um)
+          actions.setGround(m, curX, curY, gClosedDoor, um)
 
       elif ke.isKeyDown(key2):
         if m.getGround(curX, curY) == gOpenDoor:
-          toggleGroundOrientationAction(m, curX, curY, um)
+          actions.toggleGroundOrientation(m, curX, curY, um)
         else:
-          setGroundAction(m, curX, curY, gOpenDoor, um)
+          actions.setGround(m, curX, curY, gOpenDoor, um)
 
       elif ke.isKeyDown(key3):
-        setGroundAction(m, curX, curY, gPressurePlate, um)
+        actions.setGround(m, curX, curY, gPressurePlate, um)
 
       elif ke.isKeyDown(key4):
-        setGroundAction(m, curX, curY, gHiddenPressurePlate, um)
+        actions.setGround(m, curX, curY, gHiddenPressurePlate, um)
 
       elif ke.isKeyDown(key5):
-        setGroundAction(m, curX, curY, gClosedPit, um)
+        actions.setGround(m, curX, curY, gClosedPit, um)
 
       elif ke.isKeyDown(key6):
-        setGroundAction(m, curX, curY, gOpenPit, um)
+        actions.setGround(m, curX, curY, gOpenPit, um)
 
       elif ke.isKeyDown(key7):
-        setGroundAction(m, curX, curY, gHiddenPit, um)
+        actions.setGround(m, curX, curY, gHiddenPit, um)
 
       elif ke.isKeyDown(key8):
-        setGroundAction(m, curX, curY, gCeilingPit, um)
+        actions.setGround(m, curX, curY, gCeilingPit, um)
 
       elif ke.isKeyDown(key9):
-        setGroundAction(m, curX, curY, gStairsDown, um)
+        actions.setGround(m, curX, curY, gStairsDown, um)
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
@@ -343,7 +345,7 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
-          pasteAction(m, curX, curY, a.copyBuf.get, um)
+          actions.paste(m, curX, curY, a.copyBuf.get, um)
 
       elif ke.isKeyDown(keyP, {mkShift}):
         if a.copyBuf.isSome:
@@ -359,32 +361,42 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyN, {mkSuper}):
         g_newMapDialog_name = "Level 1"
-        g_newMapDialog_cols = $g_app.map.cols
-        g_newMapDialog_rows = $g_app.map.rows
+        g_newMapDialog_cols = $a.map.cols
+        g_newMapDialog_rows = $a.map.rows
         openDialog(NewMapDialogTitle)
 
       elif ke.isKeyDown(keyO, {mkSuper}):
         let filename = fileDialog(fdOpenFile, filters="Gridmonger Map:grm")
-        a.map = readMap(filename)
+        if filename != "":
+          try:
+            a.map = readMap(filename)
+            initUndoManager(a.undoManager)
+            resetCursorAndViewStart(a)
+          except CatchableError as e:
+            # TODO handle error
+            discard
 
       elif ke.isKeyDown(keyS, {mkSuper}):
         let filename = fileDialog(fdSaveFile, filters="Gridmonger Map:grm")
-        writeMap(a.map, filename)
-
+        try:
+          writeMap(a.map, filename)
+        except CatchableError as e:
+          # TODO handle error
+          discard
 
     of emExcavate, emEraseCell, emClearGround:
       proc handleMoveKey(dir: Direction, a) =
         if a.editMode == emExcavate:
           moveCursor(dir, a)
-          excavateAction(m, curX, curY, um)
+          actions.excavate(m, curX, curY, um)
 
         elif a.editMode == emEraseCell:
           moveCursor(dir, a)
-          eraseCellAction(m, curX, curY, um)
+          actions.eraseCell(m, curX, curY, um)
 
         elif a.editMode == emClearGround:
           moveCursor(dir, a)
-          setGroundAction(m, curX, curY, gEmpty, um)
+          actions.setGround(m, curX, curY, gEmpty, um)
 
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(West, a)
       if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(East, a)
@@ -399,7 +411,7 @@ proc handleEvents(a) =
         if canSetWall(m, curX, curY, dir):
           let w = if m.getWall(curX, curY, dir) == wNone: wWall
                   else: wNone
-          setWallAction(m, curX, curY, dir, w, um)
+          actions.setWall(m, curX, curY, dir, w, um)
 
       if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(West, a)
       if ke.isKeyDown(MoveKeysRight): handleMoveKey(East, a)
@@ -420,8 +432,6 @@ proc handleEvents(a) =
 
       if   ke.isKeyDown(keyA, {mkCtrl}): a.selection.get.fill(true)
       elif ke.isKeyDown(keyD, {mkCtrl}): a.selection.get.fill(false)
-      elif ke.isKeyDown(keyC): discard
-      elif ke.isKeyDown(keyX): discard
 
       if ke.isKeyDown({keyR, keyS}):
         a.editMode = emSelectRect
@@ -438,7 +448,7 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyX):
         let bbox = copySelection(a)
         if bbox.isSome:
-          eraseSelectionAction(m, a.copyBuf.get.selection, bbox.get, um)
+          actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
         exitSelectMode(a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
@@ -487,7 +497,7 @@ proc handleEvents(a) =
       if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(South, a)
 
       elif ke.isKeyDown({keyEnter, keyP}):
-        pasteAction(m, curX, curY, a.copyBuf.get, um)
+        actions.paste(m, curX, curY, a.copyBuf.get, um)
         a.editMode = emNormal
 
       elif ke.isKeyDown(keyEqual, repeat=true):

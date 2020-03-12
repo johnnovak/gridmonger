@@ -10,6 +10,10 @@ using
   currMap: var Map
   um: var UndoManager[Map]
 
+# {{{ Non-undoable actions
+# }}}
+
+# {{{ Undoable actions
 # {{{ cellAreaAction()
 template cellAreaAction(currMap; rect: Rect[Natural], um;
                         actionMap, actionBody: untyped) =
@@ -32,20 +36,20 @@ template singleCellAction(currMap; c, r: Natural, um;
 
 # }}}
 
-# {{{ eraseCellWallsAction*()
-proc eraseCellWallsAction*(currMap; c, r: Natural, um) =
+# {{{ eraseCellWalls*()
+proc eraseCellWalls*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
     m.eraseCellWalls(c, r)
 
 # }}}
-# {{{ eraseCellAction*()
-proc eraseCellAction*(currMap; c, r: Natural, um) =
+# {{{ eraseCell*()
+proc eraseCell*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
     m.eraseCell(c, r)
 
 # }}}
-# {{{ eraseSelectionAction*()
-proc eraseSelectionAction*(currMap; sel: Selection, bbox: Rect[Natural], um) =
+# {{{ eraseSelection*()
+proc eraseSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
   cellAreaAction(currMap, bbox, um, m):
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
@@ -53,8 +57,8 @@ proc eraseSelectionAction*(currMap; sel: Selection, bbox: Rect[Natural], um) =
           m.eraseCell(bbox.x1 + c, bbox.y1 + r)
 
 # }}}
-# {{{ pasteAction*()
-proc pasteAction*(currMap; destCol, destRow: Natural, cb: CopyBuffer, um) =
+# {{{ paste*()
+proc paste*(currMap; destCol, destRow: Natural, cb: CopyBuffer, um) =
   let rect = rectN(
     destCol,
     destRow,
@@ -68,20 +72,20 @@ proc pasteAction*(currMap; destCol, destRow: Natural, cb: CopyBuffer, um) =
       m.paste(destCol, destRow, cb.map, cb.selection)
 
 # }}}
-# {{{ setWallAction*()
-proc setWallAction*(currMap; c, r: Natural, dir: Direction, w: Wall, um) =
+# {{{ setWall*()
+proc setWall*(currMap; c, r: Natural, dir: Direction, w: Wall, um) =
   singleCellAction(currMap, c, r, um, m):
     m.setWall(c, r, dir, w)
 
 # }}}
-# {{{ setGroundAction*()
-proc setGroundAction*(currMap; c, r: Natural, g: Ground, um) =
+# {{{ setGround*()
+proc setGround*(currMap; c, r: Natural, g: Ground, um) =
   singleCellAction(currMap, c, r, um, m):
     m.setGround(c, r, g)
 
 # }}}
-# {{{ excavateAction*()
-proc excavateAction*(currMap; c, r: Natural, um) =
+# {{{ excavate*()
+proc excavate*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
     if m.getGround(c,r) == gNone:
       m.setGround(c,r, gEmpty)
@@ -107,13 +111,14 @@ proc excavateAction*(currMap; c, r: Natural, um) =
       m.setWall(c,r, East, wNone)
 
 # }}}
-# {{{ toggleGroundOrientationAction*()
+# {{{ toggleGroundOrientation*()
 # TODO unnecessary
-proc toggleGroundOrientationAction*(currMap; c, r: Natural, um) =
+proc toggleGroundOrientation*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
     let newOt = if m.getGroundOrientation(c, r) == Horiz: Vert else: Horiz
     m.setGroundOrientation(c, r, newOt)
 
+# }}}
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

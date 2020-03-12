@@ -97,16 +97,16 @@ proc boundingBox*(s): Option[Rect[Natural]] =
     x2 = s.cols-1
     y2 = s.rows-1
 
-  while isRowEmpty(y1) and y1 < s.rows: inc(y1)
+  while y1 < s.rows and isRowEmpty(y1): inc(y1)
 
   if y1 < s.rows-1:
-    while isColEmpty(x1) and x1 < s.cols: inc(x1)
-    while isColEmpty(x2) and x2 > 0: dec(x2)
-    while isRowEmpty(y2) and y2 > 0: dec(y2)
+    while x1 < s.cols and isColEmpty(x1): inc(x1)
+    while x2 > 0 and isColEmpty(x2): dec(x2)
+    while y2 > 0 and isRowEmpty(y2): dec(y2)
 
-    result = some(rectN(x1, y1, x2+1, y2+1))
+    return rectN(x1, y1, x2+1, y2+1).some
   else:
-    result = none(Rect[Natural])
+    return Rect[Natural].none
 
 
 # vim: et:ts=2:sw=2:fdm=marker

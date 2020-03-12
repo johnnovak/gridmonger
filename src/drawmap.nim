@@ -33,6 +33,11 @@ const
 
 # {{{ Types
 type
+  DrawMapContext* = object
+    ms*: MapStyle
+    dp*: DrawMapParams
+    vg*: NVGContext
+
   # TODO use better names
   MapStyle* = ref object
     cellCoordsColor*:     Color
@@ -49,7 +54,6 @@ type
     pastePreviewColor*:   Color
     selectionColor*:      Color
 
-
   DrawMapParams* = ref object
     startX*:       float
     startY*:       float
@@ -57,10 +61,10 @@ type
     cursorCol*:    Natural
     cursorRow*:    Natural
 
-    viewStartCol*:     Natural
-    viewStartRow*:     Natural
-    viewCols*:      Natural
-    viewRows*:      Natural
+    viewStartCol*: Natural
+    viewStartRow*: Natural
+    viewCols*:     Natural
+    viewRows*:     Natural
 
     selection*:    Option[Selection]
     selRect*:      Option[SelectionRect]
@@ -75,12 +79,6 @@ type
     normalStrokeWidth: float
 
     vertTransformYFudgeFactor: float
-
-
-  DrawMapContext* = object
-    ms*: MapStyle
-    dp*: DrawMapParams
-    vg*: NVGContext
 
 # }}}
 

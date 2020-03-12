@@ -1,4 +1,5 @@
 import options
+import tables
 
 import common
 import selection
@@ -11,8 +12,8 @@ proc cellIndex(m; c, r: Natural): Natural =
   # & rows within the module.
   let w = m.cols+1
   let h = m.rows+1
-  assert c < w+1
-  assert r < h+1
+  assert c < w
+  assert r < h
   result = w*r + c
 
 proc `[]=`(m; c, r: Natural, cell: Cell) =
@@ -48,6 +49,9 @@ proc initMap(m; cols, rows: Natural) =
   # columns & rows) so we can store the South and East walls of the bottommost
   # row and rightmost column, respectively.
   newSeq(m.cells, (cols+1) * (rows+1))
+
+  m.notes = initTable[Natural, Note]()
+
 
 proc newMap*(cols, rows: Natural): Map =
   var m = new Map
@@ -223,5 +227,18 @@ proc paste*(m; destCol, destRow: Natural, src: Map, sel: Selection) =
             copyWall(West)
             copyWall(South)
             copyWall(East)
+
+
+proc noteKey(m; c, r: Natural): Natural =
+  let w = m.cols
+  let h = m.rows
+  assert c < w
+  assert r < h
+  result = w*r + c
+
+#proc getNote*(m; c, r: Natural): Note =
+#  let key = noteKey(m, c, r)
+#  m.notes.get()
+
 
 # vim: et:ts=2:sw=2:fdm=marker
