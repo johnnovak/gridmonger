@@ -85,9 +85,9 @@ proc updateViewStartAndCursorPosition(a) =
 
   let (winWidth, winHeight) = a.win.size
 
-  # TODO -100
-  dp.viewCols = min(dp.numDisplayableCols(winWidth - 100.0), a.map.cols)
-  dp.viewRows = min(dp.numDisplayableRows(winHeight - 100.0), a.map.rows)
+  # TODO -150
+  dp.viewCols = min(dp.numDisplayableCols(winWidth - 150.0), a.map.cols)
+  dp.viewRows = min(dp.numDisplayableRows(winHeight - 150.0), a.map.rows)
 
   dp.viewStartCol = min(max(a.map.cols - dp.viewCols, 0), dp.viewStartCol)
   dp.viewStartRow = min(max(a.map.rows - dp.viewRows, 0), dp.viewStartRow)
@@ -267,6 +267,27 @@ template defineDialogs() =
 
 # }}}
 
+proc drawWallTool(a) =
+  alias(vg, a.vg)
+  let xs = 600.0
+  let ys = 100.0
+  let w = 25.0
+  let pad = 8.0
+
+  var
+    x = xs
+    y = ys
+
+  for wall in wIllusoryWall..wStatue:
+    if a.currWall == wall:
+      vg.fillColor(rgb(1.0, 0.7, 0))
+    else:
+      vg.fillColor(gray(0.3))
+    vg.beginPath()
+    vg.rect(x, y, w, w)
+    vg.fill()
+    y += w + pad
+
 # {{{ handleEvents()
 proc handleEvents(a) =
   alias(curX, a.cursorCol)
@@ -347,11 +368,11 @@ proc handleEvents(a) =
       elif ke.isKeyDown(key7):
         actions.setGround(m, curX, curY, gTeleport, um)
 
-      elif ke.isKeyDown(keyLeftBracket):
+      elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if a.currWall > wIllusoryWall: dec(a.currWall)
         else: a.currWall = a.currWall.high
 
-      elif ke.isKeyDown(keyRightBracket):
+      elif ke.isKeyDown(keyRightBracket, repeat=true):
         if a.currWall < Wall.high: inc(a.currWall)
         else: a.currWall = wIllusoryWall
 
@@ -568,6 +589,7 @@ proc renderUI() =
                       else: none(CopyBuffer)
 
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
+    drawWallTool(a)
 
   g_textFieldVal1 = koi.textField(
     winWidth-200.0, 30.0, 150.0, 24.0, tooltip = "Text field 1", g_textFieldVal1)
