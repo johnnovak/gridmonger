@@ -383,7 +383,22 @@ proc drawPressurePlate(x, y: float, ctx) =
 # }}}
 # {{{ drawHiddenPressurePlate()
 proc drawHiddenPressurePlate(x, y: float, ctx) =
-  discard
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    offs = (dp.gridSize * 0.3).int
+    a = dp.gridSize - 2*offs + 1
+    sw = ThinStrokeWidth
+
+  vg.lineCap(lcjRound)
+  vg.strokeColor(gray(0.5))
+  vg.strokeWidth(sw)
+
+  vg.beginPath()
+  vg.rect(snap(x + offs, sw), snap(y + offs, sw), a, a)
+  vg.stroke()
 
 # }}}
 # {{{ drawClosedPit()
@@ -449,12 +464,63 @@ proc drawOpenPit(x, y: float, ctx) =
 # }}}
 # {{{ drawHiddenPit()
 proc drawHiddenPit(x, y: float, ctx) =
-  discard
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    offs = (dp.gridSize * 0.3).int
+    a = dp.gridSize - 2*offs + 1
+    sw = ThinStrokeWidth
+
+  vg.lineCap(lcjSquare)
+  vg.strokeColor(gray(0.5))
+  vg.strokeWidth(sw)
+
+  let
+    x1 = snap(x + offs, sw)
+    y1 = snap(y + offs, sw)
+    x2 = snap(x + offs + a, sw)
+    y2 = snap(y + offs + a, sw)
+
+  vg.beginPath()
+  vg.rect(x1, y1, a, a)
+  vg.stroke()
+
+  vg.beginPath()
+  vg.moveTo(x1+1, y1+1)
+  vg.lineTo(x2-1, y2-1)
+  vg.stroke()
+  vg.beginPath()
+  vg.moveTo(x2-1, y1+1)
+  vg.lineTo(x1+1, y2-1)
+  vg.stroke()
 
 # }}}
 # {{{ drawCeilingPit()
 proc drawCeilingPit(x, y: float, ctx) =
-  discard
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    offs = (dp.gridSize * 0.3).int
+    a = dp.gridSize - 2*offs + 1
+    sw = ThinStrokeWidth
+
+  vg.lineCap(lcjSquare)
+  vg.strokeWidth(sw)
+  vg.strokeColor(gray(0.5))
+  vg.fillColor(gray(0.5))
+
+  let
+    x1 = snap(x + offs, sw)
+    y1 = snap(y + offs, sw)
+
+  vg.beginPath()
+  vg.rect(x1, y1, a, a)
+  vg.fill()
+  vg.stroke()
 
 # }}}
 # {{{ drawStairsDown()
@@ -497,6 +563,46 @@ proc drawSolidWallHoriz(x, y: float, ctx) =
   vg.lineCap(lcjRound)
   vg.beginPath()
   vg.strokeColor(ms.defaultFgColor)
+  vg.strokeWidth(sw)
+  vg.moveTo(x, y)
+  vg.lineTo(x + dp.gridSize, y)
+  vg.stroke()
+
+# }}}
+# {{{ drawIllusoryWallHoriz()
+proc drawIllusoryWallHoriz(x, y: float, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    sw = dp.normalStrokeWidth
+    x = snap(x, sw)
+    y = snap(y, sw)
+
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.strokeColor(rgb(1.0, 0.5, 0.5))
+  vg.strokeWidth(sw)
+  vg.moveTo(x, y)
+  vg.lineTo(x + dp.gridSize, y)
+  vg.stroke()
+
+# }}}
+# {{{ drawInvisibleWallHoriz()
+proc drawInvisibleWallHoriz(x, y: float, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    sw = dp.normalStrokeWidth
+    x = snap(x, sw)
+    y = snap(y, sw)
+
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.strokeColor(rgb(0.3, 1.0, 0.3))
   vg.strokeWidth(sw)
   vg.moveTo(x, y)
   vg.lineTo(x + dp.gridSize, y)
@@ -573,6 +679,52 @@ proc drawClosedDoorHoriz(x, y: float, ctx) =
   var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(ms.defaultFgColor)
+
+  # Wall start
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(xs, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.stroke()
+
+  # Door
+  vg.lineCap(lcjSquare)
+  sw = ThinStrokeWidth
+  vg.strokeWidth(sw)
+  vg.beginPath()
+  vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
+  vg.stroke()
+
+  # Wall end
+  sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
+# }}}
+# {{{ drawSecretDoorHoriz()
+proc drawSecretDoorHoriz(x, y: float, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    wallLen = (dp.gridSize * 0.25).int
+    doorWidth = round(dp.gridSize * 0.1)
+    xs = x
+    y  = y
+    x1 = xs + wallLen
+    xe = xs + dp.gridSize
+    x2 = xe - wallLen
+    y1 = y - doorWidth
+    y2 = y + doorWidth
+
+  var sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(rgb(1.0, 0, 0.5))
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -679,11 +831,11 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   case wall
   of wNone:          discard
   of wWall:          drawOriented(drawSolidWallHoriz)
-  of wIllusoryWall:  discard
-  of wInvisibleWall: discard
+  of wIllusoryWall:  drawOriented(drawIllusoryWallHoriz)
+  of wInvisibleWall: drawOriented(drawInvisibleWallHoriz)
   of wOpenDoor:      drawOriented(drawOpenDoorHoriz)
   of wClosedDoor:    drawOriented(drawClosedDoorHoriz)
-  of wSecretDoor:    discard
+  of wSecretDoor:    drawOriented(drawSecretDoorHoriz)
   of wLever:         discard
   of wNiche:         discard
   of wStatue:        discard

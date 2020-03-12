@@ -24,7 +24,6 @@ type
   Rect*[T: SomeNumber | Natural] = object
     x1*, y1*, x2*, y2*: T
 
-
 proc rectN*(x1, y1, x2, y2: Natural): Rect[Natural] =
   assert x1 < x2
   assert y1 < y2
@@ -33,7 +32,6 @@ proc rectN*(x1, y1, x2, y2: Natural): Rect[Natural] =
   result.y1 = y1
   result.x2 = x2
   result.y2 = y2
-
 
 proc intersect*[T: SomeNumber | Natural](a, b: Rect[T]): Option[Rect[T]] =
   let
@@ -50,7 +48,6 @@ proc intersect*[T: SomeNumber | Natural](a, b: Rect[T]): Option[Rect[T]] =
       y2: y + n2-y
     ))
   else: none(Rect[T])
-
 
 func width*[T: SomeNumber | Natural](r: Rect[T]): T = r.x2 - r.x1
 func height*[T: SomeNumber | Natural](r: Rect[T]): T = r.y2 - r.y1
@@ -93,10 +90,6 @@ type
     ground*:            Ground
     groundOrientation*: Orientation
     wallN*, wallW*:     Wall
-    customChar*:        char
-    # TODO store separately
-#    notes*:            string
-
 
   NoteKind* = enum
     nkIndexed, nkCustomId, nkComment
@@ -124,14 +117,14 @@ type
     rows*:  Natural
     cells*: seq[bool]
 
-
-type
   # TODO make ref?
   SelectionRect* = object
     x0*, y0*:   Natural
     rect*:      Rect[Natural]
     fillValue*: bool
 
+
+type
   # TODO make ref?
   CopyBuffer* = object
     map*:       Map

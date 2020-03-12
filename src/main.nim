@@ -29,6 +29,7 @@ type
     emNormal,
     emExcavate,
     emDrawWall,
+    emDrawWallSpecial,
     emEraseCell,
     emClearGround,
     emSelectDraw,
@@ -54,10 +55,15 @@ type
     editMode:       EditMode
     cursorCol:      Natural
     cursorRow:      Natural
+
+    currWall:       Wall
+
     selection:      Option[Selection]
     selRect:        Option[SelectionRect]
     copyBuf:        Option[CopyBuffer]
+
     drawMapParams:  DrawMapParams
+
 
 var g_app: AppContext
 
@@ -298,6 +304,9 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
 
+      elif ke.isKeyDown(keyR):
+        a.editMode = emDrawWallSpecial
+
       elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
         actions.eraseCellWalls(m, curX, curY, um)
 
@@ -314,25 +323,37 @@ proc handleEvents(a) =
           actions.setGround(m, curX, curY, gOpenDoor, um)
 
       elif ke.isKeyDown(key3):
-        actions.setGround(m, curX, curY, gPressurePlate, um)
+        var g = m.getGround(curX, curY)
+        g = if g == gPressurePlate: gHiddenPressurePlate else: gPressurePlate
+        actions.setGround(m, curX, curY, g, um)
 
       elif ke.isKeyDown(key4):
-        actions.setGround(m, curX, curY, gHiddenPressurePlate, um)
+        var g = m.getGround(curX, curY)
+        if g >= gClosedPit and g <= gCeilingPit:
+          g = Ground(ord(g) + 1)
+          if g > gCeilingPit: g = gClosedPit
+        else:
+          g = gClosedPit
+        actions.setGround(m, curX, curY, g, um)
 
       elif ke.isKeyDown(key5):
-        actions.setGround(m, curX, curY, gClosedPit, um)
+        var g = m.getGround(curX, curY)
+        g = if g == gStairsDown: gStairsUp else: gStairsDown
+        actions.setGround(m, curX, curY, g, um)
 
       elif ke.isKeyDown(key6):
-        actions.setGround(m, curX, curY, gOpenPit, um)
+        actions.setGround(m, curX, curY, gSpinner, um)
 
       elif ke.isKeyDown(key7):
-        actions.setGround(m, curX, curY, gHiddenPit, um)
+        actions.setGround(m, curX, curY, gTeleport, um)
 
-      elif ke.isKeyDown(key8):
-        actions.setGround(m, curX, curY, gCeilingPit, um)
+      elif ke.isKeyDown(keyLeftBracket):
+        if a.currWall > wIllusoryWall: dec(a.currWall)
+        else: a.currWall = a.currWall.high
 
-      elif ke.isKeyDown(key9):
-        actions.setGround(m, curX, curY, gStairsDown, um)
+      elif ke.isKeyDown(keyRightBracket):
+        if a.currWall < Wall.high: inc(a.currWall)
+        else: a.currWall = wIllusoryWall
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
@@ -359,13 +380,13 @@ proc handleEvents(a) =
         a.drawMapParams.decZoomLevel()
         updateViewStartAndCursorPosition(a)
 
-      elif ke.isKeyDown(keyN, {mkSuper}):
+      elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
         g_newMapDialog_cols = $a.map.cols
         g_newMapDialog_rows = $a.map.rows
         openDialog(NewMapDialogTitle)
 
-      elif ke.isKeyDown(keyO, {mkSuper}):
+      elif ke.isKeyDown(keyO, {mkCtrl}):
         let filename = fileDialog(fdOpenFile, filters="Gridmonger Map:grm")
         if filename != "":
           try:
@@ -376,7 +397,7 @@ proc handleEvents(a) =
             # TODO handle error
             discard
 
-      elif ke.isKeyDown(keyS, {mkSuper}):
+      elif ke.isKeyDown(keyS, {mkCtrl}):
         let filename = fileDialog(fdSaveFile, filters="Gridmonger Map:grm")
         try:
           writeMap(a.map, filename)
@@ -419,6 +440,21 @@ proc handleEvents(a) =
       if ke.isKeyDown(MoveKeysDown):  handleMoveKey(South, a)
 
       elif ke.isKeyUp({keyW}):
+        a.editMode = emNormal
+
+    of emDrawWallSpecial:
+      proc handleMoveKey(dir: Direction, a) =
+        if canSetWall(m, curX, curY, dir):
+          let w = if m.getWall(curX, curY, dir) == a.currWall: wNone
+                  else: a.currWall
+          actions.setWall(m, curX, curY, dir, w, um)
+
+      if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(West, a)
+      if ke.isKeyDown(MoveKeysRight): handleMoveKey(East, a)
+      if ke.isKeyDown(MoveKeysUp):    handleMoveKey(North, a)
+      if ke.isKeyDown(MoveKeysDown):  handleMoveKey(South, a)
+
+      elif ke.isKeyUp({keyR}):
         a.editMode = emNormal
 
     of emSelectDraw:
@@ -658,6 +694,7 @@ proc init(): Window =
   g_app.map = newMap(16, 16)
   g_app.mapStyle = createDefaultMapStyle()
   g_app.undoManager = newUndoManager[Map]()
+  g_app.currWall = wIllusoryWall
 
   g_app.drawMapParams = new DrawMapParams
   initDrawMapParams(g_app)

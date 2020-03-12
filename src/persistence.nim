@@ -79,7 +79,6 @@ proc readMapData_V1(rr; numCells: Natural): seq[Cell] =
     c.groundOrientation = rr.read(uint8).Orientation
     c.wallN = rr.read(uint8).Wall
     c.wallW = rr.read(uint8).Wall
-    c.customChar = rr.readChar()
     result.add(c)
 
 proc readMapAnnotations_V1(rr) =
@@ -242,7 +241,6 @@ proc writeMapCells(rw; cells: seq[Cell]) =
     rw.write(c.groundOrientation.uint8)
     rw.write(c.wallN.uint8)
     rw.write(c.wallW.uint8)
-    rw.writeChar(c.customChar)
   rw.endChunk()
 
 proc writeMapAnnotations(rw) =
