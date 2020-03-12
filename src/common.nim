@@ -99,14 +99,14 @@ type
 
 
   NoteKind* = enum
-    nkIndex, nkId, nkEdge
+    nkIndexed, nkCustomId, nkComment
 
   Note* = object
     text*: string
     case kind*: NoteKind
-    of nkIndex: idx*: Natural
-    of nkId:    id*: string
-    of nkEdge:  discard
+    of nkIndexed:  index*: Natural
+    of nkCustomId: customId*: string
+    of nkComment:  discard
 
   # (0,0) is the top-left cell of the map
   Map* = ref object

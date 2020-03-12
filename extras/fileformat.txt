@@ -12,11 +12,11 @@ RIFF ('GRDM'            # Gridmonger map file
         LIST ('map '    # Map
             'prop'      # Map properties
             'cell'      # Map cells
-            'anno'      # Annotations
+            'note'      # Notes
         )
         ...
     )
-    'them'              # Theme settings
+    'disp'              # Display related info
 )
 
 
@@ -38,11 +38,12 @@ RIFF ('GRDM'            # Gridmonger map file
     BYTE  wallWest
     BYTE  customChar
 
-'anno'
-    UINT16  numAnnotations
+'note'
+    UINT16  numNotes
     UINT16  row
     UINT16  column
-    BZSTR   text
+    UINT8   kind
+    WZSTR   text
 
-'them'
+'disp'
     BZSTR   themeName

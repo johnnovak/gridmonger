@@ -236,9 +236,41 @@ proc noteKey(m; c, r: Natural): Natural =
   assert r < h
   result = w*r + c
 
-#proc getNote*(m; c, r: Natural): Note =
-#  let key = noteKey(m, c, r)
-#  m.notes.get()
+proc hasNote*(m; c, r: Natural): bool =
+  let key = noteKey(m, c, r)
+  m.notes.hasKey(key)
+
+proc getNote*(m; c, r: Natural): Option[Note] =
+  let key = noteKey(m, c, r)
+  if m.notes.hasKey(key):
+    m.notes[key].some
+  else:
+    Note.none
+
+proc setNote*(m; c, r: Natural, note: Note) =
+  let key = noteKey(m, c, r)
+  m.notes[key] = note
+
+proc delNote*(m; c, r: Natural) =
+  let key = noteKey(m, c, r)
+  if m.notes.hasKey(key):
+    let note = m.notes[key]
+    m.notes.del(key)
+
+    # Renumber indexed notes
+    if note.kind == nkIndexed:
+      let deletedIndex = note.index
+      for n in m.notes.mvalues:
+        if n.kind == nkIndexed and deletedIndex > note.index:
+          dec(n.index)
+
+
+iterator notes*(m): (Natural, Natural, Note) =
+  for k, note in m.notes.pairs:
+    let
+      row = k div m.cols
+      col = k mod m.cols
+    yield (col.Natural, row.Natural, note)
 
 
 # vim: et:ts=2:sw=2:fdm=marker
