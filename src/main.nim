@@ -23,6 +23,9 @@ import utils
 
 const DefaultZoomLevel = 5
 
+const
+  StatusBarHeight = 28.0
+
 # {{{ AppContext
 type
   EditMode* = enum
@@ -61,6 +64,10 @@ type
     selection:      Option[Selection]
     selRect:        Option[SelectionRect]
     copyBuf:        Option[CopyBuffer]
+
+    currMapLevel:   Natural
+
+    statusMessage:  string
 
     drawMapParams:  DrawMapParams
 
@@ -147,6 +154,7 @@ proc enterSelectMode(a) =
   a.editMode = emSelectDraw
   a.selection = some(newSelection(a.map.cols, a.map.rows))
   a.drawMapParams.drawCursorGuides = true
+  a.statusMessage = "Mark selection   |   D  add   E  erase   R  rectangle   Ctrl+A/D  select/deselect all   C  copy   X  cut   Esc  exit"
 
 # }}}
 # {{{ exitSelectMode()
@@ -154,6 +162,7 @@ proc exitSelectMode(a) =
   a.editMode = emNormal
   a.selection = none(Selection)
   a.drawMapParams.drawCursorGuides = false
+  a.statusMessage = ""
 
 # }}}
 # {{{ copySelection()
@@ -267,16 +276,11 @@ template defineDialogs() =
 
 # }}}
 
-proc drawWallTool(a) =
+proc drawWallTool(a; x: float) =
   alias(vg, a.vg)
-  let xs = 600.0
-  let ys = 100.0
+  var y = 100.0
   let w = 25.0
   let pad = 8.0
-
-  var
-    x = xs
-    y = ys
 
   for wall in wIllusoryWall..wStatue:
     if a.currWall == wall:
@@ -287,6 +291,39 @@ proc drawWallTool(a) =
     vg.rect(x, y, w, w)
     vg.fill()
     y += w + pad
+
+proc drawStatusBar(a; y: float, width: float) =
+  alias(vg, a.vg)
+
+  vg.beginPath()
+  vg.rect(0, y, width, StatusBarHeight)
+  vg.fillColor(gray(0.2))
+  vg.fill()
+
+  vg.setFont(14.0)
+  vg.fillColor(gray(0.8))
+#[
+  discard vg.text(10, y + StatusBarHeight * 0.55, a.statusMessage)
+
+  vg.textAlign(haRight, vaMiddle)
+  let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
+  discard vg.text(width - 10, y + StatusBarHeight * 0.55, cursorPos)
+]#
+
+  let button = "Enter"
+  var (_, w) = vg.textBounds(0, 0, button)
+
+  vg.beginPath()
+  vg.roundedRect(10, y+5, w + 10, StatusBarHeight-10, 3)
+  vg.fillColor(gray(0.6))
+  vg.fill()
+
+  vg.fillColor(gray(0.2))
+  discard vg.text(10 + 5, y + StatusBarHeight * 0.55, button)
+
+  vg.fillColor(gray(0.8))
+  discard vg.text(10 + w + 15, y + StatusBarHeight * 0.55, "paste buffer")
+
 
 # {{{ handleEvents()
 proc handleEvents(a) =
@@ -312,18 +349,22 @@ proc handleEvents(a) =
 
       if ke.isKeyDown(keyD):
         a.editMode = emExcavate
+        a.statusMessage ="Draw tunnels   |   CURSOR - draw"
         actions.excavate(m, curX, curY, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
+        a.statusMessage ="Erase cells   |   CURSOR - erase"
         actions.eraseCell(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearGround
+        a.statusMessage ="Clear floors   |   CURSOR - clear"
         actions.setGround(m, curX, curY, gEmpty, um)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
+        a.statusMessage ="Draw/clear walls   |   CURSOR - draw/clear"
 
       elif ke.isKeyDown(keyR):
         a.editMode = emDrawWallSpecial
@@ -334,19 +375,26 @@ proc handleEvents(a) =
       elif ke.isKeyDown(key1):
         if m.getGround(curX, curY) == gClosedDoor:
           actions.toggleGroundOrientation(m, curX, curY, um)
+          a.statusMessage = "Toggle floor orientation"
         else:
-          actions.setGround(m, curX, curY, gClosedDoor, um)
+          let g = gClosedDoor
+          actions.setGround(m, curX, curY, g, um)
+          a.statusMessage = fmt"Set floor - {g}"
 
       elif ke.isKeyDown(key2):
         if m.getGround(curX, curY) == gOpenDoor:
           actions.toggleGroundOrientation(m, curX, curY, um)
+          a.statusMessage = "Toggle floor orientation"
         else:
-          actions.setGround(m, curX, curY, gOpenDoor, um)
+          let g = gOpenDoor
+          actions.setGround(m, curX, curY, g, um)
+          a.statusMessage = fmt"Set floor - {g}"
 
       elif ke.isKeyDown(key3):
         var g = m.getGround(curX, curY)
         g = if g == gPressurePlate: gHiddenPressurePlate else: gPressurePlate
         actions.setGround(m, curX, curY, g, um)
+        a.statusMessage = fmt"Set floor - {g}"
 
       elif ke.isKeyDown(key4):
         var g = m.getGround(curX, curY)
@@ -356,17 +404,23 @@ proc handleEvents(a) =
         else:
           g = gClosedPit
         actions.setGround(m, curX, curY, g, um)
+        a.statusMessage = fmt"Set floor - {g}"
 
       elif ke.isKeyDown(key5):
         var g = m.getGround(curX, curY)
         g = if g == gStairsDown: gStairsUp else: gStairsDown
         actions.setGround(m, curX, curY, g, um)
+        a.statusMessage = fmt"Set floor - {g}"
 
       elif ke.isKeyDown(key6):
-        actions.setGround(m, curX, curY, gSpinner, um)
+        let g = gSpinner
+        actions.setGround(m, curX, curY, g, um)
+        a.statusMessage = fmt"Set floor - {g}"
 
       elif ke.isKeyDown(key7):
-        actions.setGround(m, curX, curY, gTeleport, um)
+        let g = gTeleport
+        actions.setGround(m, curX, curY, g, um)
+        a.statusMessage = fmt"Set floor - {g}"
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if a.currWall > wIllusoryWall: dec(a.currWall)
@@ -378,9 +432,11 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
+        a.statusMessage = "Undo action"  # TODO print operation name?
 
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true):
         um.redo(m)
+        a.statusMessage = "Redo action"  # TODO print operation name?
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
@@ -388,18 +444,24 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
           actions.paste(m, curX, curY, a.copyBuf.get, um)
+          a.statusMessage = "Pasted buffer"
+        else:
+          a.statusMessage = "Cannot paste, buffer is empty"
 
       elif ke.isKeyDown(keyP, {mkShift}):
         if a.copyBuf.isSome:
           a.editMode = emPastePreview
+          a.statusMessage = "Paste preview   |   Cursor  placement   Enter  P  paste   Esc  exit"
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         a.drawMapParams.incZoomLevel()
         updateViewStartAndCursorPosition(a)
+        a.statusMessage = fmt"Increase zoom (level={a.drawMapParams.getZoomLevel()})"
 
       elif ke.isKeyDown(keyMinus, repeat=true):
         a.drawMapParams.decZoomLevel()
         updateViewStartAndCursorPosition(a)
+        a.statusMessage = fmt"Decrease zoom (level={a.drawMapParams.getZoomLevel()})"
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
@@ -414,17 +476,17 @@ proc handleEvents(a) =
             a.map = readMap(filename)
             initUndoManager(a.undoManager)
             resetCursorAndViewStart(a)
+            a.statusMessage = "Map successfully loaded"
           except CatchableError as e:
-            # TODO handle error
-            discard
+            a.statusMessage = "ERROR: Cannot load map"  # TODO error
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
         let filename = fileDialog(fdSaveFile, filters="Gridmonger Map:grm")
         try:
           writeMap(a.map, filename)
+          a.statusMessage = "Map successfully saved"
         except CatchableError as e:
-          # TODO handle error
-          discard
+          a.statusMessage = "ERROR: Cannot save map"  # TODO error
 
     of emExcavate, emEraseCell, emClearGround:
       proc handleMoveKey(dir: Direction, a) =
@@ -447,6 +509,7 @@ proc handleEvents(a) =
 
       elif ke.isKeyUp({keyD, keyE, keyF}):
         a.editMode = emNormal
+        a.statusMessage = ""
 
     of emDrawWall:
       proc handleMoveKey(dir: Direction, a) =
@@ -462,6 +525,7 @@ proc handleEvents(a) =
 
       elif ke.isKeyUp({keyW}):
         a.editMode = emNormal
+        a.statusMessage = ""
 
     of emDrawWallSpecial:
       proc handleMoveKey(dir: Direction, a) =
@@ -477,6 +541,7 @@ proc handleEvents(a) =
 
       elif ke.isKeyUp({keyR}):
         a.editMode = emNormal
+        a.statusMessage = ""
 
     of emSelectDraw:
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(West, a)
@@ -571,14 +636,26 @@ proc handleEvents(a) =
 # }}}
 # {{{ renderUI()
 
-var g_textFieldVal1 = "Level 1"
-
 proc renderUI() =
   alias(a, g_app)
   alias(dp, a.drawMapParams)
 
   let (winWidth, winHeight) = a.win.size
 
+  alias(vg, a.vg)
+  vg.beginPath()
+  vg.rect(winWidth - 200.0, 0.0, 200.0, winHeight.float)
+  vg.fillColor(gray(0.35))
+  vg.fill()
+
+  # Current level
+  a.currMapLevel = koi.dropdown(
+    50, 30, 300, 24.0,
+    items = @["Eye of the Beholder - Level 1", "The Beginning", "The Dwarf Settlement", "You Only Scream Twice"],
+    tooltip = "Current map level",
+    a.currMapLevel)
+
+  # Map
   if dp.viewCols > 0 and dp.viewRows > 0:
     dp.cursorCol = a.cursorCol
     dp.cursorRow = a.cursorRow
@@ -589,10 +666,16 @@ proc renderUI() =
                       else: none(CopyBuffer)
 
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
-    drawWallTool(a)
 
-  g_textFieldVal1 = koi.textField(
-    winWidth-200.0, 30.0, 150.0, 24.0, tooltip = "Text field 1", g_textFieldVal1)
+  # Toolbar
+  drawWallTool(a, winWidth - 60.0)
+
+  # Status bar
+  let
+    statusBarH = 24.0
+    statusBarY = winHeight - StatusBarHeight
+
+  drawStatusBar(a, statusBarY, winWidth.float)
 
 # }}}
 
@@ -662,14 +745,14 @@ proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
   dp.startX = 50.0
-  dp.startY = 50.0
+  dp.startY = 100.0
   dp.drawOutline         = false
   dp.drawCursorGuides    = false
 
 
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
-  cfg.size = (w: 800, h: 800)
+  cfg.size = (w: 800, h: 600)
   cfg.title = "Gridmonger v0.1"
   cfg.resizable = true
   cfg.visible = false
@@ -717,6 +800,7 @@ proc init(): Window =
   g_app.mapStyle = createDefaultMapStyle()
   g_app.undoManager = newUndoManager[Map]()
   g_app.currWall = wIllusoryWall
+  g_app.statusMessage = "Welcome, adventurer!"
 
   g_app.drawMapParams = new DrawMapParams
   initDrawMapParams(g_app)
