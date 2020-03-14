@@ -7,6 +7,9 @@ import glfw
 import undomanager
 
 
+const
+  TextVertAlignFactor* = 0.55
+
 type
   Orientation* = enum
     Horiz = (0, "horiz")

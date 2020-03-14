@@ -2,6 +2,7 @@ import lenientops
 import math
 import options
 
+import koi
 import nanovg
 
 import common
@@ -535,7 +536,10 @@ proc drawStairsUp(x, y: float, ctx) =
 # }}}
 # {{{ drawSpinner()
 proc drawSpinner(x, y: float, ctx) =
-  discard
+  let vg = ctx.vg
+  vg.setFont((ctx.dp.zoomLevel * 2).float)
+  vg.fillColor(gray(0))
+  discard vg.text(x + 6, y + 12, "")
 
 # }}}
 # {{{ drawTeleport()
