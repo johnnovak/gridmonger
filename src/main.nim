@@ -383,12 +383,21 @@ proc setFloorOrientationStatusMessage(a; o: Orientation) =
   else:
     a.setStatusMessage(IconVertArrows, "Floor orientation set to vertical")
 
+proc incZoomLevel(a) =
+  a.drawMapParams.incZoomLevel()
+  updateViewStartAndCursorPosition(a)
+
+proc decZoomLevel(a) =
+  a.drawMapParams.decZoomLevel()
+  updateViewStartAndCursorPosition(a)
+
 
 proc handleEvents(a) =
   alias(curX, a.cursorCol)
   alias(curY, a.cursorRow)
   alias(um, a.undoManager)
   alias(m, a.map)
+  alias(dp, a.drawMapParams)
   alias(win, a.win)
 
   const
@@ -567,16 +576,14 @@ proc handleEvents(a) =
           a.setStatusMessage(IconWarning, "Cannot paste, buffer is empty")
 
       elif ke.isKeyDown(keyEqual, repeat=true):
-        a.drawMapParams.incZoomLevel()
-        updateViewStartAndCursorPosition(a)
+        a.incZoomLevel()
         a.setStatusMessage(IconZoomIn,
-          fmt"Zoomed in – level {a.drawMapParams.getZoomLevel()}")
+          fmt"Zoomed in – level {dp.getZoomLevel()}")
 
       elif ke.isKeyDown(keyMinus, repeat=true):
-        a.drawMapParams.decZoomLevel()
-        updateViewStartAndCursorPosition(a)
+        a.decZoomLevel()
         a.setStatusMessage(IconZoomOut,
-          fmt"Zoomed out – level {a.drawMapParams.getZoomLevel()}")
+          fmt"Zoomed out – level {dp.getZoomLevel()}")
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
@@ -701,13 +708,8 @@ proc handleEvents(a) =
         exitSelectMode(a)
         a.setStatusMessage(IconCut, "Cut to buffer")
 
-      elif ke.isKeyDown(keyEqual, repeat=true):
-        a.drawMapParams.incZoomLevel()
-        updateViewStartAndCursorPosition(a)
-
-      elif ke.isKeyDown(keyMinus, repeat=true):
-        a.drawMapParams.decZoomLevel()
-        updateViewStartAndCursorPosition(a)
+      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
+      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
 
       elif ke.isKeyDown(keyEscape):
         exitSelectMode(a)
@@ -752,13 +754,8 @@ proc handleEvents(a) =
         a.editMode = emNormal
         a.setStatusMessage(IconPaste, "Pasted buffer")
 
-      elif ke.isKeyDown(keyEqual, repeat=true):
-        a.drawMapParams.incZoomLevel()
-        updateViewStartAndCursorPosition(a)
-
-      elif ke.isKeyDown(keyMinus, repeat=true):
-        a.drawMapParams.decZoomLevel()
-        updateViewStartAndCursorPosition(a)
+      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
+      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
 
       elif ke.isKeyDown(keyEscape):
         a.editMode = emNormal
