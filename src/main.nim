@@ -320,8 +320,6 @@ proc drawWallTool(a; x: float) =
 
 # {{{ drawTitleBar()
 
-var g_winPosBeforeMaximize = (0'i32, 0'i32)
-
 proc drawTitleBar(a; winWidth: float) =
   alias(vg, a.vg)
   alias(win, a.win)
@@ -345,15 +343,15 @@ proc drawTitleBar(a; winWidth: float) =
 
   if koi.button(winWidth - 72, 0, 23, TitleBarHeight, IconWindowMinimise,
                 tooltip="Minimize"):
-    win.restore()
-    win.pos = g_winPosBeforeMaximize
     win.iconify()
 
   if koi.button(winWidth - 48, 0, 23, TitleBarHeight,
                 if win.maximized: IconWindowRestore else: IconWindowMaximise,
                 tooltip="Maximize"):
-#    g_winPosBeforeMaximize = win.pos
-    win.maximize()
+    if win.maximized:
+      win.restore()
+    else:
+      win.maximize()
 
   if koi.button(winWidth - 24, 0, 23, TitleBarHeight, IconWindowClose,
                 tooltip="Close"):
@@ -433,11 +431,15 @@ proc drawStatusBar(a; y: float, winWidth: float) =
 # }}}
 
 # {{{ Event handling
-var g_draggingWindow: bool
-var g_resizingWindow: bool
-var g_winMx0, g_winMy0: float
-var g_winPosX0, g_winPosY0: int
-var g_winWidth0, g_winHeight0: int32
+type WindowDragState = enum
+  wdsDefault, wdsMoving, wdsResizing
+
+var
+  g_winDragState: WindowDragState
+  g_winMx0, g_winMy0: float
+  g_winPosX0, g_winPosY0: int
+  g_winWidth0, g_winHeight0: int32
+
 
 proc mkFloorMessage(g: Ground): string =
   fmt"Set floor – {g}"
@@ -465,63 +467,79 @@ proc handleEvents(a) =
   alias(dp, a.drawMapParams)
   alias(win, a.win)
 
+  let (winWidth, winHeight) = a.win.size
+
   const
     MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
     MoveKeysRight = {keyRight, keyL, keyKp6}
     MoveKeysUp    = {keyUp,    keyK, keyKp8}
     MoveKeysDown  = {keyDown,  keyJ, keyKp2}
 
-  # {{{ Handle window dragging
-  if not g_resizingWindow:
-    if not g_draggingWindow:
-      if koi.mbLeftDown() and koi.my() < TitleBarHeight:
+  # {{{ Handle window drag events
+  case g_winDragState
+  of wdsDefault:
+    if koi.mbLeftDown():
+      if koi.my() < TitleBarHeight and koi.mx() < winWidth - 72:  # TODO 72
         g_winMx0 = koi.mx()
         g_winMy0 = koi.my()
         (g_winPosX0, g_winPosY0) = win.pos
-        g_draggingWindow = true
-    else:
-      if koi.mbLeftDown():
-        let dx = (koi.mx() - g_winMx0).int
-        let dy = (koi.my() - g_winMy0).int
-        if dx != 0 or dy != 0:
-  #        if win.maximized:
-  #          echo "maximized"
-  #          win.restore()
-  #        else:
-          win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
-          (g_winPosX0, g_winPosY0) = win.pos
-      else:
-        g_draggingWindow = false
+        g_winDragState = wdsMoving
+        glfw.swapInterval(0)
 
-  # }}}
-  # {{{ Handle window resizing
-  # TODO add support for resizing on edges
-  # More standard cursor shapes patch:
-  # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
-  if not g_draggingWindow:
-    if not g_resizingWindow:
-      if koi.mbLeftDown() and koi.my() > koi.winHeight() - StatusBarHeight and
-                              koi.mx() > koi.winWidth() - 30:
+      elif not win.maximized() and
+           koi.my() > koi.winHeight() - StatusBarHeight and
+           koi.mx() > koi.winWidth() - 30:
         g_winMx0 = koi.mx()
         g_winMy0 = koi.my()
-        g_resizingWindow = true
         (g_winWidth0, g_winHeight0) = win.size
-  #      glfw.swapInterval(0)  # we get slightly less tearing this way
-    else:
-      if koi.mbLeftDown():
-        let
-          dx = (koi.mx() - g_winMx0).int
-          dy = (koi.my() - g_winMy0).int
-          (curW, curH) = win.size
-          newW = max(g_winWidth0 + dx, 400)
-          newH = max(g_winHeight0 + dy, 200)
+        g_winDragState = wdsResizing
+        glfw.swapInterval(0)
 
-        win.size = (newW, newH)
-  #      g_winMx0 = koi.mx()
-  #      g_winMy0 = koi.my()
-      else:
-        g_resizingWindow = false
-  #      glfw.swapInterval(1)
+  of wdsMoving:
+    if koi.mbLeftDown():
+      let dx = (koi.mx() - g_winMx0).int
+      let dy = (koi.my() - g_winMy0).int
+      if dx != 0 or dy != 0:
+        if win.maximized():
+          win.restore()
+          (g_winPosX0, g_winPosY0) = (g_winMx0.int32, g_winPosY0.int32)
+          let (w, h) = win.size
+          g_winMx0 = w/2
+
+          let d1 = g_winPosX0 - g_winMx0
+          if d1 < 0:
+            g_winMx0 += d1
+          else:
+            let
+              s2 = g_winPosX0 + w
+              (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
+              d2 = workAreaWidth - s2
+            if d2 < 0:
+              g_winMx0 -= d2.float / 2
+
+        else:
+          win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
+          (g_winPosX0, g_winPosY0) = win.pos
+    else:
+      g_winDragState = wdsDefault
+      glfw.swapInterval(1)
+
+  of wdsResizing:
+    # TODO add support for resizing on edges
+    # More standard cursor shapes patch:
+    # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
+    if koi.mbLeftDown():
+      let
+        dx = (koi.mx() - g_winMx0).int
+        dy = (koi.my() - g_winMy0).int
+        (curW, curH) = win.size
+        newW = max(g_winWidth0 + dx, 400)
+        newH = max(g_winHeight0 + dy, 200)
+
+      win.size = (newW, newH)
+    else:
+      g_winDragState = wdsDefault
+      glfw.swapInterval(1)
 
   # }}}
   # {{{ Handle keyboard events
@@ -943,6 +961,7 @@ proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
 #  glfw.pollEvents()
 
 # }}}
+
 
 # {{{ Init & cleanup
 proc createDefaultMapStyle(): MapStyle =
