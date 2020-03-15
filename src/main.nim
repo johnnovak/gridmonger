@@ -211,7 +211,7 @@ func isKeyUp(ke: KeyEvent, keys: set[Key]): bool =
 # {{{ Dialogs
 
 # {{{ New map dialog
-const NewMapDialogTitle = "New map"
+const NewMapDialogTitle = "  New map"
 
 var
   g_newMapDialog_name: string
@@ -225,7 +225,7 @@ proc newMapDialog() =
       dialogHeight = 220.0
       h = 24.0
       labelWidth = 70.0
-      buttonWidth = 70.0
+      buttonWidth = 80.0
       buttonPad = 15.0
 
     var
@@ -260,16 +260,16 @@ proc newMapDialog() =
       )
       resetCursorAndViewStart(g_app)
       closeDialog()
-      g_app.statusMessage = "New map created"
+      g_app.statusMessage = fmt"{IconFile}   New map created"
 
     let cancelAction = proc () =
       closeDialog()
 
-    if koi.button(x, y, buttonWidth, h, "OK", color = gray(0.6)):
+    if koi.button(x, y, buttonWidth, h, " OK", color = gray(0.6)):
       okAction()
 
     x += buttonWidth + 10
-    if koi.button(x, y, buttonWidth, h, "Cancel", color = gray(0.6)):
+    if koi.button(x, y, buttonWidth, h, " Cancel", color = gray(0.6)):
       cancelAction()
 
     for ke in koi.keyBuf():
@@ -302,6 +302,13 @@ proc drawWallTool(a; x: float) =
 
 proc setFloorMessage(g: Ground): string =
   fmt"Set floor – {g}"
+
+proc setFloorOrientationMessage(o: Orientation): string =
+  if o == Horiz:
+    fmt"{IconHorizArrows}   Floor orientation set to horizontal"
+  else:
+    fmt"{IconVertArrows}   Floor orientation set to vertical"
+
 
 proc drawStatusBar(a; y: float, width: float) =
   alias(vg, a.vg)
@@ -428,26 +435,26 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyD):
         a.editMode = emExcavate
-        a.statusMessage ="Excavate tunnel | [Hold+Move] draw [Release] exit"
+        a.statusMessage = fmt"Excavate tunnel | [{IconArrows}] draw"
         actions.excavate(m, curX, curY, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
-        a.statusMessage ="Erase cells | [Hold+Move] erase"
+        a.statusMessage = fmt"Erase cells | [{IconArrows}] erase"
         actions.eraseCell(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearGround
-        a.statusMessage ="Clear floors | [Hold+Move] clear [Release] exit"
+        a.statusMessage = fmt"Clear floors | [{IconArrows}] clear"
         actions.setGround(m, curX, curY, gEmpty, um)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
-        a.statusMessage ="Set/clear walls | [Hold+Move] set/clear [Release] exit"
+        a.statusMessage = fmt"Set/clear walls | [{IconArrows}] set/clear"
 
       elif ke.isKeyDown(keyR):
         a.editMode = emDrawWallSpecial
-        a.statusMessage ="Set/clear wall special | [Hold+Move] set/clear [Release] exit"
+        a.statusMessage = fmt"Set/clear wall special | [{IconArrows}] set/clear"
 
       # TODO
 #      elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
@@ -456,7 +463,9 @@ proc handleEvents(a) =
       elif ke.isKeyDown(key1):
         if m.getGround(curX, curY) == gClosedDoor:
           actions.toggleGroundOrientation(m, curX, curY, um)
-          a.statusMessage = "Toggle floor orientation"
+          a.statusMessage = setFloorOrientationMessage(
+            m.getGroundOrientation(curX, curY)
+          )
         else:
           let g = gClosedDoor
           actions.setGround(m, curX, curY, g, um)
@@ -465,7 +474,9 @@ proc handleEvents(a) =
       elif ke.isKeyDown(key2):
         if m.getGround(curX, curY) == gOpenDoor:
           actions.toggleGroundOrientation(m, curX, curY, um)
-          a.statusMessage = "Toggle floor orientation"
+          a.statusMessage = setFloorOrientationMessage(
+            m.getGroundOrientation(curX, curY)
+          )
         else:
           let g = gOpenDoor
           actions.setGround(m, curX, curY, g, um)
@@ -513,11 +524,11 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
-        a.statusMessage = "Undo action"
+        a.statusMessage = fmt"{IconUndo}   Undid action"
 
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true):
         um.redo(m)
-        a.statusMessage = "Redo action"
+        a.statusMessage = fmt"{IconRedo}   Redid action"
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
@@ -525,24 +536,24 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
           actions.paste(m, curX, curY, a.copyBuf.get, um)
-          a.statusMessage = "Pasted buffer"
+          a.statusMessage = fmt"{IconPaste}   Pasted buffer"
         else:
-          a.statusMessage = "Cannot paste, buffer is empty"
+          a.statusMessage = fmt"{IconWarning}   Cannot paste, buffer is empty"
 
       elif ke.isKeyDown(keyP, {mkShift}):
         if a.copyBuf.isSome:
           a.editMode = emPastePreview
-          a.statusMessage = "Paste preview | [Move] placement [Enter/P] paste [Esc] exit"
+          a.statusMessage = fmt"Paste preview | [{IconArrows}] placement [Enter/P] paste [Esc] exit"
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         a.drawMapParams.incZoomLevel()
         updateViewStartAndCursorPosition(a)
-        a.statusMessage = fmt"Increase zoom – level {a.drawMapParams.getZoomLevel()}"
+        a.statusMessage = fmt"{IconZoomIn}   Zoomed in – level {a.drawMapParams.getZoomLevel()}"
 
       elif ke.isKeyDown(keyMinus, repeat=true):
         a.drawMapParams.decZoomLevel()
         updateViewStartAndCursorPosition(a)
-        a.statusMessage = fmt"Decrease zoom – level {a.drawMapParams.getZoomLevel()}"
+        a.statusMessage = fmt"{IconZoomOut}   Zoomed out – level {a.drawMapParams.getZoomLevel()}"
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
@@ -557,20 +568,20 @@ proc handleEvents(a) =
             a.map = readMap(filename)
             initUndoManager(a.undoManager)
             resetCursorAndViewStart(a)
-            a.statusMessage = "Map loaded"
+            a.statusMessage = fmt"{IconFloppy}   Map loaded"
           except CatchableError as e:
             # TODO log stracktrace?
-            a.statusMessage = "ERROR: Cannot load map: {e.msg}"
+            a.statusMessage = fmt"{IconWarning}   Cannot load map: {e.msg}"
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
         let filename = fileDialog(fdSaveFile, filters="Gridmonger Map (*.grm):grm")
         if filename != "":
           try:
             writeMap(a.map, filename)
-            a.statusMessage = "Map saved"
+            a.statusMessage = fmt"{IconFloppy}   Map saved"
           except CatchableError as e:
             # TODO log stracktrace?
-            a.statusMessage = "ERROR: Cannot save map: {e.msg}"
+            a.statusMessage = fmt"{IconWarning}   Cannot save map: {e.msg}"
 
     of emExcavate, emEraseCell, emClearGround:
       proc handleMoveKey(dir: Direction, a) =
@@ -651,14 +662,14 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyC):
         discard copySelection(a)
         exitSelectMode(a)
-        a.statusMessage = "Copied selection"
+        a.statusMessage = fmt"{IconCopy}   Copied selection"
 
       elif ke.isKeyDown(keyX):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
         exitSelectMode(a)
-        a.statusMessage = "Cut selection"
+        a.statusMessage = fmt"{IconCut}   Cut selection"
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         a.drawMapParams.incZoomLevel()
@@ -709,7 +720,7 @@ proc handleEvents(a) =
       elif ke.isKeyDown({keyEnter, keyP}):
         actions.paste(m, curX, curY, a.copyBuf.get, um)
         a.editMode = emNormal
-        a.statusMessage = "Pasted buffer"
+        a.statusMessage = fmt"{IconPaste}   Pasted buffer"
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         a.drawMapParams.incZoomLevel()
@@ -734,10 +745,10 @@ proc renderUI() =
 
   alias(vg, a.vg)
 
-  vg.beginPath()
-  vg.rect(winWidth - 100.0, 0.0, 100.0, winHeight.float)
-  vg.fillColor(gray(0.35))
-  vg.fill()
+#  vg.beginPath()
+#  vg.rect(winWidth - 100.0, 0.0, 100.0, winHeight.float)
+#  vg.fillColor(gray(0.35))
+#  vg.fill()
 
   # Current level
   a.currMapLevel = koi.dropdown(
@@ -864,7 +875,7 @@ proc createWindow(): Window =
   cfg.debugContext = true
   cfg.nMultiSamples = 4
   cfg.decorated = false
-  cfg.floating = true
+  cfg.floating = false
 
   when defined(macosx):
     cfg.version = glv32
@@ -883,9 +894,13 @@ proc loadData(vg: NVGContext) =
   if boldFont == NoFont:
     quit "Could not add bold font.\n"
 
-  let emojiFont = vg.createFont("emoji", "data/icons.ttf")
+  let emojiFont = vg.createFont("emoji", "data/GridmongerIcons.ttf")
   if emojiFont == NoFont:
     quit "Could not load emoji font.\n"
+
+  g_icon1 = vg.createImage("data/icon1.png")
+  if g_icon1 == NoImage:
+    quit fmt"Could not load icon1"
 
   discard addFallbackFont(vg, regularFont, emojiFont)
   discard addFallbackFont(vg, boldFont, emojiFont)
@@ -913,7 +928,7 @@ proc init(): Window =
   g_app.mapStyle = createDefaultMapStyle()
   g_app.undoManager = newUndoManager[Map]()
   g_app.currWall = wIllusoryWall
-  g_app.statusMessage = "                                                                    Welcome to Gridmonger, adventurer!"
+  g_app.statusMessage = fmt"{IconMug}   Welcome to Gridmonger, adventurer!"
 
   g_app.drawMapParams = new DrawMapParams
   initDrawMapParams(g_app)

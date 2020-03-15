@@ -537,9 +537,18 @@ proc drawStairsUp(x, y: float, ctx) =
 # {{{ drawSpinner()
 proc drawSpinner(x, y: float, ctx) =
   let vg = ctx.vg
-  vg.setFont((ctx.dp.zoomLevel * 2).float)
+  let dp = ctx.dp
+
+  let icon = IconShip
+  let (bounds, tx) = vg.textBounds(x, y, icon)
+#  let
+#    x = x + (dp.gridSize - bounds.b[2]) / 2
+#    y = y + (dp.gridSize + bounds.b[3]) / 2
+
+  vg.setFont((dp.gridSize*0.6).float)
   vg.fillColor(gray(0))
-  discard vg.text(x + 6, y + 12, "")
+  vg.textAlign(haCenter, vaMiddle)
+  discard vg.text(x + dp.gridSize*0.51, y + dp.gridSize*0.58, icon)
 
 # }}}
 # {{{ drawTeleport()

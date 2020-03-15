@@ -7,6 +7,9 @@ import glfw
 import undomanager
 
 
+var g_icon1*: Image
+
+
 const
   TextVertAlignFactor* = 0.55
 
@@ -133,3 +136,69 @@ type
     map*:       Map
     selection*: Selection
 
+# {{{ Icons
+
+const
+  IconAlt* = "\uea51"
+  IconArrows* = "\uf047"
+  IconCheck* = "\uf00c"
+  IconClose* = "\uf00d"
+  IconCloseWindow* = "\uf2d3"
+  IconCog* = "\uf013"
+  IconCommand* = "\uea4e"
+  IconCopy* = "\uf0c5"
+  IconCtrl* = "\uea50"
+  IconCut* = "\uf0c4"
+  IconEnter* = "\uea13"
+  IconExit* = "\uea14"
+  IconFile* = "\uf0f6"
+  IconFloppy* = "\uf0c7"
+  IconFullscreen* = "\ue90f"
+  IconFullscreenExit* = "\ue90e"
+  IconHorizArrows* = "\uf07e"
+  IconInfo* = "\uf05a"
+  IconMaximiseWindow* = "\uf2d0"
+  IconMinimiseWindow* = "\uf2d1"
+  IconMouse* = "\ue91c"
+  IconPaste* = "\uf0ea"
+  IconPin* = "\ue91d"
+  IconRedo* = "\uf064"
+  IconRotate* = "\uf01e"
+  IconShift* = "\uea4f"
+  IconUndo* = "\uf112"
+  IconVertArrows* = "\uf07d"
+  IconWarning* = "\uf071"
+  IconZoomIn* = "\uf00e"
+  IconZoomOut* = "\uf010"
+
+  IconAnchor* = "\uf13d"
+  IconBed* = "\uf236"
+  IconBomb* = "\uf1e2"
+  IconBook* = "\uf02d"
+  IconDiamond* = "\uf219"
+  IconEquip* = "\ue92e"
+  IconFlag* = "\uf024"
+  IconFlask* = "\uf0c3"
+  IconFort* = "\uf286"
+  IconHeart* = "\uf004"
+  IconHome* = "\uf015"
+  IconKey* = "\uf084"
+  IconMale* = "\uf183"
+  IconMedkit* = "\uf0fa"
+  IconMoney* = "\ue93e"
+  IconMoneyBag* = "\ue909"
+  IconMug* = "\ue905"
+  IconShield* = "\uf132"
+  IconShip* = "\ue944"
+  IconSpinner* = "\uf01e"
+  IconStar* = "\uf005"
+  IconTree* = "\ue945"
+  IconTrophy* = "\uf091"
+
+#  Icon* = "\u"
+#  Icon* = "\u"
+#  Icon* = "\u"
+#  Icon* = "\u"
+# }}}
+
+# vim: et:ts=2:sw=2:fdm=marker
