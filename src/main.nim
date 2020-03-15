@@ -283,13 +283,11 @@ proc newMapDialog() =
     let cancelAction = proc () =
       closeDialog()
 
-    if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
-                  color = gray(0.6)):
+    if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
       okAction()
 
     x += buttonWidth + 10
-    if koi.button(x, y, buttonWidth, h, fmt"{IconExit} Cancel",
-                  color = gray(0.6)):
+    if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
       cancelAction()
 
     for ke in koi.keyBuf():
@@ -320,7 +318,58 @@ proc drawWallTool(a; x: float) =
     y += w + pad
 
 
-# {{{ drawStatusBar() =
+# {{{ drawTitleBar()
+
+var g_winPosBeforeMaximize = (0'i32, 0'i32)
+
+proc drawTitleBar(a; winWidth: float) =
+  alias(vg, a.vg)
+  alias(win, a.win)
+
+  vg.beginPath()
+  vg.rect(0, 0, winWidth.float, TitleBarHeight)
+  vg.fillColor(gray(0.09))
+  vg.fill()
+
+  vg.setFont(14.0)
+  vg.fillColor(gray(0.7))
+  vg.textAlign(haLeft, vaMiddle)
+
+  let ty = TitleBarHeight * TextVertAlignFactor
+
+  discard vg.text(5, ty, IconPin)
+  let tx = vg.text(30, ty, "Eye of the Beholder I")
+
+  vg.fillColor(gray(0.45))
+  discard vg.text(tx+10, ty, IconAsterisk)
+
+  if koi.button(winWidth - 72, 0, 23, TitleBarHeight, IconWindowMinimise,
+                tooltip="Minimize"):
+    win.restore()
+    win.pos = g_winPosBeforeMaximize
+    win.iconify()
+
+  if koi.button(winWidth - 48, 0, 23, TitleBarHeight,
+                if win.maximized: IconWindowRestore else: IconWindowMaximise,
+                tooltip="Maximize"):
+#    g_winPosBeforeMaximize = win.pos
+    win.maximize()
+
+  if koi.button(winWidth - 24, 0, 23, TitleBarHeight, IconWindowClose,
+                tooltip="Close"):
+    win.shouldClose = true
+
+# }}}
+# {{{ drawStatusBar()
+
+var g_StatusBarWindowButtonStyle = koi.DefaultButtonStyle
+
+g_StatusBarWindowButtonStyle.labelOnly        = true
+g_StatusBarWindowButtonStyle.labelColor       = gray(0.45)
+g_StatusBarWindowButtonStyle.labelColorHover  = gray(0.7)
+g_StatusBarWindowButtonStyle.labelColorActive = gray(0.9)
+
+
 proc drawStatusBar(a; y: float, winWidth: float) =
   alias(vg, a.vg)
 
@@ -334,7 +383,7 @@ proc drawStatusBar(a; y: float, winWidth: float) =
 
   # Display current coords
   let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
-  let tw = vg.horizontalAdvance(cursorPos)
+  let tw = vg.textWidth(cursorPos)
 
   vg.setFont(14.0)
   vg.fillColor(gray(0.6))
@@ -363,9 +412,8 @@ proc drawStatusBar(a; y: float, winWidth: float) =
   for i, cmd in a.statusCommands.pairs:
     if i mod 2 == 0:
       let label = cmd
-      let w = vg.horizontalAdvance(label)
+      let w = vg.textWidth(label)
 
-      # TODO cleanup, move into proc
       vg.beginPath()
       vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
       vg.fillColor(gray(0.56))
@@ -433,8 +481,12 @@ proc handleEvents(a) =
     if koi.mbLeftDown():
       let dx = (koi.mx() - g_winMx0).int
       let dy = (koi.my() - g_winMy0).int
-      win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
-      (g_winPosX0, g_winPosY0) = win.pos
+      if dx != 0 or dy != 0:
+        if win.maximized:
+          win.restore()
+        else:
+          win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
+          (g_winPosX0, g_winPosY0) = win.pos
     else:
       g_draggingWindow = false
 
@@ -449,6 +501,7 @@ proc handleEvents(a) =
       g_winMx0 = koi.mx()
       g_winMy0 = koi.my()
       g_resizingWindow = true
+      glfw.swapInterval(0)  # we get slightly less tearing this way
   else:
     if koi.mbLeftDown():
       let dx = (koi.mx() - g_winMx0).int
@@ -459,6 +512,7 @@ proc handleEvents(a) =
       g_winMy0 = koi.my()
     else:
       g_resizingWindow = false
+      glfw.swapInterval(1)
 
   # }}}
   # {{{ Handle keyboard events
@@ -792,15 +846,18 @@ proc renderUI() =
 
   alias(vg, a.vg)
 
-#  vg.beginPath()
-#  vg.rect(winWidth - 100.0, 0.0, 100.0, winHeight.float)
-#  vg.fillColor(gray(0.35))
-#  vg.fill()
+  # Title bar
+  drawTitleBar(a, winWidth.float)
 
   # Current level
   a.currMapLevel = koi.dropdown(
     50, 45, 300, 24.0,
-    items = @["Eye of the Beholder - Level 1", "The Beginning", "The Dwarf Settlement", "You Only Scream Twice"],
+    items = @[
+      "Level 1 - Legend of Darkmoor",
+      "The Beginning",
+      "The Dwarf Settlement",
+      "You Only Scream Twice"
+    ],
     tooltip = "Current map level",
     a.currMapLevel)
 
@@ -828,16 +885,10 @@ proc renderUI() =
 
   # Border
   vg.beginPath()
-  vg.rect(0, 0, winWidth.float, winHeight.float)
+  vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
   vg.strokeColor(gray(0.09))
-  vg.strokeWidth(2.0)
+  vg.strokeWidth(1.0)
   vg.stroke()
-
-  # Title bar
-  vg.beginPath()
-  vg.rect(0, 0, winWidth.float, TitleBarHeight)
-  vg.fillColor(gray(0.09))
-  vg.fill()
 
 # }}}
 # {{{ renderFrame()
@@ -1005,15 +1056,11 @@ proc cleanup() =
 
 proc main() =
   let win = init()
-
   while not win.shouldClose:
     renderFrame(win)
     glfw.pollEvents()
-
   cleanup()
 
-
 main()
-
 
 # vim: et:ts=2:sw=2:fdm=marker
