@@ -321,14 +321,27 @@ proc drawWallTool(a; x: float) =
 
 
 # {{{ drawStatusBar() =
-proc drawStatusBar(a; y: float, width: float) =
+proc drawStatusBar(a; y: float, winWidth: float) =
   alias(vg, a.vg)
+
+  let ty = y + StatusBarHeight * TextVertAlignFactor
 
   # Bar background
   vg.beginPath()
-  vg.rect(0, y, width, StatusBarHeight)
+  vg.rect(0, y, winWidth, StatusBarHeight)
   vg.fillColor(gray(0.2))
   vg.fill()
+
+  # Display current coords
+  let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
+  let tw = vg.horizontalAdvance(cursorPos)
+
+  vg.setFont(14.0)
+  vg.fillColor(gray(0.6))
+  vg.textAlign(haLeft, vaMiddle)
+  discard vg.text(winWidth - tw - 15, ty, cursorPos)
+
+  vg.scissor(0, y, winWidth - tw - 25, StatusBarHeight)
 
   # Display icon & message
   const
@@ -339,9 +352,7 @@ proc drawStatusBar(a; y: float, width: float) =
     CommandTextPadX = 10
 
   var x = 10.0
-  let ty = y + StatusBarHeight * TextVertAlignFactor
 
-  vg.setFont(14.0)
   vg.fillColor(gray(0.8))
   discard vg.text(IconPosX, ty, a.statusIcon)
 
@@ -369,11 +380,7 @@ proc drawStatusBar(a; y: float, width: float) =
       let tx = vg.text(x, ty, text)
       x = tx + CommandTextPadX
 
-  # Display current coords
-  # TODO clip msg so it doesn't ovewrite to coords
-  vg.textAlign(haRight, vaMiddle)
-  let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
-  discard vg.text(width - 10, ty, cursorPos)
+  vg.resetScissor()
 
 # }}}
 
