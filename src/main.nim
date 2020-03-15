@@ -67,9 +67,7 @@ type
     copyBuf:        Option[CopyBuffer]
 
     currMapLevel:   Natural
-
     statusMessage:  string
-
     drawMapParams:  DrawMapParams
 
 
@@ -155,12 +153,20 @@ proc clearStatusMessage(a) =
   a.statusMessage = ""
 
 # }}}
+# {{{ setStatusMessage()
+proc setStatusMessage(a; msg: string) =
+  a.statusMessage = msg
+
+proc setStatusMessage(a; icon: string, msg: string) =
+  a.statusMessage = fmt"{icon}   {msg}"
+
+# }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
   a.editMode = emSelectDraw
   a.selection = some(newSelection(a.map.cols, a.map.rows))
   a.drawMapParams.drawCursorGuides = true
-  a.statusMessage = "Mark selection | [D] draw [E] erase [R] rectangle [Ctrl+A/D] mark/unmark all [C] copy [X] cut [Esc] exit"
+  a.setStatusMessage("Mark selection | [D] draw [E] erase [R] rectangle [Ctrl+A/D] mark/unmark all [C] copy [X] cut [Esc] exit")
 
 # }}}
 # {{{ exitSelectMode()
@@ -260,7 +266,7 @@ proc newMapDialog() =
       )
       resetCursorAndViewStart(g_app)
       closeDialog()
-      g_app.statusMessage = fmt"{IconFile}   New map created"
+      g_app.setStatusMessage(IconFile, "New map created")
 
     let cancelAction = proc () =
       closeDialog()
@@ -300,16 +306,7 @@ proc drawWallTool(a; x: float) =
     y += w + pad
 
 
-proc setFloorMessage(g: Ground): string =
-  fmt"Set floor – {g}"
-
-proc setFloorOrientationMessage(o: Orientation): string =
-  if o == Horiz:
-    fmt"{IconHorizArrows}   Floor orientation set to horizontal"
-  else:
-    fmt"{IconVertArrows}   Floor orientation set to vertical"
-
-
+# {{{ drawStatusBar() =
 proc drawStatusBar(a; y: float, width: float) =
   alias(vg, a.vg)
 
@@ -346,13 +343,15 @@ proc drawStatusBar(a; y: float, width: float) =
           let label = commands[i]
           let w = vg.horizontalAdvance(label)
 
+          # TODO cleanup, move into proc
           vg.beginPath()
           vg.roundedRect(x, y+4, w + 10, StatusBarHeight-7, 3)
           vg.fillColor(gray(0.56))
           vg.fill()
 
           vg.fillColor(gray(0.2))
-          discard vg.text(x + 5, y + StatusBarHeight * TextVertAlignFactor, label)
+          discard vg.text(x + 5, y + StatusBarHeight * TextVertAlignFactor,
+                          label)
           x += w + CommandTextPad
         else:
           let text = commands[i].strip
@@ -361,18 +360,30 @@ proc drawStatusBar(a; y: float, width: float) =
           discard vg.text(x, y + StatusBarHeight * TextVertAlignFactor, text)
           x += w + CommandPad
 
+  # TODO clip msg so it doesn't ovewrite to coords
   vg.textAlign(haRight, vaMiddle)
   let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
-  discard vg.text(width - 10, y + StatusBarHeight * TextVertAlignFactor, cursorPos)
+  discard vg.text(width - 10, y + StatusBarHeight * TextVertAlignFactor,
+                  cursorPos)
 
-
+# }}}
+#
+# {{{ Event handling
 var g_draggingWindow: bool
+var g_resizingWindow: bool
 var g_winMx0, g_winMy0: float
 var g_winPosX0, g_winPosY0: int
 
-var g_winResizing: bool
+proc mkFloorMessage(g: Ground): string =
+  fmt"Set floor – {g}"
 
-# {{{ handleEvents()
+proc setFloorOrientationStatusMessage(a; o: Orientation) =
+  if o == Horiz:
+    a.setStatusMessage(IconHorizArrows, "Floor orientation set to horizontal")
+  else:
+    a.setStatusMessage(IconVertArrows, "Floor orientation set to vertical")
+
+
 proc handleEvents(a) =
   alias(curX, a.cursorCol)
   alias(curY, a.cursorRow)
@@ -386,6 +397,7 @@ proc handleEvents(a) =
     MoveKeysUp    = {keyUp,    keyK, keyKp8}
     MoveKeysDown  = {keyDown,  keyJ, keyKp2}
 
+  # {{{ Handle window dragging
   if not g_draggingWindow:
     if koi.mbLeftDown() and koi.my() < TitleBarHeight:
       g_winMx0 = koi.mx()
@@ -401,12 +413,17 @@ proc handleEvents(a) =
     else:
       g_draggingWindow = false
 
-  if not g_winResizing:
+  # }}}
+  # {{{ Handle window resizing
+  # TODO add support for resizing on edges
+  # More standard cursor shapes patch:
+  # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e 
+  if not g_resizingWindow:
     if koi.mbLeftDown() and koi.my() > koi.winHeight() - StatusBarHeight and
                             koi.mx() > koi.winWidth() - 30:
       g_winMx0 = koi.mx()
       g_winMy0 = koi.my()
-      g_winResizing = true
+      g_resizingWindow = true
   else:
     if koi.mbLeftDown():
       let dx = (koi.mx() - g_winMx0).int
@@ -416,8 +433,10 @@ proc handleEvents(a) =
       g_winMx0 = koi.mx()
       g_winMy0 = koi.my()
     else:
-      g_winResizing = false
+      g_resizingWindow = false
 
+  # }}}
+  # {{{ Handle keyboard events
   for ke in koi.keyBuf():
     case a.editMode:
     of emNormal:
@@ -435,26 +454,26 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyD):
         a.editMode = emExcavate
-        a.statusMessage = fmt"Excavate tunnel | [{IconArrows}] draw"
+        a.setStatusMessage(fmt"Excavate tunnel | [{IconArrows}] draw")
         actions.excavate(m, curX, curY, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
-        a.statusMessage = fmt"Erase cells | [{IconArrows}] erase"
+        a.setStatusMessage(fmt"Erase cells | [{IconArrows}] erase")
         actions.eraseCell(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearGround
-        a.statusMessage = fmt"Clear floors | [{IconArrows}] clear"
+        a.setStatusMessage(fmt"Clear floors | [{IconArrows}] clear")
         actions.setGround(m, curX, curY, gEmpty, um)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
-        a.statusMessage = fmt"Set/clear walls | [{IconArrows}] set/clear"
+        a.setStatusMessage(fmt"Set/clear walls | [{IconArrows}] set/clear")
 
       elif ke.isKeyDown(keyR):
         a.editMode = emDrawWallSpecial
-        a.statusMessage = fmt"Set/clear wall special | [{IconArrows}] set/clear"
+        a.setStatusMessage(fmt"Set/clear wall special | [{IconArrows}] set/clear")
 
       # TODO
 #      elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
@@ -463,30 +482,30 @@ proc handleEvents(a) =
       elif ke.isKeyDown(key1):
         if m.getGround(curX, curY) == gClosedDoor:
           actions.toggleGroundOrientation(m, curX, curY, um)
-          a.statusMessage = setFloorOrientationMessage(
+          a.setFloorOrientationStatusMessage(
             m.getGroundOrientation(curX, curY)
           )
         else:
           let g = gClosedDoor
           actions.setGround(m, curX, curY, g, um)
-          a.statusMessage = setFloorMessage(g)
+          a.setStatusMessage(mkFloorMessage(g))
 
       elif ke.isKeyDown(key2):
         if m.getGround(curX, curY) == gOpenDoor:
           actions.toggleGroundOrientation(m, curX, curY, um)
-          a.statusMessage = setFloorOrientationMessage(
+          a.setFloorOrientationStatusMessage(
             m.getGroundOrientation(curX, curY)
           )
         else:
           let g = gOpenDoor
           actions.setGround(m, curX, curY, g, um)
-          a.statusMessage = setFloorMessage(g)
+          a.setStatusMessage(mkFloorMessage(g))
 
       elif ke.isKeyDown(key3):
         var g = m.getGround(curX, curY)
         g = if g == gPressurePlate: gHiddenPressurePlate else: gPressurePlate
         actions.setGround(m, curX, curY, g, um)
-        a.statusMessage = setFloorMessage(g)
+        a.setStatusMessage(mkFloorMessage(g))
 
       elif ke.isKeyDown(key4):
         var g = m.getGround(curX, curY)
@@ -496,23 +515,23 @@ proc handleEvents(a) =
         else:
           g = gClosedPit
         actions.setGround(m, curX, curY, g, um)
-        a.statusMessage = setFloorMessage(g)
+        a.setStatusMessage(mkFloorMessage(g))
 
       elif ke.isKeyDown(key5):
         var g = m.getGround(curX, curY)
         g = if g == gStairsDown: gStairsUp else: gStairsDown
         actions.setGround(m, curX, curY, g, um)
-        a.statusMessage = setFloorMessage(g)
+        a.setStatusMessage(mkFloorMessage(g))
 
       elif ke.isKeyDown(key6):
         let g = gSpinner
         actions.setGround(m, curX, curY, g, um)
-        a.statusMessage = setFloorMessage(g)
+        a.setStatusMessage(mkFloorMessage(g))
 
       elif ke.isKeyDown(key7):
         let g = gTeleport
         actions.setGround(m, curX, curY, g, um)
-        a.statusMessage = setFloorMessage(g)
+        a.setStatusMessage(mkFloorMessage(g))
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if a.currWall > wIllusoryWall: dec(a.currWall)
@@ -524,11 +543,11 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
-        a.statusMessage = fmt"{IconUndo}   Undid action"
+        a.setStatusMessage(IconUndo, "Undid action")
 
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true):
         um.redo(m)
-        a.statusMessage = fmt"{IconRedo}   Redid action"
+        a.setStatusMessage(IconRedo, "Redid action")
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
@@ -536,24 +555,28 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
           actions.paste(m, curX, curY, a.copyBuf.get, um)
-          a.statusMessage = fmt"{IconPaste}   Pasted buffer"
+          a.setStatusMessage(IconPaste, "Pasted buffer")
         else:
-          a.statusMessage = fmt"{IconWarning}   Cannot paste, buffer is empty"
+          a.setStatusMessage(IconWarning, "Cannot paste, buffer is empty")
 
       elif ke.isKeyDown(keyP, {mkShift}):
         if a.copyBuf.isSome:
           a.editMode = emPastePreview
-          a.statusMessage = fmt"Paste preview | [{IconArrows}] placement [Enter/P] paste [Esc] exit"
+          a.setStatusMessage(fmt"Paste preview | [{IconArrows}] placement [Enter/P] paste [Esc] exit")
+        else:
+          a.setStatusMessage(IconWarning, "Cannot paste, buffer is empty")
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         a.drawMapParams.incZoomLevel()
         updateViewStartAndCursorPosition(a)
-        a.statusMessage = fmt"{IconZoomIn}   Zoomed in – level {a.drawMapParams.getZoomLevel()}"
+        a.setStatusMessage(IconZoomIn,
+          fmt"Zoomed in – level {a.drawMapParams.getZoomLevel()}")
 
       elif ke.isKeyDown(keyMinus, repeat=true):
         a.drawMapParams.decZoomLevel()
         updateViewStartAndCursorPosition(a)
-        a.statusMessage = fmt"{IconZoomOut}   Zoomed out – level {a.drawMapParams.getZoomLevel()}"
+        a.setStatusMessage(IconZoomOut,
+          fmt"Zoomed out – level {a.drawMapParams.getZoomLevel()}")
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
@@ -562,26 +585,33 @@ proc handleEvents(a) =
         openDialog(NewMapDialogTitle)
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
-        let filename = fileDialog(fdOpenFile, filters="Gridmonger Map (*.grm):grm")
+        let ext = MapFileExtension
+        let filename = fileDialog(fdOpenFile,
+                                  filters=fmt"Gridmonger Map (*.{ext}):{ext}")
         if filename != "":
           try:
             a.map = readMap(filename)
             initUndoManager(a.undoManager)
             resetCursorAndViewStart(a)
-            a.statusMessage = fmt"{IconFloppy}   Map loaded"
+            a.setStatusMessage(IconFloppy, "Map loaded")
           except CatchableError as e:
             # TODO log stracktrace?
-            a.statusMessage = fmt"{IconWarning}   Cannot load map: {e.msg}"
+            a.setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}")
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
-        let filename = fileDialog(fdSaveFile, filters="Gridmonger Map (*.grm):grm")
+        let ext = MapFileExtension
+        var filename = fileDialog(fdSaveFile,
+                                  filters=fmt"Gridmonger Map (*.{ext}):{ext}")
         if filename != "":
           try:
+            # TODO .grm suffix
+            if not filename.endsWith(fmt".{ext}"):
+              filename &= "." & ext
             writeMap(a.map, filename)
-            a.statusMessage = fmt"{IconFloppy}   Map saved"
+            a.setStatusMessage(IconFloppy, fmt"Map saved")
           except CatchableError as e:
             # TODO log stracktrace?
-            a.statusMessage = fmt"{IconWarning}   Cannot save map: {e.msg}"
+            a.setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}")
 
     of emExcavate, emEraseCell, emClearGround:
       proc handleMoveKey(dir: Direction, a) =
@@ -662,14 +692,14 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyC):
         discard copySelection(a)
         exitSelectMode(a)
-        a.statusMessage = fmt"{IconCopy}   Copied selection"
+        a.setStatusMessage(IconCopy, "Copied to buffer")
 
       elif ke.isKeyDown(keyX):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
         exitSelectMode(a)
-        a.statusMessage = fmt"{IconCut}   Cut selection"
+        a.setStatusMessage(IconCut, "Cut to buffer")
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         a.drawMapParams.incZoomLevel()
@@ -720,7 +750,7 @@ proc handleEvents(a) =
       elif ke.isKeyDown({keyEnter, keyP}):
         actions.paste(m, curX, curY, a.copyBuf.get, um)
         a.editMode = emNormal
-        a.statusMessage = fmt"{IconPaste}   Pasted buffer"
+        a.setStatusMessage(IconPaste, "Pasted buffer")
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         a.drawMapParams.incZoomLevel()
@@ -733,10 +763,11 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyEscape):
         a.editMode = emNormal
         a.clearStatusMessage()
+  # }}}
 
 # }}}
-# {{{ renderUI()
 
+# {{{ renderUI()
 proc renderUI() =
   alias(a, g_app)
   alias(dp, a.drawMapParams)
@@ -793,7 +824,6 @@ proc renderUI() =
   vg.fill()
 
 # }}}
-
 # {{{ renderFrame()
 proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
   alias(a, g_app)
@@ -831,14 +861,14 @@ proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
   glfw.swapBuffers(win)
 
 # }}}
-# {{{ framebufSizeCb
+# {{{ framebufSizeCb()
 #proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
 #  renderFrame(win)
 #  glfw.pollEvents()
 
 # }}}
 
-# {{{ init & cleanup
+# {{{ Init & cleanup
 proc createDefaultMapStyle(): MapStyle =
   var ms = new MapStyle
   ms.cellCoordsColor     = gray(0.9)
@@ -928,7 +958,7 @@ proc init(): Window =
   g_app.mapStyle = createDefaultMapStyle()
   g_app.undoManager = newUndoManager[Map]()
   g_app.currWall = wIllusoryWall
-  g_app.statusMessage = fmt"{IconMug}   Welcome to Gridmonger, adventurer!"
+  g_app.setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!")
 
   g_app.drawMapParams = new DrawMapParams
   initDrawMapParams(g_app)
@@ -938,6 +968,8 @@ proc init(): Window =
 
   koi.init(g_app.vg)
 
+  # TODO only needed when resizing with the standard OS method with window
+  # decorations enabled
 #  win.framebufferSizeCb = framebufSizeCb
 
   glfw.swapInterval(1)

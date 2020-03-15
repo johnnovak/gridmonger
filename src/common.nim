@@ -201,4 +201,7 @@ const
 #  Icon* = "\u"
 # }}}
 
+const
+  MapFileExtension* = "grm"
+
 # vim: et:ts=2:sw=2:fdm=marker
