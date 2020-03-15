@@ -437,6 +437,7 @@ var g_draggingWindow: bool
 var g_resizingWindow: bool
 var g_winMx0, g_winMy0: float
 var g_winPosX0, g_winPosY0: int
+var g_winWidth0, g_winHeight0: int32
 
 proc mkFloorMessage(g: Ground): string =
   fmt"Set floor – {g}"
@@ -471,48 +472,56 @@ proc handleEvents(a) =
     MoveKeysDown  = {keyDown,  keyJ, keyKp2}
 
   # {{{ Handle window dragging
-  if not g_draggingWindow:
-    if koi.mbLeftDown() and koi.my() < TitleBarHeight:
-      g_winMx0 = koi.mx()
-      g_winMy0 = koi.my()
-      (g_winPosX0, g_winPosY0) = win.pos
-      g_draggingWindow = true
-  else:
-    if koi.mbLeftDown():
-      let dx = (koi.mx() - g_winMx0).int
-      let dy = (koi.my() - g_winMy0).int
-      if dx != 0 or dy != 0:
-        if win.maximized:
-          win.restore()
-        else:
+  if not g_resizingWindow:
+    if not g_draggingWindow:
+      if koi.mbLeftDown() and koi.my() < TitleBarHeight:
+        g_winMx0 = koi.mx()
+        g_winMy0 = koi.my()
+        (g_winPosX0, g_winPosY0) = win.pos
+        g_draggingWindow = true
+    else:
+      if koi.mbLeftDown():
+        let dx = (koi.mx() - g_winMx0).int
+        let dy = (koi.my() - g_winMy0).int
+        if dx != 0 or dy != 0:
+  #        if win.maximized:
+  #          echo "maximized"
+  #          win.restore()
+  #        else:
           win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
           (g_winPosX0, g_winPosY0) = win.pos
-    else:
-      g_draggingWindow = false
+      else:
+        g_draggingWindow = false
 
   # }}}
   # {{{ Handle window resizing
   # TODO add support for resizing on edges
   # More standard cursor shapes patch:
   # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
-  if not g_resizingWindow:
-    if koi.mbLeftDown() and koi.my() > koi.winHeight() - StatusBarHeight and
-                            koi.mx() > koi.winWidth() - 30:
-      g_winMx0 = koi.mx()
-      g_winMy0 = koi.my()
-      g_resizingWindow = true
-      glfw.swapInterval(0)  # we get slightly less tearing this way
-  else:
-    if koi.mbLeftDown():
-      let dx = (koi.mx() - g_winMx0).int
-      let dy = (koi.my() - g_winMy0).int
-      let (curW, curH) = win.size
-      win.size = (curW + dx, curH + dy)
-      g_winMx0 = koi.mx()
-      g_winMy0 = koi.my()
+  if not g_draggingWindow:
+    if not g_resizingWindow:
+      if koi.mbLeftDown() and koi.my() > koi.winHeight() - StatusBarHeight and
+                              koi.mx() > koi.winWidth() - 30:
+        g_winMx0 = koi.mx()
+        g_winMy0 = koi.my()
+        g_resizingWindow = true
+        (g_winWidth0, g_winHeight0) = win.size
+  #      glfw.swapInterval(0)  # we get slightly less tearing this way
     else:
-      g_resizingWindow = false
-      glfw.swapInterval(1)
+      if koi.mbLeftDown():
+        let
+          dx = (koi.mx() - g_winMx0).int
+          dy = (koi.my() - g_winMy0).int
+          (curW, curH) = win.size
+          newW = max(g_winWidth0 + dx, 400)
+          newH = max(g_winHeight0 + dy, 200)
+
+        win.size = (newW, newH)
+  #      g_winMx0 = koi.mx()
+  #      g_winMy0 = koi.my()
+      else:
+        g_resizingWindow = false
+  #      glfw.swapInterval(1)
 
   # }}}
   # {{{ Handle keyboard events
