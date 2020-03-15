@@ -67,7 +67,9 @@ type
     copyBuf:        Option[CopyBuffer]
 
     currMapLevel:   Natural
+    statusIcon:     string
     statusMessage:  string
+    statusCommands: seq[string]
     drawMapParams:  DrawMapParams
 
 
@@ -150,15 +152,22 @@ proc moveCursor(dir: Direction, a) =
 # }}}
 # {{{ clearStatusMessage()
 proc clearStatusMessage(a) =
+  a.statusIcon = ""
   a.statusMessage = ""
+  a.statusCommands = @[]
 
 # }}}
 # {{{ setStatusMessage()
-proc setStatusMessage(a; msg: string) =
+proc setStatusMessage(a; icon, msg: string, commands: seq[string]) =
+  a.statusIcon = icon
   a.statusMessage = msg
+  a.statusCommands = commands
 
-proc setStatusMessage(a; icon: string, msg: string) =
-  a.statusMessage = fmt"{icon}   {msg}"
+proc setStatusMessage(a; icon, msg: string) =
+  a.setStatusMessage(icon , msg, commands = @[])
+
+proc setStatusMessage(a; msg: string) =
+  a.setStatusMessage(icon = "", msg, commands = @[])
 
 # }}}
 # {{{ enterSelectMode()
@@ -166,7 +175,10 @@ proc enterSelectMode(a) =
   a.editMode = emSelectDraw
   a.selection = some(newSelection(a.map.cols, a.map.rows))
   a.drawMapParams.drawCursorGuides = true
-  a.setStatusMessage("Mark selection | [D] draw [E] erase [R] rectangle [Ctrl+A/D] mark/unmark all [C] copy [X] cut [Esc] exit")
+  a.setStatusMessage(IconSelection, "Mark selection",
+                     @["D", "draw", "E", "erase", "R", "rectangle",
+                       "Ctrl+A/D", "mark/unmark all", "C", "copy", "X", "cut",
+                       "Esc", "exit"])
 
 # }}}
 # {{{ exitSelectMode()
@@ -271,11 +283,13 @@ proc newMapDialog() =
     let cancelAction = proc () =
       closeDialog()
 
-    if koi.button(x, y, buttonWidth, h, " OK", color = gray(0.6)):
+    if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+                  color = gray(0.6)):
       okAction()
 
     x += buttonWidth + 10
-    if koi.button(x, y, buttonWidth, h, " Cancel", color = gray(0.6)):
+    if koi.button(x, y, buttonWidth, h, fmt"{IconExit} Cancel",
+                  color = gray(0.6)):
       cancelAction()
 
     for ke in koi.keyBuf():
@@ -316,58 +330,53 @@ proc drawStatusBar(a; y: float, width: float) =
   vg.fillColor(gray(0.2))
   vg.fill()
 
-  vg.setFont(14.0)
-  vg.fillColor(gray(0.8))
+  # Display icon & message
+  const
+    IconPosX = 10
+    MessagePosX = 30
+    MessagePadX = 20
+    CommandLabelPadX = 13
+    CommandTextPadX = 10
 
   var x = 10.0
+  let ty = y + StatusBarHeight * TextVertAlignFactor
 
-  # Display status message
-  let msg = a.statusMessage.split('|')
-  let msgText = msg[0]
-  discard vg.text(x, y + StatusBarHeight * TextVertAlignFactor, msgText)
+  vg.setFont(14.0)
+  vg.fillColor(gray(0.8))
+  discard vg.text(IconPosX, ty, a.statusIcon)
 
-  const
-    MainMessagePad = 20
-    CommandTextPad = 13
-    CommandPad = 10
+  let tx = vg.text(MessagePosX, ty, a.statusMessage)
+  x = tx + MessagePadX
 
   # Display commands, if present
-  if msg.len > 1:
-    let commands = msg[1].split({'[', ']'})
-    if commands.len > 1:
-      let w = vg.horizontalAdvance(msgText)
-      x += w + MainMessagePad
+  for i, cmd in a.statusCommands.pairs:
+    if i mod 2 == 0:
+      let label = cmd
+      let w = vg.horizontalAdvance(label)
 
-      for i in 1..commands.high:
-        if i mod 2 == 1:
-          let label = commands[i]
-          let w = vg.horizontalAdvance(label)
+      # TODO cleanup, move into proc
+      vg.beginPath()
+      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
+      vg.fillColor(gray(0.56))
+      vg.fill()
 
-          # TODO cleanup, move into proc
-          vg.beginPath()
-          vg.roundedRect(x, y+4, w + 10, StatusBarHeight-7, 3)
-          vg.fillColor(gray(0.56))
-          vg.fill()
+      vg.fillColor(gray(0.2))
+      discard vg.text(x + 5, ty, label)
+      x += w + CommandLabelPadX
+    else:
+      let text = cmd
+      vg.fillColor(gray(0.8))
+      let tx = vg.text(x, ty, text)
+      x = tx + CommandTextPadX
 
-          vg.fillColor(gray(0.2))
-          discard vg.text(x + 5, y + StatusBarHeight * TextVertAlignFactor,
-                          label)
-          x += w + CommandTextPad
-        else:
-          let text = commands[i].strip
-          let w = vg.horizontalAdvance(text)
-          vg.fillColor(gray(0.8))
-          discard vg.text(x, y + StatusBarHeight * TextVertAlignFactor, text)
-          x += w + CommandPad
-
+  # Display current coords
   # TODO clip msg so it doesn't ovewrite to coords
   vg.textAlign(haRight, vaMiddle)
   let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
-  discard vg.text(width - 10, y + StatusBarHeight * TextVertAlignFactor,
-                  cursorPos)
+  discard vg.text(width - 10, ty, cursorPos)
 
 # }}}
-#
+
 # {{{ Event handling
 var g_draggingWindow: bool
 var g_resizingWindow: bool
@@ -426,7 +435,7 @@ proc handleEvents(a) =
   # {{{ Handle window resizing
   # TODO add support for resizing on edges
   # More standard cursor shapes patch:
-  # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e 
+  # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
   if not g_resizingWindow:
     if koi.mbLeftDown() and koi.my() > koi.winHeight() - StatusBarHeight and
                             koi.mx() > koi.winWidth() - 30:
@@ -463,26 +472,27 @@ proc handleEvents(a) =
 
       elif ke.isKeyDown(keyD):
         a.editMode = emExcavate
-        a.setStatusMessage(fmt"Excavate tunnel | [{IconArrows}] draw")
+        a.setStatusMessage(IconPencil, "Excavate tunnel",
+                           @[IconArrows, "draw"])
         actions.excavate(m, curX, curY, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
-        a.setStatusMessage(fmt"Erase cells | [{IconArrows}] erase")
+        a.setStatusMessage(IconEraser, "Erase cells", @[IconArrows, "erase"])
         actions.eraseCell(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearGround
-        a.setStatusMessage(fmt"Clear floors | [{IconArrows}] clear")
+        a.setStatusMessage(IconEraser, "Clear floor",  @[IconArrows, "clear"])
         actions.setGround(m, curX, curY, gEmpty, um)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
-        a.setStatusMessage(fmt"Set/clear walls | [{IconArrows}] set/clear")
+        a.setStatusMessage("", "Draw walls", @[IconArrows, "set/clear"])
 
       elif ke.isKeyDown(keyR):
         a.editMode = emDrawWallSpecial
-        a.setStatusMessage(fmt"Set/clear wall special | [{IconArrows}] set/clear")
+        a.setStatusMessage("", "Draw wall special", @[IconArrows, "set/clear"])
 
       # TODO
 #      elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
@@ -571,7 +581,9 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyP, {mkShift}):
         if a.copyBuf.isSome:
           a.editMode = emPastePreview
-          a.setStatusMessage(fmt"Paste preview | [{IconArrows}] placement [Enter/P] paste [Esc] exit")
+          a.setStatusMessage(IconTiles, "Paste preview",
+                             @[IconArrows, "placement",
+                             "Enter/P", "paste", "Esc", "exit"])
         else:
           a.setStatusMessage(IconWarning, "Cannot paste, buffer is empty")
 
@@ -752,7 +764,7 @@ proc handleEvents(a) =
       elif ke.isKeyDown({keyEnter, keyP}):
         actions.paste(m, curX, curY, a.copyBuf.get, um)
         a.editMode = emNormal
-        a.setStatusMessage(IconPaste, "Pasted buffer")
+        a.setStatusMessage(IconPaste, "Pasted buffer contents")
 
       elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
