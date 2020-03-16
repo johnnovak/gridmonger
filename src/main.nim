@@ -82,7 +82,6 @@ using a: var AppContext
 
 var
   g_winMaximized: bool
-  g_winRedraw = true
   g_winOldPosX, g_winOldPosY: int
   g_winOldWidth, g_winOldHeight: int32
 
@@ -92,14 +91,13 @@ proc winRestore(a) =
   g_winMaximized = false
 
 proc winMaximize(a) =
+  # TODO This logic needs to be a bit more sophisticated to support
+  # multiple monitors
   let (x, y, w, h) = getPrimaryMonitor().workArea
-  echo fmt"x: {x}, y: {y}, w: {w}, h: {h}"
   (g_winOldPosX, g_winOldPosY) = a.win.pos
   (g_winOldWidth, g_winOldHeight) = a.win.size
-  g_winRedraw = false
   a.win.pos = (0, 0)
   a.win.size = (w, h)
-  g_winRedraw = true
   g_winMaximized = true
 
 # {{{ resetCursorAndViewStart()
@@ -457,6 +455,7 @@ proc drawStatusBar(a; y: float, winWidth: float) =
 type WindowDragState = enum
   wdsDefault, wdsMoving, wdsResizing
 
+# TODO introduce WindowState object
 var
   g_winDragState: WindowDragState
   g_winMx0, g_winMy0: float
@@ -503,7 +502,6 @@ proc handleEvents(a) =
   of wdsDefault:
     if koi.mbLeftDown():
       if koi.my() < TitleBarHeight and koi.mx() < winWidth - 72:  # TODO 72
-        echo "*"
         g_winMx0 = koi.mx()
         g_winMy0 = koi.my()
         (g_winPosX0, g_winPosY0) = win.pos
@@ -521,35 +519,63 @@ proc handleEvents(a) =
 
   of wdsMoving:
     if koi.mbLeftDown():
-      let dx = (koi.mx() - g_winMx0).int
-      let dy = (koi.my() - g_winMy0).int
+      let
+        mx = koi.mx()
+        my = koi.my()
+        dx = (mx - g_winMx0).int
+        dy = (my - g_winMy0).int
+
+      # Only move or restore the window when we're actually
+      # dragging the title bar while holding the LMB down.
       if dx != 0 or dy != 0:
+
+        # LMB-dragging the title bar will restore the window first (we're
+        # imitating Windows' behaviour here).
         if g_winMaximized:
-          win.pos = (g_winOldPosX, g_winOldPosY)
+
+          # The restored window is centered horizontally around the cursor.
+          (g_winPosX0, g_winPosY0) = ((mx - g_winOldWidth/2).int32, my.int32)
+
+          # Fake the last horizontal cursor position to be at the middle of
+          # the restored window's width. This is needed so when we're in the
+          # "else" branch on the next frame when dragging the restored window,
+          # there won't be an unwanted window position jump.
+          g_winMx0 = g_winOldWidth/2
+
+          # ...but we also want to clamp the window position to the visible
+          # work area (and adjust the last cursor position accordingly to
+          # avoid the position jump in drag mode on the next frame).
+          if g_winPosX0 < 0:
+            g_winMx0 += g_winPosX0.float
+            g_winPosX0 = 0
+
+          # TODO This logic needs to be a bit more sophisticated to support
+          # multiple monitors
+          let (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
+          let dx = g_winPosX0 + g_winOldWidth - workAreaWidth
+          if dx > 0:
+            g_winPosX0 = workAreaWidth - g_winOldWidth
+            g_winMx0 += dx.float
+
+          win.pos = (g_winPosX0, g_winPosY0)
           win.size = (g_winOldWidth, g_winOldHeight)
+          g_winMaximized = false
 
-
-          (g_winPosX0, g_winPosY0) = (g_winMx0.int32, g_winPosY0.int32)
-          let (w, h) = win.size
-          g_winMx0 = w/2
-
-          let d1 = g_winPosX0 - g_winMx0
-          if d1 < 0:
-            g_winMx0 += d1
-          else:
-            let
-              s2 = g_winPosX0 + w
-              (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
-              d2 = workAreaWidth - s2
-            if d2 < 0:
-              g_winMx0 -= d2.float / 2
-
+#          let d1 = g_winPosX0 - g_winMx0
+#          if d1 < 0:
+#            g_winMx0 += d1
+#          else:
+#            let
+#              s2 = g_winPosX0 + g_winOldWidth
+#              (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
+#              d2 = workAreaWidth - s2
+#            if d2 < 0:
+#              g_winMx0 -= d2.float / 2
         else:
           win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
           (g_winPosX0, g_winPosY0) = win.pos
     else:
       g_winDragState = wdsDefault
-#      glfw.swapInterval(1)
 
   of wdsResizing:
     # TODO add support for resizing on edges
@@ -979,8 +1005,7 @@ proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
   koi.endFrame()
   vg.endFrame()
 
-  if g_winRedraw:
-    glfw.swapBuffers(win)
+  glfw.swapBuffers(win)
 
 # }}}
 # {{{ framebufSizeCb()
@@ -1095,7 +1120,8 @@ proc init(): Window =
   # decorations enabled
 #  win.framebufferSizeCb = framebufSizeCb
 
-  glfw.swapInterval(1)
+  # TODO
+  glfw.swapInterval(0)
 
   win.pos = (150, 150)  # TODO for development
   wrapper.showWindow(win.getHandle())
