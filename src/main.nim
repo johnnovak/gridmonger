@@ -86,6 +86,7 @@ var
   g_winOldWidth, g_winOldHeight: int32
 
 proc winRestore(a) =
+  glfw.swapInterval(0)
   a.win.pos = (g_winOldPosX, g_winOldPosY)
   a.win.size = (g_winOldWidth, g_winOldHeight)
   g_winMaximized = false
@@ -96,6 +97,7 @@ proc winMaximize(a) =
   let (x, y, w, h) = getPrimaryMonitor().workArea
   (g_winOldPosX, g_winOldPosY) = a.win.pos
   (g_winOldWidth, g_winOldHeight) = a.win.size
+  glfw.swapInterval(0)
   a.win.pos = (0, 0)
   a.win.size = (w, h)
   g_winMaximized = true
@@ -506,7 +508,7 @@ proc handleEvents(a) =
         g_winMy0 = koi.my()
         (g_winPosX0, g_winPosY0) = win.pos
         g_winDragState = wdsMoving
-#        glfw.swapInterval(0)
+        glfw.swapInterval(0)
 
       elif not g_winMaximized and
            koi.my() > koi.winHeight() - StatusBarHeight and
@@ -515,7 +517,7 @@ proc handleEvents(a) =
         g_winMy0 = koi.my()
         (g_winWidth0, g_winHeight0) = win.size
         g_winDragState = wdsResizing
-#        glfw.swapInterval(0)
+        glfw.swapInterval(0)
 
   of wdsMoving:
     if koi.mbLeftDown():
@@ -534,13 +536,14 @@ proc handleEvents(a) =
         if g_winMaximized:
 
           # The restored window is centered horizontally around the cursor.
-          (g_winPosX0, g_winPosY0) = ((mx - g_winOldWidth/2).int32, my.int32)
+          (g_winPosX0, g_winPosY0) = ((mx - g_winOldWidth/2).int32, 0)
 
           # Fake the last horizontal cursor position to be at the middle of
           # the restored window's width. This is needed so when we're in the
           # "else" branch on the next frame when dragging the restored window,
           # there won't be an unwanted window position jump.
           g_winMx0 = g_winOldWidth/2
+          g_winMy0 = my
 
           # ...but we also want to clamp the window position to the visible
           # work area (and adjust the last cursor position accordingly to
@@ -576,6 +579,7 @@ proc handleEvents(a) =
           (g_winPosX0, g_winPosY0) = win.pos
     else:
       g_winDragState = wdsDefault
+      glfw.swapInterval(1)
 
   of wdsResizing:
     # TODO add support for resizing on edges
@@ -592,7 +596,7 @@ proc handleEvents(a) =
       win.size = (newW, newH)
     else:
       g_winDragState = wdsDefault
-#      glfw.swapInterval(1)
+      glfw.swapInterval(1)
 
   # }}}
   # {{{ Handle keyboard events
@@ -1009,8 +1013,8 @@ proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
 
 # }}}
 # {{{ framebufSizeCb()
-#proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-#  renderFrame(win)
+proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
+  renderFrame(win)
 #  glfw.pollEvents()
 
 # }}}
@@ -1047,7 +1051,7 @@ proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
   cfg.size = (w: 800, h: 600)
   cfg.title = "Gridmonger v0.1"
-  cfg.resizable = true
+  cfg.resizable = false
   cfg.visible = false
   cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
   cfg.debugContext = true
@@ -1118,10 +1122,10 @@ proc init(): Window =
 
   # TODO only needed when resizing with the standard OS method with window
   # decorations enabled
-#  win.framebufferSizeCb = framebufSizeCb
+  win.framebufferSizeCb = framebufSizeCb
 
   # TODO
-  glfw.swapInterval(0)
+  glfw.swapInterval(1)
 
   win.pos = (150, 150)  # TODO for development
   wrapper.showWindow(win.getHandle())
