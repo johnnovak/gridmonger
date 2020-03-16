@@ -21,6 +21,7 @@ import undomanager
 import utils
 
 
+
 const DefaultZoomLevel = 5
 
 const
@@ -78,6 +79,28 @@ var g_app: AppContext
 using a: var AppContext
 
 # }}}
+
+var
+  g_winMaximized: bool
+  g_winRedraw = true
+  g_winOldPosX, g_winOldPosY: int
+  g_winOldWidth, g_winOldHeight: int32
+
+proc winRestore(a) =
+  a.win.pos = (g_winOldPosX, g_winOldPosY)
+  a.win.size = (g_winOldWidth, g_winOldHeight)
+  g_winMaximized = false
+
+proc winMaximize(a) =
+  let (x, y, w, h) = getPrimaryMonitor().workArea
+  echo fmt"x: {x}, y: {y}, w: {w}, h: {h}"
+  (g_winOldPosX, g_winOldPosY) = a.win.pos
+  (g_winOldWidth, g_winOldHeight) = a.win.size
+  g_winRedraw = false
+  a.win.pos = (0, 0)
+  a.win.size = (w, h)
+  g_winRedraw = true
+  g_winMaximized = true
 
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
@@ -346,12 +369,12 @@ proc drawTitleBar(a; winWidth: float) =
     win.iconify()
 
   if koi.button(winWidth - 48, 0, 23, TitleBarHeight,
-                if win.maximized: IconWindowRestore else: IconWindowMaximise,
+                if g_winMaximized: IconWindowRestore else: IconWindowMaximise,
                 tooltip="Maximize"):
-    if win.maximized:
-      win.restore()
+    if g_winMaximized:
+      winRestore(a)
     else:
-      win.maximize()
+      winMaximize(a)
 
   if koi.button(winWidth - 24, 0, 23, TitleBarHeight, IconWindowClose,
                 tooltip="Close"):
@@ -480,28 +503,32 @@ proc handleEvents(a) =
   of wdsDefault:
     if koi.mbLeftDown():
       if koi.my() < TitleBarHeight and koi.mx() < winWidth - 72:  # TODO 72
+        echo "*"
         g_winMx0 = koi.mx()
         g_winMy0 = koi.my()
         (g_winPosX0, g_winPosY0) = win.pos
         g_winDragState = wdsMoving
-        glfw.swapInterval(0)
+#        glfw.swapInterval(0)
 
-      elif not win.maximized() and
+      elif not g_winMaximized and
            koi.my() > koi.winHeight() - StatusBarHeight and
            koi.mx() > koi.winWidth() - 30:
         g_winMx0 = koi.mx()
         g_winMy0 = koi.my()
         (g_winWidth0, g_winHeight0) = win.size
         g_winDragState = wdsResizing
-        glfw.swapInterval(0)
+#        glfw.swapInterval(0)
 
   of wdsMoving:
     if koi.mbLeftDown():
       let dx = (koi.mx() - g_winMx0).int
       let dy = (koi.my() - g_winMy0).int
       if dx != 0 or dy != 0:
-        if win.maximized():
-          win.restore()
+        if g_winMaximized:
+          win.pos = (g_winOldPosX, g_winOldPosY)
+          win.size = (g_winOldWidth, g_winOldHeight)
+
+
           (g_winPosX0, g_winPosY0) = (g_winMx0.int32, g_winPosY0.int32)
           let (w, h) = win.size
           g_winMx0 = w/2
@@ -522,7 +549,7 @@ proc handleEvents(a) =
           (g_winPosX0, g_winPosY0) = win.pos
     else:
       g_winDragState = wdsDefault
-      glfw.swapInterval(1)
+#      glfw.swapInterval(1)
 
   of wdsResizing:
     # TODO add support for resizing on edges
@@ -539,7 +566,7 @@ proc handleEvents(a) =
       win.size = (newW, newH)
     else:
       g_winDragState = wdsDefault
-      glfw.swapInterval(1)
+#      glfw.swapInterval(1)
 
   # }}}
   # {{{ Handle keyboard events
@@ -952,7 +979,8 @@ proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
   koi.endFrame()
   vg.endFrame()
 
-  glfw.swapBuffers(win)
+  if g_winRedraw:
+    glfw.swapBuffers(win)
 
 # }}}
 # {{{ framebufSizeCb()
