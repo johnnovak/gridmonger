@@ -564,16 +564,6 @@ proc handleEvents(a) =
           win.size = (g_winOldWidth, g_winOldHeight)
           g_winMaximized = false
 
-#          let d1 = g_winPosX0 - g_winMx0
-#          if d1 < 0:
-#            g_winMx0 += d1
-#          else:
-#            let
-#              s2 = g_winPosX0 + g_winOldWidth
-#              (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
-#              d2 = workAreaWidth - s2
-#            if d2 < 0:
-#              g_winMx0 -= d2.float / 2
         else:
           win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
           (g_winPosX0, g_winPosY0) = win.pos
@@ -930,6 +920,12 @@ proc renderUI() =
 
   alias(vg, a.vg)
 
+  # Border
+  vg.beginPath()
+  vg.rect(0, 0, winWidth.float, winHeight.float)
+  vg.fillColor(gray(0.4))
+  vg.fill()
+
   # Title bar
   drawTitleBar(a, winWidth.float)
 
@@ -976,7 +972,7 @@ proc renderUI() =
 
 # }}}
 # {{{ renderFrame()
-proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
+proc renderFrame(win: Window, doHandleEvents: bool = true) =
   alias(a, g_app)
   alias(vg, g_app.vg)
 
@@ -1001,7 +997,8 @@ proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
 
   updateViewStartAndCursorPosition(a)
   defineDialogs()
-  handleEvents(a)
+  if doHandleEvents:
+    handleEvents(a)
   renderUI()
 
   ######################################################
@@ -1014,7 +1011,7 @@ proc renderFrame(win: Window, res: tuple[w, h: int32] = (0,0)) =
 # }}}
 # {{{ framebufSizeCb()
 proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-  renderFrame(win)
+  renderFrame(win, doHandleEvents=false)
 #  glfw.pollEvents()
 
 # }}}
