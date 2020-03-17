@@ -24,8 +24,13 @@ import utils
 const DefaultZoomLevel = 5
 
 const
-  TitleBarHeight = 26.0
+  TitleBarHeight  = 26.0
   StatusBarHeight = 26.0
+
+  MapLeftPad   = 50.0
+  MapRightPad  = 120.0
+  MapTopPad    = 80.0
+  MapBottomPad = 35.0
 
 # {{{ AppContext
 type
@@ -82,14 +87,15 @@ using a: var AppContext
 #{{{ WindowState
 type
   WindowState = object
-    maximized:           bool
-    maximizing:          bool
-    dragState:           WindowDragState
-    mx0, my0:            float
-    posX0, posY0:        int
-    width0, height0:     int32
-    oldPosX, oldPosY:    int
-    oldWidth, oldHeight: int32
+    maximized:              bool
+    maximizing:             bool
+    dragState:              WindowDragState
+    mx0, my0:               float
+    posX0, posY0:           int
+    width0, height0:        int32
+    oldPosX, oldPosY:       int
+    oldWidth, oldHeight:    int32
+    fastRedrawFrameCounter: int
 
   WindowDragState = enum
     wdsNone, wdsMoving, wdsResizing
@@ -102,6 +108,7 @@ proc restoreWindow(a) =
   alias(ws, g_windowState)
 
   glfw.swapInterval(0)
+  ws.fastRedrawFrameCounter = 20
   a.win.pos = (ws.oldPosX, ws.oldPosY)
   a.win.size = (ws.oldWidth, ws.oldHeight)
   ws.maximized = false
@@ -118,6 +125,7 @@ proc maximizeWindow(a) =
   (ws.oldWidth, ws.oldHeight) = a.win.size
 
   glfw.swapInterval(0)
+  ws.fastRedrawFrameCounter = 20
   ws.maximized = true
   ws.maximizing = true
 
@@ -385,9 +393,17 @@ proc updateViewStartAndCursorPosition(a) =
 
   let (winWidth, winHeight) = a.win.size
 
-  # TODO -150
-  dp.viewCols = min(dp.numDisplayableCols(winWidth - 150.0), a.map.cols)
-  dp.viewRows = min(dp.numDisplayableRows(winHeight - 150.0), a.map.rows)
+  let
+    drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
+                     MapTopPad - MapBottomPad
+
+    drawAreaWidth = winWidth - MapLeftPad - MapRightPad
+
+  dp.startX = MapLeftPad
+  dp.startY = TitleBarHeight + MapTopPad
+
+  dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), a.map.cols)
+  dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), a.map.rows)
 
   dp.viewStartCol = min(max(a.map.cols - dp.viewCols, 0), dp.viewStartCol)
   dp.viewStartRow = min(max(a.map.rows - dp.viewRows, 0), dp.viewStartRow)
@@ -940,7 +956,7 @@ proc renderUI() =
 
   alias(vg, a.vg)
 
-  # Border
+  # Clear background
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, winHeight.float)
   vg.fillColor(gray(0.4))
@@ -949,7 +965,7 @@ proc renderUI() =
   # Title bar
   renderTitleBar(a, winWidth.float)
 
-  # Current level
+  # Current level dropdown
   a.currMapLevel = koi.dropdown(
     50, 45, 300, 24.0,
     items = @[
@@ -977,13 +993,10 @@ proc renderUI() =
   drawWallTool(a, winWidth - 60.0)
 
   # Status bar
-  let
-    statusBarH = 24.0
-    statusBarY = winHeight - StatusBarHeight
-
+  let statusBarY = winHeight - StatusBarHeight
   renderStatusBar(a, statusBarY, winWidth.float)
 
-  # Border
+  # Window border
   vg.beginPath()
   vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
   vg.strokeColor(gray(0.09))
@@ -995,6 +1008,7 @@ proc renderUI() =
 proc renderFrame(win: Window, doHandleEvents: bool = true) =
   alias(a, g_app)
   alias(vg, g_app.vg)
+  alias(ws, g_windowState)
 
   let
     (winWidth, winHeight) = win.size
@@ -1031,6 +1045,11 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
 
   glfw.swapBuffers(win)
 
+  if ws.fastRedrawFrameCounter > 0:
+    dec(ws.fastRedrawFrameCounter)
+    if ws.fastRedrawFrameCounter == 0:
+      glfw.swapInterval(1)
+
 # }}}
 # {{{ framebufSizeCb()
 proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
@@ -1059,8 +1078,6 @@ proc createDefaultMapStyle(): MapStyle =
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
-  dp.startX = 50.0
-  dp.startY = 115.0
   dp.drawOutline = true
   dp.drawCursorGuides = false
 
@@ -1140,7 +1157,6 @@ proc init(): Window =
 
   win.framebufferSizeCb = framebufSizeCb
 
-  # TODO
   glfw.swapInterval(1)
 
   win.pos = (150, 150)  # TODO for development
@@ -1159,8 +1175,11 @@ proc cleanup() =
 proc main() =
   let win = init()
   while not win.shouldClose:
+    if koi.shouldRenderNextFrame():
+      glfw.pollEvents()
+    else:
+      glfw.waitEvents()
     renderFrame(win)
-    glfw.pollEvents()
   cleanup()
 
 main()
