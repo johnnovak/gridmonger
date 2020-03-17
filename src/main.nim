@@ -21,7 +21,6 @@ import undomanager
 import utils
 
 
-
 const DefaultZoomLevel = 5
 
 const
@@ -80,28 +79,298 @@ using a: var AppContext
 
 # }}}
 
-var
-  g_winMaximized: bool
-  g_winOldPosX, g_winOldPosY: int
-  g_winOldWidth, g_winOldHeight: int32
+#{{{ WindowState
+type
+  WindowState = object
+    maximized:           bool
+    maximizing:          bool
+    dragState:           WindowDragState
+    mx0, my0:            float
+    posX0, posY0:        int
+    width0, height0:     int32
+    oldPosX, oldPosY:    int
+    oldWidth, oldHeight: int32
 
-proc winRestore(a) =
+  WindowDragState = enum
+    wdsNone, wdsMoving, wdsResizing
+
+var g_windowState: WindowState
+
+# }}}
+# {{{ restoreWindow()
+proc restoreWindow(a) =
+  alias(ws, g_windowState)
+
   glfw.swapInterval(0)
-  a.win.pos = (g_winOldPosX, g_winOldPosY)
-  a.win.size = (g_winOldWidth, g_winOldHeight)
-  g_winMaximized = false
+  a.win.pos = (ws.oldPosX, ws.oldPosY)
+  a.win.size = (ws.oldWidth, ws.oldHeight)
+  ws.maximized = false
 
-proc winMaximize(a) =
+# }}}
+# {{{ maximizeWindow()
+proc maximizeWindow(a) =
+  alias(ws, g_windowState)
+
   # TODO This logic needs to be a bit more sophisticated to support
   # multiple monitors
   let (x, y, w, h) = getPrimaryMonitor().workArea
-  (g_winOldPosX, g_winOldPosY) = a.win.pos
-  (g_winOldWidth, g_winOldHeight) = a.win.size
+  (ws.oldPosX, ws.oldPosY) = a.win.pos
+  (ws.oldWidth, ws.oldHeight) = a.win.size
+
   glfw.swapInterval(0)
+  ws.maximized = true
+  ws.maximizing = true
+
   a.win.pos = (0, 0)
   a.win.size = (w, h)
-  g_winMaximized = true
 
+  ws.maximizing = false
+
+# }}}
+# {{{ renderTitleBar()
+proc renderTitleBar(a; winWidth: float) =
+  alias(vg, a.vg)
+  alias(win, a.win)
+  alias(ws, g_windowState)
+
+  vg.beginPath()
+  vg.rect(0, 0, winWidth.float, TitleBarHeight)
+  vg.fillColor(gray(0.09))
+  vg.fill()
+
+  vg.setFont(14.0)
+  vg.fillColor(gray(0.7))
+  vg.textAlign(haLeft, vaMiddle)
+
+  let ty = TitleBarHeight * TextVertAlignFactor
+
+  discard vg.text(5, ty, IconPin)
+  let tx = vg.text(30, ty, "Eye of the Beholder I")
+
+  vg.fillColor(gray(0.45))
+  discard vg.text(tx+10, ty, IconAsterisk)
+
+  if koi.button(winWidth - 72, 0, 23, TitleBarHeight, IconWindowMinimise,
+                tooltip="Minimize"):
+    win.iconify()
+
+  if koi.button(winWidth - 48, 0, 23, TitleBarHeight,
+                if ws.maximized: IconWindowRestore else: IconWindowMaximise,
+                tooltip="Maximize"):
+    if not ws.maximizing:  # workaround to avoid double-activation
+      if ws.maximized:
+        restoreWindow(a)
+      else:
+        maximizeWindow(a)
+
+  if koi.button(winWidth - 24, 0, 23, TitleBarHeight, IconWindowClose,
+                tooltip="Close"):
+    win.shouldClose = true
+
+# }}}
+# {{{ handleWindowDragEvents()
+proc handleWindowDragEvents(a) =
+  alias(win, a.win)
+  alias(ws, g_windowState)
+
+  let (winWidth, winHeight) = win.size
+
+  case ws.dragState
+  of wdsNone:
+    if koi.mbLeftDown():
+      if koi.my() < TitleBarHeight and koi.mx() < winWidth - 72:  # TODO 72
+        ws.mx0 = koi.mx()
+        ws.my0 = koi.my()
+        (ws.posX0, ws.posY0) = win.pos
+        ws.dragState = wdsMoving
+        glfw.swapInterval(0)
+
+      elif not ws.maximized and
+           koi.my() > koi.winHeight() - StatusBarHeight and
+           koi.mx() > koi.winWidth() - 30:
+        ws.mx0 = koi.mx()
+        ws.my0 = koi.my()
+        (ws.width0, ws.height0) = win.size
+        ws.dragState = wdsResizing
+        glfw.swapInterval(0)
+
+  of wdsMoving:
+    if koi.mbLeftDown():
+      let
+        mx = koi.mx()
+        my = koi.my()
+        dx = (mx - ws.mx0).int
+        dy = (my - ws.my0).int
+
+      # Only move or restore the window when we're actually
+      # dragging the title bar while holding the LMB down.
+      if dx != 0 or dy != 0:
+
+        # LMB-dragging the title bar will restore the window first (we're
+        # imitating Windows' behaviour here).
+        if ws.maximized:
+
+          # The restored window is centered horizontally around the cursor.
+          (ws.posX0, ws.posY0) = ((mx - ws.oldWidth/2).int32, 0)
+
+          # Fake the last horizontal cursor position to be at the middle of
+          # the restored window's width. This is needed so when we're in the
+          # "else" branch on the next frame when dragging the restored window,
+          # there won't be an unwanted window position jump.
+          ws.mx0 = ws.oldWidth/2
+          ws.my0 = my
+
+          # ...but we also want to clamp the window position to the visible
+          # work area (and adjust the last cursor position accordingly to
+          # avoid the position jump in drag mode on the next frame).
+          if ws.posX0 < 0:
+            ws.mx0 += ws.posX0.float
+            ws.posX0 = 0
+
+          # TODO This logic needs to be a bit more sophisticated to support
+          # multiple monitors
+          let (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
+          let dx = ws.posX0 + ws.oldWidth - workAreaWidth
+          if dx > 0:
+            ws.posX0 = workAreaWidth - ws.oldWidth
+            ws.mx0 += dx.float
+
+          win.pos = (ws.posX0, ws.posY0)
+          win.size = (ws.oldWidth, ws.oldHeight)
+          ws.maximized = false
+
+        else:
+          win.pos = (ws.posX0 + dx, ws.posY0 + dy)
+          (ws.posX0, ws.posY0) = win.pos
+    else:
+      ws.dragState = wdsNone
+      glfw.swapInterval(1)
+
+  of wdsResizing:
+    # TODO add support for resizing on edges
+    # More standard cursor shapes patch:
+    # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
+    if koi.mbLeftDown():
+      let
+        dx = (koi.mx() - ws.mx0).int
+        dy = (koi.my() - ws.my0).int
+        (curW, curH) = win.size
+        newW = max(ws.width0 + dx, 400)
+        newH = max(ws.height0 + dy, 200)
+
+      win.size = (newW, newH)
+    else:
+      ws.dragState = wdsNone
+      glfw.swapInterval(1)
+
+# }}}
+
+# {{{ clearStatusMessage()
+proc clearStatusMessage(a) =
+  a.statusIcon = ""
+  a.statusMessage = ""
+  a.statusCommands = @[]
+
+# }}}
+# {{{ setStatusMessage()
+proc setStatusMessage(a; icon, msg: string, commands: seq[string]) =
+  a.statusIcon = icon
+  a.statusMessage = msg
+  a.statusCommands = commands
+
+proc setStatusMessage(a; icon, msg: string) =
+  a.setStatusMessage(icon , msg, commands = @[])
+
+proc setStatusMessage(a; msg: string) =
+  a.setStatusMessage(icon = "", msg, commands = @[])
+
+# }}}
+# {{{ renderStatusBar()
+
+var g_StatusBarWindowButtonStyle = koi.DefaultButtonStyle
+
+g_StatusBarWindowButtonStyle.labelOnly        = true
+g_StatusBarWindowButtonStyle.labelColor       = gray(0.45)
+g_StatusBarWindowButtonStyle.labelColorHover  = gray(0.7)
+g_StatusBarWindowButtonStyle.labelColorActive = gray(0.9)
+
+
+proc renderStatusBar(a; y: float, winWidth: float) =
+  alias(vg, a.vg)
+
+  let ty = y + StatusBarHeight * TextVertAlignFactor
+
+  # Bar background
+  vg.beginPath()
+  vg.rect(0, y, winWidth, StatusBarHeight)
+  vg.fillColor(gray(0.2))
+  vg.fill()
+
+  # Display current coords
+  let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
+  let tw = vg.textWidth(cursorPos)
+
+  vg.setFont(14.0)
+  vg.fillColor(gray(0.6))
+  vg.textAlign(haLeft, vaMiddle)
+  discard vg.text(winWidth - tw - 15, ty, cursorPos)
+
+  vg.scissor(0, y, winWidth - tw - 25, StatusBarHeight)
+
+  # Display icon & message
+  const
+    IconPosX = 10
+    MessagePosX = 30
+    MessagePadX = 20
+    CommandLabelPadX = 13
+    CommandTextPadX = 10
+
+  var x = 10.0
+
+  vg.fillColor(gray(0.8))
+  discard vg.text(IconPosX, ty, a.statusIcon)
+
+  let tx = vg.text(MessagePosX, ty, a.statusMessage)
+  x = tx + MessagePadX
+
+  # Display commands, if present
+  for i, cmd in a.statusCommands.pairs:
+    if i mod 2 == 0:
+      let label = cmd
+      let w = vg.textWidth(label)
+
+      vg.beginPath()
+      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
+      vg.fillColor(gray(0.56))
+      vg.fill()
+
+      vg.fillColor(gray(0.2))
+      discard vg.text(x + 5, ty, label)
+      x += w + CommandLabelPadX
+    else:
+      let text = cmd
+      vg.fillColor(gray(0.8))
+      let tx = vg.text(x, ty, text)
+      x = tx + CommandTextPadX
+
+  vg.resetScissor()
+
+# }}}
+
+# {{{ isKeyDown()
+func isKeyDown(ke: KeyEvent, keys: set[Key],
+               mods: set[ModifierKey] = {}, repeat=false): bool =
+  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
+  ke.action in a and ke.key in keys and ke.mods == mods
+
+func isKeyDown(ke: KeyEvent, key: Key,
+               mods: set[ModifierKey] = {}, repeat=false): bool =
+  isKeyDown(ke, {key}, mods, repeat)
+
+func isKeyUp(ke: KeyEvent, keys: set[Key]): bool =
+  ke.action == kaUp and ke.key in keys
+
+# }}}
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
   a.cursorCol = 0
@@ -173,26 +442,6 @@ proc moveCursor(dir: Direction, a) =
   dp.viewStartRow = sy
 
 # }}}
-# {{{ clearStatusMessage()
-proc clearStatusMessage(a) =
-  a.statusIcon = ""
-  a.statusMessage = ""
-  a.statusCommands = @[]
-
-# }}}
-# {{{ setStatusMessage()
-proc setStatusMessage(a; icon, msg: string, commands: seq[string]) =
-  a.statusIcon = icon
-  a.statusMessage = msg
-  a.statusCommands = commands
-
-proc setStatusMessage(a; icon, msg: string) =
-  a.setStatusMessage(icon , msg, commands = @[])
-
-proc setStatusMessage(a; msg: string) =
-  a.setStatusMessage(icon = "", msg, commands = @[])
-
-# }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
   a.editMode = emSelectDraw
@@ -232,20 +481,6 @@ proc copySelection(a): Option[Rect[Natural]] =
     eraseOrphanedWalls(a.copyBuf.get)
 
   result = bbox
-
-# }}}
-# {{{ isKeyDown()
-func isKeyDown(ke: KeyEvent, keys: set[Key],
-               mods: set[ModifierKey] = {}, repeat=false): bool =
-  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  ke.action in a and ke.key in keys and ke.mods == mods
-
-func isKeyDown(ke: KeyEvent, key: Key,
-               mods: set[ModifierKey] = {}, repeat=false): bool =
-  isKeyDown(ke, {key}, mods, repeat)
-
-func isKeyUp(ke: KeyEvent, keys: set[Key]): bool =
-  ke.action == kaUp and ke.key in keys
 
 # }}}
 
@@ -341,149 +576,8 @@ proc drawWallTool(a; x: float) =
     y += w + pad
 
 
-# {{{ drawTitleBar()
-
-proc drawTitleBar(a; winWidth: float) =
-  alias(vg, a.vg)
-  alias(win, a.win)
-
-  vg.beginPath()
-  vg.rect(0, 0, winWidth.float, TitleBarHeight)
-  vg.fillColor(gray(0.09))
-  vg.fill()
-
-  vg.setFont(14.0)
-  vg.fillColor(gray(0.7))
-  vg.textAlign(haLeft, vaMiddle)
-
-  let ty = TitleBarHeight * TextVertAlignFactor
-
-  discard vg.text(5, ty, IconPin)
-  let tx = vg.text(30, ty, "Eye of the Beholder I")
-
-  vg.fillColor(gray(0.45))
-  discard vg.text(tx+10, ty, IconAsterisk)
-
-  if koi.button(winWidth - 72, 0, 23, TitleBarHeight, IconWindowMinimise,
-                tooltip="Minimize"):
-    win.iconify()
-
-  if koi.button(winWidth - 48, 0, 23, TitleBarHeight,
-                if g_winMaximized: IconWindowRestore else: IconWindowMaximise,
-                tooltip="Maximize"):
-    if g_winMaximized:
-      winRestore(a)
-    else:
-      winMaximize(a)
-
-  if koi.button(winWidth - 24, 0, 23, TitleBarHeight, IconWindowClose,
-                tooltip="Close"):
-    win.shouldClose = true
-
-# }}}
-# {{{ drawStatusBar()
-
-var g_StatusBarWindowButtonStyle = koi.DefaultButtonStyle
-
-g_StatusBarWindowButtonStyle.labelOnly        = true
-g_StatusBarWindowButtonStyle.labelColor       = gray(0.45)
-g_StatusBarWindowButtonStyle.labelColorHover  = gray(0.7)
-g_StatusBarWindowButtonStyle.labelColorActive = gray(0.9)
-
-
-proc drawStatusBar(a; y: float, winWidth: float) =
-  alias(vg, a.vg)
-
-  let ty = y + StatusBarHeight * TextVertAlignFactor
-
-  # Bar background
-  vg.beginPath()
-  vg.rect(0, y, winWidth, StatusBarHeight)
-  vg.fillColor(gray(0.2))
-  vg.fill()
-
-  # Display current coords
-  let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
-  let tw = vg.textWidth(cursorPos)
-
-  vg.setFont(14.0)
-  vg.fillColor(gray(0.6))
-  vg.textAlign(haLeft, vaMiddle)
-  discard vg.text(winWidth - tw - 15, ty, cursorPos)
-
-  vg.scissor(0, y, winWidth - tw - 25, StatusBarHeight)
-
-  # Display icon & message
-  const
-    IconPosX = 10
-    MessagePosX = 30
-    MessagePadX = 20
-    CommandLabelPadX = 13
-    CommandTextPadX = 10
-
-  var x = 10.0
-
-  vg.fillColor(gray(0.8))
-  discard vg.text(IconPosX, ty, a.statusIcon)
-
-  let tx = vg.text(MessagePosX, ty, a.statusMessage)
-  x = tx + MessagePadX
-
-  # Display commands, if present
-  for i, cmd in a.statusCommands.pairs:
-    if i mod 2 == 0:
-      let label = cmd
-      let w = vg.textWidth(label)
-
-      vg.beginPath()
-      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
-      vg.fillColor(gray(0.56))
-      vg.fill()
-
-      vg.fillColor(gray(0.2))
-      discard vg.text(x + 5, ty, label)
-      x += w + CommandLabelPadX
-    else:
-      let text = cmd
-      vg.fillColor(gray(0.8))
-      let tx = vg.text(x, ty, text)
-      x = tx + CommandTextPadX
-
-  vg.resetScissor()
-
-# }}}
-
-# {{{ Event handling
-type WindowDragState = enum
-  wdsDefault, wdsMoving, wdsResizing
-
-# TODO introduce WindowState object
-var
-  g_winDragState: WindowDragState
-  g_winMx0, g_winMy0: float
-  g_winPosX0, g_winPosY0: int
-  g_winWidth0, g_winHeight0: int32
-
-
-proc mkFloorMessage(g: Ground): string =
-  fmt"Set floor – {g}"
-
-proc setFloorOrientationStatusMessage(a; o: Orientation) =
-  if o == Horiz:
-    a.setStatusMessage(IconHorizArrows, "Floor orientation set to horizontal")
-  else:
-    a.setStatusMessage(IconVertArrows, "Floor orientation set to vertical")
-
-proc incZoomLevel(a) =
-  a.drawMapParams.incZoomLevel()
-  updateViewStartAndCursorPosition(a)
-
-proc decZoomLevel(a) =
-  a.drawMapParams.decZoomLevel()
-  updateViewStartAndCursorPosition(a)
-
-
-proc handleEvents(a) =
+# {{{ handleMapEvents()
+proc handleMapEvents(a) =
   alias(curX, a.cursorCol)
   alias(curY, a.cursorRow)
   alias(um, a.undoManager)
@@ -491,7 +585,25 @@ proc handleEvents(a) =
   alias(dp, a.drawMapParams)
   alias(win, a.win)
 
-  let (winWidth, winHeight) = a.win.size
+  proc mkFloorMessage(g: Ground): string =
+    fmt"Set floor – {g}"
+
+  proc setFloorOrientationStatusMessage(a; o: Orientation) =
+    if o == Horiz:
+      a.setStatusMessage(IconHorizArrows, "Floor orientation set to horizontal")
+    else:
+      a.setStatusMessage(IconVertArrows, "Floor orientation set to vertical")
+
+  proc incZoomLevel(a) =
+    a.drawMapParams.incZoomLevel()
+    updateViewStartAndCursorPosition(a)
+
+  proc decZoomLevel(a) =
+    a.drawMapParams.decZoomLevel()
+    updateViewStartAndCursorPosition(a)
+
+
+  let (winWidth, winHeight) = win.size
 
   const
     MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
@@ -499,97 +611,7 @@ proc handleEvents(a) =
     MoveKeysUp    = {keyUp,    keyK, keyKp8}
     MoveKeysDown  = {keyDown,  keyJ, keyKp2}
 
-  # {{{ Handle window drag events
-  case g_winDragState
-  of wdsDefault:
-    if koi.mbLeftDown():
-      if koi.my() < TitleBarHeight and koi.mx() < winWidth - 72:  # TODO 72
-        g_winMx0 = koi.mx()
-        g_winMy0 = koi.my()
-        (g_winPosX0, g_winPosY0) = win.pos
-        g_winDragState = wdsMoving
-        glfw.swapInterval(0)
-
-      elif not g_winMaximized and
-           koi.my() > koi.winHeight() - StatusBarHeight and
-           koi.mx() > koi.winWidth() - 30:
-        g_winMx0 = koi.mx()
-        g_winMy0 = koi.my()
-        (g_winWidth0, g_winHeight0) = win.size
-        g_winDragState = wdsResizing
-        glfw.swapInterval(0)
-
-  of wdsMoving:
-    if koi.mbLeftDown():
-      let
-        mx = koi.mx()
-        my = koi.my()
-        dx = (mx - g_winMx0).int
-        dy = (my - g_winMy0).int
-
-      # Only move or restore the window when we're actually
-      # dragging the title bar while holding the LMB down.
-      if dx != 0 or dy != 0:
-
-        # LMB-dragging the title bar will restore the window first (we're
-        # imitating Windows' behaviour here).
-        if g_winMaximized:
-
-          # The restored window is centered horizontally around the cursor.
-          (g_winPosX0, g_winPosY0) = ((mx - g_winOldWidth/2).int32, 0)
-
-          # Fake the last horizontal cursor position to be at the middle of
-          # the restored window's width. This is needed so when we're in the
-          # "else" branch on the next frame when dragging the restored window,
-          # there won't be an unwanted window position jump.
-          g_winMx0 = g_winOldWidth/2
-          g_winMy0 = my
-
-          # ...but we also want to clamp the window position to the visible
-          # work area (and adjust the last cursor position accordingly to
-          # avoid the position jump in drag mode on the next frame).
-          if g_winPosX0 < 0:
-            g_winMx0 += g_winPosX0.float
-            g_winPosX0 = 0
-
-          # TODO This logic needs to be a bit more sophisticated to support
-          # multiple monitors
-          let (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
-          let dx = g_winPosX0 + g_winOldWidth - workAreaWidth
-          if dx > 0:
-            g_winPosX0 = workAreaWidth - g_winOldWidth
-            g_winMx0 += dx.float
-
-          win.pos = (g_winPosX0, g_winPosY0)
-          win.size = (g_winOldWidth, g_winOldHeight)
-          g_winMaximized = false
-
-        else:
-          win.pos = (g_winPosX0 + dx, g_winPosY0 + dy)
-          (g_winPosX0, g_winPosY0) = win.pos
-    else:
-      g_winDragState = wdsDefault
-      glfw.swapInterval(1)
-
-  of wdsResizing:
-    # TODO add support for resizing on edges
-    # More standard cursor shapes patch:
-    # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
-    if koi.mbLeftDown():
-      let
-        dx = (koi.mx() - g_winMx0).int
-        dy = (koi.my() - g_winMy0).int
-        (curW, curH) = win.size
-        newW = max(g_winWidth0 + dx, 400)
-        newH = max(g_winHeight0 + dy, 200)
-
-      win.size = (newW, newH)
-    else:
-      g_winDragState = wdsDefault
-      glfw.swapInterval(1)
-
-  # }}}
-  # {{{ Handle keyboard events
+  # TODO these should be part of the map component event handler
   for ke in koi.keyBuf():
     case a.editMode:
     of emNormal:
@@ -907,8 +929,6 @@ proc handleEvents(a) =
       elif ke.isKeyDown(keyEscape):
         a.editMode = emNormal
         a.clearStatusMessage()
-  # }}}
-
 # }}}
 
 # {{{ renderUI()
@@ -927,7 +947,7 @@ proc renderUI() =
   vg.fill()
 
   # Title bar
-  drawTitleBar(a, winWidth.float)
+  renderTitleBar(a, winWidth.float)
 
   # Current level
   a.currMapLevel = koi.dropdown(
@@ -961,7 +981,7 @@ proc renderUI() =
     statusBarH = 24.0
     statusBarY = winHeight - StatusBarHeight
 
-  drawStatusBar(a, statusBarY, winWidth.float)
+  renderStatusBar(a, statusBarY, winWidth.float)
 
   # Border
   vg.beginPath()
@@ -997,8 +1017,11 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
 
   updateViewStartAndCursorPosition(a)
   defineDialogs()
+
   if doHandleEvents:
-    handleEvents(a)
+    handleWindowDragEvents(a)
+    handleMapEvents(a)
+
   renderUI()
 
   ######################################################
@@ -1012,10 +1035,8 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
 # {{{ framebufSizeCb()
 proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
   renderFrame(win, doHandleEvents=false)
-#  glfw.pollEvents()
 
 # }}}
-
 
 # {{{ Init & cleanup
 proc createDefaultMapStyle(): MapStyle =
@@ -1117,8 +1138,6 @@ proc init(): Window =
 
   koi.init(g_app.vg)
 
-  # TODO only needed when resizing with the standard OS method with window
-  # decorations enabled
   win.framebufferSizeCb = framebufSizeCb
 
   # TODO
