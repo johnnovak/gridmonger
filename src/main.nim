@@ -125,7 +125,7 @@ var g_window: CSDWindow
 proc restoreWindow(a) =
   alias(wnd, g_window)
 
-  glfw.swapInterval(0)
+#  glfw.swapInterval(0)
   wnd.fastRedrawFrameCounter = 20
   a.win.pos = (wnd.oldPosX, wnd.oldPosY)
   a.win.size = (wnd.oldWidth, wnd.oldHeight)
@@ -142,7 +142,7 @@ proc maximizeWindow(a) =
   (wnd.oldPosX, wnd.oldPosY) = a.win.pos
   (wnd.oldWidth, wnd.oldHeight) = a.win.size
 
-  glfw.swapInterval(0)
+#  glfw.swapInterval(0)
   wnd.fastRedrawFrameCounter = 20
   wnd.maximized = true
   wnd.maximizing = true
@@ -245,7 +245,7 @@ proc handleWindowDragEvents(a) =
         wnd.my0 = my
         (wnd.posX0, wnd.posY0) = win.pos
         wnd.dragState = wdsMoving
-        glfw.swapInterval(0)
+#        glfw.swapInterval(0)
 
     if not wnd.maximized:
       if koi.noActiveItem():
@@ -279,7 +279,7 @@ proc handleWindowDragEvents(a) =
             (wnd.width0, wnd.height0) = win.size
             wnd.dragState = wdsResizing
             hideCursor()
-            glfw.swapInterval(0)
+#            glfw.swapInterval(0)
         else:
           showArrowCursor()
 
@@ -331,7 +331,7 @@ proc handleWindowDragEvents(a) =
           (wnd.posX0, wnd.posY0) = win.pos
     else:
       wnd.dragState = wdsNone
-      glfw.swapInterval(1)
+#      glfw.swapInterval(1)
 
   of wdsResizing:
     # TODO add support for resizing on edges
@@ -377,13 +377,16 @@ proc handleWindowDragEvents(a) =
       of wrdNone:
         discard
 
+      (wnd.posX0, wnd.posY0) = (newX, newY)
+      (wnd.width0, wnd.height0) = (max(newW, WindowMinWidth), max(newH, WindowMinHeight))
+
       win.pos = (newX, newY)
-      win.size = (max(newW, WindowMinWidth), max(newH, WindowMinHeight))
+      win.size = (wnd.width0, wnd.height0)
 
     else:
       wnd.dragState = wdsNone
       showCursor()
-      glfw.swapInterval(1)
+#      glfw.swapInterval(1)
 
 # }}}
 
@@ -1154,7 +1157,8 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   if wnd.fastRedrawFrameCounter > 0:
     dec(wnd.fastRedrawFrameCounter)
     if wnd.fastRedrawFrameCounter == 0:
-      glfw.swapInterval(1)
+#      glfw.swapInterval(1)
+      discard
 
 # }}}
 # {{{ framebufSizeCb()
