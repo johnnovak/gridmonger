@@ -377,11 +377,6 @@ proc handleWindowDragEvents(a) =
       of wrdNone:
         discard
 
-      echo "------------------------------------"
-      echo fmt"mx: {mx}, my: {my}"
-      echo fmt"dx: {dx}, dy: {dy}"
-      echo fmt"newX: {newX}, newY: {newY}"
-
       win.pos = (newX, newY)
       win.size = (max(newW, WindowMinWidth), max(newH, WindowMinHeight))
 

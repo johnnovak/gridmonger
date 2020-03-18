@@ -105,26 +105,6 @@ proc newMapFrom*(src: Map, rect: Rect[Natural]): Map =
   result = dest
 
 
-proc newMapWithBorderFrom*(src: Map, rect: Rect[Natural],
-                           border: Natural): Map =
-  assert rect.x1 < src.cols
-  assert rect.y1 < src.rows
-  assert rect.x2 <= src.cols
-  assert rect.y2 <= src.rows
-
-  let srcRect = rectN(
-    max(rect.x1 - border, 0),
-    max(rect.y1 - border, 0),
-    min(rect.x2 + border, src.cols),
-    min(rect.y2 + border, src.rows)
-  )
-
-  var dest = new Map
-  dest.initMap(srcRect.width, srcRect.height)
-  dest.copyFrom(destCol=border, destRow=border, src, srcRect)
-  result = dest
-
-
 proc newMapFrom*(m): Map =
   newMapFrom(m, rectN(0, 0, m.cols, m.rows))
 
