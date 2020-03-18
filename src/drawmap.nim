@@ -311,9 +311,7 @@ proc drawOutline(m: Map, ctx) =
   let vg = ctx.vg
 
   func check(col, row: int): bool =
-    let c = max(min(col, m.cols-1), 0)
-    let r = max(min(row, m.rows-1), 0)
-    m.getGround(c,r) != gNone
+    m.getGround(col, row) != gNone
 
   func isOutline(c, r: Natural): bool =
     check(c,   r+1) or
@@ -326,8 +324,8 @@ proc drawOutline(m: Map, ctx) =
     check(c-1, r+1)
 
   # TODO just do this for the view
-  for r in 0..<m.rows:
-    for c in 0..<m.cols:
+  for r in 1..<m.rows-1:
+    for c in 1..<m.cols-1:
       if isOutline(c, r):
         let
           sw = UltrathinStrokeWidth
@@ -790,7 +788,7 @@ proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
 
   template drawOriented(drawProc: untyped) =
     drawBg()
-    case viewBuf.getGroundOrientation(viewCol, viewRow):
+    case viewBuf.getGroundOrientation(viewCol+1, viewRow+1):
     of Horiz:
       drawProc(x, y + dp.gridSize/2, ctx)
     of Vert:
@@ -961,21 +959,22 @@ proc drawMap*(m: Map, ctx) =
   drawMapBackground(ctx)
   drawBackgroundGrid(ctx)
 
-  if dp.drawOutline:
-    drawOutline(m, ctx)
-
-  let viewBuf = newMapFrom(m,
+  let viewBuf = newMapWithBorderFrom(m,
     rectN(
       dp.viewStartCol,
       dp.viewStartRow,
       dp.viewStartCol + dp.viewCols,
       dp.viewStartRow + dp.viewRows
-    )
+    ),
+    border = 1
   )
 
+  if dp.drawOutline:
+    drawOutline(m, ctx)
+
   if dp.pastePreview.isSome:
-    viewBuf.paste(dp.cursorCol - dp.viewStartCol,
-                  dp.cursorRow - dp.viewStartRow,
+    viewBuf.paste(dp.cursorCol - dp.viewStartCol + 1,
+                  dp.cursorRow - dp.viewStartRow + 1,
                   dp.pastePreview.get.map,
                   dp.pastePreview.get.selection)
 

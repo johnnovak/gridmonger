@@ -115,6 +115,12 @@ type
     cells*: seq[Cell]
     notes*: Table[Natural, Note]
 
+  # TODO introduce CellGrid
+  #CellGrid* = ref object
+  #  cols*:  Natural
+  #  rows*:  Natural
+  #  cells*: seq[Cell]
+
 
 type
   # (0,0) is the top-left cell of the selection
@@ -202,9 +208,6 @@ const
   IconTree* = "\ue945"
   IconTrophy* = "\uf091"
 
-#  Icon* = "\u"
-#  Icon* = "\u"
-#  Icon* = "\u"
 #  Icon* = "\u"
 # }}}
 
