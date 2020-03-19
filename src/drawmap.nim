@@ -12,8 +12,8 @@ import selection
 
 const
   UltrathinStrokeWidth = 1.0
-  ThinStrokeWidth      = 2.0
-  MaxZoomLevel*        = 15
+  MinZoomLevel*        = 1
+  MaxZoomLevel*        = 10
 
 
 # Naming conventions
@@ -43,7 +43,6 @@ type
   MapStyle* = ref object
     cellCoordsColor*:     Color
     cellCoordsColorHi*:   Color
-    cellCoordsFontSize*:  float
     cursorColor*:         Color
     cursorGuideColor*:    Color
     defaultFgColor*:      Color
@@ -75,9 +74,11 @@ type
     drawCursorGuides*: bool
 
     # internal
-    zoomLevel:         Natural
-    gridSize:          float
-    normalStrokeWidth: float
+    zoomLevel:          Natural
+    gridSize:           float
+    thinStrokeWidth:    float
+    normalStrokeWidth:  float
+    cellCoordsFontSize: float
 
     vertTransformYFudgeFactor: float
 
@@ -93,20 +94,22 @@ proc getZoomLevel*(dp): Natural = dp.zoomLevel
 # }}}
 # {{{ setZoomLevel*()
 proc setZoomLevel*(dp; zl: Natural) =
+  assert zl >= MinZoomLevel
   assert zl <= MaxZoomLevel
   let
-    MinGridSize = 18.0
+    MinGridSize = 19.44
     ZoomFactor = 1.08
 
   dp.zoomLevel = zl
   dp.gridSize = floor(MinGridSize * pow(ZoomFactor, zl.float))
 
-  if zl <= 10:
-    dp.normalStrokeWidth = 3.0
-    dp.vertTransformYFudgeFactor = -1.0
-  else:
-    dp.normalStrokeWidth = 4.0
-    dp.vertTransformYFudgeFactor = 0.0
+  dp.thinStrokeWidth = 2.0
+  dp.normalStrokeWidth = 3.0
+  dp.vertTransformYFudgeFactor = -1.0
+
+  dp.cellCoordsFontSize = if   zl <= 3: 11.0
+                          elif zl <= 7: 12.0
+                          else:         13.0
 
 # }}}
 # {{{ incZoomLevel*()
@@ -117,7 +120,7 @@ proc incZoomLevel*(dp) =
 # }}}
 # {{{ decZoomLevel*()
 proc decZoomLevel*(dp) =
-  if dp.zoomLevel > 0:
+  if dp.zoomLevel > MinZoomLevel:
     setZoomLevel(dp, dp.zoomLevel-1)
 
 # }}}
@@ -187,7 +190,7 @@ proc drawCellCoords(ctx) =
   let vg = ctx.vg
 
   vg.fontFace("sans")
-  vg.fontSize(ms.cellCoordsFontSize)
+  vg.fontSize(dp.cellCoordsFontSize)
   vg.textAlign(haCenter, vaMiddle)
 
   proc setTextHighlight(on: bool) =
@@ -200,6 +203,8 @@ proc drawCellCoords(ctx) =
   let endX = dp.startX + dp.gridSize * dp.viewCols
   let endY = dp.startY + dp.gridSize * dp.viewRows
 
+  let fontSize = dp.cellCoordsFontSize
+
   for x in 0..<dp.viewCols:
     let
       xPos = cellX(x, dp) + dp.gridSize/2
@@ -207,8 +212,8 @@ proc drawCellCoords(ctx) =
 
     setTextHighlight(x == dp.cursorCol)
 
-    discard vg.text(xPos, dp.startY - 12, coord)
-    discard vg.text(xPos, endY + 12, coord)
+    discard vg.text(xPos, dp.startY - fontSize, coord)
+    discard vg.text(xPos, endY + fontSize*1.25, coord)
 
   for y in 0..<dp.viewRows:
     let
@@ -217,8 +222,8 @@ proc drawCellCoords(ctx) =
 
     setTextHighlight(y == dp.cursorRow)
 
-    discard vg.text(dp.startX - 12, yPos, coord)
-    discard vg.text(endX + 12, yPos, coord)
+    discard vg.text(dp.startX - fontSize*1.2, yPos, coord)
+    discard vg.text(endX + fontSize*1.2, yPos, coord)
 
 
 # }}}
@@ -370,7 +375,7 @@ proc drawPressurePlate(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
   vg.strokeColor(ms.defaultFgColor)
@@ -390,7 +395,7 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
   vg.strokeColor(gray(0.5))
@@ -410,7 +415,7 @@ proc drawClosedPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeColor(ms.defaultFgColor)
@@ -445,7 +450,7 @@ proc drawOpenPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
@@ -471,7 +476,7 @@ proc drawHiddenPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeColor(gray(0.5))
@@ -506,7 +511,7 @@ proc drawCeilingPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
@@ -523,31 +528,32 @@ proc drawCeilingPit(x, y: float, ctx) =
   vg.stroke()
 
 # }}}
-# {{{ drawStairsDown()
-proc drawStairsDown(x, y: float, ctx) =
-  discard
-
-# }}}
-# {{{ drawStairsUp()
-proc drawStairsUp(x, y: float, ctx) =
-  discard
-
-# }}}
-# {{{ drawSpinner()
-proc drawSpinner(x, y: float, ctx) =
+# {{{ drawIcon()
+proc drawIcon(x, y, ox, oy: float, icon: string, ctx) =
   let vg = ctx.vg
   let dp = ctx.dp
-
-  let icon = IconShip
   let (bounds, tx) = vg.textBounds(x, y, icon)
-#  let
-#    x = x + (dp.gridSize - bounds.b[2]) / 2
-#    y = y + (dp.gridSize + bounds.b[3]) / 2
 
   vg.setFont((dp.gridSize*0.6).float)
   vg.fillColor(gray(0))
   vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + dp.gridSize*0.51, y + dp.gridSize*0.58, icon)
+  discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
+                  y + dp.gridSize*oy + dp.gridSize*0.58, icon)
+
+# }}}
+# {{{ drawStairsDown()
+proc drawStairsDown(x, y: float, ctx) =
+  drawIcon(x, y, 0, 0, IconStairsDown, ctx)
+
+# }}}
+# {{{ drawStairsUp()
+proc drawStairsUp(x, y: float, ctx) =
+  drawIcon(x, y, 0, 0, IconStairsUp, ctx)
+
+# }}}
+# {{{ drawSpinner()
+proc drawSpinner(x, y: float, ctx) =
+  drawIcon(x, y, 0.06, 0, IconSpinner, ctx)
 
 # }}}
 # {{{ drawTeleport()
@@ -701,7 +707,7 @@ proc drawClosedDoorHoriz(x, y: float, ctx) =
 
   # Door
   vg.lineCap(lcjSquare)
-  sw = ThinStrokeWidth
+  sw = dp.thinStrokeWidth
   vg.strokeWidth(sw)
   vg.beginPath()
   vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
@@ -712,7 +718,7 @@ proc drawClosedDoorHoriz(x, y: float, ctx) =
   vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.moveTo(snap(x2+1, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
@@ -747,7 +753,7 @@ proc drawSecretDoorHoriz(x, y: float, ctx) =
 
   # Door
   vg.lineCap(lcjSquare)
-  sw = ThinStrokeWidth
+  sw = dp.thinStrokeWidth
   vg.strokeWidth(sw)
   vg.beginPath()
   vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
@@ -791,9 +797,9 @@ proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
     drawBg()
     case viewBuf.getGroundOrientation(viewCol, viewRow):
     of Horiz:
-      drawProc(x, y + dp.gridSize/2, ctx)
+      drawProc(x, y + floor(dp.gridSize/2), ctx)
     of Vert:
-      setVertTransform(x + dp.gridSize/2, y, ctx)
+      setVertTransform(x + floor(dp.gridSize/2), y, ctx)
       drawProc(0, 0, ctx)
       vg.resetTransform()
 

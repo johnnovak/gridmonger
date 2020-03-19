@@ -24,12 +24,13 @@ import utils
 const DefaultZoomLevel = 5
 
 const
+  TitleBarFontSize = 14.0
   TitleBarHeight = 26.0
   TitleBarTitlePosX = 50.0
   TitleBarButtonWidth = 23.0
   TitleBarPinButtonsLeftPad = 4.0
   TitleBarPinButtonTotalWidth = TitleBarPinButtonsLeftPad + TitleBarButtonWidth
-  TitleBarWindowButtonsRightPad = 5.0
+  TitleBarWindowButtonsRightPad = 6.0
   TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*3 +
                                     TitleBarWindowButtonsRightPad
 
@@ -125,7 +126,7 @@ var g_window: CSDWindow
 proc restoreWindow(a) =
   alias(wnd, g_window)
 
-#  glfw.swapInterval(0)
+  glfw.swapInterval(0)
   wnd.fastRedrawFrameCounter = 20
   a.win.pos = (wnd.oldPosX, wnd.oldPosY)
   a.win.size = (wnd.oldWidth, wnd.oldHeight)
@@ -142,7 +143,7 @@ proc maximizeWindow(a) =
   (wnd.oldPosX, wnd.oldPosY) = a.win.pos
   (wnd.oldWidth, wnd.oldHeight) = a.win.size
 
-#  glfw.swapInterval(0)
+  glfw.swapInterval(0)
   wnd.fastRedrawFrameCounter = 20
   wnd.maximized = true
   wnd.maximizing = true
@@ -183,16 +184,18 @@ proc renderTitleBar(a; winWidth: float) =
   vg.fillColor(gray(0.09))
   vg.fill()
 
-  vg.setFont(14.0)
+  vg.setFont(TitleBarFontSize)
   vg.fillColor(gray(0.7))
   vg.textAlign(haLeft, vaMiddle)
 
   let
     bw = TitleBarButtonWidth
+    bh = TitleBarFontSize + 4
+    by = (TitleBarHeight - bh) / 2
     ty = TitleBarHeight * TextVertAlignFactor
 
   # Pin window button
-  if koi.button(TitleBarPinButtonsLeftPad, 0, bw, TitleBarHeight, IconPin,
+  if koi.button(TitleBarPinButtonsLeftPad, by, bw, bh, IconPin,
                 style=g_TitleBarWindowButtonStyle):
     # TODO
     discard
@@ -207,11 +210,11 @@ proc renderTitleBar(a; winWidth: float) =
   # Minimise/maximise/close window buttons
   let x = winWidth - TitleBarWindowButtonsTotalWidth
 
-  if koi.button(x, 0, bw, TitleBarHeight, IconWindowMinimise,
+  if koi.button(x, by, bw, bh, IconWindowMinimise,
                 style=g_TitleBarWindowButtonStyle):
     win.iconify()
 
-  if koi.button(x + bw, 0, bw, TitleBarHeight,
+  if koi.button(x + bw, by, bw, bh,
                 if wnd.maximized: IconWindowRestore else: IconWindowMaximise,
                 style=g_TitleBarWindowButtonStyle):
     if not wnd.maximizing:  # workaround to avoid double-activation
@@ -220,7 +223,7 @@ proc renderTitleBar(a; winWidth: float) =
       else:
         maximizeWindow(a)
 
-  if koi.button(x + bw*2, 0, bw, TitleBarHeight, IconWindowClose,
+  if koi.button(x + bw*2, by, bw, bh, IconWindowClose,
                 style=g_TitleBarWindowButtonStyle):
     win.shouldClose = true
 
@@ -245,7 +248,7 @@ proc handleWindowDragEvents(a) =
         wnd.my0 = my
         (wnd.posX0, wnd.posY0) = win.pos
         wnd.dragState = wdsMoving
-#        glfw.swapInterval(0)
+        glfw.swapInterval(0)
 
     if not wnd.maximized:
       if koi.noActiveItem():
@@ -266,10 +269,10 @@ proc handleWindowDragEvents(a) =
                 else: wrdNone
 
         if d > wrdNone:
-          case d
-          of wrdW, wrdE: showHorizResizeCursor()
-          of wrdN, wrdS: showVertResizeCursor()
-          else: showHandCursor()
+#          case d
+#          of wrdW, wrdE: showHorizResizeCursor()
+#          of wrdN, wrdS: showVertResizeCursor()
+#          else: showHandCursor()
 
           if koi.mbLeftDown():
             wnd.mx0 = mx
@@ -278,8 +281,9 @@ proc handleWindowDragEvents(a) =
             (wnd.posX0, wnd.posY0) = win.pos
             (wnd.width0, wnd.height0) = win.size
             wnd.dragState = wdsResizing
-            hideCursor()
-#            glfw.swapInterval(0)
+            # TODO maybe hide on OSX only?
+#            hideCursor()
+            glfw.swapInterval(0)
         else:
           showArrowCursor()
 
@@ -331,7 +335,7 @@ proc handleWindowDragEvents(a) =
           (wnd.posX0, wnd.posY0) = win.pos
     else:
       wnd.dragState = wdsNone
-#      glfw.swapInterval(1)
+      glfw.swapInterval(1)
 
   of wdsResizing:
     # TODO add support for resizing on edges
@@ -351,10 +355,9 @@ proc handleWindowDragEvents(a) =
         newY += dy
         newH -= dy
       of wrdNE:
-        newX -= dx
-        newY -= dy
-#        newW += dx
-#        newH += dy
+        newY += dy
+        newW += dx
+        newH -= dy
       of wrdE:
         newW += dx
       of wrdSE:
@@ -370,10 +373,10 @@ proc handleWindowDragEvents(a) =
         newX += dx
         newW -= dx
       of wrdNW:
-        newX -= dx
-        newY -= dy
-#        newW += dx
-#        newH += dy
+        newX += dx
+        newY += dy
+        newW -= dx
+        newH -= dy
       of wrdNone:
         discard
 
@@ -386,7 +389,7 @@ proc handleWindowDragEvents(a) =
     else:
       wnd.dragState = wdsNone
       showCursor()
-#      glfw.swapInterval(1)
+      glfw.swapInterval(1)
 
 # }}}
 
@@ -660,6 +663,7 @@ proc newMapDialog() =
         parseInt(g_newMapDialog_rows)
       )
       resetCursorAndViewStart(g_app)
+      updateViewStartAndCursorPosition(g_app)
       closeDialog()
       g_app.setStatusMessage(IconFile, "New map created")
 
@@ -894,6 +898,7 @@ proc handleMapEvents(a) =
             a.map = readMap(filename)
             initUndoManager(a.undoManager)
             resetCursorAndViewStart(a)
+            updateViewStartAndCursorPosition(g_app)
             a.setStatusMessage(IconFloppy, "Map loaded")
           except CatchableError as e:
             # TODO log stracktrace?
@@ -1157,8 +1162,7 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   if wnd.fastRedrawFrameCounter > 0:
     dec(wnd.fastRedrawFrameCounter)
     if wnd.fastRedrawFrameCounter == 0:
-#      glfw.swapInterval(1)
-      discard
+      glfw.swapInterval(1)
 
 # }}}
 # {{{ framebufSizeCb()
@@ -1172,7 +1176,6 @@ proc createDefaultMapStyle(): MapStyle =
   var ms = new MapStyle
   ms.cellCoordsColor     = gray(0.9)
   ms.cellCoordsColorHi   = rgb(1.0, 0.75, 0.0)
-  ms.cellCoordsFontSize  = 12.0
   ms.cursorColor         = rgb(1.0, 0.65, 0.0)
   ms.cursorGuideColor    = rgba(1.0, 0.65, 0.0, 0.2)
   ms.defaultFgColor      = gray(0.1)

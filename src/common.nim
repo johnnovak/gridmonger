@@ -181,6 +181,8 @@ const
   IconZoomIn* = "\uf00e"
   IconZoomOut* = "\uf010"
 
+  IconStairsDown* = "\ue90c"
+  IconStairsUp* = "\ue90d"
   IconEnter* = "\uea13"
   IconExit* = "\uea14"
 
@@ -203,7 +205,7 @@ const
   IconMug* = "\ue905"
   IconShield* = "\uf132"
   IconShip* = "\ue944"
-  IconSpinner* = "\uf01e"
+  IconSpinner* = "\ue910"
   IconStar* = "\uf005"
   IconTree* = "\ue945"
   IconTrophy* = "\uf091"

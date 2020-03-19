@@ -8,36 +8,127 @@
     {
       "selection": [
         {
+          "order": 260,
+          "id": 2,
+          "name": "spinner-path",
+          "prevSize": 32,
+          "code": 59664,
+          "tempChar": ""
+        },
+        {
+          "order": 261,
+          "id": 1,
+          "name": "stairs-down-path",
+          "prevSize": 32,
+          "code": 59660,
+          "tempChar": ""
+        },
+        {
+          "order": 262,
+          "id": 0,
+          "name": "stairs-up-path",
+          "prevSize": 32,
+          "code": 59661,
+          "tempChar": ""
+        }
+      ],
+      "id": 10,
+      "metadata": {
+        "name": "Custom Icons",
+        "importSize": {
+          "width": 14,
+          "height": 14
+        }
+      },
+      "height": 1024,
+      "prevSize": 32,
+      "icons": [
+        {
+          "id": 2,
+          "paths": [
+            "M392.857 120.143c-100.174 0-200.429 38-276.571 114.143-152.286 152.286-152.285 400.714 0 553 82.443 82.444 196.646 123.944 312.571 113.143 8.313-1.049 15.080-8.008 14.714-16.286l0.429-99c-0.358-4.677-2.617-8.903-5.857-12.143-3.596-2.875-8.249-4.731-12.571-4-81.004 10.441-159.758-16.615-217-73.857-101.524-101.524-101.524-267.048 0-368.571s267.047-101.524 368.571 0c46.917 46.918 73.391 109.201 76.143 174h-227.429l301 297.286 299.143-297.286h-242.571c-3.017-98.45-43.356-195.499-114.143-266.286-76.143-76.143-176.255-114.143-276.429-114.143z"
+          ],
+          "attrs": [
+            {}
+          ],
+          "isMulticolor": false,
+          "isMulticolor2": false,
+          "grid": 0,
+          "tags": [
+            "spinner-path"
+          ]
+        },
+        {
+          "id": 1,
+          "paths": [
+            "M597.714-0.857l-90.143 91.857 284.714 280.857-144.857 144.571h381.143v-380.571l-145 144.857-285.857-281.571z",
+            "M0 1024.001h877.714v-219.429h-219.429v-219.429h-219.429v-219.429h-219.429v-219.429h-219.429z"
+          ],
+          "attrs": [
+            {},
+            {}
+          ],
+          "isMulticolor": false,
+          "isMulticolor2": false,
+          "grid": 0,
+          "tags": [
+            "stairs-down-path"
+          ]
+        },
+        {
+          "id": 0,
+          "paths": [
+            "M93.594 502.921l-87.508-89.173 276.392-272.647-140.623-140.343h370.002v369.447l-140.762-140.622z",
+            "M1024.531 1024.001h-877.714v-219.429h219.429v-219.429h219.429v-219.429h219.429v-219.429h219.429z"
+          ],
+          "attrs": [
+            {},
+            {}
+          ],
+          "isMulticolor": false,
+          "isMulticolor2": false,
+          "grid": 0,
+          "tags": [
+            "stairs-up-path"
+          ]
+        }
+      ],
+      "invisible": false,
+      "colorThemes": []
+    },
+    {
+      "selection": [
+        {
           "name": "asterisk",
           "id": 0,
           "order": 166,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61545,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "plus",
           "id": 1,
           "order": 164,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61543,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "question",
           "id": 2,
           "order": 167,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61736,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "minus",
           "id": 3,
           "order": 165,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61544,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "glass",
@@ -53,9 +144,9 @@
           "name": "search",
           "id": 6,
           "order": 168,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61442,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "envelope-o",
@@ -66,17 +157,17 @@
           "name": "heart",
           "id": 8,
           "order": 169,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61444,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "star1",
           "id": 9,
           "order": 170,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61445,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "star-o",
@@ -112,33 +203,33 @@
           "name": "check",
           "id": 16,
           "order": 36,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61452,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "close, remove, times",
           "id": 17,
           "order": 37,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61453,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "search-plus",
           "id": 18,
           "order": 38,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61454,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "search-minus",
           "id": 19,
           "order": 39,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61456,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "power-off",
@@ -154,41 +245,41 @@
           "name": "cog3, gear",
           "id": 22,
           "order": 40,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61459,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "trash-o",
           "id": 23,
           "order": 208,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61460,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "home",
           "id": 24,
           "order": 209,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61461,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "file-o",
           "id": 25,
           "order": 210,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61462,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "clock-o",
           "id": 26,
           "order": 211,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61463,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "road",
@@ -224,9 +315,9 @@
           "name": "repeat, rotate-right",
           "id": 33,
           "order": 35,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61470,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "refresh",
@@ -247,9 +338,9 @@
           "name": "flag1",
           "id": 37,
           "order": 207,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61476,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "headphones",
@@ -295,9 +386,9 @@
           "name": "book1",
           "id": 46,
           "order": 212,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61485,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "bookmark",
@@ -388,9 +479,9 @@
           "name": "pencil",
           "id": 64,
           "order": 171,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61504,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "map-marker",
@@ -411,9 +502,9 @@
           "name": "edit, pencil-square-o",
           "id": 68,
           "order": 245,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61508,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "share-square-o",
@@ -424,17 +515,17 @@
           "name": "check-square-o",
           "id": 70,
           "order": 206,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61510,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "arrows",
           "id": 71,
           "order": 34,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61511,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "step-backward",
@@ -525,9 +616,9 @@
           "name": "info-circle",
           "id": 89,
           "order": 240,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61530,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "crosshairs",
@@ -548,9 +639,9 @@
           "name": "ban",
           "id": 93,
           "order": 213,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61534,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "arrow-left",
@@ -576,9 +667,9 @@
           "name": "mail-forward, share",
           "id": 98,
           "order": 238,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61540,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "expand",
@@ -633,9 +724,9 @@
           "name": "exclamation-triangle, warning1",
           "id": 107,
           "order": 81,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61553,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "plane",
@@ -656,9 +747,9 @@
           "name": "comment",
           "id": 111,
           "order": 204,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61557,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "magnet",
@@ -669,17 +760,17 @@
           "name": "chevron-up",
           "id": 113,
           "order": 77,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61559,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "chevron-down",
           "id": 114,
           "order": 78,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61560,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "retweet",
@@ -705,17 +796,17 @@
           "name": "arrows-v",
           "id": 119,
           "order": 233,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61565,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "arrows-h",
           "id": 120,
           "order": 234,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61566,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "bar-chart, bar-chart-o",
@@ -741,9 +832,9 @@
           "name": "key",
           "id": 125,
           "order": 41,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61572,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "cogs, gears",
@@ -774,9 +865,9 @@
           "name": "heart-o",
           "id": 131,
           "order": 172,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61578,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "sign-out",
@@ -807,9 +898,9 @@
           "name": "trophy1",
           "id": 137,
           "order": 159,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61585,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "github-square",
@@ -835,9 +926,9 @@
           "name": "square-o",
           "id": 142,
           "order": 176,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61590,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "bookmark-o",
@@ -898,9 +989,9 @@
           "name": "certificate",
           "id": 154,
           "order": 42,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61603,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "hand-o-right",
@@ -966,9 +1057,9 @@
           "name": "briefcase",
           "id": 167,
           "order": 184,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61617,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "arrows-alt",
@@ -1000,25 +1091,25 @@
           "name": "flask",
           "id": 172,
           "order": 44,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61635,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "cut, scissors",
           "id": 173,
           "order": 235,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61636,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "copy, files-o",
           "id": 174,
           "order": 236,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61637,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "paperclip",
@@ -1029,25 +1120,25 @@
           "name": "floppy-o, save",
           "id": 176,
           "order": 46,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61639,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "square",
           "id": 177,
           "order": 185,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61640,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "bars, navicon, reorder",
           "id": 178,
           "order": 186,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61641,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "list-ul",
@@ -1212,9 +1303,9 @@
           "name": "bolt, flash",
           "id": 206,
           "order": 188,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61671,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "sitemap",
@@ -1230,9 +1321,9 @@
           "name": "clipboard, paste",
           "id": 209,
           "order": 239,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61674,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "lightbulb-o",
@@ -1283,17 +1374,17 @@
           "name": "cutlery",
           "id": 219,
           "order": 187,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61685,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "file-text-o",
           "id": 220,
           "order": 76,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61686,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "building-o",
@@ -1314,9 +1405,9 @@
           "name": "medkit",
           "id": 224,
           "order": 189,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61690,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "fighter-jet",
@@ -1327,9 +1418,9 @@
           "name": "beer",
           "id": 226,
           "order": 190,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61692,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "h-square",
@@ -1405,9 +1496,9 @@
           "name": "circle-o",
           "id": 241,
           "order": 191,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61708,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "quote-left",
@@ -1428,17 +1519,17 @@
           "name": "circle",
           "id": 245,
           "order": 174,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61713,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "mail-reply, reply",
           "id": 246,
           "order": 237,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61714,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "github-alt",
@@ -1484,9 +1575,9 @@
           "name": "flag-o",
           "id": 255,
           "order": 192,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61725,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "flag-checkered",
@@ -1557,9 +1648,9 @@
           "name": "eraser",
           "id": 269,
           "order": 247,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61741,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "puzzle-piece",
@@ -1580,9 +1671,9 @@
           "name": "shield",
           "id": 273,
           "order": 193,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61746,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "calendar-o",
@@ -1638,9 +1729,9 @@
           "name": "anchor",
           "id": 284,
           "order": 194,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61757,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "unlock-alt",
@@ -1651,9 +1742,9 @@
           "name": "bullseye",
           "id": 286,
           "order": 195,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61760,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "ellipsis-h",
@@ -1710,9 +1801,9 @@
           "name": "check-square",
           "id": 296,
           "order": 175,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61770,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "pencil-square",
@@ -1793,9 +1884,9 @@
           "name": "file",
           "id": 312,
           "order": 72,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61787,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "file-text",
@@ -1984,9 +2075,9 @@
           "name": "male",
           "id": 349,
           "order": 196,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61827,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "gittip, gratipay",
@@ -2007,17 +2098,17 @@
           "name": "archive",
           "id": 353,
           "order": 198,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61831,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "bug",
           "id": 354,
           "order": 197,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61832,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "vk",
@@ -2116,17 +2207,17 @@
           "name": "bank, institution, university",
           "id": 373,
           "order": 177,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61852,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "graduation-cap, mortar-board",
           "id": 374,
           "order": 199,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61853,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "yahoo",
@@ -2212,9 +2303,9 @@
           "name": "paw",
           "id": 391,
           "order": 200,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61872,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "spoon",
@@ -2270,9 +2361,9 @@
           "name": "tree",
           "id": 402,
           "order": 178,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61883,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "spotify",
@@ -2358,9 +2449,9 @@
           "name": "life-bouy, life-buoy, life-ring, life-saver, support",
           "id": 419,
           "order": 201,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61901,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "circle-o-notch",
@@ -2456,9 +2547,9 @@
           "name": "bomb",
           "id": 438,
           "order": 179,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61922,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "futbol-o, soccer-ball-o",
@@ -2564,9 +2655,9 @@
           "name": "trash",
           "id": 459,
           "order": 70,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61944,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "copyright",
@@ -2587,9 +2678,9 @@
           "name": "paint-brush",
           "id": 463,
           "order": 248,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61948,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "birthday-cake",
@@ -2725,9 +2816,9 @@
           "name": "diamond",
           "id": 490,
           "order": 180,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 61977,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "ship",
@@ -2853,9 +2944,9 @@
           "name": "bed, hotel",
           "id": 515,
           "order": 181,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62006,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "viacoin",
@@ -3018,9 +3109,9 @@
           "name": "hand-paper-o, hand-stop-o",
           "id": 545,
           "order": 182,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62038,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "hand-scissors-o",
@@ -3191,17 +3282,17 @@
           "name": "commenting",
           "id": 579,
           "order": 64,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62074,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "commenting-o",
           "id": 580,
           "order": 65,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62075,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "houzz",
@@ -3252,9 +3343,9 @@
           "name": "fort-awesome",
           "id": 590,
           "order": 183,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62086,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "usb",
@@ -3606,33 +3697,33 @@
           "name": "window-maximize",
           "id": 659,
           "order": 55,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62160,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "window-minimize",
           "id": 660,
           "order": 56,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62161,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "window-restore",
           "id": 661,
           "order": 251,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62162,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "times-rectangle, window-close",
           "id": 662,
           "order": 58,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62163,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "times-rectangle-o, window-close-o",
@@ -3676,9 +3767,9 @@
           "name": "microchip",
           "id": 670,
           "order": 61,
-          "prevSize": 28,
+          "prevSize": 32,
           "code": 62171,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "name": "snowflake-o",
@@ -13996,7 +14087,7 @@
           "prevSize": 32,
           "code": 59648,
           "name": "checkmark",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 11,
@@ -14008,7 +14099,7 @@
           "prevSize": 32,
           "code": 59649,
           "name": "x",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 13,
@@ -14020,7 +14111,7 @@
           "prevSize": 32,
           "code": 59650,
           "name": "denied",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 15,
@@ -14104,7 +14195,7 @@
           "prevSize": 32,
           "code": 59651,
           "name": "plus2",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 34,
@@ -14116,7 +14207,7 @@
           "prevSize": 32,
           "code": 59652,
           "name": "minus2",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 36,
@@ -14380,7 +14471,7 @@
           "prevSize": 32,
           "code": 59662,
           "name": "fullscreen-exit",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 99,
@@ -14392,7 +14483,7 @@
           "prevSize": 32,
           "code": 59663,
           "name": "fullscreen",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 101,
@@ -14644,7 +14735,7 @@
           "prevSize": 32,
           "code": 59655,
           "name": "star",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 163,
@@ -17439,7 +17530,7 @@
           "prevSize": 32,
           "code": 59653,
           "name": "mug",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 57,
@@ -17915,7 +18006,7 @@
           "prevSize": 32,
           "code": 59654,
           "name": "skeletor",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 169,
@@ -17939,7 +18030,7 @@
           "prevSize": 32,
           "code": 59656,
           "name": "bomb1",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 174,
@@ -18027,7 +18118,7 @@
           "prevSize": 32,
           "code": 59657,
           "name": "moneybag",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 195,
@@ -24351,7 +24442,7 @@
           "prevSize": 24,
           "code": 59658,
           "name": "chat",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "order": 0,
@@ -24420,7 +24511,7 @@
           "prevSize": 24,
           "code": 59673,
           "name": "message",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "order": 0,
@@ -24749,7 +24840,7 @@
           "prevSize": 24,
           "code": 59659,
           "name": "select_all",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "order": 0,
@@ -26844,7 +26935,7 @@
           "prevSize": 24,
           "code": 59689,
           "name": "apps",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "order": 0,
@@ -27553,7 +27644,7 @@
           "prevSize": 24,
           "code": 59675,
           "name": "build",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "order": 0,
@@ -44581,7 +44672,7 @@
           "prevSize": 20,
           "code": 59694,
           "name": "apparel",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 13,
@@ -44617,7 +44708,7 @@
           "prevSize": 20,
           "code": 59695,
           "name": "arrow-thick-down",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 21,
@@ -44625,7 +44716,7 @@
           "prevSize": 20,
           "code": 59696,
           "name": "arrow-thick-left",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 22,
@@ -44633,7 +44724,7 @@
           "prevSize": 20,
           "code": 59697,
           "name": "arrow-thick-right",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 23,
@@ -44641,7 +44732,7 @@
           "prevSize": 20,
           "code": 59698,
           "name": "arrow-thick-up",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 24,
@@ -44997,7 +45088,7 @@
           "prevSize": 20,
           "code": 59710,
           "name": "currency-dollar",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 101,
@@ -45241,7 +45332,7 @@
           "prevSize": 20,
           "code": 59715,
           "name": "library1",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 158,
@@ -45293,7 +45384,7 @@
           "prevSize": 20,
           "code": 59716,
           "name": "location-marina",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 170,
@@ -45301,7 +45392,7 @@
           "prevSize": 20,
           "code": 59717,
           "name": "location-park",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 171,
@@ -45373,7 +45464,7 @@
           "prevSize": 20,
           "code": 59676,
           "name": "mouse",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 188,
@@ -45453,7 +45544,7 @@
           "prevSize": 20,
           "code": 59677,
           "name": "pin3",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 207,
@@ -45801,7 +45892,7 @@
           "prevSize": 20,
           "code": 59727,
           "name": "view-show",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 284,
@@ -45809,7 +45900,7 @@
           "prevSize": 20,
           "code": 59728,
           "name": "view-tile",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 285,
@@ -45861,7 +45952,7 @@
           "prevSize": 20,
           "code": 59730,
           "name": "yin-yang",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 296,
@@ -45869,7 +45960,7 @@
           "prevSize": 20,
           "code": 59731,
           "name": "zoom-in",
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "id": 297,
@@ -45877,7 +45968,7 @@
           "prevSize": 20,
           "code": 59732,
           "name": "zoom-out",
-          "tempChar": ""
+          "tempChar": ""
         }
       ],
       "id": 2,
@@ -49974,7 +50065,7 @@
           "id": 32,
           "prevSize": 32,
           "code": 59683,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "books, library",
@@ -50628,7 +50719,7 @@
           "id": 138,
           "prevSize": 32,
           "code": 59785,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "shrink, collapse",
@@ -50637,7 +50728,7 @@
           "id": 139,
           "prevSize": 32,
           "code": 59786,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "enlarge2, expand2",
@@ -50907,7 +50998,7 @@
           "id": 182,
           "prevSize": 32,
           "code": 59829,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "switch",
@@ -51048,7 +51139,7 @@
           "id": 205,
           "prevSize": 32,
           "code": 59852,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "attachment, paperclip",
@@ -51438,7 +51529,7 @@
           "id": 267,
           "prevSize": 32,
           "code": 59914,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "minus, subtract",
@@ -51447,7 +51538,7 @@
           "id": 268,
           "prevSize": 32,
           "code": 59915,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "info, information",
@@ -51504,7 +51595,7 @@
           "id": 276,
           "prevSize": 32,
           "code": 59923,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "exit, signout",
@@ -51513,7 +51604,7 @@
           "id": 277,
           "prevSize": 32,
           "code": 59924,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "play2, player",
@@ -51864,7 +51955,7 @@
           "id": 335,
           "prevSize": 32,
           "code": 59982,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "shift",
@@ -51873,7 +51964,7 @@
           "id": 336,
           "prevSize": 32,
           "code": 59983,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "ctrl, control",
@@ -51882,7 +51973,7 @@
           "id": 337,
           "prevSize": 32,
           "code": 59984,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "opt, option",
@@ -51891,7 +51982,7 @@
           "id": 338,
           "prevSize": 32,
           "code": 59985,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "checkbox-checked, checkbox",
@@ -51900,7 +51991,7 @@
           "id": 339,
           "prevSize": 32,
           "code": 59986,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "checkbox-unchecked, checkbox2",
@@ -51909,7 +52000,7 @@
           "id": 340,
           "prevSize": 32,
           "code": 59987,
-          "tempChar": ""
+          "tempChar": ""
         },
         {
           "ligatures": "radio-checked, radio-button",
@@ -60350,12 +60441,17 @@
       "color": 0,
       "bgColor": 16777215,
       "classSelector": ".icon",
-      "name": "icomoon"
+      "name": "icomoon",
+      "height": 32,
+      "columns": 16,
+      "margin": 16,
+      "pdf": true
     },
     "historySize": 50,
     "showCodes": true,
     "gridSize": 16,
-    "showLiga": false
+    "showLiga": false,
+    "showGrid": true
   },
   "uid": -1
 }
