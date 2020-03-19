@@ -11,9 +11,15 @@ import selection
 
 
 const
+  MinZoomLevel* = 1
+  MaxZoomLevel* = 10
+
   UltrathinStrokeWidth = 1.0
-  MinZoomLevel*        = 1
-  MaxZoomLevel*        = 10
+  ThinStrokeWidth      = 2.0
+  NormalStrokeWidth    = 3.0
+
+  VertTransformYFudgeFactor = -1.0
+
 
 
 # Naming conventions
@@ -76,8 +82,6 @@ type
     # internal
     zoomLevel:          Natural
     gridSize:           float
-    thinStrokeWidth:    float
-    normalStrokeWidth:  float
     cellCoordsFontSize: float
 
     vertTransformYFudgeFactor: float
@@ -102,10 +106,6 @@ proc setZoomLevel*(dp; zl: Natural) =
 
   dp.zoomLevel = zl
   dp.gridSize = floor(MinGridSize * pow(ZoomFactor, zl.float))
-
-  dp.thinStrokeWidth = 2.0
-  dp.normalStrokeWidth = 3.0
-  dp.vertTransformYFudgeFactor = -1.0
 
   dp.cellCoordsFontSize = if   zl <= 3: 11.0
                           elif zl <= 7: 12.0
@@ -375,7 +375,7 @@ proc drawPressurePlate(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = dp.thinStrokeWidth
+    sw = ThinStrokeWidth
 
   vg.lineCap(lcjRound)
   vg.strokeColor(ms.defaultFgColor)
@@ -395,7 +395,7 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = dp.thinStrokeWidth
+    sw = ThinStrokeWidth
 
   vg.lineCap(lcjRound)
   vg.strokeColor(gray(0.5))
@@ -415,7 +415,7 @@ proc drawClosedPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = dp.thinStrokeWidth
+    sw = ThinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeColor(ms.defaultFgColor)
@@ -450,7 +450,7 @@ proc drawOpenPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = dp.thinStrokeWidth
+    sw = ThinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
@@ -476,7 +476,7 @@ proc drawHiddenPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = dp.thinStrokeWidth
+    sw = ThinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeColor(gray(0.5))
@@ -511,7 +511,7 @@ proc drawCeilingPit(x, y: float, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1
-    sw = dp.thinStrokeWidth
+    sw = ThinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
@@ -574,7 +574,7 @@ proc drawSolidWallHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
-    sw = dp.normalStrokeWidth
+    sw = NormalStrokeWidth
     x = snap(x, sw)
     y = snap(y, sw)
 
@@ -594,7 +594,7 @@ proc drawIllusoryWallHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
-    sw = dp.normalStrokeWidth
+    sw = NormalStrokeWidth
     x = snap(x, sw)
     y = snap(y, sw)
 
@@ -614,7 +614,7 @@ proc drawInvisibleWallHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
-    sw = dp.normalStrokeWidth
+    sw = NormalStrokeWidth
     x = snap(x, sw)
     y = snap(y, sw)
 
@@ -644,7 +644,7 @@ proc drawOpenDoorHoriz(x, y: float, ctx) =
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = dp.normalStrokeWidth
+  var sw = NormalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(ms.defaultFgColor)
 
@@ -668,7 +668,7 @@ proc drawOpenDoorHoriz(x, y: float, ctx) =
   vg.stroke()
 
   # Wall end
-  sw = dp.normalStrokeWidth
+  sw = NormalStrokeWidth
   vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()
@@ -694,7 +694,7 @@ proc drawClosedDoorHoriz(x, y: float, ctx) =
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = dp.normalStrokeWidth
+  var sw = NormalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(ms.defaultFgColor)
 
@@ -707,14 +707,14 @@ proc drawClosedDoorHoriz(x, y: float, ctx) =
 
   # Door
   vg.lineCap(lcjSquare)
-  sw = dp.thinStrokeWidth
+  sw = ThinStrokeWidth
   vg.strokeWidth(sw)
   vg.beginPath()
   vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
   vg.stroke()
 
   # Wall end
-  sw = dp.normalStrokeWidth
+  sw = NormalStrokeWidth
   vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()
@@ -740,7 +740,7 @@ proc drawSecretDoorHoriz(x, y: float, ctx) =
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = dp.normalStrokeWidth
+  var sw = NormalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(rgb(1.0, 0, 0.5))
 
@@ -753,14 +753,14 @@ proc drawSecretDoorHoriz(x, y: float, ctx) =
 
   # Door
   vg.lineCap(lcjSquare)
-  sw = dp.thinStrokeWidth
+  sw = ThinStrokeWidth
   vg.strokeWidth(sw)
   vg.beginPath()
   vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
   vg.stroke()
 
   # Wall end
-  sw = dp.normalStrokeWidth
+  sw = NormalStrokeWidth
   vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()

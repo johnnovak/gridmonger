@@ -1,1 +1,1 @@
-nim c --app:gui -d:release -D:nvgGL3 -D:glfwStaticLib -r src/main
+nim c --app:gui -D:nvgGL3 -D:glfwStaticLib -r src/main
