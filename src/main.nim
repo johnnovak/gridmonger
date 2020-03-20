@@ -1079,6 +1079,12 @@ proc renderUI() =
 
   alias(vg, a.vg)
 
+  # Clear background
+  vg.beginPath()
+  vg.rect(0, 0, winWidth.float, winHeight.float)
+  vg.fillColor(gray(0.4))
+  vg.fill()
+
   # Current level dropdown
   a.currMapLevel = koi.dropdown(
     50, 45, 300, 24.0,
@@ -1117,7 +1123,7 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   alias(vg, g_app.vg)
   alias(wnd, g_window)
 
-  let
+  var
     (winWidth, winHeight) = win.size
     (fbWidth, fbHeight) = win.framebufferSize
     pxRatio = fbWidth / winWidth
@@ -1134,15 +1140,6 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
   koi.beginFrame(winWidth.float, winHeight.float)
 
-  # Clear background
-  vg.beginPath()
-  vg.rect(0, 0, winWidth.float, winHeight.float)
-  vg.fillColor(gray(0.4))
-  vg.fill()
-
-  # Title bar
-  renderTitleBar(a, winWidth.float)
-
   ######################################################
 
   updateViewStartAndCursorPosition(a)
@@ -1155,6 +1152,13 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   renderUI()
 
   ######################################################
+
+  (winWidth, winHeight) = win.size
+  (fbWidth, fbHeight) = win.framebufferSize
+  pxRatio = fbWidth / winWidth
+
+  # Title bar
+  renderTitleBar(a, winWidth.float)
 
   # Window border
   vg.beginPath()
