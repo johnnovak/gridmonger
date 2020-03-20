@@ -33,7 +33,6 @@ const
   TitleBarWindowButtonsRightPad = 6.0
   TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*3 +
                                     TitleBarWindowButtonsRightPad
-
   StatusBarHeight = 26.0
 
   MapLeftPad   = 50.0
@@ -41,7 +40,8 @@ const
   MapTopPad    = 80.0
   MapBottomPad = 35.0
 
-  WindowResizeAreaWidth = 10.0
+  WindowResizeEdgeWidth = 10.0
+  WindowResizeCornerSize = 20.0
   WindowMinWidth = 400
   WindowMinHeight = 200
 
@@ -251,28 +251,27 @@ proc handleWindowDragEvents(a) =
         glfw.swapInterval(0)
 
     if not wnd.maximized:
-      if koi.noActiveItem():
-        let
-          W = mx < WindowResizeAreaWidth
-          E = mx > winWidth - WindowResizeAreaWidth
-          N = my < WindowResizeAreaWidth
-          S = my > winHeight - WindowResizeAreaWidth
+      if not koi.hasHotItem() and koi.noActiveItem():
+        let ew = WindowResizeEdgeWidth
+        let cs = WindowResizeCornerSize
+        let d =
+          if   mx < cs            and my < cs:             wrdNW
+          elif mx > winWidth - cs and my < cs:             wrdNE
+          elif mx > winWidth - cs and my > winHeight - cs: wrdSE
+          elif mx < cs            and my > winHeight - cs: wrdSW
 
-        let d = if   N and W: wrdNW
-                elif N and E: wrdNE
-                elif S and W: wrdSW
-                elif S and E: wrdSE
-                elif N: wrdN
-                elif E: wrdE
-                elif S: wrdS
-                elif W: wrdW
-                else: wrdNone
+          elif mx < ew:             wrdW
+          elif mx > winWidth - ew:  wrdE
+          elif my < ew:             wrdN
+          elif my > winHeight - ew: wrdS
+
+          else: wrdNone
 
         if d > wrdNone:
-#          case d
-#          of wrdW, wrdE: showHorizResizeCursor()
-#          of wrdN, wrdS: showVertResizeCursor()
-#          else: showHandCursor()
+          case d
+          of wrdW, wrdE: showHorizResizeCursor()
+          of wrdN, wrdS: showVertResizeCursor()
+          else: showHandCursor()
 
           if koi.mbLeftDown():
             wnd.mx0 = mx
@@ -286,6 +285,8 @@ proc handleWindowDragEvents(a) =
             glfw.swapInterval(0)
         else:
           showArrowCursor()
+      else:
+        showArrowCursor()
 
   of wdsMoving:
     if koi.mbLeftDown():
@@ -366,8 +367,8 @@ proc handleWindowDragEvents(a) =
       of wrdS:
         newH += dy
       of wrdSW:
-        newX -= dx
-        newW += dx
+        newX += dx
+        newW -= dx
         newH += dy
       of wrdW:
         newX += dx
@@ -380,11 +381,19 @@ proc handleWindowDragEvents(a) =
       of wrdNone:
         discard
 
-      (wnd.posX0, wnd.posY0) = (newX, newY)
-      (wnd.width0, wnd.height0) = (max(newW, WindowMinWidth), max(newH, WindowMinHeight))
+      let (newWidth, newHeight) = (max(newW, WindowMinWidth), max(newH, WindowMinHeight))
 
+#      if newW >= newWidth and newH >= newHeight:
+      (wnd.posX0, wnd.posY0) = (newX, newY)
       win.pos = (newX, newY)
-      win.size = (wnd.width0, wnd.height0)
+
+      win.size = (newWidth, newHeight)
+
+      if wnd.resizeDir in {wrdSW, wrdW, wrdNW}:
+        wnd.width0 = newWidth
+
+      if wnd.resizeDir in {wrdNE, wrdN, wrdNW}:
+        wnd.height0 = newHeight
 
     else:
       wnd.dragState = wdsNone
@@ -1070,15 +1079,6 @@ proc renderUI() =
 
   alias(vg, a.vg)
 
-  # Clear background
-  vg.beginPath()
-  vg.rect(0, 0, winWidth.float, winHeight.float)
-  vg.fillColor(gray(0.4))
-  vg.fill()
-
-  # Title bar
-  renderTitleBar(a, winWidth.float)
-
   # Current level dropdown
   a.currMapLevel = koi.dropdown(
     50, 45, 300, 24.0,
@@ -1110,13 +1110,6 @@ proc renderUI() =
   let statusBarY = winHeight - StatusBarHeight
   renderStatusBar(a, statusBarY, winWidth.float)
 
-  # Window border
-  vg.beginPath()
-  vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
-  vg.strokeColor(gray(0.09))
-  vg.strokeWidth(1.0)
-  vg.stroke()
-
 # }}}
 # {{{ renderFrame()
 proc renderFrame(win: Window, doHandleEvents: bool = true) =
@@ -1141,6 +1134,15 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
   koi.beginFrame(winWidth.float, winHeight.float)
 
+  # Clear background
+  vg.beginPath()
+  vg.rect(0, 0, winWidth.float, winHeight.float)
+  vg.fillColor(gray(0.4))
+  vg.fill()
+
+  # Title bar
+  renderTitleBar(a, winWidth.float)
+
   ######################################################
 
   updateViewStartAndCursorPosition(a)
@@ -1153,6 +1155,13 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   renderUI()
 
   ######################################################
+
+  # Window border
+  vg.beginPath()
+  vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
+  vg.strokeColor(gray(0.09))
+  vg.strokeWidth(1.0)
+  vg.stroke()
 
   koi.endFrame()
   vg.endFrame()
