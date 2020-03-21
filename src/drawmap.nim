@@ -11,16 +11,12 @@ import selection
 
 
 const
-  MinZoomLevel* = 1
-  MaxZoomLevel* = 10
+  MinZoomLevel = 1
+  MaxZoomLevel = 15
+  MinGridSize  = 19.0
+  ZoomStep     = 2.0
 
   UltrathinStrokeWidth = 1.0
-  ThinStrokeWidth      = 2.0
-  NormalStrokeWidth    = 3.0
-
-  VertTransformYFudgeFactor = -1.0
-
-
 
 # Naming conventions
 # ------------------
@@ -79,12 +75,18 @@ type
     drawOutline*:      bool
     drawCursorGuides*: bool
 
+    thinLines*:        bool
+
     # internal
     zoomLevel:          Natural
     gridSize:           float
     cellCoordsFontSize: float
 
-    vertTransformYFudgeFactor: float
+    thinStrokeWidth:    float
+    normalStrokeWidth:  float
+
+    thinOffs:           float
+    vertTransformXOffs: float
 
 # }}}
 
@@ -100,16 +102,26 @@ proc getZoomLevel*(dp): Natural = dp.zoomLevel
 proc setZoomLevel*(dp; zl: Natural) =
   assert zl >= MinZoomLevel
   assert zl <= MaxZoomLevel
-  let
-    MinGridSize = 19.44
-    ZoomFactor = 1.08
 
   dp.zoomLevel = zl
-  dp.gridSize = floor(MinGridSize * pow(ZoomFactor, zl.float))
+  dp.gridSize = MinGridSize + zl*ZoomStep
+
+  if zl < 3 or dp.thinLines:
+    dp.thinStrokeWidth = 2.0
+    dp.normalStrokeWidth = 2.0
+    dp.thinOffs = 1.0
+    dp.vertTransformXOffs = 0.0
+
+  else:
+    dp.thinStrokeWidth = 2.0
+    dp.normalStrokeWidth = 3.0
+    dp.thinOffs = 0.0
+    dp.vertTransformXOffs = 1.0
 
   dp.cellCoordsFontSize = if   zl <= 3: 11.0
                           elif zl <= 7: 12.0
                           else:         13.0
+
 
 # }}}
 # {{{ incZoomLevel*()
@@ -140,7 +152,7 @@ proc numDisplayableCols*(dp; width: float): Natural =
 # This is needed for drawing crisp lines
 func snap(f: float, strokeWidth: float): float =
   let (i, _) = splitDecimal(f)
-  let (_, offs) = splitDecimal(strokeWidth/2)
+  let (_, offs) = splitDecimal(strokeWidth*0.5) # either 0 or 0.5
   result = i + offs
 
 proc cellX(x: Natural, dp): float =
@@ -207,7 +219,7 @@ proc drawCellCoords(ctx) =
 
   for x in 0..<dp.viewCols:
     let
-      xPos = cellX(x, dp) + dp.gridSize/2
+      xPos = cellX(x, dp) + dp.gridSize*0.5
       coord = $(dp.viewStartCol + x)
 
     setTextHighlight(x == dp.cursorCol)
@@ -217,7 +229,7 @@ proc drawCellCoords(ctx) =
 
   for y in 0..<dp.viewRows:
     let
-      yPos = cellY(y, dp) + dp.gridSize/2
+      yPos = cellY(y, dp) + dp.gridSize*0.5
       coord = $(dp.viewStartRow + y)
 
     setTextHighlight(y == dp.cursorRow)
@@ -374,8 +386,8 @@ proc drawPressurePlate(x, y: float, ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
   vg.strokeColor(ms.defaultFgColor)
@@ -394,8 +406,8 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
   vg.strokeColor(gray(0.5))
@@ -414,8 +426,8 @@ proc drawClosedPit(x, y: float, ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeColor(ms.defaultFgColor)
@@ -449,8 +461,8 @@ proc drawOpenPit(x, y: float, ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
@@ -475,8 +487,8 @@ proc drawHiddenPit(x, y: float, ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeColor(gray(0.5))
@@ -510,8 +522,8 @@ proc drawCeilingPit(x, y: float, ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1
-    sw = ThinStrokeWidth
+    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
@@ -534,7 +546,7 @@ proc drawIcon(x, y, ox, oy: float, icon: string, ctx) =
   let dp = ctx.dp
   let (bounds, tx) = vg.textBounds(x, y, icon)
 
-  vg.setFont((dp.gridSize*0.6).float)
+  vg.setFont((dp.gridSize*0.53).float)
   vg.fillColor(gray(0))
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
@@ -574,16 +586,18 @@ proc drawSolidWallHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
-    sw = NormalStrokeWidth
-    x = snap(x, sw)
+    o = dp.thinOffs
+    sw = dp.normalStrokeWidth
+    xs = snap(x, sw)
+    xe = snap(x + dp.gridSize, sw)
     y = snap(y, sw)
 
   vg.lineCap(lcjRound)
   vg.beginPath()
   vg.strokeColor(ms.defaultFgColor)
   vg.strokeWidth(sw)
-  vg.moveTo(x, y)
-  vg.lineTo(x + dp.gridSize, y)
+  vg.moveTo(xs, y)
+  vg.lineTo(xe, y)
   vg.stroke()
 
 # }}}
@@ -594,7 +608,7 @@ proc drawIllusoryWallHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
-    sw = NormalStrokeWidth
+    sw = dp.normalStrokeWidth
     x = snap(x, sw)
     y = snap(y, sw)
 
@@ -614,7 +628,7 @@ proc drawInvisibleWallHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
-    sw = NormalStrokeWidth
+    sw = dp.normalStrokeWidth
     x = snap(x, sw)
     y = snap(y, sw)
 
@@ -634,17 +648,18 @@ proc drawOpenDoorHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
-    wallLen = (dp.gridSize * 0.3).int
-    doorWidth = round(dp.gridSize * 0.1)
+    wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
+    wallLen = (dp.gridSize * 0.3).int + wallLenOffs
+    doorWidth = round(dp.gridSize * 0.075)
     xs = x
     y  = y
-    x1 = xs + wallLen
+    x1 = xs + wallLen + dp.thinOffs
     xe = xs + dp.gridSize
-    x2 = xe - wallLen
+    x2 = xe - wallLen - dp.thinOffs
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = NormalStrokeWidth
+  let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(ms.defaultFgColor)
 
@@ -668,8 +683,6 @@ proc drawOpenDoorHoriz(x, y: float, ctx) =
   vg.stroke()
 
   # Wall end
-  sw = NormalStrokeWidth
-  vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()
   vg.moveTo(snap(x2, sw), snap(y, sw))
@@ -684,17 +697,19 @@ proc drawClosedDoorHoriz(x, y: float, ctx) =
   let vg = ctx.vg
 
   let
+    o = dp.thinOffs
     wallLen = (dp.gridSize * 0.25).int
-    doorWidth = round(dp.gridSize * 0.1)
+    doorWidthOffs = (if dp.zoomLevel < 4 or dp.thinLines: -1.0 else: 0)
+    doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
     xs = x
     y  = y
     x1 = xs + wallLen
     xe = xs + dp.gridSize
-    x2 = xe - wallLen
+    x2 = xe - wallLen - o
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = NormalStrokeWidth
+  var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(ms.defaultFgColor)
 
@@ -706,19 +721,19 @@ proc drawClosedDoorHoriz(x, y: float, ctx) =
   vg.stroke()
 
   # Door
+  sw = dp.thinStrokeWidth
   vg.lineCap(lcjSquare)
-  sw = ThinStrokeWidth
   vg.strokeWidth(sw)
   vg.beginPath()
-  vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
+  vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
   vg.stroke()
 
   # Wall end
-  sw = NormalStrokeWidth
+  sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.moveTo(snap(x2+1, sw), snap(y, sw))
+  vg.moveTo(snap(x2, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
@@ -740,7 +755,7 @@ proc drawSecretDoorHoriz(x, y: float, ctx) =
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = NormalStrokeWidth
+  var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(rgb(1.0, 0, 0.5))
 
@@ -753,14 +768,14 @@ proc drawSecretDoorHoriz(x, y: float, ctx) =
 
   # Door
   vg.lineCap(lcjSquare)
-  sw = ThinStrokeWidth
+  sw = dp.thinStrokeWidth
   vg.strokeWidth(sw)
   vg.beginPath()
   vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
   vg.stroke()
 
   # Wall end
-  sw = NormalStrokeWidth
+  sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()
@@ -775,11 +790,11 @@ proc setVertTransform(x, y: float, ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-  vg.translate(x, y)
+  vg.translate(x + dp.vertTransformXOffs, y)
   vg.rotate(degToRad(90.0))
 
   # We need to use some fudge factor here because of the grid snapping...
-  vg.translate(0, dp.vertTransformYFudgeFactor)
+#  vg.translate(0, 0)
 
 # }}}
 # {{{ drawGround()
@@ -797,9 +812,9 @@ proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
     drawBg()
     case viewBuf.getGroundOrientation(viewCol, viewRow):
     of Horiz:
-      drawProc(x, y + floor(dp.gridSize/2), ctx)
+      drawProc(x, y + floor(dp.gridSize*0.5), ctx)
     of Vert:
-      setVertTransform(x + floor(dp.gridSize/2), y, ctx)
+      setVertTransform(x + floor(dp.gridSize*0.5), y, ctx)
       drawProc(0, 0, ctx)
       vg.resetTransform()
 
@@ -811,6 +826,8 @@ proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
     drawGround(x, y, ms.groundColor, ctx)
     if cursorActive:
       drawCursor(x, y, ctx)
+
+  vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
   case viewBuf.getGround(viewCol, viewRow)
   of gNone:
@@ -831,6 +848,8 @@ proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
   of gSpinner:             draw(drawSpinner)
   of gTeleport:            draw(drawTeleport)
   of gCustom:              draw(drawCustom)
+
+  vg.resetScissor()
 
 # }}}
 # {{{ drawWall()

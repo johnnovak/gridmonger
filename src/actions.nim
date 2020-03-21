@@ -84,6 +84,14 @@ proc setGround*(currMap; c, r: Natural, g: Ground, um) =
     m.setGround(c, r, g)
 
 # }}}
+# {{{ setOrientedGround*()
+proc setOrientedGround*(currMap; c, r: Natural, g: Ground, ot: Orientation,
+                        um) =
+  singleCellAction(currMap, c, r, um, m):
+    m.setGround(c, r, g)
+    m.setGroundOrientation(c, r, ot)
+
+# }}}
 # {{{ excavate*()
 proc excavate*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):

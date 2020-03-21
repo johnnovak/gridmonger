@@ -124,6 +124,7 @@ proc setGroundOrientation*(m; c, r: Natural, ot: Orientation) =
   assert r < m.rows
   m[c,r].groundOrientation = ot
 
+
 proc setGround*(m; c, r: Natural, f: Ground) =
   assert c < m.cols
   assert r < m.rows
@@ -198,6 +199,11 @@ proc eraseCell*(m; c, r: Natural) =
 
   m.eraseCellWalls(c, r)
   m.setGround(c, r, gNone)
+
+
+proc guessGroundOrientation*(m; c, r: Natural): Orientation =
+  if m.getWall(c, r, North) != wNone and m.getWall(c, r, South) != wNone: Vert
+  else: Horiz
 
 
 proc paste*(m; destCol, destRow: Natural, src: Map, sel: Selection) =

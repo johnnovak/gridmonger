@@ -21,7 +21,7 @@ import undomanager
 import utils
 
 
-const DefaultZoomLevel = 5
+const DefaultZoomLevel = 2
 
 const
   TitleBarFontSize = 14.0
@@ -740,6 +740,20 @@ proc handleMapEvents(a) =
     a.drawMapParams.decZoomLevel()
     updateViewStartAndCursorPosition(a)
 
+  proc cycleGround(g, first, last: Ground): Ground =
+    if g >= first and g <= last:
+      result = Ground(ord(g) + 1)
+      if result > last: result = first
+    else:
+      result = first
+
+  proc setFloor(a; first, last: Ground) =
+    var g = m.getGround(curX, curY)
+    g = cycleGround(g, first, last)
+    let ot = m.guessGroundOrientation(curX, curY)
+    actions.setOrientedGround(m, curX, curY, g, ot, um)
+    a.setStatusMessage(mkFloorMessage(g))
+
 
   let (winWidth, winHeight) = win.size
 
@@ -781,6 +795,12 @@ proc handleMapEvents(a) =
         a.setStatusMessage(IconEraser, "Clear floor",  @[IconArrows, "clear"])
         actions.setGround(m, curX, curY, gEmpty, um)
 
+      elif ke.isKeyDown(keyO):
+        actions.toggleGroundOrientation(m, curX, curY, um)
+        a.setFloorOrientationStatusMessage(
+          m.getGroundOrientation(curX, curY)
+        )
+
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
         a.setStatusMessage("", "Draw walls", @[IconArrows, "set/clear"])
@@ -794,48 +814,19 @@ proc handleMapEvents(a) =
 #        actions.eraseCellWalls(m, curX, curY, um)
 
       elif ke.isKeyDown(key1):
-        if m.getGround(curX, curY) == gClosedDoor:
-          actions.toggleGroundOrientation(m, curX, curY, um)
-          a.setFloorOrientationStatusMessage(
-            m.getGroundOrientation(curX, curY)
-          )
-        else:
-          let g = gClosedDoor
-          actions.setGround(m, curX, curY, g, um)
-          a.setStatusMessage(mkFloorMessage(g))
+        setFloor(a, gClosedDoor, gOpenDoor)
 
       elif ke.isKeyDown(key2):
-        if m.getGround(curX, curY) == gOpenDoor:
-          actions.toggleGroundOrientation(m, curX, curY, um)
-          a.setFloorOrientationStatusMessage(
-            m.getGroundOrientation(curX, curY)
-          )
-        else:
-          let g = gOpenDoor
-          actions.setGround(m, curX, curY, g, um)
-          a.setStatusMessage(mkFloorMessage(g))
+        setFloor(a, gClosedDoor, gOpenDoor)
 
       elif ke.isKeyDown(key3):
-        var g = m.getGround(curX, curY)
-        g = if g == gPressurePlate: gHiddenPressurePlate else: gPressurePlate
-        actions.setGround(m, curX, curY, g, um)
-        a.setStatusMessage(mkFloorMessage(g))
+        setFloor(a, gPressurePlate, gHiddenPressurePlate)
 
       elif ke.isKeyDown(key4):
-        var g = m.getGround(curX, curY)
-        if g >= gClosedPit and g <= gCeilingPit:
-          g = Ground(ord(g) + 1)
-          if g > gCeilingPit: g = gClosedPit
-        else:
-          g = gClosedPit
-        actions.setGround(m, curX, curY, g, um)
-        a.setStatusMessage(mkFloorMessage(g))
+        setFloor(a, gClosedPit, gCeilingPit)
 
       elif ke.isKeyDown(key5):
-        var g = m.getGround(curX, curY)
-        g = if g == gStairsDown: gStairsUp else: gStairsDown
-        actions.setGround(m, curX, curY, g, um)
-        a.setStatusMessage(mkFloorMessage(g))
+        setFloor(a, gStairsDown, gStairsUp)
 
       elif ke.isKeyDown(key6):
         let g = gSpinner
@@ -847,13 +838,13 @@ proc handleMapEvents(a) =
         actions.setGround(m, curX, curY, g, um)
         a.setStatusMessage(mkFloorMessage(g))
 
-      elif ke.isKeyDown(keyLeftBracket, repeat=true):
-        if a.currWall > wIllusoryWall: dec(a.currWall)
-        else: a.currWall = a.currWall.high
+#      elif ke.isKeyDown(keyLeftBracket, repeat=true):
+#        if a.currWall > wIllusoryWall: dec(a.currWall)
+#        else: a.currWall = a.currWall.high
 
-      elif ke.isKeyDown(keyRightBracket, repeat=true):
-        if a.currWall < Wall.high: inc(a.currWall)
-        else: a.currWall = wIllusoryWall
+#      elif ke.isKeyDown(keyRightBracket, repeat=true):
+#        if a.currWall < Wall.high: inc(a.currWall)
+#        else: a.currWall = wIllusoryWall
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
@@ -1194,7 +1185,7 @@ proc createDefaultMapStyle(): MapStyle =
   ms.defaultFgColor      = gray(0.1)
   ms.groundColor         = gray(0.9)
   ms.gridColorBackground = gray(0.0, 0.3)
-  ms.gridColorGround     = gray(0.0, 0.2)
+  ms.gridColorGround     = gray(0.0, 0.15)
   ms.mapBackgroundColor  = gray(0.0, 0.7)
   ms.mapOutlineColor     = gray(0.23)
   ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
@@ -1206,6 +1197,7 @@ proc initDrawMapParams(a) =
 
   dp.drawOutline = true
   dp.drawCursorGuides = false
+  dp.thinLines = false
 
 
 proc createWindow(): Window =
@@ -1280,6 +1272,8 @@ proc init(): Window =
   initDrawMapParams(g_app)
   g_app.drawMapParams.setZoomLevel(DefaultZoomLevel)
   g_app.scrollMargin = 3
+
+  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb
