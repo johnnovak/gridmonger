@@ -50,7 +50,7 @@ type
     defaultFgColor*:      Color
     groundColor*:         Color
     gridColorBackground*: Color
-    gridColorGround*:     Color
+    gridColorFloor*:      Color
     mapBackgroundColor*:  Color
     mapOutlineColor*:     Color
     pastePreviewColor*:   Color
@@ -330,7 +330,7 @@ proc drawOutline(m: Map, ctx) =
   func check(col, row: int): bool =
     let c = max(min(col, m.cols-1), 0)
     let r = max(min(row, m.rows-1), 0)
-    m.getGround(c, r) != gNone
+    m.getFloor(c, r) != fNone
 
   func isOutline(c, r: Natural): bool =
     check(c,   r+1) or
@@ -361,8 +361,8 @@ proc drawOutline(m: Map, ctx) =
 
 # }}}
 
-# {{{ drawGround()
-proc drawGround(x, y: float, color: Color, ctx) =
+# {{{ drawFloor()
+proc drawFloor(x, y: float, color: Color, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
@@ -371,7 +371,7 @@ proc drawGround(x, y: float, color: Color, ctx) =
 
   vg.beginPath()
   vg.fillColor(color)
-  vg.strokeColor(ms.gridColorGround)
+  vg.strokeColor(ms.gridColorFloor)
   vg.strokeWidth(sw)
   vg.rect(snap(x, sw), snap(y, sw), dp.gridSize, dp.gridSize)
   vg.fill()
@@ -641,8 +641,8 @@ proc drawInvisibleWallHoriz(x, y: float, ctx) =
   vg.stroke()
 
 # }}}
-# {{{ drawOpenDoorHoriz()
-proc drawOpenDoorHoriz(x, y: float, ctx) =
+# {{{ drawArchwayHoriz()
+proc drawArchwayHoriz(x, y: float, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
@@ -690,8 +690,56 @@ proc drawOpenDoorHoriz(x, y: float, ctx) =
   vg.stroke()
 
 # }}}
-# {{{ drawClosedDoorHoriz()
-proc drawClosedDoorHoriz(x, y: float, ctx) =
+# {{{ drawDoorHoriz()
+proc drawDoorHoriz(x, y: float, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    o = dp.thinOffs
+    wallLen = (dp.gridSize * 0.25).int
+    doorWidthOffs = (if dp.zoomLevel < 4 or dp.thinLines: -1.0 else: 0)
+    doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
+    xs = x
+    y  = y
+    x1 = xs + wallLen
+    xe = xs + dp.gridSize
+    x2 = xe - wallLen - o
+    y1 = y - doorWidth
+    y2 = y + doorWidth
+
+  var sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ms.defaultFgColor)
+
+  # Wall start
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(xs, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.stroke()
+
+  # Door
+  sw = dp.thinStrokeWidth
+  vg.lineCap(lcjSquare)
+  vg.strokeWidth(sw)
+  vg.beginPath()
+  vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
+  vg.stroke()
+
+  # Wall end
+  sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
+# }}}
+# {{{ drawLockedDoorHoriz()
+proc drawLockedDoorHoriz(x, y: float, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
@@ -797,8 +845,8 @@ proc setVertTransform(x, y: float, ctx) =
 #  vg.translate(0, 0)
 
 # }}}
-# {{{ drawGround()
-proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
+# {{{ drawFloor()
+proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
                 cursorActive: bool, ctx) =
 
   let ms = ctx.ms
@@ -810,7 +858,7 @@ proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
 
   template drawOriented(drawProc: untyped) =
     drawBg()
-    case viewBuf.getGroundOrientation(viewCol, viewRow):
+    case viewBuf.getFloorOrientation(viewCol, viewRow):
     of Horiz:
       drawProc(x, y + floor(dp.gridSize*0.5), ctx)
     of Vert:
@@ -823,31 +871,33 @@ proc drawGround(viewBuf: Map, viewCol, viewRow: Natural,
     drawProc(x, y, ctx)
 
   proc drawBg() =
-    drawGround(x, y, ms.groundColor, ctx)
+    drawFloor(x, y, ms.groundColor, ctx)
     if cursorActive:
       drawCursor(x, y, ctx)
 
   vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
-  case viewBuf.getGround(viewCol, viewRow)
-  of gNone:
+  case viewBuf.getFloor(viewCol, viewRow)
+  of fNone:
     if cursorActive:
       drawCursor(x, y, ctx)
 
-  of gEmpty:               drawBg()
-  of gClosedDoor:          drawOriented(drawClosedDoorHoriz)
-  of gOpenDoor:            drawOriented(drawOpenDoorHoriz)
-  of gPressurePlate:       draw(drawPressurePlate)
-  of gHiddenPressurePlate: draw(drawHiddenPressurePlate)
-  of gClosedPit:           draw(drawClosedPit)
-  of gOpenPit:             draw(drawOpenPit)
-  of gHiddenPit:           draw(drawHiddenPit)
-  of gCeilingPit:          draw(drawCeilingPit)
-  of gStairsDown:          draw(drawStairsDown)
-  of gStairsUp:            draw(drawStairsUp)
-  of gSpinner:             draw(drawSpinner)
-  of gTeleport:            draw(drawTeleport)
-  of gCustom:              draw(drawCustom)
+  of fEmpty:               drawBg()
+  of fDoor:                drawOriented(drawDoorHoriz)
+  of fLockedDoor:          drawOriented(drawDoorHoriz)
+  of fArchway:             drawOriented(drawArchwayHoriz)
+  of fSecretDoor:          drawOriented(drawDoorHoriz)
+  of fPressurePlate:       draw(drawPressurePlate)
+  of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
+  of fClosedPit:           draw(drawClosedPit)
+  of fOpenPit:             draw(drawOpenPit)
+  of fHiddenPit:           draw(drawHiddenPit)
+  of fCeilingPit:          draw(drawCeilingPit)
+  of fStairsDown:          draw(drawStairsDown)
+  of fStairsUp:            draw(drawStairsUp)
+  of fSpinner:             draw(drawSpinner)
+  of fTeleport:            draw(drawTeleport)
+  of fCustom:              draw(drawCustom)
 
   vg.resetScissor()
 
@@ -870,8 +920,9 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wWall:          drawOriented(drawSolidWallHoriz)
   of wIllusoryWall:  drawOriented(drawIllusoryWallHoriz)
   of wInvisibleWall: drawOriented(drawInvisibleWallHoriz)
-  of wOpenDoor:      drawOriented(drawOpenDoorHoriz)
-  of wClosedDoor:    drawOriented(drawClosedDoorHoriz)
+  of wDoor:          drawOriented(drawDoorHoriz)
+  of wLockedDoor:    drawOriented(drawLockedDoorHoriz)
+  of wArchway:       drawOriented(drawArchwayHoriz)
   of wSecretDoor:    drawOriented(drawSecretDoorHoriz)
   of wLever:         discard
   of wNiche:         discard
@@ -882,7 +933,7 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
 proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
   let dp = ctx.dp
 
-  let groundEmpty = viewBuf.getGround(viewCol, viewRow) == gNone
+  let groundEmpty = viewBuf.getFloor(viewCol, viewRow) == fNone
 
   if viewRow > 0 or (viewRow == 0 and not groundEmpty):
     drawWall(
@@ -1007,7 +1058,7 @@ proc drawMap*(m: Map, ctx) =
     for c in 0..<dp.viewCols:
       let cursorActive = dp.viewStartCol+c == dp.cursorCol and
                          dp.viewStartRow+r == dp.cursorRow
-      drawGround(viewBuf, c, r, cursorActive, ctx)
+      drawFloor(viewBuf, c, r, cursorActive, ctx)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:

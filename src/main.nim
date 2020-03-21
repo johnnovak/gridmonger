@@ -53,7 +53,7 @@ type
     emDrawWall,
     emDrawWallSpecial,
     emEraseCell,
-    emClearGround,
+    emClearFloor,
     emSelectDraw,
     emSelectRect
     emPastePreview
@@ -723,8 +723,8 @@ proc handleMapEvents(a) =
   alias(dp, a.drawMapParams)
   alias(win, a.win)
 
-  proc mkFloorMessage(g: Ground): string =
-    fmt"Set floor – {g}"
+  proc mkFloorMessage(f: Floor): string =
+    fmt"Set floor – {f}"
 
   proc setFloorOrientationStatusMessage(a; o: Orientation) =
     if o == Horiz:
@@ -740,19 +740,19 @@ proc handleMapEvents(a) =
     a.drawMapParams.decZoomLevel()
     updateViewStartAndCursorPosition(a)
 
-  proc cycleGround(g, first, last: Ground): Ground =
-    if g >= first and g <= last:
-      result = Ground(ord(g) + 1)
+  proc cycleFloor(f, first, last: Floor): Floor =
+    if f >= first and f <= last:
+      result = Floor(ord(f) + 1)
       if result > last: result = first
     else:
       result = first
 
-  proc setFloor(a; first, last: Ground) =
-    var g = m.getGround(curX, curY)
-    g = cycleGround(g, first, last)
-    let ot = m.guessGroundOrientation(curX, curY)
-    actions.setOrientedGround(m, curX, curY, g, ot, um)
-    a.setStatusMessage(mkFloorMessage(g))
+  proc setFloor(a; first, last: Floor) =
+    var f = m.getFloor(curX, curY)
+    f = cycleFloor(f, first, last)
+    let ot = m.guessFloorOrientation(curX, curY)
+    actions.setOrientedFloor(m, curX, curY, f, ot, um)
+    a.setStatusMessage(mkFloorMessage(f))
 
 
   let (winWidth, winHeight) = win.size
@@ -791,14 +791,14 @@ proc handleMapEvents(a) =
         actions.eraseCell(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
-        a.editMode = emClearGround
+        a.editMode = emClearFloor
         a.setStatusMessage(IconEraser, "Clear floor",  @[IconArrows, "clear"])
-        actions.setGround(m, curX, curY, gEmpty, um)
+        actions.setFloor(m, curX, curY, fEmpty, um)
 
       elif ke.isKeyDown(keyO):
-        actions.toggleGroundOrientation(m, curX, curY, um)
+        actions.toggleFloorOrientation(m, curX, curY, um)
         a.setFloorOrientationStatusMessage(
-          m.getGroundOrientation(curX, curY)
+          m.getFloorOrientation(curX, curY)
         )
 
       elif ke.isKeyDown(keyW):
@@ -814,29 +814,29 @@ proc handleMapEvents(a) =
 #        actions.eraseCellWalls(m, curX, curY, um)
 
       elif ke.isKeyDown(key1):
-        setFloor(a, gClosedDoor, gOpenDoor)
+        setFloor(a, fDoor, fSecretDoor)
 
       elif ke.isKeyDown(key2):
-        setFloor(a, gClosedDoor, gOpenDoor)
+        setFloor(a, fDoor, fSecretDoor)
 
       elif ke.isKeyDown(key3):
-        setFloor(a, gPressurePlate, gHiddenPressurePlate)
+        setFloor(a, fPressurePlate, fHiddenPressurePlate)
 
       elif ke.isKeyDown(key4):
-        setFloor(a, gClosedPit, gCeilingPit)
+        setFloor(a, fClosedPit, fCeilingPit)
 
       elif ke.isKeyDown(key5):
-        setFloor(a, gStairsDown, gStairsUp)
+        setFloor(a, fStairsDown, fStairsUp)
 
       elif ke.isKeyDown(key6):
-        let g = gSpinner
-        actions.setGround(m, curX, curY, g, um)
-        a.setStatusMessage(mkFloorMessage(g))
+        let f = fSpinner
+        actions.setFloor(m, curX, curY, f, um)
+        a.setStatusMessage(mkFloorMessage(f))
 
       elif ke.isKeyDown(key7):
-        let g = gTeleport
-        actions.setGround(m, curX, curY, g, um)
-        a.setStatusMessage(mkFloorMessage(g))
+        let f = fTeleport
+        actions.setFloor(m, curX, curY, f, um)
+        a.setStatusMessage(mkFloorMessage(f))
 
 #      elif ke.isKeyDown(keyLeftBracket, repeat=true):
 #        if a.currWall > wIllusoryWall: dec(a.currWall)
@@ -919,7 +919,7 @@ proc handleMapEvents(a) =
             # TODO log stracktrace?
             a.setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}")
 
-    of emExcavate, emEraseCell, emClearGround:
+    of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: Direction, a) =
         if a.editMode == emExcavate:
           moveCursor(dir, a)
@@ -929,9 +929,9 @@ proc handleMapEvents(a) =
           moveCursor(dir, a)
           actions.eraseCell(m, curX, curY, um)
 
-        elif a.editMode == emClearGround:
+        elif a.editMode == emClearFloor:
           moveCursor(dir, a)
-          actions.setGround(m, curX, curY, gEmpty, um)
+          actions.setFloor(m, curX, curY, fEmpty, um)
 
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(West, a)
       if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(East, a)
@@ -1072,7 +1072,7 @@ proc renderUI() =
 
   # Clear background
   vg.beginPath()
-  vg.rect(0, 0, winWidth.float, winHeight.float)
+  vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
   vg.fillColor(gray(0.4))
   vg.fill()
 
@@ -1131,6 +1131,9 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
   koi.beginFrame(winWidth.float, winHeight.float)
 
+  # Title bar
+  renderTitleBar(a, winWidth.float)
+
   ######################################################
 
   updateViewStartAndCursorPosition(a)
@@ -1147,9 +1150,6 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   (winWidth, winHeight) = win.size
   (fbWidth, fbHeight) = win.framebufferSize
   pxRatio = fbWidth / winWidth
-
-  # Title bar
-  renderTitleBar(a, winWidth.float)
 
   # Window border
   vg.beginPath()
@@ -1185,7 +1185,7 @@ proc createDefaultMapStyle(): MapStyle =
   ms.defaultFgColor      = gray(0.1)
   ms.groundColor         = gray(0.9)
   ms.gridColorBackground = gray(0.0, 0.3)
-  ms.gridColorGround     = gray(0.0, 0.15)
+  ms.gridColorFloor      = gray(0.0, 0.15)
   ms.mapBackgroundColor  = gray(0.0, 0.7)
   ms.mapOutlineColor     = gray(0.23)
   ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
@@ -1195,7 +1195,7 @@ proc createDefaultMapStyle(): MapStyle =
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
-  dp.drawOutline = true
+  dp.drawOutline = false
   dp.drawCursorGuides = false
   dp.thinLines = false
 
@@ -1272,8 +1272,6 @@ proc init(): Window =
   initDrawMapParams(g_app)
   g_app.drawMapParams.setZoomLevel(DefaultZoomLevel)
   g_app.scrollMargin = 3
-
-  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb

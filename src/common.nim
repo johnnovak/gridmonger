@@ -63,39 +63,42 @@ func contains*[T: SomeNumber | Natural](r: Rect[T], x, y: T): bool =
 
 
 type
-  Ground* = enum
-    gNone                = (  0, "blank"),
-    gEmpty               = (  1, "empty"),
-    gClosedDoor          = ( 10, "closed door"),
-    gOpenDoor            = ( 11, "open door"),
-    gPressurePlate       = ( 20, "pressure plate"),
-    gHiddenPressurePlate = ( 21, "hidden pressure plate"),
-    gClosedPit           = ( 30, "closed pit"),
-    gOpenPit             = ( 31, "open pit"),
-    gHiddenPit           = ( 32, "hidden pit"),
-    gCeilingPit          = ( 33, "ceiling pit"),
-    gStairsDown          = ( 40, "stairs down"),
-    gStairsUp            = ( 41, "stairs up"),
-    gSpinner             = ( 50, "spinner"),
-    gTeleport            = ( 60, "teleport"),
-    gCustom              = (255, "custom")
+  Floor* = enum
+    fNone                = (  0, "blank"),
+    fEmpty               = (  1, "empty"),
+    fDoor                = ( 20, "door"),
+    fLockedDoor          = ( 21, "locked door"),
+    fArchway             = ( 22, "archway"),
+    fSecretDoor          = ( 23, "secret door"),
+    fPressurePlate       = ( 30, "pressure plate"),
+    fHiddenPressurePlate = ( 31, "hidden pressure plate"),
+    fClosedPit           = ( 40, "closed pit"),
+    fOpenPit             = ( 41, "open pit"),
+    fHiddenPit           = ( 42, "hidden pit"),
+    fCeilingPit          = ( 43, "ceiling pit"),
+    fStairsDown          = ( 50, "stairs down"),
+    fStairsUp            = ( 51, "stairs up"),
+    fSpinner             = ( 60, "spinner"),
+    fTeleport            = ( 70, "teleport"),
+    fCustom              = (255, "custom")
 
   Wall* = enum
     wNone          = (0, "none"),
     wWall          = (10, "wall"),
     wIllusoryWall  = (11, "illusory wall"),
     wInvisibleWall = (12, "invisible wall")
-    wOpenDoor      = (20, "closed door"),
-    wClosedDoor    = (21, "open door"),
-    wSecretDoor    = (22, "secret door"),
+    wDoor          = (20, "door"),
+    wLockedDoor    = (21, "locked door"),
+    wArchway       = (22, "archway"),
+    wSecretDoor    = (23, "secret door"),
     wLever         = (30, "lever")
     wNiche         = (40, "niche")
     wStatue        = (50, "statue")
 
   Cell* = object
-    ground*:            Ground
-    groundOrientation*: Orientation
-    wallN*, wallW*:     Wall
+    floor*:            Floor
+    floorOrientation*: Orientation
+    wallN*, wallW*:    Wall
 
   NoteKind* = enum
     nkIndexed, nkCustomId, nkComment

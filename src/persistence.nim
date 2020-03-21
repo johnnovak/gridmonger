@@ -71,12 +71,38 @@ proc readMapProperties_V1(rr): (Natural, Natural, string) =
   result = (rows, cols, name)
 
 
+proc mapFloor(f: uint8): uint8 =
+  result = case f
+  of 0:  0
+  of 1:  1
+  of 10: 20
+  of 11: 22
+  of 20: 30
+  of 21: 31
+  of 30: 40
+  of 31: 41
+  of 32: 42
+  of 33: 43
+  of 40: 50
+  of 41: 51
+  of 50: 60
+  of 60: 70
+  else: f.int
+
+proc mapWall(w: uint8): uint8 =
+  result = case w
+  of 21: 22
+  else: w.int
+
 proc readMapData_V1(rr; numCells: Natural): seq[Cell] =
   result = newSeqOfCap[Cell](numCells)
   for i in 0..<numCells:
     var c: Cell
-    c.ground = rr.read(uint8).Ground
-    c.groundOrientation = rr.read(uint8).Orientation
+    #c.floor = mapFloor(rr.read(uint8)).Floor
+    c.floor = rr.read(uint8).Floor
+    c.floorOrientation = rr.read(uint8).Orientation
+    #c.wallN = mapWall(rr.read(uint8)).Wall
+    #c.wallW = mapWall(rr.read(uint8)).Wall
     c.wallN = rr.read(uint8).Wall
     c.wallW = rr.read(uint8).Wall
     result.add(c)
@@ -237,8 +263,8 @@ proc writeMapProperties(rw; m: Map) =
 proc writeMapCells(rw; cells: seq[Cell]) =
   rw.beginChunk(FourCC_GRDM_map_cell)
   for c in cells:
-    rw.write(c.ground.uint8)
-    rw.write(c.groundOrientation.uint8)
+    rw.write(c.floor.uint8)
+    rw.write(c.floorOrientation.uint8)
     rw.write(c.wallN.uint8)
     rw.write(c.wallW.uint8)
   rw.endChunk()

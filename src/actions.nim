@@ -78,53 +78,52 @@ proc setWall*(currMap; c, r: Natural, dir: Direction, w: Wall, um) =
     m.setWall(c, r, dir, w)
 
 # }}}
-# {{{ setGround*()
-proc setGround*(currMap; c, r: Natural, g: Ground, um) =
+# {{{ setFloor*()
+proc setFloor*(currMap; c, r: Natural, f: Floor, um) =
   singleCellAction(currMap, c, r, um, m):
-    m.setGround(c, r, g)
+    m.setFloor(c, r, f)
 
 # }}}
-# {{{ setOrientedGround*()
-proc setOrientedGround*(currMap; c, r: Natural, g: Ground, ot: Orientation,
-                        um) =
+# {{{ setOrientedFloor*()
+proc setOrientedFloor*(currMap; c, r: Natural, f: Floor, ot: Orientation, um) =
   singleCellAction(currMap, c, r, um, m):
-    m.setGround(c, r, g)
-    m.setGroundOrientation(c, r, ot)
+    m.setFloor(c, r, f)
+    m.setFloorOrientation(c, r, ot)
 
 # }}}
 # {{{ excavate*()
 proc excavate*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
-    if m.getGround(c,r) == gNone:
-      m.setGround(c,r, gEmpty)
+    if m.getFloor(c,r) == fNone:
+      m.setFloor(c,r, fEmpty)
 
-    if r == 0 or m.getGround(c,r-1) == gNone:
+    if r == 0 or m.getFloor(c,r-1) == fNone:
       m.setWall(c,r, North, wWall)
     else:
       m.setWall(c,r, North, wNone)
 
-    if c == 0 or m.getGround(c-1,r) == gNone:
+    if c == 0 or m.getFloor(c-1,r) == fNone:
       m.setWall(c,r, West, wWall)
     else:
       m.setWall(c,r, West, wNone)
 
-    if r == m.rows-1 or m.getGround(c,r+1) == gNone:
+    if r == m.rows-1 or m.getFloor(c,r+1) == fNone:
       m.setWall(c,r, South, wWall)
     else:
       m.setWall(c,r, South, wNone)
 
-    if c == m.cols-1 or m.getGround(c+1,r) == gNone:
+    if c == m.cols-1 or m.getFloor(c+1,r) == fNone:
       m.setWall(c,r, East, wWall)
     else:
       m.setWall(c,r, East, wNone)
 
 # }}}
-# {{{ toggleGroundOrientation*()
+# {{{ toggleFloorOrientation*()
 # TODO unnecessary
-proc toggleGroundOrientation*(currMap; c, r: Natural, um) =
+proc toggleFloorOrientation*(currMap; c, r: Natural, um) =
   singleCellAction(currMap, c, r, um, m):
-    let newOt = if m.getGroundOrientation(c, r) == Horiz: Vert else: Horiz
-    m.setGroundOrientation(c, r, newOt)
+    let newOt = if m.getFloorOrientation(c, r) == Horiz: Vert else: Horiz
+    m.setFloorOrientation(c, r, newOt)
 
 # }}}
 # }}}
