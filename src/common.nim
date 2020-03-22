@@ -32,7 +32,7 @@ const
   East*      = {dirE}
   SouthEast* = {dirS, dirE}
   South*     = {dirS}
-  SouthWest* = {dirW, dirW}
+  SouthWest* = {dirS, dirW}
   West*      = {dirW}
   NorthWest* = {dirN, dirW}
 

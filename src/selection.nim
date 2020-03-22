@@ -5,26 +5,26 @@ import common
 
 using s: Selection
 
-proc `[]=`*(s; x, y: Natural, v: bool) =
-  assert x < s.cols
-  assert y < s.rows
-  s.cells[s.cols * y + x] = v
+proc `[]=`*(s; c, r: Natural, v: bool) =
+  assert c < s.cols
+  assert r < s.rows
+  s.cells[s.cols*r + c] = v
 
-proc `[]`*(s; x, y: Natural): bool =
-  assert x < s.cols
-  assert y < s.rows
-  result = s.cells[s.cols * y + x]
+proc `[]`*(s; c, r: Natural): bool =
+  assert c < s.cols
+  assert r < s.rows
+  result = s.cells[s.cols*r + c]
 
 
-proc fill*(s; r: Rect[Natural], v: bool) =
-  assert r.x1 < s.cols
-  assert r.y1 < s.rows
-  assert r.x2 <= s.cols
-  assert r.y2 <= s.rows
+proc fill*(s; rect: Rect[Natural], v: bool) =
+  assert rect.x1 < s.cols
+  assert rect.y1 < s.rows
+  assert rect.x2 <= s.cols
+  assert rect.y2 <= s.rows
 
-  for y in r.y1..<r.y2:
-    for x in r.x1..<r.x2:
-      s[x,y] = v
+  for r in rect.y1..<rect.y2:
+    for c in rect.x1..<rect.x2:
+      s[c,r] = v
 
 
 proc fill*(s; v: bool) =
@@ -42,37 +42,37 @@ proc newSelection*(cols, rows: Natural): Selection =
   result = s
 
 
-proc copyFrom*(dest: var Selection, destX, destY: Natural,
+proc copyFrom*(dest: var Selection, destCol, destRow: Natural,
                src: Selection, srcRect: Rect[Natural]) =
   let
-    srcX = srcRect.x1
-    srcY = srcRect.y1
-    srcCols   = max(src.cols - srcX, 0)
-    srcRows  = max(src.rows - srcY, 0)
-    destCols  = max(dest.cols - destX, 0)
-    destRows = max(dest.rows - destY, 0)
+    srcCol = srcRect.x1
+    srcRow = srcRect.y1
+    srcCols   = max(src.cols - srcCol, 0)
+    srcRows  = max(src.rows - srcRow, 0)
+    destCols  = max(dest.cols - destCol, 0)
+    destRows = max(dest.rows - destRow, 0)
 
-    w = min(min(srcCols,  destCols), srcRect.width)
-    h = min(min(srcRows, destRows), srcRect.height)
+    cols = min(min(srcCols,  destCols), srcRect.width)
+    rows = min(min(srcRows, destRows), srcRect.height)
 
-  for y in 0..<h:
-    for x in 0..<w:
-      dest[destX + x, destY + y] = src[srcX + x, srcY + y]
+  for r in 0..<rows:
+    for c in 0..<cols:
+      dest[destCol+c, destRow+r] = src[srcCol+c, srcRow+r]
 
 
 proc copyFrom*(dest: var Selection, src: Selection) =
-  dest.copyFrom(destX=0, destY=0, src, rectN(0, 0, src.cols, src.rows))
+  dest.copyFrom(destCol=0, destRow=0, src, rectN(0, 0, src.cols, src.rows))
 
 
-proc newSelectionFrom*(src: Selection, r: Rect[Natural]): Selection =
-  assert r.x1 < src.cols
-  assert r.y1 < src.rows
-  assert r.x2 <= src.cols
-  assert r.y2 <= src.rows
+proc newSelectionFrom*(src: Selection, rect: Rect[Natural]): Selection =
+  assert rect.x1 < src.cols
+  assert rect.y1 < src.rows
+  assert rect.x2 <= src.cols
+  assert rect.y2 <= src.rows
 
   var dest = new Selection
-  dest.initSelection(r.width, r.height)
-  dest.copyFrom(destX=0, destY=0, src, srcRect=r)
+  dest.initSelection(rect.width, rect.height)
+  dest.copyFrom(destCol=0, destRow=0, src, srcRect=rect)
   result = dest
 
 
@@ -81,30 +81,30 @@ proc newSelectionFrom*(s): Selection =
 
 
 proc boundingBox*(s): Option[Rect[Natural]] =
-  proc isRowEmpty(y: Natural): bool =
-    for x in 0..<s.cols:
-      if s[x,y]: return false
+  proc isRowEmpty(r: Natural): bool =
+    for c in 0..<s.cols:
+      if s[c,r]: return false
     return true
 
-  proc isColEmpty(x: Natural): bool =
-    for y in 0..<s.rows:
-      if s[x,y]: return false
+  proc isColEmpty(c: Natural): bool =
+    for r in 0..<s.rows:
+      if s[c,r]: return false
     return true
 
   var
-    x1 = 0
-    y1 = 0
-    x2 = s.cols-1
-    y2 = s.rows-1
+    c1 = 0
+    r1 = 0
+    c2 = s.cols-1
+    r2 = s.rows-1
 
-  while y1 < s.rows and isRowEmpty(y1): inc(y1)
+  while r1 < s.rows and isRowEmpty(r1): inc(r1)
 
-  if y1 < s.rows-1:
-    while x1 < s.cols and isColEmpty(x1): inc(x1)
-    while x2 > 0 and isColEmpty(x2): dec(x2)
-    while y2 > 0 and isRowEmpty(y2): dec(y2)
+  if r1 < s.rows-1:
+    while c1 < s.cols and isColEmpty(c1): inc(c1)
+    while c2 > 0 and isColEmpty(c2): dec(c2)
+    while r2 > 0 and isRowEmpty(r2): dec(r2)
 
-    return rectN(x1, y1, x2+1, y2+1).some
+    return rectN(c1, r1, c2+1, r2+1).some
   else:
     return Rect[Natural].none
 

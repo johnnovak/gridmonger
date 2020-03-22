@@ -21,7 +21,7 @@ import undomanager
 import utils
 
 
-const DefaultZoomLevel = 4
+const DefaultZoomLevel = 5
 
 const
   TitleBarFontSize = 14.0
@@ -1274,8 +1274,9 @@ proc createLightMapStyle(): MapStyle =
   ms.groundColor         = rgb(248, 248, 244)
   ms.gridColorBackground = gray(0.0, 0.3)
   ms.gridColorFloor      = gray(0.0, 0.15)
-  ms.mapBackgroundColor  = gray(0.0, 0.5)
-  ms.mapOutlineColor     = gray(0.23)
+  ms.mapBackgroundColor  = rgb(228, 228, 224)
+  ms.mapForegroundColor  = gray(0.0, 0.0)
+  ms.mapOutlineColor     = rgb(178, 178, 174)
   ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor   = rgba(0.2, 0.6, 1.0, 0.4)
   result = ms
@@ -1283,7 +1284,7 @@ proc createLightMapStyle(): MapStyle =
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
-  dp.drawOutline = false
+  dp.drawOutline = true
   dp.drawCursorGuides = false
   dp.thinLines = false
 

@@ -12,8 +12,8 @@ import selection
 
 const
   MinZoomLevel = 1
-  MaxZoomLevel = 15
-  MinGridSize  = 19.0
+  MaxZoomLevel = 20
+  MinGridSize  = 13.0
   ZoomStep     = 2.0
 
   UltrathinStrokeWidth = 1.0
@@ -53,6 +53,7 @@ type
     gridColorBackground*: Color
     gridColorFloor*:      Color
     mapBackgroundColor*:  Color
+    mapForegroundColor*:  Color
     mapOutlineColor*:     Color
     pastePreviewColor*:   Color
     selectionColor*:      Color
@@ -89,6 +90,34 @@ type
     thinOffs:           float
     vertTransformXOffs: float
 
+  Outline = enum
+    olN, olNE, olE, olSE, olS, olSW, olW, olNW
+
+  OutlineCell = set[Outline]
+
+  OutlineBuf = ref object
+    cols, rows: Natural
+    cells: seq[OutlineCell]
+
+
+proc newOutlineBuf(cols, rows: Natural): OutlineBuf =
+  var b = new OutlineBuf
+  b.cols = cols
+  b.rows = rows
+  newSeq(b.cells, b.cols * b.rows)
+  result = b
+
+proc `[]=`(b: OutlineBuf, c, r: Natural, cell: OutlineCell) =
+  assert c < b.cols
+  assert r < b.rows
+  b.cells[b.cols*r + c] = cell
+
+proc `[]`(b: OutlineBuf, c, r: Natural): OutlineCell =
+  assert c < b.cols
+  assert r < b.rows
+  result = b.cells[b.cols*r + c]
+
+
 # }}}
 
 using
@@ -107,7 +136,7 @@ proc setZoomLevel*(dp; zl: Natural) =
   dp.zoomLevel = zl
   dp.gridSize = MinGridSize + zl*ZoomStep
 
-  if zl < 3 or dp.thinLines:
+  if zl < 6 or dp.thinLines:
     dp.thinStrokeWidth = 2.0
     dp.normalStrokeWidth = 2.0
     dp.thinOffs = 1.0
@@ -119,9 +148,11 @@ proc setZoomLevel*(dp; zl: Natural) =
     dp.thinOffs = 0.0
     dp.vertTransformXOffs = 1.0
 
-  dp.cellCoordsFontSize = if   zl <= 3: 11.0
-                          elif zl <= 7: 12.0
-                          else:         13.0
+  dp.cellCoordsFontSize = if   zl <= 2:   9.0
+                          elif zl <= 3:  10.0
+                          elif zl <= 7:  11.0
+                          elif zl <= 11: 12.0
+                          else:          13.0
 
 
 # }}}
@@ -230,7 +261,7 @@ proc drawCellCoords(m: Map, ctx) =
     setTextHighlight(x == dp.cursorCol)
 
     discard vg.text(xPos, dp.startY - fontSize, coord)
-    discard vg.text(xPos, endY + fontSize*1.25, coord)
+    discard vg.text(xPos, endY + fontSize*1.4, coord)
 
   for y in 0..<dp.viewRows:
     let
@@ -240,7 +271,7 @@ proc drawCellCoords(m: Map, ctx) =
     setTextHighlight(y == dp.cursorRow)
 
     discard vg.text(dp.startX - fontSize*1.2, yPos, coord)
-    discard vg.text(endX + fontSize*1.2, yPos, coord)
+    discard vg.text(endX + fontSize*1.6, yPos, coord)
 
 
 # }}}
@@ -252,7 +283,8 @@ proc drawMapBackground(ctx) =
 
   let strokeWidth = UltrathinStrokeWidth
 
-  vg.strokeColor(ms.mapBackgroundColor)
+  vg.fillColor(ms.mapBackgroundColor)
+  vg.strokeColor(ms.mapForegroundColor)
   vg.strokeWidth(strokeWidth)
 
   let
@@ -265,6 +297,10 @@ proc drawMapBackground(ctx) =
   let startY = snap(dp.startY, strokeWidth)
 
   vg.scissor(startX, startY, w, h)
+
+  vg.beginPath()
+  vg.rect(startX, startY, w, h)
+  vg.fill()
 
   var
     x1 = startX - offs
@@ -332,20 +368,17 @@ proc drawOutline(m: Map, ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-  func check(col, row: int): bool =
-    let c = max(min(col, m.cols-1), 0)
-    let r = max(min(row, m.rows-1), 0)
-    m.getFloor(c, r) != fNone
-
   func isOutline(c, r: Natural): bool =
-    check(c,   r+1) or
-    check(c+1, r+1) or
-    check(c+1, r  ) or
-    check(c+1, r-1) or
-    check(c  , r-1) or
-    check(c-1, r-1) or
-    check(c-1, r  ) or
-    check(c-1, r+1)
+    not (
+      isNeighbourCellEmpty(m, c, r, North)     and
+      isNeighbourCellEmpty(m, c, r, NorthEast) and
+      isNeighbourCellEmpty(m, c, r, East)      and
+      isNeighbourCellEmpty(m, c, r, SouthEast) and
+      isNeighbourCellEmpty(m, c, r, South)     and
+      isNeighbourCellEmpty(m, c, r, SouthWest) and
+      isNeighbourCellEmpty(m, c, r, West)      and
+      isNeighbourCellEmpty(m, c, r, NorthWest)
+    )
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
@@ -363,6 +396,102 @@ proc drawOutline(m: Map, ctx) =
         vg.rect(x, y, dp.gridSize, dp.gridSize)
         vg.fill()
         vg.stroke()
+
+# }}}
+# {{{ generateOutlines()
+proc generateOutlines(m: Map): OutlineBuf =
+  var ol = newOutlineBuf(m.cols, m.rows)
+  for r in 0..<m.rows:
+    for c in 0..<m.cols:
+      var cell: OutlineCell
+      if not isNeighbourCellEmpty(m, c, r, North): cell.incl(olN)
+      else:
+        if not isNeighbourCellEmpty(m, c, r, NorthWest): cell.incl(olNW)
+        if not isNeighbourCellEmpty(m, c, r, NorthEast): cell.incl(olNE)
+
+      if not isNeighbourCellEmpty(m, c, r, East):
+        cell.incl(olE)
+        cell.excl(olNE)
+      else:
+        if not isNeighbourCellEmpty(m, c, r, SouthEast): cell.incl(olSE)
+
+      if not isNeighbourCellEmpty(m, c, r, South):
+        cell.incl(olS)
+        cell.excl(olSE)
+      else:
+        if not isNeighbourCellEmpty(m, c, r, SouthWest): cell.incl(olSW)
+
+      if not isNeighbourCellEmpty(m, c, r, West):
+        cell.incl(olW)
+        cell.excl(olSW)
+        cell.excl(olNW)
+
+      ol[c,r] = cell
+
+    result = ol
+
+# }}}
+# {{{ drawOutlineBuf()
+proc drawOutlineBuf(ob: OutlineBuf, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  vg.fillColor(ms.mapOutlineColor)
+
+  proc draw(x, y: float, o: OutlineCell) =
+    let
+      gs = dp.gridSize
+      w  = dp.gridSize*0.5
+      x1 = x
+      x2 = x + gs
+      y1 = y
+      y2 = y + gs
+
+    if olN in o:
+      vg.beginPath()
+      vg.rect(x1, y1, gs, w)
+      vg.fill()
+    else:
+      if olNW in o:
+        vg.beginPath()
+        vg.arc(x1, y1, w, 0, PI*1.75, pwCW)
+        vg.fill()
+      if olNE in o:
+        vg.beginPath()
+        vg.arc(x2, y1, w, PI*1.5, PI, pwCW)
+        vg.fill()
+
+    if olE in o:
+      vg.beginPath()
+      vg.rect(x2-w, y1, w, gs)
+      vg.fill()
+    elif olSE in o:
+      vg.beginPath()
+      vg.arc(x2, y2, w, PI, PI*0.5, pwCW)
+      vg.fill()
+
+    if olS in o:
+      vg.beginPath()
+      vg.rect(x1, y2-w, gs, w)
+      vg.fill()
+    elif olSW in o:
+      vg.beginPath()
+      vg.arc(x1, y2, w, PI*0.5, 0, pwCW)
+      vg.fill()
+
+    if olW in o:
+      vg.beginPath()
+      vg.rect(x1, y1, w, gs)
+      vg.fill()
+
+  for r in 0..<ob.rows:
+    for c in 0..<ob.cols:
+      let
+        cell = ob[c,r]
+        x = cellX(c, dp)
+        y = cellY(r, dp)
+      draw(x, y, cell)
 
 # }}}
 
@@ -387,13 +516,41 @@ proc drawFloor(x, y: float, color: Color, ctx) =
 
   let sw = UltrathinStrokeWidth
 
+
   vg.beginPath()
   vg.fillColor(color)
   vg.strokeColor(ms.gridColorFloor)
   vg.strokeWidth(sw)
   vg.rect(snap(x, sw), snap(y, sw), dp.gridSize, dp.gridSize)
   vg.fill()
+#  vg.stroke()
+
+  let
+    offs = dp.gridSize * 0.2
+    x1 = x + offs
+    y1 = y + offs
+    x2 = x + dp.gridSize - offs
+    y2 = y + dp.gridSize - offs
+
+  vg.strokeColor(ms.lightFgColor)
+  vg.strokeWidth(sw)
+
+  vg.beginPath()
+  vg.moveTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x2, sw), snap(y, sw))
   vg.stroke()
+#  vg.beginPath()
+#  vg.moveTo(x1, y2)
+#  vg.lineTo(x2, y2)
+#  vg.stroke()
+  vg.beginPath()
+  vg.moveTo(snap(x, sw), snap(y1, sw))
+  vg.lineTo(snap(x, sw), snap(y2, sw))
+  vg.stroke()
+#  vg.beginPath()
+#  vg.moveTo(x2, y1)
+#  vg.lineTo(x2, y2)
+#  vg.stroke()
 
 # }}}
 # {{{ drawSecretDoor()
@@ -403,7 +560,7 @@ proc drawSecretDoor(x, y: float, ctx) =
   let vg = ctx.vg
 
   vg.beginPath()
-  vg.fillColor(ms.lightFgColor)
+  vg.fillColor(gray(0.9))
   vg.rect(x, y, dp.gridSize, dp.gridSize)
   vg.fill()
 
@@ -1018,8 +1175,11 @@ proc drawMap*(m: Map, ctx) =
     )
   )
 
-  if dp.drawOutline:
-    drawOutline(m, ctx)
+#  if dp.drawOutline:
+#    drawOutline(m, ctx)
+  let outlineBuf = generateOutlines(viewBuf)
+  drawOutlineBuf(outlineBuf, ctx)
+
 
   if dp.pastePreview.isSome:
     viewBuf.paste(dp.cursorCol - dp.viewStartCol,

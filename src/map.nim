@@ -146,10 +146,22 @@ proc isNeighbourCellEmpty*(m; c, r: Natural, dir: Direction): bool =
   assert c < m.cols
   assert r < m.rows
 
-  if   dir == North: result = r == 0        or m[c,   r-1].floor == fNone
-  elif dir == West:  result = c == 0        or m[c-1, r  ].floor == fNone
-  elif dir == South: result = r == m.rows-1 or m[c,   r+1].floor == fNone
-  elif dir == East:  result = c == m.cols-1 or m[c+1, r  ].floor == fNone
+  if dir == North:
+    result = r == 0 or m[c, r-1].floor == fNone
+  elif dir == NorthEast:
+    result = r == 0 or m[c+1, r-1].floor == fNone
+  elif dir == East:
+    result = m[c+1, r].floor == fNone
+  elif dir == SouthEast:
+    result = m[c+1, r+1].floor == fNone
+  elif dir == South:
+    result = m[c, r+1].floor == fNone
+  elif dir == SouthWest:
+    result = c == 0 or m[c-1, r+1].floor == fNone
+  elif dir == West:
+    result = c == 0 or m[c-1, r].floor == fNone
+  elif dir == NorthWest:
+    result = c == 0 or r == 0 or m[c-1, r-1].floor == fNone
 
 
 proc canSetWall*(m; c, r: Natural, dir: CardinalDir): bool =
