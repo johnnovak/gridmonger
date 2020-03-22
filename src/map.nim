@@ -131,66 +131,65 @@ proc setFloor*(m; c, r: Natural, f: Floor) =
   m[c,r].floor = f
 
 
-proc getWall*(m; c, r: Natural, dir: Direction): Wall =
+proc getWall*(m; c, r: Natural, dir: CardinalDir): Wall =
   assert c < m.cols
   assert r < m.rows
 
   case dir
-  of North: m[c,   r  ].wallN
-  of West:  m[c,   r  ].wallW
-  of South: m[c,   r+1].wallN
-  of East:  m[c+1, r  ].wallW
+  of dirN: m[c,   r  ].wallN
+  of dirW: m[c,   r  ].wallW
+  of dirS: m[c,   r+1].wallN
+  of dirE: m[c+1, r  ].wallW
 
 
 proc isNeighbourCellEmpty*(m; c, r: Natural, dir: Direction): bool =
   assert c < m.cols
   assert r < m.rows
 
-  case dir
-  of North: r == 0        or m[c,   r-1].floor == fNone
-  of West:  c == 0        or m[c-1, r  ].floor == fNone
-  of South: r == m.rows-1 or m[c,   r+1].floor == fNone
-  of East:  c == m.cols-1 or m[c+1, r  ].floor == fNone
+  if   dir == North: result = r == 0        or m[c,   r-1].floor == fNone
+  elif dir == West:  result = c == 0        or m[c-1, r  ].floor == fNone
+  elif dir == South: result = r == m.rows-1 or m[c,   r+1].floor == fNone
+  elif dir == East:  result = c == m.cols-1 or m[c+1, r  ].floor == fNone
 
 
-proc canSetWall*(m; c, r: Natural, dir: Direction): bool =
+proc canSetWall*(m; c, r: Natural, dir: CardinalDir): bool =
   assert c < m.cols
   assert r < m.rows
 
-  m[c,r].floor != fNone or not isNeighbourCellEmpty(m, c, r, dir)
+  m[c,r].floor != fNone or not isNeighbourCellEmpty(m, c, r, {dir})
 
 
-proc setWall*(m; c, r: Natural, dir: Direction, w: Wall) =
+proc setWall*(m; c, r: Natural, dir: CardinalDir, w: Wall) =
   assert c < m.cols
   assert r < m.rows
 
   case dir
-  of North: m[c,   r  ].wallN = w
-  of West:  m[c,   r  ].wallW = w
-  of South: m[c,   r+1].wallN = w
-  of East:  m[c+1, r  ].wallW = w
+  of dirN: m[c,   r  ].wallN = w
+  of dirW: m[c,   r  ].wallW = w
+  of dirS: m[c,   r+1].wallN = w
+  of dirE: m[c+1, r  ].wallW = w
 
 
 proc eraseCellWalls*(m; c, r: Natural) =
   assert c < m.cols
   assert r < m.rows
 
-  m.setWall(c,r, North, wNone)
-  m.setWall(c,r, West,  wNone)
-  m.setWall(c,r, South, wNone)
-  m.setWall(c,r, East,  wNone)
+  m.setWall(c,r, dirN, wNone)
+  m.setWall(c,r, dirW,  wNone)
+  m.setWall(c,r, dirS, wNone)
+  m.setWall(c,r, dirE,  wNone)
 
 
 proc eraseOrphanedWalls*(m; c, r: Natural) =
-  template cleanWall(dir: Direction) =
-    if m.isNeighbourCellEmpty(c,r, dir):
+  template cleanWall(dir: CardinalDir) =
+    if m.isNeighbourCellEmpty(c,r, {dir}):
       m.setWall(c,r, dir, wNone)
 
   if m.getFloor(c,r) == fNone:
-    cleanWall(North)
-    cleanWall(West)
-    cleanWall(South)
-    cleanWall(East)
+    cleanWall(dirN)
+    cleanWall(dirW)
+    cleanWall(dirS)
+    cleanWall(dirE)
 
 
 proc eraseCell*(m; c, r: Natural) =
@@ -202,7 +201,7 @@ proc eraseCell*(m; c, r: Natural) =
 
 
 proc guessFloorOrientation*(m; c, r: Natural): Orientation =
-  if m.getWall(c, r, North) != wNone and m.getWall(c, r, South) != wNone: Vert
+  if m.getWall(c, r, dirN) != wNone and m.getWall(c, r, dirS) != wNone: Vert
   else: Horiz
 
 
@@ -222,17 +221,17 @@ proc paste*(m; destCol, destRow: Natural, src: Map, sel: Selection) =
           let floor = src.getFloor(c,r)
           m.setFloor(destCol+c, destRow+r, floor)
 
-          template copyWall(dir: Direction) =
+          template copyWall(dir: CardinalDir) =
             let w = src.getWall(c,r, dir)
             m.setWall(destCol+c, destRow+r, dir, w)
 
           if floor == fNone:
             m.eraseOrphanedWalls(destCol+c, destRow+r)
           else:
-            copyWall(North)
-            copyWall(West)
-            copyWall(South)
-            copyWall(East)
+            copyWall(dirN)
+            copyWall(dirW)
+            copyWall(dirS)
+            copyWall(dirE)
 
 
 proc noteKey(m; c, r: Natural): Natural =

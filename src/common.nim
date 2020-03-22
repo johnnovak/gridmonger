@@ -18,11 +18,23 @@ type
     Horiz = (0, "horiz")
     Vert  = (1, "vert")
 
-  Direction* = enum
-    North = (0, "North")
-    East  = (1, "East")
-    South = (2, "South")
-    West  = (3, "West")
+  CardinalDir* = enum
+    dirN  = (0, "North")
+    dirE  = (1, "East")
+    dirS  = (2, "South")
+    dirW  = (3, "West")
+
+  Direction* = set[CardinalDir]
+
+const
+  North*     = {dirN}
+  NorthEast* = {dirN, dirE}
+  East*      = {dirE}
+  SouthEast* = {dirS, dirE}
+  South*     = {dirS}
+  SouthWest* = {dirW, dirW}
+  West*      = {dirW}
+  NorthWest* = {dirN, dirW}
 
 
 type
@@ -212,6 +224,32 @@ const
   IconStar* = "\uf005"
   IconTree* = "\ue945"
   IconTrophy* = "\uf091"
+
+const MarkerIcons* = @[
+  IconAnchor,
+  IconBed,
+  IconBomb,
+  IconBook,
+  IconDiamond,
+  IconEquip,
+  IconFlag,
+  IconFlask,
+  IconFort,
+  IconHeart,
+  IconHome,
+  IconKey,
+  IconMale,
+  IconMedkit,
+  IconMoney,
+  IconMoneyBag,
+  IconMug,
+  IconShield,
+  IconShip,
+  IconSpinner,
+  IconStar,
+  IconTree,
+  IconTrophy
+]
 
 #  Icon* = "\u"
 # }}}

@@ -73,7 +73,7 @@ proc paste*(currMap; destCol, destRow: Natural, cb: CopyBuffer, um) =
 
 # }}}
 # {{{ setWall*()
-proc setWall*(currMap; c, r: Natural, dir: Direction, w: Wall, um) =
+proc setWall*(currMap; c, r: Natural, dir: CardinalDir, w: Wall, um) =
   singleCellAction(currMap, c, r, um, m):
     m.setWall(c, r, dir, w)
 
@@ -98,24 +98,24 @@ proc excavate*(currMap; c, r: Natural, um) =
       m.setFloor(c,r, fEmpty)
 
     if r == 0 or m.getFloor(c,r-1) == fNone:
-      m.setWall(c,r, North, wWall)
+      m.setWall(c,r, dirN, wWall)
     else:
-      m.setWall(c,r, North, wNone)
+      m.setWall(c,r, dirN, wNone)
 
     if c == 0 or m.getFloor(c-1,r) == fNone:
-      m.setWall(c,r, West, wWall)
+      m.setWall(c,r, dirW, wWall)
     else:
-      m.setWall(c,r, West, wNone)
+      m.setWall(c,r, dirW, wNone)
 
     if r == m.rows-1 or m.getFloor(c,r+1) == fNone:
-      m.setWall(c,r, South, wWall)
+      m.setWall(c,r, dirS, wWall)
     else:
-      m.setWall(c,r, South, wNone)
+      m.setWall(c,r, dirS, wNone)
 
     if c == m.cols-1 or m.getFloor(c+1,r) == fNone:
-      m.setWall(c,r, East, wWall)
+      m.setWall(c,r, dirE, wWall)
     else:
-      m.setWall(c,r, East, wNone)
+      m.setWall(c,r, dirE, wNone)
 
 # }}}
 # {{{ toggleFloorOrientation*()

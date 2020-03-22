@@ -21,7 +21,7 @@ import undomanager
 import utils
 
 
-const DefaultZoomLevel = 2
+const DefaultZoomLevel = 4
 
 const
   TitleBarFontSize = 14.0
@@ -78,7 +78,7 @@ type
     cursorCol:      Natural
     cursorRow:      Natural
 
-    currWall:       Wall
+    currSpecialWallIdx: Natural
 
     selection:      Option[Selection]
     selRect:        Option[SelectionRect]
@@ -88,7 +88,9 @@ type
     statusIcon:     string
     statusMessage:  string
     statusCommands: seq[string]
-    drawMapParams:  DrawMapParams
+
+    drawMapParams:     DrawMapParams
+    toolbarDrawParams: DrawMapParams
 
 
 var g_app: AppContext
@@ -174,7 +176,7 @@ g_TitleBarWindowButtonStyle.labelColorHover  = gray(0.7)
 g_TitleBarWindowButtonStyle.labelColorActive = gray(0.9)
 
 
-proc renderTitleBar(a; winWidth: float) =
+proc renderTitleBar(winWidth: float, a) =
   alias(vg, a.vg)
   alias(win, a.win)
   alias(wnd, g_window)
@@ -303,13 +305,13 @@ proc handleWindowDragEvents(a) =
         if wnd.maximized:
 
           # The restored window is centered horizontally around the cursor.
-          (wnd.posX0, wnd.posY0) = ((mx - wnd.oldWidth/2).int32, 0)
+          (wnd.posX0, wnd.posY0) = ((mx - wnd.oldWidth*0.5).int32, 0)
 
           # Fake the last horizontal cursor position to be at the middle of
           # the restored window's width. This is needed so when we're in the
           # "else" branch on the next frame when dragging the restored window,
           # there won't be an unwanted window position jump.
-          wnd.mx0 = wnd.oldWidth/2
+          wnd.mx0 = wnd.oldWidth*0.5
           wnd.my0 = my
 
           # ...but we also want to clamp the window position to the visible
@@ -410,21 +412,20 @@ proc clearStatusMessage(a) =
 
 # }}}
 # {{{ setStatusMessage()
-proc setStatusMessage(a; icon, msg: string, commands: seq[string]) =
+proc setStatusMessage(icon, msg: string, commands: seq[string], a) =
   a.statusIcon = icon
   a.statusMessage = msg
   a.statusCommands = commands
 
-proc setStatusMessage(a; icon, msg: string) =
-  a.setStatusMessage(icon , msg, commands = @[])
+proc setStatusMessage(icon, msg: string, a) =
+  setStatusMessage(icon , msg, commands = @[], a)
 
-proc setStatusMessage(a; msg: string) =
-  a.setStatusMessage(icon = "", msg, commands = @[])
+proc setStatusMessage(msg: string, a) =
+  setStatusMessage(icon = "", msg, commands = @[], a)
 
 # }}}
 # {{{ renderStatusBar()
-
-proc renderStatusBar(a; y: float, winWidth: float) =
+proc renderStatusBar(y: float, winWidth: float, a) =
   alias(vg, a.vg)
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
@@ -543,7 +544,7 @@ proc updateViewStartAndCursorPosition(a) =
 
 # }}}
 # {{{ moveCursor()
-proc moveCursor(dir: Direction, a) =
+proc moveCursor(dir: CardinalDir, a) =
   alias(dp, a.drawMapParams)
 
   var
@@ -553,22 +554,22 @@ proc moveCursor(dir: Direction, a) =
     sy = dp.viewStartRow
 
   case dir:
-  of East:
+  of dirE:
     cx = min(cx+1, a.map.cols-1)
     if cx - sx > dp.viewCols-1 - a.scrollMargin:
       sx = min(max(a.map.cols - dp.viewCols, 0), sx+1)
 
-  of South:
+  of dirS:
     cy = min(cy+1, a.map.rows-1)
     if cy - sy > dp.viewRows-1 - a.scrollMargin:
       sy = min(max(a.map.rows - dp.viewRows, 0), sy+1)
 
-  of West:
+  of dirW:
     cx = max(cx-1, 0)
     if cx < sx + a.scrollMargin:
       sx = max(sx-1, 0)
 
-  of North:
+  of dirN:
     cy = max(cy-1, 0)
     if cy < sy + a.scrollMargin:
       sy = max(sy-1, 0)
@@ -584,10 +585,10 @@ proc enterSelectMode(a) =
   a.editMode = emSelectDraw
   a.selection = some(newSelection(a.map.cols, a.map.rows))
   a.drawMapParams.drawCursorGuides = true
-  a.setStatusMessage(IconSelection, "Mark selection",
-                     @["D", "draw", "E", "erase", "R", "rectangle",
-                       "Ctrl+A/D", "mark/unmark all", "C", "copy", "X", "cut",
-                       "Esc", "exit"])
+  setStatusMessage(IconSelection, "Mark selection",
+                   @["D", "draw", "E", "erase", "R", "rectangle",
+                     "Ctrl+A/D", "mark/unmark all", "C", "copy", "X", "cut",
+                     "Esc", "exit"], a)
 
 # }}}
 # {{{ exitSelectMode()
@@ -674,7 +675,7 @@ proc newMapDialog() =
       resetCursorAndViewStart(g_app)
       updateViewStartAndCursorPosition(g_app)
       closeDialog()
-      g_app.setStatusMessage(IconFile, "New map created")
+      setStatusMessage(IconFile, "New map created", g_app)
 
     let cancelAction = proc () =
       closeDialog()
@@ -697,21 +698,89 @@ template defineDialogs() =
 
 # }}}
 
-proc drawWallTool(a; x: float) =
-  alias(vg, a.vg)
-  var y = 100.0
-  let w = 25.0
-  let pad = 8.0
+const SpecialWalls = @[
+  wIllusoryWall,
+  wInvisibleWall,
+  wDoor,
+  wLockedDoor,
+  wArchway,
+  wSecretDoor,
+  wLever,
+  wNiche,
+  wStatue
+]
 
-  for wall in wIllusoryWall..wStatue:
-    if a.currWall == wall:
+proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
+  case w
+  of wNone:          discard
+  of wWall:          drawSolidWallHoriz(x, y, ctx)
+  of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
+  of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
+  of wDoor:          drawDoorHoriz(x, y, ctx)
+  of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
+  of wArchway:       drawArchwayHoriz(x, y, ctx)
+  of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
+  of wLever:         discard
+  of wNiche:         discard
+  of wStatue:        discard
+
+
+proc drawWallToolbar(x: float, a) =
+  alias(vg, a.vg)
+  alias(dp, a.toolbarDrawParams)
+
+  dp.setZoomLevel(1)
+  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
+
+  let
+    toolPad = 4.0
+    w = dp.gridSize + toolPad*2
+    yPad = 2.0
+
+  var y = 100.0
+
+  for i, wall in SpecialWalls.pairs:
+    if i == a.currSpecialWallIdx:
       vg.fillColor(rgb(1.0, 0.7, 0))
     else:
-      vg.fillColor(gray(0.3))
+      vg.fillColor(gray(0.6))
     vg.beginPath()
     vg.rect(x, y, w, w)
     vg.fill()
-    y += w + pad
+
+    drawWallTool(x+toolPad, y+toolPad + dp.gridSize*0.5, wall, ctx)
+    y += w + yPad
+
+
+# TODO
+proc drawMarkerIconToolbar(x: float, a) =
+  alias(vg, a.vg)
+  alias(dp, a.toolbarDrawParams)
+
+  dp.setZoomLevel(5)
+  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
+
+  let
+    toolPad = 0.0
+    w = dp.gridSize + toolPad*2
+    yPad = 2.0
+
+  var
+    x = x
+    y = 100.0
+
+  for i, icon in MarkerIcons.pairs:
+    if i > 0 and i mod 3 == 0:
+      y = 100.0
+      x += w + yPad
+
+    vg.fillColor(gray(0.6))
+    vg.beginPath()
+    vg.rect(x, y, w, w)
+    vg.fill()
+
+    drawIcon(x+toolPad, y+toolPad, 0, 0, icon, ctx)
+    y += w + yPad
 
 
 # {{{ handleMapEvents()
@@ -726,11 +795,11 @@ proc handleMapEvents(a) =
   proc mkFloorMessage(f: Floor): string =
     fmt"Set floor – {f}"
 
-  proc setFloorOrientationStatusMessage(a; o: Orientation) =
+  proc setFloorOrientationStatusMessage(o: Orientation, a) =
     if o == Horiz:
-      a.setStatusMessage(IconHorizArrows, "Floor orientation set to horizontal")
+      setStatusMessage(IconHorizArrows, "Floor orientation set to horizontal", a)
     else:
-      a.setStatusMessage(IconVertArrows, "Floor orientation set to vertical")
+      setStatusMessage(IconVertArrows, "Floor orientation set to vertical", a)
 
   proc incZoomLevel(a) =
     a.drawMapParams.incZoomLevel()
@@ -747,12 +816,12 @@ proc handleMapEvents(a) =
     else:
       result = first
 
-  proc setFloor(a; first, last: Floor) =
+  proc setFloor(first, last: Floor, a) =
     var f = m.getFloor(curX, curY)
     f = cycleFloor(f, first, last)
     let ot = m.guessFloorOrientation(curX, curY)
     actions.setOrientedFloor(m, curX, curY, f, ot, um)
-    a.setStatusMessage(mkFloorMessage(f))
+    setStatusMessage(mkFloorMessage(f), a)
 
 
   let (winWidth, winHeight) = win.size
@@ -767,10 +836,10 @@ proc handleMapEvents(a) =
   for ke in koi.keyBuf():
     case a.editMode:
     of emNormal:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(West, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(East, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(North, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(South, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
       if ke.isKeyDown(keyLeft, {mkCtrl}):
         let (w, h) = win.size
@@ -781,78 +850,76 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyD):
         a.editMode = emExcavate
-        a.setStatusMessage(IconPencil, "Excavate tunnel",
-                           @[IconArrows, "draw"])
+        setStatusMessage(IconPencil, "Excavate tunnel",
+                         @[IconArrows, "draw"], a)
         actions.excavate(m, curX, curY, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
-        a.setStatusMessage(IconEraser, "Erase cells", @[IconArrows, "erase"])
+        setStatusMessage(IconEraser, "Erase cells", @[IconArrows, "erase"], a)
         actions.eraseCell(m, curX, curY, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearFloor
-        a.setStatusMessage(IconEraser, "Clear floor",  @[IconArrows, "clear"])
+        setStatusMessage(IconEraser, "Clear floor",  @[IconArrows, "clear"], a)
         actions.setFloor(m, curX, curY, fEmpty, um)
 
       elif ke.isKeyDown(keyO):
         actions.toggleFloorOrientation(m, curX, curY, um)
-        a.setFloorOrientationStatusMessage(
-          m.getFloorOrientation(curX, curY)
-        )
+        setFloorOrientationStatusMessage(m.getFloorOrientation(curX, curY), a)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
-        a.setStatusMessage("", "Draw walls", @[IconArrows, "set/clear"])
+        setStatusMessage("", "Draw walls", @[IconArrows, "set/clear"], a)
 
       elif ke.isKeyDown(keyR):
         a.editMode = emDrawWallSpecial
-        a.setStatusMessage("", "Draw wall special", @[IconArrows, "set/clear"])
+        setStatusMessage("", "Draw wall special", @[IconArrows, "set/clear"], a)
 
       # TODO
 #      elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
 #        actions.eraseCellWalls(m, curX, curY, um)
 
       elif ke.isKeyDown(key1):
-        setFloor(a, fDoor, fSecretDoor)
+        setFloor(fDoor, fSecretDoor, a)
 
       elif ke.isKeyDown(key2):
-        setFloor(a, fDoor, fSecretDoor)
+        setFloor(fDoor, fSecretDoor, a)
 
       elif ke.isKeyDown(key3):
-        setFloor(a, fPressurePlate, fHiddenPressurePlate)
+        setFloor(fPressurePlate, fHiddenPressurePlate, a)
 
       elif ke.isKeyDown(key4):
-        setFloor(a, fClosedPit, fCeilingPit)
+        setFloor(fClosedPit, fCeilingPit, a)
 
       elif ke.isKeyDown(key5):
-        setFloor(a, fStairsDown, fStairsUp)
+        setFloor(fStairsDown, fStairsUp, a)
 
       elif ke.isKeyDown(key6):
         let f = fSpinner
         actions.setFloor(m, curX, curY, f, um)
-        a.setStatusMessage(mkFloorMessage(f))
+        setStatusMessage(mkFloorMessage(f), a)
 
       elif ke.isKeyDown(key7):
         let f = fTeleport
         actions.setFloor(m, curX, curY, f, um)
-        a.setStatusMessage(mkFloorMessage(f))
+        setStatusMessage(mkFloorMessage(f), a)
 
-#      elif ke.isKeyDown(keyLeftBracket, repeat=true):
-#        if a.currWall > wIllusoryWall: dec(a.currWall)
-#        else: a.currWall = a.currWall.high
+      elif ke.isKeyDown(keyLeftBracket, repeat=true):
+        if a.currSpecialWallIdx > 0: dec(a.currSpecialWallIdx)
+        else: a.currSpecialWallIdx = SpecialWalls.high
 
-#      elif ke.isKeyDown(keyRightBracket, repeat=true):
-#        if a.currWall < Wall.high: inc(a.currWall)
-#        else: a.currWall = wIllusoryWall
+      elif ke.isKeyDown(keyRightBracket, repeat=true):
+        if a.currSpecialWallIdx < SpecialWalls.high: inc(a.currSpecialWallIdx)
+        else: a.currSpecialWallIdx = 0
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         um.undo(m)
-        a.setStatusMessage(IconUndo, "Undid action")
+        setStatusMessage(IconUndo, "Undid action", a)
 
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true):
         um.redo(m)
-        a.setStatusMessage(IconRedo, "Redid action")
+        setStatusMessage(IconRedo, "Redid action", a)
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
@@ -860,28 +927,28 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
           actions.paste(m, curX, curY, a.copyBuf.get, um)
-          a.setStatusMessage(IconPaste, "Pasted buffer")
+          setStatusMessage(IconPaste, "Pasted buffer", a)
         else:
-          a.setStatusMessage(IconWarning, "Cannot paste, buffer is empty")
+          setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
 
       elif ke.isKeyDown(keyP, {mkShift}):
         if a.copyBuf.isSome:
           a.editMode = emPastePreview
-          a.setStatusMessage(IconTiles, "Paste preview",
-                             @[IconArrows, "placement",
-                             "Enter/P", "paste", "Esc", "exit"])
+          setStatusMessage(IconTiles, "Paste preview",
+                           @[IconArrows, "placement",
+                           "Enter/P", "paste", "Esc", "exit"], a)
         else:
-          a.setStatusMessage(IconWarning, "Cannot paste, buffer is empty")
+          setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
-        a.incZoomLevel()
-        a.setStatusMessage(IconZoomIn,
-          fmt"Zoomed in – level {dp.getZoomLevel()}")
+        incZoomLevel(a)
+        setStatusMessage(IconZoomIn,
+          fmt"Zoomed in – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyMinus, repeat=true):
-        a.decZoomLevel()
-        a.setStatusMessage(IconZoomOut,
-          fmt"Zoomed out – level {dp.getZoomLevel()}")
+        decZoomLevel(a)
+        setStatusMessage(IconZoomOut,
+                         fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
@@ -899,10 +966,10 @@ proc handleMapEvents(a) =
             initUndoManager(a.undoManager)
             resetCursorAndViewStart(a)
             updateViewStartAndCursorPosition(g_app)
-            a.setStatusMessage(IconFloppy, "Map loaded")
+            setStatusMessage(IconFloppy, "Map loaded", a)
           except CatchableError as e:
             # TODO log stracktrace?
-            a.setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}")
+            setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
         let ext = MapFileExtension
@@ -910,17 +977,16 @@ proc handleMapEvents(a) =
                                   filters=fmt"Gridmonger Map (*.{ext}):{ext}")
         if filename != "":
           try:
-            # TODO .grm suffix
             if not filename.endsWith(fmt".{ext}"):
               filename &= "." & ext
             writeMap(a.map, filename)
-            a.setStatusMessage(IconFloppy, fmt"Map saved")
+            setStatusMessage(IconFloppy, fmt"Map saved", a)
           except CatchableError as e:
             # TODO log stracktrace?
-            a.setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}")
+            setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
 
     of emExcavate, emEraseCell, emClearFloor:
-      proc handleMoveKey(dir: Direction, a) =
+      proc handleMoveKey(dir: CardinalDir, a) =
         if a.editMode == emExcavate:
           moveCursor(dir, a)
           actions.excavate(m, curX, curY, um)
@@ -933,52 +999,53 @@ proc handleMapEvents(a) =
           moveCursor(dir, a)
           actions.setFloor(m, curX, curY, fEmpty, um)
 
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(West, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(East, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): handleMoveKey(North, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): handleMoveKey(South, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(dirW, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(dirE, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): handleMoveKey(dirN, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): handleMoveKey(dirS, a)
 
       elif ke.isKeyUp({keyD, keyE, keyF}):
         a.editMode = emNormal
         a.clearStatusMessage()
 
     of emDrawWall:
-      proc handleMoveKey(dir: Direction, a) =
+      proc handleMoveKey(dir: CardinalDir, a) =
         if canSetWall(m, curX, curY, dir):
           let w = if m.getWall(curX, curY, dir) == wNone: wWall
                   else: wNone
           actions.setWall(m, curX, curY, dir, w, um)
 
-      if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(West, a)
-      if ke.isKeyDown(MoveKeysRight): handleMoveKey(East, a)
-      if ke.isKeyDown(MoveKeysUp):    handleMoveKey(North, a)
-      if ke.isKeyDown(MoveKeysDown):  handleMoveKey(South, a)
+      if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
+      if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
+      if ke.isKeyDown(MoveKeysUp):    handleMoveKey(dirN, a)
+      if ke.isKeyDown(MoveKeysDown):  handleMoveKey(dirS, a)
 
       elif ke.isKeyUp({keyW}):
         a.editMode = emNormal
         a.clearStatusMessage()
 
     of emDrawWallSpecial:
-      proc handleMoveKey(dir: Direction, a) =
+      proc handleMoveKey(dir: CardinalDir, a) =
         if canSetWall(m, curX, curY, dir):
-          let w = if m.getWall(curX, curY, dir) == a.currWall: wNone
-                  else: a.currWall
+          let curSpecWall = SpecialWalls[a.currSpecialWallIdx]
+          let w = if m.getWall(curX, curY, dir) == curSpecWall: wNone
+                  else: curSpecWall
           actions.setWall(m, curX, curY, dir, w, um)
 
-      if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(West, a)
-      if ke.isKeyDown(MoveKeysRight): handleMoveKey(East, a)
-      if ke.isKeyDown(MoveKeysUp):    handleMoveKey(North, a)
-      if ke.isKeyDown(MoveKeysDown):  handleMoveKey(South, a)
+      if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
+      if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
+      if ke.isKeyDown(MoveKeysUp):    handleMoveKey(dirN, a)
+      if ke.isKeyDown(MoveKeysDown):  handleMoveKey(dirS, a)
 
       elif ke.isKeyUp({keyR}):
         a.editMode = emNormal
         a.clearStatusMessage()
 
     of emSelectDraw:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(West, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(East, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(North, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(South, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
       # TODO don't use win
       if   win.isKeyDown(keyD): a.selection.get[curX, curY] = true
@@ -998,14 +1065,14 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyC):
         discard copySelection(a)
         exitSelectMode(a)
-        a.setStatusMessage(IconCopy, "Copied to buffer")
+        setStatusMessage(IconCopy, "Copied to buffer", a)
 
       elif ke.isKeyDown(keyX):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
         exitSelectMode(a)
-        a.setStatusMessage(IconCut, "Cut to buffer")
+        setStatusMessage(IconCut, "Cut to buffer", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
@@ -1015,10 +1082,10 @@ proc handleMapEvents(a) =
         a.clearStatusMessage()
 
     of emSelectRect:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(West, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(East, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(North, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(South, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
       var x1, y1, x2, y2: Natural
       if a.selRect.get.x0 <= curX:
@@ -1043,15 +1110,15 @@ proc handleMapEvents(a) =
         a.editMode = emSelectDraw
 
     of emPastePreview:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(West, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(East, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(North, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(South, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
       elif ke.isKeyDown({keyEnter, keyP}):
         actions.paste(m, curX, curY, a.copyBuf.get, um)
         a.editMode = emNormal
-        a.setStatusMessage(IconPaste, "Pasted buffer contents")
+        setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
@@ -1073,7 +1140,9 @@ proc renderUI() =
   # Clear background
   vg.beginPath()
   vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
-  vg.fillColor(gray(0.4))
+  # TODO
+#  vg.fillColor(gray(0.4))
+  vg.fillColor(rgb(248, 248, 244))
   vg.fill()
 
   # Current level dropdown
@@ -1101,11 +1170,12 @@ proc renderUI() =
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
 
   # Toolbar
-  drawWallTool(a, winWidth - 60.0)
+#  drawMarkerIconToolbar(winWidth - 400.0, a)
+  drawWallToolBar(winWidth - 60.0, a)
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
-  renderStatusBar(a, statusBarY, winWidth.float)
+  renderStatusBar(statusBarY, winWidth.float, a)
 
 # }}}
 # {{{ renderFrame()
@@ -1132,7 +1202,7 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   koi.beginFrame(winWidth.float, winHeight.float)
 
   # Title bar
-  renderTitleBar(a, winWidth.float)
+  renderTitleBar(winWidth.float, a)
 
   ######################################################
 
@@ -1183,10 +1253,28 @@ proc createDefaultMapStyle(): MapStyle =
   ms.cursorColor         = rgb(1.0, 0.65, 0.0)
   ms.cursorGuideColor    = rgba(1.0, 0.65, 0.0, 0.2)
   ms.defaultFgColor      = gray(0.1)
+  ms.lightFgColor        = gray(0.6)
   ms.groundColor         = gray(0.9)
   ms.gridColorBackground = gray(0.0, 0.3)
   ms.gridColorFloor      = gray(0.0, 0.15)
   ms.mapBackgroundColor  = gray(0.0, 0.7)
+  ms.mapOutlineColor     = gray(0.23)
+  ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
+  ms.pastePreviewColor   = rgba(0.2, 0.6, 1.0, 0.4)
+  result = ms
+
+proc createLightMapStyle(): MapStyle =
+  var ms = new MapStyle
+  ms.cellCoordsColor     = rgb(34, 32, 32)
+  ms.cellCoordsColorHi   = rgb(34, 32, 32)
+  ms.cursorColor         = rgb(1.0, 0.65, 0.0)
+  ms.cursorGuideColor    = rgba(1.0, 0.65, 0.0, 0.2)
+  ms.defaultFgColor      = rgb(34, 32, 32)
+  ms.lightFgColor        = rgb(186, 182, 182)
+  ms.groundColor         = rgb(248, 248, 244)
+  ms.gridColorBackground = gray(0.0, 0.3)
+  ms.gridColorFloor      = gray(0.0, 0.15)
+  ms.mapBackgroundColor  = gray(0.0, 0.5)
   ms.mapOutlineColor     = gray(0.23)
   ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor   = rgba(0.2, 0.6, 1.0, 0.4)
@@ -1202,7 +1290,7 @@ proc initDrawMapParams(a) =
 
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
-  cfg.size = (w: 800, h: 600)
+  cfg.size = (w: 960, h: 1040)
   cfg.title = "Gridmonger v0.1"
   cfg.resizable = false
   cfg.visible = false
@@ -1263,21 +1351,27 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   g_app.map = newMap(16, 16)
-  g_app.mapStyle = createDefaultMapStyle()
+  #g_app.mapStyle = createDefaultMapStyle()
+  g_app.mapStyle = createLightMapStyle()
   g_app.undoManager = newUndoManager[Map]()
-  g_app.currWall = wIllusoryWall
-  g_app.setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!")
+  setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", g_app)
 
   g_app.drawMapParams = new DrawMapParams
   initDrawMapParams(g_app)
   g_app.drawMapParams.setZoomLevel(DefaultZoomLevel)
   g_app.scrollMargin = 3
 
+  g_app.toolbarDrawParams = g_app.drawMapParams.deepCopy
+  g_app.toolbarDrawParams.setZoomLevel(1)
+
+  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
+#  g_app.map = readMap("drawtest.grm")
+
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb
   glfw.swapInterval(1)
 
-  win.pos = (150, 150)  # TODO for development
+  win.pos = (960, 0)  # TODO for development
   wrapper.showWindow(win.getHandle())
 
   result = win

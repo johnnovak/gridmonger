@@ -48,6 +48,7 @@ type
     cursorColor*:         Color
     cursorGuideColor*:    Color
     defaultFgColor*:      Color
+    lightFgColor*:        Color
     groundColor*:         Color
     gridColorBackground*: Color
     gridColorFloor*:      Color
@@ -146,6 +147,10 @@ proc numDisplayableCols*(dp; width: float): Natural =
   max(width / dp.gridSize, 0).int
 
 # }}}
+# {{{ gridSize*()
+proc gridSize*(dp): float = dp.gridSize
+
+# }}}
 
 # {{{ utils
 
@@ -196,7 +201,7 @@ proc drawBackgroundGrid(ctx) =
 
 # }}}
 # {{{ drawCellCoords()
-proc drawCellCoords(ctx) =
+proc drawCellCoords(m: Map, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
@@ -230,7 +235,7 @@ proc drawCellCoords(ctx) =
   for y in 0..<dp.viewRows:
     let
       yPos = cellY(y, dp) + dp.gridSize*0.5
-      coord = $(dp.viewStartRow + y)
+      coord = $(m.rows-1 - (dp.viewStartRow + y))
 
     setTextHighlight(y == dp.cursorRow)
 
@@ -361,6 +366,19 @@ proc drawOutline(m: Map, ctx) =
 
 # }}}
 
+# {{{ drawIcon*()
+proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  vg.setFont((dp.gridSize*0.53).float)
+  vg.fillColor(ms.defaultFgColor)
+  vg.textAlign(haCenter, vaMiddle)
+  discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
+                  y + dp.gridSize*oy + dp.gridSize*0.58, icon)
+
+# }}}
 # {{{ drawFloor()
 proc drawFloor(x, y: float, color: Color, ctx) =
   let ms = ctx.ms
@@ -376,6 +394,20 @@ proc drawFloor(x, y: float, color: Color, ctx) =
   vg.rect(snap(x, sw), snap(y, sw), dp.gridSize, dp.gridSize)
   vg.fill()
   vg.stroke()
+
+# }}}
+# {{{ drawSecretDoor()
+proc drawSecretDoor(x, y: float, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  vg.beginPath()
+  vg.fillColor(ms.lightFgColor)
+  vg.rect(x, y, dp.gridSize, dp.gridSize)
+  vg.fill()
+
+  drawIcon(x, y, 0, 0, "S", ctx)
 
 # }}}
 # {{{ drawPressurePlate()
@@ -410,7 +442,7 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(gray(0.5))
+  vg.strokeColor(ms.lightFgColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -491,7 +523,7 @@ proc drawHiddenPit(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
-  vg.strokeColor(gray(0.5))
+  vg.strokeColor(ms.lightFgColor)
   vg.strokeWidth(sw)
 
   let
@@ -527,8 +559,8 @@ proc drawCeilingPit(x, y: float, ctx) =
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
-  vg.strokeColor(gray(0.5))
-  vg.fillColor(gray(0.5))
+  vg.strokeColor(ms.lightFgColor)
+  vg.fillColor(ms.lightFgColor)
 
   let
     x1 = snap(x + offs, sw)
@@ -538,19 +570,6 @@ proc drawCeilingPit(x, y: float, ctx) =
   vg.rect(x1, y1, a, a)
   vg.fill()
   vg.stroke()
-
-# }}}
-# {{{ drawIcon()
-proc drawIcon(x, y, ox, oy: float, icon: string, ctx) =
-  let vg = ctx.vg
-  let dp = ctx.dp
-  let (bounds, tx) = vg.textBounds(x, y, icon)
-
-  vg.setFont((dp.gridSize*0.53).float)
-  vg.fillColor(gray(0))
-  vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
-                  y + dp.gridSize*oy + dp.gridSize*0.58, icon)
 
 # }}}
 # {{{ drawStairsDown()
@@ -579,14 +598,13 @@ proc drawCustom(x, y: float, ctx) =
 
 # }}}
 
-# {{{ drawSolidWallHoriz()
-proc drawSolidWallHoriz(x, y: float, ctx) =
+# {{{ drawSolidWallHoriz*()
+proc drawSolidWallHoriz*(x, y: float, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
 
   let
-    o = dp.thinOffs
     sw = dp.normalStrokeWidth
     xs = snap(x, sw)
     xe = snap(x + dp.gridSize, sw)
@@ -601,48 +619,145 @@ proc drawSolidWallHoriz(x, y: float, ctx) =
   vg.stroke()
 
 # }}}
-# {{{ drawIllusoryWallHoriz()
-proc drawIllusoryWallHoriz(x, y: float, ctx) =
+# {{{ drawIllusoryWallHoriz*()
+proc drawIllusoryWallHoriz*(x, y: float, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
 
   let
     sw = dp.normalStrokeWidth
-    x = snap(x, sw)
+    xs = x
+    xe = x + dp.gridSize
     y = snap(y, sw)
 
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.strokeColor(rgb(1.0, 0.5, 0.5))
+  vg.lineCap(lcjSquare)
+  vg.strokeColor(ms.defaultFgColor)
   vg.strokeWidth(sw)
-  vg.moveTo(x, y)
-  vg.lineTo(x + dp.gridSize, y)
-  vg.stroke()
+
+  var x = xs
+  while x <= xe:
+    vg.beginPath()
+    vg.moveTo(snap(x, sw), y)
+    vg.lineTo(snap(min(x+sw*1, xe), sw), y)
+    vg.stroke()
+    x += sw*3
 
 # }}}
-# {{{ drawInvisibleWallHoriz()
-proc drawInvisibleWallHoriz(x, y: float, ctx) =
+# {{{ drawInvisibleWallHoriz*()
+proc drawInvisibleWallHoriz*(x, y: float, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
 
   let
+    o = dp.thinOffs
     sw = dp.normalStrokeWidth
-    x = snap(x, sw)
-    y = snap(y, sw)
+    sw2 = dp.normalStrokeWidth * 2
+    xs = snap(x+sw*2+1 - o, sw2)
+    xe = snap(x + dp.gridSize-sw*2, sw2)
+    y = snap(y, sw2)
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(rgb(0.3, 1.0, 0.3))
-  vg.strokeWidth(sw)
-  vg.moveTo(x, y)
-  vg.lineTo(x + dp.gridSize, y)
+  vg.strokeColor(ms.lightFgColor)
+  vg.strokeWidth(sw2)
+  vg.moveTo(xs, y)
+  vg.lineTo(xe, y)
   vg.stroke()
 
 # }}}
-# {{{ drawArchwayHoriz()
-proc drawArchwayHoriz(x, y: float, ctx) =
+# {{{ drawDoorHoriz*()
+proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    o = dp.thinOffs
+    wallLen = (dp.gridSize * 0.25).int
+    doorWidthOffs = (if dp.zoomLevel < 4 or dp.thinLines: -1.0 else: 0)
+    doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
+    xs = x
+    y  = y
+    x1 = xs + wallLen
+    xe = xs + dp.gridSize
+    x2 = xe - wallLen - o
+    y1 = y - doorWidth
+    y2 = y + doorWidth
+
+  var sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ms.defaultFgColor)
+  vg.fillColor(ms.defaultFgColor)
+
+  # Wall start
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(xs, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.stroke()
+
+  # Door
+  sw = dp.thinStrokeWidth
+  vg.lineCap(lcjSquare)
+  vg.strokeWidth(sw)
+  vg.beginPath()
+  vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
+  vg.stroke()
+  if fill: vg.fill()
+
+  # Wall end
+  sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
+# }}}
+# {{{ drawLockedDoorHoriz*()
+proc drawLockedDoorHoriz*(x, y: float, ctx) =
+  drawDoorHoriz(x, y, ctx, fill=true)
+
+# }}}
+# {{{ drawSecretDoorHoriz*()
+proc drawSecretDoorHoriz*(x, y: float, ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let
+    wallLen = (dp.gridSize * 0.25).int
+    xs = x
+    y  = y
+    x1 = xs + wallLen + dp.thinOffs
+    xe = xs + dp.gridSize
+    x2 = xe - wallLen - dp.thinOffs
+
+  let sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ms.defaultFgColor)
+
+  # Wall start
+  vg.lineCap(lcjSquare)
+  vg.beginPath()
+  vg.moveTo(snap(xs, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.stroke()
+
+  drawIcon(x, y-dp.gridSize/2, 0.02, -0.02, "S", ctx)
+
+  # Wall end
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
+# }}}
+# {{{ drawArchwayHoriz*()
+proc drawArchwayHoriz*(x, y: float, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
@@ -683,148 +798,6 @@ proc drawArchwayHoriz(x, y: float, ctx) =
   vg.stroke()
 
   # Wall end
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
-
-# }}}
-# {{{ drawDoorHoriz()
-proc drawDoorHoriz(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
-
-  let
-    o = dp.thinOffs
-    wallLen = (dp.gridSize * 0.25).int
-    doorWidthOffs = (if dp.zoomLevel < 4 or dp.thinLines: -1.0 else: 0)
-    doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
-    xs = x
-    y  = y
-    x1 = xs + wallLen
-    xe = xs + dp.gridSize
-    x2 = xe - wallLen - o
-    y1 = y - doorWidth
-    y2 = y + doorWidth
-
-  var sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.strokeColor(ms.defaultFgColor)
-
-  # Wall start
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
-  vg.stroke()
-
-  # Door
-  sw = dp.thinStrokeWidth
-  vg.lineCap(lcjSquare)
-  vg.strokeWidth(sw)
-  vg.beginPath()
-  vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
-  vg.stroke()
-
-  # Wall end
-  sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
-
-# }}}
-# {{{ drawLockedDoorHoriz()
-proc drawLockedDoorHoriz(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
-
-  let
-    o = dp.thinOffs
-    wallLen = (dp.gridSize * 0.25).int
-    doorWidthOffs = (if dp.zoomLevel < 4 or dp.thinLines: -1.0 else: 0)
-    doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
-    xs = x
-    y  = y
-    x1 = xs + wallLen
-    xe = xs + dp.gridSize
-    x2 = xe - wallLen - o
-    y1 = y - doorWidth
-    y2 = y + doorWidth
-
-  var sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.strokeColor(ms.defaultFgColor)
-
-  # Wall start
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
-  vg.stroke()
-
-  # Door
-  sw = dp.thinStrokeWidth
-  vg.lineCap(lcjSquare)
-  vg.strokeWidth(sw)
-  vg.beginPath()
-  vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
-  vg.stroke()
-
-  # Wall end
-  sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
-
-# }}}
-# {{{ drawSecretDoorHoriz()
-proc drawSecretDoorHoriz(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
-
-  let
-    wallLen = (dp.gridSize * 0.25).int
-    doorWidth = round(dp.gridSize * 0.1)
-    xs = x
-    y  = y
-    x1 = xs + wallLen
-    xe = xs + dp.gridSize
-    x2 = xe - wallLen
-    y1 = y - doorWidth
-    y2 = y + doorWidth
-
-  var sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.strokeColor(rgb(1.0, 0, 0.5))
-
-  # Wall start
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
-  vg.stroke()
-
-  # Door
-  vg.lineCap(lcjSquare)
-  sw = dp.thinStrokeWidth
-  vg.strokeWidth(sw)
-  vg.beginPath()
-  vg.rect(snap(x1, sw) + 1, snap(y1, sw), x2-x1-1, y2-y1+1)
-  vg.stroke()
-
-  # Wall end
-  sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
   vg.lineCap(lcjRound)
   vg.beginPath()
   vg.moveTo(snap(x2, sw), snap(y, sw))
@@ -884,9 +857,9 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
 
   of fEmpty:               drawBg()
   of fDoor:                drawOriented(drawDoorHoriz)
-  of fLockedDoor:          drawOriented(drawDoorHoriz)
+  of fLockedDoor:          drawOriented(drawLockedDoorHoriz)
   of fArchway:             drawOriented(drawArchwayHoriz)
-  of fSecretDoor:          drawOriented(drawDoorHoriz)
+  of fSecretDoor:          draw(drawSecretDoor)
   of fPressurePlate:       draw(drawPressurePlate)
   of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
   of fClosedPit:           draw(drawClosedPit)
@@ -939,14 +912,14 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(viewCol, viewRow, North), Horiz, ctx
+      viewBuf.getWall(viewCol, viewRow, dirN), Horiz, ctx
     )
 
   if viewCol > 0 or (viewCol == 0 and not groundEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(viewCol, viewRow, West), Vert, ctx
+      viewBuf.getWall(viewCol, viewRow, dirW), Vert, ctx
     )
 
   let viewEndCol = dp.viewCols-1
@@ -954,7 +927,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     drawWall(
       cellX(viewCol+1, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(viewCol, viewRow, East), Vert, ctx
+      viewBuf.getWall(viewCol, viewRow, dirE), Vert, ctx
     )
 
   let viewEndRow = dp.viewRows-1
@@ -962,7 +935,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow+1, dp),
-      viewBuf.getWall(viewCol, viewRow, South), Horiz, ctx
+      viewBuf.getWall(viewCol, viewRow, dirS), Horiz, ctx
     )
 
 # }}}
@@ -1032,9 +1005,9 @@ proc drawMap*(m: Map, ctx) =
   assert dp.viewStartCol + dp.viewCols <= m.cols
   assert dp.viewStartRow + dp.viewRows <= m.rows
 
-  drawCellCoords(ctx)
+  drawCellCoords(m, ctx)
   drawMapBackground(ctx)
-  drawBackgroundGrid(ctx)
+#  drawBackgroundGrid(ctx)
 
   let viewBuf = newMapFrom(m,
     rectN(
