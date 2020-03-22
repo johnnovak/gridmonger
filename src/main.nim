@@ -1417,7 +1417,6 @@ proc createGrimrock2MapStyle(): MapStyle =
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
-  dp.drawOutline = true
   dp.drawCursorGuides = false
   dp.thinLines = true
 
@@ -1523,6 +1522,20 @@ proc cleanup() =
 
 proc main() =
   let win = init()
+
+  var
+    (winWidth, winHeight) = win.size
+    (fbWidth, fbHeight) = win.framebufferSize
+    pxRatio = fbWidth / winWidth
+
+  g_fb = g_app.vg.nvgluCreateFramebuffer(
+    width  = 100 * pxRatio.int,
+    height = 100 * pxRatio.int,
+    {ifRepeatX, ifRepeatY}
+  )
+
+  renderPattern(g_app.vg, g_fb, pxRatio)
+
   while not win.shouldClose:
     if koi.shouldRenderNextFrame():
       glfw.pollEvents()
