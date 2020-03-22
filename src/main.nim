@@ -1141,8 +1141,7 @@ proc renderUI() =
   vg.beginPath()
   vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
   # TODO
-#  vg.fillColor(gray(0.4))
-  vg.fillColor(rgb(248, 248, 244))
+  vg.fillColor(a.mapStyle.bgColor)
   vg.fill()
 
   # Current level dropdown
@@ -1248,45 +1247,179 @@ proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
 # {{{ Init & cleanup
 proc createDefaultMapStyle(): MapStyle =
   var ms = new MapStyle
-  ms.cellCoordsColor     = gray(0.9)
-  ms.cellCoordsColorHi   = rgb(1.0, 0.75, 0.0)
-  ms.cursorColor         = rgb(1.0, 0.65, 0.0)
-  ms.cursorGuideColor    = rgba(1.0, 0.65, 0.0, 0.2)
-  ms.defaultFgColor      = gray(0.1)
-  ms.lightFgColor        = gray(0.6)
-  ms.groundColor         = gray(0.9)
-  ms.gridColorBackground = gray(0.0, 0.3)
-  ms.gridColorFloor      = gray(0.0, 0.15)
-  ms.mapBackgroundColor  = gray(0.0, 0.7)
-  ms.mapOutlineColor     = gray(0.23)
-  ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor   = rgba(0.2, 0.6, 1.0, 0.4)
+  ms.bgColor = gray(0.4)
+
+  ms.bgCrosshatchEnabled       = true
+  ms.bgCrosshatchColor         = gray(0.0, 0.4)
+  ms.bgCrosshatchStrokeWidth   = 1.0
+  ms.bgCrosshatchSpacingFactor = 2.0
+
+  ms.coordsEnabled        = true
+  ms.coordsColor          = gray(0.9)
+  ms.coordsHighlightColor = rgb(1.0, 0.75, 0.0)
+
+  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
+  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
+
+  ms.gridStyle            = gsSolid
+  ms.gridColorBackground  = gray(0.0, 0.2)
+  ms.gridColorFloor       = gray(0.0, 0.22)
+
+  ms.floorColor           = gray(0.9)
+  ms.fgColor              = gray(0.1)
+  ms.lightFgColor         = gray(0.6)
+
+  ms.outlineStyle         = osCell
+  ms.outlineColor         = gray(0.25)
+  ms.outlineWidthFactor   = 0.5
+
+  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
+  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
   result = ms
+
 
 proc createLightMapStyle(): MapStyle =
   var ms = new MapStyle
-  ms.cellCoordsColor     = rgb(34, 32, 32)
-  ms.cellCoordsColorHi   = rgb(34, 32, 32)
-  ms.cursorColor         = rgb(1.0, 0.65, 0.0)
-  ms.cursorGuideColor    = rgba(1.0, 0.65, 0.0, 0.2)
-  ms.defaultFgColor      = rgb(34, 32, 32)
-  ms.lightFgColor        = rgb(186, 182, 182)
-  ms.groundColor         = rgb(248, 248, 244)
-  ms.gridColorBackground = gray(0.0, 0.3)
-  ms.gridColorFloor      = gray(0.0, 0.15)
-  ms.mapBackgroundColor  = rgb(228, 228, 224)
-  ms.mapForegroundColor  = gray(0.0, 0.0)
-  ms.mapOutlineColor     = rgb(178, 178, 174)
-  ms.selectionColor      = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor   = rgba(0.2, 0.6, 1.0, 0.4)
+#  ms.bgColor = rgb(248, 248, 244)
+  ms.bgColor = rgb(182, 184, 184)
+
+  ms.bgCrosshatchEnabled       = false
+  ms.bgCrosshatchColor         = gray(0.0, 0.0)
+  ms.bgCrosshatchStrokeWidth   = 1.0
+  ms.bgCrosshatchSpacingFactor = 2.0
+
+  ms.coordsEnabled        = false
+  ms.coordsColor          = rgb(34, 32, 32)
+  ms.coordsHighlightColor = rgb(34, 32, 32)
+
+  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
+  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
+
+  ms.gridStyle            = gsLoose
+  ms.gridColorBackground  = gray(0.0, 0.0)
+  ms.gridColorFloor       = gray(0.0, 0.22)
+
+  ms.floorColor           = rgb(248, 248, 244)
+  ms.fgColor              = rgb(45, 42, 42)
+  ms.lightFgColor         = rgb(182, 184, 184)
+
+#  ms.outlineStyle         = osRoundedEdgesFilled
+  ms.outlineStyle         = osRoundedEdges
+  ms.outlineColor         = rgb(204, 206, 206)
+#  ms.outlineWidthFactor   = 0.5
+  ms.outlineWidthFactor   = 0.3
+
+  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
+  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
   result = ms
+
+
+proc createSepiaMapStyle(): MapStyle =
+  var ms = new MapStyle
+  ms.bgColor = rgb(221, 204, 187)
+
+  ms.bgCrosshatchColor         = gray(0.0, 0.15)
+  ms.bgCrosshatchEnabled       = true
+  ms.bgCrosshatchStrokeWidth   = 1.0
+  ms.bgCrosshatchSpacingFactor = 3.0
+
+  ms.coordsEnabled        = true
+  ms.coordsColor          = gray(0.0, 0.4)
+  ms.coordsHighlightColor = gray(0.0, 0.8)
+
+  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
+  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
+
+  ms.gridStyle            = gsSolid
+  ms.gridColorBackground  = gray(0.0, 0.0)
+  ms.gridColorFloor       = rgba(180, 168, 154, 160)
+
+  ms.floorColor           = rgb(248, 248, 244)
+  ms.fgColor              = rgb(67, 67, 63)
+  ms.lightFgColor         = rgb(176, 167, 167)
+
+  ms.outlineStyle         = osSquareEdges
+  ms.outlineColor         = rgb(180, 168, 154)
+  ms.outlineWidthFactor   = 0.3
+
+  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
+  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+  result = ms
+
+
+proc createGrimrock1MapStyle(): MapStyle =
+  var ms = new MapStyle
+  ms.bgColor = rgb(152, 124, 99)
+
+  ms.bgCrosshatchColor         = gray(0.0, 0.15)
+  ms.bgCrosshatchEnabled       = true
+  ms.bgCrosshatchStrokeWidth   = 1.0
+  ms.bgCrosshatchSpacingFactor = 3.0
+
+  ms.coordsEnabled        = true
+  ms.coordsColor          = gray(0.0, 0.4)
+  ms.coordsHighlightColor = gray(0.0, 0.8)
+
+  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
+  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
+
+  ms.gridStyle            = gsSolid
+  ms.gridColorBackground  = gray(0.0, 0.0)
+  ms.gridColorFloor       = rgb(148, 123, 102)
+
+  ms.floorColor           = rgb(182, 155, 135)
+  ms.fgColor              = rgb(60, 44, 28)
+  ms.lightFgColor         = rgb(130, 114, 94)
+
+  ms.outlineStyle         = osNone
+  ms.outlineColor         = rgb(180, 168, 154)
+  ms.outlineWidthFactor   = 0.3
+
+  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
+  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+  result = ms
+
+
+proc createGrimrock2MapStyle(): MapStyle =
+  var ms = new MapStyle
+  ms.bgColor = rgb(154, 130, 113)
+
+  ms.bgCrosshatchColor         = gray(0.0, 0.25)
+  ms.bgCrosshatchEnabled       = true
+  ms.bgCrosshatchStrokeWidth   = 1.0
+  ms.bgCrosshatchSpacingFactor = 3.0
+
+  ms.coordsEnabled        = true
+  ms.coordsColor          = gray(0.0, 0.4)
+  ms.coordsHighlightColor = rgb(255, 180, 111)
+
+  ms.cursorColor          = rgb(255, 180, 111)
+  ms.cursorGuideColor     = rgba(255, 180, 111, 60)
+
+  ms.gridStyle            = gsSolid
+  ms.gridColorBackground  = gray(0.0, 0.0)
+  ms.gridColorFloor       = rgb(148, 123, 102)
+
+  ms.floorColor           = rgb(193, 180, 169)
+  ms.fgColor              = rgb(49, 42, 36)
+  ms.lightFgColor         = rgba(125, 113, 100, 220)
+
+  ms.outlineStyle         = osNone
+  ms.outlineColor         = rgb(180, 168, 154)
+  ms.outlineWidthFactor   = 0.3
+
+  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
+  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+  result = ms
+
+
 
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
   dp.drawOutline = true
   dp.drawCursorGuides = false
-  dp.thinLines = false
+  dp.thinLines = true
 
 
 proc createWindow(): Window =
@@ -1322,8 +1455,8 @@ proc loadData(vg: NVGContext) =
   if emojiFont == NoFont:
     quit "Could not load emoji font.\n"
 
-  g_icon1 = vg.createImage("data/icon1.png")
-  if g_icon1 == NoImage:
+  g_crosshatch = vg.createImage("data/crosshatch.png", {ifRepeatX, ifRepeatY})
+  if g_crosshatch == NoImage:
     quit fmt"Could not load icon1"
 
   discard addFallbackFont(vg, regularFont, emojiFont)
@@ -1352,8 +1485,11 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   g_app.map = newMap(16, 16)
-  #g_app.mapStyle = createDefaultMapStyle()
+  g_app.mapStyle = createDefaultMapStyle()
   g_app.mapStyle = createLightMapStyle()
+#  g_app.mapStyle = createSepiaMapStyle()
+#  g_app.mapStyle = createGrimrock1MapStyle()
+ # g_app.mapStyle = createGrimrock2MapStyle()
   g_app.undoManager = newUndoManager[Map]()
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", g_app)
 

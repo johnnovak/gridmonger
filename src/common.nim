@@ -7,7 +7,7 @@ import glfw
 import undomanager
 
 
-var g_icon1*: Image
+var g_crosshatch*: Image
 
 
 const

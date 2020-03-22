@@ -41,22 +41,42 @@ type
     dp*: DrawMapParams
     vg*: NVGContext
 
-  # TODO use better names
   MapStyle* = ref object
-    cellCoordsColor*:     Color
-    cellCoordsColorHi*:   Color
-    cursorColor*:         Color
-    cursorGuideColor*:    Color
-    defaultFgColor*:      Color
-    lightFgColor*:        Color
-    groundColor*:         Color
-    gridColorBackground*: Color
-    gridColorFloor*:      Color
-    mapBackgroundColor*:  Color
-    mapForegroundColor*:  Color
-    mapOutlineColor*:     Color
-    pastePreviewColor*:   Color
-    selectionColor*:      Color
+    bgColor*:                   Color
+
+    bgCrosshatchColor*:         Color
+    bgCrosshatchEnabled*:       bool
+    bgCrosshatchStrokeWidth*:   float
+    bgCrosshatchSpacingFactor*: float
+
+    coordsEnabled*:             bool
+    coordsColor*:               Color
+    coordsHighlightColor*:      Color
+
+    cursorColor*:               Color
+    cursorGuideColor*:          Color
+
+    gridStyle*:                 GridStyle
+    gridColorBackground*:       Color
+    gridColorFloor*:            Color
+
+    floorColor*:                Color
+    fgColor*:                   Color
+    lightFgColor*:              Color
+
+    outlineStyle*:              OutlineStyle
+    outlineColor*:              Color
+    outlineWidthFactor*:        float
+
+    pastePreviewColor*:         Color
+    selectionColor*:            Color
+
+  GridStyle* = enum
+    gsNone, gsSolid, gsLoose, gsDashed
+
+  OutlineStyle* = enum
+    osNone, osCell, osSquareEdges, osRoundedEdges, osRoundedEdgesFilled
+
 
   DrawMapParams* = ref object
     startX*:       float
@@ -82,7 +102,7 @@ type
     # internal
     zoomLevel:          Natural
     gridSize:           float
-    cellCoordsFontSize: float
+    coordsFontSize: float
 
     thinStrokeWidth:    float
     normalStrokeWidth:  float
@@ -136,7 +156,7 @@ proc setZoomLevel*(dp; zl: Natural) =
   dp.zoomLevel = zl
   dp.gridSize = MinGridSize + zl*ZoomStep
 
-  if zl < 6 or dp.thinLines:
+  if zl < 3 or dp.thinLines:
     dp.thinStrokeWidth = 2.0
     dp.normalStrokeWidth = 2.0
     dp.thinOffs = 1.0
@@ -148,11 +168,11 @@ proc setZoomLevel*(dp; zl: Natural) =
     dp.thinOffs = 0.0
     dp.vertTransformXOffs = 1.0
 
-  dp.cellCoordsFontSize = if   zl <= 2:   9.0
-                          elif zl <= 3:  10.0
-                          elif zl <= 7:  11.0
-                          elif zl <= 11: 12.0
-                          else:          13.0
+  dp.coordsFontSize = if   zl <= 2:   9.0
+                      elif zl <= 3:  10.0
+                      elif zl <= 7:  11.0
+                      elif zl <= 11: 12.0
+                      else:          13.0
 
 
 # }}}
@@ -199,6 +219,53 @@ proc cellY(y: Natural, dp): float =
 
 # }}}
 
+# {{{ drawBgCrosshatch()
+proc drawBgCrosshatch(ctx) =
+  let ms = ctx.ms
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  let strokeWidth = ms.bgCrosshatchStrokeWidth
+
+  vg.fillColor(ms.bgColor)
+  vg.strokeColor(ms.bgCrosshatchColor)
+  vg.strokeWidth(strokeWidth)
+
+  let
+    w = dp.gridSize * dp.viewCols
+    h = dp.gridSize * dp.viewRows
+    offs = max(w, h)
+    lineSpacing = strokeWidth * ms.bgCrosshatchSpacingFactor
+
+  let startX = snap(dp.startX, strokeWidth)
+  let startY = snap(dp.startY, strokeWidth)
+
+  vg.scissor(dp.startX, dp.startY, w, h)
+
+  vg.beginPath()
+  vg.rect(startX, startY, w, h)
+  vg.fill()
+
+  var
+    x1 = startX - offs
+    y1 = startY + offs
+    x2 = startX + offs
+    y2 = startY - offs
+
+  while x1 < dp.startX + offs:
+    vg.beginPath()
+    vg.moveTo(x1, y1)
+    vg.lineTo(x2, y2)
+    vg.stroke()
+
+    x1 += lineSpacing
+    x2 += lineSpacing
+    y1 += lineSpacing
+    y2 += lineSpacing
+
+  vg.resetScissor()
+
+# }}}
 # {{{ drawBackgroundGrid
 proc drawBackgroundGrid(ctx) =
   let ms = ctx.ms
@@ -237,89 +304,44 @@ proc drawCellCoords(m: Map, ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-  vg.fontFace("sans")
-  vg.fontSize(dp.cellCoordsFontSize)
+  vg.fontSize(dp.coordsFontSize)
   vg.textAlign(haCenter, vaMiddle)
 
   proc setTextHighlight(on: bool) =
     if on:
-      vg.fillColor(ms.cellCoordsColorHi)
-    else:
-      vg.fillColor(ms.cellCoordsColor)
+      vg.fontFace("sans-bold")
+      vg.fillColor(ms.coordsHighlightColor)
+    else: 
       vg.fontFace("sans")
+      vg.fillColor(ms.coordsColor)
 
   let endX = dp.startX + dp.gridSize * dp.viewCols
   let endY = dp.startY + dp.gridSize * dp.viewRows
 
-  let fontSize = dp.cellCoordsFontSize
+  let fontSize = dp.coordsFontSize
 
-  for x in 0..<dp.viewCols:
+  for c in 0..<dp.viewCols:
     let
-      xPos = cellX(x, dp) + dp.gridSize*0.5
-      coord = $(dp.viewStartCol + x)
+      xPos = cellX(c, dp) + dp.gridSize*0.5
+      col = dp.viewStartCol + c
+      coord = $col
 
-    setTextHighlight(x == dp.cursorCol)
+    setTextHighlight(col == dp.cursorCol)
 
     discard vg.text(xPos, dp.startY - fontSize, coord)
     discard vg.text(xPos, endY + fontSize*1.4, coord)
 
-  for y in 0..<dp.viewRows:
+  for r in 0..<dp.viewRows:
     let
-      yPos = cellY(y, dp) + dp.gridSize*0.5
-      coord = $(m.rows-1 - (dp.viewStartRow + y))
+      yPos = cellY(r, dp) + dp.gridSize*0.5
+      row = dp.viewStartRow + r
+      coord = $(m.rows-1 - row)
 
-    setTextHighlight(y == dp.cursorRow)
+    setTextHighlight(row == dp.cursorRow)
 
     discard vg.text(dp.startX - fontSize*1.2, yPos, coord)
     discard vg.text(endX + fontSize*1.6, yPos, coord)
 
-
-# }}}
-# {{{ drawMapBackground()
-proc drawMapBackground(ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
-
-  let strokeWidth = UltrathinStrokeWidth
-
-  vg.fillColor(ms.mapBackgroundColor)
-  vg.strokeColor(ms.mapForegroundColor)
-  vg.strokeWidth(strokeWidth)
-
-  let
-    w = dp.gridSize * dp.viewCols
-    h = dp.gridSize * dp.viewRows
-    offs = max(w, h)
-    lineSpacing = strokeWidth * 2
-
-  let startX = snap(dp.startX, strokeWidth)
-  let startY = snap(dp.startY, strokeWidth)
-
-  vg.scissor(startX, startY, w, h)
-
-  vg.beginPath()
-  vg.rect(startX, startY, w, h)
-  vg.fill()
-
-  var
-    x1 = startX - offs
-    y1 = startY + offs
-    x2 = startX + offs
-    y2 = startY - offs
-
-  while x1 < dp.startX + offs:
-    vg.beginPath()
-    vg.moveTo(x1, y1)
-    vg.lineTo(x2, y2)
-    vg.stroke()
-
-    x1 += lineSpacing
-    x2 += lineSpacing
-    y1 += lineSpacing
-    y2 += lineSpacing
-
-  vg.resetScissor()
 
 # }}}
 # {{{ drawCursor()
@@ -330,7 +352,7 @@ proc drawCursor(x, y: float, ctx) =
 
   vg.fillColor(ms.cursorColor)
   vg.beginPath()
-  vg.rect(x+1, y+1, dp.gridSize-1, dp.gridSize-1)
+  vg.rect(x+1, y+1, dp.gridSize, dp.gridSize)
   vg.fill()
 
 # }}}
@@ -362,8 +384,8 @@ proc drawCursorGuides(m: Map, ctx) =
   vg.stroke()
 
 # }}}
-# {{{ drawOutline()
-proc drawOutline(m: Map, ctx) =
+# {{{ drawCellOutlines()
+proc drawCellOutlines(m: Map, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
@@ -389,8 +411,8 @@ proc drawOutline(m: Map, ctx) =
           y = snap(cellY(r, dp), sw)
 
         vg.strokeWidth(sw)
-        vg.fillColor(ms.mapOutlineColor)
-        vg.strokeColor(ms.mapOutlineColor)
+        vg.fillColor(ms.outlineColor)
+        vg.strokeColor(ms.outlineColor)
 
         vg.beginPath()
         vg.rect(x, y, dp.gridSize, dp.gridSize)
@@ -398,8 +420,8 @@ proc drawOutline(m: Map, ctx) =
         vg.stroke()
 
 # }}}
-# {{{ generateOutlines()
-proc generateOutlines(m: Map): OutlineBuf =
+# {{{ generateEdgeOutlines()
+proc generateEdgeOutlines(m: Map): OutlineBuf =
   var ol = newOutlineBuf(m.cols, m.rows)
   for r in 0..<m.rows:
     for c in 0..<m.cols:
@@ -431,59 +453,129 @@ proc generateOutlines(m: Map): OutlineBuf =
     result = ol
 
 # }}}
-# {{{ drawOutlineBuf()
-proc drawOutlineBuf(ob: OutlineBuf, ctx) =
+# {{{ drawEdgeOutlines()
+proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
 
-  vg.fillColor(ms.mapOutlineColor)
+#  vg.fillColor(ms.outlineColor)
+  var img = vg.imagePattern(0, 0, 4, 4, 0, g_crosshatch, 1.0)
+  vg.fillPaint(img)
 
-  proc draw(x, y: float, o: OutlineCell) =
+  proc draw(x, y: float, cell: OutlineCell) =
     let
       gs = dp.gridSize
-      w  = dp.gridSize*0.5
+      w  = dp.gridSize * ms.outlineWidthFactor
       x1 = x
       x2 = x + gs
       y1 = y
       y2 = y + gs
 
-    if olN in o:
-      vg.beginPath()
-      vg.rect(x1, y1, gs, w)
-      vg.fill()
-    else:
-      if olNW in o:
+    proc drawRoundedEdges() =
+      if olN in cell:
         vg.beginPath()
-        vg.arc(x1, y1, w, 0, PI*1.75, pwCW)
+        vg.rect(x1, y1, gs, w)
         vg.fill()
-      if olNE in o:
+      else:
+        if olNW in cell:
+          vg.beginPath()
+          vg.arc(x1, y1, w, 0, PI*1.75, pwCW)
+          vg.fill()
+        if olNE in cell:
+          vg.beginPath()
+          vg.arc(x2, y1, w, PI*1.5, PI, pwCW)
+          vg.fill()
+
+      if olE in cell:
         vg.beginPath()
-        vg.arc(x2, y1, w, PI*1.5, PI, pwCW)
+        vg.rect(x2-w, y1, w, gs)
+        vg.fill()
+      elif olSE in cell:
+        vg.beginPath()
+        vg.arc(x2, y2, w, PI, PI*0.5, pwCW)
         vg.fill()
 
-    if olE in o:
+      if olS in cell:
+        vg.beginPath()
+        vg.rect(x1, y2-w, gs, w)
+        vg.fill()
+      elif olSW in cell:
+        vg.beginPath()
+        vg.arc(x1, y2, w, PI*0.5, 0, pwCW)
+        vg.fill()
+
+      if olW in cell:
+        vg.beginPath()
+        vg.rect(x1, y1, w, gs)
+        vg.fill()
+
+
+    proc drawSquareEdges() =
+      if olN in cell:
+        vg.beginPath()
+        vg.rect(x1, y1, gs, w)
+        vg.fill()
+      else:
+        if olNW in cell:
+          vg.beginPath()
+          vg.rect(x1, y1, w, w)
+          vg.fill()
+        if olNE in cell:
+          vg.beginPath()
+          vg.rect(x2-w, y1, w, w)
+          vg.fill()
+
+      if olE in cell:
+        vg.beginPath()
+        vg.rect(x2-w, y1, w, gs)
+        vg.fill()
+      elif olSE in cell:
+        vg.beginPath()
+        vg.rect(x2-w, y2-w, w, w)
+        vg.fill()
+
+      if olS in cell:
+        vg.beginPath()
+        vg.rect(x1, y2-w, gs, w)
+        vg.fill()
+      elif olSW in cell:
+        vg.beginPath()
+        vg.rect(x1, y2-w, w, w)
+        vg.fill()
+
+      if olW in cell:
+        vg.beginPath()
+        vg.rect(x1, y1, w, gs)
+        vg.fill()
+
+
+    proc drawFilled() =
       vg.beginPath()
-      vg.rect(x2-w, y1, w, gs)
-      vg.fill()
-    elif olSE in o:
-      vg.beginPath()
-      vg.arc(x2, y2, w, PI, PI*0.5, pwCW)
+      vg.rect(x1, y1, gs, gs)
       vg.fill()
 
-    if olS in o:
-      vg.beginPath()
-      vg.rect(x1, y2-w, gs, w)
-      vg.fill()
-    elif olSW in o:
-      vg.beginPath()
-      vg.arc(x1, y2, w, PI*0.5, 0, pwCW)
-      vg.fill()
 
-    if olW in o:
-      vg.beginPath()
-      vg.rect(x1, y1, w, gs)
-      vg.fill()
+    if ms.outlineStyle == osRoundedEdges:
+        drawRoundedEdges()
+
+    elif ms.outlineStyle == osRoundedEdgesFilled:
+      if cell == {olNW, olNE, olSW, olSE} or
+         cell == {olNW, olNE, olS} or
+         cell == {olSW, olSE, olN} or
+         cell == {olNE, olSE, olw} or
+         cell == {olNW, olSW, olE} or
+         cell == {olS, olW, olNE} or
+         cell == {olN, olW, olSE} or
+         cell == {olS, olE, olNW} or
+         cell == {olN, olE, olSW}:
+        drawFilled()
+      else:
+        drawRoundedEdges()
+
+    elif ms.outlineStyle == osSquareEdges:
+      drawSquareEdges()
+
 
   for r in 0..<ob.rows:
     for c in 0..<ob.cols:
@@ -502,7 +594,7 @@ proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
   let vg = ctx.vg
 
   vg.setFont((dp.gridSize*0.53).float)
-  vg.fillColor(ms.defaultFgColor)
+  vg.fillColor(ms.fgColor)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
                   y + dp.gridSize*oy + dp.gridSize*0.58, icon)
@@ -516,41 +608,42 @@ proc drawFloor(x, y: float, color: Color, ctx) =
 
   let sw = UltrathinStrokeWidth
 
-
   vg.beginPath()
   vg.fillColor(color)
   vg.strokeColor(ms.gridColorFloor)
   vg.strokeWidth(sw)
   vg.rect(snap(x, sw), snap(y, sw), dp.gridSize, dp.gridSize)
   vg.fill()
-#  vg.stroke()
 
-  let
-    offs = dp.gridSize * 0.2
-    x1 = x + offs
-    y1 = y + offs
-    x2 = x + dp.gridSize - offs
-    y2 = y + dp.gridSize - offs
+  case ms.gridStyle
+  of gsNone: discard
 
-  vg.strokeColor(ms.lightFgColor)
-  vg.strokeWidth(sw)
+  of gsSolid:
+    vg.stroke()
 
-  vg.beginPath()
-  vg.moveTo(snap(x1, sw), snap(y, sw))
-  vg.lineTo(snap(x2, sw), snap(y, sw))
-  vg.stroke()
-#  vg.beginPath()
-#  vg.moveTo(x1, y2)
-#  vg.lineTo(x2, y2)
-#  vg.stroke()
-  vg.beginPath()
-  vg.moveTo(snap(x, sw), snap(y1, sw))
-  vg.lineTo(snap(x, sw), snap(y2, sw))
-  vg.stroke()
-#  vg.beginPath()
-#  vg.moveTo(x2, y1)
-#  vg.lineTo(x2, y2)
-#  vg.stroke()
+  of gsLoose:
+    let
+      offs = dp.gridSize * 0.2
+      x1 = x + offs
+      y1 = y + offs
+      x2 = x + dp.gridSize - offs
+      y2 = y + dp.gridSize - offs
+
+    vg.strokeColor(ms.lightFgColor)
+    vg.strokeWidth(sw)
+
+    vg.beginPath()
+    vg.moveTo(snap(x1, sw), snap(y, sw))
+    vg.lineTo(snap(x2, sw), snap(y, sw))
+    vg.stroke()
+
+    vg.beginPath()
+    vg.moveTo(snap(x, sw), snap(y1, sw))
+    vg.lineTo(snap(x, sw), snap(y2, sw))
+    vg.stroke()
+
+  of gsDashed:
+    discard
 
 # }}}
 # {{{ drawSecretDoor()
@@ -559,10 +652,10 @@ proc drawSecretDoor(x, y: float, ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-  vg.beginPath()
-  vg.fillColor(gray(0.9))
-  vg.rect(x, y, dp.gridSize, dp.gridSize)
-  vg.fill()
+#  vg.beginPath()
+#  vg.fillColor(gray(0.7))
+#  vg.rect(x+1, y+1, dp.gridSize-1, dp.gridSize-1)
+#  vg.fill()
 
   drawIcon(x, y, 0, 0, "S", ctx)
 
@@ -579,7 +672,7 @@ proc drawPressurePlate(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -619,7 +712,7 @@ proc drawClosedPit(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjSquare)
-  vg.strokeColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
   vg.strokeWidth(sw)
 
   let
@@ -655,8 +748,8 @@ proc drawOpenPit(x, y: float, ctx) =
 
   vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.defaultFgColor)
-  vg.fillColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
+  vg.fillColor(ms.fgColor)
 
   let
     x1 = snap(x + offs, sw)
@@ -769,7 +862,7 @@ proc drawSolidWallHoriz*(x, y: float, ctx) =
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -789,7 +882,7 @@ proc drawIllusoryWallHoriz*(x, y: float, ctx) =
     y = snap(y, sw)
 
   vg.lineCap(lcjSquare)
-  vg.strokeColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
   vg.strokeWidth(sw)
 
   var x = xs
@@ -845,8 +938,8 @@ proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
 
   var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.defaultFgColor)
-  vg.fillColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
+  vg.fillColor(ms.fgColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -895,7 +988,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
 
   # Wall start
   vg.lineCap(lcjSquare)
@@ -933,7 +1026,7 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.defaultFgColor)
+  vg.strokeColor(ms.fgColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -977,7 +1070,7 @@ proc setVertTransform(x, y: float, ctx) =
 # }}}
 # {{{ drawFloor()
 proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
-                cursorActive: bool, ctx) =
+               cursorActive: bool, ctx) =
 
   let ms = ctx.ms
   let dp = ctx.dp
@@ -988,6 +1081,8 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
 
   template drawOriented(drawProc: untyped) =
     drawBg()
+    vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
+
     case viewBuf.getFloorOrientation(viewCol, viewRow):
     of Horiz:
       drawProc(x, y + floor(dp.gridSize*0.5), ctx)
@@ -995,17 +1090,16 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
       setVertTransform(x + floor(dp.gridSize*0.5), y, ctx)
       drawProc(0, 0, ctx)
       vg.resetTransform()
+    vg.resetScissor()
 
   template draw(drawProc: untyped) =
     drawBg()
     drawProc(x, y, ctx)
 
   proc drawBg() =
-    drawFloor(x, y, ms.groundColor, ctx)
+    drawFloor(x, y, ms.floorColor, ctx)
     if cursorActive:
       drawCursor(x, y, ctx)
-
-  vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
   case viewBuf.getFloor(viewCol, viewRow)
   of fNone:
@@ -1028,8 +1122,6 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
   of fSpinner:             draw(drawSpinner)
   of fTeleport:            draw(drawTeleport)
   of fCustom:              draw(drawCustom)
-
-  vg.resetScissor()
 
 # }}}
 # {{{ drawWall()
@@ -1158,13 +1250,18 @@ proc drawPastePreviewHighlight(ctx) =
 # {{{ drawMap*()
 proc drawMap*(m: Map, ctx) =
   let dp = ctx.dp
+  let ms = ctx.ms
 
   assert dp.viewStartCol + dp.viewCols <= m.cols
   assert dp.viewStartRow + dp.viewRows <= m.rows
 
-  drawCellCoords(m, ctx)
-  drawMapBackground(ctx)
-#  drawBackgroundGrid(ctx)
+  if ms.coordsEnabled:
+    drawCellCoords(m, ctx)
+
+  if ms.bgCrosshatchEnabled:
+    drawBgCrosshatch(ctx)
+
+  drawBackgroundGrid(ctx)
 
   let viewBuf = newMapFrom(m,
     rectN(
@@ -1175,11 +1272,12 @@ proc drawMap*(m: Map, ctx) =
     )
   )
 
-#  if dp.drawOutline:
-#    drawOutline(m, ctx)
-  let outlineBuf = generateOutlines(viewBuf)
-  drawOutlineBuf(outlineBuf, ctx)
-
+  if ms.outlineStyle > osNone:
+    if ms.outlineStyle == osCell:
+      drawCellOutlines(m, ctx)
+    else:
+      let outlineBuf = generateEdgeOutlines(viewBuf)
+      drawEdgeOutlines(outlineBuf, ctx)
 
   if dp.pastePreview.isSome:
     viewBuf.paste(dp.cursorCol - dp.viewStartCol,
