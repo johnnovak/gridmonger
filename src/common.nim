@@ -7,9 +7,6 @@ import glfw
 import undomanager
 
 
-var g_crosshatch*: Image
-
-
 const
   TextVertAlignFactor* = 0.55
 

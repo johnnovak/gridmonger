@@ -1461,10 +1461,6 @@ proc loadData(vg: NVGContext) =
   if emojiFont == NoFont:
     quit "Could not load emoji font.\n"
 
-  g_crosshatch = vg.createImage("data/crosshatch.png", {ifRepeatX, ifRepeatY})
-  if g_crosshatch == NoImage:
-    quit fmt"Could not load icon1"
-
   discard addFallbackFont(vg, regularFont, emojiFont)
   discard addFallbackFont(vg, boldFont, emojiFont)
 
@@ -1536,8 +1532,8 @@ proc main() =
     pxRatio = fbWidth / winWidth
 
   g_fb = g_app.vg.nvgluCreateFramebuffer(
-    width  = 100 * pxRatio.int,
-    height = 100 * pxRatio.int,
+    width  = 16 * pxRatio.int,
+    height = 16 * pxRatio.int,
     {ifRepeatX, ifRepeatY}
   )
 

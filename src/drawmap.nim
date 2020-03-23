@@ -241,52 +241,12 @@ proc renderPattern*(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: float) =
   vg.strokeColor(rgb(45, 42, 42))
   vg.strokeWidth(1.0)
 
-  for i in 0..100:
+  for i in 0..10:
     vg.beginPath()
-    vg.moveTo(0, i.float*4)
-    vg.lineTo(i.float*4, 0)
+    vg.moveTo(-2, i.float*8+2)
+    vg.lineTo(i.float*8+2, -2)
     vg.stroke()
 
-#  vg.fillColor(rgba(220, 160, 0, 200))
-#  vg.fill()
-
-#[
-  let sw = ms.bgCrosshatchStrokeWidth
-
-  vg.fillColor(ms.bgColor)
-  vg.strokeColor(ms.bgCrosshatchColor)
-  vg.strokeWidth(sw)
-
-  let
-    w = dp.gridSize * dp.viewCols
-    h = dp.gridSize * dp.viewRows
-    offs = max(w, h)
-    lineSpacing = sw * ms.bgCrosshatchSpacingFactor
-
-  let startX = snap(0, sw)
-  let startY = snap(0, sw)
-
-  vg.beginPath()
-  vg.rect(startX, startY, w, h)
-  vg.fill()
-
-  var
-    x1 = startX - offs
-    y1 = startY + offs
-    x2 = startX + offs
-    y2 = startY - offs
-
-  while x1 < dp.startX + offs:
-    vg.beginPath()
-    vg.moveTo(x1, y1)
-    vg.lineTo(x2, y2)
-    vg.stroke()
-
-    x1 += lineSpacing
-    x2 += lineSpacing
-    y1 += lineSpacing
-    y2 += lineSpacing
-]#
   vg.endFrame()
   nvgluBindFramebuffer(nil)
 
@@ -532,8 +492,7 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
   let vg = ctx.vg
 
 #  vg.fillColor(ms.outlineColor)
-#  var img = vg.imagePattern(0, 0, 4, 4, 0, g_crosshatch, 1.0)
-  var img = vg.imagePattern(0, 0, 100, 100, 0, g_fb.image, 1.0)
+  var img = vg.imagePattern(0, 0, 16, 16, 0, g_fb.image, 1.0)
   vg.fillPaint(img)
 
   proc draw(x, y: float, cell: OutlineCell) =
