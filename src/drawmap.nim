@@ -65,6 +65,7 @@ type
     floorColor*:                Color
     fgColor*:                   Color
     lightFgColor*:              Color
+    thinStroke*:                bool
 
     outlineStyle*:              OutlineStyle
     outlineColor*:              Color
@@ -98,12 +99,10 @@ type
 
     drawCursorGuides*: bool
 
-    thinLines*:        bool
-
     # internal
     zoomLevel:          Natural
     gridSize:           float
-    coordsFontSize: float
+    coordsFontSize:     float
 
     thinStrokeWidth:    float
     normalStrokeWidth:  float
@@ -142,6 +141,7 @@ proc `[]`(b: OutlineBuf, c, r: Natural): OutlineCell =
 # }}}
 
 using
+  ms:  MapStyle
   dp:  DrawMapParams
   ctx: DrawMapContext
 
@@ -151,14 +151,14 @@ proc getZoomLevel*(dp): Natural = dp.zoomLevel
 
 # }}}
 # {{{ setZoomLevel*()
-proc setZoomLevel*(dp; zl: Natural) =
+proc setZoomLevel*(dp; ms; zl: Natural) =
   assert zl >= MinZoomLevel
   assert zl <= MaxZoomLevel
 
   dp.zoomLevel = zl
   dp.gridSize = MinGridSize + zl*ZoomStep
 
-  if zl < 3 or dp.thinLines:
+  if zl < 3 or ms.thinStroke:
     dp.thinStrokeWidth = 2.0
     dp.normalStrokeWidth = 2.0
     dp.thinOffs = 1.0
@@ -176,18 +176,17 @@ proc setZoomLevel*(dp; zl: Natural) =
                       elif zl <= 11: 12.0
                       else:          13.0
 
-
 # }}}
 # {{{ incZoomLevel*()
-proc incZoomLevel*(dp) =
+proc incZoomLevel*(ms; dp) =
   if dp.zoomLevel < MaxZoomLevel:
-    setZoomLevel(dp, dp.zoomLevel+1)
+    dp.setZoomLevel(ms, dp.zoomLevel+1)
 
 # }}}
 # {{{ decZoomLevel*()
-proc decZoomLevel*(dp) =
+proc decZoomLevel*(ms; dp) =
   if dp.zoomLevel > MinZoomLevel:
-    setZoomLevel(dp, dp.zoomLevel-1)
+    dp.setZoomLevel(ms, dp.zoomLevel-1)
 
 # }}}
 # {{{ numDisplayableRows*()
@@ -239,7 +238,7 @@ proc renderPattern*(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: float) =
 
   vg.beginFrame(winWidth, winHeight, pxRatio)
 
-  vg.strokeColor(gray(0.2))
+  vg.strokeColor(rgb(45, 42, 42))
   vg.strokeWidth(1.0)
 
   for i in 0..100:
@@ -540,7 +539,7 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
   proc draw(x, y: float, cell: OutlineCell) =
     let
       gs = dp.gridSize
-      w  = dp.gridSize * ms.outlineWidthFactor
+      w  = (dp.gridSize * ms.outlineWidthFactor)+1
       x1 = x
       x2 = x + gs
       y1 = y
@@ -1000,7 +999,7 @@ proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
   let
     o = dp.thinOffs
     wallLen = (dp.gridSize * 0.25).int
-    doorWidthOffs = (if dp.zoomLevel < 4 or dp.thinLines: -1.0 else: 0)
+    doorWidthOffs = (if dp.zoomLevel < 4 or ms.thinStroke: -1.0 else: 0)
     doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
     xs = x
     y  = y

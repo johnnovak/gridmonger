@@ -727,9 +727,10 @@ proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
 
 proc drawWallToolbar(x: float, a) =
   alias(vg, a.vg)
+  alias(ms, a.mapStyle)
   alias(dp, a.toolbarDrawParams)
 
-  dp.setZoomLevel(1)
+  dp.setZoomLevel(ms, 1)
   let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
 
   let
@@ -755,9 +756,10 @@ proc drawWallToolbar(x: float, a) =
 # TODO
 proc drawMarkerIconToolbar(x: float, a) =
   alias(vg, a.vg)
+  alias(ms, a.mapStyle)
   alias(dp, a.toolbarDrawParams)
 
-  dp.setZoomLevel(5)
+  dp.setZoomLevel(ms, 5)
   let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
 
   let
@@ -789,6 +791,7 @@ proc handleMapEvents(a) =
   alias(curY, a.cursorRow)
   alias(um, a.undoManager)
   alias(m, a.map)
+  alias(ms, a.mapStyle)
   alias(dp, a.drawMapParams)
   alias(win, a.win)
 
@@ -802,11 +805,11 @@ proc handleMapEvents(a) =
       setStatusMessage(IconVertArrows, "Floor orientation set to vertical", a)
 
   proc incZoomLevel(a) =
-    a.drawMapParams.incZoomLevel()
+    incZoomLevel(ms, dp)
     updateViewStartAndCursorPosition(a)
 
   proc decZoomLevel(a) =
-    a.drawMapParams.decZoomLevel()
+    decZoomLevel(ms, dp)
     updateViewStartAndCursorPosition(a)
 
   proc cycleFloor(f, first, last: Floor): Floor =
@@ -952,8 +955,8 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
-        g_newMapDialog_cols = $a.map.cols
-        g_newMapDialog_rows = $a.map.rows
+        g_newMapDialog_cols = $m.cols
+        g_newMapDialog_rows = $m.rows
         openDialog(NewMapDialogTitle)
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
@@ -962,8 +965,8 @@ proc handleMapEvents(a) =
                                   filters=fmt"Gridmonger Map (*.{ext}):{ext}")
         if filename != "":
           try:
-            a.map = readMap(filename)
-            initUndoManager(a.undoManager)
+            m = readMap(filename)
+            initUndoManager(um)
             resetCursorAndViewStart(a)
             updateViewStartAndCursorPosition(g_app)
             setStatusMessage(IconFloppy, "Map loaded", a)
@@ -979,7 +982,7 @@ proc handleMapEvents(a) =
           try:
             if not filename.endsWith(fmt".{ext}"):
               filename &= "." & ext
-            writeMap(a.map, filename)
+            writeMap(m, filename)
             setStatusMessage(IconFloppy, fmt"Map saved", a)
           except CatchableError as e:
             # TODO log stracktrace?
@@ -1268,6 +1271,7 @@ proc createDefaultMapStyle(): MapStyle =
   ms.floorColor           = gray(0.9)
   ms.fgColor              = gray(0.1)
   ms.lightFgColor         = gray(0.6)
+  ms.thinStroke           = false
 
   ms.outlineStyle         = osCell
   ms.outlineColor         = gray(0.25)
@@ -1302,12 +1306,13 @@ proc createLightMapStyle(): MapStyle =
   ms.floorColor           = rgb(248, 248, 244)
   ms.fgColor              = rgb(45, 42, 42)
   ms.lightFgColor         = rgb(182, 184, 184)
+  ms.thinStroke           = true
 
 #  ms.outlineStyle         = osRoundedEdgesFilled
   ms.outlineStyle         = osRoundedEdges
   ms.outlineColor         = rgb(204, 206, 206)
 #  ms.outlineWidthFactor   = 0.5
-  ms.outlineWidthFactor   = 0.3
+  ms.outlineWidthFactor   = 0.25
 
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
@@ -1337,6 +1342,7 @@ proc createSepiaMapStyle(): MapStyle =
   ms.floorColor           = rgb(248, 248, 244)
   ms.fgColor              = rgb(67, 67, 63)
   ms.lightFgColor         = rgb(176, 167, 167)
+  ms.thinStroke           = true
 
   ms.outlineStyle         = osSquareEdges
   ms.outlineColor         = rgb(180, 168, 154)
@@ -1370,6 +1376,7 @@ proc createGrimrock1MapStyle(): MapStyle =
   ms.floorColor           = rgb(182, 155, 135)
   ms.fgColor              = rgb(60, 44, 28)
   ms.lightFgColor         = rgb(130, 114, 94)
+  ms.thinStroke           = true
 
   ms.outlineStyle         = osNone
   ms.outlineColor         = rgb(180, 168, 154)
@@ -1403,6 +1410,7 @@ proc createGrimrock2MapStyle(): MapStyle =
   ms.floorColor           = rgb(193, 180, 169)
   ms.fgColor              = rgb(49, 42, 36)
   ms.lightFgColor         = rgba(125, 113, 100, 220)
+  ms.thinStroke           = true
 
   ms.outlineStyle         = osNone
   ms.outlineColor         = rgb(180, 168, 154)
@@ -1418,7 +1426,6 @@ proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
   dp.drawCursorGuides = false
-  dp.thinLines = true
 
 
 proc createWindow(): Window =
@@ -1484,24 +1491,24 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   g_app.map = newMap(16, 16)
-  g_app.mapStyle = createDefaultMapStyle()
+#  g_app.mapStyle = createDefaultMapStyle()
   g_app.mapStyle = createLightMapStyle()
 #  g_app.mapStyle = createSepiaMapStyle()
 #  g_app.mapStyle = createGrimrock1MapStyle()
- # g_app.mapStyle = createGrimrock2MapStyle()
+#  g_app.mapStyle = createGrimrock2MapStyle()
   g_app.undoManager = newUndoManager[Map]()
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", g_app)
 
   g_app.drawMapParams = new DrawMapParams
   initDrawMapParams(g_app)
-  g_app.drawMapParams.setZoomLevel(DefaultZoomLevel)
+  g_app.drawMapParams.setZoomLevel(g_app.mapStyle, DefaultZoomLevel)
   g_app.scrollMargin = 3
 
   g_app.toolbarDrawParams = g_app.drawMapParams.deepCopy
-  g_app.toolbarDrawParams.setZoomLevel(1)
+  g_app.toolbarDrawParams.setZoomLevel(g_app.mapStyle, 1)
 
-  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
-#  g_app.map = readMap("drawtest.grm")
+#  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
+  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb
