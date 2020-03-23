@@ -20,6 +20,9 @@ const
 
   UltrathinStrokeWidth = 1.0
 
+  MinLineHatchSize = 3
+  MaxLineHatchSize = 8
+
 # Naming conventions
 # ------------------
 #
@@ -68,17 +71,22 @@ type
     thinStroke*:                bool
 
     outlineStyle*:              OutlineStyle
+    outlineFillStyle*:          OutlineFillStyle
     outlineColor*:              Color
     outlineWidthFactor*:        float
 
     pastePreviewColor*:         Color
     selectionColor*:            Color
 
+
   GridStyle* = enum
     gsNone, gsSolid, gsLoose, gsDashed
 
   OutlineStyle* = enum
     osNone, osCell, osSquareEdges, osRoundedEdges, osRoundedEdgesFilled
+
+  OutlineFillStyle* = enum
+    ofsSolid, ofsHatched
 
 
   DrawMapParams* = ref object
@@ -110,6 +118,10 @@ type
     thinOffs:           float
     vertTransformXOffs: float
 
+    lineHatchPatterns:  LineHatchPatterns
+    lineHatchSize:      range[MinLineHatchSize..MaxLineHatchSize]
+
+
   Outline = enum
     olN, olNE, olE, olSE, olS, olSW, olW, olNW
 
@@ -118,6 +130,8 @@ type
   OutlineBuf = ref object
     cols, rows: Natural
     cells: seq[OutlineCell]
+
+  LineHatchPatterns = array[MinLineHatchSize..MaxLineHatchSize, Paint]
 
 
 proc newOutlineBuf(cols, rows: Natural): OutlineBuf =
@@ -176,6 +190,13 @@ proc setZoomLevel*(dp; ms; zl: Natural) =
                       elif zl <= 11: 12.0
                       else:          13.0
 
+  dp.lineHatchSize = if   zl ==  1: 3
+                     elif zl <=  5: 4
+                     elif zl <=  9: 5
+                     elif zl <= 12: 6
+                     elif zl <= 17: 7
+                     else:          8
+
 # }}}
 # {{{ incZoomLevel*()
 proc incZoomLevel*(ms; dp) =
@@ -220,16 +241,14 @@ proc cellY(y: Natural, dp): float =
 
 # }}}
 
-
-proc renderPattern*(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: float) =
-  if fb == nil: return
-
+# {{{ renderHatchPatternImage()
+proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: float,
+                             strokeColor: Color, spacing: float) =
   let
     (fboWidth, fboHeight) = vg.imageSize(fb.image)
     winWidth = floor(fboWidth.float / pxRatio)
     winHeight = floor(fboHeight.float / pxRatio)
 
-  # Draw some stuff to an FBO as a test
   nvgluBindFramebuffer(fb)
 
   glViewport(0, 0, fboWidth.GLsizei, fboHeight.GLsizei)
@@ -243,13 +262,35 @@ proc renderPattern*(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: float) =
 
   for i in 0..10:
     vg.beginPath()
-    vg.moveTo(-2, i.float*8+2)
-    vg.lineTo(i.float*8+2, -2)
+    vg.moveTo(-2, i*spacing + 2)
+    vg.lineTo(i*spacing + 2, -2)
     vg.stroke()
 
   vg.endFrame()
   nvgluBindFramebuffer(nil)
 
+# }}}
+# {{{ renderLineHatchPatterns*()
+proc renderLineHatchPatterns*(dp; vg: NVGContext, pxRatio: float,
+                              strokeColor: Color) =
+  # TODO free images first if calling this multiple times
+  for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
+    var fb = vg.nvgluCreateFramebuffer(
+      width  = spacing * pxRatio.int,
+      height = spacing * pxRatio.int,
+      {ifRepeatX, ifRepeatY}
+    )
+    renderHatchPatternImage(vg, fb, pxRatio, strokeColor, spacing.float)
+
+    dp.lineHatchPatterns[spacing] = vg.imagePattern(0, 0,
+                                                    spacing.float,
+                                                    spacing.float,
+                                                    0, fb.image, 1.0)
+
+    fb.image = NoImage  # prevent deleting the image when deleting the FB
+    nvgluDeleteFramebuffer(fb)
+
+# }}}
 
 # {{{ drawBgCrosshatch()
 proc drawBgCrosshatch(ctx) =
@@ -491,9 +532,11 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-#  vg.fillColor(ms.outlineColor)
-  var img = vg.imagePattern(0, 0, 16, 16, 0, g_fb.image, 1.0)
-  vg.fillPaint(img)
+  case ms.outlineFillStyle
+  of ofsSolid:
+    vg.fillColor(ms.outlineColor)
+  of ofsHatched:
+    vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
 
   proc draw(x, y: float, cell: OutlineCell) =
     let

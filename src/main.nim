@@ -1220,8 +1220,6 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   ######################################################
 
   (winWidth, winHeight) = win.size
-  (fbWidth, fbHeight) = win.framebufferSize
-  pxRatio = fbWidth / winWidth
 
   # Window border
   vg.beginPath()
@@ -1274,6 +1272,7 @@ proc createDefaultMapStyle(): MapStyle =
   ms.thinStroke           = false
 
   ms.outlineStyle         = osCell
+  ms.outlineFillStyle     = ofsSolid
   ms.outlineColor         = gray(0.25)
   ms.outlineWidthFactor   = 0.5
 
@@ -1308,10 +1307,9 @@ proc createLightMapStyle(): MapStyle =
   ms.lightFgColor         = rgb(182, 184, 184)
   ms.thinStroke           = true
 
-#  ms.outlineStyle         = osRoundedEdgesFilled
   ms.outlineStyle         = osRoundedEdges
-  ms.outlineColor         = rgb(204, 206, 206)
-#  ms.outlineWidthFactor   = 0.5
+  ms.outlineFillStyle     = ofsHatched
+  ms.outlineColor         = rgb(154, 156, 156)
   ms.outlineWidthFactor   = 0.25
 
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
@@ -1345,6 +1343,7 @@ proc createSepiaMapStyle(): MapStyle =
   ms.thinStroke           = true
 
   ms.outlineStyle         = osSquareEdges
+  ms.outlineFillStyle     = ofsSolid
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
@@ -1379,6 +1378,7 @@ proc createGrimrock1MapStyle(): MapStyle =
   ms.thinStroke           = true
 
   ms.outlineStyle         = osNone
+  ms.outlineFillStyle     = ofsSolid
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
@@ -1465,6 +1465,7 @@ proc loadData(vg: NVGContext) =
   discard addFallbackFont(vg, boldFont, emojiFont)
 
 
+# TODO clean up
 proc init(): Window =
   g_app = new AppContext
 
@@ -1500,11 +1501,19 @@ proc init(): Window =
   g_app.drawMapParams.setZoomLevel(g_app.mapStyle, DefaultZoomLevel)
   g_app.scrollMargin = 3
 
+  var
+    (winWidth, winHeight) = win.size
+    (fbWidth, fbHeight) = win.framebufferSize
+    pxRatio = fbWidth / winWidth
+
+  g_app.drawMapParams.renderLineHatchPatterns(g_app.vg, pxRatio,
+                                              g_app.mapStyle.fgColor)
+
   g_app.toolbarDrawParams = g_app.drawMapParams.deepCopy
   g_app.toolbarDrawParams.setZoomLevel(g_app.mapStyle, 1)
 
-#  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
-  g_app.map = readMap("drawtest.grm")
+  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
+#  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb
@@ -1525,19 +1534,6 @@ proc cleanup() =
 
 proc main() =
   let win = init()
-
-  var
-    (winWidth, winHeight) = win.size
-    (fbWidth, fbHeight) = win.framebufferSize
-    pxRatio = fbWidth / winWidth
-
-  g_fb = g_app.vg.nvgluCreateFramebuffer(
-    width  = 16 * pxRatio.int,
-    height = 16 * pxRatio.int,
-    {ifRepeatX, ifRepeatY}
-  )
-
-  renderPattern(g_app.vg, g_fb, pxRatio)
 
   while not win.shouldClose:
     if koi.shouldRenderNextFrame():

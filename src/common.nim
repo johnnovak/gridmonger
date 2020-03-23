@@ -255,7 +255,4 @@ const
   MapFileExtension* = "grm"
 
 
-var g_fb*: NVGLUFramebuffer
-
-
 # vim: et:ts=2:sw=2:fdm=marker
