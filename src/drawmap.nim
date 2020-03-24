@@ -494,34 +494,35 @@ proc drawCellOutlines(m: Map, ctx) =
 
 # }}}
 # {{{ generateEdgeOutlines()
-proc generateEdgeOutlines(m: Map): OutlineBuf =
-  var ol = newOutlineBuf(m.cols, m.rows)
-  for r in 0..<m.rows:
-    for c in 0..<m.cols:
-      var cell: OutlineCell
-      if not isNeighbourCellEmpty(m, c, r, North): cell.incl(olN)
-      else:
-        if not isNeighbourCellEmpty(m, c, r, NorthWest): cell.incl(olNW)
-        if not isNeighbourCellEmpty(m, c, r, NorthEast): cell.incl(olNE)
+proc generateEdgeOutlines(viewBuf: Map): OutlineBuf =
+  var ol = newOutlineBuf(viewBuf.cols, viewBuf.rows)
+  for r in 0..<viewBuf.rows:
+    for c in 0..<viewBuf.cols:
+      if viewBuf.getFloor(c,r) == fNone:
+        var cell: OutlineCell
+        if not isNeighbourCellEmpty(viewBuf, c, r, North): cell.incl(olN)
+        else:
+          if not isNeighbourCellEmpty(viewBuf, c, r, NorthWest): cell.incl(olNW)
+          if not isNeighbourCellEmpty(viewBuf, c, r, NorthEast): cell.incl(olNE)
 
-      if not isNeighbourCellEmpty(m, c, r, East):
-        cell.incl(olE)
-        cell.excl(olNE)
-      else:
-        if not isNeighbourCellEmpty(m, c, r, SouthEast): cell.incl(olSE)
+        if not isNeighbourCellEmpty(viewBuf, c, r, East):
+          cell.incl(olE)
+          cell.excl(olNE)
+        else:
+          if not isNeighbourCellEmpty(viewBuf, c, r, SouthEast): cell.incl(olSE)
 
-      if not isNeighbourCellEmpty(m, c, r, South):
-        cell.incl(olS)
-        cell.excl(olSE)
-      else:
-        if not isNeighbourCellEmpty(m, c, r, SouthWest): cell.incl(olSW)
+        if not isNeighbourCellEmpty(viewBuf, c, r, South):
+          cell.incl(olS)
+          cell.excl(olSE)
+        else:
+          if not isNeighbourCellEmpty(viewBuf, c, r, SouthWest): cell.incl(olSW)
 
-      if not isNeighbourCellEmpty(m, c, r, West):
-        cell.incl(olW)
-        cell.excl(olSW)
-        cell.excl(olNW)
+        if not isNeighbourCellEmpty(viewBuf, c, r, West):
+          cell.incl(olW)
+          cell.excl(olSW)
+          cell.excl(olNW)
 
-      ol[c,r] = cell
+        ol[c,r] = cell
 
     result = ol
 
@@ -538,8 +539,10 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
   of ofsHatched:
     vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
 
-  proc draw(x, y: float, cell: OutlineCell) =
+  proc draw(c, r: Natural, cell: OutlineCell) =
     let
+      x = cellX(c, dp)
+      y = cellY(r, dp)
       gs = dp.gridSize
       w  = (dp.gridSize * ms.outlineWidthFactor)+1
       x1 = x
@@ -629,11 +632,9 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
   vg.beginPath()
   for r in 0..<ob.rows:
     for c in 0..<ob.cols:
-      let
-        cell = ob[c,r]
-        x = cellX(c, dp)
-        y = cellY(r, dp)
-      draw(x, y, cell)
+      let cell = ob[c,r]
+      if not (cell == {}):
+        draw(c, r, cell)
   vg.fill()
 
 # }}}
@@ -1149,16 +1150,16 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
 proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
   let dp = ctx.dp
 
-  let groundEmpty = viewBuf.getFloor(viewCol, viewRow) == fNone
+  let floorEmpty = viewBuf.getFloor(viewCol, viewRow) == fNone
 
-  if viewRow > 0 or (viewRow == 0 and not groundEmpty):
+  if viewRow > 0 or (viewRow == 0 and not floorEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
       viewBuf.getWall(viewCol, viewRow, dirN), Horiz, ctx
     )
 
-  if viewCol > 0 or (viewCol == 0 and not groundEmpty):
+  if viewCol > 0 or (viewCol == 0 and not floorEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
@@ -1166,7 +1167,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     )
 
   let viewEndCol = dp.viewCols-1
-  if viewCol < viewEndCol or (viewCol == viewEndCol and not groundEmpty):
+  if viewCol < viewEndCol or (viewCol == viewEndCol and not floorEmpty):
     drawWall(
       cellX(viewCol+1, dp),
       cellY(viewRow, dp),
@@ -1174,7 +1175,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     )
 
   let viewEndRow = dp.viewRows-1
-  if viewRow < viewEndRow or (viewRow == viewEndRow and not groundEmpty):
+  if viewRow < viewEndRow or (viewRow == viewEndRow and not floorEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow+1, dp),
