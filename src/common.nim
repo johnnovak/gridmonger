@@ -145,7 +145,7 @@ type
   SelectionRect* = object
     x0*, y0*:   Natural
     rect*:      Rect[Natural]
-    fillValue*: bool
+    selected*:  bool
 
 
 type

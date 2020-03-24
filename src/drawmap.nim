@@ -260,11 +260,11 @@ proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: floa
   vg.strokeColor(rgb(45, 42, 42))
   vg.strokeWidth(1.0)
 
+  vg.beginPath()
   for i in 0..10:
-    vg.beginPath()
     vg.moveTo(-2, i*spacing + 2)
     vg.lineTo(i*spacing + 2, -2)
-    vg.stroke()
+  vg.stroke()
 
   vg.endFrame()
   nvgluBindFramebuffer(nil)
@@ -325,16 +325,15 @@ proc drawBgCrosshatch(ctx) =
     x2 = startX + offs
     y2 = startY - offs
 
+  vg.beginPath()
   while x1 < dp.startX + offs:
-    vg.beginPath()
     vg.moveTo(x1, y1)
     vg.lineTo(x2, y2)
-    vg.stroke()
-
     x1 += lineSpacing
     x2 += lineSpacing
     y1 += lineSpacing
     y2 += lineSpacing
+  vg.stroke()
 
   vg.resetScissor()
 
@@ -354,21 +353,21 @@ proc drawBackgroundGrid(ctx) =
   let endX = snap(cellX(dp.viewCols, dp), strokeWidth)
   let endY = snap(cellY(dp.viewRows, dp), strokeWidth)
 
+  vg.beginPath()
   for x in 0..dp.viewCols:
     let x = snap(cellX(x, dp), strokeWidth)
     let y = snap(dp.startY, strokeWidth)
-    vg.beginPath()
     vg.moveTo(x, y)
     vg.lineTo(x, endY)
-    vg.stroke()
+  vg.stroke()
 
+  vg.beginPath()
   for y in 0..dp.viewRows:
     let x = snap(dp.startX, strokeWidth)
     let y = snap(cellY(y, dp), strokeWidth)
-    vg.beginPath()
     vg.moveTo(x, y)
     vg.lineTo(endX, y)
-    vg.stroke()
+  vg.stroke()
 
 # }}}
 # {{{ drawCellCoords()
@@ -475,22 +474,23 @@ proc drawCellOutlines(m: Map, ctx) =
       isNeighbourCellEmpty(m, c, r, NorthWest)
     )
 
+  let sw = UltrathinStrokeWidth
+
+  vg.strokeWidth(sw)
+  vg.fillColor(ms.outlineColor)
+  vg.strokeColor(ms.outlineColor)
+
+  vg.beginPath()
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
       if isOutline(dp.viewStartCol+c, dp.viewStartRow+r):
         let
-          sw = UltrathinStrokeWidth
           x = snap(cellX(c, dp), sw)
           y = snap(cellY(r, dp), sw)
 
-        vg.strokeWidth(sw)
-        vg.fillColor(ms.outlineColor)
-        vg.strokeColor(ms.outlineColor)
-
-        vg.beginPath()
         vg.rect(x, y, dp.gridSize, dp.gridSize)
-        vg.fill()
-        vg.stroke()
+  vg.fill()
+  vg.stroke()
 
 # }}}
 # {{{ generateEdgeOutlines()
@@ -587,48 +587,22 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
 
 
     proc drawSquareEdges() =
-      if olN in cell:
-        vg.beginPath()
-        vg.rect(x1, y1, gs, w)
-        vg.fill()
+      if olN in cell:    vg.rect(x1, y1, gs, w)
       else:
-        if olNW in cell:
-          vg.beginPath()
-          vg.rect(x1, y1, w, w)
-          vg.fill()
-        if olNE in cell:
-          vg.beginPath()
-          vg.rect(x2-w, y1, w, w)
-          vg.fill()
+        if olNW in cell: vg.rect(x1, y1, w, w)
+        if olNE in cell: vg.rect(x2-w, y1, w, w)
 
-      if olE in cell:
-        vg.beginPath()
-        vg.rect(x2-w, y1, w, gs)
-        vg.fill()
-      elif olSE in cell:
-        vg.beginPath()
-        vg.rect(x2-w, y2-w, w, w)
-        vg.fill()
+      if olE in cell:    vg.rect(x2-w, y1, w, gs)
+      elif olSE in cell: vg.rect(x2-w, y2-w, w, w)
 
-      if olS in cell:
-        vg.beginPath()
-        vg.rect(x1, y2-w, gs, w)
-        vg.fill()
-      elif olSW in cell:
-        vg.beginPath()
-        vg.rect(x1, y2-w, w, w)
-        vg.fill()
+      if olS in cell:    vg.rect(x1, y2-w, gs, w)
+      elif olSW in cell: vg.rect(x1, y2-w, w, w)
 
-      if olW in cell:
-        vg.beginPath()
-        vg.rect(x1, y1, w, gs)
-        vg.fill()
+      if olW in cell:    vg.rect(x1, y1, w, gs)
 
 
     proc drawFilled() =
-      vg.beginPath()
       vg.rect(x1, y1, gs, gs)
-      vg.fill()
 
 
     if ms.outlineStyle == osRoundedEdges:
@@ -652,6 +626,7 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
       drawSquareEdges()
 
 
+  vg.beginPath()
   for r in 0..<ob.rows:
     for c in 0..<ob.cols:
       let
@@ -659,6 +634,7 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
         x = cellX(c, dp)
         y = cellY(r, dp)
       draw(x, y, cell)
+  vg.fill()
 
 # }}}
 
@@ -710,9 +686,6 @@ proc drawFloor(x, y: float, color: Color, ctx) =
     vg.beginPath()
     vg.moveTo(snap(x1, sw), snap(y, sw))
     vg.lineTo(snap(x2, sw), snap(y, sw))
-    vg.stroke()
-
-    vg.beginPath()
     vg.moveTo(snap(x, sw), snap(y1, sw))
     vg.lineTo(snap(x, sw), snap(y2, sw))
     vg.stroke()
@@ -727,10 +700,10 @@ proc drawSecretDoor(x, y: float, ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-#  vg.beginPath()
-#  vg.fillColor(gray(0.7))
-#  vg.rect(x+1, y+1, dp.gridSize-1, dp.gridSize-1)
-#  vg.fill()
+  vg.beginPath()
+  vg.fillColor(ms.lightFgColor)
+  vg.rect(x+1, y+1, dp.gridSize-1, dp.gridSize-1)
+  vg.fill()
 
   drawIcon(x, y, 0, 0, "S", ctx)
 
@@ -775,69 +748,38 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
   vg.stroke()
 
 # }}}
-# {{{ drawClosedPit()
-proc drawClosedPit(x, y: float, ctx) =
+# {{{ drawOpenPitWithColor()
+proc drawOpenPitWithColor(x, y: float, color: Color, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
     sw = dp.thinStrokeWidth
+    sw2 = sw*0.5
+    x1 = snap(x + offs - sw2, sw)
+    y1 = snap(y + offs - sw2, sw)
+    a = dp.gridSize - 2*offs + sw + 1 - dp.thinOffs
 
-  vg.lineCap(lcjSquare)
-  vg.strokeColor(ms.fgColor)
-  vg.strokeWidth(sw)
-
-  let
-    x1 = snap(x + offs, sw)
-    y1 = snap(y + offs, sw)
-    x2 = snap(x + offs + a, sw)
-    y2 = snap(y + offs + a, sw)
-
+  vg.fillColor(color)
   vg.beginPath()
   vg.rect(x1, y1, a, a)
-  vg.stroke()
-
-  vg.beginPath()
-  vg.moveTo(x1+1, y1+1)
-  vg.lineTo(x2-1, y2-1)
-  vg.stroke()
-  vg.beginPath()
-  vg.moveTo(x2-1, y1+1)
-  vg.lineTo(x1+1, y2-1)
-  vg.stroke()
+  vg.fill()
 
 # }}}
 # {{{ drawOpenPit()
 proc drawOpenPit(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
-
-  let
-    offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
-    sw = dp.thinStrokeWidth
-
-  vg.lineCap(lcjSquare)
-  vg.strokeWidth(sw)
-  vg.strokeColor(ms.fgColor)
-  vg.fillColor(ms.fgColor)
-
-  let
-    x1 = snap(x + offs, sw)
-    y1 = snap(y + offs, sw)
-
-  vg.beginPath()
-  vg.rect(x1, y1, a, a)
-  vg.fill()
-  vg.stroke()
+  drawOpenPitWithColor(x, y, ctx.ms.fgColor, ctx)
 
 # }}}
-# {{{ drawHiddenPit()
-proc drawHiddenPit(x, y: float, ctx) =
+# {{{ drawCeilingPit()
+proc drawCeilingPit(x, y: float, ctx) =
+  drawOpenPitWithColor(x, y, ctx.ms.lightFgColor, ctx)
+
+# }}}
+# {{{ drawClosedPitWithColor()
+proc drawClosedPitWithColor(x, y: float, color: Color, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
@@ -846,55 +788,32 @@ proc drawHiddenPit(x, y: float, ctx) =
     offs = (dp.gridSize * 0.3).int
     a = dp.gridSize - 2*offs + 1 - dp.thinOffs
     sw = dp.thinStrokeWidth
-
-  vg.lineCap(lcjSquare)
-  vg.strokeColor(ms.lightFgColor)
-  vg.strokeWidth(sw)
-
-  let
     x1 = snap(x + offs, sw)
     y1 = snap(y + offs, sw)
     x2 = snap(x + offs + a, sw)
     y2 = snap(y + offs + a, sw)
 
-  vg.beginPath()
-  vg.rect(x1, y1, a, a)
-  vg.stroke()
+  vg.lineCap(lcjSquare)
+  vg.strokeColor(color)
+  vg.strokeWidth(sw)
 
   vg.beginPath()
+  vg.rect(x1, y1, a, a)
   vg.moveTo(x1+1, y1+1)
   vg.lineTo(x2-1, y2-1)
-  vg.stroke()
-  vg.beginPath()
   vg.moveTo(x2-1, y1+1)
   vg.lineTo(x1+1, y2-1)
   vg.stroke()
 
 # }}}
-# {{{ drawCeilingPit()
-proc drawCeilingPit(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+# {{{ drawClosedPit()
+proc drawClosedPit(x, y: float, ctx) =
+  drawClosedPitWithColor(x, y, ctx.ms.fgColor, ctx)
 
-  let
-    offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
-    sw = dp.thinStrokeWidth
-
-  vg.lineCap(lcjSquare)
-  vg.strokeWidth(sw)
-  vg.strokeColor(ms.lightFgColor)
-  vg.fillColor(ms.lightFgColor)
-
-  let
-    x1 = snap(x + offs, sw)
-    y1 = snap(y + offs, sw)
-
-  vg.beginPath()
-  vg.rect(x1, y1, a, a)
-  vg.fill()
-  vg.stroke()
+# }}}
+# {{{ drawHiddenPit()
+proc drawHiddenPit(x, y: float, ctx) =
+  drawClosedPitWithColor(x, y, ctx.ms.lightFgColor, ctx)
 
 # }}}
 # {{{ drawStairsDown()
@@ -955,18 +874,21 @@ proc drawIllusoryWallHoriz*(x, y: float, ctx) =
     xs = x
     xe = x + dp.gridSize
     y = snap(y, sw)
+    # TODO make zoom dependent
+    len = 2.0
+    pad = 7.0
 
   vg.lineCap(lcjSquare)
   vg.strokeColor(ms.fgColor)
   vg.strokeWidth(sw)
 
   var x = xs
+  vg.beginPath()
   while x <= xe:
-    vg.beginPath()
     vg.moveTo(snap(x, sw), y)
-    vg.lineTo(snap(min(x+sw*1, xe), sw), y)
-    vg.stroke()
-    x += sw*3
+    vg.lineTo(snap(min(x+len, xe), sw), y)
+    x += pad
+  vg.stroke()
 
 # }}}
 # {{{ drawInvisibleWallHoriz*()
@@ -1115,9 +1037,6 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
   vg.beginPath()
   vg.moveTo(snap(x1, sw), snap(y1, sw))
   vg.lineTo(snap(x1, sw), snap(y2, sw))
-  vg.stroke()
-
-  vg.beginPath()
   vg.moveTo(snap(x2, sw), snap(y1, sw))
   vg.lineTo(snap(x2, sw), snap(y2, sw))
   vg.stroke()
@@ -1288,7 +1207,7 @@ proc drawSelection(ctx) =
     for r in dp.viewStartRow..viewEndRow:
       let draw = if dp.selRect.isSome:
                    let sr = dp.selRect.get
-                   if sr.fillValue:
+                   if sr.selected:
                      sel[c,r] or sr.rect.contains(c,r)
                    else:
                      not sr.rect.contains(c,r) and sel[c,r]

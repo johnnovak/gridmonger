@@ -1062,7 +1062,7 @@ proc handleMapEvents(a) =
         a.selRect = some(SelectionRect(
           x0: curX, y0: curY,
           rect: rectN(curX, curY, curX+1, curY+1),
-          fillValue: ke.isKeyDown(keyR)
+          selected: ke.isKeyDown(keyR)
         ))
 
       elif ke.isKeyDown(keyC):
@@ -1108,7 +1108,7 @@ proc handleMapEvents(a) =
       a.selRect.get.rect = rectN(x1, y1, x2, y2)
 
       if ke.isKeyUp({keyR, keyS}):
-        a.selection.get.fill(a.selRect.get.rect, a.selRect.get.fillValue)
+        a.selection.get.fill(a.selRect.get.rect, a.selRect.get.selected)
         a.selRect = none(SelectionRect)
         a.editMode = emSelectDraw
 
@@ -1304,7 +1304,7 @@ proc createLightMapStyle(): MapStyle =
 
   ms.floorColor           = rgb(248, 248, 244)
   ms.fgColor              = rgb(45, 42, 42)
-  ms.lightFgColor         = rgb(182, 184, 184)
+  ms.lightFgColor         = rgba(45, 42, 42, 70)
   ms.thinStroke           = true
 
   ms.outlineStyle         = osRoundedEdges
@@ -1312,8 +1312,8 @@ proc createLightMapStyle(): MapStyle =
   ms.outlineColor         = rgb(154, 156, 156)
   ms.outlineWidthFactor   = 0.25
 
-  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.5)
+  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.5)
   result = ms
 
 
@@ -1488,7 +1488,7 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   g_app.map = newMap(16, 16)
-#  g_app.mapStyle = createDefaultMapStyle()
+  g_app.mapStyle = createDefaultMapStyle()
   g_app.mapStyle = createLightMapStyle()
 #  g_app.mapStyle = createSepiaMapStyle()
 #  g_app.mapStyle = createGrimrock1MapStyle()
@@ -1512,8 +1512,8 @@ proc init(): Window =
   g_app.toolbarDrawParams = g_app.drawMapParams.deepCopy
   g_app.toolbarDrawParams.setZoomLevel(g_app.mapStyle, 1)
 
-  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
-#  g_app.map = readMap("drawtest.grm")
+#  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
+  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb
