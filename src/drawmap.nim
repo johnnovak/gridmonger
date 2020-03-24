@@ -633,11 +633,11 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
 
 
   vg.beginPath()
-  for r in 0..<ob.rows:
-    for c in 0..<ob.cols:
+  for r in 1..<ob.rows-1:
+    for c in 1..<ob.cols-1:
       let cell = ob[c,r]
       if not (cell == {}):
-        draw(c, r, cell)
+        draw(c-1, r-1, cell)
   vg.fill()
 
 # }}}
@@ -1072,14 +1072,17 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
   let dp = ctx.dp
   let vg = ctx.vg
 
-  let x = cellX(viewCol, dp)
-  let y = cellY(viewRow, dp)
+  let
+    bufCol = viewCol+1
+    bufRow = viewRow+1
+    x = cellX(viewCol, dp)
+    y = cellY(viewRow, dp)
 
   template drawOriented(drawProc: untyped) =
     drawBg()
     vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
-    case viewBuf.getFloorOrientation(viewCol, viewRow):
+    case viewBuf.getFloorOrientation(bufCol, bufRow):
     of Horiz:
       drawProc(x, y + floor(dp.gridSize*0.5), ctx)
     of Vert:
@@ -1097,7 +1100,7 @@ proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
     if cursorActive:
       drawCursor(x, y, ctx)
 
-  case viewBuf.getFloor(viewCol, viewRow)
+  case viewBuf.getFloor(bufCol, bufRow)
   of fNone:
     if cursorActive:
       drawCursor(x, y, ctx)
@@ -1151,20 +1154,24 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
 proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
   let dp = ctx.dp
 
-  let floorEmpty = viewBuf.getFloor(viewCol, viewRow) == fNone
+  let
+    bufCol = viewCol+1
+    bufRow = viewRow+1
+
+  let floorEmpty = viewBuf.getFloor(bufCol, bufRow) == fNone
 
   if viewRow > 0 or (viewRow == 0 and not floorEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(viewCol, viewRow, dirN), Horiz, ctx
+      viewBuf.getWall(bufCol, bufRow, dirN), Horiz, ctx
     )
 
   if viewCol > 0 or (viewCol == 0 and not floorEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(viewCol, viewRow, dirW), Vert, ctx
+      viewBuf.getWall(bufCol, bufRow, dirW), Vert, ctx
     )
 
   let viewEndCol = dp.viewCols-1
@@ -1172,7 +1179,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     drawWall(
       cellX(viewCol+1, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(viewCol, viewRow, dirE), Vert, ctx
+      viewBuf.getWall(bufCol, bufRow, dirE), Vert, ctx
     )
 
   let viewEndRow = dp.viewRows-1
@@ -1180,7 +1187,7 @@ proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow+1, dp),
-      viewBuf.getWall(viewCol, viewRow, dirS), Horiz, ctx
+      viewBuf.getWall(bufCol, bufRow, dirS), Horiz, ctx
     )
 
 # }}}
@@ -1265,21 +1272,34 @@ proc drawMap*(m: Map, ctx) =
       dp.viewStartRow,
       dp.viewStartCol + dp.viewCols,
       dp.viewStartRow + dp.viewRows
-    )
+    ),
+    border=1
   )
+
+  var outlineBuf: OutlineBuf
+  if ms.outlineStyle > osNone:
+    if ms.outlineStyle == osCell:
+      discard # TODO
+    else:
+      outlineBuf = generateEdgeOutlines(viewBuf)
+
+  if dp.pastePreview.isSome:
+    let startCol = dp.cursorCol - dp.viewStartCol + 1
+    let startRow = dp.cursorRow - dp.viewStartRow + 1
+    let copyBuf = dp.pastePreview.get.map
+
+    viewBuf.paste(startCol, startRow,
+                  copyBuf, dp.pastePreview.get.selection)
+
+    for r in 0..<copyBuf.rows:
+      for c in 0..<copyBuf.cols:
+        outlineBuf[startCol+c, startRow+r] = {}
 
   if ms.outlineStyle > osNone:
     if ms.outlineStyle == osCell:
       drawCellOutlines(m, ctx)
     else:
-      let outlineBuf = generateEdgeOutlines(viewBuf)
       drawEdgeOutlines(outlineBuf, ctx)
-
-  if dp.pastePreview.isSome:
-    viewBuf.paste(dp.cursorCol - dp.viewStartCol,
-                  dp.cursorRow - dp.viewStartRow,
-                  dp.pastePreview.get.map,
-                  dp.pastePreview.get.selection)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:

@@ -1291,7 +1291,7 @@ proc createLightMapStyle(): MapStyle =
   ms.bgCrosshatchStrokeWidth   = 1.0
   ms.bgCrosshatchSpacingFactor = 2.0
 
-  ms.coordsEnabled        = false
+  ms.coordsEnabled        = true
   ms.coordsColor          = rgb(34, 32, 32)
   ms.coordsHighlightColor = rgb(34, 32, 32)
 

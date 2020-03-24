@@ -104,14 +104,14 @@ proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
     destRow = 0
     srcRect = rect
 
-  dec(srcRect.x1, border)
-  if srcRect.x1 < 0:
-    destCol = -srcRect.x1
+  let x1 = srcRect.x1.int - border
+  if x1 < 0:
+    destCol = -x1
     srcRect.x1 = 0
 
-  dec(srcRect.y1, border)
-  if srcRect.y1 < 0:
-    destRow = -srcRect.y1
+  let y1 = srcRect.y1.int - border
+  if y1 < 0:
+    destRow = -y1
     srcRect.y1 = 0
 
   inc(srcRect.x2, border)
