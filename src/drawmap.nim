@@ -665,9 +665,7 @@ proc drawFloor(x, y: float, color: Color, ctx) =
 
   vg.beginPath()
   vg.fillColor(color)
-  vg.strokeColor(ms.gridColorFloor)
-  vg.strokeWidth(sw)
-  vg.rect(snap(x, sw), snap(y, sw), dp.gridSize, dp.gridSize)
+  vg.rect(snap(x-sw*0.5, sw), snap(y-sw*0.5, sw), dp.gridSize+sw, dp.gridSize+sw)
   vg.fill()
 
   case ms.gridStyle
