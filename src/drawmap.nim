@@ -257,8 +257,15 @@ proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: floa
 
   vg.beginFrame(winWidth, winHeight, pxRatio)
 
-  vg.strokeColor(rgb(45, 42, 42))
-  vg.strokeWidth(1.0)
+  var sw = 1.0
+  if pxRatio == 1.0:
+    if spacing <= 4:
+      vg.shapeAntiAlias(false)
+    else:
+      sw = 0.8
+
+  vg.strokeColor(strokeColor)
+  vg.strokeWidth(sw)
 
   vg.beginPath()
   for i in 0..10:
@@ -267,6 +274,7 @@ proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: floa
   vg.stroke()
 
   vg.endFrame()
+  vg.shapeAntiAlias(true)
   nvgluBindFramebuffer(nil)
 
 # }}}
@@ -298,20 +306,20 @@ proc drawBgCrosshatch(ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-  let strokeWidth = ms.bgCrosshatchStrokeWidth
+  let sw = ms.bgCrosshatchStrokeWidth
 
   vg.fillColor(ms.bgColor)
   vg.strokeColor(ms.bgCrosshatchColor)
-  vg.strokeWidth(strokeWidth)
+  vg.strokeWidth(sw)
 
   let
     w = dp.gridSize * dp.viewCols
     h = dp.gridSize * dp.viewRows
     offs = max(w, h)
-    lineSpacing = strokeWidth * ms.bgCrosshatchSpacingFactor
+    lineSpacing = sw * ms.bgCrosshatchSpacingFactor
 
-  let startX = snap(dp.startX, strokeWidth)
-  let startY = snap(dp.startY, strokeWidth)
+  let startX = snap(dp.startX, sw)
+  let startY = snap(dp.startY, sw)
 
   vg.scissor(dp.startX, dp.startY, w, h)
 
@@ -544,48 +552,43 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
       x = cellX(c, dp)
       y = cellY(r, dp)
       gs = dp.gridSize
-      w  = (dp.gridSize * ms.outlineWidthFactor)+1
+      w  = dp.gridSize * ms.outlineWidthFactor + 1
       x1 = x
       x2 = x + gs
       y1 = y
       y2 = y + gs
 
     proc drawRoundedEdges() =
-      if olN in cell:
-        vg.beginPath()
-        vg.rect(x1, y1, gs, w)
-        vg.fill()
-      else:
-        if olNW in cell:
-          vg.beginPath()
-          vg.arc(x1, y1, w, 0, PI*1.75, pwCW)
-          vg.fill()
-        if olNE in cell:
-          vg.beginPath()
-          vg.arc(x2, y1, w, PI*1.5, PI, pwCW)
-          vg.fill()
+      vg.beginPath()
+      if olN in cell: vg.rect(x1, y1, gs, w)
+      if olE in cell: vg.rect(x2-w, y1, w, gs)
+      if olS in cell: vg.rect(x1, y2-w, gs, w)
+      if olW in cell: vg.rect(x1, y1, w, gs)
+      vg.fill()
 
-      if olE in cell:
+      if olNW in cell:
         vg.beginPath()
-        vg.rect(x2-w, y1, w, gs)
+        vg.arc(x1, y1, w, 0, PI*0.5, pwCW)
+        vg.lineTo(x1, y1)
+        vg.closePath()
         vg.fill()
-      elif olSE in cell:
+      if olNE in cell:
         vg.beginPath()
-        vg.arc(x2, y2, w, PI, PI*0.5, pwCW)
+        vg.arc(x2, y1, w, PI*0.5, PI, pwCW)
+        vg.lineTo(x2, y1)
+        vg.closePath()
         vg.fill()
-
-      if olS in cell:
+      if olSE in cell:
         vg.beginPath()
-        vg.rect(x1, y2-w, gs, w)
+        vg.arc(x2, y2, w, PI, PI*1.5, pwCW)
+        vg.lineTo(x2, y2)
+        vg.closePath()
         vg.fill()
-      elif olSW in cell:
+      if olSW in cell:
         vg.beginPath()
-        vg.arc(x1, y2, w, PI*0.5, 0, pwCW)
-        vg.fill()
-
-      if olW in cell:
-        vg.beginPath()
-        vg.rect(x1, y1, w, gs)
+        vg.arc(x1, y2, w, PI*1.5, 0, pwCW)
+        vg.lineTo(x1, y2)
+        vg.closePath()
         vg.fill()
 
 
@@ -1282,6 +1285,7 @@ proc drawMap*(m: Map, ctx) =
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
+      # TODO draw cursor & floor grid separately
       let cursorActive = dp.viewStartCol+c == dp.cursorCol and
                          dp.viewStartRow+r == dp.cursorRow
       drawFloor(viewBuf, c, r, cursorActive, ctx)

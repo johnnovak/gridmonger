@@ -1474,7 +1474,8 @@ proc init(): Window =
   var win = createWindow()
   g_app.win = win
 
-  var flags = {nifStencilStrokes, nifDebug}
+  var flags = {nifStencilStrokes, nifDebug, nifAntialias}
+
   g_app.vg = nvgInit(getProcAddress, flags)
   if g_app.vg == nil:
     quit "Error creating NanoVG context"
@@ -1512,8 +1513,8 @@ proc init(): Window =
   g_app.toolbarDrawParams = g_app.drawMapParams.deepCopy
   g_app.toolbarDrawParams.setZoomLevel(g_app.mapStyle, 1)
 
-#  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
-  g_app.map = readMap("drawtest.grm")
+  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
+#  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb

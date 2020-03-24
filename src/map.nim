@@ -93,15 +93,33 @@ proc copyFrom*(dest: var Map, src: Map) =
   dest.copyFrom(destCol=0, destRow=0, src, rectN(0, 0, src.cols, src.rows))
 
 
-proc newMapFrom*(src: Map, rect: Rect[Natural]): Map =
+proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
   assert rect.x1 < src.cols
   assert rect.y1 < src.rows
   assert rect.x2 <= src.cols
   assert rect.y2 <= src.rows
 
+  var
+    destCol = 0
+    destRow = 0
+    srcRect = rect
+
+  dec(srcRect.x1, border)
+  if srcRect.x1 < 0:
+    destCol = -srcRect.x1
+    srcRect.x1 = 0
+
+  dec(srcRect.y1, border)
+  if srcRect.y1 < 0:
+    destRow = -srcRect.y1
+    srcRect.y1 = 0
+
+  inc(srcRect.x2, border)
+  inc(srcRect.y2, border)
+
   var dest = new Map
-  dest.initMap(rect.width, rect.height)
-  dest.copyFrom(destCol=0, destRow=0, src, srcRect=rect)
+  dest.initMap(rect.width + border*2, rect.height + border*2)
+  dest.copyFrom(destCol, destRow, src, srcRect)
   result = dest
 
 
