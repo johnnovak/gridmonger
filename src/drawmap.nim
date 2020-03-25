@@ -1277,11 +1277,8 @@ proc drawMap*(m: Map, ctx) =
   )
 
   var outlineBuf: OutlineBuf
-  if ms.outlineStyle > osNone:
-    if ms.outlineStyle == osCell:
-      discard # TODO
-    else:
-      outlineBuf = generateEdgeOutlines(viewBuf)
+  if ms.outlineStyle >= osSquareEdges:
+    outlineBuf = generateEdgeOutlines(viewBuf)
 
   if dp.pastePreview.isSome:
     let startCol = dp.cursorCol - dp.viewStartCol + 1
@@ -1291,15 +1288,16 @@ proc drawMap*(m: Map, ctx) =
     viewBuf.paste(startCol, startRow,
                   copyBuf, dp.pastePreview.get.selection)
 
-    for r in 0..<copyBuf.rows:
-      for c in 0..<copyBuf.cols:
-        outlineBuf[startCol+c, startRow+r] = {}
+    let endCol = min(startCol + copyBuf.cols, outlineBuf.cols-1)
+    let endRow = min(startRow + copyBuf.rows, outlineBuf.rows-1)
+    for r in startRow..endRow:
+      for c in startCol..endCol:
+        outlineBuf[c, r] = {}
 
-  if ms.outlineStyle > osNone:
-    if ms.outlineStyle == osCell:
-      drawCellOutlines(m, ctx)
-    else:
-      drawEdgeOutlines(outlineBuf, ctx)
+  if ms.outlineStyle == osCell:
+    drawCellOutlines(m, ctx)
+  elif ms.outlineStyle >= osSquareEdges:
+    drawEdgeOutlines(outlineBuf, ctx)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:

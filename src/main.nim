@@ -437,13 +437,14 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   vg.fill()
 
   # Display current coords
-  let cursorPos = fmt"({a.cursorCol}, {a.cursorRow})"
+  vg.setFont(14.0)
+
+  let cursorPos = fmt"({a.cursorCol}, {15-a.cursorRow})"
   let tw = vg.textWidth(cursorPos)
 
-  vg.setFont(14.0)
   vg.fillColor(gray(0.6))
   vg.textAlign(haLeft, vaMiddle)
-  discard vg.text(winWidth - tw - 15, ty, cursorPos)
+  discard vg.text(winWidth - tw - 7, ty, cursorPos)
 
   vg.scissor(0, y, winWidth - tw - 25, StatusBarHeight)
 
@@ -532,6 +533,9 @@ proc updateViewStartAndCursorPosition(a) =
 
   let viewEndCol = dp.viewStartCol + dp.viewCols - 1
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
+
+  echo fmt"viewStartCol: {dp.viewStartCol}, viewStartRow: {dp.viewStartRow}"
+  echo fmt"viewEndCol: {viewEndCol}, viewEndRow: {viewEndRow}"
 
   a.cursorCol = min(
     max(viewEndCol, dp.viewStartCol),
@@ -1430,7 +1434,8 @@ proc initDrawMapParams(a) =
 
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
-  cfg.size = (w: 960, h: 1040)
+ # cfg.size = (w: 960, h: 1040)
+  cfg.size = (w: 600, h: 400)
   cfg.title = "Gridmonger v0.1"
   cfg.resizable = false
   cfg.visible = false
@@ -1513,8 +1518,8 @@ proc init(): Window =
   g_app.toolbarDrawParams = g_app.drawMapParams.deepCopy
   g_app.toolbarDrawParams.setZoomLevel(g_app.mapStyle, 1)
 
-  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
-#  g_app.map = readMap("drawtest.grm")
+#  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
+  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb

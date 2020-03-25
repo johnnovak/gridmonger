@@ -1,0 +1,8 @@
+BUGS
+ - resize window while dialog is open causes crash
+ - floor grid is 1px off to the left of the cell
+ - cursor should be move to the top-left corner of the selection after cut/copy
+ - cut and the paste back doesn't yield the same results
+ - left edge of spinner symbols is cut off on high zoom levels on retina
+   screens
+ - top-right pixel fringe in paste preview mode (floor bg is overdrawn by 1px)

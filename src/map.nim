@@ -108,11 +108,15 @@ proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
   if x1 < 0:
     destCol = -x1
     srcRect.x1 = 0
+  else:
+    srcRect.x1 = x1
 
   let y1 = srcRect.y1.int - border
   if y1 < 0:
     destRow = -y1
     srcRect.y1 = 0
+  else:
+    srcRect.y1 = y1
 
   inc(srcRect.x2, border)
   inc(srcRect.y2, border)
