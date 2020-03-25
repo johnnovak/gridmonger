@@ -1114,9 +1114,9 @@ proc setVertTransform(x, y: float, ctx) =
 #  vg.translate(0, 0)
 
 # }}}
-# {{{ drawFloor()
-proc drawFloor(viewBuf: Map, viewCol, viewRow: Natural,
-               cursorActive: bool, ctx) =
+# {{{ drawCellFloor()
+proc drawCellFloor(viewBuf: Map, viewCol, viewRow: Natural,
+                   cursorActive: bool, ctx) =
 
   let ms = ctx.ms
   let dp = ctx.dp
@@ -1200,8 +1200,8 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wStatue:        discard
 
 # }}}
-# {{{ drawWalls()
-proc drawWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
+# {{{ drawCellWalls()
+proc drawCellWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
   let dp = ctx.dp
 
   let
@@ -1299,6 +1299,50 @@ proc drawPastePreviewHighlight(ctx) =
         drawCellHighlight(x, y, ms.pastePreviewColor, ctx)
 
 # }}}
+# {{{ drawInnerShadows()
+proc drawInnerShadows(viewBuf: Map, ctx) =
+  let dp = ctx.dp
+  let ms = ctx.ms
+  let vg = ctx.vg
+
+  vg.fillColor(gray(0.0, 0.1))
+  vg.beginPath()
+
+  for r in 1..<viewBuf.rows-1:
+    for c in 1..<viewBuf.cols-1:
+      let x = cellX(c-1, dp)
+      let y = cellY(r-1, dp)
+      if viewBuf.getFloor(c,r) != fNone:
+        if isNeighbourCellEmpty(viewBuf, c, r, North):
+          vg.rect(x, y, dp.gridSize, dp.gridSize*0.15)
+
+        if isNeighbourCellEmpty(viewBuf, c, r, West):
+          vg.rect(x, y, dp.gridSize*0.15, dp.gridSize)
+
+  vg.fill()
+# }}}
+# {{{ drawOuterShadows()
+proc drawOuterShadows(viewBuf: Map, ctx) =
+  let dp = ctx.dp
+  let ms = ctx.ms
+  let vg = ctx.vg
+
+  vg.fillColor(gray(0.0, 0.15))
+  vg.beginPath()
+
+  for r in 1..<viewBuf.rows-1:
+    for c in 1..<viewBuf.cols-1:
+      let x = cellX(c-1, dp)
+      let y = cellY(r-1, dp)
+      if viewBuf.getFloor(c,r) == fNone:
+        if not isNeighbourCellEmpty(viewBuf, c, r, North):
+          vg.rect(x, y, dp.gridSize, dp.gridSize*0.125)
+
+        if not isNeighbourCellEmpty(viewBuf, c, r, West):
+          vg.rect(x, y, dp.gridSize*0.125, dp.gridSize)
+
+  vg.fill()
+# }}}
 
 # {{{ drawMap*()
 proc drawMap*(m: Map, ctx) =
@@ -1354,11 +1398,14 @@ proc drawMap*(m: Map, ctx) =
       # TODO draw cursor & floor grid separately
       let cursorActive = dp.viewStartCol+c == dp.cursorCol and
                          dp.viewStartRow+r == dp.cursorRow
-      drawFloor(viewBuf, c, r, cursorActive, ctx)
+      drawCellFloor(viewBuf, c, r, cursorActive, ctx)
+
+#  drawInnerShadows(viewBuf, ctx)
+  drawOuterShadows(viewBuf, ctx)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
-      drawWalls(viewBuf, c, r, ctx)
+      drawCellWalls(viewBuf, c, r, ctx)
 
   if dp.drawCursorGuides:
     drawCursorGuides(m, ctx)

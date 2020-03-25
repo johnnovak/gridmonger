@@ -1341,7 +1341,7 @@ proc createSepiaMapStyle(): MapStyle =
 
   ms.gridStyle            = gsSolid
   ms.gridColorBackground  = gray(0.0, 0.0)
-  ms.gridColorFloor       = rgba(180, 168, 154, 180)
+  ms.gridColorFloor       = rgba(180, 168, 154, 150)
 
   ms.floorColor           = rgb(248, 248, 244)
   ms.fgColor              = rgb(67, 67, 63)
@@ -1501,10 +1501,10 @@ proc init(): Window =
 
   g_app.map = newMap(16, 16)
 #  g_app.mapStyle = createDefaultMapStyle()
-#  g_app.mapStyle = createLightMapStyle()
+  g_app.mapStyle = createLightMapStyle()
 #  g_app.mapStyle = createSepiaMapStyle()
 #  g_app.mapStyle = createGrimrock1MapStyle()
-  g_app.mapStyle = createGrimrock2MapStyle()
+#  g_app.mapStyle = createGrimrock2MapStyle()
   g_app.undoManager = newUndoManager[Map]()
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", g_app)
 
