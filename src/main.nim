@@ -37,7 +37,7 @@ const
 
   MapLeftPad   = 50.0
   MapRightPad  = 120.0
-  MapTopPad    = 80.0
+  MapTopPad    = 85.0
   MapBottomPad = 35.0
 
   WindowResizeEdgeWidth = 10.0
@@ -1277,6 +1277,7 @@ proc createDefaultMapStyle(): MapStyle =
 
   ms.outlineStyle         = osCell
   ms.outlineFillStyle     = ofsSolid
+  ms.outlineOverscan      = false
   ms.outlineColor         = gray(0.25)
   ms.outlineWidthFactor   = 0.5
 
@@ -1295,7 +1296,7 @@ proc createLightMapStyle(): MapStyle =
   ms.bgCrosshatchStrokeWidth   = 1.0
   ms.bgCrosshatchSpacingFactor = 2.0
 
-  ms.coordsEnabled        = true
+  ms.coordsEnabled        = false
   ms.coordsColor          = rgb(34, 32, 32)
   ms.coordsHighlightColor = rgb(34, 32, 32)
 
@@ -1313,6 +1314,7 @@ proc createLightMapStyle(): MapStyle =
 
   ms.outlineStyle         = osRoundedEdges
   ms.outlineFillStyle     = ofsHatched
+  ms.outlineOverscan      = true
   ms.outlineColor         = rgb(154, 156, 156)
   ms.outlineWidthFactor   = 0.25
 
@@ -1339,7 +1341,7 @@ proc createSepiaMapStyle(): MapStyle =
 
   ms.gridStyle            = gsSolid
   ms.gridColorBackground  = gray(0.0, 0.0)
-  ms.gridColorFloor       = rgba(180, 168, 154, 160)
+  ms.gridColorFloor       = rgba(180, 168, 154, 180)
 
   ms.floorColor           = rgb(248, 248, 244)
   ms.fgColor              = rgb(67, 67, 63)
@@ -1348,6 +1350,7 @@ proc createSepiaMapStyle(): MapStyle =
 
   ms.outlineStyle         = osSquareEdges
   ms.outlineFillStyle     = ofsSolid
+  ms.outlineOverscan      = false
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
@@ -1383,6 +1386,7 @@ proc createGrimrock1MapStyle(): MapStyle =
 
   ms.outlineStyle         = osNone
   ms.outlineFillStyle     = ofsSolid
+  ms.outlineOverscan      = false
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
@@ -1417,6 +1421,8 @@ proc createGrimrock2MapStyle(): MapStyle =
   ms.thinStroke           = true
 
   ms.outlineStyle         = osNone
+  ms.outlineFillStyle     = ofsSolid
+  ms.outlineOverscan      = false
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
@@ -1434,8 +1440,8 @@ proc initDrawMapParams(a) =
 
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
- # cfg.size = (w: 960, h: 1040)
-  cfg.size = (w: 600, h: 400)
+  cfg.size = (w: 960, h: 1040)
+#  cfg.size = (w: 600, h: 400)
   cfg.title = "Gridmonger v0.1"
   cfg.resizable = false
   cfg.visible = false
@@ -1494,11 +1500,11 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   g_app.map = newMap(16, 16)
-  g_app.mapStyle = createDefaultMapStyle()
-  g_app.mapStyle = createLightMapStyle()
+#  g_app.mapStyle = createDefaultMapStyle()
+#  g_app.mapStyle = createLightMapStyle()
 #  g_app.mapStyle = createSepiaMapStyle()
 #  g_app.mapStyle = createGrimrock1MapStyle()
-#  g_app.mapStyle = createGrimrock2MapStyle()
+  g_app.mapStyle = createGrimrock2MapStyle()
   g_app.undoManager = newUndoManager[Map]()
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", g_app)
 
@@ -1518,8 +1524,8 @@ proc init(): Window =
   g_app.toolbarDrawParams = g_app.drawMapParams.deepCopy
   g_app.toolbarDrawParams.setZoomLevel(g_app.mapStyle, 1)
 
-#  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
-  g_app.map = readMap("drawtest.grm")
+  g_app.map = readMap("EOB III - Crystal Tower L2.grm")
+#  g_app.map = readMap("drawtest.grm")
 
   koi.init(g_app.vg)
   win.framebufferSizeCb = framebufSizeCb

@@ -72,6 +72,7 @@ type
 
     outlineStyle*:              OutlineStyle
     outlineFillStyle*:          OutlineFillStyle
+    outlineOverscan*:           bool
     outlineColor*:              Color
     outlineWidthFactor*:        float
 
@@ -233,10 +234,10 @@ func snap(f: float, strokeWidth: float): float =
   let (_, offs) = splitDecimal(strokeWidth*0.5) # either 0 or 0.5
   result = i + offs
 
-proc cellX(x: Natural, dp): float =
+proc cellX(x: int, dp): float =
   dp.startX + dp.gridSize * x
 
-proc cellY(y: Natural, dp): float =
+proc cellY(y: int, dp): float =
   dp.startY + dp.gridSize * y
 
 # }}}
@@ -391,7 +392,7 @@ proc drawCellCoords(m: Map, ctx) =
     if on:
       vg.fontFace("sans-bold")
       vg.fillColor(ms.coordsHighlightColor)
-    else: 
+    else:
       vg.fontFace("sans")
       vg.fillColor(ms.coordsColor)
 
@@ -399,6 +400,18 @@ proc drawCellCoords(m: Map, ctx) =
   let endY = dp.startY + dp.gridSize * dp.viewRows
 
   let fontSize = dp.coordsFontSize
+
+  var x1f, x2f, y1f, y2f: float
+  if ms.outlineOverscan:
+    x1f = 1.7
+    x2f = 1.8
+    y1f = 1.5
+    y2f = 1.8
+  else:
+    x1f = 1.3
+    x2f = 1.5
+    y1f = 1.2
+    y2f = 1.4
 
   for c in 0..<dp.viewCols:
     let
@@ -408,8 +421,8 @@ proc drawCellCoords(m: Map, ctx) =
 
     setTextHighlight(col == dp.cursorCol)
 
-    discard vg.text(xPos, dp.startY - fontSize, coord)
-    discard vg.text(xPos, endY + fontSize*1.4, coord)
+    discard vg.text(xPos, dp.startY - fontSize*y1f, coord)
+    discard vg.text(xPos, endY + fontSize*y2f, coord)
 
   for r in 0..<dp.viewRows:
     let
@@ -419,8 +432,8 @@ proc drawCellCoords(m: Map, ctx) =
 
     setTextHighlight(row == dp.cursorRow)
 
-    discard vg.text(dp.startX - fontSize*1.2, yPos, coord)
-    discard vg.text(endX + fontSize*1.6, yPos, coord)
+    discard vg.text(dp.startX - fontSize*x1f, yPos, coord)
+    discard vg.text(endX + fontSize*x2f, yPos, coord)
 
 
 # }}}
@@ -536,18 +549,16 @@ proc generateEdgeOutlines(viewBuf: Map): OutlineBuf =
 
 # }}}
 # {{{ drawEdgeOutlines()
-proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
+proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
 
   case ms.outlineFillStyle
-  of ofsSolid:
-    vg.fillColor(ms.outlineColor)
-  of ofsHatched:
-    vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
+  of ofsSolid:   vg.fillColor(ms.outlineColor)
+  of ofsHatched: vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
 
-  proc draw(c, r: Natural, cell: OutlineCell) =
+  proc draw(c, r: int, cell: OutlineCell) =
     let
       x = cellX(c, dp)
       y = cellY(r, dp)
@@ -572,18 +583,21 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
         vg.lineTo(x1, y1)
         vg.closePath()
         vg.fill()
+
       if olNE in cell:
         vg.beginPath()
         vg.arc(x2, y1, w, PI*0.5, PI, pwCW)
         vg.lineTo(x2, y1)
         vg.closePath()
         vg.fill()
+
       if olSE in cell:
         vg.beginPath()
         vg.arc(x2, y2, w, PI, PI*1.5, pwCW)
         vg.lineTo(x2, y2)
         vg.closePath()
         vg.fill()
+
       if olSW in cell:
         vg.beginPath()
         vg.arc(x1, y2, w, PI*1.5, 0, pwCW)
@@ -610,7 +624,6 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
     proc drawFilled() =
       vg.rect(x1, y1, gs, gs)
 
-
     if ms.outlineStyle == osRoundedEdges:
         drawRoundedEdges()
 
@@ -633,8 +646,24 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
 
 
   vg.beginPath()
-  for r in 1..<ob.rows-1:
-    for c in 1..<ob.cols-1:
+  var startCol, endCol, startRow, endRow: Natural
+
+  if ms.outlineOverscan:
+    let viewEndCol = dp.viewStartCol + dp.viewCols - 1
+    startCol = if dp.viewStartCol == 0: 0 else: 1
+    endCol = if viewEndCol == m.cols-1: ob.cols-1 else: ob.cols-2
+
+    let viewEndRow = dp.viewStartRow + dp.viewRows - 1
+    startRow = if dp.viewStartRow == 0: 0 else: 1
+    endRow = if viewEndRow == m.rows-1: ob.rows-1 else: ob.rows-2
+  else:
+    startCol = 1
+    endCol = ob.cols-2
+    startRow = 1
+    endRow = ob.rows-2
+
+  for r in startRow..endRow:
+    for c in startCol..endCol:
       let cell = ob[c,r]
       if not (cell == {}):
         draw(c-1, r-1, cell)
@@ -643,16 +672,20 @@ proc drawEdgeOutlines(ob: OutlineBuf, ctx) =
 # }}}
 
 # {{{ drawIcon*()
-proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
+proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
   let ms = ctx.ms
   let dp = ctx.dp
   let vg = ctx.vg
 
   vg.setFont((dp.gridSize*0.53).float)
-  vg.fillColor(ms.fgColor)
+  vg.fillColor(color)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
                   y + dp.gridSize*oy + dp.gridSize*0.58, icon)
+
+
+proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
+  drawIcon(x, y, ox, oy, icon, ctx.ms.fgColor, ctx)
 
 # }}}
 # {{{ drawFloor()
@@ -662,16 +695,30 @@ proc drawFloor(x, y: float, color: Color, ctx) =
   let vg = ctx.vg
 
   let sw = UltrathinStrokeWidth
+  vg.strokeColor(ms.gridColorFloor)
+  vg.strokeWidth(sw)
 
   vg.beginPath()
   vg.fillColor(color)
-  vg.rect(snap(x-sw*0.5, sw), snap(y-sw*0.5, sw), dp.gridSize+sw, dp.gridSize+sw)
+  vg.rect(x, y, dp.gridSize, dp.gridSize)
   vg.fill()
 
   case ms.gridStyle
   of gsNone: discard
 
   of gsSolid:
+    let
+      x1 = x
+      y1 = y
+      x2 = x + dp.gridSize
+      y2 = y + dp.gridSize
+
+    vg.beginPath()
+    vg.moveTo(snap(x1, sw), snap(y, sw))
+    vg.lineTo(snap(x2, sw), snap(y, sw))
+    vg.moveTo(snap(x, sw), snap(y1, sw))
+    vg.lineTo(snap(x, sw), snap(y2, sw))
+    vg.stroke()
     vg.stroke()
 
   of gsLoose:
@@ -681,9 +728,6 @@ proc drawFloor(x, y: float, color: Color, ctx) =
       y1 = y + offs
       x2 = x + dp.gridSize - offs
       y2 = y + dp.gridSize - offs
-
-    vg.strokeColor(ms.lightFgColor)
-    vg.strokeWidth(sw)
 
     vg.beginPath()
     vg.moveTo(snap(x1, sw), snap(y, sw))
@@ -703,9 +747,15 @@ proc drawSecretDoor(x, y: float, ctx) =
   let vg = ctx.vg
 
   vg.beginPath()
-  vg.fillColor(ms.lightFgColor)
-  vg.rect(x+1, y+1, dp.gridSize-1, dp.gridSize-1)
+  vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
+  vg.rect(x, y, dp.gridSize, dp.gridSize)
   vg.fill()
+
+  let bgCol = ms.floorColor
+  drawIcon(x-1, y, 0, 0, "S", bgCol, ctx)
+  drawIcon(x+1, y, 0, 0, "S", bgCol, ctx)
+  drawIcon(x, y-1, 0, 0, "S", bgCol, ctx)
+  drawIcon(x, y+1, 0, 0, "S", bgCol, ctx)
 
   drawIcon(x, y, 0, 0, "S", ctx)
 
@@ -1277,7 +1327,8 @@ proc drawMap*(m: Map, ctx) =
   )
 
   var outlineBuf: OutlineBuf
-  if ms.outlineStyle >= osSquareEdges:
+  let useOutlineBuf = ms.outlineStyle >= osSquareEdges
+  if useOutlineBuf:
     outlineBuf = generateEdgeOutlines(viewBuf)
 
   if dp.pastePreview.isSome:
@@ -1288,16 +1339,15 @@ proc drawMap*(m: Map, ctx) =
     viewBuf.paste(startCol, startRow,
                   copyBuf, dp.pastePreview.get.selection)
 
-    let endCol = min(startCol + copyBuf.cols, outlineBuf.cols-1)
-    let endRow = min(startRow + copyBuf.rows, outlineBuf.rows-1)
-    for r in startRow..endRow:
-      for c in startCol..endCol:
-        outlineBuf[c, r] = {}
+    if useOutlineBuf:
+      let endCol = min(startCol + copyBuf.cols, outlineBuf.cols-1)
+      let endRow = min(startRow + copyBuf.rows, outlineBuf.rows-1)
+      for r in startRow..endRow:
+        for c in startCol..endCol:
+          outlineBuf[c, r] = {}
 
-  if ms.outlineStyle == osCell:
-    drawCellOutlines(m, ctx)
-  elif ms.outlineStyle >= osSquareEdges:
-    drawEdgeOutlines(outlineBuf, ctx)
+  if ms.outlineStyle == osCell: drawCellOutlines(m, ctx)
+  elif useOutlineBuf: drawEdgeOutlines(m, outlineBuf, ctx)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
