@@ -629,76 +629,140 @@ proc copySelection(a): Option[Rect[Natural]] =
 # {{{ Dialogs
 
 # {{{ New map dialog
-const NewMapDialogTitle = "  New map"
-
 var
+  g_newMapDialogOpen: bool
   g_newMapDialog_name: string
   g_newMapDialog_cols: string
   g_newMapDialog_rows: string
 
 proc newMapDialog() =
-  koi.dialog(350, 220, NewMapDialogTitle):
-    let
-      dialogWidth = 350.0
-      dialogHeight = 220.0
-      h = 24.0
-      labelWidth = 70.0
-      buttonWidth = 80.0
-      buttonPad = 15.0
+  koi.beginDialog(350, 220, fmt"{IconNewFile}  New map")
+  g_app.clearStatusMessage()
 
-    var
-      x = 30.0
-      y = 60.0
+  let
+    dialogWidth = 350.0
+    dialogHeight = 220.0
+    h = 24.0
+    labelWidth = 70.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
 
-    koi.label(x, y, labelWidth, h, "Name", gray(0.80), fontSize=14.0)
-    g_newMapDialog_name = koi.textField(
-      x + labelWidth, y, 220.0, h, tooltip = "", g_newMapDialog_name
-    )
+  var
+    x = 30.0
+    y = 60.0
 
-    y = y + 50
-    koi.label(x, y, labelWidth, h, "Columns", gray(0.80), fontSize=14.0)
-    g_newMapDialog_cols = koi.textField(
-      x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_cols
-    )
+  koi.label(x, y, labelWidth, h, "Name", gray(0.80), fontSize=14.0)
+  g_newMapDialog_name = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", g_newMapDialog_name
+  )
 
-    y = y + 30
-    koi.label(x, y, labelWidth, h, "Rows", gray(0.80), fontSize=14.0)
-    g_newMapDialog_rows = koi.textField(
-      x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_rows
-    )
+  y = y + 50
+  koi.label(x, y, labelWidth, h, "Columns", gray(0.80), fontSize=14.0)
+  g_newMapDialog_cols = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_cols
+  )
 
-    x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-    y = dialogHeight - h - buttonPad
+  y = y + 30
+  koi.label(x, y, labelWidth, h, "Rows", gray(0.80), fontSize=14.0)
+  g_newMapDialog_rows = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_rows
+  )
 
-    let okAction = proc () =
-      initUndoManager(g_app.undoManager)
-      g_app.map = newMap(
-        parseInt(g_newMapDialog_cols),
-        parseInt(g_newMapDialog_rows)
-      )
-      resetCursorAndViewStart(g_app)
-      updateViewStartAndCursorPosition(g_app)
-      closeDialog()
-      setStatusMessage(IconFile, "New map created", g_app)
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
 
-    let cancelAction = proc () =
-      closeDialog()
+  proc okAction() =
+    initUndoManager(g_app.undoManager)
+    # TODO number error checking
+    let cols = parseInt(g_newMapDialog_cols)
+    let rows = parseInt(g_newMapDialog_rows)
+    g_app.map = newMap(cols, rows)
+    resetCursorAndViewStart(g_app)
+    updateViewStartAndCursorPosition(g_app)
+    setStatusMessage(IconFile, fmt"New {cols}x{rows} map created", g_app)
+    koi.closeDialog()
+    g_newMapDialogOpen = false
 
-    if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
-      okAction()
+  proc cancelAction() =
+    koi.closeDialog()
+    g_newMapDialogOpen = false
 
-    x += buttonWidth + 10
-    if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-      cancelAction()
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction()
 
-    for ke in koi.keyBuf():
-      if   ke.action == kaDown and ke.key == keyEscape: cancelAction()
-      elif ke.action == kaDown and ke.key == keyEnter:  okAction()
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction()
+
+  for ke in koi.keyBuf():
+    if   ke.action == kaDown and ke.key == keyEscape: cancelAction()
+    elif ke.action == kaDown and ke.key == keyEnter:  okAction()
+
+  koi.endDialog()
 
 # }}}
+# {{{ Edit note dialog
+var
+  g_editNoteDialogOpen: bool
+  g_editNoteDialog_type: int
+  g_editNoteDialog_customId: string
+  g_editNoteDialog_note: string
 
-template defineDialogs() =
-  newMapDialog()
+proc editNoteDialog() =
+  koi.beginDialog(450, 220, fmt"{IconComment}  Edit Note")
+  g_app.clearStatusMessage()
+
+  let
+    dialogWidth = 450.0
+    dialogHeight = 220.0
+    h = 24.0
+    labelWidth = 70.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Type", gray(0.80), fontSize=14.0)
+  g_editNoteDialog_type = koi.radioButtons(
+    x + labelWidth, y, 232, h,
+    labels = @["Number", "Custom", "Comment"],
+    tooltips = @["", "", ""],
+    g_editNoteDialog_type
+  )
+
+  y = y + 40
+  koi.label(x, y, labelWidth, h, "Note", gray(0.80), fontSize=14.0)
+  g_editNoteDialog_note = koi.textField(
+    x + labelWidth, y, 320.0, h, tooltip = "", g_editNoteDialog_note
+  )
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  proc okAction() =
+    koi.closeDialog()
+    g_editNoteDialogOpen = false
+
+  proc cancelAction() =
+    koi.closeDialog()
+    g_editNoteDialogOpen = false
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction()
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction()
+
+  for ke in koi.keyBuf():
+    if   ke.action == kaDown and ke.key == keyEscape: cancelAction()
+    elif ke.action == kaDown and ke.key == keyEnter:  okAction()
+
+  koi.endDialog()
+
+# }}}
 
 # }}}
 
@@ -957,11 +1021,17 @@ proc handleMapEvents(a) =
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
+      elif ke.isKeyDown(keyN):
+        if m.getFloor(curX, curY) == fNone:
+          setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
+        else:
+          g_editNoteDialogOpen = true
+
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
         g_newMapDialog_cols = $m.cols
         g_newMapDialog_rows = $m.rows
-        openDialog(NewMapDialogTitle)
+        g_newMapDialogOpen = true
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
         let ext = MapFileExtension
@@ -973,7 +1043,7 @@ proc handleMapEvents(a) =
             initUndoManager(um)
             resetCursorAndViewStart(a)
             updateViewStartAndCursorPosition(g_app)
-            setStatusMessage(IconFloppy, "Map loaded", a)
+            setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
           except CatchableError as e:
             # TODO log stracktrace?
             setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
@@ -1183,6 +1253,10 @@ proc renderUI() =
   let statusBarY = winHeight - StatusBarHeight
   renderStatusBar(statusBarY, winWidth.float, a)
 
+  # Dialogs
+  if g_newMapDialogOpen:     newMapDialog()
+  elif g_editNoteDialogOpen: editNoteDialog()
+
 # }}}
 # {{{ renderFrame()
 proc renderFrame(win: Window, doHandleEvents: bool = true) =
@@ -1213,7 +1287,6 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   ######################################################
 
   updateViewStartAndCursorPosition(a)
-  defineDialogs()
 
   if doHandleEvents:
     handleWindowDragEvents(a)
