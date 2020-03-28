@@ -7,22 +7,22 @@ import selection
 
 using m: Map
 
-proc cellIndex(m; c, r: Natural): Natural =
+proc cellIndex(m; r,c: Natural): Natural =
   # We need to be able to address the bottommost & rightmost "edge" columns
   # & rows within the module.
   let w = m.cols+1
   let h = m.rows+1
-  assert c < w
   assert r < h
-  result = w*r + c
+  assert c < w
+  result = r*w + c
 
-proc `[]=`(m; c, r: Natural, cell: Cell) =
-  m.cells[cellIndex(m, c, r)] = cell
+proc `[]=`(m; r,c: Natural, cell: Cell) =
+  m.cells[cellIndex(m, r,c)] = cell
 
-proc `[]`(m; c, r: Natural): var Cell =
+proc `[]`(m; r,c: Natural): var Cell =
   # We need to be able to address the bottommost & rightmost "edge" columns
   # & rows within the module.
-  result = m.cells[cellIndex(m, c, r)]
+  result = m.cells[cellIndex(m, r,c)]
 
 proc fill*(m; rect: Rect[Natural], cell: Cell) =
   assert rect.x1 < m.cols
@@ -33,64 +33,65 @@ proc fill*(m; rect: Rect[Natural], cell: Cell) =
   # TODO fill border
   for r in rect.y1..<rect.y2:
     for c in rect.x1..<rect.x2:
-      m[c,r] = cell
+      m[r,c] = cell
 
 
 proc fill*(m; cell: Cell) =
   let rect = rectN(0, 0, m.cols-1, m.rows-1)
   m.fill(rect, cell)
 
-proc initMap(m; cols, rows: Natural) =
+proc initMap(m; rows, cols: Natural) =
   m.name = "Untitled"
-  m.cols = cols
   m.rows = rows
+  m.cols = cols
 
   # We're storing one extra row & column at the bottom-right edges ("edge"
-  # columns & rows) so we can store the South and East walls of the bottommost
+  # rows & columns) so we can store the South and East walls of the bottommost
   # row and rightmost column, respectively.
-  newSeq(m.cells, (cols+1) * (rows+1))
+  newSeq(m.cells, (rows+1) * (cols+1))
 
   m.notes = initTable[Natural, Note]()
 
 
-proc newMap*(cols, rows: Natural): Map =
+proc newMap*(rows, cols: Natural): Map =
   var m = new Map
-  m.initMap(cols, rows)
+  m.initMap(rows, cols)
   m.fill(Cell.default)
   result = m
 
 
-proc copyFrom*(dest: var Map, destCol, destRow: Natural,
+proc copyFrom*(dest: var Map, destRow, destCol: Natural,
                src: Map, srcRect: Rect[Natural]) =
   # This function cannot fail as the copied area is clipped to the extents of
   # the destination area (so nothing gets copied in the worst case).
   let
     # TODO use rect.intersect
-    srcCol = srcRect.x1
     srcRow = srcRect.y1
-    srcCols   = max(src.cols - srcCol, 0)
+    srcCol = srcRect.x1
     srcRows  = max(src.rows - srcRow, 0)
-    destCols  = max(dest.cols - destCol, 0)
+    srcCols   = max(src.cols - srcCol, 0)
     destRows = max(dest.rows - destRow, 0)
+    destCols  = max(dest.cols - destCol, 0)
 
     w = min(min(srcCols,  destCols),  srcRect.width)
     h = min(min(srcRows, destRows), srcRect.height)
 
   for r in 0..<h:
     for c in 0..<w:
-      dest[destCol+c, destRow+r] = src[srcCol+c, srcRow+r]
+      dest[destRow+r, destCol+c] = src[srcRow+r, srcCol+c]
 
   # Copy the South walls of the bottommost "edge" row
   for c in 0..<w:
-    dest[destCol+c, destRow+h].wallN = src[srcCol+c, srcRow+h].wallN
+    dest[destRow+h, destCol+c].wallN = src[srcRow+h, srcCol+c].wallN
 
   # Copy the East walls of the rightmost "edge" column
   for r in 0..<h:
-    dest[destCol+w, destRow+r].wallW = src[srcCol+w, srcRow+r].wallW
+    dest[destRow+r, destCol+w].wallW = src[srcRow+r, srcCol+w].wallW
 
 
 proc copyFrom*(dest: var Map, src: Map) =
-  dest.copyFrom(destCol=0, destRow=0, src, rectN(0, 0, src.cols, src.rows))
+  dest.copyFrom(destRow=0, destCol=0,
+                src, srcRect=rectN(0, 0, src.cols, src.rows))
 
 
 proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
@@ -100,8 +101,8 @@ proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
   assert rect.y2 <= src.rows
 
   var
-    destCol = 0
     destRow = 0
+    destCol = 0
     srcRect = rect
 
   let x1 = srcRect.x1.int - border
@@ -122,8 +123,8 @@ proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
   inc(srcRect.y2, border)
 
   var dest = new Map
-  dest.initMap(rect.width + border*2, rect.height + border*2)
-  dest.copyFrom(destCol, destRow, src, srcRect)
+  dest.initMap(rect.height + border*2, rect.width + border*2)
+  dest.copyFrom(destRow, destCol, src, srcRect)
   result = dest
 
 
@@ -131,136 +132,136 @@ proc newMapFrom*(m): Map =
   newMapFrom(m, rectN(0, 0, m.cols, m.rows))
 
 
-proc getFloor*(m; c, r: Natural): Floor =
-  assert c < m.cols
+proc getFloor*(m; r,c: Natural): Floor =
   assert r < m.rows
-  m[c,r].floor
-
-proc getFloorOrientation*(m; c, r: Natural): Orientation =
   assert c < m.cols
-  assert r < m.rows
-  m[c,r].floorOrientation
+  m[r,c].floor
 
-proc setFloorOrientation*(m; c, r: Natural, ot: Orientation) =
+proc setFloor*(m; r,c: Natural, f: Floor) =
+  assert r < m.rows
   assert c < m.cols
+  m[r,c].floor = f
+
+proc getFloorOrientation*(m; r,c: Natural): Orientation =
   assert r < m.rows
-  m[c,r].floorOrientation = ot
-
-
-proc setFloor*(m; c, r: Natural, f: Floor) =
   assert c < m.cols
+  m[r,c].floorOrientation
+
+proc setFloorOrientation*(m; r,c: Natural, ot: Orientation) =
   assert r < m.rows
-  m[c,r].floor = f
-
-
-proc getWall*(m; c, r: Natural, dir: CardinalDir): Wall =
   assert c < m.cols
+  m[r,c].floorOrientation = ot
+
+
+proc getWall*(m; r,c: Natural, dir: CardinalDir): Wall =
   assert r < m.rows
+  assert c < m.cols
 
   case dir
-  of dirN: m[c,   r  ].wallN
-  of dirW: m[c,   r  ].wallW
-  of dirS: m[c,   r+1].wallN
-  of dirE: m[c+1, r  ].wallW
+  of dirN: m[r,   c  ].wallN
+  of dirW: m[r,   c  ].wallW
+  of dirS: m[r+1, c  ].wallN
+  of dirE: m[r,   c+1].wallW
 
 
-proc isNeighbourCellEmpty*(m; c, r: Natural, dir: Direction): bool =
-  assert c < m.cols
+proc isNeighbourCellEmpty*(m; r,c: Natural, dir: Direction): bool =
   assert r < m.rows
+  assert c < m.cols
 
   if dir == North:
-    result = r == 0 or m[c, r-1].floor == fNone
+    result = r == 0 or m[r-1, c].floor == fNone
   elif dir == NorthEast:
-    result = r == 0 or m[c+1, r-1].floor == fNone
+    result = r == 0 or m[r-1, c+1].floor == fNone
   elif dir == East:
-    result = m[c+1, r].floor == fNone
+    result = m[r, c+1].floor == fNone
   elif dir == SouthEast:
-    result = m[c+1, r+1].floor == fNone
+    result = m[r+1, c+1].floor == fNone
   elif dir == South:
-    result = m[c, r+1].floor == fNone
+    result = m[r+1, c].floor == fNone
   elif dir == SouthWest:
-    result = c == 0 or m[c-1, r+1].floor == fNone
+    result = c == 0 or m[r+1, c-1].floor == fNone
   elif dir == West:
-    result = c == 0 or m[c-1, r].floor == fNone
+    result = c == 0 or m[r, c-1].floor == fNone
   elif dir == NorthWest:
-    result = c == 0 or r == 0 or m[c-1, r-1].floor == fNone
+    result = c == 0 or r == 0 or m[r-1, c-1].floor == fNone
 
 
-proc canSetWall*(m; c, r: Natural, dir: CardinalDir): bool =
-  assert c < m.cols
+proc canSetWall*(m; r,c: Natural, dir: CardinalDir): bool =
   assert r < m.rows
-
-  m[c,r].floor != fNone or not isNeighbourCellEmpty(m, c, r, {dir})
-
-
-proc setWall*(m; c, r: Natural, dir: CardinalDir, w: Wall) =
   assert c < m.cols
+
+  m[r,c].floor != fNone or not isNeighbourCellEmpty(m, r,c, {dir})
+
+
+proc setWall*(m; r,c: Natural, dir: CardinalDir, w: Wall) =
   assert r < m.rows
+  assert c < m.cols
 
   case dir
-  of dirN: m[c,   r  ].wallN = w
-  of dirW: m[c,   r  ].wallW = w
-  of dirS: m[c,   r+1].wallN = w
-  of dirE: m[c+1, r  ].wallW = w
+  of dirN: m[r,   c  ].wallN = w
+  of dirW: m[r,   c  ].wallW = w
+  of dirS: m[r+1, c  ].wallN = w
+  of dirE: m[r,   c+1].wallW = w
 
 
-proc eraseCellWalls*(m; c, r: Natural) =
-  assert c < m.cols
+proc eraseCellWalls*(m; r,c: Natural) =
   assert r < m.rows
+  assert c < m.cols
 
-  m.setWall(c,r, dirN, wNone)
-  m.setWall(c,r, dirW,  wNone)
-  m.setWall(c,r, dirS, wNone)
-  m.setWall(c,r, dirE,  wNone)
+  m.setWall(r,c, dirN, wNone)
+  m.setWall(r,c, dirW,  wNone)
+  m.setWall(r,c, dirS, wNone)
+  m.setWall(r,c, dirE,  wNone)
 
 
-proc eraseOrphanedWalls*(m; c, r: Natural) =
+proc eraseOrphanedWalls*(m; r,c: Natural) =
   template cleanWall(dir: CardinalDir) =
-    if m.isNeighbourCellEmpty(c,r, {dir}):
-      m.setWall(c,r, dir, wNone)
+    if m.isNeighbourCellEmpty(r,c, {dir}):
+      m.setWall(r,c, dir, wNone)
 
-  if m.getFloor(c,r) == fNone:
+  if m.getFloor(r,c) == fNone:
     cleanWall(dirN)
     cleanWall(dirW)
     cleanWall(dirS)
     cleanWall(dirE)
 
 
-proc eraseCell*(m; c, r: Natural) =
-  assert c < m.cols
+proc eraseCell*(m; r,c: Natural) =
   assert r < m.rows
+  assert c < m.cols
 
-  m.eraseCellWalls(c, r)
-  m.setFloor(c, r, fNone)
-
-
-proc guessFloorOrientation*(m; c, r: Natural): Orientation =
-  if m.getWall(c, r, dirN) != wNone and m.getWall(c, r, dirS) != wNone: Vert
-  else: Horiz
+  m.eraseCellWalls(r,c)
+  m.setFloor(r,c, fNone)
 
 
-proc paste*(m; destCol, destRow: Natural, src: Map, sel: Selection) =
+proc guessFloorOrientation*(m; r,c: Natural): Orientation =
+  if m.getWall(r,c, dirN) != wNone and
+     m.getWall(r,c, dirS) != wNone:
+    Vert
+  else:
+    Horiz
+
+
+proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
   let rect = rectN(
-    destCol,
-    destRow,
-    destCol + src.cols,
-    destRow + src.rows
+    destCol, destRow,
+    destCol + src.cols, destRow + src.rows
   ).intersect(
     rectN(0, 0, m.cols, m.rows)
   )
   if rect.isSome:
-    for c in 0..<rect.get.width:
-      for r in 0..<rect.get.height:
-        if sel[c,r]:
-          let floor = src.getFloor(c,r)
-          m.setFloor(destCol+c, destRow+r, floor)
+    for r in 0..<rect.get.height:
+      for c in 0..<rect.get.width:
+        if sel[r,c]:
+          let floor = src.getFloor(r,c)
+          m.setFloor(destRow+r, destCol+c, floor)
 
           template copyWall(dir: CardinalDir) =
-            let w = src.getWall(c,r, dir)
-            m.setWall(destCol+c, destRow+r, dir, w)
+            let w = src.getWall(r,c, dir)
+            m.setWall(destRow+r, destCol+c, dir, w)
 
           if floor == fNone:
-            m.eraseOrphanedWalls(destCol+c, destRow+r)
+            m.eraseOrphanedWalls(destRow+r, destCol+c)
           else:
             copyWall(dirN)
             copyWall(dirW)
@@ -268,30 +269,31 @@ proc paste*(m; destCol, destRow: Natural, src: Map, sel: Selection) =
             copyWall(dirE)
 
 
-proc noteKey(m; c, r: Natural): Natural =
-  let w = m.cols
+proc noteKey(m; r,c: Natural): Natural =
   let h = m.rows
-  assert c < w
+  let w = m.cols
   assert r < h
-  result = w*r + c
+  assert c < w
+  result = r*w + c
 
-proc hasNote*(m; c, r: Natural): bool =
-  let key = noteKey(m, c, r)
+proc hasNote*(m; r,c: Natural): bool =
+  let key = noteKey(m, r,c)
   m.notes.hasKey(key)
 
-proc getNote*(m; c, r: Natural): Option[Note] =
-  let key = noteKey(m, c, r)
+# TODO drop the option
+proc getNote*(m; r,c: Natural): Option[Note] =
+  let key = noteKey(m, r,c)
   if m.notes.hasKey(key):
     m.notes[key].some
   else:
     Note.none
 
-proc setNote*(m; c, r: Natural, note: Note) =
-  let key = noteKey(m, c, r)
+proc setNote*(m; r,c: Natural, note: Note) =
+  let key = noteKey(m, r,c)
   m.notes[key] = note
 
-proc delNote*(m; c, r: Natural) =
-  let key = noteKey(m, c, r)
+proc delNote*(m; r,c: Natural) =
+  let key = noteKey(m, r,c)
   if m.notes.hasKey(key):
     let note = m.notes[key]
     m.notes.del(key)
@@ -304,12 +306,15 @@ proc delNote*(m; c, r: Natural) =
           dec(n.index)
 
 
-iterator notes*(m): (Natural, Natural, Note) =
+proc numNotes*(m): Natural =
+  m.notes.len
+
+iterator allNotes*(m): (Natural, Natural, Note) =
   for k, note in m.notes.pairs:
     let
       row = k div m.cols
       col = k mod m.cols
-    yield (col.Natural, row.Natural, note)
+    yield (row.Natural, col.Natural, note)
 
 
 # vim: et:ts=2:sw=2:fdm=marker

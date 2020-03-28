@@ -4,6 +4,7 @@ import strformat
 import riff
 
 import common
+import map
 
 
 # TODO use app version instead
@@ -16,7 +17,7 @@ const
   FourCC_GRDM_map      = "map "
   FourCC_GRDM_map_prop = "prop"
   FourCC_GRDM_map_cell = "cell"
-  FourCC_GRDM_map_anno = "anno"
+  FourCC_GRDM_map_note = "note"
   FourCC_GRDM_them     = "them"
 
 type
@@ -67,10 +68,11 @@ proc readMapProperties_V1(rr): (Natural, Natural, string) =
   let
     rows = rr.read(uint16).Natural
     cols = rr.read(uint16).Natural
-    name = rr.readBStr()
+    name = rr.readWStr()
   result = (rows, cols, name)
 
 
+# TODO remove
 proc mapFloor(f: uint8): uint8 =
   result = case f
   of 0:  0
@@ -89,6 +91,7 @@ proc mapFloor(f: uint8): uint8 =
   of 60: 70
   else: f.int
 
+# TODO remove
 proc mapWall(w: uint8): uint8 =
   result = case w
   of 21: 22
@@ -107,7 +110,7 @@ proc readMapData_V1(rr; numCells: Natural): seq[Cell] =
     c.wallW = rr.read(uint8).Wall
     result.add(c)
 
-proc readMapAnnotations_V1(rr) =
+proc readMapNotes_V1(rr) =
   discard  # TODO
 
 
@@ -132,9 +135,9 @@ proc readMap(rr): Map =
           chunkOnlyOnceError(FourCC_GRDM_map_cell, groupChunkId)
         dataCursor = rr.cursor.some
 
-      of FourCC_GRDM_map_anno:
+      of FourCC_GRDM_map_note:
         if annoCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_map_anno, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRDM_map_note, groupChunkId)
         annoCursor = rr.cursor.some
       else:
         invalidChunkError(ci.id, FourCC_GRDM_mapl)
@@ -148,16 +151,16 @@ proc readMap(rr): Map =
   let (rows, cols, name) = readMapProperties_V1(rr)
   result = new Map
   result.name = name
-  result.cols = cols
   result.rows = rows
+  result.cols = cols
 
   rr.cursor = dataCursor.get
-  let numCells = (cols+1) * (rows+1)  # because of the South & East borders
+  let numCells = (rows+1) * (cols+1)   # because of the South & East borders
   result.cells = readMapData_V1(rr, numCells)
 
   if annoCursor.isSome:
     rr.cursor = annoCursor.get
-    readMapAnnotations_V1(rr)  # TODO
+    readMapNotes_V1(rr)  # TODO
 
 
 proc readMapList(rr): seq[Map] =
@@ -237,7 +240,6 @@ proc readMap*(filename: string): Map =
     rr.cursor = mapListCursor.get
     rr.enterGroup()
     let maps = readMapList(rr)
-    echo maps.len
     result = maps[0]  # TODO
 
   except CatchableError as e:
@@ -256,8 +258,7 @@ proc writeMapProperties(rw; m: Map) =
   rw.beginChunk(FourCC_GRDM_map_prop)
   rw.write(m.rows.uint16)
   rw.write(m.cols.uint16)
-  rw.write(m.name.len.uint16)
-  rw.writeStr(m.name)       # TODO
+  rw.writeWStr(m.name)       # TODO
   rw.endChunk()
 
 proc writeMapCells(rw; cells: seq[Cell]) =
@@ -269,17 +270,30 @@ proc writeMapCells(rw; cells: seq[Cell]) =
     rw.write(c.wallW.uint8)
   rw.endChunk()
 
-proc writeMapAnnotations(rw) =
-  rw.beginChunk(FourCC_GRDM_map_anno)
-  let numAnnotations = 0'u16  # TODO
-  rw.write(numAnnotations)
+
+proc writeMapNotes(rw; m: Map) =
+  rw.beginChunk(FourCC_GRDM_map_note)
+  rw.write(m.numNotes.uint16)
+
+  for (c, r, note) in m.allNotes:
+    rw.write(note.kind.uint8)
+    rw.write(c.uint16)
+    rw.write(r.uint16)
+
+    case note.kind
+    of nkIndexed:  rw.write(note.index.uint16)
+    of nkCustomId: rw.writeBStr(note.customId)
+    of nkComment:  discard
+    rw.writeWStr(note.text)
+
   rw.endChunk()
+
 
 proc writeMap(rw; m: Map) =
   rw.beginListChunk(FourCC_GRDM_map)
   rw.writeMapProperties(m)
   rw.writeMapCells(m.cells)
-# TODO rw.writeMapAnnotations()
+  rw.writeMapNotes(m)
   rw.endChunk()
 
 proc writeMapList(rw; maps: seq[Map]) =

@@ -26,11 +26,11 @@ const
 # Naming conventions
 # ------------------
 #
-# The names `col`, `row` (or `c`, `r`) refer to the zero-based coordinates of
+# The names `row`, `col` (or `r`, `c`) refer to the zero-based coordinates of
 # a cell in a map. The cell in the top-left corner is the origin.
 #
-# `viewCol` and `viewRow` refer to the zero-based cell coodinates of a rectangular
-# subarea of the map (the active view).
+# `viewRow` and `viewCol` refer to the zero-based cell coodinates of
+# a rectangular subarea of the map (the active view).
 #
 # Anything with `x` or `y` in the name refers to pixel-coordinates within the
 # window's drawing area (top-left corner is the origin).
@@ -94,13 +94,13 @@ type
     startX*:       float
     startY*:       float
 
-    cursorCol*:    Natural
     cursorRow*:    Natural
+    cursorCol*:    Natural
 
-    viewStartCol*: Natural
     viewStartRow*: Natural
-    viewCols*:     Natural
+    viewStartCol*: Natural
     viewRows*:     Natural
+    viewCols*:     Natural
 
     selection*:    Option[Selection]
     selRect*:      Option[SelectionRect]
@@ -129,8 +129,8 @@ type
   OutlineCell = set[Outline]
 
   OutlineBuf = ref object
-    cols, rows: Natural
-    cells: seq[OutlineCell]
+    rows, cols: Natural
+    cells:      seq[OutlineCell]
 
   LineHatchPatterns = array[MinLineHatchSize..MaxLineHatchSize, Paint]
 
@@ -139,18 +139,18 @@ proc newOutlineBuf(cols, rows: Natural): OutlineBuf =
   var b = new OutlineBuf
   b.cols = cols
   b.rows = rows
-  newSeq(b.cells, b.cols * b.rows)
+  newSeq(b.cells, b.rows * b.cols)
   result = b
 
-proc `[]=`(b: OutlineBuf, c, r: Natural, cell: OutlineCell) =
-  assert c < b.cols
+proc `[]=`(b: OutlineBuf, r,c: Natural, cell: OutlineCell) =
   assert r < b.rows
-  b.cells[b.cols*r + c] = cell
+  assert c < b.cols
+  b.cells[r*b.cols + c] = cell
 
-proc `[]`(b: OutlineBuf, c, r: Natural): OutlineCell =
-  assert c < b.cols
+proc `[]`(b: OutlineBuf, r,c: Natural): OutlineCell =
   assert r < b.rows
-  result = b.cells[b.cols*r + c]
+  assert c < b.cols
+  result = b.cells[r*b.cols + c]
 
 
 # }}}
@@ -483,16 +483,16 @@ proc drawCellOutlines(m: Map, ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
-  func isOutline(c, r: Natural): bool =
+  func isOutline(r,c: Natural): bool =
     not (
-      isNeighbourCellEmpty(m, c, r, North)     and
-      isNeighbourCellEmpty(m, c, r, NorthEast) and
-      isNeighbourCellEmpty(m, c, r, East)      and
-      isNeighbourCellEmpty(m, c, r, SouthEast) and
-      isNeighbourCellEmpty(m, c, r, South)     and
-      isNeighbourCellEmpty(m, c, r, SouthWest) and
-      isNeighbourCellEmpty(m, c, r, West)      and
-      isNeighbourCellEmpty(m, c, r, NorthWest)
+      isNeighbourCellEmpty(m, r,c, North)     and
+      isNeighbourCellEmpty(m, r,c, NorthEast) and
+      isNeighbourCellEmpty(m, r,c, East)      and
+      isNeighbourCellEmpty(m, r,c, SouthEast) and
+      isNeighbourCellEmpty(m, r,c, South)     and
+      isNeighbourCellEmpty(m, r,c, SouthWest) and
+      isNeighbourCellEmpty(m, r,c, West)      and
+      isNeighbourCellEmpty(m, r,c, NorthWest)
     )
 
   let sw = UltrathinStrokeWidth
@@ -504,7 +504,7 @@ proc drawCellOutlines(m: Map, ctx) =
   vg.beginPath()
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
-      if isOutline(dp.viewStartCol+c, dp.viewStartRow+r):
+      if isOutline(dp.viewStartRow+r, dp.viewStartCol+c):
         let
           x = snap(cellX(c, dp), sw)
           y = snap(cellY(r, dp), sw)
@@ -516,34 +516,34 @@ proc drawCellOutlines(m: Map, ctx) =
 # }}}
 # {{{ generateEdgeOutlines()
 proc generateEdgeOutlines(viewBuf: Map): OutlineBuf =
-  var ol = newOutlineBuf(viewBuf.cols, viewBuf.rows)
+  var ol = newOutlineBuf(viewBuf.rows, viewBuf.cols)
   for r in 0..<viewBuf.rows:
     for c in 0..<viewBuf.cols:
-      if viewBuf.getFloor(c,r) == fNone:
+      if viewBuf.getFloor(r,c) == fNone:
         var cell: OutlineCell
-        if not isNeighbourCellEmpty(viewBuf, c, r, North): cell.incl(olN)
+        if not isNeighbourCellEmpty(viewBuf, r,c, North): cell.incl(olN)
         else:
-          if not isNeighbourCellEmpty(viewBuf, c, r, NorthWest): cell.incl(olNW)
-          if not isNeighbourCellEmpty(viewBuf, c, r, NorthEast): cell.incl(olNE)
+          if not isNeighbourCellEmpty(viewBuf, r,c, NorthWest): cell.incl(olNW)
+          if not isNeighbourCellEmpty(viewBuf, r,c, NorthEast): cell.incl(olNE)
 
-        if not isNeighbourCellEmpty(viewBuf, c, r, East):
+        if not isNeighbourCellEmpty(viewBuf, r,c, East):
           cell.incl(olE)
           cell.excl(olNE)
         else:
-          if not isNeighbourCellEmpty(viewBuf, c, r, SouthEast): cell.incl(olSE)
+          if not isNeighbourCellEmpty(viewBuf, r,c, SouthEast): cell.incl(olSE)
 
-        if not isNeighbourCellEmpty(viewBuf, c, r, South):
+        if not isNeighbourCellEmpty(viewBuf, r,c, South):
           cell.incl(olS)
           cell.excl(olSE)
         else:
-          if not isNeighbourCellEmpty(viewBuf, c, r, SouthWest): cell.incl(olSW)
+          if not isNeighbourCellEmpty(viewBuf, r,c, SouthWest): cell.incl(olSW)
 
-        if not isNeighbourCellEmpty(viewBuf, c, r, West):
+        if not isNeighbourCellEmpty(viewBuf, r,c, West):
           cell.incl(olW)
           cell.excl(olSW)
           cell.excl(olNW)
 
-        ol[c,r] = cell
+        ol[r,c] = cell
 
     result = ol
 
@@ -558,7 +558,7 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
   of ofsSolid:   vg.fillColor(ms.outlineColor)
   of ofsHatched: vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
 
-  proc draw(c, r: int, cell: OutlineCell) =
+  proc draw(r,c: int, cell: OutlineCell) =
     let
       x = cellX(c, dp)
       y = cellY(r, dp)
@@ -646,27 +646,27 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
 
 
   vg.beginPath()
-  var startCol, endCol, startRow, endRow: Natural
+  var startRow, endRow, startCol, endCol: Natural
 
   if ms.outlineOverscan:
-    let viewEndCol = dp.viewStartCol + dp.viewCols - 1
-    startCol = if dp.viewStartCol == 0: 0 else: 1
-    endCol = if viewEndCol == m.cols-1: ob.cols-1 else: ob.cols-2
-
     let viewEndRow = dp.viewStartRow + dp.viewRows - 1
     startRow = if dp.viewStartRow == 0: 0 else: 1
     endRow = if viewEndRow == m.rows-1: ob.rows-1 else: ob.rows-2
+
+    let viewEndCol = dp.viewStartCol + dp.viewCols - 1
+    startCol = if dp.viewStartCol == 0: 0 else: 1
+    endCol = if viewEndCol == m.cols-1: ob.cols-1 else: ob.cols-2
   else:
-    startCol = 1
-    endCol = ob.cols-2
     startRow = 1
     endRow = ob.rows-2
+    startCol = 1
+    endCol = ob.cols-2
 
   for r in startRow..endRow:
     for c in startCol..endCol:
-      let cell = ob[c,r]
+      let cell = ob[r,c]
       if not (cell == {}):
-        draw(c-1, r-1, cell)
+        draw(r-1, c-1, cell)
   vg.fill()
 
 # }}}
@@ -1115,7 +1115,7 @@ proc setVertTransform(x, y: float, ctx) =
 
 # }}}
 # {{{ drawCellFloor()
-proc drawCellFloor(viewBuf: Map, viewCol, viewRow: Natural,
+proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural,
                    cursorActive: bool, ctx) =
 
   let ms = ctx.ms
@@ -1123,8 +1123,8 @@ proc drawCellFloor(viewBuf: Map, viewCol, viewRow: Natural,
   let vg = ctx.vg
 
   let
-    bufCol = viewCol+1
     bufRow = viewRow+1
+    bufCol = viewCol+1
     x = cellX(viewCol, dp)
     y = cellY(viewRow, dp)
 
@@ -1132,7 +1132,7 @@ proc drawCellFloor(viewBuf: Map, viewCol, viewRow: Natural,
     drawBg()
     vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
-    case viewBuf.getFloorOrientation(bufCol, bufRow):
+    case viewBuf.getFloorOrientation(bufRow, bufCol):
     of Horiz:
       drawProc(x, y + floor(dp.gridSize*0.5), ctx)
     of Vert:
@@ -1150,7 +1150,7 @@ proc drawCellFloor(viewBuf: Map, viewCol, viewRow: Natural,
     if cursorActive:
       drawCursor(x, y, ctx)
 
-  case viewBuf.getFloor(bufCol, bufRow)
+  case viewBuf.getFloor(bufRow, bufCol)
   of fNone:
     if cursorActive:
       drawCursor(x, y, ctx)
@@ -1201,35 +1201,27 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
 
 # }}}
 # {{{ drawCellWalls()
-proc drawCellWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
+proc drawCellWalls(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
   let dp = ctx.dp
 
   let
-    bufCol = viewCol+1
     bufRow = viewRow+1
+    bufCol = viewCol+1
 
-  let floorEmpty = viewBuf.getFloor(bufCol, bufRow) == fNone
+  let floorEmpty = viewBuf.getFloor(bufRow, bufCol) == fNone
 
   if viewRow > 0 or (viewRow == 0 and not floorEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(bufCol, bufRow, dirN), Horiz, ctx
+      viewBuf.getWall(bufRow, bufCol, dirN), Horiz, ctx
     )
 
   if viewCol > 0 or (viewCol == 0 and not floorEmpty):
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(bufCol, bufRow, dirW), Vert, ctx
-    )
-
-  let viewEndCol = dp.viewCols-1
-  if viewCol < viewEndCol or (viewCol == viewEndCol and not floorEmpty):
-    drawWall(
-      cellX(viewCol+1, dp),
-      cellY(viewRow, dp),
-      viewBuf.getWall(bufCol, bufRow, dirE), Vert, ctx
+      viewBuf.getWall(bufRow, bufCol, dirW), Vert, ctx
     )
 
   let viewEndRow = dp.viewRows-1
@@ -1237,7 +1229,15 @@ proc drawCellWalls(viewBuf: Map, viewCol, viewRow: Natural, ctx) =
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow+1, dp),
-      viewBuf.getWall(bufCol, bufRow, dirS), Horiz, ctx
+      viewBuf.getWall(bufRow, bufCol, dirS), Horiz, ctx
+    )
+
+  let viewEndCol = dp.viewCols-1
+  if viewCol < viewEndCol or (viewCol == viewEndCol and not floorEmpty):
+    drawWall(
+      cellX(viewCol+1, dp),
+      cellY(viewRow, dp),
+      viewBuf.getWall(bufRow, bufCol, dirE), Vert, ctx
     )
 
 # }}}
@@ -1259,18 +1259,18 @@ proc drawSelection(ctx) =
   let
     sel = dp.selection.get
     color = ctx.ms.selectionColor
-    viewEndCol = dp.viewStartCol + dp.viewCols - 1
     viewEndRow = dp.viewStartRow + dp.viewRows - 1
+    viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
-  for c in dp.viewStartCol..viewEndCol:
-    for r in dp.viewStartRow..viewEndRow:
+  for r in dp.viewStartRow..viewEndRow:
+    for c in dp.viewStartCol..viewEndCol:
       let draw = if dp.selRect.isSome:
                    let sr = dp.selRect.get
                    if sr.selected:
-                     sel[c,r] or sr.rect.contains(c,r)
+                     sel[r,c] or sr.rect.contains(c,r)
                    else:
-                     not sr.rect.contains(c,r) and sel[c,r]
-                 else: sel[c,r]
+                     not sr.rect.contains(c,r) and sel[r,c]
+                 else: sel[r,c]
       if draw:
         let x = cellX(c - dp.viewStartCol, dp)
         let y = cellY(r - dp.viewStartRow, dp)
@@ -1285,14 +1285,14 @@ proc drawPastePreviewHighlight(ctx) =
 
   let
     sel = dp.pastePreview.get.selection
-    viewCursorCol = dp.cursorCol - dp.viewStartCol
     viewCursorRow = dp.cursorRow - dp.viewStartRow
-    cols = min(sel.cols, dp.viewCols - viewCursorCol)
+    viewCursorCol = dp.cursorCol - dp.viewStartCol
     rows = min(sel.rows, dp.viewRows - viewCursorRow)
+    cols = min(sel.cols, dp.viewCols - viewCursorCol)
 
-  for c in 0..<cols:
-    for r in 0..<rows:
-      if sel[c,r]:
+  for r in 0..<rows:
+    for c in 0..<cols:
+      if sel[r,c]:
         let x = cellX(viewCursorCol + c, dp)
         let y = cellY(viewCursorRow + r, dp)
 
@@ -1312,11 +1312,11 @@ proc drawInnerShadows(viewBuf: Map, ctx) =
     for c in 1..<viewBuf.cols-1:
       let x = cellX(c-1, dp)
       let y = cellY(r-1, dp)
-      if viewBuf.getFloor(c,r) != fNone:
-        if isNeighbourCellEmpty(viewBuf, c, r, North):
+      if viewBuf.getFloor(r,c) != fNone:
+        if isNeighbourCellEmpty(viewBuf, r,c, North):
           vg.rect(x, y, dp.gridSize, dp.gridSize*0.15)
 
-        if isNeighbourCellEmpty(viewBuf, c, r, West):
+        if isNeighbourCellEmpty(viewBuf, r,c, West):
           vg.rect(x, y, dp.gridSize*0.15, dp.gridSize)
 
   vg.fill()
@@ -1334,11 +1334,11 @@ proc drawOuterShadows(viewBuf: Map, ctx) =
     for c in 1..<viewBuf.cols-1:
       let x = cellX(c-1, dp)
       let y = cellY(r-1, dp)
-      if viewBuf.getFloor(c,r) == fNone:
-        if not isNeighbourCellEmpty(viewBuf, c, r, North):
+      if viewBuf.getFloor(r,c) == fNone:
+        if not isNeighbourCellEmpty(viewBuf, r,c, North):
           vg.rect(x, y, dp.gridSize, dp.gridSize*0.125)
 
-        if not isNeighbourCellEmpty(viewBuf, c, r, West):
+        if not isNeighbourCellEmpty(viewBuf, r,c, West):
           vg.rect(x, y, dp.gridSize*0.125, dp.gridSize)
 
   vg.fill()
@@ -1349,8 +1349,8 @@ proc drawMap*(m: Map, ctx) =
   let dp = ctx.dp
   let ms = ctx.ms
 
-  assert dp.viewStartCol + dp.viewCols <= m.cols
   assert dp.viewStartRow + dp.viewRows <= m.rows
+  assert dp.viewStartCol + dp.viewCols <= m.cols
 
   if ms.coordsEnabled:
     drawCellCoords(m, ctx)
@@ -1376,19 +1376,19 @@ proc drawMap*(m: Map, ctx) =
     outlineBuf = generateEdgeOutlines(viewBuf)
 
   if dp.pastePreview.isSome:
-    let startCol = dp.cursorCol - dp.viewStartCol + 1
     let startRow = dp.cursorRow - dp.viewStartRow + 1
+    let startCol = dp.cursorCol - dp.viewStartCol + 1
     let copyBuf = dp.pastePreview.get.map
 
-    viewBuf.paste(startCol, startRow,
+    viewBuf.paste(startRow, startCol,
                   copyBuf, dp.pastePreview.get.selection)
 
     if useOutlineBuf:
-      let endCol = min(startCol + copyBuf.cols, outlineBuf.cols-1)
       let endRow = min(startRow + copyBuf.rows, outlineBuf.rows-1)
+      let endCol = min(startCol + copyBuf.cols, outlineBuf.cols-1)
       for r in startRow..endRow:
         for c in startCol..endCol:
-          outlineBuf[c, r] = {}
+          outlineBuf[r,c] = {}
 
   if ms.outlineStyle == osCell: drawCellOutlines(m, ctx)
   elif useOutlineBuf: drawEdgeOutlines(m, outlineBuf, ctx)
@@ -1396,16 +1396,16 @@ proc drawMap*(m: Map, ctx) =
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
       # TODO draw cursor & floor grid separately
-      let cursorActive = dp.viewStartCol+c == dp.cursorCol and
-                         dp.viewStartRow+r == dp.cursorRow
-      drawCellFloor(viewBuf, c, r, cursorActive, ctx)
+      let cursorActive = dp.viewStartRow+r == dp.cursorRow and
+                         dp.viewStartCol+c == dp.cursorCol
+      drawCellFloor(viewBuf, r,c, cursorActive, ctx)
 
 #  drawInnerShadows(viewBuf, ctx)
   drawOuterShadows(viewBuf, ctx)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
-      drawCellWalls(viewBuf, c, r, ctx)
+      drawCellWalls(viewBuf, r,c, ctx)
 
   if dp.drawCursorGuides:
     drawCursorGuides(m, ctx)

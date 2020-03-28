@@ -9,7 +9,9 @@ import glfw
 from glfw/wrapper import showWindow
 import koi
 import nanovg
-import osdialog
+
+when not defined(DEBUG):
+  import osdialog
 
 import actions
 import common
@@ -39,6 +41,8 @@ const
   MapRightPad  = 120.0
   MapTopPad    = 85.0
   MapBottomPad = 35.0
+
+  BottomPaneHeight = 80.0
 
   WindowResizeEdgeWidth = 10.0
   WindowResizeCornerSize = 20.0
@@ -427,6 +431,7 @@ proc setStatusMessage(msg: string, a) =
 # {{{ renderStatusBar()
 proc renderStatusBar(y: float, winWidth: float, a) =
   alias(vg, a.vg)
+  alias(m, a.map)
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
@@ -439,7 +444,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   # Display current coords
   vg.setFont(14.0)
 
-  let cursorPos = fmt"({a.cursorCol}, {15-a.cursorRow})"
+  let cursorPos = fmt"({m.rows-1 - a.cursorRow}, {a.cursorCol}, )"
   let tw = vg.textWidth(cursorPos)
 
   vg.fillColor(gray(0.6))
@@ -504,10 +509,10 @@ func isKeyUp(ke: KeyEvent, keys: set[Key]): bool =
 # }}}
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
-  a.cursorCol = 0
   a.cursorRow = 0
-  a.drawMapParams.viewStartCol = 0
+  a.cursorCol = 0
   a.drawMapParams.viewStartRow = 0
+  a.drawMapParams.viewStartCol = 0
 
 # }}}
 # {{{ updateViewStartAndCursorPosition()
@@ -518,32 +523,29 @@ proc updateViewStartAndCursorPosition(a) =
 
   let
     drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
-                     MapTopPad - MapBottomPad
+                     MapTopPad - MapBottomPad - BottomPaneHeight
 
     drawAreaWidth = winWidth - MapLeftPad - MapRightPad
 
   dp.startX = MapLeftPad
   dp.startY = TitleBarHeight + MapTopPad
 
-  dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), a.map.cols)
   dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), a.map.rows)
+  dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), a.map.cols)
 
-  dp.viewStartCol = min(max(a.map.cols - dp.viewCols, 0), dp.viewStartCol)
   dp.viewStartRow = min(max(a.map.rows - dp.viewRows, 0), dp.viewStartRow)
+  dp.viewStartCol = min(max(a.map.cols - dp.viewCols, 0), dp.viewStartCol)
 
-  let viewEndCol = dp.viewStartCol + dp.viewCols - 1
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
+  let viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
-  echo fmt"viewStartCol: {dp.viewStartCol}, viewStartRow: {dp.viewStartRow}"
-  echo fmt"viewEndCol: {viewEndCol}, viewEndRow: {viewEndRow}"
-
-  a.cursorCol = min(
-    max(viewEndCol, dp.viewStartCol),
-    a.cursorCol
-  )
   a.cursorRow = min(
     max(viewEndRow, dp.viewStartRow),
     a.cursorRow
+  )
+  a.cursorCol = min(
+    max(viewEndCol, dp.viewStartCol),
+    a.cursorCol
   )
 
 # }}}
@@ -578,16 +580,16 @@ proc moveCursor(dir: CardinalDir, a) =
     if cy < sy + a.scrollMargin:
       sy = max(sy-1, 0)
 
-  a.cursorCol = cx
   a.cursorRow = cy
-  dp.viewStartCol = sx
+  a.cursorCol = cx
   dp.viewStartRow = sy
+  dp.viewStartCol = sx
 
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
   a.editMode = emSelectDraw
-  a.selection = some(newSelection(a.map.cols, a.map.rows))
+  a.selection = some(newSelection(a.map.rows, a.map.cols))
   a.drawMapParams.drawCursorGuides = true
   setStatusMessage(IconSelection, "Mark selection",
                    @["D", "draw", "E", "erase", "R", "rectangle",
@@ -608,9 +610,9 @@ proc copySelection(a): Option[Rect[Natural]] =
 
   proc eraseOrphanedWalls(cb: CopyBuffer) =
     var m = cb.map
-    for c in 0..<m.cols:
-      for r in 0..<m.rows:
-        m.eraseOrphanedWalls(c,r)
+    for r in 0..<m.rows:
+      for c in 0..<m.cols:
+        m.eraseOrphanedWalls(r,c)
 
   let sel = a.selection.get
 
@@ -632,8 +634,8 @@ proc copySelection(a): Option[Rect[Natural]] =
 var
   g_newMapDialogOpen: bool
   g_newMapDialog_name: string
-  g_newMapDialog_cols: string
   g_newMapDialog_rows: string
+  g_newMapDialog_cols: string
 
 proc newMapDialog(a) =
   koi.beginDialog(350, 220, fmt"{IconNewFile}  New map")
@@ -657,15 +659,15 @@ proc newMapDialog(a) =
   )
 
   y = y + 50
-  koi.label(x, y, labelWidth, h, "Columns", gray(0.80), fontSize=14.0)
-  g_newMapDialog_cols = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_cols
-  )
-
-  y = y + 30
   koi.label(x, y, labelWidth, h, "Rows", gray(0.80), fontSize=14.0)
   g_newMapDialog_rows = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_rows
+  )
+
+  y = y + 30
+  koi.label(x, y, labelWidth, h, "Columns", gray(0.80), fontSize=14.0)
+  g_newMapDialog_cols = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_cols
   )
 
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
@@ -674,12 +676,12 @@ proc newMapDialog(a) =
   proc okAction(a) =
     initUndoManager(a.undoManager)
     # TODO number error checking
-    let cols = parseInt(g_newMapDialog_cols)
     let rows = parseInt(g_newMapDialog_rows)
-    a.map = newMap(cols, rows)
+    let cols = parseInt(g_newMapDialog_cols)
+    a.map = newMap(rows, cols)
     resetCursorAndViewStart(a)
     updateViewStartAndCursorPosition(a)
-    setStatusMessage(IconFile, fmt"New {cols}x{rows} map created", a)
+    setStatusMessage(IconFile, fmt"New {rows}x{cols} map created", a)
     koi.closeDialog()
     g_newMapDialogOpen = false
 
@@ -742,25 +744,29 @@ proc editNoteDialog(a) =
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  proc okAction() =
+  proc okAction(a) =
     koi.closeDialog()
-#    a.map.setNote(
+    var note = Note(
+      kind: NoteKind(g_editNoteDialog_type),
+      text: g_editNoteDialog_note
+    )
+    a.map.setNote(a.cursorRow, a.cursorCol, note)
     g_editNoteDialogOpen = false
 
-  proc cancelAction() =
+  proc cancelAction(a) =
     koi.closeDialog()
     g_editNoteDialogOpen = false
 
   if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
-    okAction()
+    okAction(a)
 
   x += buttonWidth + 10
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-    cancelAction()
+    cancelAction(a)
 
   for ke in koi.keyBuf():
-    if   ke.action == kaDown and ke.key == keyEscape: cancelAction()
-    elif ke.action == kaDown and ke.key == keyEnter:  okAction()
+    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(a)
+    elif ke.action == kaDown and ke.key == keyEnter:  okAction(a)
 
   koi.endDialog()
 
@@ -793,6 +799,24 @@ proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
   of wLever:         discard
   of wNiche:         discard
   of wStatue:        discard
+
+proc drawBottomPane(x, y: float, a) =
+  alias(vg, a.vg)
+  alias(m, a.map)
+  alias(ms, a.mapStyle)
+
+  let curRow = a.cursorRow
+  let curCol = a.cursorCol
+
+  let note = m.getNote(curRow, curCol)
+  if note.isSome:
+    let n = note.get
+
+    vg.setFont(14.0)
+    vg.fillColor(ms.fgColor)
+    vg.textAlign(haLeft, vaMiddle)
+
+    discard vg.text(x, y, n.text)
 
 
 proc drawWallToolbar(x: float, a) =
@@ -857,8 +881,8 @@ proc drawMarkerIconToolbar(x: float, a) =
 
 # {{{ handleMapEvents()
 proc handleMapEvents(a) =
-  alias(curCol, a.cursorCol)
   alias(curRow, a.cursorRow)
+  alias(curCol, a.cursorCol)
   alias(um, a.undoManager)
   alias(m, a.map)
   alias(ms, a.mapStyle)
@@ -890,10 +914,10 @@ proc handleMapEvents(a) =
       result = first
 
   proc setFloor(first, last: Floor, a) =
-    var f = m.getFloor(curCol, curRow)
+    var f = m.getFloor(curRow, curCol)
     f = cycleFloor(f, first, last)
-    let ot = m.guessFloorOrientation(curCol, curRow)
-    actions.setOrientedFloor(m, curCol, curRow, f, ot, um)
+    let ot = m.guessFloorOrientation(curRow, curCol)
+    actions.setOrientedFloor(m, curRow, curCol, f, ot, um)
     setStatusMessage(mkFloorMessage(f), a)
 
 
@@ -925,21 +949,21 @@ proc handleMapEvents(a) =
         a.editMode = emExcavate
         setStatusMessage(IconPencil, "Excavate tunnel",
                          @[IconArrows, "draw"], a)
-        actions.excavate(m, curCol, curRow, um)
+        actions.excavate(m, curRow, curCol, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
         setStatusMessage(IconEraser, "Erase cells", @[IconArrows, "erase"], a)
-        actions.eraseCell(m, curCol, curRow, um)
+        actions.eraseCell(m, curRow, curCol, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearFloor
         setStatusMessage(IconEraser, "Clear floor",  @[IconArrows, "clear"], a)
-        actions.setFloor(m, curCol, curRow, fEmpty, um)
+        actions.setFloor(m, curRow, curCol, fEmpty, um)
 
       elif ke.isKeyDown(keyO):
-        actions.toggleFloorOrientation(m, curCol, curRow, um)
-        setFloorOrientationStatusMessage(m.getFloorOrientation(curCol, curRow), a)
+        actions.toggleFloorOrientation(m, curRow, curCol, um)
+        setFloorOrientationStatusMessage(m.getFloorOrientation(curRow, curCol), a)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
@@ -951,7 +975,7 @@ proc handleMapEvents(a) =
 
       # TODO
 #      elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
-#        actions.eraseCellWalls(m, curCol, curRow, um)
+#        actions.eraseCellWalls(m, curRow, curCol, um)
 
       elif ke.isKeyDown(key1):
         setFloor(fDoor, fSecretDoor, a)
@@ -970,12 +994,12 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(key6):
         let f = fSpinner
-        actions.setFloor(m, curCol, curRow, f, um)
+        actions.setFloor(m, curRow, curCol, f, um)
         setStatusMessage(mkFloorMessage(f), a)
 
       elif ke.isKeyDown(key7):
         let f = fTeleport
-        actions.setFloor(m, curCol, curRow, f, um)
+        actions.setFloor(m, curRow, curCol, f, um)
         setStatusMessage(mkFloorMessage(f), a)
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
@@ -999,7 +1023,7 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
-          actions.paste(m, curCol, curRow, a.copyBuf.get, um)
+          actions.paste(m, curRow, curCol, a.copyBuf.get, um)
           setStatusMessage(IconPaste, "Pasted buffer", a)
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
@@ -1024,59 +1048,69 @@ proc handleMapEvents(a) =
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyN):
-        if m.getFloor(curCol, curRow) == fNone:
+        if m.getFloor(curRow, curCol) == fNone:
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
+          let note = m.getNote(curRow, curCol)
+          if note.isSome:
+            let n = note.get
+            g_editNoteDialog_type = ord(n.kind)
+            g_editNoteDialog_note = n.text
+          else:
+            g_editNoteDialog_type = ord(nkComment)
+            g_editNoteDialog_note = ""
           g_editNoteDialogOpen = true
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
-        g_newMapDialog_cols = $m.cols
         g_newMapDialog_rows = $m.rows
+        g_newMapDialog_cols = $m.cols
         g_newMapDialogOpen = true
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
-        let ext = MapFileExtension
-        let filename = fileDialog(fdOpenFile,
-                                  filters=fmt"Gridmonger Map (*.{ext}):{ext}")
-        if filename != "":
-          try:
-            m = readMap(filename)
-            initUndoManager(um)
-            resetCursorAndViewStart(a)
-            updateViewStartAndCursorPosition(a)
-            setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
-          except CatchableError as e:
-            # TODO log stracktrace?
-            setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
+        when not defined(DEBUG):
+          let ext = MapFileExtension
+          let filename = fileDialog(fdOpenFile,
+                                    filters=fmt"Gridmonger Map (*.{ext}):{ext}")
+          if filename != "":
+            try:
+              m = readMap(filename)
+              initUndoManager(um)
+              resetCursorAndViewStart(a)
+              updateViewStartAndCursorPosition(a)
+              setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
+            except CatchableError as e:
+              # TODO log stracktrace?
+              setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
-        let ext = MapFileExtension
-        var filename = fileDialog(fdSaveFile,
-                                  filters=fmt"Gridmonger Map (*.{ext}):{ext}")
-        if filename != "":
-          try:
-            if not filename.endsWith(fmt".{ext}"):
-              filename &= "." & ext
-            writeMap(m, filename)
-            setStatusMessage(IconFloppy, fmt"Map saved", a)
-          except CatchableError as e:
-            # TODO log stracktrace?
-            setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
+        when not defined(DEBUG):
+          let ext = MapFileExtension
+          var filename = fileDialog(fdSaveFile,
+                                    filters=fmt"Gridmonger Map (*.{ext}):{ext}")
+          if filename != "":
+            try:
+              if not filename.endsWith(fmt".{ext}"):
+                filename &= "." & ext
+              writeMap(m, filename)
+              setStatusMessage(IconFloppy, fmt"Map saved", a)
+            except CatchableError as e:
+              # TODO log stracktrace?
+              setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
 
     of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: CardinalDir, a) =
         if a.editMode == emExcavate:
           moveCursor(dir, a)
-          actions.excavate(m, curCol, curRow, um)
+          actions.excavate(m, curRow, curCol, um)
 
         elif a.editMode == emEraseCell:
           moveCursor(dir, a)
-          actions.eraseCell(m, curCol, curRow, um)
+          actions.eraseCell(m, curRow, curCol, um)
 
         elif a.editMode == emClearFloor:
           moveCursor(dir, a)
-          actions.setFloor(m, curCol, curRow, fEmpty, um)
+          actions.setFloor(m, curRow, curCol, fEmpty, um)
 
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(dirW, a)
       if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(dirE, a)
@@ -1089,10 +1123,10 @@ proc handleMapEvents(a) =
 
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir, a) =
-        if canSetWall(m, curCol, curRow, dir):
-          let w = if m.getWall(curCol, curRow, dir) == wNone: wWall
+        if canSetWall(m, curRow, curCol, dir):
+          let w = if m.getWall(curRow, curCol, dir) == wNone: wWall
                   else: wNone
-          actions.setWall(m, curCol, curRow, dir, w, um)
+          actions.setWall(m, curRow, curCol, dir, w, um)
 
       if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
       if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
@@ -1105,11 +1139,11 @@ proc handleMapEvents(a) =
 
     of emDrawWallSpecial:
       proc handleMoveKey(dir: CardinalDir, a) =
-        if canSetWall(m, curCol, curRow, dir):
+        if canSetWall(m, curRow, curCol, dir):
           let curSpecWall = SpecialWalls[a.currSpecialWallIdx]
-          let w = if m.getWall(curCol, curRow, dir) == curSpecWall: wNone
+          let w = if m.getWall(curRow, curCol, dir) == curSpecWall: wNone
                   else: curSpecWall
-          actions.setWall(m, curCol, curRow, dir, w, um)
+          actions.setWall(m, curRow, curCol, dir, w, um)
 
       if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
       if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
@@ -1127,8 +1161,8 @@ proc handleMapEvents(a) =
       if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
       # TODO don't use win
-      if   win.isKeyDown(keyD): a.selection.get[curCol, curRow] = true
-      elif win.isKeyDown(keyE): a.selection.get[curCol, curRow] = false
+      if   win.isKeyDown(keyD): a.selection.get[curRow, curCol] = true
+      elif win.isKeyDown(keyE): a.selection.get[curRow, curCol] = false
 
       if   ke.isKeyDown(keyA, {mkCtrl}): a.selection.get.fill(true)
       elif ke.isKeyDown(keyD, {mkCtrl}): a.selection.get.fill(false)
@@ -1195,7 +1229,7 @@ proc handleMapEvents(a) =
       if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
       elif ke.isKeyDown({keyEnter, keyP}):
-        actions.paste(m, curCol, curRow, a.copyBuf.get, um)
+        actions.paste(m, curRow, curCol, a.copyBuf.get, um)
         a.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
@@ -1225,7 +1259,7 @@ proc renderUI() =
 
   # Current level dropdown
   a.currMapLevel = koi.dropdown(
-    50, 45, 300, 24.0,
+    MapLeftPad, 45, 300, 24.0,   # TODO calc y
     items = @[
       "Level 1 - Legend of Darkmoor",
       "The Beginning",
@@ -1236,9 +1270,9 @@ proc renderUI() =
     a.currMapLevel)
 
   # Map
-  if dp.viewCols > 0 and dp.viewRows > 0:
-    dp.cursorCol = a.cursorCol
+  if dp.viewRows > 0 and dp.viewCols > 0:
     dp.cursorRow = a.cursorRow
+    dp.cursorCol = a.cursorCol
 
     dp.selection = a.selection
     dp.selRect = a.selRect
@@ -1246,6 +1280,9 @@ proc renderUI() =
                       else: none(CopyBuffer)
 
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
+
+  # Bottom pane
+  drawBottomPane(MapLeftPad, winHeight - StatusBarHeight - BottomPaneHeight, a)
 
   # Toolbar
 #  drawMarkerIconToolbar(winWidth - 400.0, a)
@@ -1577,8 +1614,8 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   a.map = newMap(16, 16)
-#  a.mapStyle = createDefaultMapStyle()
-  a.mapStyle = createLightMapStyle()
+  a.mapStyle = createDefaultMapStyle()
+#  a.mapStyle = createLightMapStyle()
 #  a.mapStyle = createSepiaMapStyle()
 #  a.mapStyle = createGrimrock1MapStyle()
 #  a.mapStyle = createGrimrock2MapStyle()

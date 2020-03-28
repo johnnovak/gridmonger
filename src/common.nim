@@ -121,11 +121,10 @@ type
 
   # (0,0) is the top-left cell of the map
   Map* = ref object
-    name*:  string
-    cols*:  Natural
-    rows*:  Natural
-    cells*: seq[Cell]
-    notes*: Table[Natural, Note]
+    name*:        string
+    rows*, cols*: Natural
+    cells*:       seq[Cell]
+    notes*:       Table[Natural, Note]
 
   # TODO introduce CellGrid
   #CellGrid* = ref object
@@ -137,9 +136,8 @@ type
 type
   # (0,0) is the top-left cell of the selection
   Selection* = ref object
-    cols*:  Natural
-    rows*:  Natural
-    cells*: seq[bool]
+    rows*, cols*: Natural
+    cells*:       seq[bool]
 
   # TODO make ref?
   SelectionRect* = object
