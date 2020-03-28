@@ -1098,8 +1098,15 @@ proc handleMapEvents(a) =
 
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
-        dp.drawCellCoords = if dp.drawCellCoords: false else: true
-        echo dp.drawCellCoords
+        var state: string
+        if dp.drawCellCoords:
+          dp.drawCellCoords = false
+          state = "off"
+        else:
+          dp.drawCellCoords = true
+          state = "on"
+
+        setStatusMessage(fmt"Cell coordinates turned {state}", a)
 
     of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: CardinalDir, a) =
