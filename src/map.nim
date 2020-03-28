@@ -282,13 +282,9 @@ proc hasNote*(m; r,c: Natural): bool =
   let key = noteKey(m, r,c)
   m.notes.hasKey(key)
 
-# TODO drop the option
-proc getNote*(m; r,c: Natural): Option[Note] =
+proc getNote*(m; r,c: Natural): Note =
   let key = noteKey(m, r,c)
-  if m.notes.hasKey(key):
-    m.notes[key].some
-  else:
-    Note.none
+  m.notes[key]
 
 proc setNote*(m; r,c: Natural, note: Note) =
   let key = noteKey(m, r,c)

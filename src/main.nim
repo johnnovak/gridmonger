@@ -808,15 +808,14 @@ proc drawBottomPane(x, y: float, a) =
   let curRow = a.cursorRow
   let curCol = a.cursorCol
 
-  let note = m.getNote(curRow, curCol)
-  if note.isSome:
-    let n = note.get
+  if m.hasNote(curRow, curCol):
+    let note = m.getNote(curRow, curCol)
 
     vg.setFont(14.0)
     vg.fillColor(ms.fgColor)
     vg.textAlign(haLeft, vaMiddle)
 
-    discard vg.text(x, y, n.text)
+    discard vg.text(x, y, note.text)
 
 
 proc drawWallToolbar(x: float, a) =
@@ -1051,11 +1050,10 @@ proc handleMapEvents(a) =
         if m.getFloor(curRow, curCol) == fNone:
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
-          let note = m.getNote(curRow, curCol)
-          if note.isSome:
-            let n = note.get
-            g_editNoteDialog_type = ord(n.kind)
-            g_editNoteDialog_note = n.text
+          if m.hasNote(curRow, curCol):
+            let note = m.getNote(curRow, curCol)
+            g_editNoteDialog_type = ord(note.kind)
+            g_editNoteDialog_note = note.text
           else:
             g_editNoteDialog_type = ord(nkComment)
             g_editNoteDialog_note = ""
@@ -1097,6 +1095,11 @@ proc handleMapEvents(a) =
             except CatchableError as e:
               # TODO log stracktrace?
               setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
+
+      # Toggle options
+      elif ke.isKeyDown(keyC, {mkAlt}):
+        dp.drawCellCoords = if dp.drawCellCoords: false else: true
+        echo dp.drawCellCoords
 
     of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: CardinalDir, a) =
@@ -1372,7 +1375,6 @@ proc createDefaultMapStyle(): MapStyle =
   ms.bgCrosshatchStrokeWidth   = 1.0
   ms.bgCrosshatchSpacingFactor = 2.0
 
-  ms.coordsEnabled        = true
   ms.coordsColor          = gray(0.9)
   ms.coordsHighlightColor = rgb(1.0, 0.75, 0.0)
 
@@ -1409,7 +1411,6 @@ proc createLightMapStyle(): MapStyle =
   ms.bgCrosshatchStrokeWidth   = 1.0
   ms.bgCrosshatchSpacingFactor = 2.0
 
-  ms.coordsEnabled        = false
   ms.coordsColor          = rgb(34, 32, 32)
   ms.coordsHighlightColor = rgb(34, 32, 32)
 
@@ -1445,7 +1446,6 @@ proc createSepiaMapStyle(): MapStyle =
   ms.bgCrosshatchStrokeWidth   = 1.0
   ms.bgCrosshatchSpacingFactor = 3.0
 
-  ms.coordsEnabled        = true
   ms.coordsColor          = gray(0.0, 0.4)
   ms.coordsHighlightColor = gray(0.0, 0.8)
 
@@ -1481,7 +1481,6 @@ proc createGrimrock1MapStyle(): MapStyle =
   ms.bgCrosshatchStrokeWidth   = 1.0
   ms.bgCrosshatchSpacingFactor = 3.0
 
-  ms.coordsEnabled        = true
   ms.coordsColor          = gray(0.0, 0.4)
   ms.coordsHighlightColor = gray(0.0, 0.8)
 
@@ -1517,7 +1516,6 @@ proc createGrimrock2MapStyle(): MapStyle =
   ms.bgCrosshatchStrokeWidth   = 1.0
   ms.bgCrosshatchSpacingFactor = 3.0
 
-  ms.coordsEnabled        = true
   ms.coordsColor          = gray(0.0, 0.4)
   ms.coordsHighlightColor = rgb(255, 180, 111)
 
@@ -1548,13 +1546,14 @@ proc createGrimrock2MapStyle(): MapStyle =
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
 
+  dp.drawCellCoords   = true
   dp.drawCursorGuides = false
 
 
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
-  cfg.size = (w: 960, h: 1040)
-#  cfg.size = (w: 600, h: 400)
+#  cfg.size = (w: 960, h: 1040)
+  cfg.size = (w: 900, h: 800)
   cfg.title = "Gridmonger v0.1"
   cfg.resizable = false
   cfg.visible = false

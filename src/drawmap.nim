@@ -10,6 +10,7 @@ import nanovg
 import common
 import map
 import selection
+import utils
 
 
 const
@@ -54,7 +55,6 @@ type
     bgCrosshatchStrokeWidth*:   float
     bgCrosshatchSpacingFactor*: float
 
-    coordsEnabled*:             bool
     coordsColor*:               Color
     coordsHighlightColor*:      Color
 
@@ -75,6 +75,13 @@ type
     outlineOverscan*:           bool
     outlineColor*:              Color
     outlineWidthFactor*:        float
+
+    innerShadowEnabled:         bool
+    innerShadowColor:           Color
+    innerShadowWidthFactor:     float
+    outerShadowEnabled:         bool
+    outerShadowColor:           Color
+    outerShadowWidthFactor:     float
 
     pastePreviewColor*:         Color
     selectionColor*:            Color
@@ -106,12 +113,13 @@ type
     selRect*:      Option[SelectionRect]
     pastePreview*: Option[CopyBuffer]
 
+    drawCellCoords*:   bool
     drawCursorGuides*: bool
 
     # internal
     zoomLevel:          Natural
     gridSize:           float
-    coordsFontSize:     float
+    cellCoordsFontSize: float
 
     thinStrokeWidth:    float
     normalStrokeWidth:  float
@@ -135,10 +143,10 @@ type
   LineHatchPatterns = array[MinLineHatchSize..MaxLineHatchSize, Paint]
 
 
-proc newOutlineBuf(cols, rows: Natural): OutlineBuf =
+proc newOutlineBuf(rows, cols: Natural): OutlineBuf =
   var b = new OutlineBuf
-  b.cols = cols
   b.rows = rows
+  b.cols = cols
   newSeq(b.cells, b.rows * b.cols)
   result = b
 
@@ -185,11 +193,11 @@ proc setZoomLevel*(dp; ms; zl: Natural) =
     dp.thinOffs = 0.0
     dp.vertTransformXOffs = 1.0
 
-  dp.coordsFontSize = if   zl <= 2:   9.0
-                      elif zl <= 3:  10.0
-                      elif zl <= 7:  11.0
-                      elif zl <= 11: 12.0
-                      else:          13.0
+  dp.cellCoordsFontSize = if   zl <= 2:   9.0
+                          elif zl <= 3:  10.0
+                          elif zl <= 7:  11.0
+                          elif zl <= 11: 12.0
+                          else:          13.0
 
   dp.lineHatchSize = if   zl ==  1: 3
                      elif zl <=  5: 4
@@ -303,9 +311,9 @@ proc renderLineHatchPatterns*(dp; vg: NVGContext, pxRatio: float,
 
 # {{{ drawBgCrosshatch()
 proc drawBgCrosshatch(ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let sw = ms.bgCrosshatchStrokeWidth
 
@@ -349,9 +357,9 @@ proc drawBgCrosshatch(ctx) =
 # }}}
 # {{{ drawBackgroundGrid
 proc drawBackgroundGrid(ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let strokeWidth = UltrathinStrokeWidth
 
@@ -381,11 +389,11 @@ proc drawBackgroundGrid(ctx) =
 # }}}
 # {{{ drawCellCoords()
 proc drawCellCoords(m: Map, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
-  vg.fontSize(dp.coordsFontSize)
+  vg.fontSize(dp.cellCoordsFontSize)
   vg.textAlign(haCenter, vaMiddle)
 
   proc setTextHighlight(on: bool) =
@@ -399,7 +407,7 @@ proc drawCellCoords(m: Map, ctx) =
   let endX = dp.startX + dp.gridSize * dp.viewCols
   let endY = dp.startY + dp.gridSize * dp.viewRows
 
-  let fontSize = dp.coordsFontSize
+  let fontSize = dp.cellCoordsFontSize
 
   var x1f, x2f, y1f, y2f: float
   if ms.outlineOverscan:
@@ -439,9 +447,9 @@ proc drawCellCoords(m: Map, ctx) =
 # }}}
 # {{{ drawCursor()
 proc drawCursor(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   vg.fillColor(ms.cursorColor)
   vg.beginPath()
@@ -451,9 +459,9 @@ proc drawCursor(x, y: float, ctx) =
 # }}}
 # {{{ drawCursorGuides()
 proc drawCursorGuides(m: Map, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     x = cellX(dp.cursorCol - dp.viewStartCol, dp)
@@ -479,9 +487,9 @@ proc drawCursorGuides(m: Map, ctx) =
 # }}}
 # {{{ drawCellOutlines()
 proc drawCellOutlines(m: Map, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   func isOutline(r,c: Natural): bool =
     not (
@@ -550,9 +558,9 @@ proc generateEdgeOutlines(viewBuf: Map): OutlineBuf =
 # }}}
 # {{{ drawEdgeOutlines()
 proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   case ms.outlineFillStyle
   of ofsSolid:   vg.fillColor(ms.outlineColor)
@@ -673,9 +681,9 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
 
 # {{{ drawIcon*()
 proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   vg.setFont((dp.gridSize*0.53).float)
   vg.fillColor(color)
@@ -690,9 +698,9 @@ proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
 # }}}
 # {{{ drawFloor()
 proc drawFloor(x, y: float, color: Color, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let sw = UltrathinStrokeWidth
   vg.strokeColor(ms.gridColorFloor)
@@ -742,9 +750,9 @@ proc drawFloor(x, y: float, color: Color, ctx) =
 # }}}
 # {{{ drawSecretDoor()
 proc drawSecretDoor(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   vg.beginPath()
   vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
@@ -762,9 +770,9 @@ proc drawSecretDoor(x, y: float, ctx) =
 # }}}
 # {{{ drawPressurePlate()
 proc drawPressurePlate(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     offs = (dp.gridSize * 0.3).int
@@ -782,9 +790,9 @@ proc drawPressurePlate(x, y: float, ctx) =
 # }}}
 # {{{ drawHiddenPressurePlate()
 proc drawHiddenPressurePlate(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     offs = (dp.gridSize * 0.3).int
@@ -802,9 +810,9 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
 # }}}
 # {{{ drawOpenPitWithColor()
 proc drawOpenPitWithColor(x, y: float, color: Color, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     offs = (dp.gridSize * 0.3).int
@@ -832,9 +840,9 @@ proc drawCeilingPit(x, y: float, ctx) =
 # }}}
 # {{{ drawClosedPitWithColor()
 proc drawClosedPitWithColor(x, y: float, color: Color, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     offs = (dp.gridSize * 0.3).int
@@ -896,9 +904,9 @@ proc drawCustom(x, y: float, ctx) =
 
 # {{{ drawSolidWallHoriz*()
 proc drawSolidWallHoriz*(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     sw = dp.normalStrokeWidth
@@ -917,9 +925,9 @@ proc drawSolidWallHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawIllusoryWallHoriz*()
 proc drawIllusoryWallHoriz*(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     sw = dp.normalStrokeWidth
@@ -945,9 +953,9 @@ proc drawIllusoryWallHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawInvisibleWallHoriz*()
 proc drawInvisibleWallHoriz*(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     o = dp.thinOffs
@@ -968,9 +976,9 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawDoorHoriz*()
 proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     o = dp.thinOffs
@@ -1023,9 +1031,9 @@ proc drawLockedDoorHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawSecretDoorHoriz*()
 proc drawSecretDoorHoriz*(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     wallLen = (dp.gridSize * 0.25).int
@@ -1057,9 +1065,9 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawArchwayHoriz*()
 proc drawArchwayHoriz*(x, y: float, ctx) =
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
@@ -1118,9 +1126,9 @@ proc setVertTransform(x, y: float, ctx) =
 proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural,
                    cursorActive: bool, ctx) =
 
-  let ms = ctx.ms
-  let dp = ctx.dp
-  let vg = ctx.vg
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
   let
     bufRow = viewRow+1
@@ -1280,8 +1288,8 @@ proc drawSelection(ctx) =
 # }}}
 # {{{ drawPastePreviewHighlight()
 proc drawPastePreviewHighlight(ctx) =
-  let dp = ctx.dp
-  let ms = ctx.ms
+  alias(dp, ctx.dp)
+  alias(ms, ctx.ms)
 
   let
     sel = dp.pastePreview.get.selection
@@ -1301,12 +1309,14 @@ proc drawPastePreviewHighlight(ctx) =
 # }}}
 # {{{ drawInnerShadows()
 proc drawInnerShadows(viewBuf: Map, ctx) =
-  let dp = ctx.dp
-  let ms = ctx.ms
-  let vg = ctx.vg
+  alias(dp, ctx.dp)
+  alias(ms, ctx.ms)
+  alias(vg, ctx.vg)
 
-  vg.fillColor(gray(0.0, 0.1))
+  vg.fillColor(ms.innerShadowColor)
   vg.beginPath()
+
+  let shadowWidth = dp.gridSize * ms.innerShadowWidthFactor
 
   for r in 1..<viewBuf.rows-1:
     for c in 1..<viewBuf.cols-1:
@@ -1314,21 +1324,23 @@ proc drawInnerShadows(viewBuf: Map, ctx) =
       let y = cellY(r-1, dp)
       if viewBuf.getFloor(r,c) != fNone:
         if isNeighbourCellEmpty(viewBuf, r,c, North):
-          vg.rect(x, y, dp.gridSize, dp.gridSize*0.15)
+          vg.rect(x, y, dp.gridSize, shadowWidth)
 
         if isNeighbourCellEmpty(viewBuf, r,c, West):
-          vg.rect(x, y, dp.gridSize*0.15, dp.gridSize)
+          vg.rect(x, y, shadowWidth, dp.gridSize)
 
   vg.fill()
 # }}}
 # {{{ drawOuterShadows()
 proc drawOuterShadows(viewBuf: Map, ctx) =
-  let dp = ctx.dp
-  let ms = ctx.ms
-  let vg = ctx.vg
+  alias(dp, ctx.dp)
+  alias(ms, ctx.ms)
+  alias(vg, ctx.vg)
 
-  vg.fillColor(gray(0.0, 0.15))
+  vg.fillColor(ms.outerShadowColor)
   vg.beginPath()
+
+  let shadowWidth = dp.gridSize * ms.outerShadowWidthFactor
 
   for r in 1..<viewBuf.rows-1:
     for c in 1..<viewBuf.cols-1:
@@ -1336,23 +1348,23 @@ proc drawOuterShadows(viewBuf: Map, ctx) =
       let y = cellY(r-1, dp)
       if viewBuf.getFloor(r,c) == fNone:
         if not isNeighbourCellEmpty(viewBuf, r,c, North):
-          vg.rect(x, y, dp.gridSize, dp.gridSize*0.125)
+          vg.rect(x, y, dp.gridSize, shadowWidth)
 
         if not isNeighbourCellEmpty(viewBuf, r,c, West):
-          vg.rect(x, y, dp.gridSize*0.125, dp.gridSize)
+          vg.rect(x, y, shadowWidth, dp.gridSize)
 
   vg.fill()
 # }}}
 
 # {{{ drawMap*()
 proc drawMap*(m: Map, ctx) =
-  let dp = ctx.dp
-  let ms = ctx.ms
+  alias(dp, ctx.dp)
+  alias(ms, ctx.ms)
 
   assert dp.viewStartRow + dp.viewRows <= m.rows
   assert dp.viewStartCol + dp.viewCols <= m.cols
 
-  if ms.coordsEnabled:
+  if dp.drawCellCoords:
     drawCellCoords(m, ctx)
 
   if ms.bgCrosshatchEnabled:
@@ -1400,8 +1412,12 @@ proc drawMap*(m: Map, ctx) =
                          dp.viewStartCol+c == dp.cursorCol
       drawCellFloor(viewBuf, r,c, cursorActive, ctx)
 
-#  drawInnerShadows(viewBuf, ctx)
-  drawOuterShadows(viewBuf, ctx)
+  # TODO finish shadoww implementation (draw corners)
+  if ms.innerShadowEnabled:
+    drawInnerShadows(viewBuf, ctx)
+
+  if ms.outerShadowEnabled:
+    drawOuterShadows(viewBuf, ctx)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:

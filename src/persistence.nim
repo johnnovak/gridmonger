@@ -98,20 +98,40 @@ proc mapWall(w: uint8): uint8 =
   else: w.int
 
 proc readMapData_V1(rr; numCells: Natural): seq[Cell] =
-  result = newSeqOfCap[Cell](numCells)
+  var cells = newSeqOfCap[Cell](numCells)
   for i in 0..<numCells:
     var c: Cell
+    # TODO
     #c.floor = mapFloor(rr.read(uint8)).Floor
     c.floor = rr.read(uint8).Floor
     c.floorOrientation = rr.read(uint8).Orientation
+    # TODO
     #c.wallN = mapWall(rr.read(uint8)).Wall
     #c.wallW = mapWall(rr.read(uint8)).Wall
     c.wallN = rr.read(uint8).Wall
     c.wallW = rr.read(uint8).Wall
-    result.add(c)
+    cells.add(c)
+  result = cells
 
-proc readMapNotes_V1(rr) =
-  discard  # TODO
+
+proc readMapNotes_V1(rr; m: Map) =
+  let numNotes = rr.read(uint16).Natural
+
+  for i in 0..<numNotes:
+    let row = rr.read(uint16)
+    let col = rr.read(uint16)
+
+    var note = Note(kind: NoteKind(rr.read(uint8)))
+    case note.kind
+    of nkIndexed:  note.index = rr.read(uint16)
+    of nkCustomId: note.customId = rr.readBStr()
+    of nkComment:  discard
+
+    note.text = rr.readWStr()
+    echo note.text
+    echo note.text.len
+
+    m.setNote(row, col, note)
 
 
 proc readMap(rr): Map =
@@ -149,34 +169,36 @@ proc readMap(rr): Map =
 
   rr.cursor = propCursor.get
   let (rows, cols, name) = readMapProperties_V1(rr)
-  result = new Map
-  result.name = name
-  result.rows = rows
-  result.cols = cols
+  var m = new Map
+  m.name = name
+  m.rows = rows
+  m.cols = cols
 
   rr.cursor = dataCursor.get
   let numCells = (rows+1) * (cols+1)   # because of the South & East borders
-  result.cells = readMapData_V1(rr, numCells)
+  m.cells = readMapData_V1(rr, numCells)
 
   if annoCursor.isSome:
     rr.cursor = annoCursor.get
-    readMapNotes_V1(rr)  # TODO
+    readMapNotes_V1(rr, m)
+
+  result = m
 
 
 proc readMapList(rr): seq[Map] =
-  result = newSeq[Map]()
-
+  var ml = newSeq[Map]()
   while rr.hasNextChunk():
     let ci = rr.nextChunk()
     if ci.kind == ckGroup:
       case ci.formatTypeId
       of FourCC_GRDM_map:
         rr.enterGroup()
-        result.add(readMap(rr))
+        ml.add(readMap(rr))
       else:
         invalidListChunkError(ci.formatTypeId, FourCC_GRDM_mapl)
     else:
       invalidChunkError(ci.id, FourCC_GRDM_mapl)
+  result = ml
 
 
 proc readMapHeader(rr): MapHeaderInfo =
@@ -258,7 +280,7 @@ proc writeMapProperties(rw; m: Map) =
   rw.beginChunk(FourCC_GRDM_map_prop)
   rw.write(m.rows.uint16)
   rw.write(m.cols.uint16)
-  rw.writeWStr(m.name)       # TODO
+  rw.writeWStr(m.name)
   rw.endChunk()
 
 proc writeMapCells(rw; cells: seq[Cell]) =
@@ -275,15 +297,16 @@ proc writeMapNotes(rw; m: Map) =
   rw.beginChunk(FourCC_GRDM_map_note)
   rw.write(m.numNotes.uint16)
 
-  for (c, r, note) in m.allNotes:
-    rw.write(note.kind.uint8)
-    rw.write(c.uint16)
-    rw.write(r.uint16)
+  for (row, col, note) in m.allNotes:
+    rw.write(row.uint16)
+    rw.write(col.uint16)
 
+    rw.write(note.kind.uint8)
     case note.kind
     of nkIndexed:  rw.write(note.index.uint16)
     of nkCustomId: rw.writeBStr(note.customId)
     of nkComment:  discard
+
     rw.writeWStr(note.text)
 
   rw.endChunk()
