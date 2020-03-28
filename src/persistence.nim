@@ -128,9 +128,6 @@ proc readMapNotes_V1(rr; m: Map) =
     of nkComment:  discard
 
     note.text = rr.readWStr()
-    echo note.text
-    echo note.text.len
-
     m.setNote(row, col, note)
 
 

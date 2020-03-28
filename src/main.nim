@@ -42,6 +42,7 @@ const
   MapTopPad    = 85.0
   MapBottomPad = 35.0
 
+  BottomPaneTopPad = 10.0
   BottomPaneHeight = 80.0
 
   WindowResizeEdgeWidth = 10.0
@@ -451,7 +452,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   vg.textAlign(haLeft, vaMiddle)
   discard vg.text(winWidth - tw - 7, ty, cursorPos)
 
-  vg.scissor(0, y, winWidth - tw - 25, StatusBarHeight)
+  vg.scissor(0, y, winWidth - tw - 15, StatusBarHeight)
 
   # Display icon & message
   const
@@ -523,7 +524,8 @@ proc updateViewStartAndCursorPosition(a) =
 
   let
     drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
-                     MapTopPad - MapBottomPad - BottomPaneHeight
+                     MapTopPad - MapBottomPad -
+                     BottomPaneTopPad - BottomPaneHeight
 
     drawAreaWidth = winWidth - MapLeftPad - MapRightPad
 
@@ -712,7 +714,7 @@ var
   g_editNoteDialog_note: string
 
 proc editNoteDialog(a) =
-  koi.beginDialog(450, 220, fmt"{IconComment}  Edit Note")
+  koi.beginDialog(450, 220, fmt"{IconCommentInv}  Edit Note")
   a.clearStatusMessage()
 
   let
@@ -801,7 +803,7 @@ proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
   of wStatue:        discard
 
 
-proc drawBottomPane(x, y: float, a) =
+proc drawBottomPane(x, y, w, h: float, a) =
   alias(vg, a.vg)
   alias(m, a.map)
   alias(ms, a.mapStyle)
@@ -809,14 +811,39 @@ proc drawBottomPane(x, y: float, a) =
   let curRow = a.cursorRow
   let curCol = a.cursorCol
 
+  # TODO
+  #[
+  vg.beginPath()
+  vg.fillColor(white(0.2))
+  vg.rect(x, y, w, h)
+  vg.fill()
+]#
+
   if a.editMode != emPastePreview and m.hasNote(curRow, curCol):
     let note = m.getNote(curRow, curCol)
 
-    vg.setFont(14.0)
     vg.fillColor(ms.fgColor)
-    vg.textAlign(haLeft, vaMiddle)
 
-    discard vg.text(x, y, note.text)
+    case note.kind
+    of nkIndexed:
+      vg.setFont(20.0, "deco", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-3, $note.index)
+
+    of nkCustomId:
+      vg.setFont(20.0, "deco", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-3, note.customId)
+
+    of nkComment:
+      vg.setFont(18.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-19, y-2, IconComment)
+#      vg.setFont(20.0, "deco", horizAlign=haCenter, vertAlign=vaTop)
+#      discard vg.text(x-20, y-3, "A")
+
+    vg.setFont(14.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.4)
+    vg.scissor(x, y, w, h)
+    vg.textBox(x, y, w, note.text)
+    vg.resetScissor()
 
 
 proc drawWallToolbar(x: float, a) =
@@ -1294,7 +1321,13 @@ proc renderUI() =
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
 
   # Bottom pane
-  drawBottomPane(MapLeftPad, winHeight - StatusBarHeight - BottomPaneHeight, a)
+  drawBottomPane(
+    x = MapLeftPad,
+    y = winHeight - StatusBarHeight - BottomPaneHeight,
+    w = winWidth - MapLeftPad*2,  # TODO
+    h = BottomPaneHeight - BottomPaneTopPad*2,  # TODO
+    a
+  )
 
   # Toolbar
 #  drawMarkerIconToolbar(winWidth - 400.0, a)
@@ -1451,9 +1484,9 @@ proc createLightMapStyle(): MapStyle =
 
   ms.innerShadowEnabled     = false
   ms.innerShadowColor       = gray(0.0, 0.1)
-  ms.innerShadowWidthFactor = 0.125
-  ms.outerShadowEnabled     = false
-  ms.outerShadowColor       = gray(0.0, 0.1)
+  ms.innerShadowWidthFactor = 0.15
+  ms.outerShadowEnabled     = true
+  ms.outerShadowColor       = gray(0.0, 0.15)
   ms.outerShadowWidthFactor = 0.125
 
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.5)
@@ -1606,7 +1639,8 @@ proc initDrawMapParams(a) =
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
 #  cfg.size = (w: 960, h: 1040)
-  cfg.size = (w: 900, h: 800)
+#  cfg.size = (w: 900, h: 800)
+  cfg.size = (w: 450, h: 700)
   cfg.title = "Gridmonger v0.1"
   cfg.resizable = false
   cfg.visible = false
@@ -1633,12 +1667,17 @@ proc loadData(vg: NVGContext) =
   if boldFont == NoFont:
     quit "Could not add bold font.\n"
 
-  let emojiFont = vg.createFont("emoji", "data/GridmongerIcons.ttf")
-  if emojiFont == NoFont:
-    quit "Could not load emoji font.\n"
+  let decoFont = vg.createFont("deco", "data/Grenze-Bold.ttf")
+  if decoFont == NoFont:
+    quit "Could not add deco font.\n"
 
-  discard addFallbackFont(vg, regularFont, emojiFont)
-  discard addFallbackFont(vg, boldFont, emojiFont)
+  let iconFont = vg.createFont("icon", "data/GridmongerIcons.ttf")
+  if iconFont == NoFont:
+    quit "Could not load icon font.\n"
+
+  discard addFallbackFont(vg, regularFont, iconFont)
+  discard addFallbackFont(vg, boldFont, iconFont)
+  discard addFallbackFont(vg, decoFont, iconFont)
 
 
 # TODO clean up
