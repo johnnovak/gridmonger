@@ -71,7 +71,7 @@ proc newSelectionFrom*(src: Selection, rect: Rect[Natural]): Selection =
   assert rect.c2 <= src.cols
 
   var dest = new Selection
-  dest.initSelection(rect.width, rect.height)
+  dest.initSelection(rect.height, rect.width, )
   dest.copyFrom(destRow=0, destCol=0, src, srcRect=rect)
   result = dest
 

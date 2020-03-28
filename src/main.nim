@@ -600,7 +600,7 @@ proc enterSelectMode(a) =
 # {{{ exitSelectMode()
 proc exitSelectMode(a) =
   a.editMode = emNormal
-  a.selection = none(Selection)
+  a.selection = Selection.none
   a.drawMapParams.drawCursorGuides = false
   a.clearStatusMessage()
 
@@ -1220,7 +1220,7 @@ proc handleMapEvents(a) =
 
       if ke.isKeyUp({keyR, keyS}):
         a.selection.get.fill(a.selRect.get.rect, a.selRect.get.selected)
-        a.selRect = none(SelectionRect)
+        a.selRect = SelectionRect.none
         a.editMode = emSelectDraw
 
     of emPastePreview:
@@ -1278,7 +1278,7 @@ proc renderUI() =
     dp.selection = a.selection
     dp.selRect = a.selRect
     dp.pastePreview = if a.editMode == emPastePreview: a.copyBuf
-                      else: none(CopyBuffer)
+                      else: CopyBuffer.none
 
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
 
@@ -1638,8 +1638,8 @@ proc init(): Window =
   a.toolbarDrawParams = a.drawMapParams.deepCopy
   a.toolbarDrawParams.setZoomLevel(a.mapStyle, 1)
 
-  a.map = readMap("EOB III - Crystal Tower L2.grm")
-#  a.map = readMap("drawtest.grm")
+#  a.map = readMap("EOB III - Crystal Tower L2.grm")
+  a.map = readMap("drawtest.grm")
 
   koi.init(a.vg)
   win.framebufferSizeCb = framebufSizeCb
