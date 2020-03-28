@@ -444,7 +444,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   # Display current coords
   vg.setFont(14.0)
 
-  let cursorPos = fmt"({m.rows-1 - a.cursorRow}, {a.cursorCol}, )"
+  let cursorPos = fmt"({m.rows-1 - a.cursorRow}, {a.cursorCol})"
   let tw = vg.textWidth(cursorPos)
 
   vg.fillColor(gray(0.6))
@@ -799,6 +799,7 @@ proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
   of wLever:         discard
   of wNiche:         discard
   of wStatue:        discard
+
 
 proc drawBottomPane(x, y: float, a) =
   alias(vg, a.vg)
@@ -1474,6 +1475,13 @@ proc createSepiaMapStyle(): MapStyle =
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
+  ms.innerShadowEnabled     = true
+  ms.innerShadowColor       = gray(0.0, 0.2)
+  ms.innerShadowWidthFactor = 0.125
+  ms.outerShadowEnabled     = true
+  ms.outerShadowColor       = gray(0.0, 0.2)
+  ms.outerShadowWidthFactor = 0.125
+
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
   result = ms
@@ -1645,7 +1653,8 @@ proc init(): Window =
   a.toolbarDrawParams.setZoomLevel(a.mapStyle, 1)
 
 #  a.map = readMap("EOB III - Crystal Tower L2.grm")
-  a.map = readMap("drawtest.grm")
+#  a.map = readMap("drawtest.grm")
+  a.map = readMap("notetest.grm")
 
   koi.init(a.vg)
   win.framebufferSizeCb = framebufSizeCb
