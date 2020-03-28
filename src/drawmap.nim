@@ -249,6 +249,7 @@ proc cellY(y: int, dp): float =
   dp.startY + dp.gridSize * y
 
 proc isCursorActive(viewRow, viewCol: Natural, dp): bool =
+  dp.pastePreview.isNone and
   dp.viewStartRow + viewRow == dp.cursorRow and
   dp.viewStartCol + viewCol == dp.cursorCol
 
@@ -1388,6 +1389,30 @@ proc drawOuterShadows(viewBuf: Map, ctx) =
   vg.fill()
 # }}}
 
+# {{{ mergePasteAndOutlineBufs*()
+proc mergePasteAndOutlineBufs*(viewBuf: Map,
+                               outlineBuf: Option[OutlineBuf], ctx) =
+  alias(dp, ctx.dp)
+  alias(ms, ctx.ms)
+
+  if dp.pastePreview.isSome:
+    let startRow = dp.cursorRow - dp.viewStartRow + 1
+    let startCol = dp.cursorCol - dp.viewStartCol + 1
+    let copyBuf = dp.pastePreview.get.map
+
+    viewBuf.paste(startRow, startCol,
+                  src=copyBuf, dp.pastePreview.get.selection)
+
+    if outlineBuf.isSome:
+      let ob = outlineBuf.get
+      let endRow = min(startRow + copyBuf.rows-1, ob.rows-1)
+      let endCol = min(startCol + copyBuf.cols-1, ob.cols-1)
+
+      for r in startRow..endRow:
+        for c in startCol..endCol:
+          ob[r,c] = {}
+
+# }}}
 # {{{ drawMap*()
 proc drawMap*(m: Map, ctx) =
   alias(dp, ctx.dp)
@@ -1414,33 +1439,21 @@ proc drawMap*(m: Map, ctx) =
     border=1
   )
 
-  var outlineBuf: OutlineBuf
-  let useOutlineBuf = ms.outlineStyle >= osSquareEdges
-  if useOutlineBuf:
-    outlineBuf = generateEdgeOutlines(viewBuf)
+  let outlineBuf = if ms.outlineStyle >= osSquareEdges:
+    generateEdgeOutlines(viewBuf).some
+  else:
+    OutlineBuf.none
 
-  if dp.pastePreview.isSome:
-    let startRow = dp.cursorRow - dp.viewStartRow + 1
-    let startCol = dp.cursorCol - dp.viewStartCol + 1
-    let copyBuf = dp.pastePreview.get.map
+  mergePasteAndOutlineBufs(viewBuf, outlineBuf, ctx)
 
-    viewBuf.paste(startRow, startCol,
-                  copyBuf, dp.pastePreview.get.selection)
-
-    if useOutlineBuf:
-      let endRow = min(startRow + copyBuf.rows, outlineBuf.rows-1)
-      let endCol = min(startCol + copyBuf.cols, outlineBuf.cols-1)
-      for r in startRow..endRow:
-        for c in startCol..endCol:
-          outlineBuf[r,c] = {}
-
-  if ms.outlineStyle == osCell: drawCellOutlines(m, ctx)
-  elif useOutlineBuf: drawEdgeOutlines(m, outlineBuf, ctx)
+  if ms.outlineStyle == osCell:
+    drawCellOutlines(m, ctx)
+  elif outlineBuf.isSome:
+    drawEdgeOutlines(m, outlineBuf.get, ctx)
 
   drawFloors(viewBuf, ctx)
 
-  # TODO finish shadoww implementation (draw corners)
-  # cursor should be excluded from shadows
+  # TODO finish shadow implementation (draw corners)
   if ms.innerShadowEnabled:
     drawInnerShadows(viewBuf, ctx)
 

@@ -809,7 +809,7 @@ proc drawBottomPane(x, y: float, a) =
   let curRow = a.cursorRow
   let curCol = a.cursorCol
 
-  if m.hasNote(curRow, curCol):
+  if a.editMode != emPastePreview and m.hasNote(curRow, curCol):
     let note = m.getNote(curRow, curCol)
 
     vg.setFont(14.0)
