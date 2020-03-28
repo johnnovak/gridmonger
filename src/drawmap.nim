@@ -86,6 +86,8 @@ type
     pastePreviewColor*:         Color
     selectionColor*:            Color
 
+    commentMarkerColor*:        Color
+
 
   GridStyle* = enum
     gsNone, gsSolid, gsLoose, gsDashed
@@ -458,7 +460,7 @@ proc drawCursor(x, y: float, ctx) =
 
   vg.fillColor(ms.cursorColor)
   vg.beginPath()
-  vg.rect(x+1, y+1, dp.gridSize, dp.gridSize)
+  vg.rect(x, y, dp.gridSize+1, dp.gridSize+1)
   vg.fill()
 
 # }}}
@@ -513,8 +515,8 @@ proc drawCellOutlines(m: Map, ctx) =
   vg.strokeWidth(sw)
   vg.fillColor(ms.outlineColor)
   vg.strokeColor(ms.outlineColor)
-
   vg.beginPath()
+
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
       if isOutline(dp.viewStartRow+r, dp.viewStartCol+c):
@@ -523,12 +525,13 @@ proc drawCellOutlines(m: Map, ctx) =
           y = snap(cellY(r, dp), sw)
 
         vg.rect(x, y, dp.gridSize, dp.gridSize)
+
   vg.fill()
   vg.stroke()
 
 # }}}
-# {{{ generateEdgeOutlines()
-proc generateEdgeOutlines(viewBuf: Map): OutlineBuf =
+# {{{ renderEdgeOutlines()
+proc renderEdgeOutlines(viewBuf: Map): OutlineBuf =
   var ol = newOutlineBuf(viewBuf.rows, viewBuf.cols)
   for r in 0..<viewBuf.rows:
     for c in 0..<viewBuf.cols:
@@ -1193,6 +1196,40 @@ proc drawFloors(viewBuf: Map, ctx) =
       drawCellFloor(viewBuf, r,c, isCursorActive(r,c, dp), ctx)
 
 # }}}
+# {{{ drawNote()
+proc drawNote(x, y: float, note: Note, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let w = dp.gridSize*0.4
+
+  vg.fillColor(ms.commentMarkerColor)
+  vg.beginPath()
+  vg.moveTo(x + dp.gridSize - w, y)
+  vg.lineTo(x + dp.gridSize + 1, y + w)
+  vg.lineTo(x + dp.gridSize + 1, y)
+  vg.closePath()
+  vg.fill()
+
+# }}}
+# {{{ drawNotes()
+proc drawNotes(m: Map, ctx) =
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let r = dp.viewStartRow + viewRow
+      let c = dp.viewStartCol + viewCol
+      if m.hasNote(r,c):
+        let
+          note = m.getNote(r,c)
+          x = cellX(viewCol, dp)
+          y = cellY(viewRow, dp)
+
+        drawNote(x, y, note, ctx)
+
+# }}}
 
 # {{{ drawWall()
 proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
@@ -1440,7 +1477,7 @@ proc drawMap*(m: Map, ctx) =
   )
 
   let outlineBuf = if ms.outlineStyle >= osSquareEdges:
-    generateEdgeOutlines(viewBuf).some
+    renderEdgeOutlines(viewBuf).some
   else:
     OutlineBuf.none
 
@@ -1452,6 +1489,7 @@ proc drawMap*(m: Map, ctx) =
     drawEdgeOutlines(m, outlineBuf.get, ctx)
 
   drawFloors(viewBuf, ctx)
+  drawNotes(m, ctx)
 
   # TODO finish shadow implementation (draw corners)
   if ms.innerShadowEnabled:
@@ -1460,16 +1498,17 @@ proc drawMap*(m: Map, ctx) =
   if ms.outerShadowEnabled:
     drawOuterShadows(viewBuf, ctx)
 
-  drawWalls(viewBuf, ctx)
-
-  if dp.drawCursorGuides:
-    drawCursorGuides(m, ctx)
-
   if dp.selection.isSome:
     drawSelection(ctx)
 
   if dp.pastePreview.isSome:
     drawPastePreviewHighlight(ctx)
+
+  # TODO blend selection/preview tint with wall color
+  drawWalls(viewBuf, ctx)
+
+  if dp.drawCursorGuides:
+    drawCursorGuides(m, ctx)
 
 # }}}
 

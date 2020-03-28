@@ -1404,8 +1404,17 @@ proc createDefaultMapStyle(): MapStyle =
   ms.outlineColor         = gray(0.25)
   ms.outlineWidthFactor   = 0.5
 
+  ms.innerShadowEnabled     = false
+  ms.innerShadowColor       = gray(0.0, 0.1)
+  ms.innerShadowWidthFactor = 0.125
+  ms.outerShadowEnabled     = false
+  ms.outerShadowColor       = gray(0.0, 0.1)
+  ms.outerShadowWidthFactor = 0.125
+
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+
+  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
@@ -1440,8 +1449,17 @@ proc createLightMapStyle(): MapStyle =
   ms.outlineColor         = rgb(154, 156, 156)
   ms.outlineWidthFactor   = 0.25
 
+  ms.innerShadowEnabled     = false
+  ms.innerShadowColor       = gray(0.0, 0.1)
+  ms.innerShadowWidthFactor = 0.125
+  ms.outerShadowEnabled     = false
+  ms.outerShadowColor       = gray(0.0, 0.1)
+  ms.outerShadowWidthFactor = 0.125
+
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.5)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.5)
+
+  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
@@ -1467,7 +1485,7 @@ proc createSepiaMapStyle(): MapStyle =
   ms.floorColor           = rgb(248, 248, 244)
   ms.fgColor              = rgb(67, 67, 63)
   ms.lightFgColor         = rgb(176, 167, 167)
-  ms.thinStroke           = true
+  ms.thinStroke           = false
 
   ms.outlineStyle         = osSquareEdges
   ms.outlineFillStyle     = ofsSolid
@@ -1476,14 +1494,16 @@ proc createSepiaMapStyle(): MapStyle =
   ms.outlineWidthFactor   = 0.3
 
   ms.innerShadowEnabled     = true
-  ms.innerShadowColor       = gray(0.0, 0.2)
+  ms.innerShadowColor       = gray(0.0, 0.1)
   ms.innerShadowWidthFactor = 0.125
   ms.outerShadowEnabled     = true
-  ms.outerShadowColor       = gray(0.0, 0.2)
+  ms.outerShadowColor       = gray(0.0, 0.1)
   ms.outerShadowWidthFactor = 0.125
 
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+
+  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
@@ -1517,8 +1537,17 @@ proc createGrimrock1MapStyle(): MapStyle =
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
+  ms.innerShadowEnabled     = false
+  ms.innerShadowColor       = gray(0.0, 0.1)
+  ms.innerShadowWidthFactor = 0.125
+  ms.outerShadowEnabled     = false
+  ms.outerShadowColor       = gray(0.0, 0.1)
+  ms.outerShadowWidthFactor = 0.125
+
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+
+  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
@@ -1552,8 +1581,17 @@ proc createGrimrock2MapStyle(): MapStyle =
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
+  ms.innerShadowEnabled     = false
+  ms.innerShadowColor       = gray(0.0, 0.1)
+  ms.innerShadowWidthFactor = 0.125
+  ms.outerShadowEnabled     = false
+  ms.outerShadowColor       = gray(0.0, 0.1)
+  ms.outerShadowWidthFactor = 0.125
+
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+
+  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
@@ -1630,8 +1668,8 @@ proc init(): Window =
 
   a.map = newMap(16, 16)
 #  a.mapStyle = createDefaultMapStyle()
-#  a.mapStyle = createLightMapStyle()
-  a.mapStyle = createSepiaMapStyle()
+  a.mapStyle = createLightMapStyle()
+#  a.mapStyle = createSepiaMapStyle()
 #  a.mapStyle = createGrimrock1MapStyle()
 #  a.mapStyle = createGrimrock2MapStyle()
   a.undoManager = newUndoManager[Map]()
