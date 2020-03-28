@@ -35,40 +35,44 @@ const
 
 
 type
+  RectType = SomeNumber | Natural
+
   # Rects are endpoint-exclusive
-  Rect*[T: SomeNumber | Natural] = object
-    x1*, y1*, x2*, y2*: T
+  Rect*[T: RectType] = object
+    r1*,c1*, r2*,c2*: T
 
-proc rectN*(x1, y1, x2, y2: Natural): Rect[Natural] =
-  assert x1 < x2
-  assert y1 < y2
+proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
+  assert r1 < r2
+  assert c1 < c2
 
-  result.x1 = x1
-  result.y1 = y1
-  result.x2 = x2
-  result.y2 = y2
+  result.r1 = r1
+  result.c1 = c1
+  result.r2 = r2
+  result.c2 = c2
 
-proc intersect*[T: SomeNumber | Natural](a, b: Rect[T]): Option[Rect[T]] =
+proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
   let
-    x = max(a.x1, b.x1)
-    y = max(a.y1, b.y1)
-    n1 = min(a.x1 + a.width,  b.x1 + b.width)
-    n2 = min(a.y1 + a.height, b.y1 + b.height)
+    r = max(a.r1, b.r1)
+    c = max(a.c1, b.c1)
+    nr = min(a.r1 + a.height, b.r1 + b.height)
+    nc = min(a.c1 + a.width,  b.c1 + b.width)
 
-  if (n1 >= x and n2 >= y):
+  if (nc >= c and nr >= r):
     some(Rect[T](
-      x1: x,
-      y1: y,
-      x2: x + n1-x,
-      y2: y + n2-y
+      r1: r,
+      c1: c,
+      r2: r + nr-r,
+      c2: c + nc-c
     ))
   else: none(Rect[T])
 
-func width*[T: SomeNumber | Natural](r: Rect[T]): T = r.x2 - r.x1
-func height*[T: SomeNumber | Natural](r: Rect[T]): T = r.y2 - r.y1
 
-func contains*[T: SomeNumber | Natural](r: Rect[T], x, y: T): bool =
-  x >= r.x1 and x < r.x2 and y >= r.y1 and y < r.y2
+func width* [T: RectType](r: Rect[T]): T = r.c2 - r.c1
+func height*[T: RectType](r: Rect[T]): T = r.r2 - r.r1
+
+func contains*[T: RectType](a: Rect[T], r,c: T): bool =
+  r >= a.r1 and r < a.r2 and
+  c >= a.c1 and c < a.c2
 
 
 type
@@ -141,9 +145,10 @@ type
 
   # TODO make ref?
   SelectionRect* = object
-    x0*, y0*:   Natural
-    rect*:      Rect[Natural]
-    selected*:  bool
+    startRow*: Natural
+    startCol*: Natural
+    rect*:     Rect[Natural]
+    selected*: bool
 
 
 type

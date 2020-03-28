@@ -1170,8 +1170,9 @@ proc handleMapEvents(a) =
       if ke.isKeyDown({keyR, keyS}):
         a.editMode = emSelectRect
         a.selRect = some(SelectionRect(
-          x0: curCol, y0: curRow,
-          rect: rectN(curCol, curRow, curCol+1, curRow+1),
+          startRow: curRow,
+          startCol: curCol,
+          rect: rectN(curRow, curCol, curRow+1, curCol+1),
           selected: ke.isKeyDown(keyR)
         ))
 
@@ -1200,22 +1201,22 @@ proc handleMapEvents(a) =
       if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
       if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
-      var x1, y1, x2, y2: Natural
-      if a.selRect.get.x0 <= curCol:
-        x1 = a.selRect.get.x0
-        x2 = curCol+1
+      var r1,c1, r2,c2: Natural
+      if a.selRect.get.startRow <= curRow:
+        r1 = a.selRect.get.startRow
+        r2 = curRow+1
       else:
-        x1 = curCol
-        x2 = a.selRect.get.x0 + 1
+        r1 = curRow
+        r2 = a.selRect.get.startRow + 1
 
-      if a.selRect.get.y0 <= curRow:
-        y1 = a.selRect.get.y0
-        y2 = curRow+1
+      if a.selRect.get.startCol <= curCol:
+        c1 = a.selRect.get.startCol
+        c2 = curCol+1
       else:
-        y1 = curRow
-        y2 = a.selRect.get.y0 + 1
+        c1 = curCol
+        c2 = a.selRect.get.startCol + 1
 
-      a.selRect.get.rect = rectN(x1, y1, x2, y2)
+      a.selRect.get.rect = rectN(r1,c1, r2,c2)
 
       if ke.isKeyUp({keyR, keyS}):
         a.selection.get.fill(a.selRect.get.rect, a.selRect.get.selected)
@@ -1614,9 +1615,9 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   a.map = newMap(16, 16)
-  a.mapStyle = createDefaultMapStyle()
+#  a.mapStyle = createDefaultMapStyle()
 #  a.mapStyle = createLightMapStyle()
-#  a.mapStyle = createSepiaMapStyle()
+  a.mapStyle = createSepiaMapStyle()
 #  a.mapStyle = createGrimrock1MapStyle()
 #  a.mapStyle = createGrimrock2MapStyle()
   a.undoManager = newUndoManager[Map]()

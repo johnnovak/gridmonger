@@ -22,8 +22,8 @@ template cellAreaAction(currMap; rect: Rect[Natural], um;
 
   var undoMap = newMapFrom(currMap, rect)
   var undoAction = proc (m: var Map) =
-    m.copyFrom(destRow=rect.y1, destCol=rect.x1,
-               src=undoMap, srcRect=rectN(0, 0, rect.width, rect.height))
+    m.copyFrom(destRow=rect.r1, destCol=rect.c1,
+               src=undoMap, srcRect=rectN(0, 0, rect.height, rect.width))
 
   um.storeUndoState(undoAction, redoAction=action)
   action(currMap)
@@ -32,7 +32,7 @@ template cellAreaAction(currMap; rect: Rect[Natural], um;
 # {{{ singleCellAction()
 template singleCellAction(currMap; r,c: Natural, um;
                           actionMap, actionBody: untyped) =
-  cellAreaAction(currMap, rectN(c, r, c+1, r+1), um, actionMap, actionBody)
+  cellAreaAction(currMap, rectN(r, c, r+1, c+1), um, actionMap, actionBody)
 
 # }}}
 
@@ -54,18 +54,18 @@ proc eraseSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
         if sel[r,c]:
-          m.eraseCell(bbox.y1 + r, bbox.x1 + c)
+          m.eraseCell(bbox.r1 + r, bbox.c1 + c)
 
 # }}}
 # {{{ paste*()
 proc paste*(currMap; destRow, destCol: Natural, cb: CopyBuffer, um) =
   let rect = rectN(
-    destCol,
     destRow,
-    destCol + cb.map.cols,
-    destRow + cb.map.rows
+    destCol,
+    destRow + cb.map.rows,
+    destCol + cb.map.cols
   ).intersect(
-    rectN(0, 0, currMap.cols, currMap.rows)
+    rectN(0, 0, currMap.rows, currMap.cols)
   )
   if rect.isSome:
     cellAreaAction(currMap, rect.get, um, m):

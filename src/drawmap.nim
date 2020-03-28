@@ -1267,9 +1267,9 @@ proc drawSelection(ctx) =
       let draw = if dp.selRect.isSome:
                    let sr = dp.selRect.get
                    if sr.selected:
-                     sel[r,c] or sr.rect.contains(c,r)
+                     sel[r,c] or sr.rect.contains(r,c)
                    else:
-                     not sr.rect.contains(c,r) and sel[r,c]
+                     not sr.rect.contains(r,c) and sel[r,c]
                  else: sel[r,c]
       if draw:
         let x = cellX(c - dp.viewStartCol, dp)
@@ -1362,10 +1362,10 @@ proc drawMap*(m: Map, ctx) =
 
   let viewBuf = newMapFrom(m,
     rectN(
-      dp.viewStartCol,
       dp.viewStartRow,
-      dp.viewStartCol + dp.viewCols,
-      dp.viewStartRow + dp.viewRows
+      dp.viewStartCol,
+      dp.viewStartRow + dp.viewRows,
+      dp.viewStartCol + dp.viewCols
     ),
     border=1
   )

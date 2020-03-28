@@ -17,18 +17,18 @@ proc `[]`*(s; r,c: Natural): bool =
 
 
 proc fill*(s; rect: Rect[Natural], v: bool) =
-  assert rect.x1 < s.cols
-  assert rect.y1 < s.rows
-  assert rect.x2 <= s.cols
-  assert rect.y2 <= s.rows
+  assert rect.r1 < s.rows
+  assert rect.c1 < s.cols
+  assert rect.r2 <= s.rows
+  assert rect.c2 <= s.cols
 
-  for r in rect.y1..<rect.y2:
-    for c in rect.x1..<rect.x2:
+  for r in rect.r1..<rect.r2:
+    for c in rect.c1..<rect.c2:
       s[r,c] = v
 
 
 proc fill*(s; v: bool) =
-  let r = rectN(0, 0, s.cols, s.rows)
+  let r = rectN(0, 0, s.rows, s.cols)
   s.fill(r, v)
 
 proc initSelection(s; rows, cols: Natural) =
@@ -45,12 +45,12 @@ proc newSelection*(rows, cols: Natural): Selection =
 proc copyFrom*(dest: var Selection, destRow, destCol: Natural,
                src: Selection, srcRect: Rect[Natural]) =
   let
-    srcCol   = srcRect.x1
-    srcRow   = srcRect.y1
-    srcCols  = max(src.cols - srcCol, 0)
+    srcRow   = srcRect.r1
+    srcCol   = srcRect.c1
     srcRows  = max(src.rows - srcRow, 0)
-    destCols = max(dest.cols - destCol, 0)
+    srcCols  = max(src.cols - srcCol, 0)
     destRows = max(dest.rows - destRow, 0)
+    destCols = max(dest.cols - destCol, 0)
 
     cols = min(min(srcCols, destCols), srcRect.width)
     rows = min(min(srcRows, destRows), srcRect.height)
@@ -61,14 +61,14 @@ proc copyFrom*(dest: var Selection, destRow, destCol: Natural,
 
 
 proc copyFrom*(dest: var Selection, src: Selection) =
-  dest.copyFrom(destRow=0, destCol=0, src, rectN(0, 0, src.cols, src.rows))
+  dest.copyFrom(destRow=0, destCol=0, src, rectN(0, 0, src.rows, src.cols))
 
 
 proc newSelectionFrom*(src: Selection, rect: Rect[Natural]): Selection =
-  assert rect.x1 < src.cols
-  assert rect.y1 < src.rows
-  assert rect.x2 <= src.cols
-  assert rect.y2 <= src.rows
+  assert rect.r1 < src.rows
+  assert rect.c1 < src.cols
+  assert rect.r2 <= src.rows
+  assert rect.c2 <= src.cols
 
   var dest = new Selection
   dest.initSelection(rect.width, rect.height)
@@ -77,7 +77,7 @@ proc newSelectionFrom*(src: Selection, rect: Rect[Natural]): Selection =
 
 
 proc newSelectionFrom*(s): Selection =
-  newSelectionFrom(s, rectN(0, 0, s.cols, s.rows))
+  newSelectionFrom(s, rectN(0, 0, s.rows, s.cols))
 
 
 proc boundingBox*(s): Option[Rect[Natural]] =
@@ -104,7 +104,7 @@ proc boundingBox*(s): Option[Rect[Natural]] =
     while c2 > 0      and isColEmpty(c2): dec(c2)
     while r2 > 0      and isRowEmpty(r2): dec(r2)
 
-    return rectN(c1, r1, c2+1, r2+1).some
+    return rectN(r1, c1, r2+1, c2+1).some
   else:
     return Rect[Natural].none
 

@@ -25,19 +25,19 @@ proc `[]`(m; r,c: Natural): var Cell =
   result = m.cells[cellIndex(m, r,c)]
 
 proc fill*(m; rect: Rect[Natural], cell: Cell) =
-  assert rect.x1 < m.cols
-  assert rect.y1 < m.rows
-  assert rect.x2 <= m.cols
-  assert rect.y2 <= m.rows
+  assert rect.r1 < m.rows
+  assert rect.c1 < m.cols
+  assert rect.r2 <= m.rows
+  assert rect.c2 <= m.cols
 
   # TODO fill border
-  for r in rect.y1..<rect.y2:
-    for c in rect.x1..<rect.x2:
+  for r in rect.r1..<rect.r2:
+    for c in rect.c1..<rect.c2:
       m[r,c] = cell
 
 
 proc fill*(m; cell: Cell) =
-  let rect = rectN(0, 0, m.cols-1, m.rows-1)
+  let rect = rectN(0, 0, m.rows-1, m.cols-1)
   m.fill(rect, cell)
 
 proc initMap(m; rows, cols: Natural) =
@@ -66,8 +66,8 @@ proc copyFrom*(dest: var Map, destRow, destCol: Natural,
   # the destination area (so nothing gets copied in the worst case).
   let
     # TODO use rect.intersect
-    srcRow = srcRect.y1
-    srcCol = srcRect.x1
+    srcCol = srcRect.c1
+    srcRow = srcRect.r1
     srcRows  = max(src.rows - srcRow, 0)
     srcCols   = max(src.cols - srcCol, 0)
     destRows = max(dest.rows - destRow, 0)
@@ -91,36 +91,36 @@ proc copyFrom*(dest: var Map, destRow, destCol: Natural,
 
 proc copyFrom*(dest: var Map, src: Map) =
   dest.copyFrom(destRow=0, destCol=0,
-                src, srcRect=rectN(0, 0, src.cols, src.rows))
+                src, srcRect=rectN(0, 0, src.rows, src.cols))
 
 
 proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
-  assert rect.x1 < src.cols
-  assert rect.y1 < src.rows
-  assert rect.x2 <= src.cols
-  assert rect.y2 <= src.rows
+  assert rect.r1 < src.rows
+  assert rect.c1 < src.cols
+  assert rect.r2 <= src.rows
+  assert rect.c2 <= src.cols
 
   var
     destRow = 0
     destCol = 0
     srcRect = rect
 
-  let x1 = srcRect.x1.int - border
-  if x1 < 0:
-    destCol = -x1
-    srcRect.x1 = 0
+  let r1 = srcRect.r1.int - border
+  if r1 < 0:
+    destRow = -r1
+    srcRect.r1 = 0
   else:
-    srcRect.x1 = x1
+    srcRect.r1 = r1
 
-  let y1 = srcRect.y1.int - border
-  if y1 < 0:
-    destRow = -y1
-    srcRect.y1 = 0
+  let c1 = srcRect.c1.int - border
+  if c1 < 0:
+    destCol = -c1
+    srcRect.c1 = 0
   else:
-    srcRect.y1 = y1
+    srcRect.c1 = c1
 
-  inc(srcRect.x2, border)
-  inc(srcRect.y2, border)
+  inc(srcRect.r2, border)
+  inc(srcRect.c2, border)
 
   var dest = new Map
   dest.initMap(rect.height + border*2, rect.width + border*2)
@@ -129,7 +129,7 @@ proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
 
 
 proc newMapFrom*(m): Map =
-  newMapFrom(m, rectN(0, 0, m.cols, m.rows))
+  newMapFrom(m, rectN(0, 0, m.rows, m.cols))
 
 
 proc getFloor*(m; r,c: Natural): Floor =
@@ -244,10 +244,12 @@ proc guessFloorOrientation*(m; r,c: Natural): Orientation =
 
 proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
   let rect = rectN(
-    destCol, destRow,
-    destCol + src.cols, destRow + src.rows
+    destRow,
+    destCol,
+    destRow + src.rows,
+    destCol + src.cols
   ).intersect(
-    rectN(0, 0, m.cols, m.rows)
+    rectN(0, 0, m.rows, m.cols)
   )
   if rect.isSome:
     for r in 0..<rect.get.height:
