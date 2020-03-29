@@ -114,11 +114,21 @@ type
     # Themes
     themeNames:     seq[string]
     currThemeIndex: Natural
+    nextThemeIndex: Option[Natural]
 
 
 var g_app: AppContext
 
 using a: var AppContext
+
+# }}}
+
+# {{{ getPxRatio()
+proc getPxRatio(a): float =
+  let
+    (winWidth, _) = a.win.size
+    (fbWidth, _) = a.win.framebufferSize
+  result = fbWidth / winWidth
 
 # }}}
 
@@ -138,23 +148,12 @@ proc findThemeIndex(name: string, a): int =
 proc loadTheme(index: Natural, a) =
   let name = a.themeNames[index]
   a.mapStyle = loadTheme(fmt"{ThemesDir}/{name}.cfg")
-
-proc loadNextTheme(a) =
-  inc(a.currThemeIndex)
-  if a.currThemeIndex > a.themeNames.high:
-    a.currThemeIndex = 0
-  loadTheme(a.currThemeIndex, a)
-
-proc loadPrevTheme(a) =
-  if a.currThemeIndex == 0:
-    a.currThemeIndex = a.themeNames.high
-  else:
-    dec(a.currThemeIndex)
-  loadTheme(a.currThemeIndex, a)
+  a.currThemeIndex = index
 
 # }}}
 
 #{{{ CSDWindow
+# TODO move into appcontext, store win handle in this
 type
   CSDWindow = object
     title:                  string
@@ -1012,7 +1011,6 @@ proc handleMapEvents(a) =
     actions.setOrientedFloor(m, curRow, curCol, f, ot, um)
     setStatusMessage(mkFloorMessage(f), a)
 
-
   let (winWidth, winHeight) = win.size
 
   const
@@ -1181,7 +1179,7 @@ proc handleMapEvents(a) =
                                     filters=fmt"Gridmonger Map (*.{ext}):{ext}")
           if filename != "":
             try:
-              filename = addFileExt(ext)
+              filename = addFileExt(filename, ext)
               writeMap(m, filename)
               setStatusMessage(IconFloppy, fmt"Map saved", a)
             except CatchableError as e:
@@ -1189,19 +1187,21 @@ proc handleMapEvents(a) =
               setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
 
       elif ke.isKeyDown(keyR, {mkAlt,mkCtrl}):
-        loadTheme(a.currThemeIndex, a)
-        let themeName = a.themeNames[a.currThemeIndex]
-        setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+        a.nextThemeIndex = a.currThemeIndex.some
+        koi.incFramesLeft()
 
       elif ke.isKeyDown(keyPageUp, {mkAlt,mkCtrl}):
-        loadPrevTheme(a)
-        let themeName = a.themeNames[a.currThemeIndex]
-        setStatusMessage(fmt"Theme '{themeName}' loaded", a)
+        var i = a.currThemeIndex
+        if i == 0: i = a.themeNames.high else: dec(i)
+        a.nextThemeIndex = i.some
+        koi.incFramesLeft()
 
       elif ke.isKeyDown(keyPageDown, {mkAlt,mkCtrl}):
-        loadNextTheme(a)
-        let themeName = a.themeNames[a.currThemeIndex]
-        setStatusMessage(fmt"Theme '{themeName}' loaded", a)
+        var i = a.currThemeIndex
+        inc(i)
+        if i > a.themeNames.high: i = 0
+        a.nextThemeIndex = i.some
+        koi.incFramesLeft()
 
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
@@ -1443,6 +1443,14 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
     (fbWidth, fbHeight) = win.framebufferSize
     pxRatio = fbWidth / winWidth
 
+  if a.nextThemeIndex.isSome:
+    let i = a.nextThemeIndex.get
+    loadTheme(i, a)
+    a.drawMapParams.initDrawMapParams(a.mapStyle, a.vg, pxRatio)
+#    let themeName = a.themeNames[a.currThemeIndex]
+#    setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+    a.nextThemeIndex = Natural.none
+
   # Update and render
   glViewport(0, 0, fbWidth, fbHeight)
 
@@ -1499,8 +1507,10 @@ proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
 # {{{ Init & cleanup
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
+  dp = newDrawMapParams()
   dp.drawCellCoords   = true
   dp.drawCursorGuides = false
+  dp.initDrawMapParams(a.mapStyle, a.vg, getPxRatio(a))
 
 proc initUI(a) =
   showCellCoords(true, a)
@@ -1578,27 +1588,20 @@ proc init(): Window =
   a.map = newMap(16, 16)
 
   searchThemes(a)
-  let themeIndex = findThemeIndex("sepia", a)
+  let themeIndex = findThemeIndex("lightblue", a)
   loadTheme(themeIndex, a)
 
   a.undoManager = newUndoManager[Map]()
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-  a.drawMapParams = new DrawMapParams
-  initUI(a)
   initDrawMapParams(a)
   a.drawMapParams.setZoomLevel(a.mapStyle, DefaultZoomLevel)
   a.scrollMargin = 3
 
-  var
-    (winWidth, winHeight) = win.size
-    (fbWidth, fbHeight) = win.framebufferSize
-    pxRatio = fbWidth / winWidth
-
-  a.drawMapParams.renderLineHatchPatterns(a.vg, pxRatio, a.mapStyle.drawColor)
-
   a.toolbarDrawParams = a.drawMapParams.deepCopy
   a.toolbarDrawParams.setZoomLevel(a.mapStyle, 1)
+
+  initUI(a)
 
   a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")

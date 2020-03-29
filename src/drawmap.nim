@@ -170,6 +170,15 @@ using
   dp:  DrawMapParams
   ctx: DrawMapContext
 
+# {{{ newDrawMapParams*()
+proc newDrawMapParams*(): DrawMapParams =
+  result = new DrawMapParams
+  for paint in result.lineHatchPatterns.mitems:
+    paint.image = NoImage
+
+  result.zoomLevel = MinZoomLevel
+
+# }}}
 
 # {{{ zoomLevel*()
 proc getZoomLevel*(dp): Natural = dp.zoomLevel
@@ -258,8 +267,9 @@ proc isCursorActive(viewRow, viewCol: Natural, dp): bool =
 # }}}
 
 # {{{ renderHatchPatternImage()
-proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: float,
-                             strokeColor: Color, spacing: float) =
+proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer,
+                             pxRatio: float, strokeColor: Color,
+                             spacing: float) =
   let
     (fboWidth, fboHeight) = vg.imageSize(fb.image)
     winWidth = floor(fboWidth.float / pxRatio)
@@ -291,12 +301,13 @@ proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer, pxRatio: floa
 
   vg.endFrame()
   vg.shapeAntiAlias(true)
+
   nvgluBindFramebuffer(nil)
 
 # }}}
-# {{{ renderLineHatchPatterns*()
-proc renderLineHatchPatterns*(dp; vg: NVGContext, pxRatio: float,
-                              strokeColor: Color) =
+# {{{ renderLineHatchPatterns()
+proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
+                             strokeColor: Color) =
   # TODO free images first if calling this multiple times
   for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
     var fb = vg.nvgluCreateFramebuffer(
@@ -313,6 +324,17 @@ proc renderLineHatchPatterns*(dp; vg: NVGContext, pxRatio: float,
 
     fb.image = NoImage  # prevent deleting the image when deleting the FB
     nvgluDeleteFramebuffer(fb)
+
+# }}}
+# {{{ initDrawMapParams
+proc initDrawMapParams*(dp; ms; vg: NVGContext, pxRatio: float) =
+  for paint in dp.lineHatchPatterns:
+    if paint.image != NoImage:
+      vg.deleteImage(paint.image)
+
+  renderLineHatchPatterns(dp, vg, pxRatio, ms.drawColor)
+
+  dp.setZoomLevel(ms, dp.zoomLevel)
 
 # }}}
 
