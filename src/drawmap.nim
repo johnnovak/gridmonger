@@ -48,45 +48,45 @@ type
     vg*: NVGContext
 
   MapStyle* = ref object
-    bgColor*:                   Color
+    backgroundColor*:        Color
+    drawColor*:              Color
+    lightDrawColor*:         Color
+    floorColor*:             Color
+    thinLines*:              bool
 
-    bgCrosshatchColor*:         Color
-    bgCrosshatchEnabled*:       bool
-    bgCrosshatchStrokeWidth*:   float
-    bgCrosshatchSpacingFactor*: float
+    bgHatchColor*:           Color
+    bgHatchEnabled*:         bool
+    bgHatchStrokeWidth*:     float
+    bgHatchSpacingFactor*:   float
 
-    coordsColor*:               Color
-    coordsHighlightColor*:      Color
+    coordsColor*:            Color
+    coordsHighlightColor*:   Color
 
-    cursorColor*:               Color
-    cursorGuideColor*:          Color
+    cursorColor*:            Color
+    cursorGuideColor*:       Color
 
-    gridStyle*:                 GridStyle
-    gridColorBackground*:       Color
-    gridColorFloor*:            Color
+    gridStyle*:              GridStyle
+    gridColorBackground*:    Color
+    gridColorFloor*:         Color
 
-    floorColor*:                Color
-    fgColor*:                   Color
-    lightFgColor*:              Color
-    thinStroke*:                bool
+    outlineStyle*:           OutlineStyle
+    outlineFillStyle*:       OutlineFillStyle
+    outlineOverscan*:        bool
+    outlineColor*:           Color
+    outlineWidthFactor*:     float
 
-    outlineStyle*:              OutlineStyle
-    outlineFillStyle*:          OutlineFillStyle
-    outlineOverscan*:           bool
-    outlineColor*:              Color
-    outlineWidthFactor*:        float
+    innerShadowEnabled*:     bool
+    innerShadowColor*:       Color
+    innerShadowWidthFactor*: float
+    outerShadowEnabled*:     bool
+    outerShadowColor*:       Color
+    outerShadowWidthFactor*: float
 
-    innerShadowEnabled*:        bool
-    innerShadowColor*:          Color
-    innerShadowWidthFactor*:    float
-    outerShadowEnabled*:        bool
-    outerShadowColor*:          Color
-    outerShadowWidthFactor*:    float
+    pastePreviewColor*:      Color
+    selectionColor*:         Color
 
-    pastePreviewColor*:         Color
-    selectionColor*:            Color
-
-    commentMarkerColor*:        Color
+    noteTextColor*:          Color
+    noteCommentMarkerColor*: Color
 
 
   GridStyle* = enum
@@ -183,7 +183,7 @@ proc setZoomLevel*(dp; ms; zl: Natural) =
   dp.zoomLevel = zl
   dp.gridSize = MinGridSize + zl*ZoomStep
 
-  if zl < 3 or ms.thinStroke:
+  if zl < 3 or ms.thinLines:
     dp.thinStrokeWidth = 2.0
     dp.normalStrokeWidth = 2.0
     dp.thinOffs = 1.0
@@ -316,23 +316,23 @@ proc renderLineHatchPatterns*(dp; vg: NVGContext, pxRatio: float,
 
 # }}}
 
-# {{{ drawBgCrosshatch()
-proc drawBgCrosshatch(ctx) =
+# {{{ drawBackgroundHatch()
+proc drawBackgroundHatch(ctx) =
   alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let sw = ms.bgCrosshatchStrokeWidth
+  let sw = ms.bgHatchStrokeWidth
 
-  vg.fillColor(ms.bgColor)
-  vg.strokeColor(ms.bgCrosshatchColor)
+  vg.fillColor(ms.backgroundColor)
+  vg.strokeColor(ms.bgHatchColor)
   vg.strokeWidth(sw)
 
   let
     w = dp.gridSize * dp.viewCols
     h = dp.gridSize * dp.viewRows
     offs = max(w, h)
-    lineSpacing = sw * ms.bgCrosshatchSpacingFactor
+    lineSpacing = sw * ms.bgHatchSpacingFactor
 
   let startX = snap(dp.startX, sw)
   let startY = snap(dp.startY, sw)
@@ -701,7 +701,7 @@ proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
 
 
 proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
-  drawIcon(x, y, ox, oy, icon, ctx.ms.fgColor, ctx)
+  drawIcon(x, y, ox, oy, icon, ctx.ms.drawColor, ctx)
 
 # }}}
 # {{{ drawFloor()
@@ -788,7 +788,7 @@ proc drawPressurePlate(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ms.fgColor)
+  vg.strokeColor(ms.drawColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -808,7 +808,7 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ms.lightFgColor)
+  vg.strokeColor(ms.lightDrawColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -838,12 +838,12 @@ proc drawOpenPitWithColor(x, y: float, color: Color, ctx) =
 # }}}
 # {{{ drawOpenPit()
 proc drawOpenPit(x, y: float, ctx) =
-  drawOpenPitWithColor(x, y, ctx.ms.fgColor, ctx)
+  drawOpenPitWithColor(x, y, ctx.ms.drawColor, ctx)
 
 # }}}
 # {{{ drawCeilingPit()
 proc drawCeilingPit(x, y: float, ctx) =
-  drawOpenPitWithColor(x, y, ctx.ms.lightFgColor, ctx)
+  drawOpenPitWithColor(x, y, ctx.ms.lightDrawColor, ctx)
 
 # }}}
 # {{{ drawClosedPitWithColor()
@@ -876,12 +876,12 @@ proc drawClosedPitWithColor(x, y: float, color: Color, ctx) =
 # }}}
 # {{{ drawClosedPit()
 proc drawClosedPit(x, y: float, ctx) =
-  drawClosedPitWithColor(x, y, ctx.ms.fgColor, ctx)
+  drawClosedPitWithColor(x, y, ctx.ms.drawColor, ctx)
 
 # }}}
 # {{{ drawHiddenPit()
 proc drawHiddenPit(x, y: float, ctx) =
-  drawClosedPitWithColor(x, y, ctx.ms.lightFgColor, ctx)
+  drawClosedPitWithColor(x, y, ctx.ms.lightDrawColor, ctx)
 
 # }}}
 # {{{ drawStairsDown()
@@ -924,7 +924,7 @@ proc drawSolidWallHoriz*(x, y: float, ctx) =
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(ms.fgColor)
+  vg.strokeColor(ms.drawColor)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -947,7 +947,7 @@ proc drawIllusoryWallHoriz*(x, y: float, ctx) =
     pad = 7.0
 
   vg.lineCap(lcjSquare)
-  vg.strokeColor(ms.fgColor)
+  vg.strokeColor(ms.drawColor)
   vg.strokeWidth(sw)
 
   var x = xs
@@ -975,7 +975,7 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(ms.lightFgColor)
+  vg.strokeColor(ms.lightDrawColor)
   vg.strokeWidth(sw2)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -991,7 +991,7 @@ proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
   let
     o = dp.thinOffs
     wallLen = (dp.gridSize * 0.25).int
-    doorWidthOffs = (if dp.zoomLevel < 4 or ms.thinStroke: -1.0 else: 0)
+    doorWidthOffs = (if dp.zoomLevel < 4 or ms.thinLines: -1.0 else: 0)
     doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
     xs = x
     y  = y
@@ -1003,8 +1003,8 @@ proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
 
   var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.fgColor)
-  vg.fillColor(ms.fgColor)
+  vg.strokeColor(ms.drawColor)
+  vg.fillColor(ms.drawColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1053,7 +1053,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.fgColor)
+  vg.strokeColor(ms.drawColor)
 
   # Wall start
   vg.lineCap(lcjSquare)
@@ -1091,7 +1091,7 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.fgColor)
+  vg.strokeColor(ms.drawColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1204,7 +1204,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
 
   let w = dp.gridSize*0.4
 
-  vg.fillColor(ms.commentMarkerColor)
+  vg.fillColor(ms.noteCommentMarkerColor)
   vg.beginPath()
   vg.moveTo(x + dp.gridSize - w, y)
   vg.lineTo(x + dp.gridSize + 1, y + w)
@@ -1461,8 +1461,8 @@ proc drawMap*(m: Map, ctx) =
   if dp.drawCellCoords:
     drawCellCoords(m, ctx)
 
-  if ms.bgCrosshatchEnabled:
-    drawBgCrosshatch(ctx)
+  if ms.bgHatchEnabled:
+    drawBackgroundHatch(ctx)
 
   drawBackgroundGrid(ctx)
 

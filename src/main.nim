@@ -19,6 +19,7 @@ import drawmap
 import map
 import persistence
 import selection
+import theme
 import undomanager
 import utils
 
@@ -39,16 +40,25 @@ const
 
   MapLeftPad   = 50.0
   MapRightPad  = 120.0
-  MapTopPad    = 85.0
-  MapBottomPad = 35.0
+  MapTopPadCoords      = 85.0
+  MapBottomPadCoords   = 40.0
+  MapTopPadNoCoords    = 65.0
+  MapBottomPadNoCoords = 10.0
 
-  BottomPaneTopPad = 10.0
-  BottomPaneHeight = 80.0
+  NotesPaneTopPad = 10.0
+  NotesPaneHeight = 40.0
+  NotesPaneBottomPad = 10.0
 
   WindowResizeEdgeWidth = 10.0
   WindowResizeCornerSize = 20.0
   WindowMinWidth = 400
   WindowMinHeight = 200
+
+var
+  g_mapTopPad: float
+  g_mapBottomPad: float
+
+  g_showNotesPane: bool
 
 # {{{ AppContext
 type
@@ -522,15 +532,17 @@ proc updateViewStartAndCursorPosition(a) =
 
   let (winWidth, winHeight) = a.win.size
 
-  let
-    drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
-                     MapTopPad - MapBottomPad -
-                     BottomPaneTopPad - BottomPaneHeight
-
-    drawAreaWidth = winWidth - MapLeftPad - MapRightPad
-
   dp.startX = MapLeftPad
-  dp.startY = TitleBarHeight + MapTopPad
+  dp.startY = TitleBarHeight + g_mapTopPad
+
+  var drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
+                       g_mapTopPad - g_mapBottomPad
+
+  if g_showNotesPane:
+   drawAreaHeight -= NotesPaneTopPad + NotesPaneHeight + NotesPaneBottomPad
+
+  let
+    drawAreaWidth = winWidth - MapLeftPad - MapRightPad
 
   dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), a.map.rows)
   dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), a.map.cols)
@@ -549,6 +561,20 @@ proc updateViewStartAndCursorPosition(a) =
     max(viewEndCol, dp.viewStartCol),
     a.cursorCol
   )
+
+# }}}
+# {{{ showCellCoords()
+proc showCellCoords(show: bool, a) =
+  alias(dp, a.drawMapParams)
+
+  if show:
+    g_mapTopPad = MapTopPadCoords
+    g_mapBottomPad = MapBottomPadCoords
+    dp.drawCellCoords = true
+  else:
+    g_mapTopPad = MapTopPadNoCoords
+    g_mapBottomPad = MapBottomPadNoCoords
+    dp.drawCellCoords = false
 
 # }}}
 # {{{ moveCursor()
@@ -682,7 +708,6 @@ proc newMapDialog(a) =
     let cols = parseInt(g_newMapDialog_cols)
     a.map = newMap(rows, cols)
     resetCursorAndViewStart(a)
-    updateViewStartAndCursorPosition(a)
     setStatusMessage(IconFile, fmt"New {rows}x{cols} map created", a)
     koi.closeDialog()
     g_newMapDialogOpen = false
@@ -803,7 +828,7 @@ proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
   of wStatue:        discard
 
 
-proc drawBottomPane(x, y, w, h: float, a) =
+proc drawNotesPane(x, y, w, h: float, a) =
   alias(vg, a.vg)
   alias(m, a.map)
   alias(ms, a.mapStyle)
@@ -822,7 +847,7 @@ proc drawBottomPane(x, y, w, h: float, a) =
   if a.editMode != emPastePreview and m.hasNote(curRow, curCol):
     let note = m.getNote(curRow, curCol)
 
-    vg.fillColor(ms.fgColor)
+    vg.fillColor(ms.noteTextColor)
 
     case note.kind
     of nkIndexed:
@@ -1128,13 +1153,24 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyC, {mkAlt}):
         var state: string
         if dp.drawCellCoords:
-          dp.drawCellCoords = false
+          showCellCoords(false, a)
           state = "off"
         else:
-          dp.drawCellCoords = true
+          showCellCoords(true, a)
           state = "on"
 
+        updateViewStartAndCursorPosition(a)
         setStatusMessage(fmt"Cell coordinates turned {state}", a)
+
+      elif ke.isKeyDown(keyN, {mkAlt}):
+        if g_showNotesPane:
+          setStatusMessage(fmt"Notes pane shown", a)
+          g_showNotesPane = false
+        else:
+          setStatusMessage(fmt"Notes pane hidden", a)
+          g_showNotesPane = true
+
+        updateViewStartAndCursorPosition(a)
 
     of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: CardinalDir, a) =
@@ -1293,7 +1329,7 @@ proc renderUI() =
   vg.beginPath()
   vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
   # TODO
-  vg.fillColor(a.mapStyle.bgColor)
+  vg.fillColor(a.mapStyle.backgroundColor)
   vg.fill()
 
   # Current level dropdown
@@ -1320,14 +1356,14 @@ proc renderUI() =
 
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
 
-  # Bottom pane
-  drawBottomPane(
-    x = MapLeftPad,
-    y = winHeight - StatusBarHeight - BottomPaneHeight,
-    w = winWidth - MapLeftPad*2,  # TODO
-    h = BottomPaneHeight - BottomPaneTopPad*2,  # TODO
-    a
-  )
+  if g_showNotesPane:
+    drawNotesPane(
+      x = MapLeftPad,
+      y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
+      w = winWidth - MapLeftPad*2,  # TODO
+      h = NotesPaneHeight,
+      a
+    )
 
   # Toolbar
 #  drawMarkerIconToolbar(winWidth - 400.0, a)
@@ -1409,12 +1445,16 @@ proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
 # {{{ Init & cleanup
 proc createDefaultMapStyle(): MapStyle =
   var ms = new MapStyle
-  ms.bgColor = gray(0.4)
+  ms.backgroundColor = gray(0.4)
+  ms.drawColor       = gray(0.1)
+  ms.lightDrawColor  = gray(0.6)
+  ms.floorColor      = gray(0.9)
+  ms.thinLines       = false
 
-  ms.bgCrosshatchEnabled       = true
-  ms.bgCrosshatchColor         = gray(0.0, 0.4)
-  ms.bgCrosshatchStrokeWidth   = 1.0
-  ms.bgCrosshatchSpacingFactor = 2.0
+  ms.bgHatchEnabled       = true
+  ms.bgHatchColor         = gray(0.0, 0.4)
+  ms.bgHatchStrokeWidth   = 1.0
+  ms.bgHatchSpacingFactor = 2.0
 
   ms.coordsColor          = gray(0.9)
   ms.coordsHighlightColor = rgb(1.0, 0.75, 0.0)
@@ -1425,11 +1465,6 @@ proc createDefaultMapStyle(): MapStyle =
   ms.gridStyle            = gsSolid
   ms.gridColorBackground  = gray(0.0, 0.2)
   ms.gridColorFloor       = gray(0.0, 0.22)
-
-  ms.floorColor           = gray(0.9)
-  ms.fgColor              = gray(0.1)
-  ms.lightFgColor         = gray(0.6)
-  ms.thinStroke           = false
 
   ms.outlineStyle         = osCell
   ms.outlineFillStyle     = ofsSolid
@@ -1444,22 +1479,27 @@ proc createDefaultMapStyle(): MapStyle =
   ms.outerShadowColor       = gray(0.0, 0.1)
   ms.outerShadowWidthFactor = 0.125
 
-  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+  ms.selectionColor         = rgba(1.0, 0.5, 0.5, 0.4)
+  ms.pastePreviewColor      = rgba(0.2, 0.6, 1.0, 0.4)
 
-  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
+  ms.noteTextColor          = gray(0.85)
+  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
 proc createLightMapStyle(): MapStyle =
   var ms = new MapStyle
-#  ms.bgColor = rgb(248, 248, 244)
-  ms.bgColor = rgb(182, 184, 184)
+#  ms.backgroundColor = rgb(248, 248, 244)
+  ms.backgroundColor = rgb(182, 184, 184)
+  ms.drawColor       = rgb(45, 42, 42)
+  ms.lightDrawColor  = rgba(45, 42, 42, 70)
+  ms.floorColor      = rgb(248, 248, 244)
+  ms.thinLines       = true
 
-  ms.bgCrosshatchEnabled       = false
-  ms.bgCrosshatchColor         = gray(0.0, 0.0)
-  ms.bgCrosshatchStrokeWidth   = 1.0
-  ms.bgCrosshatchSpacingFactor = 2.0
+  ms.bgHatchEnabled       = false
+  ms.bgHatchColor         = gray(0.0, 0.0)
+  ms.bgHatchStrokeWidth   = 1.0
+  ms.bgHatchSpacingFactor = 2.0
 
   ms.coordsColor          = rgb(34, 32, 32)
   ms.coordsHighlightColor = rgb(34, 32, 32)
@@ -1470,11 +1510,6 @@ proc createLightMapStyle(): MapStyle =
   ms.gridStyle            = gsLoose
   ms.gridColorBackground  = gray(0.0, 0.0)
   ms.gridColorFloor       = gray(0.0, 0.22)
-
-  ms.floorColor           = rgb(248, 248, 244)
-  ms.fgColor              = rgb(45, 42, 42)
-  ms.lightFgColor         = rgba(45, 42, 42, 70)
-  ms.thinStroke           = true
 
   ms.outlineStyle         = osRoundedEdges
   ms.outlineFillStyle     = ofsHatched
@@ -1492,18 +1527,23 @@ proc createLightMapStyle(): MapStyle =
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.5)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.5)
 
-  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
+  ms.noteTextColor          = ms.drawColor
+  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
 proc createSepiaMapStyle(): MapStyle =
   var ms = new MapStyle
-  ms.bgColor = rgb(221, 204, 187)
+  ms.backgroundColor = rgb(221, 204, 187)
+  ms.drawColor       = rgb(67, 67, 63)
+  ms.lightDrawColor  = rgb(176, 167, 167)
+  ms.floorColor      = rgb(248, 248, 244)
+  ms.thinLines       = true
 
-  ms.bgCrosshatchColor         = gray(0.0, 0.15)
-  ms.bgCrosshatchEnabled       = true
-  ms.bgCrosshatchStrokeWidth   = 1.0
-  ms.bgCrosshatchSpacingFactor = 3.0
+  ms.bgHatchColor         = gray(0.0, 0.15)
+  ms.bgHatchEnabled       = true
+  ms.bgHatchStrokeWidth   = 1.0
+  ms.bgHatchSpacingFactor = 3.0
 
   ms.coordsColor          = gray(0.0, 0.4)
   ms.coordsHighlightColor = gray(0.0, 0.8)
@@ -1515,39 +1555,39 @@ proc createSepiaMapStyle(): MapStyle =
   ms.gridColorBackground  = gray(0.0, 0.0)
   ms.gridColorFloor       = rgba(180, 168, 154, 150)
 
-  ms.floorColor           = rgb(248, 248, 244)
-  ms.fgColor              = rgb(67, 67, 63)
-  ms.lightFgColor         = rgb(176, 167, 167)
-  ms.thinStroke           = false
-
   ms.outlineStyle         = osSquareEdges
   ms.outlineFillStyle     = ofsSolid
   ms.outlineOverscan      = false
   ms.outlineColor         = rgb(180, 168, 154)
   ms.outlineWidthFactor   = 0.3
 
-  ms.innerShadowEnabled     = true
+  ms.innerShadowEnabled     = false
   ms.innerShadowColor       = gray(0.0, 0.1)
   ms.innerShadowWidthFactor = 0.125
-  ms.outerShadowEnabled     = true
+  ms.outerShadowEnabled     = false
   ms.outerShadowColor       = gray(0.0, 0.1)
   ms.outerShadowWidthFactor = 0.125
 
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
 
-  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
+  ms.noteTextColor          = ms.drawColor
+  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
 proc createGrimrock1MapStyle(): MapStyle =
   var ms = new MapStyle
-  ms.bgColor = rgb(152, 124, 99)
+  ms.backgroundColor = rgb(152, 124, 99)
+  ms.drawColor       = rgb(60, 44, 28)
+  ms.lightDrawColor  = rgb(130, 114, 94)
+  ms.floorColor      = rgb(182, 155, 135)
+  ms.thinLines       = true
 
-  ms.bgCrosshatchColor         = gray(0.0, 0.15)
-  ms.bgCrosshatchEnabled       = true
-  ms.bgCrosshatchStrokeWidth   = 1.0
-  ms.bgCrosshatchSpacingFactor = 3.0
+  ms.bgHatchColor         = gray(0.0, 0.15)
+  ms.bgHatchEnabled       = true
+  ms.bgHatchStrokeWidth   = 1.0
+  ms.bgHatchSpacingFactor = 3.0
 
   ms.coordsColor          = gray(0.0, 0.4)
   ms.coordsHighlightColor = gray(0.0, 0.8)
@@ -1559,11 +1599,6 @@ proc createGrimrock1MapStyle(): MapStyle =
   ms.gridColorBackground  = gray(0.0, 0.0)
   ms.gridColorFloor       = rgb(148, 123, 102)
 
-  ms.floorColor           = rgb(182, 155, 135)
-  ms.fgColor              = rgb(60, 44, 28)
-  ms.lightFgColor         = rgb(130, 114, 94)
-  ms.thinStroke           = true
-
   ms.outlineStyle         = osNone
   ms.outlineFillStyle     = ofsSolid
   ms.outlineOverscan      = false
@@ -1580,18 +1615,23 @@ proc createGrimrock1MapStyle(): MapStyle =
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
 
-  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
+  ms.noteTextColor          = ms.drawColor
+  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
 proc createGrimrock2MapStyle(): MapStyle =
   var ms = new MapStyle
-  ms.bgColor = rgb(154, 130, 113)
+  ms.backgroundColor = rgb(154, 130, 113)
+  ms.drawColor       = rgb(49, 42, 36)
+  ms.lightDrawColor  = rgba(125, 113, 100, 220)
+  ms.floorColor      = rgb(193, 180, 169)
+  ms.thinLines       = true
 
-  ms.bgCrosshatchColor         = gray(0.0, 0.25)
-  ms.bgCrosshatchEnabled       = true
-  ms.bgCrosshatchStrokeWidth   = 1.0
-  ms.bgCrosshatchSpacingFactor = 3.0
+  ms.bgHatchColor         = gray(0.0, 0.25)
+  ms.bgHatchEnabled       = true
+  ms.bgHatchStrokeWidth   = 1.0
+  ms.bgHatchSpacingFactor = 3.0
 
   ms.coordsColor          = gray(0.0, 0.4)
   ms.coordsHighlightColor = rgb(255, 180, 111)
@@ -1603,11 +1643,6 @@ proc createGrimrock2MapStyle(): MapStyle =
   ms.gridColorBackground  = gray(0.0, 0.0)
   ms.gridColorFloor       = rgb(148, 123, 102)
 
-  ms.floorColor           = rgb(193, 180, 169)
-  ms.fgColor              = rgb(49, 42, 36)
-  ms.lightFgColor         = rgba(125, 113, 100, 220)
-  ms.thinStroke           = true
-
   ms.outlineStyle         = osNone
   ms.outlineFillStyle     = ofsSolid
   ms.outlineOverscan      = false
@@ -1624,7 +1659,8 @@ proc createGrimrock2MapStyle(): MapStyle =
   ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
   ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
 
-  ms.commentMarkerColor   = rgba(1.0, 0.2, 0.0, 0.8)
+  ms.noteTextColor          = ms.drawColor
+  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
   result = ms
 
 
@@ -1636,11 +1672,16 @@ proc initDrawMapParams(a) =
   dp.drawCursorGuides = false
 
 
+proc initUI(a) =
+  showCellCoords(true, a)
+  g_showNotesPane = true
+
+
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
-#  cfg.size = (w: 960, h: 1040)
+  cfg.size = (w: 960, h: 1040)
 #  cfg.size = (w: 900, h: 800)
-  cfg.size = (w: 450, h: 700)
+#  cfg.size = (w: 450, h: 700)
   cfg.title = "Gridmonger v0.1"
   cfg.resizable = false
   cfg.visible = false
@@ -1715,6 +1756,7 @@ proc init(): Window =
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
   a.drawMapParams = new DrawMapParams
+  initUI(a)
   initDrawMapParams(a)
   a.drawMapParams.setZoomLevel(a.mapStyle, DefaultZoomLevel)
   a.scrollMargin = 3
@@ -1724,14 +1766,14 @@ proc init(): Window =
     (fbWidth, fbHeight) = win.framebufferSize
     pxRatio = fbWidth / winWidth
 
-  a.drawMapParams.renderLineHatchPatterns(a.vg, pxRatio, a.mapStyle.fgColor)
+  a.drawMapParams.renderLineHatchPatterns(a.vg, pxRatio, a.mapStyle.drawColor)
 
   a.toolbarDrawParams = a.drawMapParams.deepCopy
   a.toolbarDrawParams.setZoomLevel(a.mapStyle, 1)
 
-#  a.map = readMap("EOB III - Crystal Tower L2.grm")
+  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
-  a.map = readMap("notetest.grm")
+#  a.map = readMap("notetest.grm")
 
   koi.init(a.vg)
   win.framebufferSizeCb = framebufSizeCb
