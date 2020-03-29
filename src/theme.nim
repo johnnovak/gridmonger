@@ -60,6 +60,29 @@ DefaultMapStyle.noteTextColor          = gray(0.85)
 DefaultMapStyle.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
 # }}}
 
+# {{{ missingValueError()
+proc missingValueError(section, key: string) =
+  let msg = fmt"Missing value in section='{section}', key='{key}'"
+  echo msg
+  # TODO
+#  raiseThemeParseError(msg)
+
+# }}}
+# {{{ invalidValueError
+proc invalidValueError(section, key, valueType, value: string) =
+  let msg = fmt"Invalid {valueType} value in section='{section}', key='{key}': {value}"
+  echo msg
+  # TODO
+#  raiseThemeParseError(msg)
+
+# }}}
+# {{{ getValue()
+proc getValue(cfg: Config, section, key: string): string = 
+  result = cfg.getSectionValue(section, key)
+  if result == "":
+    missingValueError(section, key)
+
+# }}}
 # {{{ parseColor()
 proc parseColor(s: string): Option[Color] =
   result = Color.none
@@ -74,6 +97,8 @@ proc parseColor(s: string): Option[Color] =
     elif scanf(s, "rgba($i,$s$i,$s$i,$s$i)$.", r, g, b, a):
       result = rgba(r, g, b, a).some
 
+  if result.isSome: return
+
   block:
     var r, g, b, a: float
     if scanf(s, "gray($f)$.", g):
@@ -85,42 +110,43 @@ proc parseColor(s: string): Option[Color] =
     elif scanf(s, "rgba($f,$s$f,$s$f,$s$f)$.", r, g, b, a):
       result = rgba(r, g, b, a).some
 
-
 # }}}
+#
 # {{{ getColor()
 proc getColor(cfg: Config, section, key: string, c: var Color) =
-  let v = cfg.getSectionValue(section, key)
-  if v == "":
-    raiseThemeParseError(fmt"Missing value for key '{key}'")
-
-  let c = parseColor(v)
-  if c.isNone:
-    raiseThemeParseError(fmt"Invalid color definition for key '{key}': {v}")
+  let v = getValue(cfg, section, key)
+  let col = parseColor(v)
+  if col.isNone:
+    invalidValueError(section, key, "color", v)
+  else:
+    c = col.get
 
 # }}}
 # {{{ getBool()
 proc getBool(cfg: Config, section, key: string, b: var bool) =
-  discard
+  let v = getValue(cfg, section, key)
+  try:
+    b = parseBool(v)
+  except ValueError:
+    invalidValueError(section, key, "bool", v)
 
 # }}}
 # {{{ getFloat()
 proc getFloat(cfg: Config, section, key: string, f: var float) =
-  discard
+  let v = getValue(cfg, section, key)
+  try:
+    f = parseFloat(v)
+  except ValueError:
+    invalidValueError(section, key, "float", v)
 
 # }}}
-# {{{ getGridStyle()
-proc getGridStyle(cfg: Config, section, key: string, gs: var GridStyle) =
-  discard
-
-# }}}
-# {{{ getOutlineStyle()
-proc getOutlineStyle(cfg: Config, section, key: string, os: var OutlineStyle) =
-  discard
-
-# }}}
-# {{{ getOutlineFillStyle()
-proc getOutlineFillStyle(cfg: Config, section, key: string, ofs: var OutlineFillStyle) =
-  discard
+# {{{ getEnum()
+proc getEnum[T: enum](cfg: Config, section, key: string, e: var T) =
+  let v = getValue(cfg, section, key)
+  try:
+    e = parseEnum[T](v)
+  except ValueError:
+    invalidValueError(section, key, "enum", v)
 
 # }}}
 
@@ -146,15 +172,15 @@ proc parseMapSection(c: Config): MapStyle =
   c.getColor(M, "cursorColor",             ms.cursorColor)
   c.getColor(M, "cursorGuideColor",        ms.cursorGuideColor)
 
-  c.getGridStyle(M, "gridStyle",           ms.gridStyle)
-  c.getColor(    M, "gridColorBackground", ms.gridColorBackground)
-  c.getColor(    M, "gridColorFloor",      ms.gridColorFloor)
+  getEnum[GridStyle](c, M, "gridStyle",    ms.gridStyle)
+  c.getColor(M, "gridColorBackground",     ms.gridColorBackground)
+  c.getColor(M, "gridColorFloor",          ms.gridColorFloor)
 
-  c.getOutlineStyle(    M, "outlineStyle",       ms.outlineStyle)
-  c.getOutlineFillStyle(M, "outlineFillStyle",   ms.outlineFillStyle)
-  c.getBool(            M, "outlineOverscan",    ms.outlineOverscan)
-  c.getColor(           M, "outlineColor",       ms.outlineColor)
-  c.getFloat(           M, "outlineWidthFactor", ms.outlineWidthFactor)
+  getEnum[OutlineStyle](c, M, "outlineStyle", ms.outlineStyle)
+  getEnum[OutlineFillStyle](c, M, "outlineFillStyle", ms.outlineFillStyle)
+  c.getBool(M, "outlineOverscan",          ms.outlineOverscan)
+  c.getColor(M, "outlineColor",            ms.outlineColor)
+  c.getFloat(M, "outlineWidthFactor",      ms.outlineWidthFactor)
 
   c.getBool( M, "innerShadowEnabled",      ms.innerShadowEnabled)
   c.getColor(M, "innerShadowColor",        ms.innerShadowColor)
@@ -169,16 +195,17 @@ proc parseMapSection(c: Config): MapStyle =
   c.getColor(M, "noteTextColor",           ms.noteTextColor)
   c.getColor(M, "noteCommentMarkerColor",  ms.noteCommentMarkerColor)
 
+  result = ms
+
 # }}}
 
 # {{{ loadTheme*()
 proc loadTheme*(filename: string): MapStyle =
+  echo fmt"Loading theme '{filename}'..."
   var cfg = loadConfig(filename)
   var mapStyle = parseMapSection(cfg)
   result = mapStyle
 
 # }}}
-
-var ms = loadTheme("themes/default.cfg")
 
 # vim: et:ts=2:sw=2:fdm=marker

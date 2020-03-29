@@ -1,6 +1,8 @@
+import algorithm
 import lenientops
 import math
 import options
+import os
 import strutils
 import strformat
 
@@ -23,6 +25,8 @@ import theme
 import undomanager
 import utils
 
+
+const ThemesDir = "themes"
 
 const DefaultZoomLevel = 5
 
@@ -107,10 +111,46 @@ type
     drawMapParams:     DrawMapParams
     toolbarDrawParams: DrawMapParams
 
+    # Themes
+    themeNames:     seq[string]
+    currThemeIndex: Natural
+
 
 var g_app: AppContext
 
 using a: var AppContext
+
+# }}}
+
+# {{{ Theme support
+proc searchThemes(a) =
+  for path in walkFiles(fmt"{ThemesDir}/*.cfg"):
+    let (_, name, _) = splitFile(path)
+    a.themeNames.add(name)
+  sort(a.themeNames)
+
+proc findThemeIndex(name: string, a): int =
+  for i, n in a.themeNames:
+    if n == name:
+      return i
+  return -1
+
+proc loadTheme(index: Natural, a) =
+  let name = a.themeNames[index]
+  a.mapStyle = loadTheme(fmt"{ThemesDir}/{name}.cfg")
+
+proc loadNextTheme(a) =
+  inc(a.currThemeIndex)
+  if a.currThemeIndex > a.themeNames.high:
+    a.currThemeIndex = 0
+  loadTheme(a.currThemeIndex, a)
+
+proc loadPrevTheme(a) =
+  if a.currThemeIndex == 0:
+    a.currThemeIndex = a.themeNames.high
+  else:
+    dec(a.currThemeIndex)
+  loadTheme(a.currThemeIndex, a)
 
 # }}}
 
@@ -1141,13 +1181,27 @@ proc handleMapEvents(a) =
                                     filters=fmt"Gridmonger Map (*.{ext}):{ext}")
           if filename != "":
             try:
-              if not filename.endsWith(fmt".{ext}"):
-                filename &= "." & ext
+              filename = addFileExt(ext)
               writeMap(m, filename)
               setStatusMessage(IconFloppy, fmt"Map saved", a)
             except CatchableError as e:
               # TODO log stracktrace?
               setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
+
+      elif ke.isKeyDown(keyR, {mkAlt,mkCtrl}):
+        loadTheme(a.currThemeIndex, a)
+        let themeName = a.themeNames[a.currThemeIndex]
+        setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+
+      elif ke.isKeyDown(keyPageUp, {mkAlt,mkCtrl}):
+        loadPrevTheme(a)
+        let themeName = a.themeNames[a.currThemeIndex]
+        setStatusMessage(fmt"Theme '{themeName}' loaded", a)
+
+      elif ke.isKeyDown(keyPageDown, {mkAlt,mkCtrl}):
+        loadNextTheme(a)
+        let themeName = a.themeNames[a.currThemeIndex]
+        setStatusMessage(fmt"Theme '{themeName}' loaded", a)
 
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
@@ -1443,239 +1497,14 @@ proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
 # }}}
 
 # {{{ Init & cleanup
-proc createDefaultMapStyle(): MapStyle =
-  var ms = new MapStyle
-  ms.backgroundColor = gray(0.4)
-  ms.drawColor       = gray(0.1)
-  ms.lightDrawColor  = gray(0.6)
-  ms.floorColor      = gray(0.9)
-  ms.thinLines       = false
-
-  ms.bgHatchEnabled       = true
-  ms.bgHatchColor         = gray(0.0, 0.4)
-  ms.bgHatchStrokeWidth   = 1.0
-  ms.bgHatchSpacingFactor = 2.0
-
-  ms.coordsColor          = gray(0.9)
-  ms.coordsHighlightColor = rgb(1.0, 0.75, 0.0)
-
-  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
-  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
-
-  ms.gridStyle            = gsSolid
-  ms.gridColorBackground  = gray(0.0, 0.2)
-  ms.gridColorFloor       = gray(0.0, 0.22)
-
-  ms.outlineStyle         = osCell
-  ms.outlineFillStyle     = ofsSolid
-  ms.outlineOverscan      = false
-  ms.outlineColor         = gray(0.25)
-  ms.outlineWidthFactor   = 0.5
-
-  ms.innerShadowEnabled     = false
-  ms.innerShadowColor       = gray(0.0, 0.1)
-  ms.innerShadowWidthFactor = 0.125
-  ms.outerShadowEnabled     = false
-  ms.outerShadowColor       = gray(0.0, 0.1)
-  ms.outerShadowWidthFactor = 0.125
-
-  ms.selectionColor         = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor      = rgba(0.2, 0.6, 1.0, 0.4)
-
-  ms.noteTextColor          = gray(0.85)
-  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
-  result = ms
-
-
-proc createLightMapStyle(): MapStyle =
-  var ms = new MapStyle
-#  ms.backgroundColor = rgb(248, 248, 244)
-  ms.backgroundColor = rgb(182, 184, 184)
-  ms.drawColor       = rgb(45, 42, 42)
-  ms.lightDrawColor  = rgba(45, 42, 42, 70)
-  ms.floorColor      = rgb(248, 248, 244)
-  ms.thinLines       = true
-
-  ms.bgHatchEnabled       = false
-  ms.bgHatchColor         = gray(0.0, 0.0)
-  ms.bgHatchStrokeWidth   = 1.0
-  ms.bgHatchSpacingFactor = 2.0
-
-  ms.coordsColor          = rgb(34, 32, 32)
-  ms.coordsHighlightColor = rgb(34, 32, 32)
-
-  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
-  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
-
-  ms.gridStyle            = gsLoose
-  ms.gridColorBackground  = gray(0.0, 0.0)
-  ms.gridColorFloor       = gray(0.0, 0.22)
-
-  ms.outlineStyle         = osRoundedEdges
-  ms.outlineFillStyle     = ofsHatched
-  ms.outlineOverscan      = true
-  ms.outlineColor         = rgb(154, 156, 156)
-  ms.outlineWidthFactor   = 0.25
-
-  ms.innerShadowEnabled     = false
-  ms.innerShadowColor       = gray(0.0, 0.1)
-  ms.innerShadowWidthFactor = 0.15
-  ms.outerShadowEnabled     = true
-  ms.outerShadowColor       = gray(0.0, 0.15)
-  ms.outerShadowWidthFactor = 0.125
-
-  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.5)
-  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.5)
-
-  ms.noteTextColor          = ms.drawColor
-  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
-  result = ms
-
-
-proc createSepiaMapStyle(): MapStyle =
-  var ms = new MapStyle
-  ms.backgroundColor = rgb(221, 204, 187)
-  ms.drawColor       = rgb(67, 67, 63)
-  ms.lightDrawColor  = rgb(176, 167, 167)
-  ms.floorColor      = rgb(248, 248, 244)
-  ms.thinLines       = true
-
-  ms.bgHatchColor         = gray(0.0, 0.15)
-  ms.bgHatchEnabled       = true
-  ms.bgHatchStrokeWidth   = 1.0
-  ms.bgHatchSpacingFactor = 3.0
-
-  ms.coordsColor          = gray(0.0, 0.4)
-  ms.coordsHighlightColor = gray(0.0, 0.8)
-
-  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
-  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
-
-  ms.gridStyle            = gsSolid
-  ms.gridColorBackground  = gray(0.0, 0.0)
-  ms.gridColorFloor       = rgba(180, 168, 154, 150)
-
-  ms.outlineStyle         = osSquareEdges
-  ms.outlineFillStyle     = ofsSolid
-  ms.outlineOverscan      = false
-  ms.outlineColor         = rgb(180, 168, 154)
-  ms.outlineWidthFactor   = 0.3
-
-  ms.innerShadowEnabled     = false
-  ms.innerShadowColor       = gray(0.0, 0.1)
-  ms.innerShadowWidthFactor = 0.125
-  ms.outerShadowEnabled     = false
-  ms.outerShadowColor       = gray(0.0, 0.1)
-  ms.outerShadowWidthFactor = 0.125
-
-  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
-
-  ms.noteTextColor          = ms.drawColor
-  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
-  result = ms
-
-
-proc createGrimrock1MapStyle(): MapStyle =
-  var ms = new MapStyle
-  ms.backgroundColor = rgb(152, 124, 99)
-  ms.drawColor       = rgb(60, 44, 28)
-  ms.lightDrawColor  = rgb(130, 114, 94)
-  ms.floorColor      = rgb(182, 155, 135)
-  ms.thinLines       = true
-
-  ms.bgHatchColor         = gray(0.0, 0.15)
-  ms.bgHatchEnabled       = true
-  ms.bgHatchStrokeWidth   = 1.0
-  ms.bgHatchSpacingFactor = 3.0
-
-  ms.coordsColor          = gray(0.0, 0.4)
-  ms.coordsHighlightColor = gray(0.0, 0.8)
-
-  ms.cursorColor          = rgb(1.0, 0.65, 0.0)
-  ms.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
-
-  ms.gridStyle            = gsSolid
-  ms.gridColorBackground  = gray(0.0, 0.0)
-  ms.gridColorFloor       = rgb(148, 123, 102)
-
-  ms.outlineStyle         = osNone
-  ms.outlineFillStyle     = ofsSolid
-  ms.outlineOverscan      = false
-  ms.outlineColor         = rgb(180, 168, 154)
-  ms.outlineWidthFactor   = 0.3
-
-  ms.innerShadowEnabled     = false
-  ms.innerShadowColor       = gray(0.0, 0.1)
-  ms.innerShadowWidthFactor = 0.125
-  ms.outerShadowEnabled     = false
-  ms.outerShadowColor       = gray(0.0, 0.1)
-  ms.outerShadowWidthFactor = 0.125
-
-  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
-
-  ms.noteTextColor          = ms.drawColor
-  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
-  result = ms
-
-
-proc createGrimrock2MapStyle(): MapStyle =
-  var ms = new MapStyle
-  ms.backgroundColor = rgb(154, 130, 113)
-  ms.drawColor       = rgb(49, 42, 36)
-  ms.lightDrawColor  = rgba(125, 113, 100, 220)
-  ms.floorColor      = rgb(193, 180, 169)
-  ms.thinLines       = true
-
-  ms.bgHatchColor         = gray(0.0, 0.25)
-  ms.bgHatchEnabled       = true
-  ms.bgHatchStrokeWidth   = 1.0
-  ms.bgHatchSpacingFactor = 3.0
-
-  ms.coordsColor          = gray(0.0, 0.4)
-  ms.coordsHighlightColor = rgb(255, 180, 111)
-
-  ms.cursorColor          = rgb(255, 180, 111)
-  ms.cursorGuideColor     = rgba(255, 180, 111, 60)
-
-  ms.gridStyle            = gsSolid
-  ms.gridColorBackground  = gray(0.0, 0.0)
-  ms.gridColorFloor       = rgb(148, 123, 102)
-
-  ms.outlineStyle         = osNone
-  ms.outlineFillStyle     = ofsSolid
-  ms.outlineOverscan      = false
-  ms.outlineColor         = rgb(180, 168, 154)
-  ms.outlineWidthFactor   = 0.3
-
-  ms.innerShadowEnabled     = false
-  ms.innerShadowColor       = gray(0.0, 0.1)
-  ms.innerShadowWidthFactor = 0.125
-  ms.outerShadowEnabled     = false
-  ms.outerShadowColor       = gray(0.0, 0.1)
-  ms.outerShadowWidthFactor = 0.125
-
-  ms.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
-  ms.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
-
-  ms.noteTextColor          = ms.drawColor
-  ms.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
-  result = ms
-
-
-
 proc initDrawMapParams(a) =
   alias(dp, a.drawMapParams)
-
   dp.drawCellCoords   = true
   dp.drawCursorGuides = false
-
 
 proc initUI(a) =
   showCellCoords(true, a)
   g_showNotesPane = true
-
 
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
@@ -1747,11 +1576,11 @@ proc init(): Window =
   setWindowModifiedFlag(true)
 
   a.map = newMap(16, 16)
-#  a.mapStyle = createDefaultMapStyle()
-  a.mapStyle = createLightMapStyle()
-#  a.mapStyle = createSepiaMapStyle()
-#  a.mapStyle = createGrimrock1MapStyle()
-#  a.mapStyle = createGrimrock2MapStyle()
+
+  searchThemes(a)
+  let themeIndex = findThemeIndex("sepia", a)
+  loadTheme(themeIndex, a)
+
   a.undoManager = newUndoManager[Map]()
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
