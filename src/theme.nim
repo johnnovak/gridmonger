@@ -1,16 +1,18 @@
 import options
 import parsecfg
-import re
+import strformat
+import strscans
+import strutils
 
 import nanovg
 
 import drawmap
 
 
-type ThemeReadError* = object of Exception
+type ThemeParseError* = object of Exception
 
-proc raiseThemeReadError(s: string) =
-  raise newException(ThemeReadError, s)
+proc raiseThemeParseError(s: string) =
+  raise newException(ThemeParseError, s)
 
 const MapSection = "map"
 
@@ -59,33 +61,66 @@ DefaultMapStyle.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
 # }}}
 
 # {{{ parseColor()
-#proc parseColor(): Option[Color] =
+proc parseColor(s: string): Option[Color] =
+  result = Color.none
+  block:
+    var r, g, b, a: int
+    if scanf(s, "gray($i)$.", g):
+      result = gray(g).some
+    elif scanf(s, "gray($i,$s$i)$.", g, a):
+      result = gray(g, a).some
+    elif scanf(s, "rgb($i,$s$i,$s$i)$.", r, g, b):
+      result = rgb(r, g, b).some
+    elif scanf(s, "rgba($i,$s$i,$s$i,$s$i)$.", r, g, b, a):
+      result = rgba(r, g, b, a).some
+
+  block:
+    var r, g, b, a: float
+    if scanf(s, "gray($f)$.", g):
+      result = gray(g).some
+    elif scanf(s, "gray($f,$s$f)$.", g, a):
+      result = gray(g, a).some
+    elif scanf(s, "rgb($f,$s$f,$s$f)$.", r, g, b):
+      result = rgb(r, g, b).some
+    elif scanf(s, "rgba($f,$s$f,$s$f,$s$f)$.", r, g, b, a):
+      result = rgba(r, g, b, a).some
+
 
 # }}}
 # {{{ getColor()
-template getColor(cfg: Config, section, key: string,
-                  ms: var MapStyle, default: MapStyle) =
+proc getColor(cfg: Config, section, key: string, c: var Color) =
   let v = cfg.getSectionValue(section, key)
+  if v == "":
+    raiseThemeParseError(fmt"Missing value for key '{key}'")
+
+  let c = parseColor(v)
+  if c.isNone:
+    raiseThemeParseError(fmt"Invalid color definition for key '{key}': {v}")
 
 # }}}
 # {{{ getBool()
-#proc getBool(cfg: Config, section, key: string, var color: Color) =
+proc getBool(cfg: Config, section, key: string, b: var bool) =
+  discard
 
 # }}}
 # {{{ getFloat()
-#proc getFloat(cfg: Config, section, key: string, var color: Color) =
+proc getFloat(cfg: Config, section, key: string, f: var float) =
+  discard
 
 # }}}
 # {{{ getGridStyle()
-#proc getGridStyle(cfg: Config, section, key: string, var color: Color) =
+proc getGridStyle(cfg: Config, section, key: string, gs: var GridStyle) =
+  discard
 
 # }}}
 # {{{ getOutlineStyle()
-#proc getOutlineStyle(cfg: Config, section, key: string, var color: Color) =
+proc getOutlineStyle(cfg: Config, section, key: string, os: var OutlineStyle) =
+  discard
 
 # }}}
 # {{{ getOutlineFillStyle()
-#proc getOutlineFillStyle(cfg: Config, section, key: string, var color: Color) =
+proc getOutlineFillStyle(cfg: Config, section, key: string, ofs: var OutlineFillStyle) =
+  discard
 
 # }}}
 
@@ -93,59 +128,57 @@ template getColor(cfg: Config, section, key: string,
 proc parseMapSection(c: Config): MapStyle =
   var ms = new MapStyle
   const M = MapSection
-  let D = DefaultMapStyle
 
-  c.getColor(M, "backgroundColor", ms, D)
+  c.getColor(M, "backgroundColor", ms.backgroundColor)
+  c.getColor(M, "drawColor",       ms.drawColor)
+  c.getColor(M, "lightDrawColor",  ms.lightDrawColor)
+  c.getColor(M, "floorColor",      ms.floorColor)
+  c.getBool( M, "thinLines",       ms.thinLines)
 
-#  c.getColor(M, "backgroundColor", ms.backgroundColor, D.backgroundColor)
-#  c.getColor(M, "drawColor",       ms.drawColor, D.drawColor)
-#  c.getColor(M, "lightDrawColor",  ms.lightDrawColor, D.lightDrawColor)
-#  c.getColor(M, "floorColor",      ms.floorColor, D.floorColor)
-  #[
-  c.getBool (M, "thinLines",       ms.thinLines, D.thinLines)
+  c.getColor(M, "bgHatchColor",            ms.bgHatchColor)
+  c.getBool( M, "bgHatchEnabled",          ms.bgHatchEnabled)
+  c.getFloat(M, "bgHatchStrokeWidth",      ms.bgHatchStrokeWidth)
+  c.getFloat(M, "bgHatchSpacingFactor",    ms.bgHatchSpacingFactor)
 
-  c.getColor(M, "bgHatchColor",            ms.bgHatchColor, D.bgHatchColor)
-  c.getBool (M, "bgHatchEnabled",          ms.bgHatchEnabled, D.bgHatchEnabled)
-  c.getFloat(M, "bgHatchStrokeWidth",      ms.bgHatchStrokeWidth, D.bgHatchStrokeWidth)
-  c.getFloat(M, "bgHatchSpacingFactor",    ms.bgHatchSpacingFactor, D.bgHatchSpacingFactor)
+  c.getColor(M, "coordsColor",             ms.coordsColor)
+  c.getColor(M, "coordsHighlightColor",    ms.coordsHighlightColor)
 
-  c.getColor(M, "coordsColor",             ms.coordsColor, D.coordsColor)
-  c.getColor(M, "coordsHighlightColor",    ms.coordsHighlightColor, D.coordsHighlightColor)
+  c.getColor(M, "cursorColor",             ms.cursorColor)
+  c.getColor(M, "cursorGuideColor",        ms.cursorGuideColor)
 
-  c.getColor(M, "cursorColor",             ms.cursorColor, D.cursorColor)
-  c.getColor(M, "cursorGuideColor",        ms.cursorGuideColor, D.cursorGuideColor)
+  c.getGridStyle(M, "gridStyle",           ms.gridStyle)
+  c.getColor(    M, "gridColorBackground", ms.gridColorBackground)
+  c.getColor(    M, "gridColorFloor",      ms.gridColorFloor)
 
-  c.getGridStyle(M, "gridStyle",           ms.gridStyle, D.gridStyle)
-  c.getColor    (M, "gridColorBackground", ms.gridColorBackground, D.gridColorBackground)
-  c.getColor    (M, "gridColorFloor",      ms.gridColorFloor, D.gridColorFloor)
+  c.getOutlineStyle(    M, "outlineStyle",       ms.outlineStyle)
+  c.getOutlineFillStyle(M, "outlineFillStyle",   ms.outlineFillStyle)
+  c.getBool(            M, "outlineOverscan",    ms.outlineOverscan)
+  c.getColor(           M, "outlineColor",       ms.outlineColor)
+  c.getFloat(           M, "outlineWidthFactor", ms.outlineWidthFactor)
 
-  c.getOutlineStyle    (M, "outlineStyle",       ms.outlineStyle, D.outlineStyle)
-  c.getOutlineFillStyle(M, "outlineFillStyle",   ms.outlineFillStyle, D.outlineFillStyle)
-  c.getBool            (M, "outlineOverscan",    ms.outlineOverscan, D.outlineOverscan)
-  c.getColor           (M, "outlineColor",       ms.outlineColor, D.outlineColor)
-  c.getFloat           (M, "outlineWidthFactor", ms.outlineWidthFactor, D.outlineWidthFactor)
+  c.getBool( M, "innerShadowEnabled",      ms.innerShadowEnabled)
+  c.getColor(M, "innerShadowColor",        ms.innerShadowColor)
+  c.getFloat(M, "innerShadowWidthFactor",  ms.innerShadowWidthFactor)
+  c.getBool( M, "outerShadowEnabled",      ms.outerShadowEnabled)
+  c.getColor(M, "outerShadowColor",        ms.outerShadowColor)
+  c.getFloat(M, "outerShadowWidthFactor",  ms.outerShadowWidthFactor)
 
-  c.getBool (M, "innerShadowEnabled",      ms.innerShadowEnabled, D.innerShadowEnabled)
-  c.getColor(M, "innerShadowColor",        ms.innerShadowColor, D.innerShadowColor)
-  c.getFloat(M, "innerShadowWidthFactor",  ms.innerShadowWidthFactor, D.innerShadowWidthFactor)
-  c.getBool (M, "outerShadowEnabled",      ms.outerShadowEnabled, D.outerShadowEnabled)
-  c.getColor(M, "outerShadowColor",        ms.outerShadowColor, D.outerShadowColor)
-  c.getFloat(M, "outerShadowWidthFactor",  ms.outerShadowWidthFactor, D.outerShadowWidthFactor)
+  c.getColor(M, "pastePreviewColor",       ms.pastePreviewColor)
+  c.getColor(M, "selectionColor",          ms.selectionColor)
 
-  c.getColor(M, "pastePreviewColor",       ms.pastePreviewColor, D.pastePreviewColor)
-  c.getColor(M, "selectionColor",          ms.selectionColor, D.selectionColor)
+  c.getColor(M, "noteTextColor",           ms.noteTextColor)
+  c.getColor(M, "noteCommentMarkerColor",  ms.noteCommentMarkerColor)
 
-  c.getColor(M, "noteTextColor",           ms.noteTextColor, D.noteTextColor)
-  c.getColor(M, "noteCommentMarkerColor",  ms.noteCommentMarkerColor, D.noteCommentMarkerColor)
-]#
 # }}}
 
 # {{{ loadTheme*()
 proc loadTheme*(filename: string): MapStyle =
-  var cfg = loadConfig("config.ini")
+  var cfg = loadConfig(filename)
   var mapStyle = parseMapSection(cfg)
   result = mapStyle
 
 # }}}
+
+var ms = loadTheme("themes/default.cfg")
 
 # vim: et:ts=2:sw=2:fdm=marker
