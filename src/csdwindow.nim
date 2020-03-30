@@ -1,5 +1,6 @@
 import lenientops
 
+import glad/gl
 import glfw
 import koi
 import nanovg
@@ -59,8 +60,51 @@ proc newCSDWindow*(win: Window): CSDWindow =
   result.w = win
 
 # }}}
-# {{{ restoreWindow*()
-proc restoreWindow*(win) =
+# {{{ setWindowTitle*()
+proc setWindowTitle*(win; title: string) =
+  win.title = title
+
+# }}}
+# {{{ setWindowModifiedFlag*()
+proc setWindowModifiedFlag*(win; modified: bool) =
+  win.modified = modified
+
+# }}}
+# {{{ GLFW Window adapter
+# Just for the functions that actually get used in the app
+
+proc pos*(win): tuple[x, y: int32] =
+  win.w.pos
+
+proc `pos=`*(win; pos: tuple[x, y: int32]) =
+  win.w.pos = pos
+
+proc size*(win): tuple[w, h: int32] =
+  win.w.size
+
+proc `size=`*(win; size: tuple[w, h: int32]) =
+  win.w.size = size
+
+proc framebufferSize*(win): tuple[w, h: int32] =
+  win.w.framebufferSize
+
+proc show*(win) =
+  win.w.show()
+
+proc shouldClose*(win): bool =
+  win.w.shouldClose
+
+# TODO move to koi?
+proc isKeyDown*(win; key: Key): bool =
+  win.w.isKeyDown(key)
+
+proc resizing*(win): bool =
+  win.dragState == wdsResizing
+
+# }}}
+#
+# {{{ restoreWindow()
+proc restoreWindow(win) =
   glfw.swapInterval(0)
   win.fastRedrawFrameCounter = 20
   win.w.pos = (win.oldPosX, win.oldPosY)
@@ -68,8 +112,8 @@ proc restoreWindow*(win) =
   win.maximized = false
 
 # }}}
-# {{{ maximizeWindow*()
-proc maximizeWindow*(win) =
+# {{{ maximizeWindow()
+proc maximizeWindow(win) =
   # TODO This logic needs to be a bit more sophisticated to support
   # multiple monitors
   let (_, _, w, h) = getPrimaryMonitor().workArea
@@ -87,17 +131,7 @@ proc maximizeWindow*(win) =
   win.maximizing = false
 
 # }}}
-# {{{ setWindowTitle*()
-proc setWindowTitle*(win; title: string) =
-  win.title = title
-
-# }}}
-# {{{ setWindowModifiedFlag*()
-proc setWindowModifiedFlag*(win; modified: bool) =
-  win.modified = modified
-
-# }}}
-# {{{ renderTitleBar*()
+# {{{ renderTitleBar()
 
 var g_TitleBarWindowButtonStyle = koi.getDefaultButtonStyle()
 
@@ -107,7 +141,7 @@ g_TitleBarWindowButtonStyle.labelColorHover  = gray(0.7)
 g_TitleBarWindowButtonStyle.labelColorActive = gray(0.9)
 
 
-proc renderTitleBar*(win; vg: NVGContext, winWidth: float) =
+proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, TitleBarHeight)
   vg.fillColor(gray(0.09))
@@ -157,8 +191,8 @@ proc renderTitleBar*(win; vg: NVGContext, winWidth: float) =
     win.w.shouldClose = true
 
 # }}}
-# {{{ handleWindowDragEvents*()
-proc handleWindowDragEvents*(win) =
+# {{{ handleWindowDragEvents()
+proc handleWindowDragEvents(win) =
   let
     (winWidth, winHeight) = (koi.winWidth(), koi.winHeight())
     mx = koi.mx()
@@ -328,49 +362,82 @@ proc handleWindowDragEvents*(win) =
 
 # }}}
 
-# {{{ GLFW Window adapter
-# Just for the functions that actually get used in the app
 
-proc pos*(win): tuple[x, y: int32] =
-  win.w.pos
-
-proc `pos=`*(win; pos: tuple[x, y: int32]) =
-  win.w.pos = pos
-
-proc size*(win): tuple[w, h: int32] =
-  win.w.size
-
-proc `size=`*(win; size: tuple[w, h: int32]) =
-  win.w.size = size
-
-proc framebufferSize*(win): tuple[w, h: int32] =
-  win.w.framebufferSize
-
-proc show*(win) =
-  win.w.show()
-
-proc shouldClose*(win): bool =
-  win.w.shouldClose
-
-# TODO move to koi?
-proc isKeyDown*(win; key: Key): bool =
-  win.w.isKeyDown(key)
-
-proc resizing*(win): bool =
-  win.dragState == wdsResizing
-
+type RenderFramePreProc = proc (win: CSDWindow)
 type RenderFrameProc = proc (win: CSDWindow, doHandleEvents: bool)
+
 var g_window: CSDWindow
+var g_renderFramePreProc: RenderFramePreProc
 var g_renderFrameProc: RenderFrameProc
 
-proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-  g_renderFrameProc(g_window, doHandleEvents=false)
+# {{{ csdRenderFrame*()
+proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
+  let vg = koi.nvgContext()
 
-proc setRenderProc*(win; p: RenderFrameProc) =
-  g_renderFrameProc = p
-  g_window = win
-  win.w.framebufferSizeCb = framebufSizeCb
+  g_renderFramePreProc(win)
+
+  #####################################
+
+  var
+    (winWidth, winHeight) = win.size
+    (fbWidth, fbHeight) = win.framebufferSize
+    pxRatio = fbWidth / winWidth
+
+  # Update and render
+  glViewport(0, 0, fbWidth, fbHeight)
+
+  glClearColor(0.4, 0.4, 0.4, 1.0)
+
+  glClear(GL_COLOR_BUFFER_BIT or
+          GL_DEPTH_BUFFER_BIT or
+          GL_STENCIL_BUFFER_BIT)
+
+  vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
+  koi.beginFrame(winWidth.float, winHeight.float)
+
+  # Title bar
+  renderTitleBar(win, vg, winWidth.float)
+
+  #####################################
+
+  g_renderFrameProc(win, doHandleEvents=true)
+
+  if doHandleEvents:
+    handleWindowDragEvents(win)
+
+  #####################################
+  (winWidth, winHeight) = win.size
+
+  # Window border
+  vg.beginPath()
+  vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
+  vg.strokeColor(gray(0.09))
+  vg.strokeWidth(1.0)
+  vg.stroke()
+
+  koi.endFrame()
+  vg.endFrame()
+
+  glfw.swapBuffers(win.w)  # TODO
+
+  if win.fastRedrawFrameCounter > 0:
+    dec(win.fastRedrawFrameCounter)
+    if win.fastRedrawFrameCounter == 0:
+      glfw.swapInterval(1)
 
 # }}}
+
+proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
+#  g_renderFrameProc(g_window, doHandleEvents=false)
+  csdRenderFrame(g_window, doHandleEvents=false)
+
+proc setRenderFramePreProc*(win; p: RenderFramePreProc) =
+  g_renderFramePreProc = p
+
+proc setRenderFrameProc*(win; p: RenderFrameProc) =
+  g_window = win
+  g_renderFrameProc = p
+  win.w.framebufferSizeCb = framebufSizeCb
+
 
 # vim: et:ts=2:sw=2:fdm=marker

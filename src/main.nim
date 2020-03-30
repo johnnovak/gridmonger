@@ -1115,39 +1115,21 @@ proc renderUI() =
 
 # }}}
 # {{{ renderFrame()
-proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
+proc renderFramePre(win: CSDWindow) =
   alias(a, g_app)
   alias(vg, g_app.vg)
-
-  var
-    (winWidth, winHeight) = win.size
-    (fbWidth, fbHeight) = win.framebufferSize
-    pxRatio = fbWidth / winWidth
 
   if a.nextThemeIndex.isSome:
     let themeIndex = a.nextThemeIndex.get
     a.themeReloaded = themeIndex == a.currThemeIndex
     loadTheme(themeIndex, a)
-    a.drawMapParams.initDrawMapParams(a.mapStyle, a.vg, pxRatio)
+    a.drawMapParams.initDrawMapParams(a.mapStyle, a.vg, getPxRatio(a))
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
 
-  # Update and render
-  glViewport(0, 0, fbWidth, fbHeight)
-
-  glClearColor(0.4, 0.4, 0.4, 1.0)
-
-  glClear(GL_COLOR_BUFFER_BIT or
-          GL_DEPTH_BUFFER_BIT or
-          GL_STENCIL_BUFFER_BIT)
-
-  vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
-  koi.beginFrame(winWidth.float, winHeight.float)
-
-  # Title bar
-  renderTitleBar(win, vg, winWidth.float)
-
-  ######################################################
+proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
+  alias(a, g_app)
+  alias(vg, g_app.vg)
 
   if a.nextThemeIndex.isSome:
     let themeName = a.themeNames[a.currThemeIndex]
@@ -1160,31 +1142,9 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
   updateViewStartAndCursorPosition(a)
 
   if doHandleEvents:
-    handleWindowDragEvents(win)
     handleMapEvents(a)
 
   renderUI()
-
-  ######################################################
-
-  (winWidth, winHeight) = win.size
-
-  # Window border
-  vg.beginPath()
-  vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
-  vg.strokeColor(gray(0.09))
-  vg.strokeWidth(1.0)
-  vg.stroke()
-
-  koi.endFrame()
-  vg.endFrame()
-
-  glfw.swapBuffers(win.w)  # TODO
-
-  if win.fastRedrawFrameCounter > 0:
-    dec(win.fastRedrawFrameCounter)
-    if win.fastRedrawFrameCounter == 0:
-      glfw.swapInterval(1)
 
 # }}}
 
@@ -1292,7 +1252,8 @@ proc init() =
 #  a.map = readMap("notetest.grm")
 
   koi.init(a.vg)
-  a.win.setRenderProc(renderFrame)
+  a.win.setRenderFramePreProc(renderFramePre)
+  a.win.setRenderFrameProc(renderFrame)
   glfw.swapInterval(1)
 
   a.win.pos = (960, 0)  # TODO for development
@@ -1314,7 +1275,7 @@ proc main() =
       glfw.pollEvents()
     else:
       glfw.waitEvents()
-    renderFrame(g_app.win)
+    csdRenderFrame(g_app.win)
   cleanup()
 
 main()
