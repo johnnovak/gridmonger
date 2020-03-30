@@ -1,12 +1,6 @@
 import options
 import tables
 
-import nanovg
-import glfw
-
-import undomanager
-
-
 const
   TextVertAlignFactor* = 0.55
 

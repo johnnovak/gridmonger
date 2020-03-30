@@ -17,6 +17,7 @@ when not defined(DEBUG):
 
 import actions
 import common
+import csdwindow
 import drawmap
 import map
 import persistence
@@ -31,15 +32,6 @@ const ThemesDir = "themes"
 const DefaultZoomLevel = 5
 
 const
-  TitleBarFontSize = 14.0
-  TitleBarHeight = 26.0
-  TitleBarTitlePosX = 50.0
-  TitleBarButtonWidth = 23.0
-  TitleBarPinButtonsLeftPad = 4.0
-  TitleBarPinButtonTotalWidth = TitleBarPinButtonsLeftPad + TitleBarButtonWidth
-  TitleBarWindowButtonsRightPad = 6.0
-  TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*3 +
-                                    TitleBarWindowButtonsRightPad
   StatusBarHeight = 26.0
 
   MapLeftPad   = 50.0
@@ -52,11 +44,6 @@ const
   NotesPaneTopPad = 10.0
   NotesPaneHeight = 40.0
   NotesPaneBottomPad = 10.0
-
-  WindowResizeEdgeWidth = 10.0
-  WindowResizeCornerSize = 20.0
-  WindowMinWidth = 400
-  WindowMinHeight = 200
 
 # {{{ AppContext
 type
@@ -73,7 +60,7 @@ type
 
   AppContext = ref object
     # Context
-    win:            Window
+    win:            CSDWindow
     vg:             NVGContext
 
     # Dependencies
@@ -150,312 +137,6 @@ proc loadTheme(index: Natural, a) =
   let name = a.themeNames[index]
   a.mapStyle = loadTheme(fmt"{ThemesDir}/{name}.cfg")
   a.currThemeIndex = index
-
-# }}}
-
-#{{{ CSDWindow
-# TODO move into appcontext, store win handle in this
-type
-  CSDWindow = object
-    title:                  string
-    modified:               bool
-    maximized:              bool
-    maximizing:             bool
-    dragState:              WindowDragState
-    resizeDir:              WindowResizeDir
-    mx0, my0:               float
-    posX0, posY0:           int
-    width0, height0:        int32
-    oldPosX, oldPosY:       int
-    oldWidth, oldHeight:    int32
-    fastRedrawFrameCounter: int
-
-  WindowDragState = enum
-    wdsNone, wdsMoving, wdsResizing
-
-  WindowResizeDir = enum
-    wrdNone, wrdN, wrdNW, wrdW, wrdSW, wrdS, wrdSE, wrdE, wrdNE
-
-var g_window: CSDWindow
-
-# }}}
-# {{{ restoreWindow()
-proc restoreWindow(a) =
-  alias(wnd, g_window)
-
-  glfw.swapInterval(0)
-  wnd.fastRedrawFrameCounter = 20
-  a.win.pos = (wnd.oldPosX, wnd.oldPosY)
-  a.win.size = (wnd.oldWidth, wnd.oldHeight)
-  wnd.maximized = false
-
-# }}}
-# {{{ maximizeWindow()
-proc maximizeWindow(a) =
-  alias(wnd, g_window)
-
-  # TODO This logic needs to be a bit more sophisticated to support
-  # multiple monitors
-  let (_, _, w, h) = getPrimaryMonitor().workArea
-  (wnd.oldPosX, wnd.oldPosY) = a.win.pos
-  (wnd.oldWidth, wnd.oldHeight) = a.win.size
-
-  glfw.swapInterval(0)
-  wnd.fastRedrawFrameCounter = 20
-  wnd.maximized = true
-  wnd.maximizing = true
-
-  a.win.pos = (0, 0)
-  a.win.size = (w, h)
-
-  wnd.maximizing = false
-
-# }}}
-# {{{ setWindowTitle()
-proc setWindowTitle(title: string) =
-  g_window.title = title
-
-# }}}
-# {{{ setWindowModifiedFlag()
-proc setWindowModifiedFlag(modified: bool) =
-  g_window.modified = modified
-
-# }}}
-# {{{ renderTitleBar()
-
-var g_TitleBarWindowButtonStyle = koi.getDefaultButtonStyle()
-
-g_TitleBarWindowButtonStyle.labelOnly        = true
-g_TitleBarWindowButtonStyle.labelColor       = gray(0.45)
-g_TitleBarWindowButtonStyle.labelColorHover  = gray(0.7)
-g_TitleBarWindowButtonStyle.labelColorActive = gray(0.9)
-
-
-proc renderTitleBar(winWidth: float, a) =
-  alias(vg, a.vg)
-  alias(win, a.win)
-  alias(wnd, g_window)
-
-  vg.beginPath()
-  vg.rect(0, 0, winWidth.float, TitleBarHeight)
-  vg.fillColor(gray(0.09))
-  vg.fill()
-
-  vg.setFont(TitleBarFontSize)
-  vg.fillColor(gray(0.7))
-  vg.textAlign(haLeft, vaMiddle)
-
-  let
-    bw = TitleBarButtonWidth
-    bh = TitleBarFontSize + 4
-    by = (TitleBarHeight - bh) / 2
-    ty = TitleBarHeight * TextVertAlignFactor
-
-  # Pin window button
-  if koi.button(TitleBarPinButtonsLeftPad, by, bw, bh, IconPin,
-                style=g_TitleBarWindowButtonStyle):
-    # TODO
-    discard
-
-  # Window title & modified flag
-  let tx = vg.text(TitleBarTitlePosX, ty, wnd.title)
-
-  if wnd.modified:
-    vg.fillColor(gray(0.45))
-    discard vg.text(tx+10, ty, IconAsterisk)
-
-  # Minimise/maximise/close window buttons
-  let x = winWidth - TitleBarWindowButtonsTotalWidth
-
-  if koi.button(x, by, bw, bh, IconWindowMinimise,
-                style=g_TitleBarWindowButtonStyle):
-    win.iconify()
-
-  if koi.button(x + bw, by, bw, bh,
-                if wnd.maximized: IconWindowRestore else: IconWindowMaximise,
-                style=g_TitleBarWindowButtonStyle):
-    if not wnd.maximizing:  # workaround to avoid double-activation
-      if wnd.maximized:
-        restoreWindow(a)
-      else:
-        maximizeWindow(a)
-
-  if koi.button(x + bw*2, by, bw, bh, IconWindowClose,
-                style=g_TitleBarWindowButtonStyle):
-    win.shouldClose = true
-
-# }}}
-# {{{ handleWindowDragEvents()
-proc handleWindowDragEvents(a) =
-  alias(win, a.win)
-  alias(wnd, g_window)
-
-  let
-    (winWidth, winHeight) = (koi.winWidth(), koi.winHeight())
-    mx = koi.mx()
-    my = koi.my()
-
-  case wnd.dragState
-  of wdsNone:
-    if koi.noActiveItem() and koi.mbLeftDown():
-      if my < TitleBarHeight and
-         mx > TitleBarPinButtonTotalWidth and
-         mx < winWidth - TitleBarWindowButtonsTotalWidth:
-        wnd.mx0 = mx
-        wnd.my0 = my
-        (wnd.posX0, wnd.posY0) = win.pos
-        wnd.dragState = wdsMoving
-        glfw.swapInterval(0)
-
-    if not wnd.maximized:
-      if not koi.hasHotItem() and koi.noActiveItem():
-        let ew = WindowResizeEdgeWidth
-        let cs = WindowResizeCornerSize
-        let d =
-          if   mx < cs            and my < cs:             wrdNW
-          elif mx > winWidth - cs and my < cs:             wrdNE
-          elif mx > winWidth - cs and my > winHeight - cs: wrdSE
-          elif mx < cs            and my > winHeight - cs: wrdSW
-
-          elif mx < ew:             wrdW
-          elif mx > winWidth - ew:  wrdE
-          elif my < ew:             wrdN
-          elif my > winHeight - ew: wrdS
-
-          else: wrdNone
-
-        if d > wrdNone:
-          case d
-          of wrdW, wrdE: showHorizResizeCursor()
-          of wrdN, wrdS: showVertResizeCursor()
-          else: showHandCursor()
-
-          if koi.mbLeftDown():
-            wnd.mx0 = mx
-            wnd.my0 = my
-            wnd.resizeDir = d
-            (wnd.posX0, wnd.posY0) = win.pos
-            (wnd.width0, wnd.height0) = win.size
-            wnd.dragState = wdsResizing
-            # TODO maybe hide on OSX only?
-#            hideCursor()
-            glfw.swapInterval(0)
-        else:
-          showArrowCursor()
-      else:
-        showArrowCursor()
-
-  of wdsMoving:
-    if koi.mbLeftDown():
-      let
-        dx = (mx - wnd.mx0).int
-        dy = (my - wnd.my0).int
-
-      # Only move or restore the window when we're actually
-      # dragging the title bar while holding the LMB down.
-      if dx != 0 or dy != 0:
-
-        # LMB-dragging the title bar will restore the window first (we're
-        # imitating Windows' behaviour here).
-        if wnd.maximized:
-
-          # The restored window is centered horizontally around the cursor.
-          (wnd.posX0, wnd.posY0) = ((mx - wnd.oldWidth*0.5).int32, 0)
-
-          # Fake the last horizontal cursor position to be at the middle of
-          # the restored window's width. This is needed so when we're in the
-          # "else" branch on the next frame when dragging the restored window,
-          # there won't be an unwanted window position jump.
-          wnd.mx0 = wnd.oldWidth*0.5
-          wnd.my0 = my
-
-          # ...but we also want to clamp the window position to the visible
-          # work area (and adjust the last cursor position accordingly to
-          # avoid the position jump in drag mode on the next frame).
-          if wnd.posX0 < 0:
-            wnd.mx0 += wnd.posX0.float
-            wnd.posX0 = 0
-
-          # TODO This logic needs to be a bit more sophisticated to support
-          # multiple monitors
-          let (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
-          let dx = wnd.posX0 + wnd.oldWidth - workAreaWidth
-          if dx > 0:
-            wnd.posX0 = workAreaWidth - wnd.oldWidth
-            wnd.mx0 += dx.float
-
-          win.pos = (wnd.posX0, wnd.posY0)
-          win.size = (wnd.oldWidth, wnd.oldHeight)
-          wnd.maximized = false
-
-        else:
-          win.pos = (wnd.posX0 + dx, wnd.posY0 + dy)
-          (wnd.posX0, wnd.posY0) = win.pos
-    else:
-      wnd.dragState = wdsNone
-      glfw.swapInterval(1)
-
-  of wdsResizing:
-    # TODO add support for resizing on edges
-    # More standard cursor shapes patch:
-    # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
-    if koi.mbLeftDown():
-      let
-        dx = (mx - wnd.mx0).int32
-        dy = (my - wnd.my0).int32
-
-      var
-        (newX, newY) = (wnd.posX0, wnd.posY0)
-        (newW, newH) = (wnd.width0, wnd.height0)
-
-      case wnd.resizeDir:
-      of wrdN:
-        newY += dy
-        newH -= dy
-      of wrdNE:
-        newY += dy
-        newW += dx
-        newH -= dy
-      of wrdE:
-        newW += dx
-      of wrdSE:
-        newW += dx
-        newH += dy
-      of wrdS:
-        newH += dy
-      of wrdSW:
-        newX += dx
-        newW -= dx
-        newH += dy
-      of wrdW:
-        newX += dx
-        newW -= dx
-      of wrdNW:
-        newX += dx
-        newY += dy
-        newW -= dx
-        newH -= dy
-      of wrdNone:
-        discard
-
-      let (newWidth, newHeight) = (max(newW, WindowMinWidth), max(newH, WindowMinHeight))
-
-#      if newW >= newWidth and newH >= newHeight:
-      (wnd.posX0, wnd.posY0) = (newX, newY)
-      win.pos = (newX, newY)
-
-      win.size = (newWidth, newHeight)
-
-      if wnd.resizeDir in {wrdSW, wrdW, wrdNW}:
-        wnd.width0 = newWidth
-
-      if wnd.resizeDir in {wrdNE, wrdN, wrdNW}:
-        wnd.height0 = newHeight
-
-    else:
-      wnd.dragState = wdsNone
-      showCursor()
-      glfw.swapInterval(1)
 
 # }}}
 
@@ -1434,10 +1115,9 @@ proc renderUI() =
 
 # }}}
 # {{{ renderFrame()
-proc renderFrame(win: Window, doHandleEvents: bool = true) =
+proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
   alias(a, g_app)
   alias(vg, g_app.vg)
-  alias(wnd, g_window)
 
   var
     (winWidth, winHeight) = win.size
@@ -1465,7 +1145,7 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   koi.beginFrame(winWidth.float, winHeight.float)
 
   # Title bar
-  renderTitleBar(winWidth.float, a)
+  renderTitleBar(win, vg, winWidth.float)
 
   ######################################################
 
@@ -1480,7 +1160,7 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   updateViewStartAndCursorPosition(a)
 
   if doHandleEvents:
-    handleWindowDragEvents(a)
+    handleWindowDragEvents(win)
     handleMapEvents(a)
 
   renderUI()
@@ -1499,17 +1179,12 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   koi.endFrame()
   vg.endFrame()
 
-  glfw.swapBuffers(win)
+  glfw.swapBuffers(win.w)  # TODO
 
-  if wnd.fastRedrawFrameCounter > 0:
-    dec(wnd.fastRedrawFrameCounter)
-    if wnd.fastRedrawFrameCounter == 0:
+  if win.fastRedrawFrameCounter > 0:
+    dec(win.fastRedrawFrameCounter)
+    if win.fastRedrawFrameCounter == 0:
       glfw.swapInterval(1)
-
-# }}}
-# {{{ framebufSizeCb()
-proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-  renderFrame(win, doHandleEvents=false)
 
 # }}}
 
@@ -1525,7 +1200,7 @@ proc initUI(a) =
   showCellCoords(true, a)
   a.showNotesPane = true
 
-proc createWindow(): Window =
+proc createCSDWindow(): CSDWindow =
   var cfg = DefaultOpenglWindowConfig
   cfg.size = (w: 960, h: 1040)
 #  cfg.size = (w: 900, h: 800)
@@ -1544,7 +1219,8 @@ proc createWindow(): Window =
     cfg.forwardCompat = true
     cfg.profile = opCoreProfile
 
-  newWindow(cfg)
+  let win = newWindow(cfg)
+  result = newCSDWindow(win)
 
 
 proc loadData(vg: NVGContext) =
@@ -1570,15 +1246,14 @@ proc loadData(vg: NVGContext) =
 
 
 # TODO clean up
-proc init(): Window =
+proc init() =
   alias(a, g_app)
 
   a = new AppContext
 
   glfw.initialize()
 
-  var win = createWindow()
-  a.win = win
+  a.win = createCSDWindow()
 
   var flags = {nifStencilStrokes, nifDebug, nifAntialias}
 
@@ -1591,8 +1266,8 @@ proc init(): Window =
 
   loadData(a.vg)
 
-  setWindowTitle("Eye of the Beholder III")
-  setWindowModifiedFlag(true)
+  setWindowTitle(a.win, "Eye of the Beholder III")
+  setWindowModifiedFlag(a.win, true)
 
   a.map = newMap(16, 16)
 
@@ -1617,13 +1292,11 @@ proc init(): Window =
 #  a.map = readMap("notetest.grm")
 
   koi.init(a.vg)
-  win.framebufferSizeCb = framebufSizeCb
+  a.win.setRenderProc(renderFrame)
   glfw.swapInterval(1)
 
-  win.pos = (960, 0)  # TODO for development
-  wrapper.showWindow(win.getHandle())
-
-  result = win
+  a.win.pos = (960, 0)  # TODO for development
+  a.win.show()
 
 
 proc cleanup() =
@@ -1634,14 +1307,14 @@ proc cleanup() =
 # }}}
 
 proc main() =
-  let win = init()
+  init()
 
-  while not win.shouldClose:
+  while not g_app.win.shouldClose:
     if koi.shouldRenderNextFrame():
       glfw.pollEvents()
     else:
       glfw.waitEvents()
-    renderFrame(win)
+    renderFrame(g_app.win)
   cleanup()
 
 main()
