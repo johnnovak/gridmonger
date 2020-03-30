@@ -58,12 +58,6 @@ const
   WindowMinWidth = 400
   WindowMinHeight = 200
 
-var
-  g_mapTopPad: float
-  g_mapBottomPad: float
-
-  g_showNotesPane: bool
-
 # {{{ AppContext
 type
   EditMode* = enum
@@ -116,6 +110,12 @@ type
     currThemeIndex: Natural
     nextThemeIndex: Option[Natural]
     themeReloaded:  bool
+
+
+    mapTopPad: float
+    mapBottomPad: float
+
+    showNotesPane: bool
 
 
 var g_app: AppContext
@@ -573,12 +573,12 @@ proc updateViewStartAndCursorPosition(a) =
   let (winWidth, winHeight) = a.win.size
 
   dp.startX = MapLeftPad
-  dp.startY = TitleBarHeight + g_mapTopPad
+  dp.startY = TitleBarHeight + a.mapTopPad
 
   var drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
-                       g_mapTopPad - g_mapBottomPad
+                       a.mapTopPad - a.mapBottomPad
 
-  if g_showNotesPane:
+  if a.showNotesPane:
    drawAreaHeight -= NotesPaneTopPad + NotesPaneHeight + NotesPaneBottomPad
 
   let
@@ -608,12 +608,12 @@ proc showCellCoords(show: bool, a) =
   alias(dp, a.drawMapParams)
 
   if show:
-    g_mapTopPad = MapTopPadCoords
-    g_mapBottomPad = MapBottomPadCoords
+    a.mapTopPad = MapTopPadCoords
+    a.mapBottomPad = MapBottomPadCoords
     dp.drawCellCoords = true
   else:
-    g_mapTopPad = MapTopPadNoCoords
-    g_mapBottomPad = MapBottomPadNoCoords
+    a.mapTopPad = MapTopPadNoCoords
+    a.mapBottomPad = MapBottomPadNoCoords
     dp.drawCellCoords = false
 
 # }}}
@@ -1218,12 +1218,12 @@ proc handleMapEvents(a) =
         setStatusMessage(fmt"Cell coordinates turned {state}", a)
 
       elif ke.isKeyDown(keyN, {mkAlt}):
-        if g_showNotesPane:
+        if a.showNotesPane:
           setStatusMessage(fmt"Notes pane shown", a)
-          g_showNotesPane = false
+          a.showNotesPane = false
         else:
           setStatusMessage(fmt"Notes pane hidden", a)
-          g_showNotesPane = true
+          a.showNotesPane = true
 
         updateViewStartAndCursorPosition(a)
 
@@ -1411,7 +1411,7 @@ proc renderUI() =
 
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
 
-  if g_showNotesPane:
+  if a.showNotesPane:
     drawNotesPane(
       x = MapLeftPad,
       y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
@@ -1523,7 +1523,7 @@ proc initDrawMapParams(a) =
 
 proc initUI(a) =
   showCellCoords(true, a)
-  g_showNotesPane = true
+  a.showNotesPane = true
 
 proc createWindow(): Window =
   var cfg = DefaultOpenglWindowConfig
