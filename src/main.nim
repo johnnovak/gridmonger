@@ -115,6 +115,7 @@ type
     themeNames:     seq[string]
     currThemeIndex: Natural
     nextThemeIndex: Option[Natural]
+    themeReloaded:  bool
 
 
 var g_app: AppContext
@@ -1444,12 +1445,12 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
     pxRatio = fbWidth / winWidth
 
   if a.nextThemeIndex.isSome:
-    let i = a.nextThemeIndex.get
-    loadTheme(i, a)
+    let themeIndex = a.nextThemeIndex.get
+    a.themeReloaded = themeIndex == a.currThemeIndex
+    loadTheme(themeIndex, a)
     a.drawMapParams.initDrawMapParams(a.mapStyle, a.vg, pxRatio)
-#    let themeName = a.themeNames[a.currThemeIndex]
-#    setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
-    a.nextThemeIndex = Natural.none
+    # nextThemeIndex will be reset at the start of the current frame after
+    # displaying the status message
 
   # Update and render
   glViewport(0, 0, fbWidth, fbHeight)
@@ -1467,6 +1468,14 @@ proc renderFrame(win: Window, doHandleEvents: bool = true) =
   renderTitleBar(winWidth.float, a)
 
   ######################################################
+
+  if a.nextThemeIndex.isSome:
+    let themeName = a.themeNames[a.currThemeIndex]
+    if a.themeReloaded:
+      setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+    else:
+      setStatusMessage(fmt"Switched to '{themeName}' theme", a)
+    a.nextThemeIndex = Natural.none
 
   updateViewStartAndCursorPosition(a)
 
