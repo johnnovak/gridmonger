@@ -1156,34 +1156,9 @@ proc initDrawMapParams(a) =
   dp.drawCursorGuides = false
   dp.initDrawMapParams(a.mapStyle, a.vg, getPxRatio(a))
 
-proc initUI(a) =
-  showCellCoords(true, a)
-  a.showNotesPane = true
 
-proc createCSDWindow(): CSDWindow =
-  var cfg = DefaultOpenglWindowConfig
-  cfg.size = (w: 960, h: 1040)
-#  cfg.size = (w: 900, h: 800)
-#  cfg.size = (w: 450, h: 700)
-  cfg.title = "Gridmonger v0.1"
-  cfg.resizable = false
-  cfg.visible = false
-  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
-  cfg.debugContext = true
-  cfg.nMultiSamples = 4
-  cfg.decorated = false
-  cfg.floating = false
-
-  when defined(macosx):
-    cfg.version = glv32
-    cfg.forwardCompat = true
-    cfg.profile = opCoreProfile
-
-  let win = newWindow(cfg)
-  result = newCSDWindow(win)
-
-
-proc loadData(vg: NVGContext) =
+proc loadFonts(vg: NVGContext) =
+  # TODO fix font load error checking
   let regularFont = vg.createFont("sans", "data/Roboto-Regular.ttf")
   if regularFont == NoFont:
     quit "Could not add regular font.\n"
@@ -1205,38 +1180,35 @@ proc loadData(vg: NVGContext) =
   discard addFallbackFont(vg, decoFont, iconFont)
 
 
-# TODO clean up
-proc init() =
-  alias(a, g_app)
-
-  a = new AppContext
-
+proc initGfx(): (CSDWindow, NVGContext) =
   glfw.initialize()
-
-  a.win = createCSDWindow()
-
-  var flags = {nifStencilStrokes, nifDebug, nifAntialias}
-
-  a.vg = nvgInit(getProcAddress, flags)
-  if a.vg == nil:
-    quit "Error creating NanoVG context"
+  let win = newCSDWindow()
 
   if not gladLoadGL(getProcAddress):
     quit "Error initialising OpenGL"
 
-  loadData(a.vg)
+  let vg = nvgInit(getProcAddress, {nifStencilStrokes, nifAntialias})
+  if vg == nil:
+    quit "Error creating NanoVG context"
 
-  setWindowTitle(a.win, "Eye of the Beholder III")
-  setWindowModifiedFlag(a.win, true)
+  loadFonts(vg)
 
-  a.map = newMap(16, 16)
+  koi.init(vg)
+
+  result = (win, vg)
+
+
+proc initApp(win: CSDWindow, vg: NVGContext) =
+  alias(a, g_app)
+
+  a = new AppContext
+  a.win = win
+  a.vg = vg
+  a.undoManager = newUndoManager[Map]()
 
   searchThemes(a)
   let themeIndex = findThemeIndex("lightblue", a)
   loadTheme(themeIndex, a)
-
-  a.undoManager = newUndoManager[Map]()
-  setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
   initDrawMapParams(a)
   a.drawMapParams.setZoomLevel(a.mapStyle, DefaultZoomLevel)
@@ -1245,18 +1217,24 @@ proc init() =
   a.toolbarDrawParams = a.drawMapParams.deepCopy
   a.toolbarDrawParams.setZoomLevel(a.mapStyle, 1)
 
-  initUI(a)
+  showCellCoords(true, a)
+  a.showNotesPane = true
 
+  setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
+
+#  a.map = newMap(16, 16)
   a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
 #  a.map = readMap("notetest.grm")
 
-  koi.init(a.vg)
-  a.win.setRenderFramePreProc(renderFramePre)
-  a.win.setRenderFrameProc(renderFrame)
-  glfw.swapInterval(1)
+  a.win.renderFramePreCb = renderFramePre
+  a.win.renderFrameCb = renderFrame
 
-  a.win.pos = (960, 0)  # TODO for development
+  a.win.title = "Eye of the Beholder III"
+  a.win.modified = true
+  # TODO for development
+  a.win.size = (960, 1040)
+  a.win.pos = (960, 0)
   a.win.show()
 
 
@@ -1268,7 +1246,8 @@ proc cleanup() =
 # }}}
 
 proc main() =
-  init()
+  let (win, vg) = initGfx()
+  initApp(win, vg)
 
   while not g_app.win.shouldClose:
     if koi.shouldRenderNextFrame():

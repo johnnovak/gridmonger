@@ -27,10 +27,11 @@ const
 #  {{{ CSDWindow
 type
   CSDWindow* = ref object
-    w*: Window  # the wrapper GLFW window
+    modified*: bool
+
+    w: Window  # the wrapper GLFW window
 
     title:               string
-    modified:            bool
     maximized:           bool
     maximizing:          bool
     dragState:           WindowDragState
@@ -41,7 +42,7 @@ type
     oldPosX, oldPosY:    int
     oldWidth, oldHeight: int32
 
-    fastRedrawFrameCounter*: int  # TODO
+    fastRedrawFrameCounter: int
 
   WindowDragState = enum
     wdsNone, wdsMoving, wdsResizing
@@ -55,23 +56,36 @@ using win: CSDWindow
 # }}}
 
 # {{{ newCSDWindow*()
-proc newCSDWindow*(win: Window): CSDWindow =
+proc newCSDWindow*(): CSDWindow =
   result = new CSDWindow
-  result.w = win
+
+  var cfg = DefaultOpenglWindowConfig
+  cfg.size = (w: 800, h: 600)
+  cfg.resizable = false
+  cfg.visible = false
+  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
+  cfg.debugContext = false  # TODO
+  cfg.nMultiSamples = 4
+  cfg.decorated = false
+  cfg.floating = false
+
+  when defined(macosx):
+    cfg.version = glv32
+    cfg.forwardCompat = true
+    cfg.profile = opCoreProfile
+
+  result.w = newWindow(cfg)
 
 # }}}
-# {{{ setWindowTitle*()
-proc setWindowTitle*(win; title: string) =
-  win.title = title
-
-# }}}
-# {{{ setWindowModifiedFlag*()
-proc setWindowModifiedFlag*(win; modified: bool) =
-  win.modified = modified
-
-# }}}
-# {{{ GLFW Window adapter
+# {{{ GLFW Window adapters
 # Just for the functions that actually get used in the app
+
+proc title*(win): string =
+  win.title
+
+proc `title=`*(win; title: string) =
+  win.title = title
+  win.w.title = title
 
 proc pos*(win): tuple[x, y: int32] =
   win.w.pos
@@ -103,8 +117,8 @@ proc resizing*(win): bool =
 
 # }}}
 #
-# {{{ restoreWindow()
-proc restoreWindow(win) =
+# {{{ restore()
+proc restore(win) =
   glfw.swapInterval(0)
   win.fastRedrawFrameCounter = 20
   win.w.pos = (win.oldPosX, win.oldPosY)
@@ -112,8 +126,8 @@ proc restoreWindow(win) =
   win.maximized = false
 
 # }}}
-# {{{ maximizeWindow()
-proc maximizeWindow(win) =
+# {{{ maximize()
+proc maximize(win) =
   # TODO This logic needs to be a bit more sophisticated to support
   # multiple monitors
   let (_, _, w, h) = getPrimaryMonitor().workArea
@@ -182,9 +196,9 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
                 style=g_TitleBarWindowButtonStyle):
     if not win.maximizing:  # workaround to avoid double-activation
       if win.maximized:
-        restoreWindow(win)
+        win.restore()
       else:
-        maximizeWindow(win)
+        win.maximize()
 
   if koi.button(x + bw*2, by, bw, bh, IconWindowClose,
                 style=g_TitleBarWindowButtonStyle):
@@ -431,10 +445,10 @@ proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
 #  g_renderFrameProc(g_window, doHandleEvents=false)
   csdRenderFrame(g_window, doHandleEvents=false)
 
-proc setRenderFramePreProc*(win; p: RenderFramePreProc) =
+proc `renderFramePreCb=`*(win; p: RenderFramePreProc) =
   g_renderFramePreProc = p
 
-proc setRenderFrameProc*(win; p: RenderFrameProc) =
+proc `renderFrameCb=`*(win; p: RenderFrameProc) =
   g_window = win
   g_renderFrameProc = p
   win.w.framebufferSizeCb = framebufSizeCb
