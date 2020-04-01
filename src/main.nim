@@ -455,6 +455,8 @@ proc newMapDialog(a) =
 # {{{ Edit note dialog
 var
   g_editNoteDialogOpen: bool
+  g_editNoteDialog_row: Natural
+  g_editNoteDialog_col: Natural
   g_editNoteDialog_type: int
   g_editNoteDialog_customId: string
   g_editNoteDialog_note: string
@@ -498,7 +500,8 @@ proc editNoteDialog(a) =
       kind: NoteKind(g_editNoteDialog_type),
       text: g_editNoteDialog_note
     )
-    actions.setNote(a.map, a.cursorRow, a.cursorCol, note, a.undoManager)
+    actions.setNote(a.map, g_editNoteDialog_row, g_editNoteDialog_col, note,
+                    a.undoManager)
     setStatusMessage(IconComment, "Set cell note", a)
     g_editNoteDialogOpen = false
 
@@ -827,6 +830,8 @@ proc handleMapEvents(a) =
         if m.getFloor(curRow, curCol) == fNone:
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
+          g_editNoteDialog_row = curRow
+          g_editNoteDialog_col = curCol
           if m.hasNote(curRow, curCol):
             let note = m.getNote(curRow, curCol)
             g_editNoteDialog_type = ord(note.kind)
