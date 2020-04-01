@@ -119,11 +119,16 @@ proc excavate*(currMap; r,c: Natural, um) =
 
 # }}}
 # {{{ toggleFloorOrientation*()
-# TODO unnecessary, remove
 proc toggleFloorOrientation*(currMap; r,c: Natural, um) =
   singleCellAction(currMap, r,c, um, m):
     let newOt = if m.getFloorOrientation(r,c) == Horiz: Vert else: Horiz
     m.setFloorOrientation(r,c, newOt)
+
+# }}}
+# {{{ setNote*()
+proc setNote*(currMap; r,c: Natural, n: Note, um) =
+  singleCellAction(currMap, r,c, um, m):
+    m.setNote(r,c, n)
 
 # }}}
 # }}}

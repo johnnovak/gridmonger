@@ -7,6 +7,66 @@ import selection
 
 using m: Map
 
+proc noteKey(m; r,c: Natural): Natural =
+  let h = m.rows
+  let w = m.cols
+  assert r < h
+  assert c < w
+  result = r*w + c
+
+proc hasNote*(m; r,c: Natural): bool =
+  let key = noteKey(m, r,c)
+  m.notes.hasKey(key)
+
+proc getNote*(m; r,c: Natural): Note =
+  let key = noteKey(m, r,c)
+  m.notes[key]
+
+proc setNote*(m; r,c: Natural, note: Note) =
+  let key = noteKey(m, r,c)
+  m.notes[key] = note
+
+proc delNote*(m; r,c: Natural) =
+  let key = noteKey(m, r,c)
+  if m.notes.hasKey(key):
+    let note = m.notes[key]
+    m.notes.del(key)
+
+    # Renumber indexed notes
+    if note.kind == nkIndexed:
+      let deletedIndex = note.index
+      for n in m.notes.mvalues:
+        if n.kind == nkIndexed and deletedIndex > note.index:
+          dec(n.index)
+
+
+proc numNotes*(m): Natural =
+  m.notes.len
+
+iterator allNotes*(m): (Natural, Natural, Note) =
+  for k, note in m.notes.pairs:
+    let
+      row = k div m.cols
+      col = k mod m.cols
+    yield (row.Natural, col.Natural, note)
+
+
+proc delNotes(m; rect: Rect[Natural]) =
+  var toDel: seq[(Natural, Natural)]
+  for r,c, _ in m.allNotes():
+    if rect.contains(r,c):
+      toDel.add((r,c))
+
+  for (r,c) in toDel: m.delNote(r,c)
+
+
+proc copyNotesFrom(dest: var Map, destRow, destCol: Natural,
+                   src: Map, srcRect: Rect[Natural]) =
+  for (r,c, note) in src.allNotes():
+    if srcRect.contains(r,c):
+      dest.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
+
+
 proc cellIndex(m; r,c: Natural): Natural =
   # We need to be able to address the bottommost & rightmost "edge" columns
   # & rows within the module.
@@ -37,7 +97,7 @@ proc fill*(m; rect: Rect[Natural], cell: Cell) =
 
 
 proc fill*(m; cell: Cell) =
-  let rect = rectN(0, 0, m.rows-1, m.cols-1)
+  let rect = rectN(0, 0, m.rows, m.cols)
   m.fill(rect, cell)
 
 proc initMap(m; rows, cols: Natural) =
@@ -88,6 +148,11 @@ proc copyFrom*(dest: var Map, destRow, destCol: Natural,
   for r in 0..<h:
     dest[destRow+r, destCol+w].wallW = src[srcRow+r, srcCol+w].wallW
 
+  dest.delNotes(rectN(destRow, destCol,
+                      destRow + srcRect.height, destCol + srcRect.width))
+
+  dest.copyNotesFrom(destRow, destCol, src, srcRect)
+
 
 proc copyFrom*(dest: var Map, src: Map) =
   dest.copyFrom(destRow=0, destCol=0,
@@ -122,9 +187,9 @@ proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
   inc(srcRect.r2, border)
   inc(srcRect.c2, border)
 
-  var dest = new Map
-  dest.initMap(rect.height + border*2, rect.width + border*2)
+  var dest = newMap(rect.height + border*2, rect.width + border*2)
   dest.copyFrom(destRow, destCol, src, srcRect)
+
   result = dest
 
 
@@ -232,6 +297,7 @@ proc eraseCell*(m; r,c: Natural) =
 
   m.eraseCellWalls(r,c)
   m.setFloor(r,c, fNone)
+  m.delNote(r,c)
 
 
 proc guessFloorOrientation*(m; r,c: Natural): Orientation =
@@ -269,50 +335,6 @@ proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
             copyWall(dirW)
             copyWall(dirS)
             copyWall(dirE)
-
-
-proc noteKey(m; r,c: Natural): Natural =
-  let h = m.rows
-  let w = m.cols
-  assert r < h
-  assert c < w
-  result = r*w + c
-
-proc hasNote*(m; r,c: Natural): bool =
-  let key = noteKey(m, r,c)
-  m.notes.hasKey(key)
-
-proc getNote*(m; r,c: Natural): Note =
-  let key = noteKey(m, r,c)
-  m.notes[key]
-
-proc setNote*(m; r,c: Natural, note: Note) =
-  let key = noteKey(m, r,c)
-  m.notes[key] = note
-
-proc delNote*(m; r,c: Natural) =
-  let key = noteKey(m, r,c)
-  if m.notes.hasKey(key):
-    let note = m.notes[key]
-    m.notes.del(key)
-
-    # Renumber indexed notes
-    if note.kind == nkIndexed:
-      let deletedIndex = note.index
-      for n in m.notes.mvalues:
-        if n.kind == nkIndexed and deletedIndex > note.index:
-          dec(n.index)
-
-
-proc numNotes*(m): Natural =
-  m.notes.len
-
-iterator allNotes*(m): (Natural, Natural, Note) =
-  for k, note in m.notes.pairs:
-    let
-      row = k div m.cols
-      col = k mod m.cols
-    yield (row.Natural, col.Natural, note)
 
 
 # vim: et:ts=2:sw=2:fdm=marker

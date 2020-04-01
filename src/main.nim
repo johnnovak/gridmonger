@@ -498,7 +498,8 @@ proc editNoteDialog(a) =
       kind: NoteKind(g_editNoteDialog_type),
       text: g_editNoteDialog_note
     )
-    a.map.setNote(a.cursorRow, a.cursorCol, note)
+    actions.setNote(a.map, a.cursorRow, a.cursorCol, note, a.undoManager)
+    setStatusMessage(IconComment, "Set cell note", a)
     g_editNoteDialogOpen = false
 
   proc cancelAction(a) =
