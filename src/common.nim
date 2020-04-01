@@ -48,8 +48,8 @@ proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
   let
     r = max(a.r1, b.r1)
     c = max(a.c1, b.c1)
-    nr = min(a.r1 + a.height, b.r1 + b.height)
-    nc = min(a.c1 + a.width,  b.c1 + b.width)
+    nr = min(a.r1 + a.rows, b.r1 + b.rows)
+    nc = min(a.c1 + a.cols, b.c1 + b.cols)
 
   if (nc >= c and nr >= r):
     some(Rect[T](
@@ -61,8 +61,8 @@ proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
   else: none(Rect[T])
 
 
-func width* [T: RectType](r: Rect[T]): T = r.c2 - r.c1
-func height*[T: RectType](r: Rect[T]): T = r.r2 - r.r1
+func rows*[T: RectType](r: Rect[T]): T = r.r2 - r.r1
+func cols*[T: RectType](r: Rect[T]): T = r.c2 - r.c1
 
 func contains*[T: RectType](a: Rect[T], r,c: T): bool =
   r >= a.r1 and r < a.r2 and

@@ -1236,16 +1236,16 @@ proc drawNote(x, y: float, note: Note, ctx) =
 
 # }}}
 # {{{ drawNotes()
-proc drawNotes(m: Map, ctx) =
+proc drawNotes(viewBuf: Map, ctx) =
   alias(dp, ctx.dp)
 
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
-      let r = dp.viewStartRow + viewRow
-      let c = dp.viewStartCol + viewCol
-      if m.hasNote(r,c):
+      let bufRow = viewRow+1
+      let bufCol = viewCol+1
+      if viewBuf.hasNote(bufRow, bufCol):
         let
-          note = m.getNote(r,c)
+          note = viewBuf.getNote(bufRow, bufCol)
           x = cellX(viewCol, dp)
           y = cellY(viewRow, dp)
 
@@ -1511,7 +1511,7 @@ proc drawMap*(m: Map, ctx) =
     drawEdgeOutlines(m, outlineBuf.get, ctx)
 
   drawFloors(viewBuf, ctx)
-  drawNotes(m, ctx)
+  drawNotes(viewBuf, ctx)
 
   # TODO finish shadow implementation (draw corners)
   if ms.innerShadowEnabled:

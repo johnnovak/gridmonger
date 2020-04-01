@@ -52,8 +52,8 @@ proc copyFrom*(dest: var Selection, destRow, destCol: Natural,
     destRows = max(dest.rows - destRow, 0)
     destCols = max(dest.cols - destCol, 0)
 
-    cols = min(min(srcCols, destCols), srcRect.width)
-    rows = min(min(srcRows, destRows), srcRect.height)
+    rows = min(min(srcRows, destRows), srcRect.rows)
+    cols = min(min(srcCols, destCols), srcRect.cols)
 
   for r in 0..<rows:
     for c in 0..<cols:
@@ -71,7 +71,7 @@ proc newSelectionFrom*(src: Selection, rect: Rect[Natural]): Selection =
   assert rect.c2 <= src.cols
 
   var dest = new Selection
-  dest.initSelection(rect.height, rect.width, )
+  dest.initSelection(rect.rows, rect.cols)
   dest.copyFrom(destRow=0, destCol=0, src, srcRect=rect)
   result = dest
 

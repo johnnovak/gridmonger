@@ -60,11 +60,11 @@ proc delNotes(m; rect: Rect[Natural]) =
   for (r,c) in toDel: m.delNote(r,c)
 
 
-proc copyNotesFrom(dest: var Map, destRow, destCol: Natural,
+proc copyNotesFrom(m; destRow, destCol: Natural,
                    src: Map, srcRect: Rect[Natural]) =
   for (r,c, note) in src.allNotes():
     if srcRect.contains(r,c):
-      dest.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
+      m.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
 
 
 proc cellIndex(m; r,c: Natural): Natural =
@@ -120,7 +120,7 @@ proc newMap*(rows, cols: Natural): Map =
   result = m
 
 
-proc copyFrom*(dest: var Map, destRow, destCol: Natural,
+proc copyFrom*(m; destRow, destCol: Natural,
                src: Map, srcRect: Rect[Natural]) =
   # This function cannot fail as the copied area is clipped to the extents of
   # the destination area (so nothing gets copied in the worst case).
@@ -128,35 +128,35 @@ proc copyFrom*(dest: var Map, destRow, destCol: Natural,
     # TODO use rect.intersect
     srcCol = srcRect.c1
     srcRow = srcRect.r1
-    srcRows  = max(src.rows - srcRow, 0)
-    srcCols   = max(src.cols - srcCol, 0)
-    destRows = max(dest.rows - destRow, 0)
-    destCols  = max(dest.cols - destCol, 0)
+    srcRows = max(src.rows - srcRow, 0)
+    srcCols = max(src.cols - srcCol, 0)
+    destRows = max(m.rows - destRow, 0)
+    destCols = max(m.cols - destCol, 0)
 
-    w = min(min(srcCols,  destCols),  srcRect.width)
-    h = min(min(srcRows, destRows), srcRect.height)
+    rows = min(min(srcRows, destRows), srcRect.rows)
+    cols = min(min(srcCols,  destCols),  srcRect.cols)
 
-  for r in 0..<h:
-    for c in 0..<w:
-      dest[destRow+r, destCol+c] = src[srcRow+r, srcCol+c]
+  for r in 0..<rows:
+    for c in 0..<cols:
+      m[destRow+r, destCol+c] = src[srcRow+r, srcCol+c]
 
   # Copy the South walls of the bottommost "edge" row
-  for c in 0..<w:
-    dest[destRow+h, destCol+c].wallN = src[srcRow+h, srcCol+c].wallN
+  for c in 0..<cols:
+    m[destRow+rows, destCol+c].wallN = src[srcRow+rows, srcCol+c].wallN
 
   # Copy the East walls of the rightmost "edge" column
-  for r in 0..<h:
-    dest[destRow+r, destCol+w].wallW = src[srcRow+r, srcCol+w].wallW
+  for r in 0..<rows:
+    m[destRow+r, destCol+cols].wallW = src[srcRow+r, srcCol+cols].wallW
 
-  dest.delNotes(rectN(destRow, destCol,
-                      destRow + srcRect.height, destCol + srcRect.width))
+  m.delNotes(rectN(destRow, destCol,
+                   destRow + srcRect.rows, destCol + srcRect.cols))
 
-  dest.copyNotesFrom(destRow, destCol, src, srcRect)
+  m.copyNotesFrom(destRow, destCol, src, srcRect)
 
 
-proc copyFrom*(dest: var Map, src: Map) =
-  dest.copyFrom(destRow=0, destCol=0,
-                src, srcRect=rectN(0, 0, src.rows, src.cols))
+proc copyFrom*(m; src: Map) =
+  m.copyFrom(destRow=0, destCol=0,
+             src, srcRect=rectN(0, 0, src.rows, src.cols))
 
 
 proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
@@ -187,7 +187,7 @@ proc newMapFrom*(src: Map, rect: Rect[Natural], border: Natural = 0): Map =
   inc(srcRect.r2, border)
   inc(srcRect.c2, border)
 
-  var dest = newMap(rect.height + border*2, rect.width + border*2)
+  var dest = newMap(rect.rows + border*2, rect.cols + border*2)
   dest.copyFrom(destRow, destCol, src, srcRect)
 
   result = dest
@@ -309,7 +309,7 @@ proc guessFloorOrientation*(m; r,c: Natural): Orientation =
 
 
 proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
-  let rect = rectN(
+  let destRect = rectN(
     destRow,
     destCol,
     destRow + src.rows,
@@ -317,9 +317,9 @@ proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
   ).intersect(
     rectN(0, 0, m.rows, m.cols)
   )
-  if rect.isSome:
-    for r in 0..<rect.get.height:
-      for c in 0..<rect.get.width:
+  if destRect.isSome:
+    for r in 0..<destRect.get.rows:
+      for c in 0..<destRect.get.cols:
         if sel[r,c]:
           let floor = src.getFloor(r,c)
           m.setFloor(destRow+r, destCol+c, floor)
@@ -335,6 +335,10 @@ proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
             copyWall(dirW)
             copyWall(dirS)
             copyWall(dirE)
+
+          m.delNote(destRow+r, destCol+c)
+          if src.hasNote(r,c):
+            m.setNote(destRow+r, destCol+c, src.getNote(r,c))
 
 
 # vim: et:ts=2:sw=2:fdm=marker
