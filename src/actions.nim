@@ -131,6 +131,12 @@ proc setNote*(currMap; r,c: Natural, n: Note, um) =
     m.setNote(r,c, n)
 
 # }}}
+# {{{ eraseNote*()
+proc eraseNote*(currMap; r,c: Natural, um) =
+  singleCellAction(currMap, r,c, um, m):
+    m.delNote(r,c)
+
+# }}}
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

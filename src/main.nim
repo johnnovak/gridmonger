@@ -841,6 +841,13 @@ proc handleMapEvents(a) =
             g_editNoteDialog_note = ""
           g_editNoteDialogOpen = true
 
+      elif ke.isKeyDown(keyN, {mkShift}):
+        if m.getFloor(curRow, curCol) == fNone:
+          setStatusMessage(IconWarning, "No note to delete in cell", a)
+        else:
+          actions.eraseNote(a.map, curRow, curCol, a.undoManager)
+          setStatusMessage(IconEraser, "Note erased", a)
+
       elif ke.isKeyDown(keyN, {mkCtrl}):
         g_newMapDialog_name = "Level 1"
         g_newMapDialog_rows = $m.rows
