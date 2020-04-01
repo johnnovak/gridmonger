@@ -522,33 +522,7 @@ proc editNoteDialog(a) =
 
 # }}}
 
-const SpecialWalls = @[
-  wIllusoryWall,
-  wInvisibleWall,
-  wDoor,
-  wLockedDoor,
-  wArchway,
-  wSecretDoor,
-  wLever,
-  wNiche,
-  wStatue
-]
-
-proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
-  case w
-  of wNone:          discard
-  of wWall:          drawSolidWallHoriz(x, y, ctx)
-  of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
-  of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
-  of wDoor:          drawDoorHoriz(x, y, ctx)
-  of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
-  of wArchway:       drawArchwayHoriz(x, y, ctx)
-  of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
-  of wLever:         discard
-  of wNiche:         discard
-  of wStatue:        discard
-
-
+# {{{ drawNotesPane()
 proc drawNotesPane(x, y, w, h: float, a) =
   alias(vg, a.vg)
   alias(m, a.map)
@@ -592,10 +566,38 @@ proc drawNotesPane(x, y, w, h: float, a) =
     vg.resetScissor()
 
 
+# }}}
+# {{{ drawWallToolbar
+const SpecialWalls = @[
+  wIllusoryWall,
+  wInvisibleWall,
+  wDoor,
+  wLockedDoor,
+  wArchway,
+  wSecretDoor,
+  wLever,
+  wNiche,
+  wStatue
+]
+
 proc drawWallToolbar(x: float, a) =
   alias(vg, a.vg)
   alias(ms, a.mapStyle)
   alias(dp, a.toolbarDrawParams)
+
+  proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
+    case w
+    of wNone:          discard
+    of wWall:          drawSolidWallHoriz(x, y, ctx)
+    of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
+    of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
+    of wDoor:          drawDoorHoriz(x, y, ctx)
+    of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
+    of wArchway:       drawArchwayHoriz(x, y, ctx)
+    of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
+    of wLever:         discard
+    of wNiche:         discard
+    of wStatue:        discard
 
   dp.setZoomLevel(ms, 1)
   let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
@@ -619,8 +621,8 @@ proc drawWallToolbar(x: float, a) =
     drawWallTool(x+toolPad, y+toolPad + dp.gridSize*0.5, wall, ctx)
     y += w + yPad
 
-
-# TODO
+# }}}
+# {{{ drawMarkerIconToolbar()
 proc drawMarkerIconToolbar(x: float, a) =
   alias(vg, a.vg)
   alias(ms, a.mapStyle)
@@ -651,6 +653,7 @@ proc drawMarkerIconToolbar(x: float, a) =
     drawIcon(x+toolPad, y+toolPad, 0, 0, icon, ctx)
     y += w + yPad
 
+# }}}
 
 # {{{ handleMapEvents()
 proc handleMapEvents(a) =
@@ -1114,7 +1117,7 @@ proc renderUI() =
   elif g_editNoteDialogOpen: editNoteDialog(a)
 
 # }}}
-# {{{ renderFrame()
+# {{{ renderFramePre()
 proc renderFramePre(win: CSDWindow) =
   alias(a, g_app)
   alias(vg, g_app.vg)
@@ -1127,6 +1130,8 @@ proc renderFramePre(win: CSDWindow) =
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
 
+# }}}
+# {{{ renderFrame()
 proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
   alias(a, g_app)
   alias(vg, g_app.vg)
@@ -1180,6 +1185,7 @@ proc loadFonts(vg: NVGContext) =
   discard addFallbackFont(vg, decoFont, iconFont)
 
 
+# TODO clean up
 proc initGfx(): (CSDWindow, NVGContext) =
   glfw.initialize()
   let win = newCSDWindow()
@@ -1207,7 +1213,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.undoManager = newUndoManager[Map]()
 
   searchThemes(a)
-  let themeIndex = findThemeIndex("lightblue", a)
+  var themeIndex = findThemeIndex("light", a)
+  if themeIndex == -1:
+    themeIndex = 0
   loadTheme(themeIndex, a)
 
   initDrawMapParams(a)

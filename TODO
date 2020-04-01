@@ -14,3 +14,5 @@ FONT -
 
 TODO
   don't allow drawing on title & status bars
+  better csdwindow separation (e.g. titlebar)
+  proper multi-window handling in csdwindow
