@@ -715,7 +715,7 @@ proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  vg.setFont((dp.gridSize*0.53).float)
+  vg.setFont((dp.gridSize*0.43).float * 1.6, "deco")  # TODO
   vg.fillColor(color)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
@@ -1084,7 +1084,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
   vg.lineTo(snap(x1, sw), snap(y, sw))
   vg.stroke()
 
-  drawIcon(x, y-dp.gridSize/2, 0.02, -0.02, "S", ctx)
+  drawIcon(x, y-dp.gridSize*0.5, 0.02, -0.02, "S", ctx)
 
   # Wall end
   vg.beginPath()
@@ -1226,15 +1226,27 @@ proc drawNote(x, y: float, note: Note, ctx) =
 
   let w = dp.gridSize*0.4
 
-  vg.fillColor(ms.noteCommentMarkerColor)
-  vg.beginPath()
-  vg.moveTo(x + dp.gridSize - w, y)
-  vg.lineTo(x + dp.gridSize + 1, y + w)
-  vg.lineTo(x + dp.gridSize + 1, y)
-  vg.closePath()
-  vg.fill()
+  case note.kind
+  of nkIndexed:
+    vg.fillColor(gray(0.0, 0.0))
+    vg.beginPath()
+    vg.circle(x + dp.gridSize*0.5, y + dp.gridSize*0.5, dp.gridSize*0.35)
+    vg.fill()
+    drawIcon(x, y, 0.02, -0.02, $note.index, ctx)
 
-# }}}
+  of nkCustomId:
+    drawIcon(x, y, 0.02, -0.02, $note.customId, ctx)
+
+  of nkComment:
+    vg.fillColor(ms.noteCommentMarkerColor)
+    vg.beginPath()
+    vg.moveTo(x + dp.gridSize - w, y)
+    vg.lineTo(x + dp.gridSize + 1, y + w)
+    vg.lineTo(x + dp.gridSize + 1, y)
+    vg.closePath()
+    vg.fill()
+
+  # }}}
 # {{{ drawNotes()
 proc drawNotes(viewBuf: Map, ctx) =
   alias(dp, ctx.dp)

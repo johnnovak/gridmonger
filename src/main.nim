@@ -472,14 +472,14 @@ var
   g_editNoteDialog_note: string
 
 proc editNoteDialog(a) =
-  koi.beginDialog(450, 220, fmt"{IconCommentInv}  Edit Note")
+  koi.beginDialog(470, 320, fmt"{IconCommentInv}  Edit Note")
   a.clearStatusMessage()
 
   let
-    dialogWidth = 450.0
-    dialogHeight = 220.0
+    dialogWidth = 470.0
+    dialogHeight = 320.0
     h = 24.0
-    labelWidth = 70.0
+    labelWidth = 80.0
     buttonWidth = 80.0
     buttonPad = 15.0
 
@@ -489,17 +489,24 @@ proc editNoteDialog(a) =
 
   koi.label(x, y, labelWidth, h, "Type", gray(0.80), fontSize=14.0)
   g_editNoteDialog_type = koi.radioButtons(
-    x + labelWidth, y, 232, h,
-    labels = @["Number", "Custom", "Comment"],
+    x + labelWidth, y, 250, h,
+    labels = @["Number", "Custom ID", "Comment"],
     tooltips = @["", "", ""],
     g_editNoteDialog_type
   )
+  y += 40
 
-  y = y + 40
   koi.label(x, y, labelWidth, h, "Note", gray(0.80), fontSize=14.0)
   g_editNoteDialog_note = koi.textField(
     x + labelWidth, y, 320.0, h, tooltip = "", g_editNoteDialog_note
   )
+  y = y + 32
+
+  if g_editNoteDialog_type == 1:
+    koi.label(x, y, labelWidth, h, "Custom ID", gray(0.80), fontSize=14.0)
+    g_editNoteDialog_customId = koi.textField(
+      x + labelWidth, y, 50.0, h, tooltip = "", g_editNoteDialog_customId
+    )
 
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
@@ -510,6 +517,11 @@ proc editNoteDialog(a) =
       kind: NoteKind(g_editNoteDialog_type),
       text: g_editNoteDialog_note
     )
+    if note.kind == nkIndexed:
+      note.index = a.map.maxNoteIndex() + 1
+    elif note.kind == nkCustomId:
+      note.customId = g_editNoteDialog_customId
+
     actions.setNote(a.map, g_editNoteDialog_row, g_editNoteDialog_col, note,
                     a.undoManager)
     setStatusMessage(IconComment, "Set cell note", a)

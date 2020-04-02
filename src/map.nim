@@ -59,6 +59,11 @@ proc delNotes(m; rect: Rect[Natural]) =
 
   for (r,c) in toDel: m.delNote(r,c)
 
+proc maxNoteIndex*(m): Natural =
+  for n in m.notes.values():
+    if n.kind == nkIndexed:
+      result = max(result, n.index)
+
 
 proc copyNotesFrom(m; destRow, destCol: Natural,
                    src: Map, srcRect: Rect[Natural]) =
