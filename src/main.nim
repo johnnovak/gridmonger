@@ -790,12 +790,19 @@ proc handleMapEvents(a) =
         else: a.currSpecialWallIdx = 0
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
-        um.undo(m)
-        setStatusMessage(IconUndo, "Undid action", a)
+        if um.canUndo():
+          let actionName = um.undo(m)
+          setStatusMessage(IconUndo, fmt"Undid action: {actionName}", a)
+        else:
+          setStatusMessage(IconWarning, "Nothing to undo", a)
+
 
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true):
-        um.redo(m)
-        setStatusMessage(IconRedo, "Redid action", a)
+        if um.canRedo():
+          let actionName = um.redo(m)
+          setStatusMessage(IconRedo, fmt"Redid action: {actionName}", a)
+        else:
+          setStatusMessage(IconWarning, "Nothing to redo", a)
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
@@ -1244,9 +1251,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
 #  a.map = newMap(16, 16)
-  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
+#  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
-#  a.map = readMap("notetest.grm")
+  a.map = readMap("notetest.grm")
 
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame
@@ -1254,8 +1261,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.win.title = "Eye of the Beholder III"
   a.win.modified = true
   # TODO for development
-  a.win.size = (960, 1040)
-  a.win.pos = (960, 0)
+#  a.win.size = (960, 1040)
+#  a.win.pos = (960, 0)
+  a.win.size = (700, 900)
+  a.win.pos = (900, 0)
   a.win.show()
 
 

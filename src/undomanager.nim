@@ -6,11 +6,12 @@ type
     states: seq[UndoState[S]]
     currState: int
 
-  UndoStateChangeProc*[S] = proc (s: var S)
+  ActionProc*[S] = proc (s: var S)
 
   UndoState[S] = object
-    nextState: UndoStateChangeProc[S]
-    prevState: UndoStateChangeProc[S]
+    action:     ActionProc[S]
+    actionName: string
+    undoAction: ActionProc[S]
 
 
 proc initUndoManager*[S](m: var UndoManager[S]) =
@@ -23,8 +24,8 @@ proc newUndoManager*[S](): UndoManager[S] =
 
 
 proc storeUndoState*[S](m: var UndoManager[S],
-                        undoAction: UndoStateChangeProc[S],
-                        redoAction: UndoStateChangeProc[S]) =
+                        actionName: string,
+                        action, undoAction: ActionProc[S]) =
 
   if m.states.len == 0:
     m.states.add(UndoState[S]())
@@ -34,25 +35,28 @@ proc storeUndoState*[S](m: var UndoManager[S],
   elif m.currState < m.states.high:
     m.states.setLen(m.currState+1)
 
-  m.states[m.currState].nextState = redoAction
-  m.states.add(UndoState[S](nextState: nil, prevState: undoAction))
+  m.states[m.currState].action = action
+  m.states[m.currState].actionName = actionName
+  m.states.add(UndoState[S](action: nil, undoAction: undoAction))
   inc(m.currState)
 
 
 proc canUndo*[S](m: var UndoManager[S]): bool =
   m.currState > 0
 
-proc undo*[S](m: var UndoManager[S], s: var S) =
+proc undo*[S](m: var UndoManager[S], s: var S): string =
   if m.canUndo():
-    m.states[m.currState].prevState(s)
+    m.states[m.currState].undoAction(s)
     dec(m.currState)
+    result = m.states[m.currState].actionName
 
 proc canRedo*[S](m: var UndoManager[S]): bool =
   m.currState < m.states.high
 
-proc redo*[S](m: var UndoManager[S], s: var S) =
+proc redo*[S](m: var UndoManager[S], s: var S): string =
   if m.canRedo():
-    m.states[m.currState].nextState(s)
+    m.states[m.currState].action(s)
+    result = m.states[m.currState].actionName
     inc(m.currState)
 
 
