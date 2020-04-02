@@ -52,7 +52,40 @@ proc eraseSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
         if sel[r,c]:
-          m.eraseCell(bbox.r1 + r, bbox.c1 + c)
+          let row = bbox.r1+r
+          let col = bbox.c1+c
+          m.eraseCell(row, col)
+
+# }}}
+# {{{ fillSelection*()
+proc fillSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
+  cellAreaAction(currMap, bbox, um, "Fill selection", m):
+    for r in 0..<sel.rows:
+      for c in 0..<sel.cols:
+        if sel[r,c]:
+          let row = bbox.r1+r
+          let col = bbox.c1+c
+          m.eraseCell(row, col)
+          m.setFloor(row, col, fEmpty)
+
+# }}}
+# {{{ surroundSelection*()
+proc surroundSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
+  cellAreaAction(currMap, bbox, um, "Surround selection with walls", m):
+    for r in 0..<sel.rows:
+      for c in 0..<sel.cols:
+        if sel[r,c]:
+          let row = bbox.r1+r
+          let col = bbox.c1+c
+
+          proc setWall(m: var Map, dir: CardinalDir) =
+            if m.canSetWall(row, col, dir):
+              m.setWall(row, col, dir, wWall)
+
+          if sel.isNeighbourCellEmpty(r,c, dirN): m.setWall(dirN)
+          if sel.isNeighbourCellEmpty(r,c, dirE): m.setWall(dirE)
+          if sel.isNeighbourCellEmpty(r,c, dirS): m.setWall(dirS)
+          if sel.isNeighbourCellEmpty(r,c, dirW): m.setWall(dirW)
 
 # }}}
 # {{{ paste*()

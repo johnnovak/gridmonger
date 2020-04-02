@@ -109,4 +109,15 @@ proc boundingBox*(s): Option[Rect[Natural]] =
     return Rect[Natural].none
 
 
+proc isNeighbourCellEmpty*(s; r,c: Natural, dir: CardinalDir): bool =
+  assert r < s.rows
+  assert c < s.cols
+
+  case dir
+  of dirN: result = r == 0        or not s[r-1, c  ]
+  of dirE: result = c == s.cols-1 or not s[  r, c+1]
+  of dirS: result = r == s.rows-1 or not s[r+1, c  ]
+  of dirW: result = c == 0        or not s[  r, c-1]
+
+
 # vim: et:ts=2:sw=2:fdm=marker

@@ -54,7 +54,7 @@ type
     emDrawWallSpecial,
     emEraseCell,
     emClearFloor,
-    emSelectDraw,
+    emSelect,
     emSelectRect
     emPastePreview
 
@@ -225,6 +225,19 @@ proc renderStatusBar(y: float, winWidth: float, a) =
 
 # }}}
 
+proc setSelectModeSelectMessage(a) =
+  setStatusMessage(IconSelection, "Mark selection",
+                   @["D", "draw", "E", "erase",
+                     "R", "add rect", "S", "sub rect",
+                     "A", "mark all", "U", "unmark all",
+                     "Ctrl", "actions"], a)
+
+proc setSelectModeActionMessage(a) =
+  setStatusMessage(IconSelection, "Mark selection",
+                   @["Ctrl+C", "copy", "Ctrl+X", "cut",
+                     "Ctrl+E", "erase", "Ctrl+F", "fill",
+                     "Ctrl+S", "surround"], a)
+
 # {{{ isKeyDown()
 func isKeyDown(ke: KeyEvent, keys: set[Key],
                mods: set[ModifierKey] = {}, repeat=false): bool =
@@ -337,13 +350,10 @@ proc moveCursor(dir: CardinalDir, a) =
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
-  a.editMode = emSelectDraw
+  a.editMode = emSelect
   a.selection = some(newSelection(a.map.rows, a.map.cols))
   a.drawMapParams.drawCursorGuides = true
-  setStatusMessage(IconSelection, "Mark selection",
-                   @["D", "draw", "E", "erase", "R", "rectangle",
-                     "Ctrl+A/D", "mark/unmark all", "C", "copy", "X", "cut",
-                     "Esc", "exit"], a)
+  setSelectModeSelectMessage(a)
 
 # }}}
 # {{{ exitSelectMode()
@@ -806,6 +816,7 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
+        koi.incFramesLeft()
 
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
@@ -987,18 +998,23 @@ proc handleMapEvents(a) =
         a.editMode = emNormal
         a.clearStatusMessage()
 
-    of emSelectDraw:
+    of emSelect:
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
       if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
       if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
       if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
+      if win.isKeyDown(keyLeftControl) or win.isKeyDown(keyRightControl):
+        setSelectModeActionMessage(a)
+      else:
+        setSelectModeSelectMessage(a)
+
       # TODO don't use win
       if   win.isKeyDown(keyD): a.selection.get[curRow, curCol] = true
       elif win.isKeyDown(keyE): a.selection.get[curRow, curCol] = false
 
-      if   ke.isKeyDown(keyA, {mkCtrl}): a.selection.get.fill(true)
-      elif ke.isKeyDown(keyD, {mkCtrl}): a.selection.get.fill(false)
+      if   ke.isKeyDown(keyA): a.selection.get.fill(true)
+      elif ke.isKeyDown(keyU): a.selection.get.fill(false)
 
       if ke.isKeyDown({keyR, keyS}):
         a.editMode = emSelectRect
@@ -1009,17 +1025,38 @@ proc handleMapEvents(a) =
           selected: ke.isKeyDown(keyR)
         ))
 
-      elif ke.isKeyDown(keyC):
+      elif ke.isKeyDown(keyC, {mkCtrl}):
         discard copySelection(a)
         exitSelectMode(a)
-        setStatusMessage(IconCopy, "Copied to buffer", a)
+        setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
-      elif ke.isKeyDown(keyX):
+      elif ke.isKeyDown(keyX, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
         exitSelectMode(a)
-        setStatusMessage(IconCut, "Cut to buffer", a)
+        setStatusMessage(IconCut, "Cut selection to buffer", a)
+
+      elif ke.isKeyDown(keyE, {mkCtrl}):
+        let bbox = copySelection(a)
+        if bbox.isSome:
+          actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
+        exitSelectMode(a)
+        setStatusMessage(IconEraser, "Erased selection", a)
+
+      elif ke.isKeyDown(keyF, {mkCtrl}):
+        let bbox = copySelection(a)
+        if bbox.isSome:
+          actions.fillSelection(m, a.copyBuf.get.selection, bbox.get, um)
+        exitSelectMode(a)
+        setStatusMessage(IconPencil, "Filled selection", a)
+
+      elif ke.isKeyDown(keyS, {mkCtrl}):
+        let bbox = copySelection(a)
+        if bbox.isSome:
+          actions.surroundSelection(m, a.copyBuf.get.selection, bbox.get, um)
+        exitSelectMode(a)
+        setStatusMessage(IconPencil, "Surrounded selection with walls", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
@@ -1054,7 +1091,7 @@ proc handleMapEvents(a) =
       if ke.isKeyUp({keyR, keyS}):
         a.selection.get.fill(a.selRect.get.rect, a.selRect.get.selected)
         a.selRect = SelectionRect.none
-        a.editMode = emSelectDraw
+        a.editMode = emSelect
 
     of emPastePreview:
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
@@ -1233,7 +1270,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.undoManager = newUndoManager[Map]()
 
   searchThemes(a)
-  var themeIndex = findThemeIndex("light", a)
+  var themeIndex = findThemeIndex("lightblue", a)
   if themeIndex == -1:
     themeIndex = 0
   loadTheme(themeIndex, a)
@@ -1253,7 +1290,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  a.map = newMap(16, 16)
 #  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
-  a.map = readMap("notetest.grm")
+#  a.map = readMap("notetest.grm")
+  a.map = readMap("pool-of-radiance-library.grm")
 
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame
@@ -1261,10 +1299,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.win.title = "Eye of the Beholder III"
   a.win.modified = true
   # TODO for development
-#  a.win.size = (960, 1040)
-#  a.win.pos = (960, 0)
-  a.win.size = (700, 900)
-  a.win.pos = (900, 0)
+  a.win.size = (960, 1040)
+  a.win.pos = (960, 0)
+#  a.win.size = (700, 900)
+#  a.win.pos = (900, 0)
   a.win.show()
 
 
