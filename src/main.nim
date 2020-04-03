@@ -29,7 +29,7 @@ import utils
 
 const ThemesDir = "themes"
 
-const DefaultZoomLevel = 5
+const DefaultZoomLevel = 8
 
 const
   StatusBarHeight = 26.0
@@ -465,14 +465,17 @@ proc newMapDialog(a) =
 # {{{ Edit note dialog
 var
   g_editNoteDialogOpen: bool
+  g_editNoteDialog_editMode: bool
   g_editNoteDialog_row: Natural
   g_editNoteDialog_col: Natural
-  g_editNoteDialog_type: int
+  g_editNoteDialog_kind: NoteKind
+  g_editNoteDialog_index: Natural
   g_editNoteDialog_customId: string
-  g_editNoteDialog_note: string
+  g_editNoteDialog_text: string
 
 proc editNoteDialog(a) =
-  koi.beginDialog(470, 320, fmt"{IconCommentInv}  Edit Note")
+  let title = (if g_editNoteDialog_editMode: "Edit" else: "Add") & " Note"
+  koi.beginDialog(470, 320, fmt"{IconCommentInv}  {title}")
   a.clearStatusMessage()
 
   let
@@ -488,21 +491,23 @@ proc editNoteDialog(a) =
     y = 60.0
 
   koi.label(x, y, labelWidth, h, "Type", gray(0.80), fontSize=14.0)
-  g_editNoteDialog_type = koi.radioButtons(
-    x + labelWidth, y, 250, h,
-    labels = @["Number", "Custom ID", "Comment"],
-    tooltips = @["", "", ""],
-    g_editNoteDialog_type
+  g_editNoteDialog_kind = NoteKind(
+    koi.radioButtons(
+      x + labelWidth, y, 250, h,
+      labels = @["Number", "Custom ID", "Comment"],
+      tooltips = @["", "", ""],
+      ord(g_editNoteDialog_kind)
+    )
   )
   y += 40
 
   koi.label(x, y, labelWidth, h, "Note", gray(0.80), fontSize=14.0)
-  g_editNoteDialog_note = koi.textField(
-    x + labelWidth, y, 320.0, h, tooltip = "", g_editNoteDialog_note
+  g_editNoteDialog_text = koi.textField(
+    x + labelWidth, y, 320.0, h, tooltip = "", g_editNoteDialog_text
   )
   y = y + 32
 
-  if g_editNoteDialog_type == 1:
+  if g_editNoteDialog_kind == nkCustomId:
     koi.label(x, y, labelWidth, h, "Custom ID", gray(0.80), fontSize=14.0)
     g_editNoteDialog_customId = koi.textField(
       x + labelWidth, y, 50.0, h, tooltip = "", g_editNoteDialog_customId
@@ -514,11 +519,14 @@ proc editNoteDialog(a) =
   proc okAction(a) =
     koi.closeDialog()
     var note = Note(
-      kind: NoteKind(g_editNoteDialog_type),
-      text: g_editNoteDialog_note
+      kind: g_editNoteDialog_kind,
+      text: g_editNoteDialog_text
     )
     if note.kind == nkIndexed:
-      note.index = a.map.maxNoteIndex() + 1
+      if g_editNoteDialog_editMode:
+        note.index = g_editNoteDialog_index
+      else:
+        note.index = a.map.maxNoteIndex() + 1
     elif note.kind == nkCustomId:
       note.customId = g_editNoteDialog_customId
 
@@ -557,35 +565,27 @@ proc drawNotesPane(x, y, w, h: float, a) =
   let curRow = a.cursorRow
   let curCol = a.cursorCol
 
-  # TODO
-  #[
-  vg.beginPath()
-  vg.fillColor(white(0.2))
-  vg.rect(x, y, w, h)
-  vg.fill()
-]#
-
   if a.editMode != emPastePreview and m.hasNote(curRow, curCol):
     let note = m.getNote(curRow, curCol)
 
-    vg.fillColor(ms.noteTextColor)
-
     case note.kind
     of nkIndexed:
-      vg.setFont(20.0, "deco", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-3, $note.index)
+      drawIndexedNote(x-40, y-12, note.index, 36,
+                      bgColor=ms.notePaneBackgroundColor,
+                      fgColor=ms.notePaneTextColor, vg)
 
     of nkCustomId:
-      vg.setFont(20.0, "deco", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-3, note.customId)
+      vg.fillColor(ms.notePaneTextColor)
+      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-22, y-2, note.customId)
 
     of nkComment:
-      vg.setFont(18.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-19, y-2, IconComment)
-#      vg.setFont(20.0, "deco", horizAlign=haCenter, vertAlign=vaTop)
-#      discard vg.text(x-20, y-3, "A")
+      vg.fillColor(ms.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-2, IconComment)
 
-    vg.setFont(14.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.fillColor(ms.notePaneTextColor)
+    vg.setFont(15.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
     vg.scissor(x, y, w, h)
     vg.textBox(x, y, w, note.text)
@@ -864,11 +864,23 @@ proc handleMapEvents(a) =
           g_editNoteDialog_col = curCol
           if m.hasNote(curRow, curCol):
             let note = m.getNote(curRow, curCol)
-            g_editNoteDialog_type = ord(note.kind)
-            g_editNoteDialog_note = note.text
+            g_editNoteDialog_editMode = true
+            g_editNoteDialog_kind = note.kind
+            g_editNoteDialog_text = note.text
+
+            if note.kind == nkIndexed:
+              g_editNoteDialog_index = note.index
+
+            if note.kind == nkCustomId:
+              g_editNoteDialog_customId = note.customId
+            else:
+              g_editNoteDialog_customId = ""
+
           else:
-            g_editNoteDialog_type = ord(nkComment)
-            g_editNoteDialog_note = ""
+            g_editNoteDialog_editMode = false
+            g_editNoteDialog_customId = ""
+            g_editNoteDialog_text = ""
+
           g_editNoteDialogOpen = true
 
       elif ke.isKeyDown(keyN, {mkShift}):
@@ -1241,9 +1253,9 @@ proc loadFonts(vg: NVGContext) =
   if boldFont == NoFont:
     quit "Could not add bold font.\n"
 
-  let decoFont = vg.createFont("deco", "data/Grenze-Bold.ttf")
-  if decoFont == NoFont:
-    quit "Could not add deco font.\n"
+  let blackFont = vg.createFont("sans-black", "data/Roboto-Black.ttf")
+  if blackFont == NoFont:
+    quit "Could not add black font.\n"
 
   let iconFont = vg.createFont("icon", "data/GridmongerIcons.ttf")
   if iconFont == NoFont:
@@ -1251,7 +1263,6 @@ proc loadFonts(vg: NVGContext) =
 
   discard addFallbackFont(vg, regularFont, iconFont)
   discard addFallbackFont(vg, boldFont, iconFont)
-  discard addFallbackFont(vg, decoFont, iconFont)
 
 
 # TODO clean up
@@ -1303,7 +1314,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
 #  a.map = readMap("notetest.grm")
-  a.map = readMap("pool-of-radiance-library.grm")
+#  a.map = readMap("pool-of-radiance-library.grm")
+  a.map = readMap("library.grm")
 
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame
@@ -1311,10 +1323,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.win.title = "Eye of the Beholder III"
   a.win.modified = true
   # TODO for development
-  a.win.size = (960, 1040)
-  a.win.pos = (960, 0)
-#  a.win.size = (700, 900)
-#  a.win.pos = (900, 0)
+#  a.win.size = (960, 1040)
+#  a.win.pos = (960, 0)
+  a.win.size = (700, 900)
+  a.win.pos = (900, 0)
   a.win.show()
 
 

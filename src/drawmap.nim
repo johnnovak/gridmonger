@@ -85,8 +85,12 @@ type
     pastePreviewColor*:      Color
     selectionColor*:         Color
 
-    noteTextColor*:          Color
-    noteCommentMarkerColor*: Color
+    noteMapTextColor*:        Color
+    noteMapIndexColor*:       Color
+    noteMapBackgroundColor*:  Color
+    notePaneTextColor*:       Color
+    notePaneBackgroundColor*: Color
+    noteCommentMarkerColor*:  Color
 
 
   GridStyle* = enum
@@ -711,11 +715,10 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
 
 # {{{ drawIcon*()
 proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
-  alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  vg.setFont((dp.gridSize*0.43).float * 1.6, "deco")  # TODO
+  vg.setFont((dp.gridSize*0.43).float)
   vg.fillColor(color)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
@@ -724,6 +727,42 @@ proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
 
 proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
   drawIcon(x, y, ox, oy, icon, ctx.ms.drawColor, ctx)
+
+# }}}
+# {{{ drawIndexedNote*()
+proc drawIndexedNote*(x, y: float, i: Natural, size: float,
+                      bgColor, fgColor: Color, vg: NVGContext) =
+  vg.fillColor(bgColor)
+  vg.beginPath()
+  vg.circle(x + size*0.5, y + size*0.5, size*0.35)
+  vg.fill()
+
+  vg.setFont((size*0.39).float)
+  vg.fillColor(fgColor)
+  vg.textAlign(haCenter, vaMiddle)
+  discard vg.text(x + size*0.50, y + size*0.53, $i)
+
+proc drawIndexedNote*(x, y: float, i: Natural, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  drawIndexedNote(x, y, i, dp.gridSize,
+                  bgColor=ms.noteMapBackgroundColor,
+                  fgColor=ms.noteMapIndexColor, vg)
+
+# }}}
+# {{{ drawCustomIdNote*()
+proc drawCustomIdNote*(x, y: float, s: string, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  vg.setFont((dp.gridSize * 0.48).float)
+  vg.fillColor(ms.noteMapTextColor)
+  vg.textAlign(haCenter, vaMiddle)
+  discard vg.text(x + dp.gridSize*0.52,
+                  y + dp.gridSize*0.55, s)
 
 # }}}
 # {{{ drawFloor()
@@ -1228,14 +1267,10 @@ proc drawNote(x, y: float, note: Note, ctx) =
 
   case note.kind
   of nkIndexed:
-    vg.fillColor(gray(0.0, 0.0))
-    vg.beginPath()
-    vg.circle(x + dp.gridSize*0.5, y + dp.gridSize*0.5, dp.gridSize*0.35)
-    vg.fill()
-    drawIcon(x, y, 0.02, -0.02, $note.index, ctx)
+    drawIndexedNote(x, y, note.index, ctx)
 
   of nkCustomId:
-    drawIcon(x, y, 0.02, -0.02, $note.customId, ctx)
+    drawCustomIdNote(x, y, note.customId, ctx)
 
   of nkComment:
     vg.fillColor(ms.noteCommentMarkerColor)

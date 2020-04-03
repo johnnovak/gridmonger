@@ -14,6 +14,12 @@ FONT -
 
 
 TODO
+  note dialog:
+    if custom id is empty, ok should be disabled
+    if text is empty, ok should be disabled for comments
+
+  note index recalculation on delete, cut, erase, paste etc.
+  autosave
   don't allow drawing on title & status bars
   better csdwindow separation (e.g. titlebar)
   proper multi-window handling in csdwindow

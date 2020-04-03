@@ -32,11 +32,11 @@ RIFF ('GRDM'            # Gridmonger map file
 'data'
     (numRows * numColums) records of:
 
-    BYTE  floor
-    BYTE  floorOrientation
-    BYTE  wallNorth
-    BYTE  wallWest
-    BYTE  customChar
+    UINT8  floor
+    UINT8  floorOrientation
+    UINT8  wallNorth
+    UINT8  wallWest
+    UINT8  customChar
 
 'note'
     UINT16  numNotes
@@ -47,3 +47,8 @@ RIFF ('GRDM'            # Gridmonger map file
 
 'disp'
     BZSTR   themeName
+    UINT8   currMap
+    UINT8   zoomLevel
+    UINT8   showCoords
+    UINT8   gridStyle
+

@@ -56,8 +56,13 @@ DefaultMapStyle.outerShadowWidthFactor = 0.125
 DefaultMapStyle.selectionColor         = rgba(1.0, 0.5, 0.5, 0.4)
 DefaultMapStyle.pastePreviewColor      = rgba(0.2, 0.6, 1.0, 0.4)
 
-DefaultMapStyle.noteTextColor          = gray(0.85)
-DefaultMapStyle.noteCommentMarkerColor = rgba(1.0, 0.2, 0.0, 0.8)
+DefaultMapStyle.noteMapTextColor        = gray(0.85)
+DefaultMapStyle.noteMapIndexColor       = gray(0.85)
+DefaultMapStyle.noteMapBackgroundColor  = gray(0.0, 0.2)
+DefaultMapStyle.notePaneTextColor       = gray(0.1)
+DefaultMapStyle.notePaneBackgroundColor = gray(1.0, 0.2)
+DefaultMapStyle.noteCommentMarkerColor  = rgba(1.0, 0.2, 0.0, 0.8)
+
 # }}}
 
 # {{{ missingValueError()
@@ -152,7 +157,7 @@ proc getEnum[T: enum](cfg: Config, section, key: string, e: var T) =
 
 # {{{ parseMapSection()
 proc parseMapSection(c: Config): MapStyle =
-  var ms = new MapStyle
+  var ms = DefaultMapStyle.deepCopy()
   const M = MapSection
 
   c.getColor(M, "backgroundColor", ms.backgroundColor)
@@ -192,7 +197,12 @@ proc parseMapSection(c: Config): MapStyle =
   c.getColor(M, "pastePreviewColor",       ms.pastePreviewColor)
   c.getColor(M, "selectionColor",          ms.selectionColor)
 
-  c.getColor(M, "noteTextColor",           ms.noteTextColor)
+  c.getColor(M, "noteMapTextColor",        ms.noteMapTextColor)
+  c.getColor(M, "noteMapIndexColor",       ms.noteMapIndexColor)
+  c.getColor(M, "noteMapBackgroundColor",  ms.noteMapBackgroundColor)
+  c.getColor(M, "noteCommentMarkerColor",  ms.noteCommentMarkerColor)
+  c.getColor(M, "notePaneTextColor",       ms.notePaneTextColor)
+  c.getColor(M, "notePaneBackgroundColor", ms.notePaneBackgroundColor)
   c.getColor(M, "noteCommentMarkerColor",  ms.noteCommentMarkerColor)
 
   result = ms
