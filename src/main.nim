@@ -92,17 +92,37 @@ type
     drawMapParams:     DrawMapParams
     toolbarDrawParams: DrawMapParams
 
+    mapTopPad:      float
+    mapBottomPad:   float
+
+    showNotesPane:  bool
+
     # Themes
     themeNames:     seq[string]
     currThemeIndex: Natural
     nextThemeIndex: Option[Natural]
     themeReloaded:  bool
 
+    # Dialogs
+    newMapDialog:   NewMapDialogParams
+    editNoteDialog: EditNoteDialogParams
 
-    mapTopPad: float
-    mapBottomPad: float
 
-    showNotesPane: bool
+  NewMapDialogParams = object
+    isOpen:   bool
+    name:     string
+    rows:     string
+    cols:     string
+
+  EditNoteDialogParams = object
+    isOpen:   bool
+    editMode: bool
+    row:      Natural
+    col:      Natural
+    kind:     NoteKind
+    index:    Natural
+    customId: string
+    text:     string
 
 
 var g_app: AppContext
@@ -390,13 +410,7 @@ proc copySelection(a): Option[Rect[Natural]] =
 # {{{ Dialogs
 
 # {{{ New map dialog
-var
-  g_newMapDialogOpen: bool
-  g_newMapDialog_name: string
-  g_newMapDialog_rows: string
-  g_newMapDialog_cols: string
-
-proc newMapDialog(a) =
+proc newMapDialog(dlg: var NewMapDialogParams, a) =
   koi.beginDialog(350, 220, fmt"{IconNewFile}  New map")
   a.clearStatusMessage()
 
@@ -413,68 +427,59 @@ proc newMapDialog(a) =
     y = 60.0
 
   koi.label(x, y, labelWidth, h, "Name", gray(0.80), fontSize=14.0)
-  g_newMapDialog_name = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", g_newMapDialog_name
+  dlg.name = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
   )
 
   y = y + 50
   koi.label(x, y, labelWidth, h, "Rows", gray(0.80), fontSize=14.0)
-  g_newMapDialog_rows = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_rows
+  dlg.rows = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
   )
 
   y = y + 30
   koi.label(x, y, labelWidth, h, "Columns", gray(0.80), fontSize=14.0)
-  g_newMapDialog_cols = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", g_newMapDialog_cols
+  dlg.cols = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
   )
 
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  proc okAction(a) =
+  proc okAction(dlg: var NewMapDialogParams, a) =
     initUndoManager(a.undoManager)
     # TODO number error checking
-    let rows = parseInt(g_newMapDialog_rows)
-    let cols = parseInt(g_newMapDialog_cols)
+    let rows = parseInt(dlg.rows)
+    let cols = parseInt(dlg.cols)
     a.map = newMap(rows, cols)
     resetCursorAndViewStart(a)
     setStatusMessage(IconFile, fmt"New {rows}x{cols} map created", a)
     koi.closeDialog()
-    g_newMapDialogOpen = false
+    dlg.isOpen = false
 
-  proc cancelAction(a) =
+  proc cancelAction(dlg: var NewMapDialogParams, a) =
     koi.closeDialog()
-    g_newMapDialogOpen = false
+    dlg.isOpen = false
 
 
   if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
-    okAction(a)
+    okAction(dlg, a)
 
   x += buttonWidth + 10
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-    cancelAction(a)
+    cancelAction(dlg, a)
 
   for ke in koi.keyBuf():
-    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(a)
-    elif ke.action == kaDown and ke.key == keyEnter:  okAction(a)
+    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
+    elif ke.action == kaDown and ke.key == keyEnter:  okAction(dlg, a)
 
   koi.endDialog()
 
 # }}}
 # {{{ Edit note dialog
-var
-  g_editNoteDialogOpen: bool
-  g_editNoteDialog_editMode: bool
-  g_editNoteDialog_row: Natural
-  g_editNoteDialog_col: Natural
-  g_editNoteDialog_kind: NoteKind
-  g_editNoteDialog_index: Natural
-  g_editNoteDialog_customId: string
-  g_editNoteDialog_text: string
 
-proc editNoteDialog(a) =
-  let title = (if g_editNoteDialog_editMode: "Edit" else: "Add") & " Note"
+proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
+  let title = (if dlg.editMode: "Edit" else: "Add") & " Note"
   koi.beginDialog(470, 320, fmt"{IconCommentInv}  {title}")
   a.clearStatusMessage()
 
@@ -491,64 +496,68 @@ proc editNoteDialog(a) =
     y = 60.0
 
   koi.label(x, y, labelWidth, h, "Type", gray(0.80), fontSize=14.0)
-  g_editNoteDialog_kind = NoteKind(
+  dlg.kind = NoteKind(
     koi.radioButtons(
       x + labelWidth, y, 250, h,
       labels = @["Number", "Custom ID", "Comment"],
       tooltips = @["", "", ""],
-      ord(g_editNoteDialog_kind)
+      ord(dlg.kind)
     )
   )
   y += 40
 
   koi.label(x, y, labelWidth, h, "Note", gray(0.80), fontSize=14.0)
-  g_editNoteDialog_text = koi.textField(
-    x + labelWidth, y, 320.0, h, tooltip = "", g_editNoteDialog_text
+  dlg.text = koi.textField(
+    x + labelWidth, y, 320.0, h, tooltip = "", dlg.text
   )
   y = y + 32
 
-  if g_editNoteDialog_kind == nkCustomId:
+  if dlg.kind == nkCustomId:
     koi.label(x, y, labelWidth, h, "Custom ID", gray(0.80), fontSize=14.0)
-    g_editNoteDialog_customId = koi.textField(
-      x + labelWidth, y, 50.0, h, tooltip = "", g_editNoteDialog_customId
+    dlg.customId = koi.textField(
+      x + labelWidth, y, 50.0, h, tooltip = "", dlg.customId
     )
 
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  proc okAction(a) =
+  proc okAction(dlg: var EditNoteDialogParams, a) =
     koi.closeDialog()
     var note = Note(
-      kind: g_editNoteDialog_kind,
-      text: g_editNoteDialog_text
+      kind: dlg.kind,
+      text: dlg.text
     )
     if note.kind == nkIndexed:
-      if g_editNoteDialog_editMode:
-        note.index = g_editNoteDialog_index
+      let (r, c) = (dlg.row, dlg.col)
+      let changedKindToIndexed = not a.map.hasNote(r,c) or
+                                     a.map.getNote(r,c).kind != nkIndexed
+
+      if dlg.editMode and not changedKindToIndexed:
+        note.index = dlg.index
       else:
         note.index = a.map.maxNoteIndex() + 1
     elif note.kind == nkCustomId:
-      note.customId = g_editNoteDialog_customId
+      note.customId = dlg.customId
 
-    actions.setNote(a.map, g_editNoteDialog_row, g_editNoteDialog_col, note,
+    actions.setNote(a.map, dlg.row, dlg.col, note,
                     a.undoManager)
     setStatusMessage(IconComment, "Set cell note", a)
-    g_editNoteDialogOpen = false
+    dlg.isOpen = false
 
-  proc cancelAction(a) =
+  proc cancelAction(dlg: var EditNoteDialogParams, a) =
     koi.closeDialog()
-    g_editNoteDialogOpen = false
+    dlg.isOpen = false
 
   if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
-    okAction(a)
+    okAction(dlg, a)
 
   x += buttonWidth + 10
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-    cancelAction(a)
+    cancelAction(dlg, a)
 
   for ke in koi.keyBuf():
-    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(a)
-    elif ke.action == kaDown and ke.key == keyEnter:  okAction(a)
+    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
+    elif ke.action == kaDown and ke.key == keyEnter:  okAction(dlg, a)
 
   koi.endDialog()
 
@@ -585,7 +594,7 @@ proc drawNotesPane(x, y, w, h: float, a) =
       discard vg.text(x-20, y-2, IconComment)
 
     vg.fillColor(ms.notePaneTextColor)
-    vg.setFont(15.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
     vg.scissor(x, y, w, h)
     vg.textBox(x, y, w, note.text)
@@ -860,28 +869,30 @@ proc handleMapEvents(a) =
         if m.getFloor(curRow, curCol) == fNone:
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
-          g_editNoteDialog_row = curRow
-          g_editNoteDialog_col = curCol
+          alias(dlg, a.editNoteDialog)
+          dlg.row = curRow
+          dlg.col = curCol
+
           if m.hasNote(curRow, curCol):
             let note = m.getNote(curRow, curCol)
-            g_editNoteDialog_editMode = true
-            g_editNoteDialog_kind = note.kind
-            g_editNoteDialog_text = note.text
+            dlg.editMode = true
+            dlg.kind = note.kind
+            dlg.text = note.text
 
             if note.kind == nkIndexed:
-              g_editNoteDialog_index = note.index
+              dlg.index = note.index
 
             if note.kind == nkCustomId:
-              g_editNoteDialog_customId = note.customId
+              dlg.customId = note.customId
             else:
-              g_editNoteDialog_customId = ""
+              dlg.customId = ""
 
           else:
-            g_editNoteDialog_editMode = false
-            g_editNoteDialog_customId = ""
-            g_editNoteDialog_text = ""
+            dlg.editMode = false
+            dlg.customId = ""
+            dlg.text = ""
 
-          g_editNoteDialogOpen = true
+          dlg.isOpen = true
 
       elif ke.isKeyDown(keyN, {mkShift}):
         if m.getFloor(curRow, curCol) == fNone:
@@ -891,10 +902,11 @@ proc handleMapEvents(a) =
           setStatusMessage(IconEraser, "Note erased", a)
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
-        g_newMapDialog_name = "Level 1"
-        g_newMapDialog_rows = $m.rows
-        g_newMapDialog_cols = $m.cols
-        g_newMapDialogOpen = true
+        alias(dlg, a.newMapDialog)
+        dlg.name = "Level 1"
+        dlg.rows = $m.rows
+        dlg.cols = $m.cols
+        dlg.isOpen = true
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
         when not defined(DEBUG):
@@ -1194,8 +1206,8 @@ proc renderUI() =
   renderStatusBar(statusBarY, winWidth.float, a)
 
   # Dialogs
-  if g_newMapDialogOpen:     newMapDialog(a)
-  elif g_editNoteDialogOpen: editNoteDialog(a)
+  if a.newMapDialog.isOpen:     newMapDialog(a.newMapDialog, a)
+  elif a.editNoteDialog.isOpen: editNoteDialog(a.editNoteDialog, a)
 
 # }}}
 # {{{ renderFramePre()
@@ -1314,8 +1326,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
 #  a.map = readMap("notetest.grm")
-#  a.map = readMap("pool-of-radiance-library.grm")
-  a.map = readMap("library.grm")
+  a.map = readMap("pool-of-radiance-library.grm")
+#  a.map = readMap("library.grm")
 
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame
