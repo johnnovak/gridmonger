@@ -16,11 +16,13 @@ template cellAreaAction(currMap; rect: Rect[Natural], um;
                         actionName: string, actionMap, actionBody: untyped) =
   let action = proc (actionMap: var Map) =
     actionBody
+    m.reindexNotes()
 
   var undoMap = newMapFrom(currMap, rect)
   var undoAction = proc (m: var Map) =
     m.copyFrom(destRow=rect.r1, destCol=rect.c1,
                src=undoMap, srcRect=rectN(0, 0, rect.rows, rect.cols))
+    m.reindexNotes()
 
   um.storeUndoState(actionName, action, undoAction)
   action(currMap)

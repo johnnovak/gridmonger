@@ -647,20 +647,11 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       kind: dlg.kind,
       text: dlg.text
     )
-    if note.kind == nkIndexed:
-      let (r, c) = (dlg.row, dlg.col)
-      let changedKindToIndexed = not a.map.hasNote(r,c) or
-                                     a.map.getNote(r,c).kind != nkIndexed
-
-      if dlg.editMode and not changedKindToIndexed:
-        note.index = dlg.index
-      else:
-        note.index = a.map.maxNoteIndex() + 1
-    elif note.kind == nkCustomId:
+    if note.kind == nkCustomId:
       note.customId = dlg.customId
 
-    actions.setNote(a.map, dlg.row, dlg.col, note,
-                    a.undoManager)
+    actions.setNote(a.map, dlg.row, dlg.col, note, a.undoManager)
+
     setStatusMessage(IconComment, "Set cell note", a)
     dlg.isOpen = false
 

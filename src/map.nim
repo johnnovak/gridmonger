@@ -1,3 +1,4 @@
+import algorithm
 import options
 import tables
 
@@ -29,15 +30,17 @@ proc setNote*(m; r,c: Natural, note: Note) =
 proc delNote*(m; r,c: Natural) =
   let key = noteKey(m, r,c)
   if m.notes.hasKey(key):
-    let note = m.notes[key]
     m.notes.del(key)
 
-    # Renumber indexed notes
-    if note.kind == nkIndexed:
-      let deletedIndex = note.index
-      for n in m.notes.mvalues:
-        if n.kind == nkIndexed and deletedIndex > note.index:
-          dec(n.index)
+proc reindexNotes*(m) =
+  var keys: seq[int] = @[]
+  for k, n in m.notes.pairs():
+    if n.kind == nkIndexed:
+      keys.add(k)
+
+  sort(keys)
+  for i, k in keys.pairs():
+    m.notes[k].index = i+1
 
 
 proc numNotes*(m): Natural =
