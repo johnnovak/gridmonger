@@ -11,8 +11,9 @@ import drawmap
 
 type ThemeParseError* = object of Exception
 
-proc raiseThemeParseError(s: string) =
-  raise newException(ThemeParseError, s)
+# TODO remove?
+#proc raiseThemeParseError(s: string) =
+#  raise newException(ThemeParseError, s)
 
 const MapSection = "map"
 

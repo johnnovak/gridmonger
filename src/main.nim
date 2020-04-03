@@ -1,19 +1,15 @@
 import algorithm
 import lenientops
-import math
 import options
 import os
-import strutils
 import strformat
+import strutils
 
 import glad/gl
 import glfw
-from glfw/wrapper import showWindow
 import koi
 import nanovg
-
-when not defined(DEBUG):
-  import osdialog
+when not defined(DEBUG): import osdialog
 
 import actions
 import common
@@ -27,15 +23,16 @@ import undomanager
 import utils
 
 
-const ThemesDir = "themes"
-
-const DefaultZoomLevel = 8
-
+# {{{ Constants
 const
+  ThemesDir = "themes"
+
+  DefaultZoomLevel = 8
+
   StatusBarHeight = 26.0
 
-  MapLeftPad   = 50.0
-  MapRightPad  = 120.0
+  MapLeftPad           = 50.0
+  MapRightPad          = 120.0
   MapTopPadCoords      = 85.0
   MapBottomPadCoords   = 40.0
   MapTopPadNoCoords    = 65.0
@@ -45,6 +42,7 @@ const
   NotesPaneHeight = 40.0
   NotesPaneBottomPad = 10.0
 
+# }}}
 # {{{ AppContext
 type
   EditMode* = enum
@@ -128,15 +126,6 @@ type
 var g_app: AppContext
 
 using a: var AppContext
-
-# }}}
-
-# {{{ getPxRatio()
-proc getPxRatio(a): float =
-  let
-    (winWidth, _) = a.win.size
-    (fbWidth, _) = a.win.framebufferSize
-  result = fbWidth / winWidth
 
 # }}}
 
@@ -244,19 +233,6 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   vg.resetScissor()
 
 # }}}
-
-proc setSelectModeSelectMessage(a) =
-  setStatusMessage(IconSelection, "Mark selection",
-                   @["D", "draw", "E", "erase",
-                     "R", "add rect", "S", "sub rect",
-                     "A", "mark all", "U", "unmark all",
-                     "Ctrl", "actions"], a)
-
-proc setSelectModeActionMessage(a) =
-  setStatusMessage(IconSelection, "Mark selection",
-                   @["Ctrl+C", "copy", "Ctrl+X", "cut",
-                     "Ctrl+E", "erase", "Ctrl+F", "fill",
-                     "Ctrl+S", "surround"], a)
 
 # {{{ isKeyDown()
 func isKeyDown(ke: KeyEvent, keys: set[Key],
@@ -367,6 +343,21 @@ proc moveCursor(dir: CardinalDir, a) =
   dp.viewStartRow = sy
   dp.viewStartCol = sx
 
+# }}}
+# {{{ setSelectModeSelectMessage()
+proc setSelectModeSelectMessage(a) =
+  setStatusMessage(IconSelection, "Mark selection",
+                   @["D", "draw", "E", "erase",
+                     "R", "add rect", "S", "sub rect",
+                     "A", "mark all", "U", "unmark all",
+                     "Ctrl", "actions"], a)
+# }}}
+# {{{ setSelectModeActionMessage()
+proc setSelectModeActionMessage(a) =
+  setStatusMessage(IconSelection, "Mark selection",
+                   @["Ctrl+C", "copy", "Ctrl+X", "cut",
+                     "Ctrl+E", "erase", "Ctrl+F", "fill",
+                     "Ctrl+S", "surround"], a)
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
@@ -499,8 +490,8 @@ proc drawWallToolbar(x: float, a) =
     y += w + yPad
 
 # }}}
-# {{{ drawMarkerIconToolbar()
-proc drawMarkerIconToolbar(x: float, a) =
+# {{{ drawMarkerIcons()
+proc drawMarkerIcons(x: float, a) =
   alias(vg, a.vg)
   alias(ms, a.mapStyle)
   alias(dp, a.toolbarDrawParams)
@@ -734,8 +725,6 @@ proc handleMapEvents(a) =
     let ot = m.guessFloorOrientation(curRow, curCol)
     actions.setOrientedFloor(m, curRow, curCol, f, ot, um)
     setStatusMessage(mkFloorMessage(f), a)
-
-  let (winWidth, winHeight) = win.size
 
   const
     MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
@@ -1152,6 +1141,14 @@ proc handleMapEvents(a) =
         a.clearStatusMessage()
 # }}}
 
+# {{{ getPxRatio()
+proc getPxRatio(a): float =
+  let
+    (winWidth, _) = a.win.size
+    (fbWidth, _) = a.win.framebufferSize
+  result = fbWidth / winWidth
+
+# }}}
 # {{{ renderUI()
 proc renderUI() =
   alias(a, g_app)
@@ -1217,7 +1214,6 @@ proc renderUI() =
 # {{{ renderFramePre()
 proc renderFramePre(win: CSDWindow) =
   alias(a, g_app)
-  alias(vg, g_app.vg)
 
   if a.nextThemeIndex.isSome:
     let themeIndex = a.nextThemeIndex.get
@@ -1231,7 +1227,6 @@ proc renderFramePre(win: CSDWindow) =
 # {{{ renderFrame()
 proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
   alias(a, g_app)
-  alias(vg, g_app.vg)
 
   if a.nextThemeIndex.isSome:
     let themeName = a.themeNames[a.currThemeIndex]
@@ -1352,7 +1347,7 @@ proc cleanup() =
   glfw.terminate()
 
 # }}}
-
+# {{{ main()
 proc main() =
   let (win, vg) = initGfx()
   initApp(win, vg)
@@ -1364,6 +1359,7 @@ proc main() =
       glfw.waitEvents()
     csdRenderFrame(g_app.win)
   cleanup()
+# }}}
 
 main()
 

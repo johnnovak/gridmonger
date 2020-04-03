@@ -3,7 +3,6 @@ import math
 import options
 
 import glad/gl
-import glfw
 import koi
 import nanovg
 
@@ -879,7 +878,6 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
 # }}}
 # {{{ drawOpenPitWithColor()
 proc drawOpenPitWithColor(x, y: float, color: Color, ctx) =
-  alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -909,7 +907,6 @@ proc drawCeilingPit(x, y: float, ctx) =
 # }}}
 # {{{ drawClosedPitWithColor()
 proc drawClosedPitWithColor(x, y: float, color: Color, ctx) =
-  alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1499,7 +1496,6 @@ proc drawOuterShadows(viewBuf: Map, ctx) =
 proc mergePasteAndOutlineBufs*(viewBuf: Map,
                                outlineBuf: Option[OutlineBuf], ctx) =
   alias(dp, ctx.dp)
-  alias(ms, ctx.ms)
 
   if dp.pastePreview.isSome:
     let startRow = dp.cursorRow - dp.viewStartRow + 1
