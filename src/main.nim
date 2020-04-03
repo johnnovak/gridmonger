@@ -411,12 +411,14 @@ proc copySelection(a): Option[Rect[Natural]] =
 
 # {{{ New map dialog
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
-  koi.beginDialog(350, 220, fmt"{IconNewFile}  New map")
-  a.clearStatusMessage()
-
   let
     dialogWidth = 350.0
     dialogHeight = 220.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New map")
+  a.clearStatusMessage()
+
+  let
     h = 24.0
     labelWidth = 70.0
     buttonWidth = 80.0
@@ -479,13 +481,15 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 # {{{ Edit note dialog
 
 proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
-  let title = (if dlg.editMode: "Edit" else: "Add") & " Note"
-  koi.beginDialog(470, 320, fmt"{IconCommentInv}  {title}")
-  a.clearStatusMessage()
-
   let
     dialogWidth = 470.0
     dialogHeight = 320.0
+    title = (if dlg.editMode: "Edit" else: "Add") & " Note"
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCommentInv}  {title}")
+  a.clearStatusMessage()
+
+  let
     h = 24.0
     labelWidth = 80.0
     buttonWidth = 80.0
