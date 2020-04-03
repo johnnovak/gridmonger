@@ -407,6 +407,131 @@ proc copySelection(a): Option[Rect[Natural]] =
 
 # }}}
 
+# {{{ drawNotesPane()
+proc drawNotesPane(x, y, w, h: float, a) =
+  alias(vg, a.vg)
+  alias(m, a.map)
+  alias(ms, a.mapStyle)
+
+  let curRow = a.cursorRow
+  let curCol = a.cursorCol
+
+  if a.editMode != emPastePreview and m.hasNote(curRow, curCol):
+    let note = m.getNote(curRow, curCol)
+
+    case note.kind
+    of nkIndexed:
+      drawIndexedNote(x-40, y-12, note.index, 36,
+                      bgColor=ms.notePaneBackgroundColor,
+                      fgColor=ms.notePaneTextColor, vg)
+
+    of nkCustomId:
+      vg.fillColor(ms.notePaneTextColor)
+      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-22, y-2, note.customId)
+
+    of nkComment:
+      vg.fillColor(ms.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-2, IconComment)
+
+    vg.fillColor(ms.notePaneTextColor)
+    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.4)
+    vg.scissor(x, y, w, h)
+    vg.textBox(x, y, w, note.text)
+    vg.resetScissor()
+
+
+# }}}
+# {{{ drawWallToolbar
+const SpecialWalls = @[
+  wIllusoryWall,
+  wInvisibleWall,
+  wDoor,
+  wLockedDoor,
+  wArchway,
+  wSecretDoor,
+  wLever,
+  wNiche,
+  wStatue
+]
+
+proc drawWallToolbar(x: float, a) =
+  alias(vg, a.vg)
+  alias(ms, a.mapStyle)
+  alias(dp, a.toolbarDrawParams)
+
+  proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
+    case w
+    of wNone:          discard
+    of wWall:          drawSolidWallHoriz(x, y, ctx)
+    of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
+    of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
+    of wDoor:          drawDoorHoriz(x, y, ctx)
+    of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
+    of wArchway:       drawArchwayHoriz(x, y, ctx)
+    of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
+    of wLever:         discard
+    of wNiche:         discard
+    of wStatue:        discard
+
+  dp.setZoomLevel(ms, 1)
+  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
+
+  let
+    toolPad = 4.0
+    w = dp.gridSize + toolPad*2
+    yPad = 2.0
+
+  var y = 100.0
+
+  for i, wall in SpecialWalls.pairs:
+    if i == a.currSpecialWallIdx:
+      vg.fillColor(rgb(1.0, 0.7, 0))
+    else:
+      vg.fillColor(gray(0.6))
+    vg.beginPath()
+    vg.rect(x, y, w, w)
+    vg.fill()
+
+    drawWallTool(x+toolPad, y+toolPad + dp.gridSize*0.5, wall, ctx)
+    y += w + yPad
+
+# }}}
+# {{{ drawMarkerIconToolbar()
+proc drawMarkerIconToolbar(x: float, a) =
+  alias(vg, a.vg)
+  alias(ms, a.mapStyle)
+  alias(dp, a.toolbarDrawParams)
+
+  dp.setZoomLevel(ms, 5)
+  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
+
+  let
+    toolPad = 0.0
+    w = dp.gridSize + toolPad*2
+    yPad = 2.0
+
+  var
+    x = x
+    y = 100.0
+
+  for i, icon in MarkerIcons.pairs:
+    if i > 0 and i mod 3 == 0:
+      y = 100.0
+      x += w + yPad
+
+    vg.fillColor(gray(0.6))
+    vg.beginPath()
+    vg.rect(x, y, w, w)
+    vg.fill()
+
+    drawIcon(x+toolPad, y+toolPad, 0, 0, icon, ctx)
+    y += w + yPad
+
+# }}}
+
 # {{{ Dialogs
 
 # {{{ New map dialog
@@ -566,131 +691,6 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   koi.endDialog()
 
 # }}}
-
-# }}}
-
-# {{{ drawNotesPane()
-proc drawNotesPane(x, y, w, h: float, a) =
-  alias(vg, a.vg)
-  alias(m, a.map)
-  alias(ms, a.mapStyle)
-
-  let curRow = a.cursorRow
-  let curCol = a.cursorCol
-
-  if a.editMode != emPastePreview and m.hasNote(curRow, curCol):
-    let note = m.getNote(curRow, curCol)
-
-    case note.kind
-    of nkIndexed:
-      drawIndexedNote(x-40, y-12, note.index, 36,
-                      bgColor=ms.notePaneBackgroundColor,
-                      fgColor=ms.notePaneTextColor, vg)
-
-    of nkCustomId:
-      vg.fillColor(ms.notePaneTextColor)
-      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-22, y-2, note.customId)
-
-    of nkComment:
-      vg.fillColor(ms.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-2, IconComment)
-
-    vg.fillColor(ms.notePaneTextColor)
-    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.4)
-    vg.scissor(x, y, w, h)
-    vg.textBox(x, y, w, note.text)
-    vg.resetScissor()
-
-
-# }}}
-# {{{ drawWallToolbar
-const SpecialWalls = @[
-  wIllusoryWall,
-  wInvisibleWall,
-  wDoor,
-  wLockedDoor,
-  wArchway,
-  wSecretDoor,
-  wLever,
-  wNiche,
-  wStatue
-]
-
-proc drawWallToolbar(x: float, a) =
-  alias(vg, a.vg)
-  alias(ms, a.mapStyle)
-  alias(dp, a.toolbarDrawParams)
-
-  proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
-    case w
-    of wNone:          discard
-    of wWall:          drawSolidWallHoriz(x, y, ctx)
-    of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
-    of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
-    of wDoor:          drawDoorHoriz(x, y, ctx)
-    of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
-    of wArchway:       drawArchwayHoriz(x, y, ctx)
-    of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
-    of wLever:         discard
-    of wNiche:         discard
-    of wStatue:        discard
-
-  dp.setZoomLevel(ms, 1)
-  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
-
-  let
-    toolPad = 4.0
-    w = dp.gridSize + toolPad*2
-    yPad = 2.0
-
-  var y = 100.0
-
-  for i, wall in SpecialWalls.pairs:
-    if i == a.currSpecialWallIdx:
-      vg.fillColor(rgb(1.0, 0.7, 0))
-    else:
-      vg.fillColor(gray(0.6))
-    vg.beginPath()
-    vg.rect(x, y, w, w)
-    vg.fill()
-
-    drawWallTool(x+toolPad, y+toolPad + dp.gridSize*0.5, wall, ctx)
-    y += w + yPad
-
-# }}}
-# {{{ drawMarkerIconToolbar()
-proc drawMarkerIconToolbar(x: float, a) =
-  alias(vg, a.vg)
-  alias(ms, a.mapStyle)
-  alias(dp, a.toolbarDrawParams)
-
-  dp.setZoomLevel(ms, 5)
-  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
-
-  let
-    toolPad = 0.0
-    w = dp.gridSize + toolPad*2
-    yPad = 2.0
-
-  var
-    x = x
-    y = 100.0
-
-  for i, icon in MarkerIcons.pairs:
-    if i > 0 and i mod 3 == 0:
-      y = 100.0
-      x += w + yPad
-
-    vg.fillColor(gray(0.6))
-    vg.beginPath()
-    vg.rect(x, y, w, w)
-    vg.fill()
-
-    drawIcon(x+toolPad, y+toolPad, 0, 0, icon, ctx)
-    y += w + yPad
 
 # }}}
 
