@@ -1,8 +1,16 @@
 import options
 import tables
 
+import nanovg
+
+
 const
   TextVertAlignFactor* = 0.55
+
+type
+  UIStyle* = ref object
+    backgroundColor*: Color
+    backgroundImage*: string
 
 type
   Orientation* = enum

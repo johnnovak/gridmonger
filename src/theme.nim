@@ -1,3 +1,4 @@
+import common
 import options
 import parsecfg
 import strformat
@@ -15,8 +16,16 @@ type ThemeParseError* = object of Exception
 #proc raiseThemeParseError(s: string) =
 #  raise newException(ThemeParseError, s)
 
+const UISection = "ui"
 const MapSection = "map"
 
+# {{{ UIStyle
+var DefaultUIStyle = new UIStyle
+
+DefaultUIStyle.backgroundColor = gray(0.4)
+DefaultUIStyle.backgroundImage = ""
+
+# }}}
 # {{{ DefaultMapStyle
 var DefaultMapStyle = new MapStyle
 
@@ -118,6 +127,11 @@ proc parseColor(s: string): Option[Color] =
 
 # }}}
 #
+# {{{ getString()
+proc getString(cfg: Config, section, key: string, s: var string) =
+  s = getValue(cfg, section, key)
+
+# }}}
 # {{{ getColor()
 proc getColor(cfg: Config, section, key: string, c: var Color) =
   let v = getValue(cfg, section, key)
@@ -156,6 +170,17 @@ proc getEnum[T: enum](cfg: Config, section, key: string, e: var T) =
 
 # }}}
 
+# {{{ parseUISection()
+proc parseUISection(c: Config): UIStyle =
+  var ms = DefaultUIStyle.deepCopy()
+  const M = UISection
+
+  c.getColor( M, "backgroundColor", ms.backgroundColor)
+  c.getString(M, "backgroundImage", ms.backgroundImage)
+
+  result = ms
+
+# }}}
 # {{{ parseMapSection()
 proc parseMapSection(c: Config): MapStyle =
   var ms = DefaultMapStyle.deepCopy()
@@ -211,11 +236,14 @@ proc parseMapSection(c: Config): MapStyle =
 # }}}
 
 # {{{ loadTheme*()
-proc loadTheme*(filename: string): MapStyle =
+proc loadTheme*(filename: string): (UIStyle, MapStyle) =
   echo fmt"Loading theme '{filename}'..."
   var cfg = loadConfig(filename)
+
+  var uiStyle = parseUISection(cfg)
   var mapStyle = parseMapSection(cfg)
-  result = mapStyle
+
+  result = (uiStyle, mapStyle)
 
 # }}}
 

@@ -341,6 +341,23 @@ proc initDrawMapParams*(dp; ms; vg: NVGContext, pxRatio: float) =
 
 # }}}
 
+# {{{ drawBackground()
+proc drawBackground(ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  vg.fillColor(ms.backgroundColor)
+
+  let
+    w = dp.gridSize * dp.viewCols
+    h = dp.gridSize * dp.viewRows
+
+  vg.beginPath()
+  vg.rect(dp.startX, dp.startY, w, h)
+  vg.fill()
+
+# }}}
 # {{{ drawBackgroundHatch()
 proc drawBackgroundHatch(ctx) =
   alias(ms, ctx.ms)
@@ -349,7 +366,6 @@ proc drawBackgroundHatch(ctx) =
 
   let sw = ms.bgHatchStrokeWidth
 
-  vg.fillColor(ms.backgroundColor)
   vg.strokeColor(ms.bgHatchColor)
   vg.strokeWidth(sw)
 
@@ -363,10 +379,6 @@ proc drawBackgroundHatch(ctx) =
   let startY = snap(dp.startY, sw)
 
   vg.scissor(dp.startX, dp.startY, w, h)
-
-  vg.beginPath()
-  vg.rect(startX, startY, w, h)
-  vg.fill()
 
   var
     x1 = startX - offs
@@ -717,7 +729,7 @@ proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  vg.setFont((dp.gridSize*0.43).float)
+  vg.setFont((dp.gridSize*0.53).float)
   vg.fillColor(color)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
@@ -1273,7 +1285,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
     vg.fillColor(ms.noteCommentMarkerColor)
     vg.beginPath()
     vg.moveTo(x + dp.gridSize - w, y)
-    vg.lineTo(x + dp.gridSize + 1, y + w)
+    vg.lineTo(x + dp.gridSize + 1, y + w+1)
     vg.lineTo(x + dp.gridSize + 1, y)
     vg.closePath()
     vg.fill()
@@ -1331,25 +1343,22 @@ proc drawCellWalls(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
   let
     bufRow = viewRow+1
     bufCol = viewCol+1
+    floorEmpty = viewBuf.getFloor(bufRow, bufCol) == fNone
 
-  let floorEmpty = viewBuf.getFloor(bufRow, bufCol) == fNone
+  drawWall(
+    cellX(viewCol, dp),
+    cellY(viewRow, dp),
+    viewBuf.getWall(bufRow, bufCol, dirN), Horiz, ctx
+  )
 
-  if viewRow > 0 or (viewRow == 0 and not floorEmpty):
-    drawWall(
-      cellX(viewCol, dp),
-      cellY(viewRow, dp),
-      viewBuf.getWall(bufRow, bufCol, dirN), Horiz, ctx
-    )
-
-  if viewCol > 0 or (viewCol == 0 and not floorEmpty):
-    drawWall(
-      cellX(viewCol, dp),
-      cellY(viewRow, dp),
-      viewBuf.getWall(bufRow, bufCol, dirW), Vert, ctx
-    )
+  drawWall(
+    cellX(viewCol, dp),
+    cellY(viewRow, dp),
+    viewBuf.getWall(bufRow, bufCol, dirW), Vert, ctx
+  )
 
   let viewEndRow = dp.viewRows-1
-  if viewRow < viewEndRow or (viewRow == viewEndRow and not floorEmpty):
+  if viewRow == viewEndRow:
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow+1, dp),
@@ -1357,7 +1366,7 @@ proc drawCellWalls(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
     )
 
   let viewEndCol = dp.viewCols-1
-  if viewCol < viewEndCol or (viewCol == viewEndCol and not floorEmpty):
+  if viewCol == viewEndCol:
     drawWall(
       cellX(viewCol+1, dp),
       cellY(viewRow, dp),
@@ -1522,6 +1531,8 @@ proc drawMap*(m: Map, ctx) =
 
   assert dp.viewStartRow + dp.viewRows <= m.rows
   assert dp.viewStartCol + dp.viewCols <= m.cols
+
+  drawBackground(ctx)
 
   if dp.drawCellCoords:
     drawCellCoords(m, ctx)

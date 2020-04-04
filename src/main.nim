@@ -27,7 +27,7 @@ import utils
 const
   ThemesDir = "themes"
 
-  DefaultZoomLevel = 8
+  DefaultZoomLevel = 5
 
   StatusBarHeight = 26.0
 
@@ -72,6 +72,8 @@ type
     mapStyle:       MapStyle
 
     # UI state (TODO group under 'ui'?)
+    uiStyle:        UIStyle
+
     editMode:       EditMode
     cursorCol:      Natural
     cursorRow:      Natural
@@ -95,6 +97,8 @@ type
 
     showNotesPane:  bool
 
+    oldPaperPattern: Paint
+
     # Themes
     themeNames:     seq[string]
     currThemeIndex: Natural
@@ -104,6 +108,9 @@ type
     # Dialogs
     newMapDialog:   NewMapDialogParams
     editNoteDialog: EditNoteDialogParams
+
+    # Images
+    oldPaperImage:  Image
 
 
   NewMapDialogParams = object
@@ -144,7 +151,7 @@ proc findThemeIndex(name: string, a): int =
 
 proc loadTheme(index: Natural, a) =
   let name = a.themeNames[index]
-  a.mapStyle = loadTheme(fmt"{ThemesDir}/{name}.cfg")
+  (a.uiStyle, a.mapStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
   a.currThemeIndex = index
 
 # }}}
@@ -642,7 +649,6 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   y = dialogHeight - h - buttonPad
 
   proc okAction(dlg: var EditNoteDialogParams, a) =
-    koi.closeDialog()
     var note = Note(
       kind: dlg.kind,
       text: dlg.text
@@ -653,6 +659,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     actions.setNote(a.map, dlg.row, dlg.col, note, a.undoManager)
 
     setStatusMessage(IconComment, "Set cell note", a)
+    koi.closeDialog()
     dlg.isOpen = false
 
   proc cancelAction(dlg: var EditNoteDialogParams, a) =
@@ -821,7 +828,7 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
-        koi.incFramesLeft()
+        koi.setFramesLeft()
 
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
@@ -924,20 +931,20 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyR, {mkAlt,mkCtrl}):
         a.nextThemeIndex = a.currThemeIndex.some
-        koi.incFramesLeft()
+        koi.setFramesLeft()
 
       elif ke.isKeyDown(keyPageUp, {mkAlt,mkCtrl}):
         var i = a.currThemeIndex
         if i == 0: i = a.themeNames.high else: dec(i)
         a.nextThemeIndex = i.some
-        koi.incFramesLeft()
+        koi.setFramesLeft()
 
       elif ke.isKeyDown(keyPageDown, {mkAlt,mkCtrl}):
         var i = a.currThemeIndex
         inc(i)
         if i > a.themeNames.high: i = 0
         a.nextThemeIndex = i.some
-        koi.incFramesLeft()
+        koi.setFramesLeft()
 
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
@@ -1152,8 +1159,12 @@ proc renderUI() =
   # Clear background
   vg.beginPath()
   vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
-  # TODO
-  vg.fillColor(a.mapStyle.backgroundColor)
+
+  # TODO extend logic for other images
+  if a.uiStyle.backgroundImage == "old-paper":
+    vg.fillPaint(a.oldPaperPattern)
+  else:
+    vg.fillColor(a.uiStyle.backgroundColor)
   vg.fill()
 
   # Current level dropdown
@@ -1245,8 +1256,19 @@ proc initDrawMapParams(a) =
   dp.initDrawMapParams(a.mapStyle, a.vg, getPxRatio(a))
 
 
+proc loadImages(vg: NVGContext, a) =
+  let img = vg.createImage("data/old-paper.jpg", {ifRepeatX, ifRepeatY})
+
+  # TODO use exceptions instead
+  if img == NoImage:
+    quit "Could not load old paper image.\n"
+
+  let (w, h) = vg.imageSize(img)
+  a.oldPaperPattern = vg.imagePattern(0, 0, w.float, h.float, angle=0,
+                                      img, alpha=1.0)
+
+
 proc loadFonts(vg: NVGContext) =
-  # TODO fix font load error checking
   let regularFont = vg.createFont("sans", "data/Roboto-Regular.ttf")
   if regularFont == NoFont:
     quit "Could not add regular font.\n"
@@ -1263,8 +1285,8 @@ proc loadFonts(vg: NVGContext) =
   if iconFont == NoFont:
     quit "Could not load icon font.\n"
 
-  discard addFallbackFont(vg, regularFont, iconFont)
   discard addFallbackFont(vg, boldFont, iconFont)
+  discard addFallbackFont(vg, blackFont, iconFont)
 
 
 # TODO clean up
@@ -1279,8 +1301,6 @@ proc initGfx(): (CSDWindow, NVGContext) =
   if vg == nil:
     quit "Error creating NanoVG context"
 
-  loadFonts(vg)
-
   koi.init(vg)
 
   result = (win, vg)
@@ -1294,8 +1314,11 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.vg = vg
   a.undoManager = newUndoManager[Map]()
 
+  loadFonts(vg)
+  loadImages(vg, a)
+
   searchThemes(a)
-  var themeIndex = findThemeIndex("lightblue", a)
+  var themeIndex = findThemeIndex("oldpaper", a)
   if themeIndex == -1:
     themeIndex = 0
   loadTheme(themeIndex, a)
@@ -1313,10 +1336,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
 #  a.map = newMap(16, 16)
-#  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
+  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
 #  a.map = readMap("notetest.grm")
-  a.map = readMap("pool-of-radiance-library.grm")
+#  a.map = readMap("pool-of-radiance-library.grm")
 #  a.map = readMap("library.grm")
 
   a.win.renderFramePreCb = renderFramePre
@@ -1325,10 +1348,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.win.title = "Eye of the Beholder III"
   a.win.modified = true
   # TODO for development
-#  a.win.size = (960, 1040)
-#  a.win.pos = (960, 0)
-  a.win.size = (700, 900)
-  a.win.pos = (900, 0)
+  a.win.size = (960, 1040)
+  a.win.pos = (960, 0)
+#  a.win.size = (700, 900)
+#  a.win.pos = (900, 0)
   a.win.show()
 
 
