@@ -127,6 +127,9 @@ proc readMapNotes_V1(rr; m: Map) =
       note.index = rr.read(uint16)
       note.indexColor = rr.read(uint8)
 
+    of nkIcon:
+      note.icon = rr.read(uint8)
+
     of nkCustomId:
       note.customId = rr.readBStr()
 
@@ -312,7 +315,10 @@ proc writeMapNotes(rw; m: Map) =
     of nkCustomId:
       rw.writeBStr(note.customId)
 
-    of nkComment:  discard
+    of nkIcon:
+      rw.write(note.icon.uint8)
+
+    of nkComment: discard
 
     rw.writeWStr(note.text)
 

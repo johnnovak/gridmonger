@@ -128,6 +128,7 @@ type
     index:      Natural
     indexColor: Natural
     customId:   string
+    icon:       Natural
     text:       string
 
 
@@ -429,6 +430,11 @@ proc drawNotesPane(x, y, w, h: float, a) =
       vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x-22, y-2, note.customId)
 
+    of nkIcon:
+      vg.fillColor(ms.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-3, NoteIcons[note.icon])
+
     of nkComment:
       vg.fillColor(ms.notePaneTextColor)
       vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
@@ -498,38 +504,6 @@ proc drawWallToolbar(x: float, a) =
     y += w + yPad
 
 # }}}
-# {{{ drawMarkerIcons()
-proc drawMarkerIcons(x: float, a) =
-  alias(vg, a.vg)
-  alias(ms, a.mapStyle)
-  alias(dp, a.toolbarDrawParams)
-
-  dp.setZoomLevel(ms, 5)
-  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
-
-  let
-    toolPad = 0.0
-    w = dp.gridSize + toolPad*2
-    yPad = 2.0
-
-  var
-    x = x
-    y = 100.0
-
-  for i, icon in MarkerIcons.pairs:
-    if i > 0 and i mod 3 == 0:
-      y = 100.0
-      x += w + yPad
-
-    vg.fillColor(gray(0.6))
-    vg.beginPath()
-    vg.rect(x, y, w, w)
-    vg.fill()
-
-    drawIcon(x+toolPad, y+toolPad, 0, 0, icon, ctx)
-    y += w + yPad
-
-# }}}
 
 # {{{ Dialogs
 
@@ -537,7 +511,7 @@ proc drawMarkerIcons(x: float, a) =
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
   let
     dialogWidth = 350.0
-    dialogHeight = 220.0
+    dialogHeight = 224.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New map")
   a.clearStatusMessage()
@@ -557,13 +531,13 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
   )
 
-  y = y + 50
+  y = y + 40
   koi.label(x, y, labelWidth, h, "Rows", gray(0.80), fontSize=14.0)
   dlg.rows = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
   )
 
-  y = y + 30
+  y = y + 32
   koi.label(x, y, labelWidth, h, "Columns", gray(0.80), fontSize=14.0)
   dlg.cols = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
@@ -608,8 +582,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   let ms = a.mapStyle
 
   let
-    dialogWidth = 470.0
-    dialogHeight = 320.0
+    dialogWidth = 464.0
+    dialogHeight = 330.0
     title = (if dlg.editMode: "Edit" else: "Add") & " Note"
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCommentInv}  {title}")
@@ -629,23 +603,23 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   koi.label(x, y, labelWidth, h, "Type", gray(0.80), fontSize=14.0)
   dlg.kind = NoteKind(
     koi.radioButtons(
-      x + labelWidth, y, 250, h,
-      labels = @["Number", "Custom ID", "Comment"],
-      tooltips = @["", "", ""],
+      x + labelWidth, y, 270, h,
+      labels = @["Number", "ID", "Icon", "Text"],
+      tooltips = @[],
       ord(dlg.kind)
     )
   )
   y += 40
 
-  koi.label(x, y, labelWidth, h, "Note", gray(0.80), fontSize=14.0)
+  koi.label(x, y, labelWidth, h, "Text", gray(0.80), fontSize=14.0)
   dlg.text = koi.textField(
     x + labelWidth, y, 320.0, h, tooltip = "", dlg.text
   )
-  y = y + 32
+  y = y + 40
 
   case dlg.kind:
   of nkIndexed:
-    var radioButtonsDrawProc: RadioButtonsDrawProc =
+    var drawProc: RadioButtonsDrawProc =
       proc (vg: NVGContext, buttonIdx: Natural, label: string,
             hover: bool, active: bool, pressed: bool,
             x, y, w, h: float) =
@@ -686,18 +660,67 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
     koi.label(x, y, labelWidth, h, "Color", gray(0.80), fontSize=14.0)
     dlg.indexColor = koi.radioButtons(
-      x + labelWidth, y, h, h,
+      x + labelWidth, y, 28, 28,
       labels = newSeq[string](4),
       tooltips = @[],
       dlg.indexColor,
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc=radioButtonsDrawProc.some
+      drawProc=drawProc.some
     )
 
   of nkCustomId:
-    koi.label(x, y, labelWidth, h, "Custom ID", gray(0.80), fontSize=14.0)
+    koi.label(x, y, labelWidth, h, "ID", gray(0.80), fontSize=14.0)
     dlg.customId = koi.textField(
       x + labelWidth, y, 50.0, h, tooltip = "", dlg.customId
+    )
+
+  of nkIcon:
+    var drawProc: RadioButtonsDrawProc =
+      proc (vg: NVGContext, buttonIdx: Natural, label: string,
+            hover: bool, active: bool, pressed: bool,
+            x, y, w, h: float) =
+
+        var icon = NoteIcons[buttonIdx]
+
+        let bgCol =
+          if hover: gray(0.8)
+          elif pressed: gray(0.5)
+          else: gray(0.6)
+
+        const Pad = 5
+        const SelPad = 3
+
+        var cx, cy, cw, ch: float
+        if active:
+          vg.beginPath()
+          vg.strokeColor(ms.cursorColor)
+          vg.strokeWidth(2)
+          vg.rect(x, y, w-Pad, h-Pad)
+          vg.stroke()
+
+          cx = x+SelPad
+          cy = y+SelPad
+          cw = w-Pad-SelPad*2
+          ch = h-Pad-SelPad*2
+          vg.scissor(cx, cy, cw, ch)
+
+        vg.beginPath()
+        vg.fillColor(bgCol)
+        vg.rect(x, y, w-Pad, h-Pad)
+        vg.fill()
+
+        drawIcon(x, y, 0, 0, icon, w-Pad, ms.drawColor, vg)
+        vg.resetScissor()
+
+
+    koi.label(x, y, labelWidth, h, "Icon", gray(0.80), fontSize=14.0)
+    dlg.icon = koi.radioButtons(
+      x + labelWidth, y, 36, 36,
+      labels = NoteIcons,
+      tooltips = @[],
+      dlg.icon,
+      layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 9),
+      drawProc=drawProc.some
     )
 
   of nkComment: discard
@@ -716,6 +739,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       note.customId = dlg.customId
     of nkIndexed:
       note.indexColor = dlg.indexColor
+    of nkIcon:
+      note.icon = dlg.icon
     of nkComment:
       discard
 
@@ -938,6 +963,8 @@ proc handleMapEvents(a) =
             if note.kind == nkIndexed:
               dlg.index = note.index
               dlg.indexColor = note.indexColor
+            elif note.kind == nkIcon:
+              dlg.icon = note.icon
 
             if note.kind == nkCustomId:
               dlg.customId = note.customId

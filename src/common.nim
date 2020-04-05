@@ -116,13 +116,14 @@ type
     wallN*, wallW*:    Wall
 
   NoteKind* = enum
-    nkIndexed, nkCustomId, nkComment
+    nkIndexed, nkCustomId, nkComment, nkIcon  # TODO reorder?
 
   Note* = object
     text*: string
     case kind*: NoteKind
     of nkIndexed:  index*, indexColor*: Natural
     of nkCustomId: customId*: string
+    of nkIcon:     icon*: Natural
     of nkComment:  discard
 
   # (0,0) is the top-left cell of the map
@@ -206,7 +207,6 @@ const
   IconEnter* = "\uea13"
   IconExit* = "\uea14"
 
-  IconAnchor* = "\uf13d"
   IconBed* = "\uf236"
   IconBomb* = "\uf1e2"
   IconBook* = "\uf02d"
@@ -221,7 +221,6 @@ const
   IconMale* = "\uf183"
   IconMedkit* = "\uf0fa"
   IconMoney* = "\ue93e"
-  IconMoneyBag* = "\ue909"
   IconMug* = "\ue905"
   IconShield* = "\uf132"
   IconShip* = "\ue944"
@@ -230,30 +229,28 @@ const
   IconTree* = "\ue945"
   IconTrophy* = "\uf091"
 
-const MarkerIcons* = @[
-  IconAnchor,
+const NoteIcons* = @[
   IconBed,
-  IconBomb,
-  IconBook,
-  IconDiamond,
-  IconEquip,
-  IconFlag,
-  IconFlask,
   IconFort,
-  IconHeart,
   IconHome,
-  IconKey,
-  IconMale,
+  IconMug,
+  IconShip,
+  IconTree,
+  IconHeart,
   IconMedkit,
   IconMoney,
-  IconMoneyBag,
-  IconMug,
+  IconKey,
+  IconBook,
+  IconTrophy,
   IconShield,
-  IconShip,
-  IconSpinner,
+  IconEquip,
+  IconDiamond,
+  IconFlask,
+  IconFlag,
+  IconMale,
+  IconBomb,
   IconStar,
-  IconTree,
-  IconTrophy
+  IconFloppy
 ]
 
 #  Icon* = "\u"

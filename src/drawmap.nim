@@ -706,18 +706,19 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
 # }}}
 
 # {{{ drawIcon*()
-proc drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
+proc drawIcon*(x, y, ox, oy: float, icon: string,
+               gridSize: float, color: Color, vg: NVGContext) =
 
-  vg.setFont((dp.gridSize*0.53).float)
+  vg.setFont((gridSize*0.53).float)
   vg.fillColor(color)
   vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + dp.gridSize*ox + dp.gridSize*0.51,
-                  y + dp.gridSize*oy + dp.gridSize*0.58, icon)
+  discard vg.text(x + gridSize*ox + gridSize*0.51,
+                  y + gridSize*oy + gridSize*0.58, icon)
 
+template drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
+  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, color, ctx.vg)
 
-proc drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
+template drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
   drawIcon(x, y, ox, oy, icon, ctx.ms.drawColor, ctx)
 
 # }}}
@@ -1291,6 +1292,9 @@ proc drawNote(x, y: float, note: Note, ctx) =
 
   of nkCustomId:
     drawCustomIdNote(x, y, note.customId, ctx)
+
+  of nkIcon:
+    drawIcon(x, y, 0, 0, NoteIcons[note.icon], ctx)
 
   of nkComment:
     vg.fillColor(ms.noteMapCommentColor)
