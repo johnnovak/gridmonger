@@ -401,38 +401,6 @@ proc drawBackgroundHatch(ctx) =
   vg.resetScissor()
 
 # }}}
-# {{{ drawBackgroundGrid
-proc drawBackgroundGrid(ctx) =
-  alias(ms, ctx.ms)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  let strokeWidth = UltrathinStrokeWidth
-
-  vg.lineCap(lcjSquare)
-  vg.strokeColor(ms.gridColorBackground)
-  vg.strokeWidth(strokeWidth)
-
-  let endX = snap(cellX(dp.viewCols, dp), strokeWidth)
-  let endY = snap(cellY(dp.viewRows, dp), strokeWidth)
-
-  vg.beginPath()
-  for x in 0..dp.viewCols:
-    let x = snap(cellX(x, dp), strokeWidth)
-    let y = snap(dp.startY, strokeWidth)
-    vg.moveTo(x, y)
-    vg.lineTo(x, endY)
-  vg.stroke()
-
-  vg.beginPath()
-  for y in 0..dp.viewRows:
-    let x = snap(dp.startX, strokeWidth)
-    let y = snap(cellY(y, dp), strokeWidth)
-    vg.moveTo(x, y)
-    vg.lineTo(endX, y)
-  vg.stroke()
-
-# }}}
 # {{{ drawCellCoords()
 proc drawCellCoords(m: Map, ctx) =
   alias(ms, ctx.ms)
@@ -492,15 +460,26 @@ proc drawCellCoords(m: Map, ctx) =
 
 # }}}
 # {{{ drawCursor()
-proc drawCursor(x, y: float, ctx) =
+proc drawCursor(ctx) =
   alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  vg.fillColor(ms.cursorColor)
-  vg.beginPath()
-  vg.rect(x, y, dp.gridSize+1, dp.gridSize+1)
-  vg.fill()
+  let viewRow = dp.cursorRow - dp.viewStartRow
+  let viewCol = dp.cursorCol - dp.viewStartCol
+
+  if viewRow >= 0 and viewRow < dp.viewRows and
+     viewCol >= 0 and viewCol < dp.viewCols:
+
+    let
+      x = cellX(viewCol, dp)
+      y = cellY(viewRow, dp)
+      a = dp.gridSize
+
+    vg.fillColor(ms.cursorColor)
+    vg.beginPath()
+    vg.rect(x, y, a, a)
+    vg.fill()
 
 # }}}
 # {{{ drawCursorGuides()
@@ -778,20 +757,27 @@ proc drawCustomIdNote*(x, y: float, s: string, ctx) =
                   y + dp.gridSize*0.55, s)
 
 # }}}
-# {{{ drawFloor()
-proc drawFloor(x, y: float, color: Color, ctx) =
+# {{{ drawFloorBg()
+proc drawFloorBg(x, y: float, color: Color, ctx) =
   alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
-
-  let sw = UltrathinStrokeWidth
-  vg.strokeColor(ms.gridColorFloor)
-  vg.strokeWidth(sw)
 
   vg.beginPath()
   vg.fillColor(color)
   vg.rect(x, y, dp.gridSize, dp.gridSize)
   vg.fill()
+
+# }}}
+# {{{ drawGrid()
+proc drawGrid(x, y: float, color: Color, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let sw = UltrathinStrokeWidth
+  vg.strokeColor(color)
+  vg.strokeWidth(sw)
 
   case ms.gridStyle
   of gsNone: discard
@@ -1201,9 +1187,7 @@ proc setVertTransform(x, y: float, ctx) =
 
 # }}}
 # {{{ drawCellFloor()
-proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural,
-                   cursorActive: bool, ctx) =
-
+proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
   alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1215,7 +1199,6 @@ proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural,
     y = cellY(viewRow, dp)
 
   template drawOriented(drawProc: untyped) =
-    drawBg()
     vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
     case viewBuf.getFloorOrientation(bufRow, bufCol):
@@ -1228,20 +1211,11 @@ proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural,
     vg.resetScissor()
 
   template draw(drawProc: untyped) =
-    drawBg()
     drawProc(x, y, ctx)
 
-  proc drawBg() =
-    drawFloor(x, y, ms.floorColor, ctx)
-    if cursorActive:
-      drawCursor(x, y, ctx)
-
   case viewBuf.getFloor(bufRow, bufCol)
-  of fNone:
-    if cursorActive:
-      drawCursor(x, y, ctx)
-
-  of fEmpty:               drawBg()
+  of fNone:                discard # TODO?
+  of fEmpty:               discard #
   of fDoor:                drawOriented(drawDoorHoriz)
   of fLockedDoor:          drawOriented(drawLockedDoorHoriz)
   of fArchway:             drawOriented(drawArchwayHoriz)
@@ -1259,13 +1233,48 @@ proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural,
   of fCustom:              draw(drawCustom)
 
 # }}}
+# {{{ drawBackgroundGrid()
+proc drawBackgroundGrid(viewBuf: Map, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let
+        bufRow = viewRow+1
+        bufCol = viewCol+1
+
+      if viewBuf.getFloor(bufRow, bufCol) == fNone:
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
+        drawGrid(x, y, ms.gridColorBackground, ctx)
+
+# }}}
+# {{{ drawCellBackgroundsAndGrid()
+proc drawCellBackgroundsAndGrid(viewBuf: Map, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let
+        bufRow = viewRow+1
+        bufCol = viewCol+1
+
+      if viewBuf.getFloor(bufRow, bufCol) != fNone:
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
+        drawFloorBg(x, y, ms.floorColor, ctx)
+        drawGrid(x, y, ms.gridColorFloor, ctx)
+
+# }}}
 # {{{ drawFloors()
 proc drawFloors(viewBuf: Map, ctx) =
   alias(dp, ctx.dp)
 
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
-      drawCellFloor(viewBuf, r,c, isCursorActive(r,c, dp), ctx)
+      drawCellFloor(viewBuf, r,c, ctx)
 
 # }}}
 # {{{ drawNote()
@@ -1534,15 +1543,10 @@ proc drawMap*(m: Map, ctx) =
   assert dp.viewStartRow + dp.viewRows <= m.rows
   assert dp.viewStartCol + dp.viewCols <= m.cols
 
-  drawBackground(ctx)
-
-  if dp.drawCellCoords:
-    drawCellCoords(m, ctx)
-
   if ms.bgHatchEnabled:
     drawBackgroundHatch(ctx)
-
-  drawBackgroundGrid(ctx)
+  else:
+    drawBackground(ctx)
 
   let viewBuf = newMapFrom(m,
     rectN(
@@ -1561,10 +1565,17 @@ proc drawMap*(m: Map, ctx) =
 
   mergePasteAndOutlineBufs(viewBuf, outlineBuf, ctx)
 
+  drawBackgroundGrid(viewBuf, ctx)
+
   if ms.outlineStyle == osCell:
     drawCellOutlines(m, ctx)
   elif outlineBuf.isSome:
     drawEdgeOutlines(m, outlineBuf.get, ctx)
+
+  drawCellBackgroundsAndGrid(viewBuf, ctx)
+
+  if dp.pastePreview.isNone:
+    drawCursor(ctx)
 
   drawFloors(viewBuf, ctx)
   drawNotes(viewBuf, ctx)
@@ -1587,6 +1598,9 @@ proc drawMap*(m: Map, ctx) =
 
   if dp.drawCursorGuides:
     drawCursorGuides(m, ctx)
+
+  if dp.drawCellCoords:
+    drawCellCoords(m, ctx)
 
 # }}}
 
