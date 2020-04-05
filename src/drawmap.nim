@@ -729,10 +729,10 @@ proc drawIndexedNote*(x, y: float, i: Natural, size: float,
   vg.circle(x + size*0.5, y + size*0.5, size*0.35)
   vg.fill()
 
-  vg.setFont((size*0.39).float)
+  vg.setFont((size*0.4).float)
   vg.fillColor(fgColor)
   vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + size*0.50, y + size*0.53, $i)
+  discard vg.text(x + size*0.51, y + size*0.54, $i)
 
 proc drawIndexedNote*(x, y: float, index: Natural, colorIdx: Natural, ctx) =
   alias(ms, ctx.ms)
