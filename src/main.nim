@@ -27,7 +27,7 @@ import utils
 const
   ThemesDir = "themes"
 
-  DefaultZoomLevel = 5
+  DefaultZoomLevel = 9
 
   StatusBarHeight = 26.0
 
@@ -120,14 +120,15 @@ type
     cols:     string
 
   EditNoteDialogParams = object
-    isOpen:   bool
-    editMode: bool
-    row:      Natural
-    col:      Natural
-    kind:     NoteKind
-    index:    Natural
-    customId: string
-    text:     string
+    isOpen:     bool
+    editMode:   bool
+    row:        Natural
+    col:        Natural
+    kind:       NoteKind
+    index:      Natural
+    indexColor: Natural
+    customId:   string
+    text:       string
 
 
 var g_app: AppContext
@@ -420,8 +421,8 @@ proc drawNotesPane(x, y, w, h: float, a) =
     case note.kind
     of nkIndexed:
       drawIndexedNote(x-40, y-12, note.index, 36,
-                      bgColor=ms.notePaneIndexBgColor1,
-                      fgColor=ms.notePaneTextColor, vg)
+                      bgColor=ms.notePaneIndexBgColor[note.indexColor],
+                      fgColor=ms.notePaneIndexColor, vg)
 
     of nkCustomId:
       vg.fillColor(ms.notePaneTextColor)
@@ -604,6 +605,8 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 # {{{ Edit note dialog
 
 proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
+  let ms = a.mapStyle
+
   let
     dialogWidth = 470.0
     dialogHeight = 320.0
@@ -614,6 +617,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   let
     h = 24.0
+    radioButtonSize = 20
     labelWidth = 80.0
     buttonWidth = 80.0
     buttonPad = 15.0
@@ -639,28 +643,88 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   )
   y = y + 32
 
-  if dlg.kind == nkCustomId:
+  case dlg.kind:
+  of nkIndexed:
+    var radioButtonsDrawProc: RadioButtonsDrawProc =
+      proc (vg: NVGContext, buttonIdx: Natural, label: string,
+            hover: bool, active: bool, pressed: bool,
+            x, y, w, h: float) =
+
+        var col = ms.noteMapIndexBgColor[buttonIdx]
+
+        if hover:
+          col = col.lerp(white(), 0.3)
+        if pressed:
+          col = col.lerp(black(), 0.3)
+
+        const Pad = 5
+        const SelPad = 3
+
+        var cx, cy, cw, ch: float
+        if active:
+          vg.beginPath()
+          vg.strokeColor(ms.cursorColor)
+          vg.strokeWidth(2)
+          vg.rect(x, y, w-Pad, h-Pad)
+          vg.stroke()
+
+          cx = x+SelPad
+          cy = y+SelPad
+          cw = w-Pad-SelPad*2
+          ch = h-Pad-SelPad*2
+
+        else:
+          cx = x
+          cy = y
+          cw = w-Pad
+          ch = h-Pad
+
+        vg.beginPath()
+        vg.fillColor(col)
+        vg.rect(cx, cy, cw, ch)
+        vg.fill()
+
+    koi.label(x, y, labelWidth, h, "Color", gray(0.80), fontSize=14.0)
+    dlg.indexColor = koi.radioButtons(
+      x + labelWidth, y, h, h,
+      labels = newSeq[string](4),
+      tooltips = @[],
+      dlg.indexColor,
+      layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
+      drawProc=radioButtonsDrawProc.some
+    )
+
+  of nkCustomId:
     koi.label(x, y, labelWidth, h, "Custom ID", gray(0.80), fontSize=14.0)
     dlg.customId = koi.textField(
       x + labelWidth, y, 50.0, h, tooltip = "", dlg.customId
     )
 
+  of nkComment: discard
+
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
+
 
   proc okAction(dlg: var EditNoteDialogParams, a) =
     var note = Note(
       kind: dlg.kind,
       text: dlg.text
     )
-    if note.kind == nkCustomId:
+    case note.kind
+    of nkCustomId:
       note.customId = dlg.customId
+    of nkIndexed:
+      note.indexColor = dlg.indexColor
+    of nkComment:
+      discard
 
     actions.setNote(a.map, dlg.row, dlg.col, note, a.undoManager)
 
     setStatusMessage(IconComment, "Set cell note", a)
     koi.closeDialog()
     dlg.isOpen = false
+
 
   proc cancelAction(dlg: var EditNoteDialogParams, a) =
     koi.closeDialog()
@@ -672,6 +736,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   x += buttonWidth + 10
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
+
 
   for ke in koi.keyBuf():
     if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
@@ -872,6 +937,7 @@ proc handleMapEvents(a) =
 
             if note.kind == nkIndexed:
               dlg.index = note.index
+              dlg.indexColor = note.indexColor
 
             if note.kind == nkCustomId:
               dlg.customId = note.customId
@@ -1318,7 +1384,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   loadImages(vg, a)
 
   searchThemes(a)
-  var themeIndex = findThemeIndex("oldpaper", a)
+  var themeIndex = findThemeIndex("default2", a)
   if themeIndex == -1:
     themeIndex = 0
   loadTheme(themeIndex, a)
@@ -1335,7 +1401,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-#  a.map = newMap(16, 16)
+  a.map = newMap(16, 16)
   a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
 #  a.map = readMap("drawtest.grm")
 #  a.map = readMap("notetest.grm")

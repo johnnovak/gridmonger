@@ -87,17 +87,11 @@ type
     noteMapTextColor*:       Color
     noteMapCommentColor*:    Color
     noteMapIndexColor*:      Color
-    noteMapIndexBgColor1*:   Color
-    noteMapIndexBgColor2*:   Color
-    noteMapIndexBgColor3*:   Color
-    noteMapIndexBgColor4*:   Color
+    noteMapIndexBgColor*:    array[4, Color]
 
     notePaneTextColor*:      Color
     notePaneIndexColor*:     Color
-    notePaneIndexBgColor1*:  Color
-    notePaneIndexBgColor2*:  Color
-    notePaneIndexBgColor3*:  Color
-    notePaneIndexBgColor4*:  Color
+    notePaneIndexBgColor*:   array[4, Color]
 
 
   GridStyle* = enum
@@ -761,13 +755,13 @@ proc drawIndexedNote*(x, y: float, i: Natural, size: float,
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + size*0.50, y + size*0.53, $i)
 
-proc drawIndexedNote*(x, y: float, i: Natural, ctx) =
+proc drawIndexedNote*(x, y: float, index: Natural, colorIdx: Natural, ctx) =
   alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawIndexedNote(x, y, i, dp.gridSize,
-                  bgColor=ms.noteMapIndexBgColor1,
+  drawIndexedNote(x, y, index, dp.gridSize,
+                  bgColor=ms.noteMapIndexBgColor[colorIdx],
                   fgColor=ms.noteMapIndexColor, vg)
 
 # }}}
@@ -1284,7 +1278,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
 
   case note.kind
   of nkIndexed:
-    drawIndexedNote(x, y, note.index, ctx)
+    drawIndexedNote(x, y, note.index, note.indexColor, ctx)
 
   of nkCustomId:
     drawCustomIdNote(x, y, note.customId, ctx)

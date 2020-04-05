@@ -21,13 +21,13 @@ RIFF ('GRDM'            # Gridmonger map file
 
 
 'maph'
-    UINT8  format version
+    UINT8   format version
 
 
 'prop'
     UINT16  numRows
     UINT16  numColums
-    BZSTR   mapName
+    BSTR    mapName
 
 'data'
     (numRows * numColums) records of:
@@ -43,10 +43,18 @@ RIFF ('GRDM'            # Gridmonger map file
     UINT16  row
     UINT16  column
     UINT8   kind
-    WZSTR   text
+
+    if kind == 0 (indexed)
+        UINT16  index
+        UINT8   indexColor
+
+    if kind == 1 (customId)
+        BSTR    custom ID
+
+    WSTR    text
 
 'disp'
-    BZSTR   themeName
+    BSTR    themeName
     UINT8   currMap
     UINT8   zoomLevel
     UINT8   showCoords

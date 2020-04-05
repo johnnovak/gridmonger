@@ -69,17 +69,17 @@ DefaultMapStyle.pastePreviewColor      = rgba(0.2, 0.6, 1.0, 0.4)
 DefaultMapStyle.noteMapTextColor       = gray(0.85)
 DefaultMapStyle.noteMapCommentColor    = rgba(1.0, 0.2, 0.0, 0.8)
 DefaultMapStyle.noteMapIndexColor      = gray(0.85)
-DefaultMapStyle.noteMapIndexBgColor1   = gray(0.0, 0.2)
-DefaultMapStyle.noteMapIndexBgColor2   = gray(0.0, 0.2)
-DefaultMapStyle.noteMapIndexBgColor3   = gray(0.0, 0.2)
-DefaultMapStyle.noteMapIndexBgColor4   = gray(0.0, 0.2)
+DefaultMapStyle.noteMapIndexBgColor    = [gray(0.0, 0.2),
+                                          gray(0.0, 0.2),
+                                          gray(0.0, 0.2),
+                                          gray(0.0, 0.2)]
 
 DefaultMapStyle.notePaneTextColor      = gray(0.1)
 DefaultMapStyle.notePaneIndexColor     = gray(0.1)
-DefaultMapStyle.notePaneIndexBgColor1  = gray(1.0, 0.2)
-DefaultMapStyle.notePaneIndexBgColor2  = gray(1.0, 0.2)
-DefaultMapStyle.notePaneIndexBgColor3  = gray(1.0, 0.2)
-DefaultMapStyle.notePaneIndexBgColor4  = gray(1.0, 0.2)
+DefaultMapStyle.notePaneIndexBgColor   = [gray(1.0, 0.2),
+                                          gray(1.0, 0.2),
+                                          gray(1.0, 0.2),
+                                          gray(1.0, 0.2)]
 
 # }}}
 
@@ -234,17 +234,17 @@ proc parseMapSection(c: Config): MapStyle =
   c.getColor(M, "noteMapTextColor",         ms.noteMapTextColor)
   c.getColor(M, "noteMapCommentColor",      ms.noteMapCommentColor)
   c.getColor(M, "noteMapIndexColor",        ms.noteMapIndexColor)
-  c.getColor(M, "noteMapIndexBgColor1",     ms.noteMapIndexBgColor1)
-  c.getColor(M, "noteMapIndexBgColor2",     ms.noteMapIndexBgColor2)
-  c.getColor(M, "noteMapIndexBgColor3",     ms.noteMapIndexBgColor3)
-  c.getColor(M, "noteMapIndexBgColor4",     ms.noteMapIndexBgColor4)
+  c.getColor(M, "noteMapIndexBgColor1",     ms.noteMapIndexBgColor[0])
+  c.getColor(M, "noteMapIndexBgColor2",     ms.noteMapIndexBgColor[1])
+  c.getColor(M, "noteMapIndexBgColor3",     ms.noteMapIndexBgColor[2])
+  c.getColor(M, "noteMapIndexBgColor4",     ms.noteMapIndexBgColor[3])
 
   c.getColor(M, "notePaneTextColor",        ms.notePaneTextColor)
-  c.getColor(M, "notePaneIndexColor",       ms.notePaneTextColor)
-  c.getColor(M, "notePaneIndexBgColor1",    ms.notePaneIndexBgColor1)
-  c.getColor(M, "notePaneIndexBgColor2",    ms.notePaneIndexBgColor2)
-  c.getColor(M, "notePaneIndexBgColor3",    ms.notePaneIndexBgColor3)
-  c.getColor(M, "notePaneIndexBgColor4",    ms.notePaneIndexBgColor4)
+  c.getColor(M, "notePaneIndexColor",       ms.notePaneIndexColor)
+  c.getColor(M, "notePaneIndexBgColor1",    ms.notePaneIndexBgColor[0])
+  c.getColor(M, "notePaneIndexBgColor2",    ms.notePaneIndexBgColor[1])
+  c.getColor(M, "notePaneIndexBgColor3",    ms.notePaneIndexBgColor[2])
+  c.getColor(M, "notePaneIndexBgColor4",    ms.notePaneIndexBgColor[3])
 
   result = ms
 

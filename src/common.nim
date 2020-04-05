@@ -121,7 +121,7 @@ type
   Note* = object
     text*: string
     case kind*: NoteKind
-    of nkIndexed:  index*: Natural
+    of nkIndexed:  index*, indexColor*: Natural
     of nkCustomId: customId*: string
     of nkComment:  discard
 
