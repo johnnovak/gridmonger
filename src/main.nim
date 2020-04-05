@@ -420,7 +420,7 @@ proc drawNotesPane(x, y, w, h: float, a) =
     case note.kind
     of nkIndexed:
       drawIndexedNote(x-40, y-12, note.index, 36,
-                      bgColor=ms.notePaneBackgroundColor,
+                      bgColor=ms.notePaneIndexBgColor1,
                       fgColor=ms.notePaneTextColor, vg)
 
     of nkCustomId:

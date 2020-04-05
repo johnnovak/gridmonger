@@ -1,5 +1,6 @@
 import algorithm
 import options
+import sugar
 import tables
 
 import common

@@ -53,8 +53,8 @@ type
     floorColor*:             Color
     thinLines*:              bool
 
-    bgHatchColor*:           Color
     bgHatchEnabled*:         bool
+    bgHatchColor*:           Color
     bgHatchStrokeWidth*:     float
     bgHatchSpacingFactor*:   float
 
@@ -84,12 +84,20 @@ type
     pastePreviewColor*:      Color
     selectionColor*:         Color
 
-    noteMapTextColor*:        Color
-    noteMapIndexColor*:       Color
-    noteMapBackgroundColor*:  Color
-    notePaneTextColor*:       Color
-    notePaneBackgroundColor*: Color
-    noteCommentMarkerColor*:  Color
+    noteMapTextColor*:       Color
+    noteMapCommentColor*:    Color
+    noteMapIndexColor*:      Color
+    noteMapIndexBgColor1*:   Color
+    noteMapIndexBgColor2*:   Color
+    noteMapIndexBgColor3*:   Color
+    noteMapIndexBgColor4*:   Color
+
+    notePaneTextColor*:      Color
+    notePaneIndexColor*:     Color
+    notePaneIndexBgColor1*:  Color
+    notePaneIndexBgColor2*:  Color
+    notePaneIndexBgColor3*:  Color
+    notePaneIndexBgColor4*:  Color
 
 
   GridStyle* = enum
@@ -759,7 +767,7 @@ proc drawIndexedNote*(x, y: float, i: Natural, ctx) =
   alias(vg, ctx.vg)
 
   drawIndexedNote(x, y, i, dp.gridSize,
-                  bgColor=ms.noteMapBackgroundColor,
+                  bgColor=ms.noteMapIndexBgColor1,
                   fgColor=ms.noteMapIndexColor, vg)
 
 # }}}
@@ -1282,7 +1290,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
     drawCustomIdNote(x, y, note.customId, ctx)
 
   of nkComment:
-    vg.fillColor(ms.noteCommentMarkerColor)
+    vg.fillColor(ms.noteMapCommentColor)
     vg.beginPath()
     vg.moveTo(x + dp.gridSize - w, y)
     vg.lineTo(x + dp.gridSize + 1, y + w+1)
