@@ -57,6 +57,8 @@ type
     emPastePreview
 
   AppContext = ref object
+    shouldClose:    bool
+
     # Context
     win:            CSDWindow
     vg:             NVGContext
@@ -65,6 +67,7 @@ type
     undoManager:    UndoManager[Map]
 
     # Document (TODO group under 'doc'?)
+    filename:       string
     map:            Map
 
     # Options (TODO group under 'opts'?)
@@ -106,6 +109,7 @@ type
     themeReloaded:  bool
 
     # Dialogs
+    quitDialogOpen: bool
     newMapDialog:   NewMapDialogParams
     editNoteDialog: EditNoteDialogParams
 
@@ -135,26 +139,6 @@ type
 var g_app: AppContext
 
 using a: var AppContext
-
-# }}}
-
-# {{{ Theme support
-proc searchThemes(a) =
-  for path in walkFiles(fmt"{ThemesDir}/*.cfg"):
-    let (_, name, _) = splitFile(path)
-    a.themeNames.add(name)
-  sort(a.themeNames)
-
-proc findThemeIndex(name: string, a): int =
-  for i, n in a.themeNames:
-    if n == name:
-      return i
-  return -1
-
-proc loadTheme(index: Natural, a) =
-  let name = a.themeNames[index]
-  (a.uiStyle, a.mapStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
-  a.currThemeIndex = index
 
 # }}}
 
@@ -240,6 +224,56 @@ proc renderStatusBar(y: float, winWidth: float, a) =
       x = tx + CommandTextPadX
 
   vg.resetScissor()
+
+# }}}
+
+# {{{ isMapModified()
+proc isMapModified(a): bool =
+  a.undoManager.canUndo()
+
+# }}}
+# {{{ saveMap()
+proc saveMap(filename: string, a) =
+  writeMap(a.map, filename)
+  setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
+
+proc saveMapAs(a) =
+  when not defined(DEBUG):
+    let ext = MapFileExtension
+    var filename = fileDialog(fdSaveFile,
+                              filters=fmt"Gridmonger Map (*.{ext}):{ext}")
+    if filename != "":
+      try:
+        filename = addFileExt(filename, ext)
+        saveMap(filename, a)
+        a.filename = filename
+        a.win.title = filename
+      except CatchableError as e:
+        # TODO log stracktrace?
+        setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
+
+proc saveMap(a) =
+  if a.filename != "": saveMap(a.filename, a)
+  else: saveMapAs(a)
+
+# }}}
+# {{{ Theme support
+proc searchThemes(a) =
+  for path in walkFiles(fmt"{ThemesDir}/*.cfg"):
+    let (_, name, _) = splitFile(path)
+    a.themeNames.add(name)
+  sort(a.themeNames)
+
+proc findThemeIndex(name: string, a): int =
+  for i, n in a.themeNames:
+    if n == name:
+      return i
+  return -1
+
+proc loadTheme(index: Natural, a) =
+  let name = a.themeNames[index]
+  (a.uiStyle, a.mapStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
+  a.currThemeIndex = index
 
 # }}}
 
@@ -507,6 +541,66 @@ proc drawWallToolbar(x: float, a) =
 
 # {{{ Dialogs
 
+# {{{ Quit dialog
+proc quitDialog(a) =
+  let
+    dialogWidth = 350.0
+    dialogHeight = 160.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconExit}  Quit")
+  a.clearStatusMessage()
+
+  let
+    h = 24.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 50.0
+
+  koi.label(x, y, dialogWidth, h, "You have unsaved changes.", gray(0.80), fontSize=14.0)
+
+  y += 24
+  koi.label(x, y, dialogWidth, h, "Do you want to save before quitting?", gray(0.80), fontSize=14.0)
+
+  proc yesAction(a) =
+    saveMap(a)
+    a.shouldClose = true
+    koi.closeDialog()
+    a.quitDialogOpen = false
+
+  proc noAction(a) =
+    a.shouldClose = true
+    koi.closeDialog()
+    a.quitDialogOpen = false
+
+  proc cancelAction(a) =
+    koi.closeDialog()
+    a.quitDialogOpen = false
+
+
+  x = dialogWidth - 3 * buttonWidth - buttonPad - 20
+  y = dialogHeight - h - buttonPad
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} Yes"):
+    yesAction(a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"No"):
+    noAction(a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(a)
+
+  for ke in koi.keyBuf():
+    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(a)
+    elif ke.action == kaDown and ke.key == keyEnter:  yesAction(a)
+
+  koi.endDialog()
+
+# }}}
 # {{{ New map dialog
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
   let
@@ -543,9 +637,6 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
   )
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
-
   proc okAction(dlg: var NewMapDialogParams, a) =
     initUndoManager(a.undoManager)
     # TODO number error checking
@@ -553,6 +644,8 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     let cols = parseInt(dlg.cols)
     a.map = newMap(rows, cols)
     resetCursorAndViewStart(a)
+    a.filename = ""
+    a.win.title = "[Untitled]"
     setStatusMessage(IconFile, fmt"New {rows}x{cols} map created", a)
     koi.closeDialog()
     dlg.isOpen = false
@@ -561,6 +654,8 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
 
   if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
     okAction(dlg, a)
@@ -600,11 +695,11 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     x = 30.0
     y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Type", gray(0.80), fontSize=14.0)
+  koi.label(x, y, labelWidth, h, "Marker", gray(0.80), fontSize=14.0)
   dlg.kind = NoteKind(
     koi.radioButtons(
-      x + labelWidth, y, 270, h,
-      labels = @["Number", "ID", "Icon", "Text"],
+      x + labelWidth, y, 264, h,
+      labels = @["None", "Number", "ID", "Icon"],
       tooltips = @[],
       ord(dlg.kind)
     )
@@ -725,9 +820,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   of nkComment: discard
 
+
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
-
 
   proc okAction(dlg: var EditNoteDialogParams, a) =
     var note = Note(
@@ -761,7 +856,6 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   x += buttonWidth + 10
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
-
 
   for ke in koi.keyBuf():
     if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
@@ -1000,6 +1094,8 @@ proc handleMapEvents(a) =
           if filename != "":
             try:
               m = readMap(filename)
+              a.filename = filename
+              a.win.title = filename
               initUndoManager(um)
               resetCursorAndViewStart(a)
               updateViewStartAndCursorPosition(a)
@@ -1009,18 +1105,10 @@ proc handleMapEvents(a) =
               setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
-        when not defined(DEBUG):
-          let ext = MapFileExtension
-          var filename = fileDialog(fdSaveFile,
-                                    filters=fmt"Gridmonger Map (*.{ext}):{ext}")
-          if filename != "":
-            try:
-              filename = addFileExt(filename, ext)
-              writeMap(m, filename)
-              setStatusMessage(IconFloppy, fmt"Map saved", a)
-            except CatchableError as e:
-              # TODO log stracktrace?
-              setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
+        saveMap(a)
+
+      elif ke.isKeyDown(keyS, {mkCtrl, mkShift}):
+        saveMapAs(a)
 
       elif ke.isKeyDown(keyR, {mkAlt,mkCtrl}):
         a.nextThemeIndex = a.currThemeIndex.some
@@ -1260,6 +1348,8 @@ proc renderUI() =
     vg.fillColor(a.uiStyle.backgroundColor)
   vg.fill()
 
+  a.win.modified = isMapModified(a)
+
   # Current level dropdown
   a.currMapLevel = koi.dropdown(
     MapLeftPad, 45, 300, 24.0,   # TODO calc y
@@ -1302,6 +1392,11 @@ proc renderUI() =
   renderStatusBar(statusBarY, winWidth.float, a)
 
   # Dialogs
+  if a.win.shouldClose:
+    a.win.shouldClose = false
+    a.quitDialogOpen = true
+
+  if a.quitDialogOpen:          quitDialog(a)
   if a.newMapDialog.isOpen:     newMapDialog(a.newMapDialog, a)
   elif a.editNoteDialog.isOpen: editNoteDialog(a.editNoteDialog, a)
 
@@ -1429,17 +1524,19 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
   a.map = newMap(16, 16)
-  a.map = readMap("EOB III - Crystal Tower L2 notes.grm")
-#  a.map = readMap("drawtest.grm")
-#  a.map = readMap("notetest.grm")
-#  a.map = readMap("pool-of-radiance-library.grm")
-#  a.map = readMap("library.grm")
+
+  let filename = "EOB III - Crystal Tower L2 notes.grm"
+# let filename = "drawtest.grm"
+# let filename = "notetest.grm"
+# let filename = "pool-of-radiance-library.grm"
+# let filename = "library.grm"
+  a.map = readMap(filename)
+  a.filename = filename
+  a.win.title = filename
 
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame
 
-  a.win.title = "Eye of the Beholder III"
-  a.win.modified = true
   # TODO for development
   a.win.size = (960, 1040)
   a.win.pos = (960, 0)
@@ -1459,7 +1556,7 @@ proc main() =
   let (win, vg) = initGfx()
   initApp(win, vg)
 
-  while not g_app.win.shouldClose:
+  while not g_app.shouldClose:
     if koi.shouldRenderNextFrame():
       glfw.pollEvents()
     else:

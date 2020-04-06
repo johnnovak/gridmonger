@@ -7,6 +7,7 @@ import undomanager
 
 
 using
+  m: var Map
   currMap: var Map
   um: var UndoManager[Map]
 
@@ -127,8 +128,8 @@ proc setOrientedFloor*(currMap; r,c: Natural, f: Floor, ot: Orientation, um) =
 # {{{ excavate*()
 proc excavate*(currMap; r,c: Natural, um) =
   singleCellAction(currMap, r,c, um, "Excavate", m):
-    if m.getFloor(r,c) == fNone:
-      m.setFloor(r,c, fEmpty)
+    m.eraseCell(r,c)
+    m.setFloor(r,c, fEmpty)
 
     if r == 0 or m.getFloor(r-1, c) == fNone:
       m.setWall(r,c, dirN, wWall)

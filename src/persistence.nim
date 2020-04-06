@@ -122,7 +122,9 @@ proc readMapNotes_V1(rr; m: Map) =
     let col = rr.read(uint16)
 
     var note = Note(kind: NoteKind(rr.read(uint8)))
+
     case note.kind
+    of nkComment:  discard
     of nkIndexed:
       note.index = rr.read(uint16)
       note.indexColor = rr.read(uint8)
@@ -132,8 +134,6 @@ proc readMapNotes_V1(rr; m: Map) =
 
     of nkCustomId:
       note.customId = rr.readBStr()
-
-    of nkComment:  discard
 
     note.text = rr.readWStr()
     m.setNote(row, col, note)
@@ -308,6 +308,7 @@ proc writeMapNotes(rw; m: Map) =
 
     rw.write(note.kind.uint8)
     case note.kind
+    of nkComment: discard
     of nkIndexed:
       rw.write(note.index.uint16)
       rw.write(note.indexColor.uint8)
@@ -317,8 +318,6 @@ proc writeMapNotes(rw; m: Map) =
 
     of nkIcon:
       rw.write(note.icon.uint8)
-
-    of nkComment: discard
 
     rw.writeWStr(note.text)
 

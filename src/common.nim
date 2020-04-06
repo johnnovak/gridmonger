@@ -116,15 +116,16 @@ type
     wallN*, wallW*:    Wall
 
   NoteKind* = enum
-    nkIndexed, nkCustomId, nkComment, nkIcon  # TODO reorder?
+#    nkIndexed, nkCustomId, nkComment, nkIcon  # TODO reorder?
+    nkComment, nkIndexed, nkCustomId, nkIcon  # TODO reorder?
 
   Note* = object
     text*: string
     case kind*: NoteKind
+    of nkComment:  discard
     of nkIndexed:  index*, indexColor*: Natural
     of nkCustomId: customId*: string
     of nkIcon:     icon*: Natural
-    of nkComment:  discard
 
   # (0,0) is the top-left cell of the map
   Map* = ref object

@@ -68,6 +68,13 @@ proc maxNoteIndex*(m): Natural =
     if n.kind == nkIndexed:
       result = max(result, n.index)
 
+proc convertNoteToComment(m; r,c: Natural) =
+  if m.hasNote(r,c):
+    let note = m.getNote(r,c)
+    if note.kind != nkComment:
+      m.delNote(r,c)
+      let commentNote = Note(kind: nkComment, text: note.text)
+      m.setNote(r,c, commentNote)
 
 proc copyNotesFrom(m; destRow, destCol: Natural,
                    src: Map, srcRect: Rect[Natural]) =
@@ -214,6 +221,7 @@ proc getFloor*(m; r,c: Natural): Floor =
 proc setFloor*(m; r,c: Natural, f: Floor) =
   assert r < m.rows
   assert c < m.cols
+  m.convertNoteToComment(r,c)
   m[r,c].floor = f
 
 proc getFloorOrientation*(m; r,c: Natural): Orientation =

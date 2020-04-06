@@ -108,6 +108,9 @@ proc show*(win) =
 proc shouldClose*(win): bool =
   win.w.shouldClose
 
+proc `shouldClose=`*(win; state: bool) =
+  win.w.shouldClose = state
+
 # TODO move to koi?
 proc isKeyDown*(win; key: Key): bool =
   win.w.isKeyDown(key)
