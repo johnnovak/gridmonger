@@ -2,6 +2,7 @@ import algorithm
 import lenientops
 import options
 import os
+import sugar
 import strformat
 import strutils
 
@@ -42,6 +43,11 @@ const
   NotesPaneHeight = 40.0
   NotesPaneBottomPad = 10.0
 
+
+const
+  MapFileExt * = "grm"
+  GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
+
 # }}}
 # {{{ AppContext
 type
@@ -67,8 +73,8 @@ type
     undoManager:    UndoManager[Map]
 
     # Document (TODO group under 'doc'?)
-    filename:       string
-    map:            Map
+    filename:          string
+    map:               Map
 
     # Options (TODO group under 'opts'?)
     scrollMargin:   Natural
@@ -109,13 +115,16 @@ type
     themeReloaded:  bool
 
     # Dialogs
-    quitDialogOpen: bool
-    newMapDialog:   NewMapDialogParams
-    editNoteDialog: EditNoteDialogParams
+    saveDiscardDialog: SaveDiscardDialogParams
+    newMapDialog:      NewMapDialogParams
+    editNoteDialog:    EditNoteDialogParams
 
     # Images
     oldPaperImage:  Image
 
+  SaveDiscardDialogParams = object
+    isOpen: bool
+    action: proc (a: var AppContext)
 
   NewMapDialogParams = object
     isOpen:   bool
@@ -227,24 +236,43 @@ proc renderStatusBar(y: float, winWidth: float, a) =
 
 # }}}
 
-# {{{ isMapModified()
-proc isMapModified(a): bool =
-  a.undoManager.canUndo()
+# {{{ openMap()
+proc resetCursorAndViewStart(a)
+proc updateViewStartAndCursorPosition(a)
 
+proc openMap(a) =
+  when defined(DEBUG): discard
+  else:
+    let filename = fileDialog(fdOpenFile,
+                              filters=GridmongerMapFileFilter)
+    if filename != "":
+      try:
+        a.map = readMap(filename)
+        a.filename = filename
+        a.win.title = filename
+
+        initUndoManager(a.undoManager)
+
+        resetCursorAndViewStart(a)
+        updateViewStartAndCursorPosition(a)
+        setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
+
+      except CatchableError as e:
+        # TODO log stracktrace?
+        setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
 # }}}
 # {{{ saveMap()
 proc saveMap(filename: string, a) =
   writeMap(a.map, filename)
+  a.undoManager.setLastSaveState()
   setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
 
 proc saveMapAs(a) =
   when not defined(DEBUG):
-    let ext = MapFileExtension
-    var filename = fileDialog(fdSaveFile,
-                              filters=fmt"Gridmonger Map (*.{ext}):{ext}")
+    var filename = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
     if filename != "":
       try:
-        filename = addFileExt(filename, ext)
+        filename = addFileExt(filename, MapFileExt)
         saveMap(filename, a)
         a.filename = filename
         a.win.title = filename
@@ -483,7 +511,7 @@ proc drawNotesPane(x, y, w, h: float, a) =
 
 
 # }}}
-# {{{ drawWallToolbar
+# {{{ drawWallToolbar()
 const SpecialWalls = @[
   wIllusoryWall,
   wInvisibleWall,
@@ -541,13 +569,13 @@ proc drawWallToolbar(x: float, a) =
 
 # {{{ Dialogs
 
-# {{{ Quit dialog
-proc quitDialog(a) =
+# {{{ Save/discard changes dialog
+proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   let
     dialogWidth = 350.0
     dialogHeight = 160.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconExit}  Quit")
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconFloppy}  Save changes?")
   a.clearStatusMessage()
 
   let
@@ -562,46 +590,51 @@ proc quitDialog(a) =
   koi.label(x, y, dialogWidth, h, "You have unsaved changes.", gray(0.80), fontSize=14.0)
 
   y += 24
-  koi.label(x, y, dialogWidth, h, "Do you want to save before quitting?", gray(0.80), fontSize=14.0)
+  koi.label(x, y, dialogWidth, h, "Do you want to save your changes first?", gray(0.80), fontSize=14.0)
 
-  proc yesAction(a) =
+  proc saveAction(dlg: var SaveDiscardDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
     saveMap(a)
-    a.shouldClose = true
-    koi.closeDialog()
-    a.quitDialogOpen = false
+    dlg.action(a)
 
-  proc noAction(a) =
-    a.shouldClose = true
+  proc discardAction(dlg: var SaveDiscardDialogParams, a) =
     koi.closeDialog()
-    a.quitDialogOpen = false
+    dlg.isOpen = false
+    dlg.action(a)
 
-  proc cancelAction(a) =
+  proc cancelAction(dlg: var SaveDiscardDialogParams, a) =
     koi.closeDialog()
-    a.quitDialogOpen = false
-
+    dlg.isOpen = false
 
   x = dialogWidth - 3 * buttonWidth - buttonPad - 20
   y = dialogHeight - h - buttonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} Yes"):
-    yesAction(a)
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} Save"):
+    saveAction(dlg, a)
 
   x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"No"):
-    noAction(a)
+  if koi.button(x, y, buttonWidth, h, fmt"{IconTrash} Discard"):
+    discardAction(dlg, a)
 
   x += buttonWidth + 10
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-    cancelAction(a)
+    cancelAction(dlg, a)
 
   for ke in koi.keyBuf():
-    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(a)
-    elif ke.action == kaDown and ke.key == keyEnter:  yesAction(a)
+    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
+    elif ke.action == kaDown and ke.key == keyEnter:  saveAction(dlg, a)
 
   koi.endDialog()
 
 # }}}
 # {{{ New map dialog
+proc openNewMapDialog(a) =
+  a.newMapDialog.name = ""
+  a.newMapDialog.rows = $a.map.rows
+  a.newMapDialog.cols = $a.map.cols
+  a.newMapDialog.isOpen = true
+
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
   let
     dialogWidth = 350.0
@@ -638,15 +671,19 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
   )
 
   proc okAction(dlg: var NewMapDialogParams, a) =
-    initUndoManager(a.undoManager)
     # TODO number error checking
     let rows = parseInt(dlg.rows)
     let cols = parseInt(dlg.cols)
+
     a.map = newMap(rows, cols)
-    resetCursorAndViewStart(a)
     a.filename = ""
     a.win.title = "[Untitled]"
+
+    initUndoManager(a.undoManager)
+
+    resetCursorAndViewStart(a)
     setStatusMessage(IconFile, fmt"New {rows}x{cols} map created", a)
+
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1080,29 +1117,19 @@ proc handleMapEvents(a) =
           setStatusMessage(IconEraser, "Note erased", a)
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
-        alias(dlg, a.newMapDialog)
-        dlg.name = "Level 1"
-        dlg.rows = $m.rows
-        dlg.cols = $m.cols
-        dlg.isOpen = true
+        if a.undoManager.isModified:
+          a.saveDiscardDialog.isOpen = true
+          a.saveDiscardDialog.action = openNewMapDialog
+        else:
+          openNewMapDialog(a)
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
-        when not defined(DEBUG):
-          let ext = MapFileExtension
-          let filename = fileDialog(fdOpenFile,
-                                    filters=fmt"Gridmonger Map (*.{ext}):{ext}")
-          if filename != "":
-            try:
-              m = readMap(filename)
-              a.filename = filename
-              a.win.title = filename
-              initUndoManager(um)
-              resetCursorAndViewStart(a)
-              updateViewStartAndCursorPosition(a)
-              setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
-            except CatchableError as e:
-              # TODO log stracktrace?
-              setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
+        alias(dlg, a.saveDiscardDialog)
+        if a.undoManager.isModified:
+          dlg.isOpen = true
+          dlg.action = openMap
+        else:
+          openMap(a)
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
         saveMap(a)
@@ -1348,8 +1375,6 @@ proc renderUI() =
     vg.fillColor(a.uiStyle.backgroundColor)
   vg.fill()
 
-  a.win.modified = isMapModified(a)
-
   # Current level dropdown
   a.currMapLevel = koi.dropdown(
     MapLeftPad, 45, 300, 24.0,   # TODO calc y
@@ -1392,13 +1417,9 @@ proc renderUI() =
   renderStatusBar(statusBarY, winWidth.float, a)
 
   # Dialogs
-  if a.win.shouldClose:
-    a.win.shouldClose = false
-    a.quitDialogOpen = true
-
-  if a.quitDialogOpen:          quitDialog(a)
-  if a.newMapDialog.isOpen:     newMapDialog(a.newMapDialog, a)
-  elif a.editNoteDialog.isOpen: editNoteDialog(a.editNoteDialog, a)
+  if   a.saveDiscardDialog.isOpen: saveDiscardDialog(a.saveDiscardDialog, a)
+  elif a.newMapDialog.isOpen:      newMapDialog(a.newMapDialog, a)
+  elif a.editNoteDialog.isOpen:    editNoteDialog(a.editNoteDialog, a)
 
 # }}}
 # {{{ renderFramePre()
@@ -1412,6 +1433,8 @@ proc renderFramePre(win: CSDWindow) =
     a.drawMapParams.initDrawMapParams(a.mapStyle, a.vg, getPxRatio(a))
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
+
+  a.win.modified = a.undoManager.isModified
 
 # }}}
 # {{{ renderFrame()
@@ -1433,6 +1456,18 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
 
   renderUI()
 
+  if win.shouldClose:
+    win.shouldClose = false
+    when defined(NO_QUIT_DIALOG):
+      a.shouldClose = true
+    else:
+      if not koi.isDialogActive():
+        if a.undoManager.isModified:
+          a.saveDiscardDialog.isOpen = true
+          a.saveDiscardDialog.action = proc (a) = a.shouldClose = true
+          koi.setFramesLeft()
+        else:
+          a.shouldClose = true
 # }}}
 
 # {{{ Init & cleanup
@@ -1562,7 +1597,9 @@ proc main() =
     else:
       glfw.waitEvents()
     csdRenderFrame(g_app.win)
+
   cleanup()
+
 # }}}
 
 main()

@@ -445,7 +445,6 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 # }}}
 
 proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-#  g_renderFrameProc(g_window, doHandleEvents=false)
   csdRenderFrame(g_window, doHandleEvents=false)
 
 proc `renderFramePreCb=`*(win; p: RenderFramePreProc) =

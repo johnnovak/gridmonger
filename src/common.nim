@@ -134,7 +134,8 @@ type
     cells*:       seq[Cell]
     notes*:       Table[Natural, Note]
 
-  # TODO introduce CellGrid
+  # TODO introduce CellGrid because now the undomanager and the viewbuffer
+  # copies the name, modified too
   #CellGrid* = ref object
   #  cols*:  Natural
   #  rows*:  Natural
@@ -192,6 +193,7 @@ const
   IconRedo* = "\uf064"
   IconRotate* = "\uf01e"
   IconSelection* = "\ue90b"
+  IconTrash* = "\uf1f8"
   IconTiles* = "\ue950"
   IconUndo* = "\uf112"
   IconVertArrows* = "\uf07d"
@@ -208,6 +210,7 @@ const
   IconEnter* = "\uea13"
   IconExit* = "\uea14"
 
+  IconArchive* = "\uf187"
   IconBed* = "\uf236"
   IconBomb* = "\uf1e2"
   IconBook* = "\uf02d"
@@ -216,13 +219,16 @@ const
   IconFlag* = "\uf024"
   IconFlask* = "\uf0c3"
   IconFort* = "\uf286"
+  IconGraduation* = "\uf19d"
   IconHeart* = "\uf004"
   IconHome* = "\uf015"
+  IconInstitution* = "\uf19c"
   IconKey* = "\uf084"
   IconMale* = "\uf183"
   IconMedkit* = "\uf0fa"
   IconMoney* = "\ue93e"
   IconMug* = "\ue905"
+  IconPower* = "\ue9b5"
   IconShield* = "\uf132"
   IconShip* = "\ue944"
   IconSpinner* = "\ue910"
@@ -231,34 +237,34 @@ const
   IconTrophy* = "\uf091"
 
 const NoteIcons* = @[
+  IconArchive,
   IconBed,
+  IconBomb,
+  IconBook,
+  IconDiamond,
+  IconEquip,
+  IconFlag,
+  IconFlask,
+  IconFloppy,
   IconFort,
-  IconHome,
-  IconMug,
-  IconShip,
-  IconTree,
+  IconGraduation,
   IconHeart,
+  IconHome,
+  IconInstitution,
+  IconKey,
+  IconMale,
   IconMedkit,
   IconMoney,
-  IconKey,
-  IconBook,
-  IconTrophy,
+  IconMug,
+  IconPower,
   IconShield,
-  IconEquip,
-  IconDiamond,
-  IconFlask,
-  IconFlag,
-  IconMale,
-  IconBomb,
+  IconShip,
   IconStar,
-  IconFloppy
+  IconTree,
+  IconTrophy
 ]
 
 #  Icon* = "\u"
 # }}}
-
-const
-  MapFileExtension* = "grm"
-
 
 # vim: et:ts=2:sw=2:fdm=marker
