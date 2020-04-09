@@ -152,10 +152,10 @@ proc maximize(win) =
 
 var g_TitleBarWindowButtonStyle = koi.getDefaultButtonStyle()
 
-g_TitleBarWindowButtonStyle.labelOnly        = true
-g_TitleBarWindowButtonStyle.labelColor       = gray(0.45)
-g_TitleBarWindowButtonStyle.labelColorHover  = gray(0.7)
-g_TitleBarWindowButtonStyle.labelColorActive = gray(0.9)
+g_TitleBarWindowButtonStyle.labelOnly       = true
+g_TitleBarWindowButtonStyle.labelColor      = gray(0.45)
+g_TitleBarWindowButtonStyle.labelColorHover = gray(0.7)
+g_TitleBarWindowButtonStyle.labelColorDown  = gray(0.9)
 
 
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =

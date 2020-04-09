@@ -319,6 +319,12 @@ proc loadTheme(index: Natural, a) =
   (a.uiStyle, a.mapStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
   a.currThemeIndex = index
 
+  # TODO
+  var labelStyle = koi.getDefaultLabelStyle()
+  labelStyle.fontSize = 14
+  labelStyle.color = gray(0.8)
+  koi.setDefaultLabelStyle(labelStyle)
+
 # }}}
 
 # {{{ isKeyDown()
@@ -548,10 +554,10 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
     x = 30.0
     y = 50.0
 
-  koi.label(x, y, dialogWidth, h, "You have unsaved changes.", gray(0.80), fontSize=14.0)
+  koi.label(x, y, dialogWidth, h, "You have unsaved changes.")
 
   y += 24
-  koi.label(x, y, dialogWidth, h, "Do you want to save your changes first?", gray(0.80), fontSize=14.0)
+  koi.label(x, y, dialogWidth, h, "Do you want to save your changes first?")
 
   proc saveAction(dlg: var SaveDiscardDialogParams, a) =
     koi.closeDialog()
@@ -614,19 +620,19 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     x = 30.0
     y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Name", gray(0.80), fontSize=14.0)
+  koi.label(x, y, labelWidth, h, "Name")
   dlg.name = koi.textField(
     x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
   )
 
   y = y + 40
-  koi.label(x, y, labelWidth, h, "Rows", gray(0.80), fontSize=14.0)
+  koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
   )
 
   y = y + 32
-  koi.label(x, y, labelWidth, h, "Columns", gray(0.80), fontSize=14.0)
+  koi.label(x, y, labelWidth, h, "Columns")
   dlg.cols = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
   )
@@ -672,14 +678,14 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 # {{{ Edit note dialog
 proc indexColorDrawProc(ms: MapStyle): RadioButtonsDrawProc =
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               hover: bool, active: bool, pressed: bool,
-               x, y, w, h: float) =
+               hover, active, down, first, last: bool,
+               x, y, w, h: float, style: RadioButtonsStyle) =
 
     var col = ms.noteMapIndexBgColor[buttonIdx]
 
     if hover:
       col = col.lerp(white(), 0.3)
-    if pressed:
+    if down:
       col = col.lerp(black(), 0.3)
 
     const Pad = 5
@@ -709,43 +715,14 @@ proc indexColorDrawProc(ms: MapStyle): RadioButtonsDrawProc =
     vg.rect(cx, cy, cw, ch)
     vg.fill()
 
-proc iconDrawProc(ms: MapStyle): RadioButtonsDrawProc =
-  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               hover: bool, active: bool, pressed: bool,
-               x, y, w, h: float) =
-
-    var icon = NoteIcons[buttonIdx]
-
-    let bgCol =
-      if hover: gray(0.8)
-      elif pressed: gray(0.5)
-      else: gray(0.6)
-
-    const Pad = 5
-    const SelPad = 3
-
-    var cx, cy, cw, ch: float
-    if active:
-      vg.beginPath()
-      vg.strokeColor(ms.cursorColor)
-      vg.strokeWidth(2)
-      vg.rect(x, y, w-Pad, h-Pad)
-      vg.stroke()
-
-      cx = x+SelPad
-      cy = y+SelPad
-      cw = w-Pad-SelPad*2
-      ch = h-Pad-SelPad*2
-      vg.scissor(cx, cy, cw, ch)
-
-    vg.beginPath()
-    vg.fillColor(bgCol)
-    vg.rect(x, y, w-Pad, h-Pad)
-    vg.fill()
-
-    drawIcon(x, y, 0, 0, icon, w-Pad, ms.drawColor, vg)
-    vg.resetScissor()
-
+var NoteIconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
+NoteIconRadioButtonsStyle.buttonPadHoriz = 4.0
+NoteIconRadioButtonsStyle.buttonPadVert = 4.0
+NoteIconRadioButtonsStyle.labelFontSize = 18.0
+NoteIconRadioButtonsStyle.labelColor = gray(0.1)
+NoteIconRadioButtonsStyle.labelColorActive = gray(0.1)
+NoteIconRadioButtonsStyle.labelPadHoriz = 0
+NoteIconRadioButtonsStyle.labelPadHoriz = 0
 
 proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   let ms = a.mapStyle
@@ -769,7 +746,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     x = 30.0
     y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Marker", gray(0.80), fontSize=14.0)
+  koi.label(x, y, labelWidth, h, "Marker")
   dlg.kind = NoteKind(
     koi.radioButtons(
       x + labelWidth, y, 282, h,
@@ -780,7 +757,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   )
   y += 40
 
-  koi.label(x, y, labelWidth, h, "Text", gray(0.80), fontSize=14.0)
+  koi.label(x, y, labelWidth, h, "Text")
   dlg.text = koi.textField(
     x + labelWidth, y, 355, h, tooltip = "", dlg.text
   )
@@ -792,7 +769,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   case dlg.kind:
   of nkIndexed:
 
-    koi.label(x, y, labelWidth, h, "Color", gray(0.80), fontSize=14.0)
+    koi.label(x, y, labelWidth, h, "Color")
     dlg.indexColor = koi.radioButtons(
       x + labelWidth, y, 28, 28,
       labels = newSeq[string](ms.noteMapIndexBgColor.len),
@@ -803,20 +780,20 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     )
 
   of nkCustomId:
-    koi.label(x, y, labelWidth, h, "ID", gray(0.80), fontSize=14.0)
+    koi.label(x, y, labelWidth, h, "ID")
     dlg.customId = koi.textField(
       x + labelWidth, y, 50.0, h, tooltip = "", dlg.customId
     )
 
   of nkIcon:
-    koi.label(x, y, labelWidth, h, "Icon", gray(0.80), fontSize=14.0)
+    koi.label(x, y, labelWidth, h, "Icon")
     dlg.icon = koi.radioButtons(
-      x + labelWidth, y, 1500, 36,
+      x + labelWidth, y, 35, 35,
       labels = NoteIcons,
       tooltips = @[],
       dlg.icon,
-      layout=RadioButtonsLayout(kind: rblHoriz)
-#      drawProc=iconDrawProc(ms).some
+      layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 10),
+      style=NoteIconRadioButtonsStyle
     )
 
   of nkComment: discard
@@ -1433,8 +1410,8 @@ proc renderUI() =
   # Toolbar
   var drawProc: RadioButtonsDrawProc =
     proc (vg: NVGContext, buttonIdx: Natural, label: string,
-          hover: bool, active: bool, pressed: bool,
-          x, y, w, h: float) =
+          hover, active, down, first, last: bool,
+          x, y, w, h: float, style: RadioButtonsStyle) =
 
       alias(ms, a.mapStyle)
       alias(dp, a.toolbarDrawParams)
@@ -1443,7 +1420,7 @@ proc renderUI() =
 
       if hover:
         col = col.lerp(white(), 0.3)
-      if pressed:
+      if down:
         col = col.lerp(black(), 0.3)
 
       const Pad = 5
@@ -1504,14 +1481,14 @@ proc renderUI() =
 
   var drawColorProc: RadioButtonsDrawProc =
     proc (vg: NVGContext, buttonIdx: Natural, label: string,
-          hover: bool, active: bool, pressed: bool,
-          x, y, w, h: float) =
+          hover, active, down, first, last: bool,
+          x, y, w, h: float, style: RadioButtonsStyle) =
 
       var col = ms.noteMapIndexBgColor[buttonIdx]
 
       if hover:
         col = col.lerp(white(), 0.3)
-      if pressed:
+      if down:
         col = col.lerp(black(), 0.3)
 
       const Pad = 5
