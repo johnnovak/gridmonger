@@ -152,6 +152,7 @@ proc maximize(win) =
 
 var g_TitleBarWindowButtonStyle = koi.getDefaultButtonStyle()
 
+g_TitleBarWindowButtonStyle.labelPadHoriz   = 0
 g_TitleBarWindowButtonStyle.labelOnly       = true
 g_TitleBarWindowButtonStyle.labelColor      = gray(0.45)
 g_TitleBarWindowButtonStyle.labelColorHover = gray(0.7)

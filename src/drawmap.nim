@@ -707,19 +707,18 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
 
 # {{{ drawIcon*()
 proc drawIcon*(x, y, ox, oy: float, icon: string,
-               gridSize: float, color: Color, vg: NVGContext) =
+              gridSize: float, color: Color, fontSizeFactor: float,
+              vg: NVGContext) =
 
-  vg.setFont((gridSize*0.53).float)
+  vg.setFont(gridSize * fontSizeFactor)
   vg.fillColor(color)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + gridSize*ox + gridSize*0.51,
                   y + gridSize*oy + gridSize*0.58, icon)
 
-template drawIcon*(x, y, ox, oy: float, icon: string, color: Color, ctx) =
-  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, color, ctx.vg)
-
 template drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
-  drawIcon(x, y, ox, oy, icon, ctx.ms.drawColor, ctx)
+  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ms.drawColor,
+          fontSizeFactor=0.53, ctx.vg)
 
 # }}}
 # {{{ drawIndexedNote*()
@@ -828,13 +827,17 @@ proc drawSecretDoor(x, y: float, ctx) =
   vg.rect(x, y, dp.gridSize, dp.gridSize)
   vg.fill()
 
-  let bgCol = ms.floorColor
-  drawIcon(x-1, y, 0, 0, "S", bgCol, ctx)
-  drawIcon(x+1, y, 0, 0, "S", bgCol, ctx)
-  drawIcon(x, y-1, 0, 0, "S", bgCol, ctx)
-  drawIcon(x, y+1, 0, 0, "S", bgCol, ctx)
+  let
+    bgCol = ms.floorColor
+    fontSizeFactor = 0.53
+    gs = dp.gridSize
 
-  drawIcon(x, y, 0, 0, "S", ctx)
+  drawIcon(x-1, y, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x+1, y, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y-1, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y+1, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
+
+  drawIcon(x, y, 0, 0, "S", gs, ms.drawColor, fontSizeFactor, vg)
 
 # }}}
 # {{{ drawPressurePlate()
@@ -1121,7 +1124,8 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
   vg.lineTo(snap(x1, sw), snap(y, sw))
   vg.stroke()
 
-  drawIcon(x, y-dp.gridSize*0.5, 0.02, -0.02, "S", ctx)
+  drawIcon(x, y-dp.gridSize*0.5, 0.02, -0.02, "S", dp.gridSize, ms.drawColor,
+           fontSizeFactor=0.43, ctx.vg)
 
   # Wall end
   vg.beginPath()
