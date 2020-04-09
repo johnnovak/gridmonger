@@ -1,5 +1,6 @@
 import algorithm
 import lenientops
+import math
 import options
 import os
 import sugar
@@ -24,6 +25,20 @@ import undomanager
 import utils
 
 
+# TODO
+const SpecialWalls = @[
+  wIllusoryWall,
+  wInvisibleWall,
+  wDoor,
+  wLockedDoor,
+  wArchway,
+  wSecretDoor,
+  wLever,
+  wNiche,
+  wStatue
+]
+
+
 # {{{ Constants
 const
   ThemesDir = "themes"
@@ -33,7 +48,7 @@ const
   StatusBarHeight = 26.0
 
   MapLeftPad           = 50.0
-  MapRightPad          = 120.0
+  MapRightPad          = 113.0
   MapTopPadCoords      = 85.0
   MapBottomPadCoords   = 40.0
   MapTopPadNoCoords    = 65.0
@@ -88,6 +103,7 @@ type
     cursorRow:      Natural
 
     currSpecialWallIdx: Natural
+    currFloorColor:     Natural
 
     selection:      Option[Selection]
     selRect:        Option[SelectionRect]
@@ -511,61 +527,6 @@ proc drawNotesPane(x, y, w, h: float, a) =
 
 
 # }}}
-# {{{ drawWallToolbar()
-const SpecialWalls = @[
-  wIllusoryWall,
-  wInvisibleWall,
-  wDoor,
-  wLockedDoor,
-  wArchway,
-  wSecretDoor,
-  wLever,
-  wNiche,
-  wStatue
-]
-
-proc drawWallToolbar(x: float, a) =
-  alias(vg, a.vg)
-  alias(ms, a.mapStyle)
-  alias(dp, a.toolbarDrawParams)
-
-  proc drawWallTool(x, y: float, w: Wall, ctx: DrawMapContext) =
-    case w
-    of wNone:          discard
-    of wWall:          drawSolidWallHoriz(x, y, ctx)
-    of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
-    of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
-    of wDoor:          drawDoorHoriz(x, y, ctx)
-    of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
-    of wArchway:       drawArchwayHoriz(x, y, ctx)
-    of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
-    of wLever:         discard
-    of wNiche:         discard
-    of wStatue:        discard
-
-  dp.setZoomLevel(ms, 1)
-  let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg)
-
-  let
-    toolPad = 4.0
-    w = dp.gridSize + toolPad*2
-    yPad = 2.0
-
-  var y = 100.0
-
-  for i, wall in SpecialWalls.pairs:
-    if i == a.currSpecialWallIdx:
-      vg.fillColor(rgb(1.0, 0.7, 0))
-    else:
-      vg.fillColor(gray(0.6))
-    vg.beginPath()
-    vg.rect(x, y, w, w)
-    vg.fill()
-
-    drawWallTool(x+toolPad, y+toolPad + dp.gridSize*0.5, wall, ctx)
-    y += w + yPad
-
-# }}}
 
 # {{{ Dialogs
 
@@ -709,13 +670,89 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 
 # }}}
 # {{{ Edit note dialog
+proc indexColorDrawProc(ms: MapStyle): RadioButtonsDrawProc =
+  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
+               hover: bool, active: bool, pressed: bool,
+               x, y, w, h: float) =
+
+    var col = ms.noteMapIndexBgColor[buttonIdx]
+
+    if hover:
+      col = col.lerp(white(), 0.3)
+    if pressed:
+      col = col.lerp(black(), 0.3)
+
+    const Pad = 5
+    const SelPad = 3
+
+    var cx, cy, cw, ch: float
+    if active:
+      vg.beginPath()
+      vg.strokeColor(ms.cursorColor)
+      vg.strokeWidth(2)
+      vg.rect(x, y, w-Pad, h-Pad)
+      vg.stroke()
+
+      cx = x+SelPad
+      cy = y+SelPad
+      cw = w-Pad-SelPad*2
+      ch = h-Pad-SelPad*2
+
+    else:
+      cx = x
+      cy = y
+      cw = w-Pad
+      ch = h-Pad
+
+    vg.beginPath()
+    vg.fillColor(col)
+    vg.rect(cx, cy, cw, ch)
+    vg.fill()
+
+proc iconDrawProc(ms: MapStyle): RadioButtonsDrawProc =
+  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
+               hover: bool, active: bool, pressed: bool,
+               x, y, w, h: float) =
+
+    var icon = NoteIcons[buttonIdx]
+
+    let bgCol =
+      if hover: gray(0.8)
+      elif pressed: gray(0.5)
+      else: gray(0.6)
+
+    const Pad = 5
+    const SelPad = 3
+
+    var cx, cy, cw, ch: float
+    if active:
+      vg.beginPath()
+      vg.strokeColor(ms.cursorColor)
+      vg.strokeWidth(2)
+      vg.rect(x, y, w-Pad, h-Pad)
+      vg.stroke()
+
+      cx = x+SelPad
+      cy = y+SelPad
+      cw = w-Pad-SelPad*2
+      ch = h-Pad-SelPad*2
+      vg.scissor(cx, cy, cw, ch)
+
+    vg.beginPath()
+    vg.fillColor(bgCol)
+    vg.rect(x, y, w-Pad, h-Pad)
+    vg.fill()
+
+    drawIcon(x, y, 0, 0, icon, w-Pad, ms.drawColor, vg)
+    vg.resetScissor()
+
 
 proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   let ms = a.mapStyle
 
   let
-    dialogWidth = 464.0
-    dialogHeight = 330.0
+    dialogWidth = 500.0
+    dialogHeight = 370.0
     title = (if dlg.editMode: "Edit" else: "Add") & " Note"
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCommentInv}  {title}")
@@ -735,7 +772,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   koi.label(x, y, labelWidth, h, "Marker", gray(0.80), fontSize=14.0)
   dlg.kind = NoteKind(
     koi.radioButtons(
-      x + labelWidth, y, 264, h,
+      x + labelWidth, y, 282, h,
       labels = @["None", "Number", "ID", "Icon"],
       tooltips = @[],
       ord(dlg.kind)
@@ -745,59 +782,24 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   koi.label(x, y, labelWidth, h, "Text", gray(0.80), fontSize=14.0)
   dlg.text = koi.textField(
-    x + labelWidth, y, 320.0, h, tooltip = "", dlg.text
+    x + labelWidth, y, 355, h, tooltip = "", dlg.text
   )
-  y = y + 40
+  y = y + 64
+
+  const NumIndexColors = ms.noteMapIndexBgColor.len
+  const IconsPerRow = 10
 
   case dlg.kind:
   of nkIndexed:
-    var drawProc: RadioButtonsDrawProc =
-      proc (vg: NVGContext, buttonIdx: Natural, label: string,
-            hover: bool, active: bool, pressed: bool,
-            x, y, w, h: float) =
-
-        var col = ms.noteMapIndexBgColor[buttonIdx]
-
-        if hover:
-          col = col.lerp(white(), 0.3)
-        if pressed:
-          col = col.lerp(black(), 0.3)
-
-        const Pad = 5
-        const SelPad = 3
-
-        var cx, cy, cw, ch: float
-        if active:
-          vg.beginPath()
-          vg.strokeColor(ms.cursorColor)
-          vg.strokeWidth(2)
-          vg.rect(x, y, w-Pad, h-Pad)
-          vg.stroke()
-
-          cx = x+SelPad
-          cy = y+SelPad
-          cw = w-Pad-SelPad*2
-          ch = h-Pad-SelPad*2
-
-        else:
-          cx = x
-          cy = y
-          cw = w-Pad
-          ch = h-Pad
-
-        vg.beginPath()
-        vg.fillColor(col)
-        vg.rect(cx, cy, cw, ch)
-        vg.fill()
 
     koi.label(x, y, labelWidth, h, "Color", gray(0.80), fontSize=14.0)
     dlg.indexColor = koi.radioButtons(
       x + labelWidth, y, 28, 28,
-      labels = newSeq[string](4),
+      labels = newSeq[string](ms.noteMapIndexBgColor.len),
       tooltips = @[],
       dlg.indexColor,
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc=drawProc.some
+      drawProc=indexColorDrawProc(ms).some
     )
 
   of nkCustomId:
@@ -807,52 +809,14 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     )
 
   of nkIcon:
-    var drawProc: RadioButtonsDrawProc =
-      proc (vg: NVGContext, buttonIdx: Natural, label: string,
-            hover: bool, active: bool, pressed: bool,
-            x, y, w, h: float) =
-
-        var icon = NoteIcons[buttonIdx]
-
-        let bgCol =
-          if hover: gray(0.8)
-          elif pressed: gray(0.5)
-          else: gray(0.6)
-
-        const Pad = 5
-        const SelPad = 3
-
-        var cx, cy, cw, ch: float
-        if active:
-          vg.beginPath()
-          vg.strokeColor(ms.cursorColor)
-          vg.strokeWidth(2)
-          vg.rect(x, y, w-Pad, h-Pad)
-          vg.stroke()
-
-          cx = x+SelPad
-          cy = y+SelPad
-          cw = w-Pad-SelPad*2
-          ch = h-Pad-SelPad*2
-          vg.scissor(cx, cy, cw, ch)
-
-        vg.beginPath()
-        vg.fillColor(bgCol)
-        vg.rect(x, y, w-Pad, h-Pad)
-        vg.fill()
-
-        drawIcon(x, y, 0, 0, icon, w-Pad, ms.drawColor, vg)
-        vg.resetScissor()
-
-
     koi.label(x, y, labelWidth, h, "Icon", gray(0.80), fontSize=14.0)
     dlg.icon = koi.radioButtons(
-      x + labelWidth, y, 36, 36,
+      x + labelWidth, y, 1500, 36,
       labels = NoteIcons,
       tooltips = @[],
       dlg.icon,
-      layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 9),
-      drawProc=drawProc.some
+      layout=RadioButtonsLayout(kind: rblHoriz)
+#      drawProc=iconDrawProc(ms).some
     )
 
   of nkComment: discard
@@ -894,9 +858,65 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
+  proc moveCurrIcon(iconIdx: int, dc: int = 0, dr: int = 0): Natural =
+    const NumRows = ceil(NoteIcons.len.float / IconsPerRow).Natural
+    var row = iconIdx div IconsPerRow
+    var col = iconIdx mod IconsPerRow
+    col = floorMod(col+dc, IconsPerRow).Natural
+    row = floorMod(row+dr, NumRows).Natural
+    result = row * IconsPerRow + col
+
   for ke in koi.keyBuf():
-    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
-    elif ke.action == kaDown and ke.key == keyEnter:  okAction(dlg, a)
+    if   ke.isKeyDown(keyEscape):      cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):       okAction(dlg, a)
+
+    elif ke.isKeyDown(key1, {mkCtrl}):
+      dlg.kind = nkComment
+
+    elif ke.isKeyDown(key2, {mkCtrl}):
+      dlg.kind = nkIndexed
+
+    elif ke.isKeyDown(key3, {mkCtrl}):
+      dlg.kind = nkCustomId
+
+    elif ke.isKeyDown(key4, {mkCtrl}):
+      dlg.kind = nkIcon
+
+    elif ke.isKeyDown(keyH, {mkCtrl}):
+      if dlg.kind > NoteKind.low: dec(dlg.kind)
+      else: dlg.kind = NoteKind.high
+
+    elif ke.isKeyDown(keyL, {mkCtrl}):
+      if dlg.kind < NoteKind.high: inc(dlg.kind)
+      else: dlg.kind = NoteKind.low
+
+    elif ke.isKeyDown(keyH, repeat=true):
+      case dlg.kind
+      of nkComment, nkCustomId: discard
+      of nkIndexed:
+        dlg.indexColor = floorMod(dlg.indexColor.int - 1, NumIndexColors).Natural
+      of nkIcon:
+        dlg.icon = moveCurrIcon(dlg.icon, dc= -1)
+
+    elif ke.isKeyDown(keyL, repeat=true):
+      case dlg.kind
+      of nkComment, nkCustomId: discard
+      of nkIndexed:
+        dlg.indexColor = floorMod(dlg.indexColor + 1, NumIndexColors).Natural
+      of nkIcon:
+        dlg.icon = moveCurrIcon(dlg.icon, dc=1)
+
+    elif ke.isKeyDown(keyK, repeat=true):
+      case dlg.kind
+      of nkComment, nkIndexed, nkCustomId: discard
+      of nkIcon: dlg.icon = moveCurrIcon(dlg.icon, dr= -1)
+
+    elif ke.isKeyDown(keyJ, repeat=true):
+      case dlg.kind
+      of nkComment, nkIndexed, nkCustomId: discard
+      of nkIcon: dlg.icon = moveCurrIcon(dlg.icon, dr=1)
+
+    koi.setFramesLeft()
 
   koi.endDialog()
 
@@ -1356,9 +1376,11 @@ proc getPxRatio(a): float =
 
 # }}}
 # {{{ renderUI()
+
 proc renderUI() =
   alias(a, g_app)
   alias(dp, a.drawMapParams)
+  alias(ms, a.mapStyle)
 
   let (winWidth, winHeight) = a.win.size
 
@@ -1409,8 +1431,125 @@ proc renderUI() =
     )
 
   # Toolbar
-#  drawMarkerIconToolbar(winWidth - 400.0, a)
-  drawWallToolBar(winWidth - 60.0, a)
+  var drawProc: RadioButtonsDrawProc =
+    proc (vg: NVGContext, buttonIdx: Natural, label: string,
+          hover: bool, active: bool, pressed: bool,
+          x, y, w, h: float) =
+
+      alias(ms, a.mapStyle)
+      alias(dp, a.toolbarDrawParams)
+
+      var col = gray(1.0, 0.2)
+
+      if hover:
+        col = col.lerp(white(), 0.3)
+      if pressed:
+        col = col.lerp(black(), 0.3)
+
+      const Pad = 5
+      const SelPad = 3
+
+      var cx, cy, cw, ch: float
+      if active:
+        vg.beginPath()
+        vg.strokeColor(ms.cursorColor)
+        vg.strokeWidth(2)
+        vg.rect(x, y, w-Pad, h-Pad)
+        vg.stroke()
+
+        cx = x+SelPad
+        cy = y+SelPad
+        cw = w-Pad-SelPad*2
+        ch = h-Pad-SelPad*2
+
+      else:
+        cx = x
+        cy = y
+        cw = w-Pad
+        ch = h-Pad
+
+      vg.beginPath()
+      vg.fillColor(col)
+      vg.rect(cx, cy, cw, ch)
+      vg.fill()
+
+      dp.setZoomLevel(ms, 4)
+      let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: vg)
+
+      var x = x + 5
+      var y = y + 15
+
+      case SpecialWalls[buttonIdx]
+      of wNone:          discard
+      of wWall:          drawSolidWallHoriz(x, y, ctx)
+      of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
+      of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
+      of wDoor:          drawDoorHoriz(x, y, ctx)
+      of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
+      of wArchway:       drawArchwayHoriz(x, y, ctx)
+      of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
+      of wLever:         discard
+      of wNiche:         discard
+      of wStatue:        discard
+
+
+  a.currSpecialWallIdx = koi.radioButtons(
+    winWidth - 60.0, 90, 35, 35,
+    labels = newSeq[string](SpecialWalls.len),
+    tooltips = @[],
+    a.currSpecialWallIdx,
+    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
+    drawProc=drawProc.some
+  )
+
+  var drawColorProc: RadioButtonsDrawProc =
+    proc (vg: NVGContext, buttonIdx: Natural, label: string,
+          hover: bool, active: bool, pressed: bool,
+          x, y, w, h: float) =
+
+      var col = ms.noteMapIndexBgColor[buttonIdx]
+
+      if hover:
+        col = col.lerp(white(), 0.3)
+      if pressed:
+        col = col.lerp(black(), 0.3)
+
+      const Pad = 5
+      const SelPad = 3
+
+      var cx, cy, cw, ch: float
+      if active:
+        vg.beginPath()
+        vg.strokeColor(ms.cursorColor)
+        vg.strokeWidth(2)
+        vg.rect(x, y, w-Pad, h-Pad)
+        vg.stroke()
+
+        cx = x+SelPad
+        cy = y+SelPad
+        cw = w-Pad-SelPad*2
+        ch = h-Pad-SelPad*2
+
+      else:
+        cx = x
+        cy = y
+        cw = w-Pad
+        ch = h-Pad
+
+      vg.beginPath()
+      vg.fillColor(col)
+      vg.rect(cx, cy, cw, ch)
+      vg.fill()
+
+  a.currFloorColor = koi.radioButtons(
+#    winWidth - 50.0, 90, 28, 28,
+    winWidth - 57.0, 440, 29, 29,
+    labels = newSeq[string](4),
+    tooltips = @[],
+    a.currFloorColor,
+    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
+    drawProc=drawColorProc.some
+  )
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight

@@ -261,7 +261,23 @@ const NoteIcons* = @[
   IconShip,
   IconStar,
   IconTree,
-  IconTrophy
+  IconTrophy,
+  # TODO just placeholders for now
+  IconArrows,
+  IconAsterisk,
+  IconCheck,
+  IconClose,
+  IconCog,
+  IconComment,
+  IconCommentInv,
+  IconCopy,
+  IconCut,
+  IconEraser,
+  IconFile,
+  IconFloppy,
+  IconFullscreen,
+  IconFullscreenExit,
+  IconHorizArrows
 ]
 
 #  Icon* = "\u"

@@ -358,4 +358,41 @@ proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
             m.setNote(destRow+r, destCol+c, src.getNote(r,c))
 
 
+proc resize*(m; newRows, newCols: Natural, align: Direction): Map =
+  var srcRect  = Rect[int](r1: 0, c1: 0, r2: m.rows,  c2: m.cols)
+
+  proc shiftHoriz(r: var Rect[int], d: int) =
+    r.c1 += d
+    r.c2 += d
+
+  proc shiftVert(r: var Rect[int], d: int) =
+    r.r1 += d
+    r.r2 += d
+
+  if dirE in align:
+    srcRect.shiftHoriz(newCols - m.cols)
+  elif {dirE, dirW} * align == {}:
+    srcRect.shiftHoriz((newCols - m.cols) div 2)
+
+  if dirS in align:
+    srcRect.shiftVert(newRows - m.rows)
+  elif {dirS, dirN} * align == {}:
+    srcRect.shiftVert((newRows - m.rows) div 2)
+
+  let destRect = Rect[int](r1: 0, c1: 0, r2: newRows, c2: newCols)
+  var intRect = srcRect.intersect(destRect).get
+
+  var copyRect = rectN(0, 0, intRect.rows, intRect.cols)
+  var destRow = 0
+  if srcRect.rows < 0: copyRect.r1 = -srcRect.rows
+  else: destRow = srcRect.rows
+
+  var destCol = 0
+  if srcRect.cols < 0: copyRect.c1 = -srcRect.cols
+  else: destCol = srcRect.cols
+
+  result = newMap(newRows, newCols)
+  result.copyFrom(destRow, destCol, m, copyRect)
+
+
 # vim: et:ts=2:sw=2:fdm=marker
