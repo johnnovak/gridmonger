@@ -1056,7 +1056,7 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawDoorHoriz*()
-proc drawDoorHoriz*(x, y: float; ctx) =
+proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
   alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1090,8 +1090,12 @@ proc drawDoorHoriz*(x, y: float; ctx) =
   sw = dp.thinStrokeWidth
   vg.strokeWidth(sw)
   vg.beginPath()
-  vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
-  vg.fill()
+  if fill:
+    vg.rect(snap(x1, sw), snap(y1-o-1, sw), x2-x1+1, y2-y1+3+o)
+    vg.fill()
+  else:
+    vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
+    vg.stroke()
 
   # Wall end
   sw = dp.normalStrokeWidth
@@ -1104,7 +1108,7 @@ proc drawDoorHoriz*(x, y: float; ctx) =
 # }}}
 # {{{ drawLockedDoorHoriz*()
 proc drawLockedDoorHoriz*(x, y: float, ctx) =
-  drawDoorHoriz(x, y, ctx)
+  drawDoorHoriz(x, y, ctx, fill=true)
 
 # }}}
 # {{{ drawSecretDoorHoriz*()

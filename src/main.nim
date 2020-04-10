@@ -90,8 +90,8 @@ type
     undoManager:    UndoManager[Map]
 
     # Document (TODO group under 'doc'?)
-    filename:          string
-    map:               Map
+    filename:       string
+    map:            Map
 
     # Options (TODO group under 'opts'?)
     scrollMargin:   Natural
@@ -208,13 +208,14 @@ proc setStatusMessage(msg: string, a) =
 proc renderStatusBar(y: float, winWidth: float, a) =
   alias(vg, a.vg)
   alias(m, a.map)
+  alias(s, a.uiStyle.statusBarStyle)
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
   # Bar background
   vg.beginPath()
   vg.rect(0, y, winWidth, StatusBarHeight)
-  vg.fillColor(gray(0.2))
+  vg.fillColor(s.backgroundColor)
   vg.fill()
 
   # Display current coords
@@ -223,7 +224,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   let cursorPos = fmt"({m.rows-1 - a.cursorRow}, {a.cursorCol})"
   let tw = vg.textWidth(cursorPos)
 
-  vg.fillColor(gray(0.6))
+  vg.fillColor(s.coordsColor)
   vg.textAlign(haLeft, vaMiddle)
   discard vg.text(winWidth - tw - 7, ty, cursorPos)
 
@@ -239,7 +240,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
 
   var x = 10.0
 
-  vg.fillColor(gray(0.8))
+  vg.fillColor(s.textColor)
   discard vg.text(IconPosX, ty, a.statusIcon)
 
   let tx = vg.text(MessagePosX, ty, a.statusMessage)
@@ -253,15 +254,15 @@ proc renderStatusBar(y: float, winWidth: float, a) =
 
       vg.beginPath()
       vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
-      vg.fillColor(gray(0.56))
+      vg.fillColor(s.commandBgColor)
       vg.fill()
 
-      vg.fillColor(gray(0.2))
+      vg.fillColor(s.commandColor)
       discard vg.text(x + 5, ty, label)
       x += w + CommandLabelPadX
     else:
       let text = cmd
-      vg.fillColor(gray(0.8))
+      vg.fillColor(s.textColor)
       let tx = vg.text(x, ty, text)
       x = tx + CommandTextPadX
 
@@ -346,7 +347,7 @@ proc loadTheme(index: Natural, a) =
   # TODO
   alias(s, a.uiStyle)
 
-  a.win.setStyle(s.windowStyle)
+  a.win.setStyle(s.titleBarStyle)
 
   block:
     alias(d, a.mapDropdownStyle)
@@ -358,6 +359,7 @@ proc loadTheme(index: Natural, a) =
     d.buttonFillColorHover     = s.buttonColorHover
     d.buttonFillColorDown      = s.buttonColor
     d.buttonFillColorActive    = s.buttonColor
+    d.labelFontSize            = 15.0
     d.labelColor               = s.labelColor
     d.labelColorHover          = s.labelColor
     d.labelColorActive         = s.labelColor
@@ -1639,7 +1641,7 @@ proc renderUI() =
     vg.fillColor(a.uiStyle.backgroundColor)
   vg.fill()
 
-  const MapDropdownWidth = 300
+  const MapDropdownWidth = 320
   # Current level dropdown
   a.currMapLevel = koi.dropdown(
     (winWidth - MapDropdownWidth)*0.5, 45, MapDropdownWidth, 24.0,   # TODO calc y
@@ -1704,25 +1706,32 @@ proc renderUI() =
       dp.setZoomLevel(ms, 4)
       let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: vg)
 
-      var x = x + 5
-      var y = y + 15
+      var cx = x + 5
+      var cy = y + 15
 
       case SpecialWalls[buttonIdx]
       of wNone:          discard
-      of wWall:          drawSolidWallHoriz(x, y, ctx)
-      of wIllusoryWall:  drawIllusoryWallHoriz(x, y, ctx)
-      of wInvisibleWall: drawInvisibleWallHoriz(x, y, ctx)
-      of wDoor:          drawDoorHoriz(x, y, ctx)
-      of wLockedDoor:    drawLockedDoorHoriz(x, y, ctx)
-      of wArchway:       drawArchwayHoriz(x, y, ctx)
-      of wSecretDoor:    drawSecretDoorHoriz(x, y, ctx)
+      of wWall:          drawSolidWallHoriz(cx, cy, ctx)
+      of wIllusoryWall:  drawIllusoryWallHoriz(cx+2, cy, ctx)
+      of wInvisibleWall: drawInvisibleWallHoriz(cx, cy, ctx)
+      of wDoor:          drawDoorHoriz(cx, cy, ctx)
+      of wLockedDoor:    drawLockedDoorHoriz(cx, cy, ctx)
+      of wArchway:       drawArchwayHoriz(cx, cy, ctx)
+      of wSecretDoor:
+        # A bit messy... but so is life! =8)
+        dp.setZoomLevel(ms, 6)
+        vg.scissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
+        drawSecretDoorHoriz(cx-2, cy, ctx)
+        dp.setZoomLevel(ms, 4)
+        vg.resetScissor()
+
       of wLever:         discard
       of wNiche:         discard
       of wStatue:        discard
 
 
   a.currSpecialWallIdx = koi.radioButtons(
-    winWidth - 60.0, 90, 35, 35,
+    winWidth - 60.0, 90, 36, 35,
     labels = newSeq[string](SpecialWalls.len),
     tooltips = @[],
     a.currSpecialWallIdx,
@@ -1919,7 +1928,6 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.scrollMargin = 3
 
   a.toolbarDrawParams = a.drawMapParams.deepCopy
-  a.toolbarDrawParams.setZoomLevel(a.mapStyle, 1)
 
   showCellCoords(true, a)
   a.showNotesPane = true

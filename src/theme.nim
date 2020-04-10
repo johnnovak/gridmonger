@@ -19,7 +19,8 @@ type ThemeParseError* = object of Exception
 #  raise newException(ThemeParseError, s)
 
 const UISection = "ui"
-const UIWindowSection      = fmt"{UISection}.window"
+const UITitleBarSection    = fmt"{UISection}.titleBar"
+const UIStatusBarSection   = fmt"{UISection}.statusBar"
 const UIMapDropdownSection = fmt"{UISection}.mapDropdown"
 
 const MapSection = "map"
@@ -46,20 +47,40 @@ DefaultMapDropdownStyle.itemColorHover   = gray(0.4)
 DefaultMapDropdownStyle.itemBgColorHover = gray(0.4)
 
 # }}}
+# {{{ StatusBarStyle
+type
+  StatusBarStyle* = ref object
+    backgroundColor*:  Color
+    coordsColor*:      Color
+    textColor*:        Color
+    commandBgColor*:   Color
+    commandColor*:     Color
+
+var DefaultStatusBarStyle = new StatusBarStyle
+
+DefaultStatusBarStyle.backgroundColor  = gray(0.2)
+DefaultStatusBarStyle.coordsColor      = gray(0.6)
+DefaultStatusBarStyle.textColor        = gray(0.8)
+DefaultStatusBarStyle.commandBgColor   = gray(0.56)
+DefaultStatusBarStyle.commandColor     = gray(0.2)
+
+# }}}
 # {{{ UIStyle
 type
   UIStyle* = ref object
-    backgroundColor*:     Color
-    backgroundImage*:     string
-    windowStyle*:         CSDWindowStyle
-    mapDropdownStyle*:    MapDropdownStyle
+    backgroundColor*:  Color
+    backgroundImage*:  string
+    titleBarStyle*:    CSDWindowStyle
+    mapDropdownStyle*: MapDropdownStyle
+    statusBarStyle*:   StatusBarStyle
 
 var DefaultUIStyle = new UIStyle
 
 DefaultUIStyle.backgroundColor  = gray(0.4)
 DefaultUIStyle.backgroundImage  = ""
-DefaultUIStyle.windowStyle      = getDefaultCSDWindowStyle()
+DefaultUIStyle.titleBarStyle    = getDefaultCSDWindowStyle()
 DefaultUIStyle.mapDropdownStyle = DefaultMapDropdownStyle
+DefaultUIStyle.statusBarStyle   = DefaultStatusBarStyle
 
 # }}}
 
@@ -227,8 +248,8 @@ proc parseUISection(c: Config): UIStyle =
     c.getString(M, "backgroundImage", s.backgroundImage)
 
   block:
-    alias(s, result.windowStyle)
-    let M = UIWindowSection
+    alias(s, result.titleBarStyle)
+    let M = UITitleBarSection
 
     c.getColor(M, "backgroundColor",   s.backgroundColor)
     c.getColor(M, "buttonColor",       s.buttonColor)
@@ -236,6 +257,16 @@ proc parseUISection(c: Config): UIStyle =
     c.getColor(M, "buttonColorDown",   s.buttonColorDown)
     c.getColor(M, "textColor",         s.textColor)
     c.getColor(M, "modifiedFlagColor", s.modifiedFlagColor)
+
+  block:
+    alias(s, result.statusBarStyle)
+    let M = UIStatusBarSection
+
+    c.getColor(M, "backgroundColor",  s.backgroundColor)
+    c.getColor(M, "coordsColor",      s.coordsColor)
+    c.getColor(M, "textColor",        s.textColor)
+    c.getColor(M, "commandBgColor",   s.commandBgColor)
+    c.getColor(M, "commandColor",     s.commandColor)
 
   block:
     alias(s, result.mapDropdownStyle)
