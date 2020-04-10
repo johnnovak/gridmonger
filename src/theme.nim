@@ -7,7 +7,9 @@ import strutils
 
 import nanovg
 
+import csdwindow
 import drawmap
+import utils
 
 
 type ThemeParseError* = object of Exception
@@ -17,15 +19,50 @@ type ThemeParseError* = object of Exception
 #  raise newException(ThemeParseError, s)
 
 const UISection = "ui"
+const UIWindowSection      = fmt"{UISection}.window"
+const UIMapDropdownSection = fmt"{UISection}.mapDropdown"
+
 const MapSection = "map"
 
-# {{{ UIStyle
-var DefaultUIStyle = new UIStyle
+# {{{ MapDropdownStyle
+type
+  MapDropdownStyle* = ref object
+    buttonColor*:       Color
+    buttonColorHover*:  Color
+    labelColor*:        Color
+    itemListColor*:     Color
+    itemColor*:         Color
+    itemColorHover*:    Color
+    itemBgColorHover*:  Color
 
-DefaultUIStyle.backgroundColor = gray(0.4)
-DefaultUIStyle.backgroundImage = ""
+var DefaultMapDropdownStyle = new MapDropdownStyle
+
+DefaultMapDropdownStyle.buttonColor      = gray(0.4)
+DefaultMapDropdownStyle.buttonColorHover = gray(0.4)
+DefaultMapDropdownStyle.labelColor       = gray(0.4)
+DefaultMapDropdownStyle.itemListColor    = gray(0.4)
+DefaultMapDropdownStyle.itemColor        = gray(0.4)
+DefaultMapDropdownStyle.itemColorHover   = gray(0.4)
+DefaultMapDropdownStyle.itemBgColorHover = gray(0.4)
 
 # }}}
+# {{{ UIStyle
+type
+  UIStyle* = ref object
+    backgroundColor*:     Color
+    backgroundImage*:     string
+    windowStyle*:         CSDWindowStyle
+    mapDropdownStyle*:    MapDropdownStyle
+
+var DefaultUIStyle = new UIStyle
+
+DefaultUIStyle.backgroundColor  = gray(0.4)
+DefaultUIStyle.backgroundImage  = ""
+DefaultUIStyle.windowStyle      = getDefaultCSDWindowStyle()
+DefaultUIStyle.mapDropdownStyle = DefaultMapDropdownStyle
+
+# }}}
+
 # {{{ DefaultMapStyle
 var DefaultMapStyle = new MapStyle
 
@@ -100,7 +137,7 @@ proc invalidValueError(section, key, valueType, value: string) =
 
 # }}}
 # {{{ getValue()
-proc getValue(cfg: Config, section, key: string): string = 
+proc getValue(cfg: Config, section, key: string): string =
   result = cfg.getSectionValue(section, key)
   if result == "":
     missingValueError(section, key)
@@ -134,7 +171,7 @@ proc parseColor(s: string): Option[Color] =
       result = rgba(r, g, b, a).some
 
 # }}}
-#
+
 # {{{ getString()
 proc getString(cfg: Config, section, key: string, s: var string) =
   s = getValue(cfg, section, key)
@@ -180,73 +217,97 @@ proc getEnum[T: enum](cfg: Config, section, key: string, e: var T) =
 
 # {{{ parseUISection()
 proc parseUISection(c: Config): UIStyle =
-  var ms = DefaultUIStyle.deepCopy()
-  const M = UISection
+  result = DefaultUIStyle.deepCopy()
 
-  c.getColor( M, "backgroundColor", ms.backgroundColor)
-  c.getString(M, "backgroundImage", ms.backgroundImage)
+  block:
+    alias(s, result)
+    let M = UISection
 
-  result = ms
+    c.getColor( M, "backgroundColor", s.backgroundColor)
+    c.getString(M, "backgroundImage", s.backgroundImage)
+
+  block:
+    alias(s, result.windowStyle)
+    let M = UIWindowSection
+
+    c.getColor(M, "backgroundColor",   s.backgroundColor)
+    c.getColor(M, "buttonColor",       s.buttonColor)
+    c.getColor(M, "buttonColorHover",  s.buttonColorHover)
+    c.getColor(M, "buttonColorDown",   s.buttonColorDown)
+    c.getColor(M, "textColor",         s.textColor)
+    c.getColor(M, "modifiedFlagColor", s.modifiedFlagColor)
+
+  block:
+    alias(s, result.mapDropdownStyle)
+    let M = UIMapDropdownSection
+
+    c.getColor(M, "buttonColor",      s.buttonColor)
+    c.getColor(M, "buttonColorHover", s.buttonColorHover)
+    c.getColor(M, "labelColor",       s.labelColor)
+    c.getColor(M, "itemListColor",    s.itemListColor)
+    c.getColor(M, "itemColor",        s.itemColor)
+    c.getColor(M, "itemColorHover",   s.itemColorHover)
+    c.getColor(M, "itemBgColorHover", s.itemBgColorHover)
 
 # }}}
 # {{{ parseMapSection()
 proc parseMapSection(c: Config): MapStyle =
-  var ms = DefaultMapStyle.deepCopy()
-  const M = MapSection
+  var s = DefaultMapStyle.deepCopy()
+  let M = MapSection
 
-  c.getColor(M, "backgroundColor",          ms.backgroundColor)
-  c.getColor(M, "drawColor",                ms.drawColor)
-  c.getColor(M, "lightDrawColor",           ms.lightDrawColor)
-  c.getColor(M, "floorColor",               ms.floorColor)
-  c.getBool( M, "thinLines",                ms.thinLines)
+  c.getColor(M, "backgroundColor",          s.backgroundColor)
+  c.getColor(M, "drawColor",                s.drawColor)
+  c.getColor(M, "lightDrawColor",           s.lightDrawColor)
+  c.getColor(M, "floorColor",               s.floorColor)
+  c.getBool( M, "thinLines",                s.thinLines)
 
-  c.getBool( M, "bgHatch",                  ms.bgHatchEnabled)
-  c.getColor(M, "bgHatchColor",             ms.bgHatchColor)
-  c.getFloat(M, "bgHatchStrokeWidth",       ms.bgHatchStrokeWidth)
-  c.getFloat(M, "bgHatchSpacingFactor",     ms.bgHatchSpacingFactor)
+  c.getBool( M, "bgHatch",                  s.bgHatchEnabled)
+  c.getColor(M, "bgHatchColor",             s.bgHatchColor)
+  c.getFloat(M, "bgHatchStrokeWidth",       s.bgHatchStrokeWidth)
+  c.getFloat(M, "bgHatchSpacingFactor",     s.bgHatchSpacingFactor)
 
-  c.getColor(M, "coordsColor",              ms.coordsColor)
-  c.getColor(M, "coordsHighlightColor",     ms.coordsHighlightColor)
+  c.getColor(M, "coordsColor",              s.coordsColor)
+  c.getColor(M, "coordsHighlightColor",     s.coordsHighlightColor)
 
-  c.getColor(M, "cursorColor",              ms.cursorColor)
-  c.getColor(M, "cursorGuideColor",         ms.cursorGuideColor)
+  c.getColor(M, "cursorColor",              s.cursorColor)
+  c.getColor(M, "cursorGuideColor",         s.cursorGuideColor)
 
-  getEnum[GridStyle](c, M, "gridStyle",     ms.gridStyle)
-  c.getColor(M, "gridColorBackground",      ms.gridColorBackground)
-  c.getColor(M, "gridColorFloor",           ms.gridColorFloor)
+  getEnum[GridStyle](c, M, "gridStyle",     s.gridStyle)
+  c.getColor(M, "gridColorBackground",      s.gridColorBackground)
+  c.getColor(M, "gridColorFloor",           s.gridColorFloor)
 
-  getEnum[OutlineStyle](c, M, "outlineStyle", ms.outlineStyle)
-  getEnum[OutlineFillStyle](c, M, "outlineFillStyle", ms.outlineFillStyle)
-  c.getBool( M, "outlineOverscan",          ms.outlineOverscan)
-  c.getColor(M, "outlineColor",             ms.outlineColor)
-  c.getFloat(M, "outlineWidthFactor",       ms.outlineWidthFactor)
+  getEnum[OutlineStyle](c, M, "outlineStyle", s.outlineStyle)
+  getEnum[OutlineFillStyle](c, M, "outlineFillStyle", s.outlineFillStyle)
+  c.getBool( M, "outlineOverscan",          s.outlineOverscan)
+  c.getColor(M, "outlineColor",             s.outlineColor)
+  c.getFloat(M, "outlineWidthFactor",       s.outlineWidthFactor)
 
-  c.getBool( M, "innerShadow",              ms.innerShadowEnabled)
-  c.getColor(M, "innerShadowColor",         ms.innerShadowColor)
-  c.getFloat(M, "innerShadowWidthFactor",   ms.innerShadowWidthFactor)
-  c.getBool( M, "outerShadow",              ms.outerShadowEnabled)
-  c.getColor(M, "outerShadowColor",         ms.outerShadowColor)
-  c.getFloat(M, "outerShadowWidthFactor",   ms.outerShadowWidthFactor)
+  c.getBool( M, "innerShadow",              s.innerShadowEnabled)
+  c.getColor(M, "innerShadowColor",         s.innerShadowColor)
+  c.getFloat(M, "innerShadowWidthFactor",   s.innerShadowWidthFactor)
+  c.getBool( M, "outerShadow",              s.outerShadowEnabled)
+  c.getColor(M, "outerShadowColor",         s.outerShadowColor)
+  c.getFloat(M, "outerShadowWidthFactor",   s.outerShadowWidthFactor)
 
-  c.getColor(M, "pastePreviewColor",        ms.pastePreviewColor)
-  c.getColor(M, "selectionColor",           ms.selectionColor)
+  c.getColor(M, "pastePreviewColor",        s.pastePreviewColor)
+  c.getColor(M, "selectionColor",           s.selectionColor)
 
-  c.getColor(M, "noteMapTextColor",         ms.noteMapTextColor)
-  c.getColor(M, "noteMapCommentColor",      ms.noteMapCommentColor)
-  c.getColor(M, "noteMapIndexColor",        ms.noteMapIndexColor)
-  c.getColor(M, "noteMapIndexBgColor1",     ms.noteMapIndexBgColor[0])
-  c.getColor(M, "noteMapIndexBgColor2",     ms.noteMapIndexBgColor[1])
-  c.getColor(M, "noteMapIndexBgColor3",     ms.noteMapIndexBgColor[2])
-  c.getColor(M, "noteMapIndexBgColor4",     ms.noteMapIndexBgColor[3])
+  c.getColor(M, "noteMapTextColor",         s.noteMapTextColor)
+  c.getColor(M, "noteMapCommentColor",      s.noteMapCommentColor)
+  c.getColor(M, "noteMapIndexColor",        s.noteMapIndexColor)
+  c.getColor(M, "noteMapIndexBgColor1",     s.noteMapIndexBgColor[0])
+  c.getColor(M, "noteMapIndexBgColor2",     s.noteMapIndexBgColor[1])
+  c.getColor(M, "noteMapIndexBgColor3",     s.noteMapIndexBgColor[2])
+  c.getColor(M, "noteMapIndexBgColor4",     s.noteMapIndexBgColor[3])
 
-  c.getColor(M, "notePaneTextColor",        ms.notePaneTextColor)
-  c.getColor(M, "notePaneIndexColor",       ms.notePaneIndexColor)
-  c.getColor(M, "notePaneIndexBgColor1",    ms.notePaneIndexBgColor[0])
-  c.getColor(M, "notePaneIndexBgColor2",    ms.notePaneIndexBgColor[1])
-  c.getColor(M, "notePaneIndexBgColor3",    ms.notePaneIndexBgColor[2])
-  c.getColor(M, "notePaneIndexBgColor4",    ms.notePaneIndexBgColor[3])
+  c.getColor(M, "notePaneTextColor",        s.notePaneTextColor)
+  c.getColor(M, "notePaneIndexColor",       s.notePaneIndexColor)
+  c.getColor(M, "notePaneIndexBgColor1",    s.notePaneIndexBgColor[0])
+  c.getColor(M, "notePaneIndexBgColor2",    s.notePaneIndexBgColor[1])
+  c.getColor(M, "notePaneIndexBgColor3",    s.notePaneIndexBgColor[2])
+  c.getColor(M, "notePaneIndexBgColor4",    s.notePaneIndexBgColor[3])
 
-  result = ms
+  result = s
 
 # }}}
 

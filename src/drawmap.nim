@@ -7,6 +7,7 @@ import koi
 import nanovg
 
 import common
+import icons
 import map
 import selection
 import utils
@@ -1055,7 +1056,7 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawDoorHoriz*()
-proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
+proc drawDoorHoriz*(x, y: float; ctx) =
   alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1082,22 +1083,19 @@ proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
   vg.lineCap(lcjRound)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x1+1, sw), snap(y, sw))
   vg.stroke()
 
   # Door
   sw = dp.thinStrokeWidth
-  vg.lineCap(lcjSquare)
   vg.strokeWidth(sw)
   vg.beginPath()
   vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
-  vg.stroke()
-  if fill: vg.fill()
+  vg.fill()
 
   # Wall end
   sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.lineCap(lcjRound)
   vg.beginPath()
   vg.moveTo(snap(x2, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
@@ -1106,7 +1104,7 @@ proc drawDoorHoriz*(x, y: float; ctx; fill: bool = false) =
 # }}}
 # {{{ drawLockedDoorHoriz*()
 proc drawLockedDoorHoriz*(x, y: float, ctx) =
-  drawDoorHoriz(x, y, ctx, fill=true)
+  drawDoorHoriz(x, y, ctx)
 
 # }}}
 # {{{ drawSecretDoorHoriz*()

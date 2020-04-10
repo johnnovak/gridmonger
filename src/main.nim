@@ -17,6 +17,7 @@ import actions
 import common
 import csdwindow
 import drawmap
+import icons
 import map
 import persistence
 import selection
@@ -131,6 +132,8 @@ type
     currThemeIndex: Natural
     nextThemeIndex: Option[Natural]
     themeReloaded:  bool
+
+    mapDropdownStyle:  DropdownStyle
 
     # Dialogs
     saveDiscardDialog: SaveDiscardDialogParams
@@ -339,6 +342,33 @@ proc loadTheme(index: Natural, a) =
   labelStyle.color = gray(0.8)
   labelStyle.align = haLeft
   koi.setDefaultLabelStyle(labelStyle)
+
+  # TODO
+  alias(s, a.uiStyle)
+
+  a.win.setStyle(s.windowStyle)
+
+  block:
+    alias(d, a.mapDropdownStyle)
+    alias(s, s.mapDropdownStyle)
+
+    d = koi.getDefaultDropdownStyle()
+
+    d.buttonFillColor          = s.buttonColor
+    d.buttonFillColorHover     = s.buttonColorHover
+    d.buttonFillColorDown      = s.buttonColor
+    d.buttonFillColorActive    = s.buttonColor
+    d.labelColor               = s.labelColor
+    d.labelColorHover          = s.labelColor
+    d.labelColorActive         = s.labelColor
+    d.labelColorDown           = s.labelColor
+    d.labelAlign               = haCenter
+    d.itemListFillColor        = s.itemListColor
+    d.itemColor                = s.itemColor
+    d.itemColorHover           = s.itemColorHover
+    d.itemBackgroundColorHover = s.itemBgColorHover
+    d.itemAlign                = haCenter
+    d.itemListPadHoriz         = 0
 
 # }}}
 
@@ -869,14 +899,10 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       text: dlg.text
     )
     case note.kind
-    of nkCustomId:
-      note.customId = dlg.customId
-    of nkIndexed:
-      note.indexColor = dlg.indexColor
-    of nkIcon:
-      note.icon = dlg.icon
-    of nkComment:
-      discard
+    of nkCustomId: note.customId = dlg.customId
+    of nkIndexed:  note.indexColor = dlg.indexColor
+    of nkIcon:     note.icon = dlg.icon
+    of nkComment:  discard
 
     actions.setNote(a.map, dlg.row, dlg.col, note, a.undoManager)
 
@@ -1613,9 +1639,10 @@ proc renderUI() =
     vg.fillColor(a.uiStyle.backgroundColor)
   vg.fill()
 
+  const MapDropdownWidth = 300
   # Current level dropdown
   a.currMapLevel = koi.dropdown(
-    MapLeftPad, 45, 300, 24.0,   # TODO calc y
+    (winWidth - MapDropdownWidth)*0.5, 45, MapDropdownWidth, 24.0,   # TODO calc y
     items = @[
       "Level 1 - Legend of Darkmoor",
       "The Beginning",
@@ -1623,7 +1650,9 @@ proc renderUI() =
       "You Only Scream Twice"
     ],
     tooltip = "Current map level",
-    a.currMapLevel)
+    a.currMapLevel,
+    style = a.mapDropdownStyle
+  )
 
   # Map
   if dp.viewRows > 0 and dp.viewCols > 0:
@@ -1658,7 +1687,7 @@ proc renderUI() =
       alias(ms, a.mapStyle)
       alias(dp, a.toolbarDrawParams)
 
-      var col = gray(1.0, 0.2)
+      var col = if active: ms.cursorColor else: ms.floorColor
 
       if hover:
         col = col.lerp(white(), 0.3)
@@ -1666,30 +1695,10 @@ proc renderUI() =
         col = col.lerp(black(), 0.3)
 
       const Pad = 5
-      const SelPad = 3
-
-      var cx, cy, cw, ch: float
-      if active:
-        vg.beginPath()
-        vg.strokeColor(ms.cursorColor)
-        vg.strokeWidth(2)
-        vg.rect(x, y, w-Pad, h-Pad)
-        vg.stroke()
-
-        cx = x+SelPad
-        cy = y+SelPad
-        cw = w-Pad-SelPad*2
-        ch = h-Pad-SelPad*2
-
-      else:
-        cx = x
-        cy = y
-        cw = w-Pad
-        ch = h-Pad
 
       vg.beginPath()
       vg.fillColor(col)
-      vg.rect(cx, cy, cw, ch)
+      vg.rect(x, y, w-Pad, h-Pad)
       vg.fill()
 
       dp.setZoomLevel(ms, 4)
@@ -1900,7 +1909,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   loadImages(vg, a)
 
   searchThemes(a)
-  var themeIndex = findThemeIndex("light", a)
+  var themeIndex = findThemeIndex("oldpaper", a)
   if themeIndex == -1:
     themeIndex = 0
   loadTheme(themeIndex, a)

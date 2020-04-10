@@ -1,11 +1,13 @@
 import lenientops
 
+import icons
 import glad/gl
 import glfw
 import koi
 import nanovg
 
 import common
+import utils
 
 
 const
@@ -28,9 +30,11 @@ const
 type
   CSDWindow* = ref object
     modified*: bool
+    style*:    CSDWindowStyle
 
     w: Window  # the wrapper GLFW window
 
+    buttonStyle:         ButtonStyle
     title:               string
     maximized:           bool
     maximizing:          bool
@@ -44,6 +48,15 @@ type
 
     fastRedrawFrameCounter: int
 
+
+  CSDWindowStyle* = ref object
+    backgroundColor*:   Color
+    buttonColor*:       Color
+    buttonColorHover*:  Color
+    buttonColorDown*:   Color
+    textColor*:         Color
+    modifiedFlagColor*: Color
+
   WindowDragState = enum
     wdsNone, wdsMoving, wdsResizing
 
@@ -55,6 +68,34 @@ using win: CSDWindow
 
 # }}}
 
+# {{{ Default style
+var DefaultCSDWindowStyle = new CSDWindowStyle
+
+DefaultCSDWindowStyle.backgroundColor   = gray(0.09)
+DefaultCSDWindowStyle.buttonColor       = gray(1.0, 0.45)
+DefaultCSDWindowStyle.buttonColorHover  = gray(1.0, 0.7)
+DefaultCSDWindowStyle.buttonColorDown   = gray(1.0, 0.9)
+DefaultCSDWindowStyle.textColor         = gray(1.0, 0.7)
+DefaultCSDWindowStyle.modifiedFlagColor = gray(1.0, 0.45)
+
+proc getDefaultCSDWindowStyle*(): CSDWindowStyle = DefaultCSDWindowStyle.deepCopy()
+
+# }}}
+
+# {{{ setStyle()
+proc setStyle*(win; s: CSDWindowStyle) = 
+  win.style = s
+
+  alias(bs, win.buttonStyle)
+  bs = koi.getDefaultButtonStyle()
+
+  bs.labelPadHoriz   = 0
+  bs.labelOnly       = true
+  bs.labelColor      = s.buttonColor
+  bs.labelColorHover = s.buttonColorHover
+  bs.labelColorDown  = s.buttonColorDown
+
+# }}}
 # {{{ newCSDWindow*()
 proc newCSDWindow*(): CSDWindow =
   result = new CSDWindow
@@ -75,6 +116,7 @@ proc newCSDWindow*(): CSDWindow =
     cfg.profile = opCoreProfile
 
   result.w = newWindow(cfg)
+  result.setStyle(DefaultCSDWindowStyle)
 
 # }}}
 # {{{ GLFW Window adapters
@@ -119,7 +161,7 @@ proc resizing*(win): bool =
   win.dragState == wdsResizing
 
 # }}}
-#
+
 # {{{ restore()
 proc restore(win) =
   glfw.swapInterval(0)
@@ -150,23 +192,16 @@ proc maximize(win) =
 # }}}
 # {{{ renderTitleBar()
 
-var g_TitleBarWindowButtonStyle = koi.getDefaultButtonStyle()
-
-g_TitleBarWindowButtonStyle.labelPadHoriz   = 0
-g_TitleBarWindowButtonStyle.labelOnly       = true
-g_TitleBarWindowButtonStyle.labelColor      = gray(0.45)
-g_TitleBarWindowButtonStyle.labelColorHover = gray(0.7)
-g_TitleBarWindowButtonStyle.labelColorDown  = gray(0.9)
-
-
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
+  alias(s, win.style)
+
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, TitleBarHeight)
-  vg.fillColor(gray(0.09))
+  vg.fillColor(s.backgroundColor)
   vg.fill()
 
   vg.setFont(TitleBarFontSize)
-  vg.fillColor(gray(0.7))
+  vg.fillColor(s.textColor)
   vg.textAlign(haLeft, vaMiddle)
 
   let
@@ -175,9 +210,10 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
     by = (TitleBarHeight - bh) / 2
     ty = TitleBarHeight * TextVertAlignFactor
 
+  alias(bs, win.buttonStyle)
+
   # Pin window button
-  if koi.button(TitleBarPinButtonsLeftPad, by, bw, bh, IconPin,
-                style=g_TitleBarWindowButtonStyle):
+  if koi.button(TitleBarPinButtonsLeftPad, by, bw, bh, IconPin, style=bs):
     # TODO
     discard
 
@@ -185,27 +221,25 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   let tx = vg.text(TitleBarTitlePosX, ty, win.title)
 
   if win.modified:
-    vg.fillColor(gray(0.45))
+    vg.fillColor(s.modifiedFlagColor)
     discard vg.text(tx+10, ty, IconAsterisk)
 
   # Minimise/maximise/close window buttons
   let x = winWidth - TitleBarWindowButtonsTotalWidth
 
-  if koi.button(x, by, bw, bh, IconWindowMinimise,
-                style=g_TitleBarWindowButtonStyle):
+  if koi.button(x, by, bw, bh, IconWindowMinimise, style=bs):
     win.w.iconify()
 
   if koi.button(x + bw, by, bw, bh,
                 if win.maximized: IconWindowRestore else: IconWindowMaximise,
-                style=g_TitleBarWindowButtonStyle):
+                style=bs):
     if not win.maximizing:  # workaround to avoid double-activation
       if win.maximized:
         win.restore()
       else:
         win.maximize()
 
-  if koi.button(x + bw*2, by, bw, bh, IconWindowClose,
-                style=g_TitleBarWindowButtonStyle):
+  if koi.button(x + bw*2, by, bw, bh, IconWindowClose, style=bs):
     win.w.shouldClose = true
 
 # }}}
