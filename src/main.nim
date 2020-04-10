@@ -134,6 +134,7 @@ type
     saveDiscardDialog: SaveDiscardDialogParams
     newMapDialog:      NewMapDialogParams
     editNoteDialog:    EditNoteDialogParams
+    resizeMapDialog:   ResizeMapDialogParams
 
     # Images
     oldPaperImage:  Image
@@ -159,6 +160,17 @@ type
     customId:   string
     icon:       Natural
     text:       string
+
+  ResizeMapDialogParams = object
+    isOpen:   bool
+    rows:     string
+    cols:     string
+    anchor:   ResizeAnchor
+
+  ResizeAnchor = enum
+    raTopLeft,    raTop,    raTopRight,
+    raLeft,       raCenter, raRight,
+    raBottomLeft, raBottom, raBottomRight
 
 
 var g_app: AppContext
@@ -323,6 +335,7 @@ proc loadTheme(index: Natural, a) =
   var labelStyle = koi.getDefaultLabelStyle()
   labelStyle.fontSize = 14
   labelStyle.color = gray(0.8)
+  labelStyle.align = haLeft
   koi.setDefaultLabelStyle(labelStyle)
 
 # }}}
@@ -339,6 +352,31 @@ func isKeyDown(ke: KeyEvent, key: Key,
 
 func isKeyUp(ke: KeyEvent, keys: set[Key]): bool =
   ke.action == kaUp and ke.key in keys
+
+# }}}
+# {{{ moveCurrGridIcon()
+
+var GridIconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
+GridIconRadioButtonsStyle.buttonPadHoriz = 4.0
+GridIconRadioButtonsStyle.buttonPadVert = 4.0
+GridIconRadioButtonsStyle.labelFontSize = 18.0
+GridIconRadioButtonsStyle.labelColor = gray(0.1)
+GridIconRadioButtonsStyle.labelColorHover = gray(0.1)
+GridIconRadioButtonsStyle.labelColorDown = gray(0.1)
+GridIconRadioButtonsStyle.labelColorActive = gray(0.1)
+GridIconRadioButtonsStyle.labelPadHoriz = 0
+GridIconRadioButtonsStyle.labelPadHoriz = 0
+
+proc moveCurrGridIcon(numIcons, iconsPerRow: Natural, iconIdx: int,
+                      dc: int = 0, dr: int = 0): Natural =
+  assert numIcons mod iconsPerRow == 0
+
+  let numRows = ceil(numIcons.float / iconsPerRow).Natural
+  var row = iconIdx div iconsPerRow
+  var col = iconIdx mod iconsPerRow
+  col = floorMod(col+dc, iconsPerRow).Natural
+  row = floorMod(row+dr, numRows).Natural
+  result = row * iconsPerRow + col
 
 # }}}
 # {{{ resetCursorAndViewStart()
@@ -535,7 +573,6 @@ proc drawNotesPane(x, y, w, h: float, a) =
 # }}}
 
 # {{{ Dialogs
-
 # {{{ Save/discard changes dialog
 proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   let
@@ -625,13 +662,13 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
   )
 
-  y = y + 40
+  y += 40
   koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
   )
 
-  y = y + 32
+  y += 32
   koi.label(x, y, labelWidth, h, "Columns")
   dlg.cols = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
@@ -715,15 +752,6 @@ proc indexColorDrawProc(ms: MapStyle): RadioButtonsDrawProc =
     vg.rect(cx, cy, cw, ch)
     vg.fill()
 
-var NoteIconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
-NoteIconRadioButtonsStyle.buttonPadHoriz = 4.0
-NoteIconRadioButtonsStyle.buttonPadVert = 4.0
-NoteIconRadioButtonsStyle.labelFontSize = 18.0
-NoteIconRadioButtonsStyle.labelColor = gray(0.1)
-NoteIconRadioButtonsStyle.labelColorActive = gray(0.1)
-NoteIconRadioButtonsStyle.labelPadHoriz = 0
-NoteIconRadioButtonsStyle.labelPadHoriz = 0
-
 proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   let ms = a.mapStyle
 
@@ -761,7 +789,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   dlg.text = koi.textField(
     x + labelWidth, y, 355, h, tooltip = "", dlg.text
   )
-  y = y + 64
+  y += 64
 
   const NumIndexColors = ms.noteMapIndexBgColor.len
   const IconsPerRow = 10
@@ -793,7 +821,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       tooltips = @[],
       dlg.icon,
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 10),
-      style=NoteIconRadioButtonsStyle
+      style=GridIconRadioButtonsStyle
     )
 
   of nkComment: discard
@@ -835,13 +863,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  proc moveCurrIcon(iconIdx: int, dc: int = 0, dr: int = 0): Natural =
-    const NumRows = ceil(NoteIcons.len.float / IconsPerRow).Natural
-    var row = iconIdx div IconsPerRow
-    var col = iconIdx mod IconsPerRow
-    col = floorMod(col+dc, IconsPerRow).Natural
-    row = floorMod(row+dr, NumRows).Natural
-    result = row * IconsPerRow + col
+  proc moveIcon(iconIdx: Natural, dc: int = 0, dr: int = 0): Natural =
+    moveCurrGridIcon(NoteIcons.len, IconsPerRow, iconIdx, dc, dr)
 
   for ke in koi.keyBuf():
     if   ke.isKeyDown(keyEscape):      cancelAction(dlg, a)
@@ -873,7 +896,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       of nkIndexed:
         dlg.indexColor = floorMod(dlg.indexColor.int - 1, NumIndexColors).Natural
       of nkIcon:
-        dlg.icon = moveCurrIcon(dlg.icon, dc= -1)
+        dlg.icon = moveIcon(dlg.icon, dc= -1)
 
     elif ke.isKeyDown(keyL, repeat=true):
       case dlg.kind
@@ -881,24 +904,125 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       of nkIndexed:
         dlg.indexColor = floorMod(dlg.indexColor + 1, NumIndexColors).Natural
       of nkIcon:
-        dlg.icon = moveCurrIcon(dlg.icon, dc=1)
+        dlg.icon = moveIcon(dlg.icon, dc=1)
 
     elif ke.isKeyDown(keyK, repeat=true):
       case dlg.kind
       of nkComment, nkIndexed, nkCustomId: discard
-      of nkIcon: dlg.icon = moveCurrIcon(dlg.icon, dr= -1)
+      of nkIcon: dlg.icon = moveIcon(dlg.icon, dr= -1)
 
     elif ke.isKeyDown(keyJ, repeat=true):
       case dlg.kind
       of nkComment, nkIndexed, nkCustomId: discard
-      of nkIcon: dlg.icon = moveCurrIcon(dlg.icon, dr=1)
+      of nkIcon: dlg.icon = moveIcon(dlg.icon, dr=1)
 
     koi.setFramesLeft()
 
   koi.endDialog()
 
 # }}}
+# {{{ Resize map dialog
 
+proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
+  let ms = a.mapStyle
+
+  let
+    dialogWidth = 270.0
+    dialogHeight = 300.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCrop}  Resize Map")
+  a.clearStatusMessage()
+
+  let
+    h = 24.0
+    labelWidth = 70.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Rows")
+  dlg.rows = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
+  )
+
+  y += 32
+  koi.label(x, y, labelWidth, h, "Columns")
+  dlg.cols = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
+  )
+
+  y += 40
+
+  const IconsPerRow = 3
+
+  const AnchorIcons = @[
+    IconArrowUpLeft,   IconArrowUp,   IconArrowUpRight,
+    IconArrowLeft,     IconCircleInv, IconArrowRight,
+    IconArrowDownLeft, IconArrowDown, IconArrowDownRight
+  ]
+
+  koi.label(x, y, labelWidth, h, "Anchor")
+  dlg.anchor = koi.radioButtons(
+    x + labelWidth, y, 35, 35,
+    labels = AnchorIcons,
+    tooltips = @["Top-left", "Top", "Top-right",
+                 "Left", "Center", "Right",
+                 "Bottom-left", "Bottom", "Bottom-right"],
+    ord(dlg.anchor),
+    layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: IconsPerRow),
+    style=GridIconRadioButtonsStyle
+  ).ResizeAnchor
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  proc okAction(dlg: var ResizeMapDialogParams, a) =
+    # TODO
+#    actions.setNote(a.map, dlg.row, dlg.col, note, a.undoManager)
+
+    setStatusMessage(IconFile, "Map resized", a)
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  proc cancelAction(dlg: var ResizeMapDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+  proc moveIcon(iconIDx: Natural, dc: int = 0, dr: int = 0): Natural =
+    moveCurrGridIcon(AnchorIcons.len, IconsPerRow, iconIdx, dc, dr)
+
+  for ke in koi.keyBuf():
+    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+
+    elif ke.isKeyDown(keyH, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dc= -1).ResizeAnchor
+
+    elif ke.isKeyDown(keyL, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dc=1).ResizeAnchor
+
+    elif ke.isKeyDown(keyK, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dr= -1).ResizeAnchor
+
+    elif ke.isKeyDown(keyJ, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dr=1).ResizeAnchor
+
+    koi.setFramesLeft()
+
+  koi.endDialog()
+
+# }}}
 # }}}
 
 # {{{ handleMapEvents()
@@ -916,9 +1040,9 @@ proc handleMapEvents(a) =
 
   proc setFloorOrientationStatusMessage(o: Orientation, a) =
     if o == Horiz:
-      setStatusMessage(IconHorizArrows, "Floor orientation set to horizontal", a)
+      setStatusMessage(IconArrowsHoriz, "Floor orientation set to horizontal", a)
     else:
-      setStatusMessage(IconVertArrows, "Floor orientation set to vertical", a)
+      setStatusMessage(IconArrowsVert, "Floor orientation set to vertical", a)
 
   proc incZoomLevel(a) =
     incZoomLevel(ms, dp)
@@ -967,30 +1091,34 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyD):
         a.editMode = emExcavate
         setStatusMessage(IconPencil, "Excavate tunnel",
-                         @[IconArrows, "draw"], a)
+                         @[IconArrowsAll, "draw"], a)
         actions.excavate(m, curRow, curCol, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
-        setStatusMessage(IconEraser, "Erase cells", @[IconArrows, "erase"], a)
+        setStatusMessage(IconEraser, "Erase cells",
+                         @[IconArrowsAll, "erase"], a)
         actions.eraseCell(m, curRow, curCol, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearFloor
-        setStatusMessage(IconEraser, "Clear floor",  @[IconArrows, "clear"], a)
+        setStatusMessage(IconEraser, "Clear floor",
+                         @[IconArrowsAll, "clear"], a)
         actions.setFloor(m, curRow, curCol, fEmpty, um)
 
       elif ke.isKeyDown(keyO):
         actions.toggleFloorOrientation(m, curRow, curCol, um)
-        setFloorOrientationStatusMessage(m.getFloorOrientation(curRow, curCol), a)
+        setFloorOrientationStatusMessage(
+          m.getFloorOrientation(curRow, curCol), a)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
-        setStatusMessage("", "Draw walls", @[IconArrows, "set/clear"], a)
+        setStatusMessage("", "Draw walls", @[IconArrowsAll, "set/clear"], a)
 
       elif ke.isKeyDown(keyR):
         a.editMode = emDrawWallSpecial
-        setStatusMessage("", "Draw wall special", @[IconArrows, "set/clear"], a)
+        setStatusMessage("", "Draw wall special",
+                         @[IconArrowsAll, "set/clear"], a)
 
       # TODO
 #      elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
@@ -1059,7 +1187,7 @@ proc handleMapEvents(a) =
         if a.copyBuf.isSome:
           a.editMode = emPastePreview
           setStatusMessage(IconTiles, "Paste preview",
-                           @[IconArrows, "placement",
+                           @[IconArrowsAll, "placement",
                            "Enter/P", "paste", "Esc", "exit"], a)
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
@@ -1119,6 +1247,12 @@ proc handleMapEvents(a) =
           a.saveDiscardDialog.action = openNewMapDialog
         else:
           openNewMapDialog(a)
+
+      elif ke.isKeyDown(keyR, {mkCtrl}):
+        a.resizeMapDialog.rows = $a.map.rows
+        a.resizeMapDialog.cols = $a.map.cols
+        a.resizeMapDialog.anchor = raCenter
+        a.resizeMapDialog.isOpen = true
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
         alias(dlg, a.saveDiscardDialog)
@@ -1536,6 +1670,7 @@ proc renderUI() =
   if   a.saveDiscardDialog.isOpen: saveDiscardDialog(a.saveDiscardDialog, a)
   elif a.newMapDialog.isOpen:      newMapDialog(a.newMapDialog, a)
   elif a.editNoteDialog.isOpen:    editNoteDialog(a.editNoteDialog, a)
+  elif a.resizeMapDialog.isOpen:   resizeMapDialog(a.resizeMapDialog, a)
 
 # }}}
 # {{{ renderFramePre()

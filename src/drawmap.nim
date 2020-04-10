@@ -828,16 +828,17 @@ proc drawSecretDoor(x, y: float, ctx) =
   vg.fill()
 
   let
+    icon = "S"
     bgCol = ms.floorColor
     fontSizeFactor = 0.53
     gs = dp.gridSize
 
-  drawIcon(x-1, y, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x+1, y, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y-1, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y+1, 0, 0, "S", gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x-1, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x+1, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y-1, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y+1, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
 
-  drawIcon(x, y, 0, 0, "S", gs, ms.drawColor, fontSizeFactor, vg)
+  drawIcon(x, y, 0, 0, icon, gs, ms.drawColor, fontSizeFactor, vg)
 
 # }}}
 # {{{ drawPressurePlate()
