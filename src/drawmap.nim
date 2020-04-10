@@ -116,9 +116,18 @@ type
     viewRows*:     Natural
     viewCols*:     Natural
 
-    selection*:    Option[Selection]
-    selRect*:      Option[SelectionRect]
-    pastePreview*: Option[CopyBuffer]
+    # The current selection; it has the same dimensions as the map
+    selection*:        Option[Selection]
+
+    # Used for drawing the rect highlight in rect draw mode
+    selectionRect*:    Option[SelectionRect]
+
+    # Used as either the copy buffer or the nudge buffer
+    selectionBuffer*:  Option[SelectionBuffer]
+
+    # Start drawing coords for the selection buffer (can be negative)
+    selStartRow*:      int
+    selStartCol*:      int
 
     drawCellCoords*:   bool
     drawCursorGuides*: bool
@@ -265,7 +274,7 @@ proc cellY(y: int, dp): float =
   dp.startY + dp.gridSize * y
 
 proc isCursorActive(viewRow, viewCol: Natural, dp): bool =
-  dp.pastePreview.isNone and
+  dp.selectionBuffer.isNone and
   dp.viewStartRow + viewRow == dp.cursorRow and
   dp.viewStartCol + viewCol == dp.cursorCol
 
@@ -1427,8 +1436,8 @@ proc drawSelection(ctx) =
 
   for r in dp.viewStartRow..viewEndRow:
     for c in dp.viewStartCol..viewEndCol:
-      let draw = if dp.selRect.isSome:
-                   let sr = dp.selRect.get
+      let draw = if dp.selectionRect.isSome:
+                   let sr = dp.selectionRect.get
                    if sr.selected:
                      sel[r,c] or sr.rect.contains(r,c)
                    else:
@@ -1441,23 +1450,23 @@ proc drawSelection(ctx) =
         drawCellHighlight(x, y, color, ctx)
 
 # }}}
-# {{{ drawPastePreviewHighlight()
-proc drawPastePreviewHighlight(ctx) =
+# {{{ drawSelectionHighlight()
+proc drawSelectionHighlight(ctx) =
   alias(dp, ctx.dp)
   alias(ms, ctx.ms)
 
   let
-    sel = dp.pastePreview.get.selection
-    viewCursorRow = dp.cursorRow - dp.viewStartRow
-    viewCursorCol = dp.cursorCol - dp.viewStartCol
-    rows = min(sel.rows, dp.viewRows - viewCursorRow)
-    cols = min(sel.cols, dp.viewCols - viewCursorCol)
+    sel = dp.selectionBuffer.get.selection
+    viewSelStartRow = dp.selStartRow - dp.viewStartRow
+    viewSelStartCol = dp.selStartCol - dp.viewStartCol
+    rows = min(sel.rows, dp.viewRows - viewSelStartRow)
+    cols = min(sel.cols, dp.viewCols - viewSelStartCol)
 
   for r in 0..<rows:
     for c in 0..<cols:
-      if sel[r,c]:
-        let x = cellX(viewCursorCol + c, dp)
-        let y = cellY(viewCursorRow + r, dp)
+      if sel[r,c] and viewSelStartRow + r >= 0 and viewSelStartCol + c >= 0:
+        let x = cellX(viewSelStartCol + c, dp)
+        let y = cellY(viewSelStartRow + r, dp)
 
         drawCellHighlight(x, y, ms.pastePreviewColor, ctx)
 
@@ -1521,26 +1530,26 @@ proc drawOuterShadows(viewBuf: Map, ctx) =
   vg.fill()
 # }}}
 
-# {{{ mergePasteAndOutlineBufs*()
-proc mergePasteAndOutlineBufs*(viewBuf: Map,
-                               outlineBuf: Option[OutlineBuf], ctx) =
-  alias(dp, ctx.dp)
-
-  if dp.pastePreview.isSome:
-    let startRow = dp.cursorRow - dp.viewStartRow + 1
-    let startCol = dp.cursorCol - dp.viewStartCol + 1
-    let copyBuf = dp.pastePreview.get.map
+# {{{ mergeSelectionAndOutlineBuffers*()
+proc mergeSelectionAndOutlineBuffers*(viewBuf: Map,
+                                      outlineBuf: Option[OutlineBuf], dp) =
+  if dp.selectionBuffer.isSome:
+    let startRow = dp.selStartRow - dp.viewStartRow + 1
+    let startCol = dp.selStartCol - dp.viewStartCol + 1
+    let copyBuf = dp.selectionBuffer.get.map
 
     viewBuf.paste(startRow, startCol,
-                  src=copyBuf, dp.pastePreview.get.selection)
+                  src=copyBuf, dp.selectionBuffer.get.selection)
 
     if outlineBuf.isSome:
       let ob = outlineBuf.get
       let endRow = min(startRow + copyBuf.rows-1, ob.rows-1)
       let endCol = min(startCol + copyBuf.cols-1, ob.cols-1)
 
-      for r in startRow..endRow:
-        for c in startCol..endCol:
+      let sr = max(startRow, 0)
+      let sc = max(startCol, 0)
+      for r in sr..endRow:
+        for c in sc..endCol:
           ob[r,c] = {}
 
 # }}}
@@ -1567,12 +1576,13 @@ proc drawMap*(m: Map, ctx) =
     border=1
   )
 
+  # outlineBuf has the same dimensions as viewBuf
   let outlineBuf = if ms.outlineStyle >= osSquareEdges:
     renderEdgeOutlines(viewBuf).some
   else:
     OutlineBuf.none
 
-  mergePasteAndOutlineBufs(viewBuf, outlineBuf, ctx)
+  mergeSelectionAndOutlineBuffers(viewBuf, outlineBuf, dp)
 
   drawBackgroundGrid(viewBuf, ctx)
 
@@ -1583,7 +1593,7 @@ proc drawMap*(m: Map, ctx) =
 
   drawCellBackgroundsAndGrid(viewBuf, ctx)
 
-  if dp.pastePreview.isNone:
+  if dp.selectionBuffer.isNone:
     drawCursor(ctx)
 
   drawFloors(viewBuf, ctx)
@@ -1599,8 +1609,8 @@ proc drawMap*(m: Map, ctx) =
   if dp.selection.isSome:
     drawSelection(ctx)
 
-  if dp.pastePreview.isSome:
-    drawPastePreviewHighlight(ctx)
+  if dp.selectionBuffer.isSome:
+    drawSelectionHighlight(ctx)
 
   # TODO blend selection/preview tint with wall color
   drawWalls(viewBuf, ctx)

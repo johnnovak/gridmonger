@@ -61,8 +61,10 @@ proc delNotes(m; rect: Rect[Natural]) =
   for r,c, _ in m.allNotes():
     if rect.contains(r,c):
       toDel.add((r,c))
-
   for (r,c) in toDel: m.delNote(r,c)
+
+proc delNotes*(m) =
+  m.notes = initTable[Natural, Note]()
 
 proc maxNoteIndex*(m): Natural =
   for n in m.notes.values():
@@ -107,9 +109,8 @@ proc fill*(m; rect: Rect[Natural], cell: Cell) =
   assert rect.r2 <= m.rows
   assert rect.c2 <= m.cols
 
-  # TODO fill border
-  for r in rect.r1..<rect.r2:
-    for c in rect.c1..<rect.c2:
+  for r in rect.r1..rect.r2:
+    for c in rect.c1..rect.c2:
       m[r,c] = cell
 
 
@@ -326,41 +327,45 @@ proc guessFloorOrientation*(m; r,c: Natural): Orientation =
     Horiz
 
 
-proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
-  let destRect = rectN(
-    destRow,
-    destCol,
-    destRow + src.rows,
-    destCol + src.cols
+proc paste*(m; destRow, destCol: int, src: Map, sel: Selection) =
+  let destRect = rectI(
+    destRow, destCol,
+    destRow + src.rows, destCol + src.cols
   ).intersect(
-    rectN(0, 0, m.rows, m.cols)
+    rectI(0, 0, m.rows, m.cols)
   )
   if destRect.isSome:
-    for r in 0..<destRect.get.rows:
-      for c in 0..<destRect.get.cols:
-        if sel[r,c]:
-          let floor = src.getFloor(r,c)
-          m.setFloor(destRow+r, destCol+c, floor)
+    let dr = destRect.get
+    for r in dr.r1..<dr.r2:
+      for c in dr.c1..<dr.c2:
+        var srcRow = r - dr.r1
+        var srcCol = c - dr.c1
+        if destRow < 0: inc(srcRow, -destRow)
+        if destCol < 0: inc(srcCol, -destCol)
+
+        if sel[srcRow, srcCol]:
+          let floor = src.getFloor(srcRow, srcCol)
+          m.setFloor(r,c, floor)
 
           template copyWall(dir: CardinalDir) =
-            let w = src.getWall(r,c, dir)
-            m.setWall(destRow+r, destCol+c, dir, w)
+            let w = src.getWall(srcRow, srcCol, dir)
+            m.setWall(r,c, dir, w)
 
           if floor == fNone:
-            m.eraseOrphanedWalls(destRow+r, destCol+c)
+            m.eraseOrphanedWalls(r,c)
           else:
             copyWall(dirN)
             copyWall(dirW)
             copyWall(dirS)
             copyWall(dirE)
 
-          m.delNote(destRow+r, destCol+c)
-          if src.hasNote(r,c):
-            m.setNote(destRow+r, destCol+c, src.getNote(r,c))
+          m.delNote(r,c)
+          if src.hasNote(srcRow, srcCol):
+            m.setNote(r,c, src.getNote(srcRow, srcCol))
 
 
 proc resize*(m; newRows, newCols: Natural, align: Direction): Map =
-  var srcRect = Rect[int](r1: 0, c1: 0, r2: m.rows, c2: m.cols)
+  var srcRect = rectI(0, 0, m.rows, m.cols)
 
   proc shiftHoriz(r: var Rect[int], d: int) =
     r.c1 += d
@@ -380,7 +385,7 @@ proc resize*(m; newRows, newCols: Natural, align: Direction): Map =
   elif {dirS, dirN} * align == {}:
     srcRect.shiftVert((newRows - m.rows) div 2)
 
-  let destRect = Rect[int](r1: 0, c1: 0, r2: newRows, c2: newCols)
+  let destRect = rectI(0, 0, newRows, newCols)
   var intRect = srcRect.intersect(destRect).get
 
   var copyRect: Rect[Natural]

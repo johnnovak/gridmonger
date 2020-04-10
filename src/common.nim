@@ -52,6 +52,16 @@ proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
   result.r2 = r2
   result.c2 = c2
 
+proc rectI*(r1,c1, r2,c2: int): Rect[int] =
+  assert r1 < r2
+  assert c1 < c2
+
+  result.r1 = r1
+  result.c1 = c1
+  result.r2 = r2
+  result.c2 = c2
+
+
 proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
   let
     r = max(a.r1, b.r1)
@@ -158,7 +168,7 @@ type
 
 type
   # TODO make ref?
-  CopyBuffer* = object
+  SelectionBuffer* = object
     map*:       Map
     selection*: Selection
 

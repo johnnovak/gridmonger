@@ -75,7 +75,8 @@ type
     emClearFloor,
     emSelect,
     emSelectRect
-    emPastePreview
+    emPastePreview,
+    emNudgePreview
 
   AppContext = ref object
     shouldClose:    bool
@@ -107,7 +108,8 @@ type
 
     selection:      Option[Selection]
     selRect:        Option[SelectionRect]
-    copyBuf:        Option[CopyBuffer]
+    copyBuf:        Option[SelectionBuffer]
+    nudgeBuf:       Option[SelectionBuffer]
 
     currMapLevel:   Natural
     statusIcon:     string
@@ -476,6 +478,35 @@ proc moveCursor(dir: CardinalDir, a) =
   dp.viewStartCol = sx
 
 # }}}
+# {{{ moveCursorAndSelStart()
+proc moveCursorAndSelStart(dir: CardinalDir, a) =
+  moveCursor(dir, a)
+  a.drawMapParams.selStartRow = a.cursorRow
+  a.drawMapParams.selStartCol = a.cursorCol
+
+# }}}
+# {{{ moveSelStart()
+proc moveSelStart(dir: CardinalDir, a) =
+  alias(dp, a.drawMapParams)
+
+  let cols = a.nudgeBuf.get.map.cols
+  let rows = a.nudgeBuf.get.map.cols
+
+  case dir:
+  of dirE:
+    if dp.selStartCol < cols-1: inc(dp.selStartCol)
+
+  of dirS:
+    if dp.selStartRow < rows-1: inc(dp.selStartRow)
+
+  of dirW:
+    if dp.selStartCol + cols > 1: dec(dp.selStartCol)
+
+  of dirN:
+    if dp.selStartRow + rows > 1: dec(dp.selStartRow)
+
+
+# }}}
 # {{{ setSelectModeSelectMessage()
 proc setSelectModeSelectMessage(a) =
   setStatusMessage(IconSelection, "Mark selection",
@@ -510,7 +541,7 @@ proc exitSelectMode(a) =
 # {{{ copySelection()
 proc copySelection(a): Option[Rect[Natural]] =
 
-  proc eraseOrphanedWalls(cb: CopyBuffer) =
+  proc eraseOrphanedWalls(cb: SelectionBuffer) =
     var m = cb.map
     for r in 0..<m.rows:
       for c in 0..<m.cols:
@@ -520,7 +551,7 @@ proc copySelection(a): Option[Rect[Natural]] =
 
   let bbox = sel.boundingBox()
   if bbox.isSome:
-    a.copyBuf = some(CopyBuffer(
+    a.copyBuf = some(SelectionBuffer(
       selection: newSelectionFrom(a.selection.get, bbox.get),
       map: newMapFrom(a.map, bbox.get)
     ))
@@ -539,9 +570,10 @@ proc drawNotesPane(x, y, w, h: float, a) =
   let curRow = a.cursorRow
   let curCol = a.cursorCol
 
-  if a.editMode != emPastePreview and m.hasNote(curRow, curCol):
-    let note = m.getNote(curRow, curCol)
+  if not (a.editMode in {emPastePreview, emNudgePreview}) and
+     m.hasNote(curRow, curCol):
 
+    let note = m.getNote(curRow, curCol)
     case note.kind
     of nkIndexed:
       drawIndexedNote(x-40, y-12, note.index, 36,
@@ -1201,12 +1233,30 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyP, {mkShift}):
         if a.copyBuf.isSome:
+          dp.selStartRow = a.cursorRow
+          dp.selStartCol = a.cursorCol
+
           a.editMode = emPastePreview
           setStatusMessage(IconTiles, "Paste preview",
                            @[IconArrowsAll, "placement",
                            "Enter/P", "paste", "Esc", "exit"], a)
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
+
+      elif ke.isKeyDown(keyG, {mkCtrl}):
+        # TODO warning when map is empty?
+        let sel = newSelection(a.map.rows, a.map.cols)
+        sel.fill(true)
+        a.nudgeBuf = SelectionBuffer(map: a.map, selection: sel).some
+        a.map = newMap(a.map.rows, a.map.cols)
+
+        dp.selStartRow = 0
+        dp.selStartCol = 0
+
+        a.editMode = emNudgePreview
+        setStatusMessage(IconArrowsAll, "Nudge preview",
+                         @[IconArrowsAll, "nudge",
+                         "Enter", "confirm", "Esc", "exit"], a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         incZoomLevel(a)
@@ -1487,10 +1537,17 @@ proc handleMapEvents(a) =
         a.editMode = emSelect
 
     of emPastePreview:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true):
+        moveCursorAndSelStart(dirW, a)
+
+      if ke.isKeyDown(MoveKeysRight, repeat=true):
+        moveCursorAndSelStart(dirE, a)
+
+      if ke.isKeyDown(MoveKeysUp,    repeat=true):
+        moveCursorAndSelStart(dirN, a)
+
+      if ke.isKeyDown(MoveKeysDown,  repeat=true):
+        moveCursorAndSelStart(dirS, a)
 
       elif ke.isKeyDown({keyEnter, keyP}):
         actions.paste(m, curRow, curCol, a.copyBuf.get, um)
@@ -1503,6 +1560,27 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyEscape):
         a.editMode = emNormal
         a.clearStatusMessage()
+
+    of emNudgePreview:
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveSelStart(dirW, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveSelStart(dirE, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveSelStart(dirN, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveSelStart(dirS, a)
+
+      elif ke.isKeyDown(keyEnter):
+        actions.nudgeMap(m, dp.selStartRow, dp.selStartCol, a.nudgeBuf.get, um)
+        a.editMode = emNormal
+        setStatusMessage(IconArrowsAll, "Nudged map", a)
+
+      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
+      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
+
+      elif ke.isKeyDown(keyEscape):
+        a.editMode = emNormal
+        a.map = a.nudgeBuf.get.map
+        a.nudgeBuf = SelectionBuffer.none
+        a.clearStatusMessage()
+
 # }}}
 
 # {{{ getPxRatio()
@@ -1553,9 +1631,12 @@ proc renderUI() =
     dp.cursorCol = a.cursorCol
 
     dp.selection = a.selection
-    dp.selRect = a.selRect
-    dp.pastePreview = if a.editMode == emPastePreview: a.copyBuf
-                      else: CopyBuffer.none
+    dp.selectionRect = a.selRect
+
+    dp.selectionBuffer =
+      if a.editMode == emPastePreview: a.copyBuf
+      elif a.editMode == emNudgePreview: a.nudgeBuf
+      else: SelectionBuffer.none
 
     drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
 
@@ -1819,7 +1900,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   loadImages(vg, a)
 
   searchThemes(a)
-  var themeIndex = findThemeIndex("default2", a)
+  var themeIndex = findThemeIndex("light", a)
   if themeIndex == -1:
     themeIndex = 0
   loadTheme(themeIndex, a)
@@ -1838,11 +1919,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.map = newMap(16, 16)
 
-  let filename = "EOB III - Crystal Tower L2 notes.grm"
+#  let filename = "EOB III - Crystal Tower L2 notes.grm"
 # let filename = "drawtest.grm"
-# let filename = "notetest.grm"
-# let filename = "pool-of-radiance-library.grm"
-# let filename = "library.grm"
+  let filename = "notetest.grm"
+#  let filename = "pool-of-radiance-library.grm"
   a.map = readMap(filename)
   a.filename = filename
   a.win.title = filename

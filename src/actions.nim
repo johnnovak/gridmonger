@@ -106,7 +106,7 @@ proc surroundSelectionWithWalls*(currMap; sel: Selection, bbox: Rect[Natural],
 
 # }}}
 # {{{ paste*()
-proc paste*(currMap; destRow, destCol: Natural, cb: CopyBuffer, um) =
+proc paste*(currMap; destRow, destCol: Natural, cb: SelectionBuffer, um) =
   let rect = rectN(
     destRow,
     destCol,
@@ -195,6 +195,22 @@ proc resizeMap*(currMap; newRows, newCols: Natural, align: Direction, um) =
 proc cropMap*(currMap; rect: Rect[Natural], um) =
   fullMapAction(currMap, um, "Crop map", m):
     m = newMapFrom(m, rect)
+
+# }}}
+# {{{ nudgeMap*()
+proc nudgeMap*(currMap; destRow, destCol: int, cb: SelectionBuffer, um) =
+  # The map is cleared for the duration of the nudge operation and it is
+  # stored temporarily in the SelectionBuffer
+  let action = proc (m: var Map) =
+    m = newMap(m.rows, m.cols)
+    m.paste(destRow, destCol, cb.map, cb.selection)
+
+  var undoMap = newMapFrom(cb.map)
+  var undoAction = proc (m: var Map) =
+    m = undoMap
+
+  um.storeUndoState("Nudge map", action, undoAction)
+  action(currMap)
 
 # }}}
 
