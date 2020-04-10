@@ -11,13 +11,26 @@ using
   currMap: var Map
   um: var UndoManager[Map]
 
-# {{{ Undoable actions
+# {{{ fullMapAction()
+template fullMapAction(currMap; um;
+                       actionName: string, actionMap, actionBody: untyped) =
+  let action = proc (actionMap: var Map) =
+    actionBody
+
+  var undoMap = newMapFrom(currMap)
+  var undoAction = proc (m: var Map) =
+    m = undoMap
+
+  um.storeUndoState(actionName, action, undoAction)
+  action(currMap)
+
+# }}}
 # {{{ cellAreaAction()
 template cellAreaAction(currMap; rect: Rect[Natural], um;
                         actionName: string, actionMap, actionBody: untyped) =
   let action = proc (actionMap: var Map) =
     actionBody
-    m.reindexNotes()
+    actionMap.reindexNotes()
 
   var undoMap = newMapFrom(currMap, rect)
   var undoAction = proc (m: var Map) =
@@ -171,6 +184,11 @@ proc eraseNote*(currMap; r,c: Natural, um) =
     m.delNote(r,c)
 
 # }}}
+# {{{ resizeMap*()
+proc resizeMap*(currMap; newRows, newCols: Natural, align: Direction, um) =
+  fullMapAction(currMap, um, "Resize map", m):
+    m = m.resize(newRows, newCols, align)
+
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

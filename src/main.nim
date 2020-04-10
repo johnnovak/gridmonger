@@ -979,10 +979,24 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
   y = dialogHeight - h - buttonPad
 
   proc okAction(dlg: var ResizeMapDialogParams, a) =
-    # TODO
-#    actions.setNote(a.map, dlg.row, dlg.col, note, a.undoManager)
+    # TODO number error checking
+    let newRows = parseInt(dlg.rows)
+    let newCols = parseInt(dlg.cols)
 
-    setStatusMessage(IconFile, "Map resized", a)
+    let align = case dlg.anchor
+    of raTopLeft:     NorthWest
+    of raTop:         North
+    of raTopRight:    NorthEast
+    of raLeft:        West
+    of raCenter:      {}
+    of raRight:       East
+    of raBottomLeft:  SouthWest
+    of raBottom:      South
+    of raBottomRight: SouthEast
+
+    actions.resizeMap(a.map, newRows, newCols, align, a.undoManager)
+
+    setStatusMessage(IconCrop, "Map resized", a)
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1159,6 +1173,7 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
         if um.canUndo():
           let actionName = um.undo(m)
+          updateViewStartAndCursorPosition(a)
           setStatusMessage(IconUndo, fmt"Undid action: {actionName}", a)
         else:
           setStatusMessage(IconWarning, "Nothing to undo", a)
@@ -1167,6 +1182,7 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true):
         if um.canRedo():
           let actionName = um.redo(m)
+          updateViewStartAndCursorPosition(a)
           setStatusMessage(IconRedo, fmt"Redid action: {actionName}", a)
         else:
           setStatusMessage(IconWarning, "Nothing to redo", a)

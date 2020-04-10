@@ -1,6 +1,7 @@
 import algorithm
 import options
 import sugar
+import strformat
 import tables
 
 import common
@@ -359,7 +360,7 @@ proc paste*(m; destRow, destCol: Natural, src: Map, sel: Selection) =
 
 
 proc resize*(m; newRows, newCols: Natural, align: Direction): Map =
-  var srcRect  = Rect[int](r1: 0, c1: 0, r2: m.rows,  c2: m.cols)
+  var srcRect = Rect[int](r1: 0, c1: 0, r2: m.rows, c2: m.cols)
 
   proc shiftHoriz(r: var Rect[int], d: int) =
     r.c1 += d
@@ -382,14 +383,17 @@ proc resize*(m; newRows, newCols: Natural, align: Direction): Map =
   let destRect = Rect[int](r1: 0, c1: 0, r2: newRows, c2: newCols)
   var intRect = srcRect.intersect(destRect).get
 
-  var copyRect = rectN(0, 0, intRect.rows, intRect.cols)
+  var copyRect: Rect[Natural]
   var destRow = 0
-  if srcRect.rows < 0: copyRect.r1 = -srcRect.rows
-  else: destRow = srcRect.rows
+  if srcRect.r1 < 0: copyRect.r1 = -srcRect.r1
+  else: destRow = srcRect.r1
 
   var destCol = 0
-  if srcRect.cols < 0: copyRect.c1 = -srcRect.cols
-  else: destCol = srcRect.cols
+  if srcRect.c1 < 0: copyRect.c1 = -srcRect.c1
+  else: destCol = srcRect.c1
+
+  copyRect.r2 = copyRect.r1 + intRect.rows
+  copyRect.c2 = copyRect.c1 + intRect.cols
 
   result = newMap(newRows, newCols)
   result.copyFrom(destRow, destCol, m, copyRect)
