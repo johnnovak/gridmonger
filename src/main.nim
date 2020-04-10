@@ -489,7 +489,7 @@ proc setSelectModeActionMessage(a) =
   setStatusMessage(IconSelection, "Mark selection",
                    @["Ctrl+C", "copy", "Ctrl+X", "cut",
                      "Ctrl+E", "erase", "Ctrl+F", "fill",
-                     "Ctrl+S", "surround"], a)
+                     "Ctrl+S", "surround", "Ctrl+R", "crop"], a)
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
@@ -1170,7 +1170,8 @@ proc handleMapEvents(a) =
         if a.currSpecialWallIdx < SpecialWalls.high: inc(a.currSpecialWallIdx)
         else: a.currSpecialWallIdx = 0
 
-      elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true):
+      elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
+           ke.isKeyDown(keyU, repeat=true):
         if um.canUndo():
           let actionName = um.undo(m)
           updateViewStartAndCursorPosition(a)
@@ -1178,8 +1179,8 @@ proc handleMapEvents(a) =
         else:
           setStatusMessage(IconWarning, "Nothing to undo", a)
 
-
-      elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true):
+      elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
+           ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
         if um.canRedo():
           let actionName = um.redo(m)
           updateViewStartAndCursorPosition(a)
@@ -1263,7 +1264,7 @@ proc handleMapEvents(a) =
         else:
           openNewMapDialog(a)
 
-      elif ke.isKeyDown(keyR, {mkCtrl}):
+      elif ke.isKeyDown(keyE, {mkCtrl}):
         a.resizeMapDialog.rows = $a.map.rows
         a.resizeMapDialog.cols = $a.map.cols
         a.resizeMapDialog.anchor = raCenter
@@ -1407,37 +1408,48 @@ proc handleMapEvents(a) =
         ))
 
       elif ke.isKeyDown(keyC, {mkCtrl}):
-        discard copySelection(a)
-        exitSelectMode(a)
-        setStatusMessage(IconCopy, "Copied selection to buffer", a)
+        let bbox = copySelection(a)
+        if bbox.isSome:
+          exitSelectMode(a)
+          setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
       elif ke.isKeyDown(keyX, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
-        exitSelectMode(a)
-        setStatusMessage(IconCut, "Cut selection to buffer", a)
+          exitSelectMode(a)
+          setStatusMessage(IconCut, "Cut selection to buffer", a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
-        exitSelectMode(a)
-        setStatusMessage(IconEraser, "Erased selection", a)
+          exitSelectMode(a)
+          setStatusMessage(IconEraser, "Erased selection", a)
 
       elif ke.isKeyDown(keyF, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.fillSelection(m, a.copyBuf.get.selection, bbox.get, um)
-        exitSelectMode(a)
-        setStatusMessage(IconPencil, "Filled selection", a)
+          exitSelectMode(a)
+          setStatusMessage(IconPencil, "Filled selection", a)
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.surroundSelection(m, a.copyBuf.get.selection, bbox.get, um)
-        exitSelectMode(a)
-        setStatusMessage(IconPencil, "Surrounded selection with walls", a)
+          actions.surroundSelectionWithWalls(m, a.copyBuf.get.selection,
+                                             bbox.get, um)
+          exitSelectMode(a)
+          setStatusMessage(IconPencil, "Surrounded selection with walls", a)
+
+      elif ke.isKeyDown(keyR, {mkCtrl}):
+        let sel = a.selection.get
+        let bbox = sel.boundingBox()
+        if bbox.isSome:
+          actions.cropMap(m, bbox.get, um)
+          updateViewStartAndCursorPosition(a)
+          exitSelectMode(a)
+          setStatusMessage(IconPencil, "Cropped map to selection", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()

@@ -86,7 +86,8 @@ proc fillSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
 
 # }}}
 # {{{ surroundSelection*()
-proc surroundSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
+proc surroundSelectionWithWalls*(currMap; sel: Selection, bbox: Rect[Natural],
+                                 um) =
   cellAreaAction(currMap, bbox, um, "Surround selection with walls", m):
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
@@ -188,6 +189,12 @@ proc eraseNote*(currMap; r,c: Natural, um) =
 proc resizeMap*(currMap; newRows, newCols: Natural, align: Direction, um) =
   fullMapAction(currMap, um, "Resize map", m):
     m = m.resize(newRows, newCols, align)
+
+# }}}
+# {{{ cropMap*()
+proc cropMap*(currMap; rect: Rect[Natural], um) =
+  fullMapAction(currMap, um, "Crop map", m):
+    m = newMapFrom(m, rect)
 
 # }}}
 
