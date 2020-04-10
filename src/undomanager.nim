@@ -17,6 +17,8 @@ type
 
 proc initUndoManager*[S](m: var UndoManager[S]) =
   m.states = @[]
+  m.currState = 0
+  m.lastSaveState = 0
 
 proc newUndoManager*[S](): UndoManager[S] =
   result = new UndoManager[S]
