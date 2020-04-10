@@ -360,6 +360,7 @@ var GridIconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
 GridIconRadioButtonsStyle.buttonPadHoriz = 4.0
 GridIconRadioButtonsStyle.buttonPadVert = 4.0
 GridIconRadioButtonsStyle.labelFontSize = 18.0
+# TODO color schould come from theme
 GridIconRadioButtonsStyle.labelColor = gray(0.1)
 GridIconRadioButtonsStyle.labelColorHover = gray(0.1)
 GridIconRadioButtonsStyle.labelColorDown = gray(0.1)
@@ -626,8 +627,9 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
     cancelAction(dlg, a)
 
   for ke in koi.keyBuf():
-    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
-    elif ke.action == kaDown and ke.key == keyEnter:  saveAction(dlg, a)
+    if   ke.isKeyDown(keyEscape):     cancelAction(dlg, a)
+    elif ke.isKeyDown(keyD, {mkAlt}): discardAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):      saveAction(dlg, a)
 
   koi.endDialog()
 
@@ -706,8 +708,8 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     cancelAction(dlg, a)
 
   for ke in koi.keyBuf():
-    if   ke.action == kaDown and ke.key == keyEscape: cancelAction(dlg, a)
-    elif ke.action == kaDown and ke.key == keyEnter:  okAction(dlg, a)
+    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
 
   koi.endDialog()
 
@@ -770,9 +772,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     buttonWidth = 80.0
     buttonPad = 15.0
 
-  var
-    x = 30.0
-    y = 60.0
+  var x = 30.0
+  var y = 60.0
 
   koi.label(x, y, labelWidth, h, "Marker")
   dlg.kind = NoteKind(
@@ -783,12 +784,13 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       ord(dlg.kind)
     )
   )
-  y += 40
 
+  y += 40
   koi.label(x, y, labelWidth, h, "Text")
   dlg.text = koi.textField(
     x + labelWidth, y, 355, h, tooltip = "", dlg.text
   )
+
   y += 64
 
   const NumIndexColors = ms.noteMapIndexBgColor.len
@@ -796,7 +798,6 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   case dlg.kind:
   of nkIndexed:
-
     koi.label(x, y, labelWidth, h, "Color")
     dlg.indexColor = koi.radioButtons(
       x + labelWidth, y, 28, 28,
@@ -867,10 +868,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     moveCurrGridIcon(NoteIcons.len, IconsPerRow, iconIdx, dc, dr)
 
   for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape):      cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):       okAction(dlg, a)
-
-    elif ke.isKeyDown(key1, {mkCtrl}):
+    if   ke.isKeyDown(key1, {mkCtrl}):
       dlg.kind = nkComment
 
     elif ke.isKeyDown(key2, {mkCtrl}):
@@ -916,6 +914,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       of nkComment, nkIndexed, nkCustomId: discard
       of nkIcon: dlg.icon = moveIcon(dlg.icon, dr=1)
 
+    elif ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+
     koi.setFramesLeft()
 
   koi.endDialog()
@@ -939,9 +940,8 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
     buttonWidth = 80.0
     buttonPad = 15.0
 
-  var
-    x = 30.0
-    y = 60.0
+  var x = 30.0
+  var y = 60.0
 
   koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
@@ -954,8 +954,6 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
   )
 
-  y += 40
-
   const IconsPerRow = 3
 
   const AnchorIcons = @[
@@ -964,6 +962,7 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
     IconArrowDownLeft, IconArrowDown, IconArrowDownRight
   ]
 
+  y += 40
   koi.label(x, y, labelWidth, h, "Anchor")
   dlg.anchor = koi.radioButtons(
     x + labelWidth, y, 35, 35,
@@ -1003,10 +1002,7 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
     moveCurrGridIcon(AnchorIcons.len, IconsPerRow, iconIdx, dc, dr)
 
   for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
-
-    elif ke.isKeyDown(keyH, repeat=true):
+    if   ke.isKeyDown(keyH, repeat=true):
       dlg.anchor = moveIcon(ord(dlg.anchor), dc= -1).ResizeAnchor
 
     elif ke.isKeyDown(keyL, repeat=true):
@@ -1017,6 +1013,9 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
 
     elif ke.isKeyDown(keyJ, repeat=true):
       dlg.anchor = moveIcon(ord(dlg.anchor), dr=1).ResizeAnchor
+
+    elif ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
 
     koi.setFramesLeft()
 
