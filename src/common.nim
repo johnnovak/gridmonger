@@ -111,9 +111,12 @@ type
     wLockedDoor    = (21, "locked door"),
     wArchway       = (22, "archway"),
     wSecretDoor    = (23, "secret door"),
-    wLever         = (30, "lever")
-    wNiche         = (40, "niche")
-    wStatue        = (50, "statue")
+    wLeverNE       = (30, "lever")
+    wLeverSW       = (31, "lever")
+    wNicheNE       = (40, "niche")
+    wNicheSW       = (41, "niche")
+    wStatueNE      = (50, "statue")
+    wStatueSW      = (51, "statue")
 
   Cell* = object
     floor*:            Floor

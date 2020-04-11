@@ -34,9 +34,9 @@ const SpecialWalls = @[
   wLockedDoor,
   wArchway,
   wSecretDoor,
-  wLever,
-  wNiche,
-  wStatue
+  wLeverSW,
+  wNicheSW,
+  wStatueSW
 ]
 
 
@@ -636,7 +636,6 @@ proc drawNotesPane(x, y, w, h: float, a) =
 
 
 # }}}
-
 # {{{ Dialogs
 # {{{ Save/discard changes dialog
 proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
@@ -1444,7 +1443,14 @@ proc handleMapEvents(a) =
     of emDrawWallSpecial:
       proc handleMoveKey(dir: CardinalDir, a) =
         if canSetWall(m, curRow, curCol, dir):
-          let curSpecWall = SpecialWalls[a.currSpecialWallIdx]
+          var curSpecWall = SpecialWalls[a.currSpecialWallIdx]
+          if   curSpecWall == wLeverSw:
+            if dir in {dirN, dirE}: curSpecWall = wLeverNE
+          elif curSpecWall == wNicheSw:
+            if dir in {dirN, dirE}: curSpecWall = wNicheNE
+          elif curSpecWall == wStatueSw:
+            if dir in {dirN, dirE}: curSpecWall = wStatueNE
+
           let w = if m.getWall(curRow, curCol, dir) == curSpecWall: wNone
                   else: curSpecWall
           actions.setWall(m, curRow, curCol, dir, w, um)
@@ -1686,8 +1692,8 @@ proc renderUI() =
           hover, active, down, first, last: bool,
           x, y, w, h: float, style: RadioButtonsStyle) =
 
-      alias(ms, a.mapStyle)
-      alias(dp, a.toolbarDrawParams)
+      let ms = a.mapStyle
+      let dp = a.toolbarDrawParams
 
       var col = if active: ms.cursorColor else: ms.floorColor
 
@@ -1709,6 +1715,14 @@ proc renderUI() =
       var cx = x + 5
       var cy = y + 15
 
+      template drawAtZoomLevel6(body: untyped) =
+        # A bit messy... but so is life! =8)
+        dp.setZoomLevel(ms, 6)
+        vg.scissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
+        body
+        dp.setZoomLevel(ms, 4)
+        vg.resetScissor()
+
       case SpecialWalls[buttonIdx]
       of wNone:          discard
       of wWall:          drawSolidWallHoriz(cx, cy, ctx)
@@ -1718,16 +1732,14 @@ proc renderUI() =
       of wLockedDoor:    drawLockedDoorHoriz(cx, cy, ctx)
       of wArchway:       drawArchwayHoriz(cx, cy, ctx)
       of wSecretDoor:
-        # A bit messy... but so is life! =8)
-        dp.setZoomLevel(ms, 6)
-        vg.scissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
-        drawSecretDoorHoriz(cx-2, cy, ctx)
-        dp.setZoomLevel(ms, 4)
-        vg.resetScissor()
+        drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
 
-      of wLever:         discard
-      of wNiche:         discard
-      of wStatue:        discard
+      of wLeverSW:
+        drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
+
+      of wNicheSW:       discard
+      of wStatueSW:      discard
+      else: discard
 
 
   a.currSpecialWallIdx = koi.radioButtons(
@@ -1936,9 +1948,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.map = newMap(16, 16)
 
-#  let filename = "EOB III - Crystal Tower L2 notes.grm"
+  let filename = "EOB III - Crystal Tower L2 notes.grm"
 # let filename = "drawtest.grm"
-  let filename = "notetest.grm"
+#  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
   a.map = readMap(filename)
   a.filename = filename

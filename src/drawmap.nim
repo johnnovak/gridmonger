@@ -1192,6 +1192,44 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
   vg.stroke()
 
 # }}}
+# {{{ drawLeverHoriz*()
+proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    sw = dp.normalStrokeWidth
+    xs = snap(x, sw)
+    xe = snap(x + dp.gridSize, sw)
+    y = snap(y, sw)
+
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.strokeColor(ms.drawColor)
+  vg.strokeWidth(sw)
+  vg.moveTo(xs, y)
+  vg.lineTo(xe, y)
+  vg.stroke()
+
+  let
+    lw = floor(dp.gridSize*0.2)
+    lx = snap(x + (dp.gridSize-lw)*0.5, sw)
+    ly = if northEast: y else: y-lw
+
+  vg.fillColor(ms.drawColor)
+  vg.beginPath()
+  vg.rect(lx, ly, lw, lw)
+  vg.fill()
+
+
+proc drawLeverHorizNE*(x, y: float, ctx) =
+  drawLeverHoriz(x, y, northEast=true, ctx)
+
+proc drawLeverHorizSW*(x, y: float, ctx) =
+  drawLeverHoriz(x, y, northEast=false, ctx)
+
+# }}}
 
 # {{{ setVertTransform()
 proc setVertTransform(x, y: float, ctx) =
@@ -1362,9 +1400,12 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wLockedDoor:    drawOriented(drawLockedDoorHoriz)
   of wArchway:       drawOriented(drawArchwayHoriz)
   of wSecretDoor:    drawOriented(drawSecretDoorHoriz)
-  of wLever:         discard
-  of wNiche:         discard
-  of wStatue:        discard
+  of wLeverNE:       drawOriented(drawLeverHorizNE)
+  of wLeverSW:       drawOriented(drawLeverHorizSW)
+  of wNicheNE:       discard
+  of wNicheSW:       discard
+  of wStatueNE:      discard
+  of wStatueSW:      discard
 
 # }}}
 # {{{ drawCellWalls()
