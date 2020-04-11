@@ -1731,13 +1731,14 @@ proc renderUI() =
       of wDoor:          drawDoorHoriz(cx, cy, ctx)
       of wLockedDoor:    drawLockedDoorHoriz(cx, cy, ctx)
       of wArchway:       drawArchwayHoriz(cx, cy, ctx)
+
       of wSecretDoor:
         drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
 
       of wLeverSW:
         drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
 
-      of wNicheSW:       discard
+      of wNicheSW:       drawNicheHorizSW(cx, cy, ctx)
       of wStatueSW:      discard
       else: discard
 

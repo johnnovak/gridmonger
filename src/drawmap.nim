@@ -1230,6 +1230,50 @@ proc drawLeverHorizSW*(x, y: float, ctx) =
   drawLeverHoriz(x, y, northEast=false, ctx)
 
 # }}}
+# {{{ drawNicheHoriz*()
+proc drawNicheHoriz*(x, y: float, northEast: bool, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
+    wallLen = (dp.gridSize * 0.25).int + wallLenOffs
+    nicheDepth = round(dp.gridSize * 0.15)
+    xs = x
+    y  = y
+    x1 = xs + wallLen + dp.thinOffs
+    xe = xs + dp.gridSize
+    x2 = xe - wallLen - dp.thinOffs
+    yn = if northEast: y-nicheDepth else: y+nicheDepth
+
+  let sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ms.drawColor)
+
+  vg.fillColor(ms.floorColor)
+  vg.beginPath()
+  vg.rect(x1, y, x2-x1, yn-y)
+  vg.fill()
+
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(xs, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(yn, sw))
+  vg.lineTo(snap(x2, sw), snap(yn, sw))
+  vg.lineTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
+
+proc drawNicheHorizNE*(x, y: float, ctx) =
+  drawNicheHoriz(x, y, northEast=true, ctx)
+
+proc drawNicheHorizSW*(x, y: float, ctx) =
+  drawNicheHoriz(x, y, northEast=false, ctx)
+
+# }}}
 
 # {{{ setVertTransform()
 proc setVertTransform(x, y: float, ctx) =
@@ -1402,8 +1446,8 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wSecretDoor:    drawOriented(drawSecretDoorHoriz)
   of wLeverNE:       drawOriented(drawLeverHorizNE)
   of wLeverSW:       drawOriented(drawLeverHorizSW)
-  of wNicheNE:       discard
-  of wNicheSW:       discard
+  of wNicheNE:       drawOriented(drawNicheHorizNE)
+  of wNicheSW:       drawOriented(drawNicheHorizSW)
   of wStatueNE:      discard
   of wStatueSW:      discard
 
