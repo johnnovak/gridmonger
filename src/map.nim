@@ -10,27 +10,33 @@ import selection
 
 using m: Map
 
-proc noteKey(m; r,c: Natural): Natural =
+
+proc locationKey(m; r,c: Natural): Natural =
   let h = m.rows
   let w = m.cols
   assert r < h
   assert c < w
   result = r*w + c
 
+# {{{ Notes
+
+proc numNotes*(m): Natural =
+  m.notes.len
+
 proc hasNote*(m; r,c: Natural): bool =
-  let key = noteKey(m, r,c)
+  let key = locationKey(m, r,c)
   m.notes.hasKey(key)
 
 proc getNote*(m; r,c: Natural): Note =
-  let key = noteKey(m, r,c)
+  let key = locationKey(m, r,c)
   m.notes[key]
 
 proc setNote*(m; r,c: Natural, note: Note) =
-  let key = noteKey(m, r,c)
+  let key = locationKey(m, r,c)
   m.notes[key] = note
 
 proc delNote*(m; r,c: Natural) =
-  let key = noteKey(m, r,c)
+  let key = locationKey(m, r,c)
   if m.notes.hasKey(key):
     m.notes.del(key)
 
@@ -44,9 +50,6 @@ proc reindexNotes*(m) =
   for i, k in keys.pairs():
     m.notes[k].index = i+1
 
-
-proc numNotes*(m): Natural =
-  m.notes.len
 
 iterator allNotes*(m): (Natural, Natural, Note) =
   for k, note in m.notes.pairs:
@@ -85,6 +88,9 @@ proc copyNotesFrom(m; destRow, destCol: Natural,
     if srcRect.contains(r,c):
       m.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
 
+# }}}
+
+# {{{ Map
 
 proc cellIndex(m; r,c: Natural): Natural =
   # We need to be able to address the bottommost & rightmost "edge" columns
@@ -403,5 +409,6 @@ proc resize*(m; newRows, newCols: Natural, align: Direction): Map =
   result = newMap(newRows, newCols)
   result.copyFrom(destRow, destCol, m, copyRect)
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

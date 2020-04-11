@@ -1282,6 +1282,46 @@ proc drawNicheHorizSW*(x, y: float, ctx) =
   drawNicheHoriz(x, y, northEast=false, ctx)
 
 # }}}
+# {{{ drawStatueHoriz*()
+proc drawStatueHoriz*(x, y: float, northEast: bool, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ms.drawColor)
+
+  # Wall start
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(x, sw), snap(y, sw))
+  vg.lineTo(snap(x + dp.gridSize, sw), snap(y, sw))
+  vg.stroke()
+
+  # Arc
+  const da = 1.3
+  let
+    cx = x + dp.gridSize*0.5
+    dy = dp.gridSize*0.07
+    cy = if northEast: y-dy else: y+dy
+    ca = if northEast: PI*0.5 else: 3*PI*0.5
+    a1 = ca-da
+    a2 = ca+da
+
+  vg.fillColor(ms.drawColor)
+  vg.beginPath()
+  vg.arc(cx, cy, dp.gridSize*0.27, a1, a2, pwCW)
+  vg.fill()
+
+
+proc drawStatueHorizNE*(x, y: float, ctx) =
+  drawStatueHoriz(x, y, northEast=true, ctx)
+
+proc drawStatueHorizSW*(x, y: float, ctx) =
+  drawStatueHoriz(x, y, northEast=false, ctx)
+
+# }}}
 # {{{ drawKeyholeHoriz*()
 proc drawKeyholeHoriz*(x, y: float, ctx) =
   alias(ms, ctx.ms)
@@ -1459,13 +1499,15 @@ proc drawNote(x, y: float, note: Note, ctx) =
     drawIcon(x, y, 0, 0, NoteIcons[note.icon], ctx)
 
   of nkComment:
-    vg.fillColor(ms.noteMapCommentColor)
-    vg.beginPath()
-    vg.moveTo(x + dp.gridSize - w, y)
-    vg.lineTo(x + dp.gridSize + 1, y + w+1)
-    vg.lineTo(x + dp.gridSize + 1, y)
-    vg.closePath()
-    vg.fill()
+    discard
+
+  vg.fillColor(ms.noteMapCommentColor)
+  vg.beginPath()
+  vg.moveTo(x + dp.gridSize - w, y)
+  vg.lineTo(x + dp.gridSize + 1, y + w+1)
+  vg.lineTo(x + dp.gridSize + 1, y)
+  vg.closePath()
+  vg.fill()
 
   # }}}
 # {{{ drawNotes()
@@ -1512,8 +1554,8 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wLeverSW:       drawOriented(drawLeverHorizSW)
   of wNicheNE:       drawOriented(drawNicheHorizNE)
   of wNicheSW:       drawOriented(drawNicheHorizSW)
-  of wStatueNE:      discard
-  of wStatueSW:      discard
+  of wStatueNE:      drawOriented(drawStatueHorizNE)
+  of wStatueSW:      drawOriented(drawStatueHorizSW)
   of wKeyhole:       drawOriented(drawKeyholeHoriz)
 
 # }}}

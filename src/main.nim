@@ -1675,10 +1675,13 @@ proc specialWallDrawProc(ms: MapStyle, dp: DrawMapParams): RadioButtonsDrawProc 
       drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
 
     of wNicheSW:       drawNicheHorizSW(cx, cy, ctx)
-    of wStatueSW:      discard
+
+    of wStatueSW:
+      drawAtZoomLevel6: drawStatueHorizSW(cx-2, cy+2, ctx)
 
     of wKeyhole:
       drawAtZoomLevel6: drawKeyholeHoriz(cx-2, cy, ctx)
+
     else: discard
 
 
@@ -1910,7 +1913,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.map = newMap(16, 16)
 
-  let filename = "EOB III - Crystal Tower L2 notes.grm"
+#  let filename = "EOB III - Crystal Tower L2 notes.grm"
+  let filename = "EOB III - Crystal Tower L2.grm"
 # let filename = "drawtest.grm"
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
