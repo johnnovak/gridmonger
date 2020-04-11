@@ -77,7 +77,8 @@ type
     emSelect,
     emSelectRect
     emPastePreview,
-    emNudgePreview
+    emNudgePreview,
+    emSetTeleportDest
 
   AppContext = ref object
     shouldClose:    bool
@@ -111,6 +112,9 @@ type
     selRect:        Option[SelectionRect]
     copyBuf:        Option[SelectionBuffer]
     nudgeBuf:       Option[SelectionBuffer]
+
+    currTeleportSrcRow: Natural
+    currTeleportSrcCol: Natural
 
     currMapLevel:   Natural
     statusIcon:     string
@@ -1211,6 +1215,7 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(key4) or ke.isKeyDown(key4, {mkShift}):
         setOrCycleFloor(fTeleport, fInvisibleTeleport,
                         forward=not koi.shiftDown(), a)
+        m.setTeleport(curRow, curCol)
 
       elif ke.isKeyDown(key5) or ke.isKeyDown(key5, {mkShift}):
         setOrCycleFloor(fStairsDown, fExitDoor,
@@ -1283,6 +1288,29 @@ proc handleMapEvents(a) =
         setStatusMessage(IconArrowsAll, "Nudge preview",
                          @[IconArrowsAll, "nudge",
                          "Enter", "confirm", "Esc", "exit"], a)
+
+      elif ke.isKeyDown(keyG):
+        if m.getFloor(curRow, curCol) == fTeleport:
+          let dest = m.getTeleportSrc(curRow, curCol)
+          if dest.isSome:
+            let dest = dest.get
+            curRow = dest.row
+            curCol = dest.col
+            updateViewStartAndCursorPosition(a)
+        else:
+          setStatusMessage(IconWarning, "Current cell is not a teleport", a)
+
+      elif ke.isKeyDown(keyG, {mkShift}):
+        if m.getFloor(curRow, curCol) == fTeleport:
+          a.currTeleportSrcRow = curRow
+          a.currTeleportSrcCol = curCol
+          a.editMode = emSetTeleportDest
+          setStatusMessage(IconTeleport, "Set teleport destination",
+                           @[IconArrowsAll, "select cell",
+                           "Enter", "confirm", "Esc", "cancel"], a)
+        else:
+          setStatusMessage(IconWarning,
+                           "Current cell is not a teleport source", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         incZoomLevel(a)
@@ -1600,19 +1628,40 @@ proc handleMapEvents(a) =
       if ke.isKeyDown(MoveKeysUp,    repeat=true): moveSelStart(dirN, a)
       if ke.isKeyDown(MoveKeysDown,  repeat=true): moveSelStart(dirS, a)
 
+      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
+      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
+
       elif ke.isKeyDown(keyEnter):
         actions.nudgeMap(m, dp.selStartRow, dp.selStartCol, a.nudgeBuf.get, um)
         a.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
-
-      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
-      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
 
       elif ke.isKeyDown(keyEscape):
         a.editMode = emNormal
         a.map = a.nudgeBuf.get.map
         a.nudgeBuf = SelectionBuffer.none
         a.clearStatusMessage()
+
+    of emSetTeleportDest:
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
+
+      if ke.isKeyDown(keyEnter):
+        let destLocation = MapLocation(mapIndex: 0, row: curRow, col: curCol)
+        m.setTeleport(a.currTeleportSrcRow, a.currTeleportSrcCol,
+                      destLocation.some)
+        a.editMode = emNormal
+        setStatusMessage(IconTeleport, "Teleport destination set", a)
+
+      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
+      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
+
+      elif ke.isKeyDown(keyEscape):
+        a.editMode = emNormal
+        a.clearStatusMessage()
+
 
 # }}}
 
@@ -1914,10 +1963,11 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.map = newMap(16, 16)
 
 #  let filename = "EOB III - Crystal Tower L2 notes.grm"
-  let filename = "EOB III - Crystal Tower L2.grm"
+#  let filename = "EOB III - Crystal Tower L2.grm"
 # let filename = "drawtest.grm"
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
+  let filename = "teleport-test.grm"
   a.map = readMap(filename)
   a.filename = filename
   a.win.title = filename

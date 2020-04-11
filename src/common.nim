@@ -138,8 +138,8 @@ type
     of nkIcon:     icon*: Natural
 
   MapLocation* = object
-    mapIndex: Natural
-    row, col: Natural
+    mapIndex*:  Natural
+    row*, col*: Natural
 
   # (0,0) is the top-left cell of the map
   Map* = ref object
@@ -147,8 +147,8 @@ type
     rows*, cols*:   Natural
     cells*:         seq[Cell]
     notes*:         Table[Natural, Note]
-    teleportsSrc*:  Table[Natural, MapLocation]
-    teleportsDest*: Table[Natural, MapLocation]
+    teleportsSrc*:  Table[Natural, Option[MapLocation]]
+    teleportsDest*: Table[Natural, Option[MapLocation]]
 
   # TODO introduce CellGrid because now the undomanager and the viewbuffer
   # copies the name, modified too

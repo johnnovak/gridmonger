@@ -89,7 +89,46 @@ proc copyNotesFrom(m; destRow, destCol: Natural,
       m.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
 
 # }}}
+# {{{ Teleports
 
+proc hasTeleportSrc*(m; r,c: Natural): bool =
+  let key = locationKey(m, r,c)
+  m.teleportsSrc.hasKey(key)
+
+proc hasTeleportDest*(m; r,c: Natural): bool =
+  let key = locationKey(m, r,c)
+  m.teleportsDest.hasKey(key)
+
+proc getTeleportSrc*(m; r,c: Natural): Option[MapLocation] =
+  let key = locationKey(m, r,c)
+  m.teleportsSrc[key]
+
+proc getTeleportDest*(m; r,c: Natural): Option[MapLocation] =
+  let key = locationKey(m, r,c)
+  m.teleportsDest[key]
+
+proc setTeleport*(m; srcRow, srcCol: Natural,
+                  ml: Option[MapLocation] = MapLocation.none) =
+  let srcKey = locationKey(m, srcRow, srcCol)
+  m.teleportsSrc[srcKey] = ml
+  if ml.isSome:
+    let ml = ml.get
+    let destKey = locationKey(m, ml.row, ml.col)
+    m.teleportsDest[destKey] = MapLocation(mapIndex: 0,
+                                           row: srcRow, col: srcCol).some
+
+proc delTeleport*(m; srcRow, srcCol: Natural) =
+  let srcKey = locationKey(m, srcRow, srcCol)
+  if m.teleportsSrc.hasKey(srcKey):
+    let destLocation = m.teleportsSrc[srcKey]
+    m.teleportsSrc.del(srcKey)
+
+    if destLocation.isSome:
+      let dl = destLocation.get
+      let destKey = locationKey(m, dl.row, dl.col)
+      m.teleportsDest.del(destKey)
+
+# }}}
 # {{{ Map
 
 proc cellIndex(m; r,c: Natural): Natural =
