@@ -1676,6 +1676,9 @@ proc specialWallDrawProc(ms: MapStyle, dp: DrawMapParams): RadioButtonsDrawProc 
 
     of wNicheSW:       drawNicheHorizSW(cx, cy, ctx)
     of wStatueSW:      discard
+
+    of wKeyhole:
+      drawAtZoomLevel6: drawKeyholeHoriz(cx-2, cy, ctx)
     else: discard
 
 

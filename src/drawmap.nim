@@ -1282,6 +1282,61 @@ proc drawNicheHorizSW*(x, y: float, ctx) =
   drawNicheHoriz(x, y, northEast=false, ctx)
 
 # }}}
+# {{{ drawKeyholeHoriz*()
+proc drawKeyholeHoriz*(x, y: float, ctx) =
+  alias(ms, ctx.ms)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    o = dp.thinOffs
+    boxLen = (dp.gridSize * 0.25).int
+    xs = x
+    x1 = xs + (dp.gridSize - boxLen)*0.5
+    x2 = x1 + boxLen
+    xe = x + dp.gridSize
+
+  var sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ms.drawColor)
+
+  # Wall start
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(xs, sw), snap(y, sw))
+  vg.lineTo(snap(x1+1, sw), snap(y, sw))
+  vg.stroke()
+
+  # Keyhole border
+  sw = dp.thinStrokeWidth
+  let
+    kx = snap(x1, sw)
+    ky = snap(y-boxLen*0.5, sw)
+    kl = boxLen.float
+
+  vg.strokeWidth(sw)
+  vg.fillColor(ms.floorColor)
+  vg.beginPath()
+  vg.rect(kx, ky, kl, kl)
+  vg.fill()
+  vg.stroke()
+
+  let hole = kl-6 
+  if hole >= 2:
+    vg.fillColor(ms.drawColor)
+    vg.beginPath()
+    vg.rect(kx+3, ky+3, hole, hole)
+    vg.fill()
+
+  # Wall end
+  sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
+# }}}
 
 # {{{ setVertTransform()
 proc setVertTransform(x, y: float, ctx) =
@@ -1459,7 +1514,7 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wNicheSW:       drawOriented(drawNicheHorizSW)
   of wStatueNE:      discard
   of wStatueSW:      discard
-  of wKeyhole:       discard
+  of wKeyhole:       drawOriented(drawKeyholeHoriz)
 
 # }}}
 # {{{ drawCellWalls()
