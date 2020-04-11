@@ -88,11 +88,11 @@ type
     noteMapTextColor*:       Color
     noteMapCommentColor*:    Color
     noteMapIndexColor*:      Color
-    noteMapIndexBgColor*:    array[4, Color]
+    noteMapIndexBgColor*:    seq[Color]
 
     notePaneTextColor*:      Color
     notePaneIndexColor*:     Color
-    notePaneIndexBgColor*:   array[4, Color]
+    notePaneIndexBgColor*:   seq[Color]
 
 
   GridStyle* = enum
@@ -967,6 +967,12 @@ proc drawStairsUp(x, y: float, ctx) =
   drawIcon(x, y, 0, 0, IconStairsUp, ctx)
 
 # }}}
+# {{{ drawExitDoor()
+proc drawExitDoor(x, y: float, ctx) =
+  drawIcon(x, y, 0.05, 0, IconExit, ctx.dp.gridSize, ctx.ms.drawColor,
+           fontSizeFactor=0.7, ctx.vg)
+
+# }}}
 # {{{ drawSpinner()
 proc drawSpinner(x, y: float, ctx) =
   drawIcon(x, y, 0.06, 0, IconSpinner, ctx)
@@ -974,12 +980,14 @@ proc drawSpinner(x, y: float, ctx) =
 # }}}
 # {{{ drawTeleport()
 proc drawTeleport(x, y: float, ctx) =
-  discard
+  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ms.drawColor,
+           fontSizeFactor=0.7, ctx.vg)
 
 # }}}
-# {{{ drawCustom()
-proc drawCustom(x, y: float, ctx) =
-  discard
+# {{{ drawInvisibleTeleport()
+proc drawInvisibleTeleport(x, y: float, ctx) =
+  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ms.lightDrawColor,
+           fontSizeFactor=0.7, ctx.vg)
 
 # }}}
 
@@ -1327,9 +1335,10 @@ proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
   of fCeilingPit:          draw(drawCeilingPit)
   of fStairsDown:          draw(drawStairsDown)
   of fStairsUp:            draw(drawStairsUp)
+  of fExitDoor:            draw(drawExitDoor)
   of fSpinner:             draw(drawSpinner)
   of fTeleport:            draw(drawTeleport)
-  of fCustom:              draw(drawCustom)
+  of fInvisibleTeleport:   draw(drawInvisibleTeleport)
 
 # }}}
 # {{{ drawBackgroundGrid()
@@ -1450,6 +1459,7 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wNicheSW:       drawOriented(drawNicheHorizSW)
   of wStatueNE:      discard
   of wStatueSW:      discard
+  of wKeyhole:       discard
 
 # }}}
 # {{{ drawCellWalls()

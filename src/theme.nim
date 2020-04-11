@@ -127,17 +127,17 @@ DefaultMapStyle.pastePreviewColor      = rgba(0.2, 0.6, 1.0, 0.4)
 DefaultMapStyle.noteMapTextColor       = gray(0.85)
 DefaultMapStyle.noteMapCommentColor    = rgba(1.0, 0.2, 0.0, 0.8)
 DefaultMapStyle.noteMapIndexColor      = gray(0.85)
-DefaultMapStyle.noteMapIndexBgColor    = [gray(0.0, 0.2),
-                                          gray(0.0, 0.2),
-                                          gray(0.0, 0.2),
-                                          gray(0.0, 0.2)]
+DefaultMapStyle.noteMapIndexBgColor    = @[gray(0.0, 0.2),
+                                           gray(0.0, 0.2),
+                                           gray(0.0, 0.2),
+                                           gray(0.0, 0.2)]
 
 DefaultMapStyle.notePaneTextColor      = gray(0.1)
 DefaultMapStyle.notePaneIndexColor     = gray(0.1)
-DefaultMapStyle.notePaneIndexBgColor   = [gray(1.0, 0.2),
-                                          gray(1.0, 0.2),
-                                          gray(1.0, 0.2),
-                                          gray(1.0, 0.2)]
+DefaultMapStyle.notePaneIndexBgColor   = @[gray(1.0, 0.2),
+                                           gray(1.0, 0.2),
+                                           gray(1.0, 0.2),
+                                           gray(1.0, 0.2)]
 
 # }}}
 

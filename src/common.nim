@@ -98,9 +98,10 @@ type
     fCeilingPit          = ( 43, "ceiling pit"),
     fStairsDown          = ( 50, "stairs down"),
     fStairsUp            = ( 51, "stairs up"),
+    fExitDoor            = ( 52, "exit door"),
     fSpinner             = ( 60, "spinner"),
     fTeleport            = ( 70, "teleport"),
-    fCustom              = (255, "custom")
+    fInvisibleTeleport   = ( 71, "invisible teleport"),
 
   Wall* = enum
     wNone          = (0, "none"),
@@ -117,6 +118,7 @@ type
     wNicheSW       = (41, "niche")
     wStatueNE      = (50, "statue")
     wStatueSW      = (51, "statue")
+    wKeyhole       = (60, "keyhole")
 
   Cell* = object
     floor*:            Floor

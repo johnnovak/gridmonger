@@ -26,7 +26,6 @@ import undomanager
 import utils
 
 
-# TODO
 const SpecialWalls = @[
   wIllusoryWall,
   wInvisibleWall,
@@ -36,7 +35,8 @@ const SpecialWalls = @[
   wSecretDoor,
   wLeverSW,
   wNicheSW,
-  wStatueSW
+  wStatueSW,
+  wKeyhole
 ]
 
 
@@ -778,12 +778,13 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 
 # }}}
 # {{{ Edit note dialog
-proc indexColorDrawProc(ms: MapStyle): RadioButtonsDrawProc =
+proc colorRadioButtonDrawProc(colors: seq[Color],
+                              cursorColor: Color): RadioButtonsDrawProc =
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
                hover, active, down, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
-    var col = ms.noteMapIndexBgColor[buttonIdx]
+    var col = colors[buttonIdx]
 
     if hover:
       col = col.lerp(white(), 0.3)
@@ -796,7 +797,7 @@ proc indexColorDrawProc(ms: MapStyle): RadioButtonsDrawProc =
     var cx, cy, cw, ch: float
     if active:
       vg.beginPath()
-      vg.strokeColor(ms.cursorColor)
+      vg.strokeColor(cursorColor)
       vg.strokeWidth(2)
       vg.rect(x, y, w-Pad, h-Pad)
       vg.stroke()
@@ -856,7 +857,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   y += 64
 
-  const NumIndexColors = ms.noteMapIndexBgColor.len
+  let NumIndexColors = ms.noteMapIndexBgColor.len
   const IconsPerRow = 10
 
   case dlg.kind:
@@ -868,7 +869,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       tooltips = @[],
       dlg.indexColor,
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc=indexColorDrawProc(ms).some
+      drawProc=colorRadioButtonDrawProc(ms.noteMapIndexBgColor,
+                                        ms.cursorColor).some
     )
 
   of nkCustomId:
@@ -1124,19 +1126,22 @@ proc handleMapEvents(a) =
     decZoomLevel(ms, dp)
     updateViewStartAndCursorPosition(a)
 
-  proc cycleFloor(f, first, last: Floor): Floor =
-    if f >= first and f <= last:
-      result = Floor(ord(f) + 1)
-      if result > last: result = first
-    else:
-      result = first
+  proc setOrCycleFloor(first, last: Floor, forward: bool, a) =
+    assert first <= last
 
-  proc setFloor(first, last: Floor, a) =
-    var f = m.getFloor(curRow, curCol)
-    f = cycleFloor(f, first, last)
+    var floor = m.getFloor(curRow, curCol)
+    if floor >= first and floor <= last:
+      var f = ord(floor)
+      let first = ord(first)
+      let last = ord(last)
+      if forward: inc(f) else: dec(f)
+      floor = (first + floorMod(f-first, last-first+1)).Floor
+    else:
+      floor = if forward: first else: last
+
     let ot = m.guessFloorOrientation(curRow, curCol)
-    actions.setOrientedFloor(m, curRow, curCol, f, ot, um)
-    setStatusMessage(mkFloorMessage(f), a)
+    actions.setOrientedFloor(m, curRow, curCol, floor, ot, um)
+    setStatusMessage(mkFloorMessage(floor), a)
 
   const
     MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
@@ -1192,34 +1197,28 @@ proc handleMapEvents(a) =
         setStatusMessage("", "Draw wall special",
                          @[IconArrowsAll, "set/clear"], a)
 
-      # TODO
-#      elif ke.isKeyDown(keyW) and ke.mods == {mkAlt}:
-#        actions.eraseCellWalls(m, curRow, curCol, um)
+      elif ke.isKeyDown(key1) or ke.isKeyDown(key1, {mkShift}):
+        setOrCycleFloor(fDoor, fSecretDoor, forward=not koi.shiftDown(), a)
 
-      elif ke.isKeyDown(key1):
-        setFloor(fDoor, fSecretDoor, a)
+      elif ke.isKeyDown(key2) or ke.isKeyDown(key2, {mkShift}):
+        setOrCycleFloor(fPressurePlate, fHiddenPressurePlate,
+                        forward=not koi.shiftDown(), a)
 
-      elif ke.isKeyDown(key2):
-        setFloor(fDoor, fSecretDoor, a)
+      elif ke.isKeyDown(key3) or ke.isKeyDown(key3, {mkShift}):
+        setOrCycleFloor(fClosedPit, fCeilingPit,
+                        forward=not koi.shiftDown(), a)
 
-      elif ke.isKeyDown(key3):
-        setFloor(fPressurePlate, fHiddenPressurePlate, a)
+      elif ke.isKeyDown(key4) or ke.isKeyDown(key4, {mkShift}):
+        setOrCycleFloor(fTeleport, fInvisibleTeleport,
+                        forward=not koi.shiftDown(), a)
 
-      elif ke.isKeyDown(key4):
-        setFloor(fClosedPit, fCeilingPit, a)
+      elif ke.isKeyDown(key5) or ke.isKeyDown(key5, {mkShift}):
+        setOrCycleFloor(fStairsDown, fExitDoor,
+                        forward=not koi.shiftDown(), a)
 
-      elif ke.isKeyDown(key5):
-        setFloor(fStairsDown, fStairsUp, a)
-
-      elif ke.isKeyDown(key6):
-        let f = fSpinner
-        actions.setFloor(m, curRow, curCol, f, um)
-        setStatusMessage(mkFloorMessage(f), a)
-
-      elif ke.isKeyDown(key7):
-        let f = fTeleport
-        actions.setFloor(m, curRow, curCol, f, um)
-        setStatusMessage(mkFloorMessage(f), a)
+      elif ke.isKeyDown(key6) or ke.isKeyDown(key6, {mkShift}):
+        setOrCycleFloor(fSpinner, fSpinner,
+                        forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if a.currSpecialWallIdx > 0: dec(a.currSpecialWallIdx)
@@ -1427,8 +1426,8 @@ proc handleMapEvents(a) =
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir, a) =
         if canSetWall(m, curRow, curCol, dir):
-          let w = if m.getWall(curRow, curCol, dir) == wNone: wWall
-                  else: wNone
+          let w = if m.getWall(curRow, curCol, dir) == wWall: wNone
+                  else: wWall
           actions.setWall(m, curRow, curCol, dir, w, um)
 
       if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
@@ -1627,6 +1626,59 @@ proc getPxRatio(a): float =
 # }}}
 # {{{ renderUI()
 
+proc specialWallDrawProc(ms: MapStyle, dp: DrawMapParams): RadioButtonsDrawProc =
+  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
+               hover, active, down, first, last: bool,
+               x, y, w, h: float, style: RadioButtonsStyle) =
+
+    var col = if active: ms.cursorColor else: ms.floorColor
+
+    if hover:
+      col = col.lerp(white(), 0.3)
+    if down:
+      col = col.lerp(black(), 0.3)
+
+    const Pad = 5
+
+    vg.beginPath()
+    vg.fillColor(col)
+    vg.rect(x, y, w-Pad, h-Pad)
+    vg.fill()
+
+    dp.setZoomLevel(ms, 4)
+    let ctx = DrawMapContext(ms: ms, dp: dp, vg: vg)
+
+    var cx = x + 5
+    var cy = y + 15
+
+    template drawAtZoomLevel6(body: untyped) =
+      # A bit messy... but so is life! =8)
+      dp.setZoomLevel(ms, 6)
+      vg.scissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
+      body
+      dp.setZoomLevel(ms, 4)
+      vg.resetScissor()
+
+    case SpecialWalls[buttonIdx]
+    of wNone:          discard
+    of wWall:          drawSolidWallHoriz(cx, cy, ctx)
+    of wIllusoryWall:  drawIllusoryWallHoriz(cx+2, cy, ctx)
+    of wInvisibleWall: drawInvisibleWallHoriz(cx, cy, ctx)
+    of wDoor:          drawDoorHoriz(cx, cy, ctx)
+    of wLockedDoor:    drawLockedDoorHoriz(cx, cy, ctx)
+    of wArchway:       drawArchwayHoriz(cx, cy, ctx)
+
+    of wSecretDoor:
+      drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
+
+    of wLeverSW:
+      drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
+
+    of wNicheSW:       drawNicheHorizSW(cx, cy, ctx)
+    of wStatueSW:      discard
+    else: discard
+
+
 proc renderUI() =
   alias(a, g_app)
   alias(dp, a.drawMapParams)
@@ -1686,119 +1738,25 @@ proc renderUI() =
       a
     )
 
-  # Toolbar
-  var drawProc: RadioButtonsDrawProc =
-    proc (vg: NVGContext, buttonIdx: Natural, label: string,
-          hover, active, down, first, last: bool,
-          x, y, w, h: float, style: RadioButtonsStyle) =
-
-      let ms = a.mapStyle
-      let dp = a.toolbarDrawParams
-
-      var col = if active: ms.cursorColor else: ms.floorColor
-
-      if hover:
-        col = col.lerp(white(), 0.3)
-      if down:
-        col = col.lerp(black(), 0.3)
-
-      const Pad = 5
-
-      vg.beginPath()
-      vg.fillColor(col)
-      vg.rect(x, y, w-Pad, h-Pad)
-      vg.fill()
-
-      dp.setZoomLevel(ms, 4)
-      let ctx = DrawMapContext(ms: a.mapStyle, dp: dp, vg: vg)
-
-      var cx = x + 5
-      var cy = y + 15
-
-      template drawAtZoomLevel6(body: untyped) =
-        # A bit messy... but so is life! =8)
-        dp.setZoomLevel(ms, 6)
-        vg.scissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
-        body
-        dp.setZoomLevel(ms, 4)
-        vg.resetScissor()
-
-      case SpecialWalls[buttonIdx]
-      of wNone:          discard
-      of wWall:          drawSolidWallHoriz(cx, cy, ctx)
-      of wIllusoryWall:  drawIllusoryWallHoriz(cx+2, cy, ctx)
-      of wInvisibleWall: drawInvisibleWallHoriz(cx, cy, ctx)
-      of wDoor:          drawDoorHoriz(cx, cy, ctx)
-      of wLockedDoor:    drawLockedDoorHoriz(cx, cy, ctx)
-      of wArchway:       drawArchwayHoriz(cx, cy, ctx)
-
-      of wSecretDoor:
-        drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
-
-      of wLeverSW:
-        drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
-
-      of wNicheSW:       drawNicheHorizSW(cx, cy, ctx)
-      of wStatueSW:      discard
-      else: discard
-
-
+  # Right-side toolbar
   a.currSpecialWallIdx = koi.radioButtons(
     winWidth - 60.0, 90, 36, 35,
     labels = newSeq[string](SpecialWalls.len),
     tooltips = @[],
     a.currSpecialWallIdx,
     layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
-    drawProc=drawProc.some
+    drawProc=specialWallDrawProc(ms, a.toolbarDrawParams).some
   )
-
-  var drawColorProc: RadioButtonsDrawProc =
-    proc (vg: NVGContext, buttonIdx: Natural, label: string,
-          hover, active, down, first, last: bool,
-          x, y, w, h: float, style: RadioButtonsStyle) =
-
-      var col = ms.noteMapIndexBgColor[buttonIdx]
-
-      if hover:
-        col = col.lerp(white(), 0.3)
-      if down:
-        col = col.lerp(black(), 0.3)
-
-      const Pad = 5
-      const SelPad = 3
-
-      var cx, cy, cw, ch: float
-      if active:
-        vg.beginPath()
-        vg.strokeColor(ms.cursorColor)
-        vg.strokeWidth(2)
-        vg.rect(x, y, w-Pad, h-Pad)
-        vg.stroke()
-
-        cx = x+SelPad
-        cy = y+SelPad
-        cw = w-Pad-SelPad*2
-        ch = h-Pad-SelPad*2
-
-      else:
-        cx = x
-        cy = y
-        cw = w-Pad
-        ch = h-Pad
-
-      vg.beginPath()
-      vg.fillColor(col)
-      vg.rect(cx, cy, cw, ch)
-      vg.fill()
 
   a.currFloorColor = koi.radioButtons(
 #    winWidth - 50.0, 90, 28, 28,
-    winWidth - 57.0, 440, 29, 29,
+    winWidth - 57.0, 460, 30, 30,
     labels = newSeq[string](4),
     tooltips = @[],
     a.currFloorColor,
     layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
-    drawProc=drawColorProc.some
+    drawProc=colorRadioButtonDrawProc(ms.noteMapIndexBgColor,
+                                      ms.cursorColor).some
   )
 
   # Status bar
