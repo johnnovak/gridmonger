@@ -1,8 +1,8 @@
+import hashes
 import options
 import tables
 
 import nanovg
-
 
 const
   TextVertAlignFactor* = 0.55
@@ -100,8 +100,8 @@ type
     fStairsUp            = ( 51, "stairs up"),
     fExitDoor            = ( 52, "exit door"),
     fSpinner             = ( 60, "spinner"),
-    fTeleport            = ( 70, "teleport"),
-    fInvisibleTeleport   = ( 71, "invisible teleport"),
+    fTeleportSource      = ( 70, "teleport"),
+    fTeleportDestination = ( 71, "teleport destination"),
 
   Wall* = enum
     wNone          = (0, "none"),
@@ -126,8 +126,7 @@ type
     wallN*, wallW*:    Wall
 
   NoteKind* = enum
-#    nkIndexed, nkCustomId, nkComment, nkIcon  # TODO reorder?
-    nkComment, nkIndexed, nkCustomId, nkIcon  # TODO reorder?
+    nkComment, nkIndexed, nkCustomId, nkIcon
 
   Note* = object
     text*: string
@@ -147,15 +146,20 @@ type
     rows*, cols*:   Natural
     cells*:         seq[Cell]
     notes*:         Table[Natural, Note]
-    teleportsSrc*:  Table[Natural, Option[MapLocation]]
-    teleportsDest*: Table[Natural, Option[MapLocation]]
 
   # TODO introduce CellGrid because now the undomanager and the viewbuffer
-  # copies the name, modified too
+  # copies the name
   #CellGrid* = ref object
   #  cols*:  Natural
   #  rows*:  Natural
   #  cells*: seq[Cell]
+
+proc hash*(ml: MapLocation): Hash =
+  var h: Hash = 0
+  h = h !& hash(ml.mapIndex)
+  h = h !& hash(ml.row)
+  h = h !& hash(ml.col)
+  result = !$h
 
 
 type
@@ -178,3 +182,4 @@ type
     map*:       Map
     selection*: Selection
 
+# vim: et:ts=2:sw=2:fdm=marker

@@ -978,14 +978,14 @@ proc drawSpinner(x, y: float, ctx) =
   drawIcon(x, y, 0.06, 0, IconSpinner, ctx)
 
 # }}}
-# {{{ drawTeleport()
-proc drawTeleport(x, y: float, ctx) =
+# {{{ drawTeleportSource()
+proc drawTeleportSource(x, y: float, ctx) =
   drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ms.drawColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
-# {{{ drawInvisibleTeleport()
-proc drawInvisibleTeleport(x, y: float, ctx) =
+# {{{ drawTeleportDestination()
+proc drawTeleportDestination(x, y: float, ctx) =
   drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ms.lightDrawColor,
            fontSizeFactor=0.7, ctx.vg)
 
@@ -1432,8 +1432,8 @@ proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
   of fStairsUp:            draw(drawStairsUp)
   of fExitDoor:            draw(drawExitDoor)
   of fSpinner:             draw(drawSpinner)
-  of fTeleport:            draw(drawTeleport)
-  of fInvisibleTeleport:   draw(drawInvisibleTeleport)
+  of fTeleportSource:      draw(drawTeleportSource)
+  of fTeleportDestination: draw(drawTeleportDestination)
 
 # }}}
 # {{{ drawBackgroundGrid()

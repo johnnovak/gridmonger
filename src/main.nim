@@ -14,6 +14,7 @@ import nanovg
 when not defined(DEBUG): import osdialog
 
 import actions
+import bitable
 import common
 import csdwindow
 import drawmap
@@ -78,7 +79,7 @@ type
     emSelectRect
     emPastePreview,
     emNudgePreview,
-    emSetTeleportDest
+    emSetTeleportDestination
 
   AppContext = ref object
     shouldClose:    bool
@@ -93,6 +94,9 @@ type
     # Document (TODO group under 'doc'?)
     filename:       string
     map:            Map
+    teleportLinks:  BiTable[MapLocation, MapLocation]
+    pitLinks:       BiTable[MapLocation, MapLocation]
+    entranceLinks:  BiTable[MapLocation, MapLocation]
 
     # Options (TODO group under 'opts'?)
     scrollMargin:   Natural
@@ -113,10 +117,9 @@ type
     copyBuf:        Option[SelectionBuffer]
     nudgeBuf:       Option[SelectionBuffer]
 
-    currTeleportSrcRow: Natural
-    currTeleportSrcCol: Natural
+    srcTeleportLocation: MapLocation
 
-    currMapLevel:   Natural
+    currMapIndex:   Natural
     statusIcon:     string
     statusMessage:  string
     statusCommands: seq[string]
@@ -416,6 +419,11 @@ proc moveCurrGridIcon(numIcons, iconsPerRow: Natural, iconIdx: int,
   col = floorMod(col+dc, iconsPerRow).Natural
   row = floorMod(row+dr, numRows).Natural
   result = row * iconsPerRow + col
+
+# }}}
+# {{{ getCurrMapLocation()
+proc getCurrMapLocation(a): MapLocation =
+  MapLocation(mapIndex: a.currMapIndex, row: a.cursorRow, col: a.cursorCol)
 
 # }}}
 # {{{ resetCursorAndViewStart()
@@ -1130,6 +1138,11 @@ proc handleMapEvents(a) =
     decZoomLevel(ms, dp)
     updateViewStartAndCursorPosition(a)
 
+  proc setFloor(f: Floor, a) =
+    let ot = m.guessFloorOrientation(curRow, curCol)
+    actions.setOrientedFloor(m, curRow, curCol, f, ot, um)
+    setStatusMessage(mkFloorMessage(f), a)
+
   proc setOrCycleFloor(first, last: Floor, forward: bool, a) =
     assert first <= last
 
@@ -1142,10 +1155,8 @@ proc handleMapEvents(a) =
       floor = (first + floorMod(f-first, last-first+1)).Floor
     else:
       floor = if forward: first else: last
+    setFloor(floor, a)
 
-    let ot = m.guessFloorOrientation(curRow, curCol)
-    actions.setOrientedFloor(m, curRow, curCol, floor, ot, um)
-    setStatusMessage(mkFloorMessage(floor), a)
 
   const
     MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
@@ -1213,17 +1224,14 @@ proc handleMapEvents(a) =
                         forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key4) or ke.isKeyDown(key4, {mkShift}):
-        setOrCycleFloor(fTeleport, fInvisibleTeleport,
-                        forward=not koi.shiftDown(), a)
-        m.setTeleport(curRow, curCol)
+        setFloor(fTeleportSource, a)
 
       elif ke.isKeyDown(key5) or ke.isKeyDown(key5, {mkShift}):
         setOrCycleFloor(fStairsDown, fExitDoor,
                         forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key6) or ke.isKeyDown(key6, {mkShift}):
-        setOrCycleFloor(fSpinner, fSpinner,
-                        forward=not koi.shiftDown(), a)
+        setFloor(fSpinner, a)
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if a.currSpecialWallIdx > 0: dec(a.currSpecialWallIdx)
@@ -1290,21 +1298,30 @@ proc handleMapEvents(a) =
                          "Enter", "confirm", "Esc", "exit"], a)
 
       elif ke.isKeyDown(keyG):
-        if m.getFloor(curRow, curCol) == fTeleport:
-          let dest = m.getTeleportSrc(curRow, curCol)
-          if dest.isSome:
-            let dest = dest.get
+        if m.getFloor(curRow, curCol) == fTeleportSource:
+          let src = getCurrMapLocation(a)
+          if a.teleportLinks.hasKey(src):
+            let dest = a.teleportLinks[getCurrMapLocation(a)]
             curRow = dest.row
             curCol = dest.col
             updateViewStartAndCursorPosition(a)
+          else:
+            setStatusMessage(IconWarning, "Teleport has no destination set", a)
+
+        elif m.getFloor(curRow, curCol) == fTeleportDestination:
+          let dest = getCurrMapLocation(a)
+          let src = a.teleportLinks.getKeyByVal(getCurrMapLocation(a))
+          curRow = src.row
+          curCol = src.col
+          updateViewStartAndCursorPosition(a)
+
         else:
           setStatusMessage(IconWarning, "Current cell is not a teleport", a)
 
       elif ke.isKeyDown(keyG, {mkShift}):
-        if m.getFloor(curRow, curCol) == fTeleport:
-          a.currTeleportSrcRow = curRow
-          a.currTeleportSrcCol = curCol
-          a.editMode = emSetTeleportDest
+        if m.getFloor(curRow, curCol) == fTeleportSource:
+          a.srcTeleportLocation = getCurrMapLocation(a)
+          a.editMode = emSetTeleportDestination
           setStatusMessage(IconTeleport, "Set teleport destination",
                            @[IconArrowsAll, "select cell",
                            "Enter", "confirm", "Esc", "cancel"], a)
@@ -1642,16 +1659,15 @@ proc handleMapEvents(a) =
         a.nudgeBuf = SelectionBuffer.none
         a.clearStatusMessage()
 
-    of emSetTeleportDest:
+    of emSetTeleportDestination:
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
       if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
       if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
       if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
 
       if ke.isKeyDown(keyEnter):
-        let destLocation = MapLocation(mapIndex: 0, row: curRow, col: curCol)
-        m.setTeleport(a.currTeleportSrcRow, a.currTeleportSrcCol,
-                      destLocation.some)
+        setFloor(fTeleportDestination, a)
+        a.teleportLinks[a.srcTeleportLocation] = getCurrMapLocation(a)
         a.editMode = emNormal
         setStatusMessage(IconTeleport, "Teleport destination set", a)
 
@@ -1756,7 +1772,7 @@ proc renderUI() =
 
   const MapDropdownWidth = 320
   # Current level dropdown
-  a.currMapLevel = koi.dropdown(
+  a.currMapIndex = koi.dropdown(
     (winWidth - MapDropdownWidth)*0.5, 45, MapDropdownWidth, 24.0,   # TODO calc y
     items = @[
       "Level 1 - Legend of Darkmoor",
@@ -1765,7 +1781,7 @@ proc renderUI() =
       "You Only Scream Twice"
     ],
     tooltip = "Current map level",
-    a.currMapLevel,
+    a.currMapIndex,
     style = a.mapDropdownStyle
   )
 
