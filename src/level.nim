@@ -116,26 +116,8 @@ proc getFloorOrientation*(l; r,c: Natural): Orientation {.inline.} =
 proc setFloorOrientation*(l; r,c: Natural, ot: Orientation) {.inline.} =
   l.cellGrid.setFloorOrientation(r,c, ot)
 
-
 proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool =
-  alias(g, l.cellGrid)
-
-  if dir == North:
-    result = r == 0 or g.getFloor(r-1, c) == fNone
-  elif dir == NorthEast:
-    result = r == 0 or g.getFloor(r-1, c+1) == fNone
-  elif dir == East:
-    result = g.getFloor(r, c+1) == fNone
-  elif dir == SouthEast:
-    result = g.getfloor(r+1, c+1) == fNone
-  elif dir == South:
-    result = g.getFloor(r+1, c) == fNone
-  elif dir == SouthWest:
-    result = c == 0 or g.getFloor(r+1, c-1) == fNone
-  elif dir == West:
-    result = c == 0 or g.getFloor(r, c-1) == fNone
-  elif dir == NorthWest:
-    result = c == 0 or r == 0 or g.getFloor(r-1, c-1) == fNone
+  l.cellGrid.isNeighbourCellEmpty(r,c, dir)
 
 
 proc eraseOrphanedWalls*(l; r,c: Natural) =

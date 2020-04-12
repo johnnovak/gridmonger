@@ -1,3 +1,5 @@
+import sugar
+
 import common
 import rect
 
@@ -125,9 +127,22 @@ proc copyFrom*(g; destRow, destCol: Natural,
     g[destRow+r, destCol+cols].wallW = src[srcRow+r, srcCol+cols].wallW
 
 
-# TODO remove?
-#proc copyFrom*(g; src: CellGrid) =
-#  g.copyFrom(destRow=0, destCol=0, src, srcRect=rectN(0, 0, src.rows, src.cols))
-
+proc isNeighbourCellEmpty*(g; r,c: Natural, dir: Direction): bool =
+  if dir == North:
+    result = r == 0 or g[r-1, c].floor == fNone
+  elif dir == NorthEast:
+    result = r == 0 or g[r-1, c+1].floor == fNone
+  elif dir == East:
+    result = g[r, c+1].floor == fNone
+  elif dir == SouthEast:
+    result = g[r+1, c+1].floor == fNone
+  elif dir == South:
+    result = g[r+1, c].floor == fNone
+  elif dir == SouthWest:
+    result = c == 0 or g[r+1, c-1].floor == fNone
+  elif dir == West:
+    result = c == 0 or g[r, c-1].floor == fNone
+  elif dir == NorthWest:
+    result = c == 0 or r == 0 or g[r-1, c-1].floor == fNone
 
 # vim: et:ts=2:sw=2:fdm=marker
