@@ -17,10 +17,12 @@ import actions
 import bitable
 import common
 import csdwindow
-import drawmap
+import drawlevel
 import icons
+import level
 import map
 import persistence
+import rect
 import selection
 import theme
 import undomanager
@@ -49,12 +51,12 @@ const
 
   StatusBarHeight = 26.0
 
-  MapLeftPad           = 50.0
-  MapRightPad          = 113.0
-  MapTopPadCoords      = 85.0
-  MapBottomPadCoords   = 40.0
-  MapTopPadNoCoords    = 65.0
-  MapBottomPadNoCoords = 10.0
+  LevelLeftPad           = 50.0
+  LevelRightPad          = 113.0
+  LevelTopPadCoords      = 85.0
+  LevelBottomPadCoords   = 40.0
+  LevelTopPadNoCoords    = 65.0
+  LevelBottomPadNoCoords = 10.0
 
   NotesPaneTopPad = 10.0
   NotesPaneHeight = 40.0
@@ -89,18 +91,16 @@ type
     vg:             NVGContext
 
     # Dependencies
-    undoManager:    UndoManager[Map]
+    undoManager:    UndoManager[Level]
 
     # Document (TODO group under 'doc'?)
     filename:       string
     map:            Map
-    teleportLinks:  BiTable[MapLocation, MapLocation]
-    pitLinks:       BiTable[MapLocation, MapLocation]
-    entranceLinks:  BiTable[MapLocation, MapLocation]
+    currLevel:      Natural
+    levelStyles:    seq[LevelStyle]
 
     # Options (TODO group under 'opts'?)
     scrollMargin:   Natural
-    mapStyle:       MapStyle
 
     # UI state (TODO group under 'ui'?)
     uiStyle:        UIStyle
@@ -119,16 +119,15 @@ type
 
     srcTeleportLocation: MapLocation
 
-    currMapIndex:   Natural
     statusIcon:     string
     statusMessage:  string
     statusCommands: seq[string]
 
-    drawMapParams:     DrawMapParams
-    toolbarDrawParams: DrawMapParams
+    drawLevelParams:   DrawLevelParams
+    toolbarDrawParams: DrawLevelParams
 
-    mapTopPad:      float
-    mapBottomPad:   float
+    levelTopPad:    float
+    levelBottomPad: float
 
     showNotesPane:  bool
 
@@ -140,13 +139,13 @@ type
     nextThemeIndex: Option[Natural]
     themeReloaded:  bool
 
-    mapDropdownStyle:  DropdownStyle
+    levelDropdownStyle:  DropdownStyle
 
     # Dialogs
     saveDiscardDialog: SaveDiscardDialogParams
-    newMapDialog:      NewMapDialogParams
+    newLevelDialog:    NewLevelDialogParams
     editNoteDialog:    EditNoteDialogParams
-    resizeMapDialog:   ResizeMapDialogParams
+    resizeLevelDialog: ResizeLevelDialogParams
 
     # Images
     oldPaperImage:  Image
@@ -155,7 +154,7 @@ type
     isOpen: bool
     action: proc (a: var AppContext)
 
-  NewMapDialogParams = object
+  NewLevelDialogParams = object
     isOpen:   bool
     name:     string
     rows:     string
@@ -173,7 +172,7 @@ type
     icon:       Natural
     text:       string
 
-  ResizeMapDialogParams = object
+  ResizeLevelDialogParams = object
     isOpen:   bool
     rows:     string
     cols:     string
@@ -191,6 +190,16 @@ using a: var AppContext
 
 # }}}
 
+# {{{ getCurrLevel()
+proc getCurrLevel(a): Level =
+  a.map.levels[a.currLevel]
+
+# }}}
+# {{{ getCurrLevelStyle()
+proc getCurrLevelStyle(a): LevelStyle =
+  a.levelStyles[a.currLevel]
+
+# }}}
 # {{{ clearStatusMessage()
 proc clearStatusMessage(a) =
   a.statusIcon = ""
@@ -214,8 +223,9 @@ proc setStatusMessage(msg: string, a) =
 # {{{ renderStatusBar()
 proc renderStatusBar(y: float, winWidth: float, a) =
   alias(vg, a.vg)
-  alias(m, a.map)
   alias(s, a.uiStyle.statusBarStyle)
+
+  let l = getCurrLevel(a)
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
@@ -228,7 +238,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   # Display current coords
   vg.setFont(14.0)
 
-  let cursorPos = fmt"({m.rows-1 - a.cursorRow}, {a.cursorCol})"
+  let cursorPos = fmt"({l.rows-1 - a.cursorRow}, {a.cursorCol})"
   let tw = vg.textWidth(cursorPos)
 
   vg.fillColor(s.coordsColor)
@@ -341,7 +351,15 @@ proc findThemeIndex(name: string, a): int =
 
 proc loadTheme(index: Natural, a) =
   let name = a.themeNames[index]
-  (a.uiStyle, a.mapStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
+  let (uiStyle, levelStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
+  a.uiStyle = uiStyle
+
+  # TODO proper init
+  if a.levelStyles.len == 0:
+    a.levelStyles.add(levelStyle)
+  else:
+    a.levelStyles[0] = levelStyle
+
   a.currThemeIndex = index
 
   # TODO
@@ -357,8 +375,8 @@ proc loadTheme(index: Natural, a) =
   a.win.setStyle(s.titleBarStyle)
 
   block:
-    alias(d, a.mapDropdownStyle)
-    alias(s, s.mapDropdownStyle)
+    alias(d, a.levelDropdownStyle)
+    alias(s, s.levelDropdownStyle)
 
     d = koi.getDefaultDropdownStyle()
 
@@ -423,40 +441,41 @@ proc moveCurrGridIcon(numIcons, iconsPerRow: Natural, iconIdx: int,
 # }}}
 # {{{ getCurrMapLocation()
 proc getCurrMapLocation(a): MapLocation =
-  MapLocation(mapIndex: a.currMapIndex, row: a.cursorRow, col: a.cursorCol)
+  MapLocation(levelIdx: a.currLevel, row: a.cursorRow, col: a.cursorCol)
 
 # }}}
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
   a.cursorRow = 0
   a.cursorCol = 0
-  a.drawMapParams.viewStartRow = 0
-  a.drawMapParams.viewStartCol = 0
+  a.drawLevelParams.viewStartRow = 0
+  a.drawLevelParams.viewStartCol = 0
 
 # }}}
 # {{{ updateViewStartAndCursorPosition()
 proc updateViewStartAndCursorPosition(a) =
-  alias(dp, a.drawMapParams)
+  alias(dp, a.drawLevelParams)
+  let l = getCurrLevel(a)
 
   let (winWidth, winHeight) = a.win.size
 
-  dp.startX = MapLeftPad
-  dp.startY = TitleBarHeight + a.mapTopPad
+  dp.startX = LevelLeftPad
+  dp.startY = TitleBarHeight + a.levelTopPad
 
   var drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
-                       a.mapTopPad - a.mapBottomPad
+                       a.levelTopPad - a.levelBottomPad
 
   if a.showNotesPane:
    drawAreaHeight -= NotesPaneTopPad + NotesPaneHeight + NotesPaneBottomPad
 
   let
-    drawAreaWidth = winWidth - MapLeftPad - MapRightPad
+    drawAreaWidth = winWidth - LevelLeftPad - LevelRightPad
 
-  dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), a.map.rows)
-  dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), a.map.cols)
+  dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), l.rows)
+  dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), l.cols)
 
-  dp.viewStartRow = min(max(a.map.rows - dp.viewRows, 0), dp.viewStartRow)
-  dp.viewStartCol = min(max(a.map.cols - dp.viewCols, 0), dp.viewStartCol)
+  dp.viewStartRow = min(max(l.rows - dp.viewRows, 0), dp.viewStartRow)
+  dp.viewStartCol = min(max(l.cols - dp.viewCols, 0), dp.viewStartCol)
 
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
   let viewEndCol = dp.viewStartCol + dp.viewCols - 1
@@ -473,21 +492,22 @@ proc updateViewStartAndCursorPosition(a) =
 # }}}
 # {{{ showCellCoords()
 proc showCellCoords(show: bool, a) =
-  alias(dp, a.drawMapParams)
+  alias(dp, a.drawLevelParams)
 
   if show:
-    a.mapTopPad = MapTopPadCoords
-    a.mapBottomPad = MapBottomPadCoords
+    a.levelTopPad = LevelTopPadCoords
+    a.levelBottomPad = LevelBottomPadCoords
     dp.drawCellCoords = true
   else:
-    a.mapTopPad = MapTopPadNoCoords
-    a.mapBottomPad = MapBottomPadNoCoords
+    a.levelTopPad = LevelTopPadNoCoords
+    a.levelBottomPad = LevelBottomPadNoCoords
     dp.drawCellCoords = false
 
 # }}}
 # {{{ moveCursor()
 proc moveCursor(dir: CardinalDir, a) =
-  alias(dp, a.drawMapParams)
+  alias(dp, a.drawLevelParams)
+  let l = getCurrLevel(a)
 
   var
     cx = a.cursorCol
@@ -497,14 +517,14 @@ proc moveCursor(dir: CardinalDir, a) =
 
   case dir:
   of dirE:
-    cx = min(cx+1, a.map.cols-1)
+    cx = min(cx+1, l.cols-1)
     if cx - sx > dp.viewCols-1 - a.scrollMargin:
-      sx = min(max(a.map.cols - dp.viewCols, 0), sx+1)
+      sx = min(max(l.cols - dp.viewCols, 0), sx+1)
 
   of dirS:
-    cy = min(cy+1, a.map.rows-1)
+    cy = min(cy+1, l.rows-1)
     if cy - sy > dp.viewRows-1 - a.scrollMargin:
-      sy = min(max(a.map.rows - dp.viewRows, 0), sy+1)
+      sy = min(max(l.rows - dp.viewRows, 0), sy+1)
 
   of dirW:
     cx = max(cx-1, 0)
@@ -525,16 +545,16 @@ proc moveCursor(dir: CardinalDir, a) =
 # {{{ moveCursorAndSelStart()
 proc moveCursorAndSelStart(dir: CardinalDir, a) =
   moveCursor(dir, a)
-  a.drawMapParams.selStartRow = a.cursorRow
-  a.drawMapParams.selStartCol = a.cursorCol
+  a.drawLevelParams.selStartRow = a.cursorRow
+  a.drawLevelParams.selStartCol = a.cursorCol
 
 # }}}
 # {{{ moveSelStart()
 proc moveSelStart(dir: CardinalDir, a) =
-  alias(dp, a.drawMapParams)
+  alias(dp, a.drawLevelParams)
 
-  let cols = a.nudgeBuf.get.map.cols
-  let rows = a.nudgeBuf.get.map.cols
+  let cols = a.nudgeBuf.get.level.cols
+  let rows = a.nudgeBuf.get.level.cols
 
   case dir:
   of dirE:
@@ -568,9 +588,11 @@ proc setSelectModeActionMessage(a) =
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
+  let l = getCurrLevel(a)
+
   a.editMode = emSelect
-  a.selection = some(newSelection(a.map.rows, a.map.cols))
-  a.drawMapParams.drawCursorGuides = true
+  a.selection = some(newSelection(l.rows, l.cols))
+  a.drawLevelParams.drawCursorGuides = true
   setSelectModeSelectMessage(a)
 
 # }}}
@@ -578,7 +600,7 @@ proc enterSelectMode(a) =
 proc exitSelectMode(a) =
   a.editMode = emNormal
   a.selection = Selection.none
-  a.drawMapParams.drawCursorGuides = false
+  a.drawLevelParams.drawCursorGuides = false
   a.clearStatusMessage()
 
 # }}}
@@ -586,10 +608,10 @@ proc exitSelectMode(a) =
 proc copySelection(a): Option[Rect[Natural]] =
 
   proc eraseOrphanedWalls(cb: SelectionBuffer) =
-    var m = cb.map
-    for r in 0..<m.rows:
-      for c in 0..<m.cols:
-        m.eraseOrphanedWalls(r,c)
+    var l = cb.level
+    for r in 0..<l.rows:
+      for c in 0..<l.cols:
+        l.eraseOrphanedWalls(r,c)
 
   let sel = a.selection.get
 
@@ -597,7 +619,7 @@ proc copySelection(a): Option[Rect[Natural]] =
   if bbox.isSome:
     a.copyBuf = some(SelectionBuffer(
       selection: newSelectionFrom(a.selection.get, bbox.get),
-      map: newMapFrom(a.map, bbox.get)
+      level: newLevelFrom(getCurrLevel(a), bbox.get)
     ))
     eraseOrphanedWalls(a.copyBuf.get)
 
@@ -608,38 +630,38 @@ proc copySelection(a): Option[Rect[Natural]] =
 # {{{ drawNotesPane()
 proc drawNotesPane(x, y, w, h: float, a) =
   alias(vg, a.vg)
-  alias(m, a.map)
-  alias(ms, a.mapStyle)
+  let ls = getCurrLevelStyle(a)
 
+  let l = getCurrLevel(a)
   let curRow = a.cursorRow
   let curCol = a.cursorCol
 
   if not (a.editMode in {emPastePreview, emNudgePreview}) and
-     m.hasNote(curRow, curCol):
+     l.hasNote(curRow, curCol):
 
-    let note = m.getNote(curRow, curCol)
+    let note = l.getNote(curRow, curCol)
     case note.kind
     of nkIndexed:
       drawIndexedNote(x-40, y-12, note.index, 36,
-                      bgColor=ms.notePaneIndexBgColor[note.indexColor],
-                      fgColor=ms.notePaneIndexColor, vg)
+                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
+                      fgColor=ls.notePaneIndexColor, vg)
 
     of nkCustomId:
-      vg.fillColor(ms.notePaneTextColor)
+      vg.fillColor(ls.notePaneTextColor)
       vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x-22, y-2, note.customId)
 
     of nkIcon:
-      vg.fillColor(ms.notePaneTextColor)
+      vg.fillColor(ls.notePaneTextColor)
       vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x-20, y-3, NoteIcons[note.icon])
 
     of nkComment:
-      vg.fillColor(ms.notePaneTextColor)
+      vg.fillColor(ls.notePaneTextColor)
       vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x-20, y-2, IconComment)
 
-    vg.fillColor(ms.notePaneTextColor)
+    vg.fillColor(ls.notePaneTextColor)
     vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
     vg.scissor(x, y, w, h)
@@ -709,14 +731,15 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   koi.endDialog()
 
 # }}}
-# {{{ New map dialog
-proc openNewMapDialog(a) =
-  a.newMapDialog.name = ""
-  a.newMapDialog.rows = $a.map.rows
-  a.newMapDialog.cols = $a.map.cols
-  a.newMapDialog.isOpen = true
+# {{{ New level dialog
+proc openNewLevelDialog(a) =
+  let l = getCurrLevel(a)
+  a.newLevelDialog.name = ""
+  a.newLevelDialog.rows = $l.rows
+  a.newLevelDialog.cols = $l.cols
+  a.newLevelDialog.isOpen = true
 
-proc newMapDialog(dlg: var NewMapDialogParams, a) =
+proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   let
     dialogWidth = 350.0
     dialogHeight = 224.0
@@ -751,12 +774,12 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
   )
 
-  proc okAction(dlg: var NewMapDialogParams, a) =
+  proc okAction(dlg: var NewLevelDialogParams, a) =
     # TODO number error checking
     let rows = parseInt(dlg.rows)
     let cols = parseInt(dlg.cols)
 
-    a.map = newMap(rows, cols)
+    a.map.levels[a.currLevel] = newLevel(dlg.name, level=0, rows, cols)
     a.filename = ""
     a.win.title = "[Untitled]"
 
@@ -768,7 +791,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-  proc cancelAction(dlg: var NewMapDialogParams, a) =
+  proc cancelAction(dlg: var NewLevelDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -792,6 +815,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 # {{{ Edit note dialog
 proc colorRadioButtonDrawProc(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
+
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
                hover, active, down, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
@@ -831,8 +855,8 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
     vg.fill()
 
 proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
-  let ms = a.mapStyle
-
+  var l = getCurrLevel(a)
+  let ls = getCurrLevelStyle(a)
   let
     dialogWidth = 500.0
     dialogHeight = 370.0
@@ -869,7 +893,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   y += 64
 
-  let NumIndexColors = ms.noteMapIndexBgColor.len
+  let NumIndexColors = ls.noteLevelIndexBgColor.len
   const IconsPerRow = 10
 
   case dlg.kind:
@@ -877,12 +901,12 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     koi.label(x, y, labelWidth, h, "Color")
     dlg.indexColor = koi.radioButtons(
       x + labelWidth, y, 28, 28,
-      labels = newSeq[string](ms.noteMapIndexBgColor.len),
+      labels = newSeq[string](ls.noteLevelIndexBgColor.len),
       tooltips = @[],
       dlg.indexColor,
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc=colorRadioButtonDrawProc(ms.noteMapIndexBgColor,
-                                        ms.cursorColor).some
+      drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
+                                        ls.cursorColor).some
     )
 
   of nkCustomId:
@@ -904,7 +928,6 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   of nkComment: discard
 
-
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
@@ -919,7 +942,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     of nkIcon:     note.icon = dlg.icon
     of nkComment:  discard
 
-    actions.setNote(a.map, dlg.row, dlg.col, note, a.undoManager)
+    actions.setNote(l, dlg.row, dlg.col, note, a.undoManager)
 
     setStatusMessage(IconComment, "Set cell note", a)
     koi.closeDialog()
@@ -995,16 +1018,17 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   koi.endDialog()
 
 # }}}
-# {{{ Resize map dialog
+# {{{ Resize level dialog
 
-proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
-  let ms = a.mapStyle
+proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
+  var l = getCurrLevel(a)
+  let ls = getCurrLevelStyle(a)
 
   let
     dialogWidth = 270.0
     dialogHeight = 300.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCrop}  Resize Map")
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCrop}  Resize Level")
   a.clearStatusMessage()
 
   let
@@ -1051,7 +1075,7 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  proc okAction(dlg: var ResizeMapDialogParams, a) =
+  proc okAction(dlg: var ResizeLevelDialogParams, a) =
     # TODO number error checking
     let newRows = parseInt(dlg.rows)
     let newCols = parseInt(dlg.cols)
@@ -1067,14 +1091,14 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
     of raBottom:      South
     of raBottomRight: SouthEast
 
-    actions.resizeMap(a.map, newRows, newCols, align, a.undoManager)
+    actions.resizeLevel(l, newRows, newCols, align, a.undoManager)
 
-    setStatusMessage(IconCrop, "Map resized", a)
+    setStatusMessage(IconCrop, "Level resized", a)
     koi.closeDialog()
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var ResizeMapDialogParams, a) =
+  proc cancelAction(dlg: var ResizeLevelDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1111,15 +1135,16 @@ proc resizeMapDialog(dlg: var ResizeMapDialogParams, a) =
 # }}}
 # }}}
 
-# {{{ handleMapEvents()
-proc handleMapEvents(a) =
+# {{{ handleLevelEvents()
+proc handleLevelEvents(a) =
   alias(curRow, a.cursorRow)
   alias(curCol, a.cursorCol)
   alias(um, a.undoManager)
-  alias(m, a.map)
-  alias(ms, a.mapStyle)
-  alias(dp, a.drawMapParams)
+  alias(dp, a.drawLevelParams)
   alias(win, a.win)
+
+  var l = getCurrLevel(a)
+  let ls = getCurrLevelStyle(a)
 
   proc mkFloorMessage(f: Floor): string =
     fmt"Set floor – {f}"
@@ -1131,22 +1156,22 @@ proc handleMapEvents(a) =
       setStatusMessage(IconArrowsVert, "Floor orientation set to vertical", a)
 
   proc incZoomLevel(a) =
-    incZoomLevel(ms, dp)
+    incZoomLevel(ls, dp)
     updateViewStartAndCursorPosition(a)
 
   proc decZoomLevel(a) =
-    decZoomLevel(ms, dp)
+    decZoomLevel(ls, dp)
     updateViewStartAndCursorPosition(a)
 
   proc setFloor(f: Floor, a) =
-    let ot = m.guessFloorOrientation(curRow, curCol)
-    actions.setOrientedFloor(m, curRow, curCol, f, ot, um)
+    let ot = l.guessFloorOrientation(curRow, curCol)
+    actions.setOrientedFloor(l, curRow, curCol, f, ot, um)
     setStatusMessage(mkFloorMessage(f), a)
 
   proc setOrCycleFloor(first, last: Floor, forward: bool, a) =
     assert first <= last
 
-    var floor = m.getFloor(curRow, curCol)
+    var floor = l.getFloor(curRow, curCol)
     if floor >= first and floor <= last:
       var f = ord(floor)
       let first = ord(first)
@@ -1164,7 +1189,7 @@ proc handleMapEvents(a) =
     MoveKeysUp    = {keyUp,    keyK, keyKp8}
     MoveKeysDown  = {keyDown,  keyJ, keyKp2}
 
-  # TODO these should be part of the map component event handler
+  # TODO these should be part of the level component event handler
   for ke in koi.keyBuf():
     case a.editMode:
     of emNormal:
@@ -1184,24 +1209,24 @@ proc handleMapEvents(a) =
         a.editMode = emExcavate
         setStatusMessage(IconPencil, "Excavate tunnel",
                          @[IconArrowsAll, "draw"], a)
-        actions.excavate(m, curRow, curCol, um)
+        actions.excavate(l, curRow, curCol, um)
 
       elif ke.isKeyDown(keyE):
         a.editMode = emEraseCell
         setStatusMessage(IconEraser, "Erase cells",
                          @[IconArrowsAll, "erase"], a)
-        actions.eraseCell(m, curRow, curCol, um)
+        actions.eraseCell(l, curRow, curCol, um)
 
       elif ke.isKeyDown(keyF):
         a.editMode = emClearFloor
         setStatusMessage(IconEraser, "Clear floor",
                          @[IconArrowsAll, "clear"], a)
-        actions.setFloor(m, curRow, curCol, fEmpty, um)
+        actions.setFloor(l, curRow, curCol, fEmpty, um)
 
       elif ke.isKeyDown(keyO):
-        actions.toggleFloorOrientation(m, curRow, curCol, um)
+        actions.toggleFloorOrientation(l, curRow, curCol, um)
         setFloorOrientationStatusMessage(
-          m.getFloorOrientation(curRow, curCol), a)
+          l.getFloorOrientation(curRow, curCol), a)
 
       elif ke.isKeyDown(keyW):
         a.editMode = emDrawWall
@@ -1244,7 +1269,7 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyU, repeat=true):
         if um.canUndo():
-          let actionName = um.undo(m)
+          let actionName = um.undo(l)
           updateViewStartAndCursorPosition(a)
           setStatusMessage(IconUndo, fmt"Undid action: {actionName}", a)
         else:
@@ -1253,7 +1278,7 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
         if um.canRedo():
-          let actionName = um.redo(m)
+          let actionName = um.redo(l)
           updateViewStartAndCursorPosition(a)
           setStatusMessage(IconRedo, fmt"Redid action: {actionName}", a)
         else:
@@ -1265,7 +1290,7 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyP):
         if a.copyBuf.isSome:
-          actions.paste(m, curRow, curCol, a.copyBuf.get, um)
+          actions.paste(l, curRow, curCol, a.copyBuf.get, um)
           setStatusMessage(IconPaste, "Pasted buffer", a)
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
@@ -1284,10 +1309,10 @@ proc handleMapEvents(a) =
 
       elif ke.isKeyDown(keyG, {mkCtrl}):
         # TODO warning when map is empty?
-        let sel = newSelection(a.map.rows, a.map.cols)
+        let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
-        a.nudgeBuf = SelectionBuffer(map: a.map, selection: sel).some
-        a.map = newMap(a.map.rows, a.map.cols)
+        a.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
+        a.map.levels[a.currLevel] = newLevel(l.name, l.level, l.rows, l.cols)
 
         dp.selStartRow = 0
         dp.selStartCol = 0
@@ -1298,19 +1323,19 @@ proc handleMapEvents(a) =
                          "Enter", "confirm", "Esc", "exit"], a)
 
       elif ke.isKeyDown(keyG):
-        if m.getFloor(curRow, curCol) == fTeleportSource:
+        if l.getFloor(curRow, curCol) == fTeleportSource:
           let src = getCurrMapLocation(a)
-          if a.teleportLinks.hasKey(src):
-            let dest = a.teleportLinks[getCurrMapLocation(a)]
+          if a.map.teleportLinks.hasKey(src):
+            let dest = a.map.teleportLinks[src]
             curRow = dest.row
             curCol = dest.col
             updateViewStartAndCursorPosition(a)
           else:
             setStatusMessage(IconWarning, "Teleport has no destination set", a)
 
-        elif m.getFloor(curRow, curCol) == fTeleportDestination:
+        elif l.getFloor(curRow, curCol) == fTeleportDestination:
           let dest = getCurrMapLocation(a)
-          let src = a.teleportLinks.getKeyByVal(getCurrMapLocation(a))
+          let src = a.map.teleportLinks.getKeyByVal(dest)
           curRow = src.row
           curCol = src.col
           updateViewStartAndCursorPosition(a)
@@ -1319,7 +1344,7 @@ proc handleMapEvents(a) =
           setStatusMessage(IconWarning, "Current cell is not a teleport", a)
 
       elif ke.isKeyDown(keyG, {mkShift}):
-        if m.getFloor(curRow, curCol) == fTeleportSource:
+        if l.getFloor(curRow, curCol) == fTeleportSource:
           a.srcTeleportLocation = getCurrMapLocation(a)
           a.editMode = emSetTeleportDestination
           setStatusMessage(IconTeleport, "Set teleport destination",
@@ -1340,15 +1365,15 @@ proc handleMapEvents(a) =
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyN):
-        if m.getFloor(curRow, curCol) == fNone:
+        if l.getFloor(curRow, curCol) == fNone:
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
           alias(dlg, a.editNoteDialog)
           dlg.row = curRow
           dlg.col = curCol
 
-          if m.hasNote(curRow, curCol):
-            let note = m.getNote(curRow, curCol)
+          if l.hasNote(curRow, curCol):
+            let note = l.getNote(curRow, curCol)
             dlg.editMode = true
             dlg.kind = note.kind
             dlg.text = note.text
@@ -1372,24 +1397,24 @@ proc handleMapEvents(a) =
           dlg.isOpen = true
 
       elif ke.isKeyDown(keyN, {mkShift}):
-        if m.getFloor(curRow, curCol) == fNone:
+        if l.getFloor(curRow, curCol) == fNone:
           setStatusMessage(IconWarning, "No note to delete in cell", a)
         else:
-          actions.eraseNote(a.map, curRow, curCol, a.undoManager)
+          actions.eraseNote(l, curRow, curCol, a.undoManager)
           setStatusMessage(IconEraser, "Note erased", a)
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         if a.undoManager.isModified:
           a.saveDiscardDialog.isOpen = true
-          a.saveDiscardDialog.action = openNewMapDialog
+          a.saveDiscardDialog.action = openNewLevelDialog
         else:
-          openNewMapDialog(a)
+          openNewLevelDialog(a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
-        a.resizeMapDialog.rows = $a.map.rows
-        a.resizeMapDialog.cols = $a.map.cols
-        a.resizeMapDialog.anchor = raCenter
-        a.resizeMapDialog.isOpen = true
+        a.resizeLevelDialog.rows = $l.rows
+        a.resizeLevelDialog.cols = $l.cols
+        a.resizeLevelDialog.anchor = raCenter
+        a.resizeLevelDialog.isOpen = true
 
       elif ke.isKeyDown(keyO, {mkCtrl}):
         alias(dlg, a.saveDiscardDialog)
@@ -1449,15 +1474,15 @@ proc handleMapEvents(a) =
       proc handleMoveKey(dir: CardinalDir, a) =
         if a.editMode == emExcavate:
           moveCursor(dir, a)
-          actions.excavate(m, curRow, curCol, um)
+          actions.excavate(l, curRow, curCol, um)
 
         elif a.editMode == emEraseCell:
           moveCursor(dir, a)
-          actions.eraseCell(m, curRow, curCol, um)
+          actions.eraseCell(l, curRow, curCol, um)
 
         elif a.editMode == emClearFloor:
           moveCursor(dir, a)
-          actions.setFloor(m, curRow, curCol, fEmpty, um)
+          actions.setFloor(l, curRow, curCol, fEmpty, um)
 
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(dirW, a)
       if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(dirE, a)
@@ -1470,10 +1495,10 @@ proc handleMapEvents(a) =
 
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir, a) =
-        if canSetWall(m, curRow, curCol, dir):
-          let w = if m.getWall(curRow, curCol, dir) == wWall: wNone
+        if canSetWall(l, curRow, curCol, dir):
+          let w = if l.getWall(curRow, curCol, dir) == wWall: wNone
                   else: wWall
-          actions.setWall(m, curRow, curCol, dir, w, um)
+          actions.setWall(l, curRow, curCol, dir, w, um)
 
       if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
       if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
@@ -1486,7 +1511,7 @@ proc handleMapEvents(a) =
 
     of emDrawWallSpecial:
       proc handleMoveKey(dir: CardinalDir, a) =
-        if canSetWall(m, curRow, curCol, dir):
+        if canSetWall(l, curRow, curCol, dir):
           var curSpecWall = SpecialWalls[a.currSpecialWallIdx]
           if   curSpecWall == wLeverSw:
             if dir in {dirN, dirE}: curSpecWall = wLeverNE
@@ -1495,9 +1520,9 @@ proc handleMapEvents(a) =
           elif curSpecWall == wStatueSw:
             if dir in {dirN, dirE}: curSpecWall = wStatueNE
 
-          let w = if m.getWall(curRow, curCol, dir) == curSpecWall: wNone
+          let w = if l.getWall(curRow, curCol, dir) == curSpecWall: wNone
                   else: curSpecWall
-          actions.setWall(m, curRow, curCol, dir, w, um)
+          actions.setWall(l, curRow, curCol, dir, w, um)
 
       if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
       if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
@@ -1544,28 +1569,28 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyX, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
+          actions.eraseSelection(l, a.copyBuf.get.selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconCut, "Cut selection to buffer", a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.eraseSelection(m, a.copyBuf.get.selection, bbox.get, um)
+          actions.eraseSelection(l, a.copyBuf.get.selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconEraser, "Erased selection", a)
 
       elif ke.isKeyDown(keyF, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.fillSelection(m, a.copyBuf.get.selection, bbox.get, um)
+          actions.fillSelection(l, a.copyBuf.get.selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Filled selection", a)
 
       elif ke.isKeyDown(keyS, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.surroundSelectionWithWalls(m, a.copyBuf.get.selection,
+          actions.surroundSelectionWithWalls(l, a.copyBuf.get.selection,
                                              bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Surrounded selection with walls", a)
@@ -1574,7 +1599,7 @@ proc handleMapEvents(a) =
         let sel = a.selection.get
         let bbox = sel.boundingBox()
         if bbox.isSome:
-          actions.cropMap(m, bbox.get, um)
+          actions.cropLevel(l, bbox.get, um)
           updateViewStartAndCursorPosition(a)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped map to selection", a)
@@ -1628,7 +1653,7 @@ proc handleMapEvents(a) =
         moveCursorAndSelStart(dirS, a)
 
       elif ke.isKeyDown({keyEnter, keyP}):
-        actions.paste(m, curRow, curCol, a.copyBuf.get, um)
+        actions.paste(l, curRow, curCol, a.copyBuf.get, um)
         a.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
@@ -1649,13 +1674,14 @@ proc handleMapEvents(a) =
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
 
       elif ke.isKeyDown(keyEnter):
-        actions.nudgeMap(m, dp.selStartRow, dp.selStartCol, a.nudgeBuf.get, um)
+        actions.nudgeLevel(l, dp.selStartRow, dp.selStartCol, a.nudgeBuf.get,
+                           um)
         a.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
       elif ke.isKeyDown(keyEscape):
         a.editMode = emNormal
-        a.map = a.nudgeBuf.get.map
+        a.map.levels[a.currLevel] = a.nudgeBuf.get.level
         a.nudgeBuf = SelectionBuffer.none
         a.clearStatusMessage()
 
@@ -1667,7 +1693,7 @@ proc handleMapEvents(a) =
 
       if ke.isKeyDown(keyEnter):
         setFloor(fTeleportDestination, a)
-        a.teleportLinks[a.srcTeleportLocation] = getCurrMapLocation(a)
+        a.map.teleportLinks[a.srcTeleportLocation] = getCurrMapLocation(a)
         a.editMode = emNormal
         setStatusMessage(IconTeleport, "Teleport destination set", a)
 
@@ -1691,12 +1717,13 @@ proc getPxRatio(a): float =
 # }}}
 # {{{ renderUI()
 
-proc specialWallDrawProc(ms: MapStyle, dp: DrawMapParams): RadioButtonsDrawProc =
+proc specialWallDrawProc(ls: LevelStyle,
+                         dp: DrawLevelParams): RadioButtonsDrawProc =
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
                hover, active, down, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
-    var col = if active: ms.cursorColor else: ms.floorColor
+    var col = if active: ls.cursorColor else: ls.floorColor
 
     if hover:
       col = col.lerp(white(), 0.3)
@@ -1710,18 +1737,18 @@ proc specialWallDrawProc(ms: MapStyle, dp: DrawMapParams): RadioButtonsDrawProc 
     vg.rect(x, y, w-Pad, h-Pad)
     vg.fill()
 
-    dp.setZoomLevel(ms, 4)
-    let ctx = DrawMapContext(ms: ms, dp: dp, vg: vg)
+    dp.setZoomLevel(ls, 4)
+    let ctx = DrawLevelContext(ls: ls, dp: dp, vg: vg)
 
     var cx = x + 5
     var cy = y + 15
 
     template drawAtZoomLevel6(body: untyped) =
       # A bit messy... but so is life! =8)
-      dp.setZoomLevel(ms, 6)
+      dp.setZoomLevel(ls, 6)
       vg.scissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
       body
-      dp.setZoomLevel(ms, 4)
+      dp.setZoomLevel(ls, 4)
       vg.resetScissor()
 
     case SpecialWalls[buttonIdx]
@@ -1752,8 +1779,8 @@ proc specialWallDrawProc(ms: MapStyle, dp: DrawMapParams): RadioButtonsDrawProc 
 
 proc renderUI() =
   alias(a, g_app)
-  alias(dp, a.drawMapParams)
-  alias(ms, a.mapStyle)
+  alias(dp, a.drawLevelParams)
+  let ls = getCurrLevelStyle(a)
 
   let (winWidth, winHeight) = a.win.size
 
@@ -1770,10 +1797,10 @@ proc renderUI() =
     vg.fillColor(a.uiStyle.backgroundColor)
   vg.fill()
 
-  const MapDropdownWidth = 320
+  const LevelDropdownWidth = 320
   # Current level dropdown
-  a.currMapIndex = koi.dropdown(
-    (winWidth - MapDropdownWidth)*0.5, 45, MapDropdownWidth, 24.0,   # TODO calc y
+  a.currLevel = koi.dropdown(
+    (winWidth - LevelDropdownWidth)*0.5, 45, LevelDropdownWidth, 24.0,   # TODO calc y
     items = @[
       "Level 1 - Legend of Darkmoor",
       "The Beginning",
@@ -1781,11 +1808,11 @@ proc renderUI() =
       "You Only Scream Twice"
     ],
     tooltip = "Current map level",
-    a.currMapIndex,
-    style = a.mapDropdownStyle
+    a.currLevel,
+    style = a.levelDropdownStyle
   )
 
-  # Map
+  # Level
   if dp.viewRows > 0 and dp.viewCols > 0:
     dp.cursorRow = a.cursorRow
     dp.cursorCol = a.cursorCol
@@ -1798,13 +1825,13 @@ proc renderUI() =
       elif a.editMode == emNudgePreview: a.nudgeBuf
       else: SelectionBuffer.none
 
-    drawMap(a.map, DrawMapContext(ms: a.mapStyle, dp: dp, vg: a.vg))
+    drawLevel(getCurrLevel(a), DrawLevelContext(ls: ls, dp: dp, vg: a.vg))
 
   if a.showNotesPane:
     drawNotesPane(
-      x = MapLeftPad,
+      x = LevelLeftPad,
       y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
-      w = winWidth - MapLeftPad*2,  # TODO
+      w = winWidth - LevelLeftPad*2,  # TODO
       h = NotesPaneHeight,
       a
     )
@@ -1816,7 +1843,7 @@ proc renderUI() =
     tooltips = @[],
     a.currSpecialWallIdx,
     layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
-    drawProc=specialWallDrawProc(ms, a.toolbarDrawParams).some
+    drawProc=specialWallDrawProc(ls, a.toolbarDrawParams).some
   )
 
   a.currFloorColor = koi.radioButtons(
@@ -1826,8 +1853,8 @@ proc renderUI() =
     tooltips = @[],
     a.currFloorColor,
     layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
-    drawProc=colorRadioButtonDrawProc(ms.noteMapIndexBgColor,
-                                      ms.cursorColor).some
+    drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
+                                      ls.cursorColor).some
   )
 
   # Status bar
@@ -1836,9 +1863,9 @@ proc renderUI() =
 
   # Dialogs
   if   a.saveDiscardDialog.isOpen: saveDiscardDialog(a.saveDiscardDialog, a)
-  elif a.newMapDialog.isOpen:      newMapDialog(a.newMapDialog, a)
+  elif a.newLevelDialog.isOpen:    newLevelDialog(a.newLevelDialog, a)
   elif a.editNoteDialog.isOpen:    editNoteDialog(a.editNoteDialog, a)
-  elif a.resizeMapDialog.isOpen:   resizeMapDialog(a.resizeMapDialog, a)
+  elif a.resizeLevelDialog.isOpen: resizeLevelDialog(a.resizeLevelDialog, a)
 
 # }}}
 # {{{ renderFramePre()
@@ -1849,7 +1876,8 @@ proc renderFramePre(win: CSDWindow) =
     let themeIndex = a.nextThemeIndex.get
     a.themeReloaded = themeIndex == a.currThemeIndex
     loadTheme(themeIndex, a)
-    a.drawMapParams.initDrawMapParams(a.mapStyle, a.vg, getPxRatio(a))
+    a.drawLevelParams.initDrawLevelParams(getCurrLevelStyle(a), a.vg,
+                                          getPxRatio(a))
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
 
@@ -1871,7 +1899,7 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
   updateViewStartAndCursorPosition(a)
 
   if doHandleEvents:
-    handleMapEvents(a)
+    handleLevelEvents(a)
 
   renderUI()
 
@@ -1890,12 +1918,12 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
 # }}}
 
 # {{{ Init & cleanup
-proc initDrawMapParams(a) =
-  alias(dp, a.drawMapParams)
-  dp = newDrawMapParams()
+proc initDrawLevelParams(a) =
+  alias(dp, a.drawLevelParams)
+  dp = newDrawLevelParams()
   dp.drawCellCoords   = true
   dp.drawCursorGuides = false
-  dp.initDrawMapParams(a.mapStyle, a.vg, getPxRatio(a))
+  dp.initDrawLevelParams(getCurrLevelStyle(a), a.vg, getPxRatio(a))
 
 
 proc loadImages(vg: NVGContext, a) =
@@ -1954,10 +1982,13 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a = new AppContext
   a.win = win
   a.vg = vg
-  a.undoManager = newUndoManager[Map]()
+  a.undoManager = newUndoManager[Level]()
 
   loadFonts(vg)
   loadImages(vg, a)
+
+  # TODO proper init
+  a.levelStyles = @[]
 
   searchThemes(a)
   var themeIndex = findThemeIndex("oldpaper", a)
@@ -1965,18 +1996,20 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
     themeIndex = 0
   loadTheme(themeIndex, a)
 
-  initDrawMapParams(a)
-  a.drawMapParams.setZoomLevel(a.mapStyle, DefaultZoomLevel)
+  initDrawLevelParams(a)
+  a.drawLevelParams.setZoomLevel(getCurrLevelStyle(a), DefaultZoomLevel)
   a.scrollMargin = 3
 
-  a.toolbarDrawParams = a.drawMapParams.deepCopy
+  a.toolbarDrawParams = a.drawLevelParams.deepCopy
 
   showCellCoords(true, a)
   a.showNotesPane = true
 
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-  a.map = newMap(16, 16)
+  # TODO proper init
+  a.map = newMap()
+  a.map.levels.add(newLevel("", level=0, 16, 16))
 
 #  let filename = "EOB III - Crystal Tower L2 notes.grm"
 #  let filename = "EOB III - Crystal Tower L2.grm"

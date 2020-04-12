@@ -8,7 +8,8 @@ import nanovg
 
 import common
 import icons
-import map
+import level
+import rect
 import selection
 import utils
 
@@ -42,70 +43,12 @@ const
 
 # {{{ Types
 type
-  DrawMapContext* = object
-    ms*: MapStyle
-    dp*: DrawMapParams
+  DrawLevelContext* = object
+    ls*: LevelStyle
+    dp*: DrawLevelParams
     vg*: NVGContext
 
-  MapStyle* = ref object
-    backgroundColor*:        Color
-    drawColor*:              Color
-    lightDrawColor*:         Color
-    floorColor*:             Color
-    thinLines*:              bool
-
-    bgHatchEnabled*:         bool
-    bgHatchColor*:           Color
-    bgHatchStrokeWidth*:     float
-    bgHatchSpacingFactor*:   float
-
-    coordsColor*:            Color
-    coordsHighlightColor*:   Color
-
-    cursorColor*:            Color
-    cursorGuideColor*:       Color
-
-    gridStyle*:              GridStyle
-    gridColorBackground*:    Color
-    gridColorFloor*:         Color
-
-    outlineStyle*:           OutlineStyle
-    outlineFillStyle*:       OutlineFillStyle
-    outlineOverscan*:        bool
-    outlineColor*:           Color
-    outlineWidthFactor*:     float
-
-    innerShadowEnabled*:     bool
-    innerShadowColor*:       Color
-    innerShadowWidthFactor*: float
-    outerShadowEnabled*:     bool
-    outerShadowColor*:       Color
-    outerShadowWidthFactor*: float
-
-    pastePreviewColor*:      Color
-    selectionColor*:         Color
-
-    noteMapTextColor*:       Color
-    noteMapCommentColor*:    Color
-    noteMapIndexColor*:      Color
-    noteMapIndexBgColor*:    seq[Color]
-
-    notePaneTextColor*:      Color
-    notePaneIndexColor*:     Color
-    notePaneIndexBgColor*:   seq[Color]
-
-
-  GridStyle* = enum
-    gsNone, gsSolid, gsLoose, gsDashed
-
-  OutlineStyle* = enum
-    osNone, osCell, osSquareEdges, osRoundedEdges, osRoundedEdgesFilled
-
-  OutlineFillStyle* = enum
-    ofsSolid, ofsHatched
-
-
-  DrawMapParams* = ref object
+  DrawLevelParams* = ref object
     startX*:       float
     startY*:       float
 
@@ -181,13 +124,13 @@ proc `[]`(b: OutlineBuf, r,c: Natural): OutlineCell =
 # }}}
 
 using
-  ms:  MapStyle
-  dp:  DrawMapParams
-  ctx: DrawMapContext
+  ls:  LevelStyle
+  dp:  DrawLevelParams
+  ctx: DrawLevelContext
 
-# {{{ newDrawMapParams*()
-proc newDrawMapParams*(): DrawMapParams =
-  result = new DrawMapParams
+# {{{ newDrawLevelParams*()
+proc newDrawLevelParams*(): DrawLevelParams =
+  result = new DrawLevelParams
   for paint in result.lineHatchPatterns.mitems:
     paint.image = NoImage
 
@@ -200,14 +143,14 @@ proc getZoomLevel*(dp): Natural = dp.zoomLevel
 
 # }}}
 # {{{ setZoomLevel*()
-proc setZoomLevel*(dp; ms; zl: Natural) =
+proc setZoomLevel*(dp; ls; zl: Natural) =
   assert zl >= MinZoomLevel
   assert zl <= MaxZoomLevel
 
   dp.zoomLevel = zl
   dp.gridSize = MinGridSize + zl*ZoomStep
 
-  if zl < 3 or ms.thinLines:
+  if zl < 3 or ls.thinLines:
     dp.thinStrokeWidth = 2.0
     dp.normalStrokeWidth = 2.0
     dp.thinOffs = 1.0
@@ -234,15 +177,15 @@ proc setZoomLevel*(dp; ms; zl: Natural) =
 
 # }}}
 # {{{ incZoomLevel*()
-proc incZoomLevel*(ms; dp) =
+proc incZoomLevel*(ls; dp) =
   if dp.zoomLevel < MaxZoomLevel:
-    dp.setZoomLevel(ms, dp.zoomLevel+1)
+    dp.setZoomLevel(ls, dp.zoomLevel+1)
 
 # }}}
 # {{{ decZoomLevel*()
-proc decZoomLevel*(ms; dp) =
+proc decZoomLevel*(ls; dp) =
   if dp.zoomLevel > MinZoomLevel:
-    dp.setZoomLevel(ms, dp.zoomLevel-1)
+    dp.setZoomLevel(ls, dp.zoomLevel-1)
 
 # }}}
 # {{{ numDisplayableRows*()
@@ -341,25 +284,25 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
     nvgluDeleteFramebuffer(fb)
 
 # }}}
-# {{{ initDrawMapParams
-proc initDrawMapParams*(dp; ms; vg: NVGContext, pxRatio: float) =
+# {{{ initDrawLevelParams
+proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
   for paint in dp.lineHatchPatterns:
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, ms.drawColor)
+  renderLineHatchPatterns(dp, vg, pxRatio, ls.drawColor)
 
-  dp.setZoomLevel(ms, dp.zoomLevel)
+  dp.setZoomLevel(ls, dp.zoomLevel)
 
 # }}}
 
 # {{{ drawBackground()
 proc drawBackground(ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  vg.fillColor(ms.backgroundColor)
+  vg.fillColor(ls.backgroundColor)
 
   let
     w = dp.gridSize * dp.viewCols
@@ -372,20 +315,20 @@ proc drawBackground(ctx) =
 # }}}
 # {{{ drawBackgroundHatch()
 proc drawBackgroundHatch(ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let sw = ms.bgHatchStrokeWidth
+  let sw = ls.bgHatchStrokeWidth
 
-  vg.strokeColor(ms.bgHatchColor)
+  vg.strokeColor(ls.bgHatchColor)
   vg.strokeWidth(sw)
 
   let
     w = dp.gridSize * dp.viewCols
     h = dp.gridSize * dp.viewRows
     offs = max(w, h)
-    lineSpacing = sw * ms.bgHatchSpacingFactor
+    lineSpacing = sw * ls.bgHatchSpacingFactor
 
   let startX = snap(dp.startX, sw)
   let startY = snap(dp.startY, sw)
@@ -412,8 +355,8 @@ proc drawBackgroundHatch(ctx) =
 
 # }}}
 # {{{ drawCellCoords()
-proc drawCellCoords(m: Map, ctx) =
-  alias(ms, ctx.ms)
+proc drawCellCoords(l: Level, ctx) =
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -423,10 +366,10 @@ proc drawCellCoords(m: Map, ctx) =
   proc setTextHighlight(on: bool) =
     if on:
       vg.fontFace("sans-bold")
-      vg.fillColor(ms.coordsHighlightColor)
+      vg.fillColor(ls.coordsHighlightColor)
     else:
       vg.fontFace("sans")
-      vg.fillColor(ms.coordsColor)
+      vg.fillColor(ls.coordsColor)
 
   let endX = dp.startX + dp.gridSize * dp.viewCols
   let endY = dp.startY + dp.gridSize * dp.viewRows
@@ -434,7 +377,7 @@ proc drawCellCoords(m: Map, ctx) =
   let fontSize = dp.cellCoordsFontSize
 
   var x1f, x2f, y1f, y2f: float
-  if ms.outlineOverscan:
+  if ls.outlineOverscan:
     x1f = 1.7
     x2f = 1.8
     y1f = 1.5
@@ -460,7 +403,7 @@ proc drawCellCoords(m: Map, ctx) =
     let
       yPos = cellY(r, dp) + dp.gridSize*0.5
       row = dp.viewStartRow + r
-      coord = $(m.rows-1 - row)
+      coord = $(l.rows - 1 - row)
 
     setTextHighlight(row == dp.cursorRow)
 
@@ -471,7 +414,7 @@ proc drawCellCoords(m: Map, ctx) =
 # }}}
 # {{{ drawCursor()
 proc drawCursor(ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -486,15 +429,15 @@ proc drawCursor(ctx) =
       y = cellY(viewRow, dp)
       a = dp.gridSize
 
-    vg.fillColor(ms.cursorColor)
+    vg.fillColor(ls.cursorColor)
     vg.beginPath()
     vg.rect(x, y, a, a)
     vg.fill()
 
 # }}}
 # {{{ drawCursorGuides()
-proc drawCursorGuides(m: Map, ctx) =
-  alias(ms, ctx.ms)
+proc drawCursorGuides(ctx) =
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -504,8 +447,8 @@ proc drawCursorGuides(m: Map, ctx) =
     w = dp.gridSize * dp.viewCols
     h = dp.gridSize * dp.viewRows
 
-  vg.fillColor(ms.cursorGuideColor)
-  vg.strokeColor(ms.cursorGuideColor)
+  vg.fillColor(ls.cursorGuideColor)
+  vg.strokeColor(ls.cursorGuideColor)
   let sw = UltrathinStrokeWidth
   vg.strokeWidth(sw)
 
@@ -521,28 +464,28 @@ proc drawCursorGuides(m: Map, ctx) =
 
 # }}}
 # {{{ drawCellOutlines()
-proc drawCellOutlines(m: Map, ctx) =
-  alias(ms, ctx.ms)
+proc drawCellOutlines(l: Level, ctx) =
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   func isOutline(r,c: Natural): bool =
     not (
-      isNeighbourCellEmpty(m, r,c, North)     and
-      isNeighbourCellEmpty(m, r,c, NorthEast) and
-      isNeighbourCellEmpty(m, r,c, East)      and
-      isNeighbourCellEmpty(m, r,c, SouthEast) and
-      isNeighbourCellEmpty(m, r,c, South)     and
-      isNeighbourCellEmpty(m, r,c, SouthWest) and
-      isNeighbourCellEmpty(m, r,c, West)      and
-      isNeighbourCellEmpty(m, r,c, NorthWest)
+      isNeighbourCellEmpty(l, r,c, North)     and
+      isNeighbourCellEmpty(l, r,c, NorthEast) and
+      isNeighbourCellEmpty(l, r,c, East)      and
+      isNeighbourCellEmpty(l, r,c, SouthEast) and
+      isNeighbourCellEmpty(l, r,c, South)     and
+      isNeighbourCellEmpty(l, r,c, SouthWest) and
+      isNeighbourCellEmpty(l, r,c, West)      and
+      isNeighbourCellEmpty(l, r,c, NorthWest)
     )
 
   let sw = UltrathinStrokeWidth
 
   vg.strokeWidth(sw)
-  vg.fillColor(ms.outlineColor)
-  vg.strokeColor(ms.outlineColor)
+  vg.fillColor(ls.outlineColor)
+  vg.strokeColor(ls.outlineColor)
   vg.beginPath()
 
   for r in 0..<dp.viewRows:
@@ -559,7 +502,7 @@ proc drawCellOutlines(m: Map, ctx) =
 
 # }}}
 # {{{ renderEdgeOutlines()
-proc renderEdgeOutlines(viewBuf: Map): OutlineBuf =
+proc renderEdgeOutlines(viewBuf: Level): OutlineBuf =
   var ol = newOutlineBuf(viewBuf.rows, viewBuf.cols)
   for r in 0..<viewBuf.rows:
     for c in 0..<viewBuf.cols:
@@ -593,13 +536,13 @@ proc renderEdgeOutlines(viewBuf: Map): OutlineBuf =
 
 # }}}
 # {{{ drawEdgeOutlines()
-proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
-  alias(ms, ctx.ms)
+proc drawEdgeOutlines(l: Level, ob: OutlineBuf, ctx) =
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  case ms.outlineFillStyle
-  of ofsSolid:   vg.fillColor(ms.outlineColor)
+  case ls.outlineFillStyle
+  of ofsSolid:   vg.fillColor(ls.outlineColor)
   of ofsHatched: vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
 
   proc draw(r,c: int, cell: OutlineCell) =
@@ -607,7 +550,7 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
       x = cellX(c, dp)
       y = cellY(r, dp)
       gs = dp.gridSize
-      w  = dp.gridSize * ms.outlineWidthFactor + 1
+      w  = dp.gridSize * ls.outlineWidthFactor + 1
       x1 = x
       x2 = x + gs
       y1 = y
@@ -668,10 +611,10 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
     proc drawFilled() =
       vg.rect(x1, y1, gs, gs)
 
-    if ms.outlineStyle == osRoundedEdges:
+    if ls.outlineStyle == osRoundedEdges:
         drawRoundedEdges()
 
-    elif ms.outlineStyle == osRoundedEdgesFilled:
+    elif ls.outlineStyle == osRoundedEdgesFilled:
       if cell == {olNW, olNE, olSW, olSE} or
          cell == {olNW, olNE, olS} or
          cell == {olSW, olSE, olN} or
@@ -685,21 +628,21 @@ proc drawEdgeOutlines(m: Map, ob: OutlineBuf, ctx) =
       else:
         drawRoundedEdges()
 
-    elif ms.outlineStyle == osSquareEdges:
+    elif ls.outlineStyle == osSquareEdges:
       drawSquareEdges()
 
 
   vg.beginPath()
   var startRow, endRow, startCol, endCol: Natural
 
-  if ms.outlineOverscan:
+  if ls.outlineOverscan:
     let viewEndRow = dp.viewStartRow + dp.viewRows - 1
     startRow = if dp.viewStartRow == 0: 0 else: 1
-    endRow = if viewEndRow == m.rows-1: ob.rows-1 else: ob.rows-2
+    endRow = if viewEndRow == l.rows-1: ob.rows-1 else: ob.rows-2
 
     let viewEndCol = dp.viewStartCol + dp.viewCols - 1
     startCol = if dp.viewStartCol == 0: 0 else: 1
-    endCol = if viewEndCol == m.cols-1: ob.cols-1 else: ob.cols-2
+    endCol = if viewEndCol == l.cols-1: ob.cols-1 else: ob.cols-2
   else:
     startRow = 1
     endRow = ob.rows-2
@@ -727,7 +670,7 @@ proc drawIcon*(x, y, ox, oy: float, icon: string,
                   y + gridSize*oy + gridSize*0.58, icon)
 
 template drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
-  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ms.drawColor,
+  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ls.drawColor,
           fontSizeFactor=0.53, ctx.vg)
 
 # }}}
@@ -745,23 +688,23 @@ proc drawIndexedNote*(x, y: float, i: Natural, size: float,
   discard vg.text(x + size*0.51, y + size*0.54, $i)
 
 proc drawIndexedNote*(x, y: float, index: Natural, colorIdx: Natural, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   drawIndexedNote(x, y, index, dp.gridSize,
-                  bgColor=ms.noteMapIndexBgColor[colorIdx],
-                  fgColor=ms.noteMapIndexColor, vg)
+                  bgColor=ls.noteLevelIndexBgColor[colorIdx],
+                  fgColor=ls.noteLevelIndexColor, vg)
 
 # }}}
 # {{{ drawCustomIdNote*()
 proc drawCustomIdNote*(x, y: float, s: string, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   vg.setFont((dp.gridSize * 0.48).float)
-  vg.fillColor(ms.noteMapTextColor)
+  vg.fillColor(ls.noteLevelTextColor)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*0.52,
                   y + dp.gridSize*0.55, s)
@@ -769,7 +712,6 @@ proc drawCustomIdNote*(x, y: float, s: string, ctx) =
 # }}}
 # {{{ drawFloorBg()
 proc drawFloorBg(x, y: float, color: Color, ctx) =
-  alias(ms, ctx.ms)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -781,7 +723,7 @@ proc drawFloorBg(x, y: float, color: Color, ctx) =
 # }}}
 # {{{ drawGrid()
 proc drawGrid(x, y: float, color: Color, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -789,7 +731,7 @@ proc drawGrid(x, y: float, color: Color, ctx) =
   vg.strokeColor(color)
   vg.strokeWidth(sw)
 
-  case ms.gridStyle
+  case ls.gridStyle
   of gsNone: discard
 
   of gsSolid:
@@ -828,7 +770,7 @@ proc drawGrid(x, y: float, color: Color, ctx) =
 # }}}
 # {{{ drawSecretDoor()
 proc drawSecretDoor(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -839,7 +781,7 @@ proc drawSecretDoor(x, y: float, ctx) =
 
   let
     icon = "S"
-    bgCol = ms.floorColor
+    bgCol = ls.floorColor
     fontSizeFactor = 0.53
     gs = dp.gridSize
 
@@ -848,12 +790,12 @@ proc drawSecretDoor(x, y: float, ctx) =
   drawIcon(x, y-1, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
   drawIcon(x, y+1, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
 
-  drawIcon(x, y, 0, 0, icon, gs, ms.drawColor, fontSizeFactor, vg)
+  drawIcon(x, y, 0, 0, icon, gs, ls.drawColor, fontSizeFactor, vg)
 
 # }}}
 # {{{ drawPressurePlate()
 proc drawPressurePlate(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -863,7 +805,7 @@ proc drawPressurePlate(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -873,7 +815,7 @@ proc drawPressurePlate(x, y: float, ctx) =
 # }}}
 # {{{ drawHiddenPressurePlate()
 proc drawHiddenPressurePlate(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -883,7 +825,7 @@ proc drawHiddenPressurePlate(x, y: float, ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ms.lightDrawColor)
+  vg.strokeColor(ls.lightDrawColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -912,12 +854,12 @@ proc drawOpenPitWithColor(x, y: float, color: Color, ctx) =
 # }}}
 # {{{ drawOpenPit()
 proc drawOpenPit(x, y: float, ctx) =
-  drawOpenPitWithColor(x, y, ctx.ms.drawColor, ctx)
+  drawOpenPitWithColor(x, y, ctx.ls.drawColor, ctx)
 
 # }}}
 # {{{ drawCeilingPit()
 proc drawCeilingPit(x, y: float, ctx) =
-  drawOpenPitWithColor(x, y, ctx.ms.lightDrawColor, ctx)
+  drawOpenPitWithColor(x, y, ctx.ls.lightDrawColor, ctx)
 
 # }}}
 # {{{ drawClosedPitWithColor()
@@ -949,12 +891,12 @@ proc drawClosedPitWithColor(x, y: float, color: Color, ctx) =
 # }}}
 # {{{ drawClosedPit()
 proc drawClosedPit(x, y: float, ctx) =
-  drawClosedPitWithColor(x, y, ctx.ms.drawColor, ctx)
+  drawClosedPitWithColor(x, y, ctx.ls.drawColor, ctx)
 
 # }}}
 # {{{ drawHiddenPit()
 proc drawHiddenPit(x, y: float, ctx) =
-  drawClosedPitWithColor(x, y, ctx.ms.lightDrawColor, ctx)
+  drawClosedPitWithColor(x, y, ctx.ls.lightDrawColor, ctx)
 
 # }}}
 # {{{ drawStairsDown()
@@ -969,7 +911,7 @@ proc drawStairsUp(x, y: float, ctx) =
 # }}}
 # {{{ drawExitDoor()
 proc drawExitDoor(x, y: float, ctx) =
-  drawIcon(x, y, 0.05, 0, IconExit, ctx.dp.gridSize, ctx.ms.drawColor,
+  drawIcon(x, y, 0.05, 0, IconExit, ctx.dp.gridSize, ctx.ls.drawColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
@@ -980,20 +922,20 @@ proc drawSpinner(x, y: float, ctx) =
 # }}}
 # {{{ drawTeleportSource()
 proc drawTeleportSource(x, y: float, ctx) =
-  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ms.drawColor,
+  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ls.drawColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
 # {{{ drawTeleportDestination()
 proc drawTeleportDestination(x, y: float, ctx) =
-  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ms.lightDrawColor,
+  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ls.lightDrawColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
 
 # {{{ drawSolidWallHoriz*()
 proc drawSolidWallHoriz*(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1005,7 +947,7 @@ proc drawSolidWallHoriz*(x, y: float, ctx) =
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -1014,7 +956,7 @@ proc drawSolidWallHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawIllusoryWallHoriz*()
 proc drawIllusoryWallHoriz*(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1028,7 +970,7 @@ proc drawIllusoryWallHoriz*(x, y: float, ctx) =
     pad = 7.0
 
   vg.lineCap(lcjSquare)
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
   vg.strokeWidth(sw)
 
   var x = xs
@@ -1042,7 +984,7 @@ proc drawIllusoryWallHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawInvisibleWallHoriz*()
 proc drawInvisibleWallHoriz*(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1056,7 +998,7 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(ms.lightDrawColor)
+  vg.strokeColor(ls.lightDrawColor)
   vg.strokeWidth(sw2)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -1065,14 +1007,14 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawDoorHoriz*()
 proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   let
     o = dp.thinOffs
     wallLen = (dp.gridSize * 0.25).int
-    doorWidthOffs = (if dp.zoomLevel < 4 or ms.thinLines: -1.0 else: 0)
+    doorWidthOffs = (if dp.zoomLevel < 4 or ls.thinLines: -1.0 else: 0)
     doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
     xs = x
     y  = y
@@ -1084,8 +1026,8 @@ proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
 
   var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.drawColor)
-  vg.fillColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
+  vg.fillColor(ls.drawColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1121,7 +1063,7 @@ proc drawLockedDoorHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawSecretDoorHoriz*()
 proc drawSecretDoorHoriz*(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1135,7 +1077,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
 
   # Wall start
   vg.lineCap(lcjSquare)
@@ -1144,7 +1086,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
   vg.lineTo(snap(x1, sw), snap(y, sw))
   vg.stroke()
 
-  drawIcon(x, y-dp.gridSize*0.5, 0.02, -0.02, "S", dp.gridSize, ms.drawColor,
+  drawIcon(x, y-dp.gridSize*0.5, 0.02, -0.02, "S", dp.gridSize, ls.drawColor,
            fontSizeFactor=0.43, ctx.vg)
 
   # Wall end
@@ -1156,7 +1098,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawArchwayHoriz*()
 proc drawArchwayHoriz*(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1174,7 +1116,7 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1202,7 +1144,7 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
 # }}}
 # {{{ drawLeverHoriz*()
 proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1214,7 +1156,7 @@ proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -1225,7 +1167,7 @@ proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
     lx = snap(x + (dp.gridSize-lw)*0.5, sw)
     ly = if northEast: y else: y-lw
 
-  vg.fillColor(ms.drawColor)
+  vg.fillColor(ls.drawColor)
   vg.beginPath()
   vg.rect(lx, ly, lw, lw)
   vg.fill()
@@ -1240,7 +1182,7 @@ proc drawLeverHorizSW*(x, y: float, ctx) =
 # }}}
 # {{{ drawNicheHoriz*()
 proc drawNicheHoriz*(x, y: float, northEast: bool, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1257,9 +1199,9 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, ctx) =
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
 
-  vg.fillColor(ms.floorColor)
+  vg.fillColor(ls.floorColor)
   vg.beginPath()
   vg.rect(x1, y, x2-x1, yn-y)
   vg.fill()
@@ -1284,13 +1226,13 @@ proc drawNicheHorizSW*(x, y: float, ctx) =
 # }}}
 # {{{ drawStatueHoriz*()
 proc drawStatueHoriz*(x, y: float, northEast: bool, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1309,7 +1251,7 @@ proc drawStatueHoriz*(x, y: float, northEast: bool, ctx) =
     a1 = ca-da
     a2 = ca+da
 
-  vg.fillColor(ms.drawColor)
+  vg.fillColor(ls.drawColor)
   vg.beginPath()
   vg.arc(cx, cy, dp.gridSize*0.27, a1, a2, pwCW)
   vg.fill()
@@ -1324,12 +1266,11 @@ proc drawStatueHorizSW*(x, y: float, ctx) =
 # }}}
 # {{{ drawKeyholeHoriz*()
 proc drawKeyholeHoriz*(x, y: float, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   let
-    o = dp.thinOffs
     boxLen = (dp.gridSize * 0.25).int
     xs = x
     x1 = xs + (dp.gridSize - boxLen)*0.5
@@ -1338,7 +1279,7 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
 
   var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ms.drawColor)
+  vg.strokeColor(ls.drawColor)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1355,7 +1296,7 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
     kl = boxLen.float
 
   vg.strokeWidth(sw)
-  vg.fillColor(ms.floorColor)
+  vg.fillColor(ls.floorColor)
   vg.beginPath()
   vg.rect(kx, ky, kl, kl)
   vg.fill()
@@ -1363,7 +1304,7 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
 
   let hole = kl-6 
   if hole >= 2:
-    vg.fillColor(ms.drawColor)
+    vg.fillColor(ls.drawColor)
     vg.beginPath()
     vg.rect(kx+3, ky+3, hole, hole)
     vg.fill()
@@ -1389,8 +1330,7 @@ proc setVertTransform(x, y: float, ctx) =
 
 # }}}
 # {{{ drawCellFloor()
-proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
-  alias(ms, ctx.ms)
+proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1437,8 +1377,8 @@ proc drawCellFloor(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
 
 # }}}
 # {{{ drawBackgroundGrid()
-proc drawBackgroundGrid(viewBuf: Map, ctx) =
-  alias(ms, ctx.ms)
+proc drawBackgroundGrid(viewBuf: Level, ctx) =
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
 
   for viewRow in 0..<dp.viewRows:
@@ -1450,12 +1390,12 @@ proc drawBackgroundGrid(viewBuf: Map, ctx) =
       if viewBuf.getFloor(bufRow, bufCol) == fNone:
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        drawGrid(x, y, ms.gridColorBackground, ctx)
+        drawGrid(x, y, ls.gridColorBackground, ctx)
 
 # }}}
 # {{{ drawCellBackgroundsAndGrid()
-proc drawCellBackgroundsAndGrid(viewBuf: Map, ctx) =
-  alias(ms, ctx.ms)
+proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
 
   for viewRow in 0..<dp.viewRows:
@@ -1467,12 +1407,12 @@ proc drawCellBackgroundsAndGrid(viewBuf: Map, ctx) =
       if viewBuf.getFloor(bufRow, bufCol) != fNone:
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        drawFloorBg(x, y, ms.floorColor, ctx)
-        drawGrid(x, y, ms.gridColorFloor, ctx)
+        drawFloorBg(x, y, ls.floorColor, ctx)
+        drawGrid(x, y, ls.gridColorFloor, ctx)
 
 # }}}
 # {{{ drawFloors()
-proc drawFloors(viewBuf: Map, ctx) =
+proc drawFloors(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
 
   for r in 0..<dp.viewRows:
@@ -1482,7 +1422,7 @@ proc drawFloors(viewBuf: Map, ctx) =
 # }}}
 # {{{ drawNote()
 proc drawNote(x, y: float, note: Note, ctx) =
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1501,7 +1441,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
   of nkComment:
     discard
 
-  vg.fillColor(ms.noteMapCommentColor)
+  vg.fillColor(ls.noteLevelCommentColor)
   vg.beginPath()
   vg.moveTo(x + dp.gridSize - w, y)
   vg.lineTo(x + dp.gridSize + 1, y + w+1)
@@ -1511,7 +1451,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
 
   # }}}
 # {{{ drawNotes()
-proc drawNotes(viewBuf: Map, ctx) =
+proc drawNotes(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
 
   for viewRow in 0..<dp.viewRows:
@@ -1560,13 +1500,11 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
 
 # }}}
 # {{{ drawCellWalls()
-proc drawCellWalls(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
-  let dp = ctx.dp
+proc drawCellWalls(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
+  alias(dp, ctx.dp)
 
-  let
-    bufRow = viewRow+1
-    bufCol = viewCol+1
-    floorEmpty = viewBuf.getFloor(bufRow, bufCol) == fNone
+  let bufRow = viewRow+1
+  let bufCol = viewCol+1
 
   drawWall(
     cellX(viewCol, dp),
@@ -1598,7 +1536,7 @@ proc drawCellWalls(viewBuf: Map, viewRow, viewCol: Natural, ctx) =
 
 # }}}
 # {{{ drawWalls()
-proc drawWalls(viewBuf: Map, ctx) =
+proc drawWalls(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
 
   for r in 0..<dp.viewRows:
@@ -1624,7 +1562,7 @@ proc drawSelection(ctx) =
 
   let
     sel = dp.selection.get
-    color = ctx.ms.selectionColor
+    color = ctx.ls.selectionColor
     viewEndRow = dp.viewStartRow + dp.viewRows - 1
     viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
@@ -1647,7 +1585,7 @@ proc drawSelection(ctx) =
 # {{{ drawSelectionHighlight()
 proc drawSelectionHighlight(ctx) =
   alias(dp, ctx.dp)
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
 
   let
     sel = dp.selectionBuffer.get.selection
@@ -1662,19 +1600,19 @@ proc drawSelectionHighlight(ctx) =
         let x = cellX(viewSelStartCol + c, dp)
         let y = cellY(viewSelStartRow + r, dp)
 
-        drawCellHighlight(x, y, ms.pastePreviewColor, ctx)
+        drawCellHighlight(x, y, ls.pastePreviewColor, ctx)
 
 # }}}
 # {{{ drawInnerShadows()
-proc drawInnerShadows(viewBuf: Map, ctx) =
+proc drawInnerShadows(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(vg, ctx.vg)
 
-  vg.fillColor(ms.innerShadowColor)
+  vg.fillColor(ls.innerShadowColor)
   vg.beginPath()
 
-  let shadowWidth = dp.gridSize * ms.innerShadowWidthFactor
+  let shadowWidth = dp.gridSize * ls.innerShadowWidthFactor
 
   for bufRow in 1..<viewBuf.rows-1:
     for bufCol in 1..<viewBuf.cols-1:
@@ -1695,15 +1633,15 @@ proc drawInnerShadows(viewBuf: Map, ctx) =
   vg.fill()
 # }}}
 # {{{ drawOuterShadows()
-proc drawOuterShadows(viewBuf: Map, ctx) =
+proc drawOuterShadows(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
   alias(vg, ctx.vg)
 
-  vg.fillColor(ms.outerShadowColor)
+  vg.fillColor(ls.outerShadowColor)
   vg.beginPath()
 
-  let shadowWidth = dp.gridSize * ms.outerShadowWidthFactor
+  let shadowWidth = dp.gridSize * ls.outerShadowWidthFactor
 
   for bufRow in 1..<viewBuf.rows-1:
     for bufCol in 1..<viewBuf.cols-1:
@@ -1725,12 +1663,12 @@ proc drawOuterShadows(viewBuf: Map, ctx) =
 # }}}
 
 # {{{ mergeSelectionAndOutlineBuffers*()
-proc mergeSelectionAndOutlineBuffers*(viewBuf: Map,
+proc mergeSelectionAndOutlineBuffers*(viewBuf: Level,
                                       outlineBuf: Option[OutlineBuf], dp) =
   if dp.selectionBuffer.isSome:
     let startRow = dp.selStartRow - dp.viewStartRow + 1
     let startCol = dp.selStartCol - dp.viewStartCol + 1
-    let copyBuf = dp.selectionBuffer.get.map
+    let copyBuf = dp.selectionBuffer.get.level
 
     viewBuf.paste(startRow, startCol,
                   src=copyBuf, dp.selectionBuffer.get.selection)
@@ -1747,20 +1685,20 @@ proc mergeSelectionAndOutlineBuffers*(viewBuf: Map,
           ob[r,c] = {}
 
 # }}}
-# {{{ drawMap*()
-proc drawMap*(m: Map, ctx) =
+# {{{ drawLevel*()
+proc drawLevel*(l: Level, ctx) =
   alias(dp, ctx.dp)
-  alias(ms, ctx.ms)
+  alias(ls, ctx.ls)
 
-  assert dp.viewStartRow + dp.viewRows <= m.rows
-  assert dp.viewStartCol + dp.viewCols <= m.cols
+  assert dp.viewStartRow + dp.viewRows <= l.rows
+  assert dp.viewStartCol + dp.viewCols <= l.cols
 
-  if ms.bgHatchEnabled:
+  if ls.bgHatchEnabled:
     drawBackgroundHatch(ctx)
   else:
     drawBackground(ctx)
 
-  let viewBuf = newMapFrom(m,
+  let viewBuf = newLevelFrom(l,
     rectN(
       dp.viewStartRow,
       dp.viewStartCol,
@@ -1771,7 +1709,7 @@ proc drawMap*(m: Map, ctx) =
   )
 
   # outlineBuf has the same dimensions as viewBuf
-  let outlineBuf = if ms.outlineStyle >= osSquareEdges:
+  let outlineBuf = if ls.outlineStyle >= osSquareEdges:
     renderEdgeOutlines(viewBuf).some
   else:
     OutlineBuf.none
@@ -1780,10 +1718,10 @@ proc drawMap*(m: Map, ctx) =
 
   drawBackgroundGrid(viewBuf, ctx)
 
-  if ms.outlineStyle == osCell:
-    drawCellOutlines(m, ctx)
+  if ls.outlineStyle == osCell:
+    drawCellOutlines(l, ctx)
   elif outlineBuf.isSome:
-    drawEdgeOutlines(m, outlineBuf.get, ctx)
+    drawEdgeOutlines(l, outlineBuf.get, ctx)
 
   drawCellBackgroundsAndGrid(viewBuf, ctx)
 
@@ -1794,10 +1732,10 @@ proc drawMap*(m: Map, ctx) =
   drawNotes(viewBuf, ctx)
 
   # TODO finish shadow implementation (draw corners)
-  if ms.innerShadowEnabled:
+  if ls.innerShadowEnabled:
     drawInnerShadows(viewBuf, ctx)
 
-  if ms.outerShadowEnabled:
+  if ls.outerShadowEnabled:
     drawOuterShadows(viewBuf, ctx)
 
   if dp.selection.isSome:
@@ -1810,10 +1748,10 @@ proc drawMap*(m: Map, ctx) =
   drawWalls(viewBuf, ctx)
 
   if dp.drawCursorGuides:
-    drawCursorGuides(m, ctx)
+    drawCursorGuides(ctx)
 
   if dp.drawCellCoords:
-    drawCellCoords(m, ctx)
+    drawCellCoords(l, ctx)
 
 # }}}
 

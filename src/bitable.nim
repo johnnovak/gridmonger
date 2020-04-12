@@ -1,5 +1,5 @@
-import hashes
 import tables
+
 
 const DefaultInitialSize = 64
 

@@ -1,216 +1,217 @@
 import options
 
 import common
-import map
+import level
+import rect
 import selection
 import undomanager
 
 
 using
-  m: var Map
-  currMap: var Map
-  um: var UndoManager[Map]
+  l: var Level
+  currLevel: var Level
+  um: var UndoManager[Level]
 
-# {{{ fullMapAction()
-template fullMapAction(currMap; um;
-                       actionName: string, actionMap, actionBody: untyped) =
-  let action = proc (actionMap: var Map) =
+# {{{ fullLevelAction()
+template fullLevelAction(currLevel; um;
+                         actionName: string, actionLevel, actionBody: untyped) =
+  let action = proc (actionLevel: var Level) =
     actionBody
 
-  var undoMap = newMapFrom(currMap)
-  var undoAction = proc (m: var Map) =
-    m = undoMap
+  var undoLevel = newLevelFrom(currLevel)
+  var undoAction = proc (l: var Level) =
+    l = undoLevel
 
   um.storeUndoState(actionName, action, undoAction)
-  action(currMap)
+  action(currLevel)
 
 # }}}
 # {{{ cellAreaAction()
-template cellAreaAction(currMap; rect: Rect[Natural], um;
-                        actionName: string, actionMap, actionBody: untyped) =
-  let action = proc (actionMap: var Map) =
+template cellAreaAction(currLevel; rect: Rect[Natural], um;
+                        actionName: string, actionLevel, actionBody: untyped) =
+  let action = proc (actionLevel: var Level) =
     actionBody
-    actionMap.reindexNotes()
+    actionLevel.reindexNotes()
 
-  var undoMap = newMapFrom(currMap, rect)
-  var undoAction = proc (m: var Map) =
-    m.copyFrom(destRow=rect.r1, destCol=rect.c1,
-               src=undoMap, srcRect=rectN(0, 0, rect.rows, rect.cols))
-    m.reindexNotes()
+  var undoLevel = newLevelFrom(currLevel, rect)
+  var undoAction = proc (l: var Level) =
+    l.copyFrom(destRow=rect.r1, destCol=rect.c1,
+               src=undoLevel, srcRect=rectN(0, 0, rect.rows, rect.cols))
+    l.reindexNotes()
 
   um.storeUndoState(actionName, action, undoAction)
-  action(currMap)
+  action(currLevel)
 
 # }}}
 # {{{ singleCellAction()
-template singleCellAction(currMap; r,c: Natural, um;
-                          actionName: string, actionMap, actionBody: untyped) =
-  cellAreaAction(currMap, rectN(r, c, r+1, c+1), um,
-                 actionName, actionMap, actionBody)
+template singleCellAction(currLevel; r,c: Natural, um;
+                          actionName: string, actionLevel, actionBody: untyped) =
+  cellAreaAction(currLevel, rectN(r, c, r+1, c+1), um,
+                 actionName, actionLevel, actionBody)
 
 # }}}
 
 # {{{ eraseCellWalls*()
-proc eraseCellWalls*(currMap; r,c: Natural, um) =
-  singleCellAction(currMap, r,c, um, "Erase cell walls", m):
-    m.eraseCellWalls(r,c)
+proc eraseCellWalls*(currLevel; r,c: Natural, um) =
+  singleCellAction(currLevel, r,c, um, "Erase cell walls", l):
+    l.eraseCellWalls(r,c)
 
 # }}}
 # {{{ eraseCell*()
-proc eraseCell*(currMap; r,c: Natural, um) =
-  singleCellAction(currMap, r,c, um, "Erase cell", m):
-    m.eraseCell(r,c)
+proc eraseCell*(currLevel; r,c: Natural, um) =
+  singleCellAction(currLevel, r,c, um, "Erase cell", l):
+    l.eraseCell(r,c)
 
 # }}}
 # {{{ eraseSelection*()
-proc eraseSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
-  cellAreaAction(currMap, bbox, um, "Erase selection", m):
+proc eraseSelection*(currLevel; sel: Selection, bbox: Rect[Natural], um) =
+  cellAreaAction(currLevel, bbox, um, "Erase selection", l):
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
         if sel[r,c]:
           let row = bbox.r1+r
           let col = bbox.c1+c
-          m.eraseCell(row, col)
+          l.eraseCell(row, col)
 
 # }}}
 # {{{ fillSelection*()
-proc fillSelection*(currMap; sel: Selection, bbox: Rect[Natural], um) =
-  cellAreaAction(currMap, bbox, um, "Fill selection", m):
+proc fillSelection*(currLevel; sel: Selection, bbox: Rect[Natural], um) =
+  cellAreaAction(currLevel, bbox, um, "Fill selection", l):
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
         if sel[r,c]:
           let row = bbox.r1+r
           let col = bbox.c1+c
-          m.eraseCell(row, col)
-          m.setFloor(row, col, fEmpty)
+          l.eraseCell(row, col)
+          l.setFloor(row, col, fEmpty)
 
 # }}}
 # {{{ surroundSelection*()
-proc surroundSelectionWithWalls*(currMap; sel: Selection, bbox: Rect[Natural],
+proc surroundSelectionWithWalls*(currLevel; sel: Selection, bbox: Rect[Natural],
                                  um) =
-  cellAreaAction(currMap, bbox, um, "Surround selection with walls", m):
+  cellAreaAction(currLevel, bbox, um, "Surround selection with walls", l):
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
         if sel[r,c]:
           let row = bbox.r1+r
           let col = bbox.c1+c
 
-          proc setWall(m: var Map, dir: CardinalDir) =
-            if m.canSetWall(row, col, dir):
-              m.setWall(row, col, dir, wWall)
+          proc setWall(l: var Level, dir: CardinalDir) =
+            if l.canSetWall(row, col, dir):
+              l.setWall(row, col, dir, wWall)
 
-          if sel.isNeighbourCellEmpty(r,c, dirN): m.setWall(dirN)
-          if sel.isNeighbourCellEmpty(r,c, dirE): m.setWall(dirE)
-          if sel.isNeighbourCellEmpty(r,c, dirS): m.setWall(dirS)
-          if sel.isNeighbourCellEmpty(r,c, dirW): m.setWall(dirW)
+          if sel.isNeighbourCellEmpty(r,c, dirN): l.setWall(dirN)
+          if sel.isNeighbourCellEmpty(r,c, dirE): l.setWall(dirE)
+          if sel.isNeighbourCellEmpty(r,c, dirS): l.setWall(dirS)
+          if sel.isNeighbourCellEmpty(r,c, dirW): l.setWall(dirW)
 
 # }}}
 # {{{ paste*()
-proc paste*(currMap; destRow, destCol: Natural, cb: SelectionBuffer, um) =
+proc paste*(currLevel; destRow, destCol: Natural, cb: SelectionBuffer, um) =
   let rect = rectN(
     destRow,
     destCol,
-    destRow + cb.map.rows,
-    destCol + cb.map.cols
+    destRow + cb.level.rows,
+    destCol + cb.level.cols
   ).intersect(
-    rectN(0, 0, currMap.rows, currMap.cols)
+    rectN(0, 0, currLevel.rows, currLevel.cols)
   )
   if rect.isSome:
-    cellAreaAction(currMap, rect.get, um, "Paste buffer", m):
-      m.paste(destRow, destCol, cb.map, cb.selection)
+    cellAreaAction(currLevel, rect.get, um, "Paste buffer", l):
+      l.paste(destRow, destCol, cb.level, cb.selection)
 
 # }}}
 # {{{ setWall*()
-proc setWall*(currMap; r,c: Natural, dir: CardinalDir, w: Wall, um) =
-  singleCellAction(currMap, r,c, um, "Set wall", m):
-    m.setWall(r,c, dir, w)
+proc setWall*(currLevel; r,c: Natural, dir: CardinalDir, w: Wall, um) =
+  singleCellAction(currLevel, r,c, um, "Set wall", l):
+    l.setWall(r,c, dir, w)
 
 # }}}
 # {{{ setFloor*()
-proc setFloor*(currMap; r,c: Natural, f: Floor, um) =
-  singleCellAction(currMap, r,c, um, "Set floor", m):
-    m.setFloor(r,c, f)
+proc setFloor*(currLevel; r,c: Natural, f: Floor, um) =
+  singleCellAction(currLevel, r,c, um, "Set floor", l):
+    l.setFloor(r,c, f)
 
 # }}}
 # {{{ setOrientedFloor*()
-proc setOrientedFloor*(currMap; r,c: Natural, f: Floor, ot: Orientation, um) =
-  singleCellAction(currMap, r,c, um, "Set oriented floor", m):
-    m.setFloor(r,c, f)
-    m.setFloorOrientation(r,c, ot)
+proc setOrientedFloor*(currLevel; r,c: Natural, f: Floor, ot: Orientation, um) =
+  singleCellAction(currLevel, r,c, um, "Set oriented floor", l):
+    l.setFloor(r,c, f)
+    l.setFloorOrientation(r,c, ot)
 
 # }}}
 # {{{ excavate*()
-proc excavate*(currMap; r,c: Natural, um) =
-  singleCellAction(currMap, r,c, um, "Excavate", m):
-    m.eraseCell(r,c)
-    m.setFloor(r,c, fEmpty)
+proc excavate*(currLevel; r,c: Natural, um) =
+  singleCellAction(currLevel, r,c, um, "Excavate", l):
+    l.eraseCell(r,c)
+    l.setFloor(r,c, fEmpty)
 
-    if r == 0 or m.getFloor(r-1, c) == fNone:
-      m.setWall(r,c, dirN, wWall)
+    if r == 0 or l.getFloor(r-1, c) == fNone:
+      l.setWall(r,c, dirN, wWall)
     else:
-      m.setWall(r,c, dirN, wNone)
+      l.setWall(r,c, dirN, wNone)
 
-    if c == 0 or m.getFloor(r, c-1) == fNone:
-      m.setWall(r,c, dirW, wWall)
+    if c == 0 or l.getFloor(r, c-1) == fNone:
+      l.setWall(r,c, dirW, wWall)
     else:
-      m.setWall(r,c, dirW, wNone)
+      l.setWall(r,c, dirW, wNone)
 
-    if r == m.rows-1 or m.getFloor(r+1, c) == fNone:
-      m.setWall(r,c, dirS, wWall)
+    if r == l.rows-1 or l.getFloor(r+1, c) == fNone:
+      l.setWall(r,c, dirS, wWall)
     else:
-      m.setWall(r,c, dirS, wNone)
+      l.setWall(r,c, dirS, wNone)
 
-    if c == m.cols-1 or m.getFloor(r, c+1) == fNone:
-      m.setWall(r,c, dirE, wWall)
+    if c == l.cols-1 or l.getFloor(r, c+1) == fNone:
+      l.setWall(r,c, dirE, wWall)
     else:
-      m.setWall(r,c, dirE, wNone)
+      l.setWall(r,c, dirE, wNone)
 
 # }}}
 # {{{ toggleFloorOrientation*()
-proc toggleFloorOrientation*(currMap; r,c: Natural, um) =
-  singleCellAction(currMap, r,c, um, "Toggle floor orientation", m):
-    let newOt = if m.getFloorOrientation(r,c) == Horiz: Vert else: Horiz
-    m.setFloorOrientation(r,c, newOt)
+proc toggleFloorOrientation*(currLevel; r,c: Natural, um) =
+  singleCellAction(currLevel, r,c, um, "Toggle floor orientation", l):
+    let newOt = if l.getFloorOrientation(r,c) == Horiz: Vert else: Horiz
+    l.setFloorOrientation(r,c, newOt)
 
 # }}}
 # {{{ setNote*()
-proc setNote*(currMap; r,c: Natural, n: Note, um) =
-  singleCellAction(currMap, r,c, um, "Set note", m):
-    m.setNote(r,c, n)
+proc setNote*(currLevel; r,c: Natural, n: Note, um) =
+  singleCellAction(currLevel, r,c, um, "Set note", l):
+    l.setNote(r,c, n)
 
 # }}}
 # {{{ eraseNote*()
-proc eraseNote*(currMap; r,c: Natural, um) =
-  singleCellAction(currMap, r,c, um, "Erase note", m):
-    m.delNote(r,c)
+proc eraseNote*(currLevel; r,c: Natural, um) =
+  singleCellAction(currLevel, r,c, um, "Erase note", l):
+    l.delNote(r,c)
 
 # }}}
-# {{{ resizeMap*()
-proc resizeMap*(currMap; newRows, newCols: Natural, align: Direction, um) =
-  fullMapAction(currMap, um, "Resize map", m):
-    m = m.resize(newRows, newCols, align)
+# {{{ resizeLevel*()
+proc resizeLevel*(currLevel; newRows, newCols: Natural, align: Direction, um) =
+  fullLevelAction(currLevel, um, "Resize level", l):
+    l = l.resize(newRows, newCols, align)
 
 # }}}
-# {{{ cropMap*()
-proc cropMap*(currMap; rect: Rect[Natural], um) =
-  fullMapAction(currMap, um, "Crop map", m):
-    m = newMapFrom(m, rect)
+# {{{ cropLevel*()
+proc cropLevel*(currLevel; rect: Rect[Natural], um) =
+  fullLevelAction(currLevel, um, "Crop level", l):
+    l = newLevelFrom(l, rect)
 
 # }}}
-# {{{ nudgeMap*()
-proc nudgeMap*(currMap; destRow, destCol: int, cb: SelectionBuffer, um) =
-  # The map is cleared for the duration of the nudge operation and it is
+# {{{ nudgeLevel*()
+proc nudgeLevel*(currLevel; destRow, destCol: int, cb: SelectionBuffer, um) =
+  # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
-  let action = proc (m: var Map) =
-    m = newMap(m.rows, m.cols)
-    m.paste(destRow, destCol, cb.map, cb.selection)
+  let action = proc (l: var Level) =
+    l = newLevel(l.name, l.level, l.rows, l.cols)
+    l.paste(destRow, destCol, cb.level, cb.selection)
 
-  var undoMap = newMapFrom(cb.map)
-  var undoAction = proc (m: var Map) =
-    m = undoMap
+  var undoLevel = newLevelFrom(cb.level)
+  var undoAction = proc (l: var Level) =
+    l = undoLevel
 
-  um.storeUndoState("Nudge map", action, undoAction)
-  action(currMap)
+  um.storeUndoState("Nudge level", action, undoAction)
+  action(currLevel)
 
 # }}}
 

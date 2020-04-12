@@ -1,8 +1,10 @@
+import nanovg
+
+import bitable
 import hashes
-import options
+import rect
 import tables
 
-import nanovg
 
 const
   TextVertAlignFactor* = 0.55
@@ -32,57 +34,90 @@ const
 
 
 type
-  RectType = SomeNumber | Natural
+  Map* = ref object
+    levels*:         seq[Level]
+    teleportLinks*:  BiTable[MapLocation, MapLocation]
+    pitLinks*:       BiTable[MapLocation, MapLocation]
+    entranceLinks*:  BiTable[MapLocation, MapLocation]
 
-  # Rects are endpoint-exclusive
-  Rect*[T: RectType] = object
-    r1*,c1*, r2*,c2*: T
+  Level* = ref object
+    name*:     string
+    level*:    int
+    cellGrid*: CellGrid
+    notes*:    Table[Natural, Note]
 
-proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
-  assert r1 < r2
-  assert c1 < c2
+  LevelStyle* = ref object
+    backgroundColor*:        Color
+    drawColor*:              Color
+    lightDrawColor*:         Color
+    floorColor*:             Color
+    thinLines*:              bool
 
-  result.r1 = r1
-  result.c1 = c1
-  result.r2 = r2
-  result.c2 = c2
+    bgHatchEnabled*:         bool
+    bgHatchColor*:           Color
+    bgHatchStrokeWidth*:     float
+    bgHatchSpacingFactor*:   float
 
-proc rectI*(r1,c1, r2,c2: int): Rect[int] =
-  assert r1 < r2
-  assert c1 < c2
+    coordsColor*:            Color
+    coordsHighlightColor*:   Color
 
-  result.r1 = r1
-  result.c1 = c1
-  result.r2 = r2
-  result.c2 = c2
+    cursorColor*:            Color
+    cursorGuideColor*:       Color
+
+    gridStyle*:              GridStyle
+    gridColorBackground*:    Color
+    gridColorFloor*:         Color
+
+    outlineStyle*:           OutlineStyle
+    outlineFillStyle*:       OutlineFillStyle
+    outlineOverscan*:        bool
+    outlineColor*:           Color
+    outlineWidthFactor*:     float
+
+    innerShadowEnabled*:     bool
+    innerShadowColor*:       Color
+    innerShadowWidthFactor*: float
+    outerShadowEnabled*:     bool
+    outerShadowColor*:       Color
+    outerShadowWidthFactor*: float
+
+    pastePreviewColor*:      Color
+    selectionColor*:         Color
+
+    noteLevelTextColor*:     Color
+    noteLevelCommentColor*:  Color
+    noteLevelIndexColor*:    Color
+    noteLevelIndexBgColor*:  seq[Color]
+
+    notePaneTextColor*:      Color
+    notePaneIndexColor*:     Color
+    notePaneIndexBgColor*:   seq[Color]
 
 
-proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
-  let
-    r = max(a.r1, b.r1)
-    c = max(a.c1, b.c1)
-    nr = min(a.r1 + a.rows, b.r1 + b.rows)
-    nc = min(a.c1 + a.cols, b.c1 + b.cols)
+  GridStyle* = enum
+    gsNone, gsSolid, gsLoose, gsDashed
 
-  if (nc >= c and nr >= r):
-    some(Rect[T](
-      r1: r,
-      c1: c,
-      r2: r + nr-r,
-      c2: c + nc-c
-    ))
-  else: none(Rect[T])
+  OutlineStyle* = enum
+    osNone, osCell, osSquareEdges, osRoundedEdges, osRoundedEdgesFilled
 
+  OutlineFillStyle* = enum
+    ofsSolid, ofsHatched
+  CellGrid* = ref object
+    cols*:  Natural
+    rows*:  Natural
 
-func rows*[T: RectType](r: Rect[T]): T = r.r2 - r.r1
-func cols*[T: RectType](r: Rect[T]): T = r.c2 - r.c1
+    # Cells are stored in row-major order; (0,0) is the top-left cell
+    cells*: seq[Cell]
 
-func contains*[T: RectType](a: Rect[T], r,c: T): bool =
-  r >= a.r1 and r < a.r2 and
-  c >= a.c1 and c < a.c2
+  MapLocation* = object
+    levelIdx*:  Natural
+    row*, col*: Natural
 
+  Cell* = object
+    floor*:            Floor
+    floorOrientation*: Orientation
+    wallN*, wallW*:    Wall
 
-type
   Floor* = enum
     fNone                = (  0, "blank"),
     fEmpty               = (  1, "empty"),
@@ -120,11 +155,6 @@ type
     wStatueSW      = (51, "statue")
     wKeyhole       = (60, "keyhole")
 
-  Cell* = object
-    floor*:            Floor
-    floorOrientation*: Orientation
-    wallN*, wallW*:    Wall
-
   NoteKind* = enum
     nkComment, nkIndexed, nkCustomId, nkIcon
 
@@ -136,27 +166,10 @@ type
     of nkCustomId: customId*: string
     of nkIcon:     icon*: Natural
 
-  MapLocation* = object
-    mapIndex*:  Natural
-    row*, col*: Natural
-
-  # (0,0) is the top-left cell of the map
-  Map* = ref object
-    name*:          string
-    rows*, cols*:   Natural
-    cells*:         seq[Cell]
-    notes*:         Table[Natural, Note]
-
-  # TODO introduce CellGrid because now the undomanager and the viewbuffer
-  # copies the name
-  #CellGrid* = ref object
-  #  cols*:  Natural
-  #  rows*:  Natural
-  #  cells*: seq[Cell]
 
 proc hash*(ml: MapLocation): Hash =
   var h: Hash = 0
-  h = h !& hash(ml.mapIndex)
+  h = h !& hash(ml.levelIdx)
   h = h !& hash(ml.row)
   h = h !& hash(ml.col)
   result = !$h
@@ -179,7 +192,7 @@ type
 type
   # TODO make ref?
   SelectionBuffer* = object
-    map*:       Map
+    level*:     Level
     selection*: Selection
 
 # vim: et:ts=2:sw=2:fdm=marker

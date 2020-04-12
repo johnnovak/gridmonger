@@ -1,4 +1,5 @@
 import options
+import rect
 
 import common
 
