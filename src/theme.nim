@@ -8,11 +8,10 @@ import strutils
 import nanovg
 
 import csdwindow
-import drawlevel
 import utils
 
 
-type ThemeParseError* = object of Exception
+type ThemeParseError* = object of ValueError
 
 # TODO remove?
 #proc raiseThemeParseError(s: string) =

@@ -102,6 +102,7 @@ type
 
   OutlineFillStyle* = enum
     ofsSolid, ofsHatched
+
   CellGrid* = ref object
     cols*:  Natural
     rows*:  Natural
@@ -110,7 +111,7 @@ type
     cells*: seq[Cell]
 
   MapLocation* = object
-    levelIdx*:  Natural
+    level*:     Natural
     row*, col*: Natural
 
   Cell* = object
@@ -169,7 +170,7 @@ type
 
 proc hash*(ml: MapLocation): Hash =
   var h: Hash = 0
-  h = h !& hash(ml.levelIdx)
+  h = h !& hash(ml.level)
   h = h !& hash(ml.row)
   h = h !& hash(ml.col)
   result = !$h

@@ -26,7 +26,7 @@ type
     version: Natural
 
 
-type MapReadError* = object of Exception
+type MapReadError* = object of IOError
 
 proc raiseMapReadError(s: string) =
   raise newException(MapReadError, s)
@@ -74,6 +74,7 @@ proc readLevelProperties_V1(rr): (Natural, Natural, string) =
 
 
 # TODO remove
+#[
 proc mapFloor(f: uint8): uint8 =
   result = case f
   of 0:  0
@@ -91,12 +92,15 @@ proc mapFloor(f: uint8): uint8 =
   of 50: 60
   of 60: 70
   else: f.int
+]#
 
 # TODO remove
+#[
 proc mapWall(w: uint8): uint8 =
   result = case w
   of 21: 22
   else: w.int
+]#
 
 proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
   var cells = newSeqOfCap[Cell](numCells)
