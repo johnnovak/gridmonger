@@ -3,6 +3,7 @@ import lenientops
 import math
 import options
 import os
+import sequtils
 import strformat
 import strutils
 
@@ -288,7 +289,6 @@ proc renderStatusBar(y: float, winWidth: float, a) =
 
 # {{{ openMap()
 proc resetCursorAndViewStart(a)
-proc updateViewStartAndCursorPosition(a)
 
 proc openMap(a) =
   when defined(DEBUG): discard
@@ -304,7 +304,6 @@ proc openMap(a) =
         initUndoManager(a.undoManager)
 
         resetCursorAndViewStart(a)
-        updateViewStartAndCursorPosition(a)
         setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
 
       except CatchableError as e:
@@ -772,7 +771,10 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     let rows = parseInt(dlg.rows)
     let cols = parseInt(dlg.cols)
 
-    a.doc.map.levels[a.ui.cursor.level] = newLevel(dlg.name, level=0, rows, cols)
+    let newLevel = newLevel(dlg.name, level=0, rows, cols)
+    a.doc.map.levels.add(newLevel)
+    a.doc.levelStyles.add(getCurrLevelStyle(a))
+
     a.doc.filename = ""
     a.win.title = "[Untitled]"
 
@@ -1148,11 +1150,9 @@ proc handleLevelEvents(a) =
 
   proc incZoomLevel(a) =
     incZoomLevel(ls, dp)
-    updateViewStartAndCursorPosition(a)
 
   proc decZoomLevel(a) =
     decZoomLevel(ls, dp)
-    updateViewStartAndCursorPosition(a)
 
   proc setFloor(f: Floor, a) =
     let ot = l.guessFloorOrientation(cur.row, cur.col)
@@ -1262,7 +1262,6 @@ proc handleLevelEvents(a) =
         if um.canUndo():
           let actionName = um.undo(map)
           # TODO move cursor to action
-          updateViewStartAndCursorPosition(a)
           setStatusMessage(IconUndo, fmt"Undid action: {actionName}", a)
         else:
           setStatusMessage(IconWarning, "Nothing to undo", a)
@@ -1272,7 +1271,6 @@ proc handleLevelEvents(a) =
         if um.canRedo():
           let actionName = um.redo(map)
           # TODO move cursor to action
-          updateViewStartAndCursorPosition(a)
           setStatusMessage(IconRedo, fmt"Redid action: {actionName}", a)
         else:
           setStatusMessage(IconWarning, "Nothing to redo", a)
@@ -1319,18 +1317,14 @@ proc handleLevelEvents(a) =
         if l.getFloor(cur.row, cur.col) == fTeleportSource:
           if map.links.hasKey(cur):
             let dest = map.links[cur]
-            cur.row = dest.row
-            cur.col = dest.col
-            updateViewStartAndCursorPosition(a)
+            cur = dest
           else:
             setStatusMessage(IconWarning, "Teleport has no destination set", a)
 
         elif l.getFloor(cur.row, cur.col) == fTeleportDestination:
-          let dest =cur 
+          let dest = cur
           let src = map.links.getKeyByVal(dest)
-          cur.row = src.row
-          cur.col = src.col
-          updateViewStartAndCursorPosition(a)
+          cur = src
 
         else:
           setStatusMessage(IconWarning, "Current cell is not a teleport", a)
@@ -1396,10 +1390,18 @@ proc handleLevelEvents(a) =
           setStatusMessage(IconEraser, "Note erased", a)
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
+        openNewLevelDialog(a)
+
+      elif ke.isKeyDown(keyN, {mkCtrl, mkAlt}):
         if um.isModified:
           a.dialog.saveDiscardDialog.isOpen = true
-          a.dialog.saveDiscardDialog.action = openNewLevelDialog
+          a.dialog.saveDiscardDialog.action = proc (a: var AppContext) =
+            a.doc.map = newMap()
+            a.doc.map.levels.add(newLevel("Untitled", level=0, 16, 16))
+            # TODO
+            openNewLevelDialog(a)
         else:
+          # TODO delete map
           openNewLevelDialog(a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
@@ -1449,7 +1451,6 @@ proc handleLevelEvents(a) =
           showCellCoords(true, a)
           state = "on"
 
-        updateViewStartAndCursorPosition(a)
         setStatusMessage(fmt"Cell coordinates turned {state}", a)
 
       elif ke.isKeyDown(keyN, {mkAlt}):
@@ -1459,8 +1460,6 @@ proc handleLevelEvents(a) =
         else:
           setStatusMessage(fmt"Notes pane hidden", a)
           a.opt.showNotesPane = true
-
-        updateViewStartAndCursorPosition(a)
 
     of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: CardinalDir, a) =
@@ -1596,7 +1595,6 @@ proc handleLevelEvents(a) =
         let bbox = sel.boundingBox()
         if bbox.isSome:
           actions.cropLevel(map, cur.level, bbox.get, um)
-          updateViewStartAndCursorPosition(a)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped map to selection", a)
 
@@ -1796,21 +1794,19 @@ proc renderUI() =
   vg.fill()
 
   const LevelDropdownWidth = 320
-  # Current level dropdown
+
+  # Levels dropdown
+  var items = a.doc.map.levels.mapIt(it.name & " \u2013 Level " & $it.level)
+
   ui.cursor.level = koi.dropdown(
     (winWidth - LevelDropdownWidth)*0.5, 45, LevelDropdownWidth, 24.0,   # TODO calc y
-    items = @[
-      "Level 1 - Legend of Darkmoor",
-      "The Beginning",
-      "The Dwarf Settlement",
-      "You Only Scream Twice"
-    ],
-    tooltip = "Current map level",
-    ui.cursor.level,
+    items, tooltip = "Current map level", ui.cursor.level,
     style = a.theme.levelDropdownStyle
   )
 
-  # Level
+  updateViewStartAndCursorPosition(a)
+
+  # Draw current level
   if dp.viewRows > 0 and dp.viewCols > 0:
     dp.cursorRow = ui.cursor.row
     dp.cursorCol = ui.cursor.col
@@ -1893,8 +1889,6 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
     else:
       setStatusMessage(fmt"Switched to '{themeName}' theme", a)
     a.theme.nextThemeIndex = Natural.none
-
-  updateViewStartAndCursorPosition(a)
 
   if doHandleEvents:
     handleLevelEvents(a)

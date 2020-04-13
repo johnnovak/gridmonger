@@ -22,6 +22,7 @@ TODO
   autosave
   don't allow drawing on title & status bars
   better csdwindow separation (e.g. titlebar)
+  dynamic width for the levels dropdown
   proper multi-window handling in csdwindow
   themes for all koi widgets
   koi textarea widget
