@@ -1,24 +1,28 @@
+import algorithm
+import math
 import options
 import strformat
 
 import riff
 
+import bitable
 import common
 import level
 import map
 
 
-# TODO use app version instead
+# TODO use app version instead?
 const CurrentMapVersion = 1
 
 const
   FourCC_GRDM          = "GRMM"
   FourCC_GRDM_maph     = "maph"
-  FourCC_GRDM_mapl     = "mapl"
-  FourCC_GRDM_map      = "map "
-  FourCC_GRDM_map_prop = "prop"
-  FourCC_GRDM_map_cell = "cell"
-  FourCC_GRDM_map_note = "note"
+  FourCC_GRDM_lnks     = "lnks"
+  FourCC_GRDM_lvls     = "lvls"
+  FourCC_GRDM_lvl      = "lvl "
+  FourCC_GRDM_lvl_prop = "prop"
+  FourCC_GRDM_lvl_cell = "cell"
+  FourCC_GRDM_lvl_note = "note"
   FourCC_GRDM_them     = "them"
 
 type
@@ -65,42 +69,30 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
 
 using rr: RiffReader
 
-proc readLevelProperties_V1(rr): (Natural, Natural, string) =
+proc readLinks(rr): BiTable[Location, Location] =
+  var numLinks = rr.read(uint16).int
+
+  proc readLocation(): Location =
+    result.level = rr.read(uint16).int
+    result.row = rr.read(uint16).Natural
+    result.col = rr.read(uint16).Natural
+
+  result = initBiTable[Location, Location](nextPowerOfTwo(numLinks))
+  while numLinks > 0:
+    let src = readLocation()
+    let dest = readLocation()
+    result[src] = dest
+    dec(numLinks)
+
+
+proc readLevelProperties_V1(rr): (string, int, Natural, Natural) =
   let
-    rows = rr.read(uint16).Natural
-    cols = rr.read(uint16).Natural
-    name = rr.readWStr()
-  result = (rows, cols, name)
+    name  = rr.readWStr()
+    level = rr.read(int16).int
+    rows  = rr.read(uint16).Natural
+    cols  = rr.read(uint16).Natural
+  result = (name, level, rows, cols)
 
-
-# TODO remove
-#[
-proc mapFloor(f: uint8): uint8 =
-  result = case f
-  of 0:  0
-  of 1:  1
-  of 10: 20
-  of 11: 22
-  of 20: 30
-  of 21: 31
-  of 30: 40
-  of 31: 41
-  of 32: 42
-  of 33: 43
-  of 40: 50
-  of 41: 51
-  of 50: 60
-  of 60: 70
-  else: f.int
-]#
-
-# TODO remove
-#[
-proc mapWall(w: uint8): uint8 =
-  result = case w
-  of 21: 22
-  else: w.int
-]#
 
 proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
   var cells = newSeqOfCap[Cell](numCells)
@@ -145,7 +137,7 @@ proc readLevelNotes_V1(rr; l: Level) =
 
 
 proc readLevel(rr): Level =
-  let groupChunkId = FourCC_GRDM_mapl.some
+  let groupChunkId = FourCC_GRDM_lvls.some
   var
     propCursor = Cursor.none
     dataCursor = Cursor.none
@@ -155,32 +147,31 @@ proc readLevel(rr): Level =
     let ci = rr.nextChunk()
     if ci.kind == ckChunk:
       case ci.id
-      of FourCC_GRDM_map_prop:
+      of FourCC_GRDM_lvl_prop:
         if propCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_map_prop, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRDM_lvl_prop, groupChunkId)
         propCursor = rr.cursor.some
 
-      of FourCC_GRDM_map_cell:
+      of FourCC_GRDM_lvl_cell:
         if dataCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_map_cell, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRDM_lvl_cell, groupChunkId)
         dataCursor = rr.cursor.some
 
-      of FourCC_GRDM_map_note:
+      of FourCC_GRDM_lvl_note:
         if annoCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_map_note, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRDM_lvl_note, groupChunkId)
         annoCursor = rr.cursor.some
       else:
-        invalidChunkError(ci.id, FourCC_GRDM_mapl)
+        invalidChunkError(ci.id, FourCC_GRDM_lvls)
     else:
       invalidChunkError(ci.id, groupChunkId.get)
 
-  if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_map_prop)
-  if dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_map_cell)
+  if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvl_prop)
+  if dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvl_cell)
 
   rr.cursor = propCursor.get
-  let (rows, cols, name) = readLevelProperties_V1(rr)
-  # TODO level
-  var l = newLevel(name, level=0, rows, cols)
+  let (name, level, rows, cols) = readLevelProperties_V1(rr)
+  var l = newLevel(name, level, rows, cols)
 
   rr.cursor = dataCursor.get
   let numCells = (rows+1) * (cols+1)   # because of the South & East borders
@@ -199,13 +190,13 @@ proc readLevelList(rr): seq[Level] =
     let ci = rr.nextChunk()
     if ci.kind == ckGroup:
       case ci.formatTypeId
-      of FourCC_GRDM_map:
+      of FourCC_GRDM_lvl:
         rr.enterGroup()
         ml.add(readLevel(rr))
       else:
-        invalidListChunkError(ci.formatTypeId, FourCC_GRDM_mapl)
+        invalidListChunkError(ci.formatTypeId, FourCC_GRDM_lvls)
     else:
-      invalidChunkError(ci.id, FourCC_GRDM_mapl)
+      invalidChunkError(ci.id, FourCC_GRDM_lvls)
   result = ml
 
 
@@ -230,7 +221,8 @@ proc readMap*(filename: string): Map =
 
     var
       mapHeaderCursor = Cursor.none
-      mapListCursor = Cursor.none
+      linksCursor = Cursor.none
+      levelListCursor = Cursor.none
       themeCursor = Cursor.none
 
     # Find chunks
@@ -241,9 +233,9 @@ proc readMap*(filename: string): Map =
         of FourCC_INFO:
           discard  # TODO
 
-        of FourCC_GRDM_mapl:
-          if mapListCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_mapl)
-          mapListCursor = rr.cursor.some
+        of FourCC_GRDM_lvls:
+          if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lvls)
+          levelListCursor = rr.cursor.some
 
         else: discard   # skip unknown top level group chunks
 
@@ -253,6 +245,10 @@ proc readMap*(filename: string): Map =
           if mapHeaderCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_maph)
           mapHeaderCursor = rr.cursor.some
 
+        of FourCC_GRDM_lnks:
+          if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
+          linksCursor = rr.cursor.some
+
         of FourCC_GRDM_them:
           if themeCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_them)
           themeCursor = rr.cursor.some
@@ -261,20 +257,28 @@ proc readMap*(filename: string): Map =
 
     # Check for mandatory chunks
     if mapHeaderCursor.isNone: chunkNotFoundError(FourCC_GRDM_maph)
-    if mapListCursor.isNone:   chunkNotFoundError(FourCC_GRDM_mapl)
+    if levelListCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvls)
+    if linksCursor.isNone:     chunkNotFoundError(FourCC_GRDM_lnks)
 
     # Load chunks
     rr.cursor = mapHeaderCursor.get
     discard readMapHeader(rr)
 
-    rr.cursor = mapListCursor.get
-    rr.enterGroup()
-
     result = newMap()
+
+    rr.cursor = levelListCursor.get
+    rr.enterGroup()
     result.levels = readLevelList(rr)
 
+    rr.cursor = linksCursor.get
+    result.links = readLinks(rr)
+
+  except MapReadError as e:
+    echo getStackTrace(e)
+    raise e
   except CatchableError as e:
-    raise newException(MapReadError, fmt"Error reading map file", e)
+    echo getStackTrace(e)
+    raise newException(MapReadError, fmt"Error reading map file: {e.msg}", e)
   finally:
     rr.close()
 
@@ -285,15 +289,36 @@ proc readMap*(filename: string): Map =
 
 using rw: RiffWriter
 
+proc writeLinks(rw; links: BiTable[Location, Location]) =
+  rw.beginChunk(FourCC_GRDM_lnks)
+  rw.write(links.len.uint16)
+
+  var sortedKeys = links.keys()
+  sort(sortedKeys)
+
+  proc writeLocation(loc: Location) =
+    rw.write(loc.level.uint16)
+    rw.write(loc.row.uint16)
+    rw.write(loc.col.uint16)
+
+  for src in sortedKeys:
+    let dest = links[src]
+    writeLocation(src)
+    writeLocation(dest)
+
+  rw.endChunk()
+
+
 proc writeLevelProperties(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_map_prop)
+  rw.beginChunk(FourCC_GRDM_lvl_prop)
+  rw.writeWStr(l.name)
+  rw.write(l.level.int16)
   rw.write(l.rows.uint16)
   rw.write(l.cols.uint16)
-  rw.writeWStr(l.name)
   rw.endChunk()
 
 proc writeLevelCells(rw; cells: seq[Cell]) =
-  rw.beginChunk(FourCC_GRDM_map_cell)
+  rw.beginChunk(FourCC_GRDM_lvl_cell)
   for c in cells:
     rw.write(c.floor.uint8)
     rw.write(c.floorOrientation.uint8)
@@ -303,7 +328,7 @@ proc writeLevelCells(rw; cells: seq[Cell]) =
 
 
 proc writeLevelNotes(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_map_note)
+  rw.beginChunk(FourCC_GRDM_lvl_note)
   rw.write(l.numNotes.uint16)
 
   for (row, col, note) in l.allNotes:
@@ -329,17 +354,18 @@ proc writeLevelNotes(rw; l: Level) =
 
 
 proc writeLevel(rw; l: Level) =
-  rw.beginListChunk(FourCC_GRDM_map)
+  rw.beginListChunk(FourCC_GRDM_lvl)
   rw.writeLevelProperties(l)
   rw.writeLevelCells(l.cellGrid.cells)
   rw.writeLevelNotes(l)
   rw.endChunk()
 
 proc writeLevelList(rw; levels: seq[Level]) =
-  rw.beginListChunk(FourCC_GRDM_mapl)
+  rw.beginListChunk(FourCC_GRDM_lvls)
   for l in levels:
     writeLevel(rw, l)
   rw.endChunk()
+
 
 proc writeMapHeader(rw) =
   rw.beginChunk(FourCC_GRDM_maph)
@@ -355,10 +381,13 @@ proc writeMap*(m: Map, filename: string) =
     # TODO writeMapInfo(rw)
     writeMapHeader(rw)
     writeLevelList(rw, m.levels)
+    writeLinks(rw, m.links)
 # TODO   writeTheme(rw)
 
+  except MapReadError as e:
+    raise e
   except CatchableError as e:
-    raise newException(MapReadError, fmt"Error writing map file", e)
+    raise newException(MapReadError, fmt"Error writing map file: {e.msg}", e)
   finally:
     rw.close()
 

@@ -35,10 +35,8 @@ const
 
 type
   Map* = ref object
-    levels*:         seq[Level]
-    teleportLinks*:  BiTable[MapLocation, MapLocation]
-    pitLinks*:       BiTable[MapLocation, MapLocation]
-    entranceLinks*:  BiTable[MapLocation, MapLocation]
+    levels*:   seq[Level]
+    links*:    BiTable[Location, Location]
 
   Level* = ref object
     name*:     string
@@ -110,7 +108,7 @@ type
     # Cells are stored in row-major order; (0,0) is the top-left cell
     cells*: seq[Cell]
 
-  MapLocation* = object
+  Location* = object
     level*:     Natural
     row*, col*: Natural
 
@@ -168,12 +166,22 @@ type
     of nkIcon:     icon*: Natural
 
 
-proc hash*(ml: MapLocation): Hash =
+proc hash*(ml: Location): Hash =
   var h: Hash = 0
   h = h !& hash(ml.level)
   h = h !& hash(ml.row)
   h = h !& hash(ml.col)
   result = !$h
+
+proc `<`*(a, b: Location): bool =
+  if   a.level < b.level: return true
+  elif a.level > b.level: return false
+
+  elif a.row < b.row: return true
+  elif a.row > b.row: return false
+
+  elif a.col < b.col: return true
+  else: return false
 
 
 type
@@ -189,8 +197,6 @@ type
     rect*:     Rect[Natural]
     selected*: bool
 
-
-type
   # TODO make ref?
   SelectionBuffer* = object
     level*:     Level

@@ -85,40 +85,40 @@ type
 
 
   Document = object
-    filename:       string
-    map:            Map
-    levelStyles:    seq[LevelStyle]
+    filename:        string
+    map:             Map
+    levelStyles:     seq[LevelStyle]
 
   Options = object
-    scrollMargin:   Natural
-    showNotesPane:  bool
+    scrollMargin:    Natural
+    showNotesPane:   bool
 
   UI = object
-    style:          UIStyle
-    cursor:         MapLocation
-    editMode:       EditMode
+    style:           UIStyle
+    cursor:          Location
+    editMode:        EditMode
 
-    selection:      Option[Selection]
-    selRect:        Option[SelectionRect]
-    copyBuf:        Option[SelectionBuffer]
-    nudgeBuf:       Option[SelectionBuffer]
+    selection:       Option[Selection]
+    selRect:         Option[SelectionRect]
+    copyBuf:         Option[SelectionBuffer]
+    nudgeBuf:        Option[SelectionBuffer]
 
-    statusIcon:     string
-    statusMessage:  string
-    statusCommands: seq[string]
+    statusIcon:      string
+    statusMessage:   string
+    statusCommands:  seq[string]
 
-    currSpecialWall:    Natural
-    currFloorColor:     Natural
+    currSpecialWall: Natural
+    currFloorColor:  Natural
 
-    levelTopPad:        float
-    levelBottomPad:     float
+    levelTopPad:     float
+    levelBottomPad:  float
 
-    srcTeleportLocation: MapLocation
+    linkSrcLocation: Location
 
-    drawLevelParams:     DrawLevelParams
-    toolbarDrawParams:   DrawLevelParams
+    drawLevelParams:   DrawLevelParams
+    toolbarDrawParams: DrawLevelParams
 
-    oldPaperPattern:     Paint
+    oldPaperPattern: Paint
 
 
   EditMode* = enum
@@ -1317,8 +1317,8 @@ proc handleLevelEvents(a) =
 
       elif ke.isKeyDown(keyG):
         if l.getFloor(cur.row, cur.col) == fTeleportSource:
-          if map.teleportLinks.hasKey(cur):
-            let dest = map.teleportLinks[cur]
+          if map.links.hasKey(cur):
+            let dest = map.links[cur]
             cur.row = dest.row
             cur.col = dest.col
             updateViewStartAndCursorPosition(a)
@@ -1327,7 +1327,7 @@ proc handleLevelEvents(a) =
 
         elif l.getFloor(cur.row, cur.col) == fTeleportDestination:
           let dest =cur 
-          let src = map.teleportLinks.getKeyByVal(dest)
+          let src = map.links.getKeyByVal(dest)
           cur.row = src.row
           cur.col = src.col
           updateViewStartAndCursorPosition(a)
@@ -1337,7 +1337,7 @@ proc handleLevelEvents(a) =
 
       elif ke.isKeyDown(keyG, {mkShift}):
         if l.getFloor(cur.row, cur.col) == fTeleportSource:
-          ui.srcTeleportLocation = cur
+          ui.linkSrcLocation = cur
           ui.editMode = emSetTeleportDestination
           setStatusMessage(IconTeleport, "Set teleport destination",
                            @[IconArrowsAll, "select cell",
@@ -1416,10 +1416,10 @@ proc handleLevelEvents(a) =
         else:
           openMap(a)
 
-      elif ke.isKeyDown(keyS, {mkCtrl}):
+      elif ke.isKeyDown(Key.keyS, {mkCtrl}):
         saveMap(a)
 
-      elif ke.isKeyDown(keyS, {mkCtrl, mkShift}):
+      elif ke.isKeyDown(Key.keyS, {mkCtrl, mkShift}):
         saveMapAs(a)
 
       elif ke.isKeyDown(keyR, {mkAlt,mkCtrl}):
@@ -1543,7 +1543,7 @@ proc handleLevelEvents(a) =
       if   ke.isKeyDown(keyA): ui.selection.get.fill(true)
       elif ke.isKeyDown(keyU): ui.selection.get.fill(false)
 
-      if ke.isKeyDown({keyR, keyS}):
+      if ke.isKeyDown({keyR, Key.keyS}):
         ui.editMode = emSelectRect
         ui.selRect = some(SelectionRect(
           startRow: cur.row,
@@ -1582,7 +1582,7 @@ proc handleLevelEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Filled selection", a)
 
-      elif ke.isKeyDown(keyS, {mkCtrl}):
+      elif ke.isKeyDown(Key.keyS, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.surroundSelectionWithWalls(map, cur.level,
@@ -1630,7 +1630,7 @@ proc handleLevelEvents(a) =
 
       ui.selRect.get.rect = rectN(r1,c1, r2,c2)
 
-      if ke.isKeyUp({keyR, keyS}):
+      if ke.isKeyUp({keyR, Key.keyS}):
         ui.selection.get.fill(ui.selRect.get.rect, ui.selRect.get.selected)
         ui.selRect = SelectionRect.none
         ui.editMode = emSelect
@@ -1689,7 +1689,7 @@ proc handleLevelEvents(a) =
 
       if ke.isKeyDown(keyEnter):
         setFloor(fTeleportDestination, a)
-        map.teleportLinks[ui.srcTeleportLocation] = cur
+        map.links[ui.linkSrcLocation] = cur
         ui.editMode = emNormal
         setStatusMessage(IconTeleport, "Teleport destination set", a)
 

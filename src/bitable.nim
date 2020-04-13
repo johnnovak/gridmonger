@@ -1,3 +1,4 @@
+import sugar
 import tables
 
 
@@ -15,6 +16,14 @@ proc initBiTable*[K, V](
 proc len*[K, V](t: BiTable[K, V]): Natural =
   t.keyToVal.len
 
+proc keys*[K, V](t: BiTable[K, V]): seq[K] =
+  result = collect(newSeqOfCap(t.keyToVal.len)):
+    for k in t.keyToVal.keys(): k
+
+proc values*[K, V](t: BiTable[K, V]): seq[V] =
+  result = collect(newSeqOfCap(t.valToKey.len)):
+    for k in t.valToKey.keys(): k
+
 proc hasKey*[K, V](t: BiTable[K, V], key: K): bool =
   t.keyToVal.hasKey(key)
 
@@ -27,7 +36,7 @@ proc getValByKey*[K, V](t: BiTable[K, V], key: K): V =
 proc getKeyByVal*[K, V](t: BiTable[K, V], val: V): K =
   t.valToKey[val]
 
-proc `[]`*[K, V](t: var BiTable[K, V], key: K): V =
+proc `[]`*[K, V](t: BiTable[K, V], key: K): V =
   t.getValByKey(key)
 
 proc `[]=`*[K, V](t: var BiTable[K, V], key: K, val: V) =

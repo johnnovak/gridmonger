@@ -7,15 +7,18 @@ RIFF ('GRDM'            # Gridmonger map file
         'ICRD'          # Creation Date
         'ISFT'          # Software
     )
-    'maph'              # Map header
-    LIST ('mapl'        # List of maps
-        LIST ('map '    # Map
-            'prop'      # Map properties
-            'cell'      # Map cells
+    'maph'              # Map
+    LIST ('lvls'        # List of maps
+        LIST ('lvl '    # Level
+            'prop'      # Level properties
+            'cell'      # Level cells
             'note'      # Notes
         )
         ...
     )
+    'lnks'              # Map links
+
+    TODO
     'disp'              # Display related info
 )
 
@@ -23,20 +26,19 @@ RIFF ('GRDM'            # Gridmonger map file
 'maph'
     UINT8   format version
 
-
 'prop'
+    BSTR    name
+    INT16   level
     UINT16  numRows
     UINT16  numColums
-    BSTR    mapName
 
-'data'
+'cell'
     (numRows * numColums) records of:
 
     UINT8  floor
     UINT8  floorOrientation
     UINT8  wallNorth
     UINT8  wallWest
-    UINT8  customChar
 
 'note'
     UINT16  numNotes
@@ -53,6 +55,20 @@ RIFF ('GRDM'            # Gridmonger map file
 
     WSTR    text
 
+'lnks'
+    UINT16  numLinks
+
+    numLinks records of:
+
+    UINT16  sourceLevel
+    UINT16  sourceColumn
+    UINT16  sourceRow
+
+    UINT16  destinationLevel
+    UINT16  destinationColumn
+    UINT16  destinationRow
+
+TODO
 'disp'
     BSTR    themeName
     UINT8   currMap

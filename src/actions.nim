@@ -46,7 +46,7 @@ template cellAreaAction(map; level: Natural, rect: Rect[Natural], um;
 
 # }}}
 # {{{ singleCellAction()
-template singleCellAction(map; loc: MapLocation; um;
+template singleCellAction(map; loc: Location; um;
                           actionName: string; actionMap, actionBody: untyped) =
   let c = loc.col
   let r = loc.row
@@ -56,14 +56,14 @@ template singleCellAction(map; loc: MapLocation; um;
 # }}}
 
 # {{{ eraseCellWalls*()
-proc eraseCellWalls*(map; loc: MapLocation, um) =
+proc eraseCellWalls*(map; loc: Location, um) =
   singleCellAction(map, loc, um, "Erase cell walls", m):
     alias(l, m.levels[loc.level])
     l.eraseCellWalls(loc.row, loc.col)
 
 # }}}
 # {{{ eraseCell*()
-proc eraseCell*(map; loc: MapLocation, um) =
+proc eraseCell*(map; loc: Location, um) =
   singleCellAction(map, loc, um, "Erase cell", m):
     alias(l, m.levels[loc.level])
     l.eraseCell(loc.row, loc.col)
@@ -116,7 +116,7 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection, bbox: Rect
 
 # }}}
 # {{{ paste*()
-proc paste*(map; dest: MapLocation, cb: SelectionBuffer, um) =
+proc paste*(map; dest: Location, cb: SelectionBuffer, um) =
   let rect = rectN(
     dest.row,
     dest.col,
@@ -136,21 +136,21 @@ proc paste*(map; dest: MapLocation, cb: SelectionBuffer, um) =
 
 # }}}
 # {{{ setWall*()
-proc setWall*(map; loc: MapLocation, dir: CardinalDir, w: Wall, um) =
+proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall, um) =
   singleCellAction(map, loc, um, "Set wall", m):
     alias(l, m.levels[loc.level])
     l.setWall(loc.row, loc.col, dir, w)
 
 # }}}
 # {{{ setFloor*()
-proc setFloor*(map; loc: MapLocation, f: Floor, um) =
+proc setFloor*(map; loc: Location, f: Floor, um) =
   singleCellAction(map, loc, um, "Set floor", m):
     alias(l, m.levels[loc.level])
     l.setFloor(loc.row, loc.col, f)
 
 # }}}
 # {{{ setOrientedFloor*()
-proc setOrientedFloor*(map; loc: MapLocation, f: Floor, ot: Orientation, um) =
+proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation, um) =
   singleCellAction(map, loc, um, "Set oriented floor", m):
     alias(l, m.levels[loc.level])
     l.setFloor(loc.row, loc.col, f)
@@ -158,7 +158,7 @@ proc setOrientedFloor*(map; loc: MapLocation, f: Floor, ot: Orientation, um) =
 
 # }}}
 # {{{ excavate*()
-proc excavate*(map; loc: MapLocation, um) =
+proc excavate*(map; loc: Location, um) =
   singleCellAction(map, loc, um, "Excavate", m):
     alias(l, m.levels[loc.level])
     alias(c, loc.col)
@@ -189,7 +189,7 @@ proc excavate*(map; loc: MapLocation, um) =
 
 # }}}
 # {{{ toggleFloorOrientation*()
-proc toggleFloorOrientation*(map; loc: MapLocation, um) =
+proc toggleFloorOrientation*(map; loc: Location, um) =
   singleCellAction(map, loc, um, "Toggle floor orientation", m):
     alias(l, m.levels[loc.level])
     alias(c, loc.col)
@@ -200,14 +200,14 @@ proc toggleFloorOrientation*(map; loc: MapLocation, um) =
 
 # }}}
 # {{{ setNote*()
-proc setNote*(map; loc: MapLocation, n: Note, um) =
+proc setNote*(map; loc: Location, n: Note, um) =
   singleCellAction(map, loc, um, "Set note", m):
     alias(l, m.levels[loc.level])
     l.setNote(loc.row, loc.col, n)
 
 # }}}
 # {{{ eraseNote*()
-proc eraseNote*(map; loc: MapLocation, um) =
+proc eraseNote*(map; loc: Location, um) =
   singleCellAction(map, loc, um, "Erase note", m):
     alias(l, m.levels[loc.level])
     l.delNote(loc.row, loc.col)
