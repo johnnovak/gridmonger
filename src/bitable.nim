@@ -3,44 +3,44 @@ import tables
 
 const DefaultInitialSize = 64
 
-type BiTable*[A, B] = object
-  keyToVal: Table[A, B]
-  valToKey: Table[B, A]
+type BiTable*[K, V] = object
+  keyToVal: Table[K, V]
+  valToKey: Table[V, K]
 
-proc initBiTable*[A, B](
-    initialSize: Natural = DefaultInitialSize): BiTable[A, B] =
-  result.keyToVal = initTable[A, B](initialSize)
-  result.valToKey = initTable[B, A](initialSize)
+proc initBiTable*[K, V](
+    initialSize: Natural = DefaultInitialSize): BiTable[K, V] =
+  result.keyToVal = initTable[K, V](initialSize)
+  result.valToKey = initTable[V, K](initialSize)
 
-proc len*[A, B](t: BiTable[A, B]): Natural =
+proc len*[K, V](t: BiTable[K, V]): Natural =
   t.keyToVal.len
 
-proc hasKey*[A, B](t: BiTable[A, B], key: A): bool =
+proc hasKey*[K, V](t: BiTable[K, V], key: K): bool =
   t.keyToVal.hasKey(key)
 
-proc hasVal*[A, B](t: BiTable[A, B], val: B): bool=
+proc hasVal*[K, V](t: BiTable[K, V], val: V): bool=
   t.valToKey.hasKey(val)
 
-proc getValByKey*[A, B](t: BiTable[A, B], key: A): B =
+proc getValByKey*[K, V](t: BiTable[K, V], key: K): V =
   t.keyToVal[key]
 
-proc getKeyByVal*[A, B](t: BiTable[A, B], val: B): A =
+proc getKeyByVal*[K, V](t: BiTable[K, V], val: V): K =
   t.valToKey[val]
 
-proc `[]`*[A, B](t: var BiTable[A, B], key: A): B =
+proc `[]`*[K, V](t: var BiTable[K, V], key: K): V =
   t.getValByKey(key)
 
-proc `[]=`*[A, B](t: var BiTable[A, B], key: A, val: B) =
+proc `[]=`*[K, V](t: var BiTable[K, V], key: K, val: V) =
   t.keyToVal[key] = val
   t.valToKey[val] = key
 
-proc delByKey*[A, B](t: var BiTable[A, B], key: A) =
+proc delByKey*[K, V](t: var BiTable[K, V], key: K) =
   if key in t.keyToVal:
     let val = t.keyToVal[key]
     t.keyToVal.del(key)
     t.valToKey.del(val)
 
-proc delByVal*[A, B](t: var BiTable[A, B], val: B) =
+proc delByVal*[K, V](t: var BiTable[K, V], val: V) =
   if val in t.valToKey:
     let key = t.valToKey[val]
     t.valToKey.del(val)
