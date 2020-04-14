@@ -39,10 +39,11 @@ type
     links*:    BiTable[Location, Location]
 
   Level* = ref object
-    name*:     string
-    level*:    int
-    cellGrid*: CellGrid
-    notes*:    Table[Natural, Note]
+    locationName*: string
+    levelName*:    string
+    elevation*:    int
+    cellGrid*:     CellGrid
+    notes*:        Table[Natural, Note]
 
   LevelStyle* = ref object
     backgroundColor*:        Color
@@ -201,5 +202,6 @@ type
   SelectionBuffer* = object
     level*:     Level
     selection*: Selection
+
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -6,6 +6,8 @@ import os
 import sequtils
 import strformat
 import strutils
+import sugar
+import tables
 
 import glad/gl
 import glfw
@@ -95,31 +97,34 @@ type
     showNotesPane:   bool
 
   UI = object
-    style:           UIStyle
-    cursor:          Location
-    editMode:        EditMode
+    sortedLevelNames:   seq[string]
+    sortedLevelIdxToLevelIdx: Table[Natural, Natural]
 
-    selection:       Option[Selection]
-    selRect:         Option[SelectionRect]
-    copyBuf:         Option[SelectionBuffer]
-    nudgeBuf:        Option[SelectionBuffer]
+    style:             UIStyle
+    cursor:            Location
+    editMode:          EditMode
 
-    statusIcon:      string
-    statusMessage:   string
-    statusCommands:  seq[string]
+    selection:         Option[Selection]
+    selRect:           Option[SelectionRect]
+    copyBuf:           Option[SelectionBuffer]
+    nudgeBuf:          Option[SelectionBuffer]
 
-    currSpecialWall: Natural
-    currFloorColor:  Natural
+    statusIcon:        string
+    statusMessage:     string
+    statusCommands:    seq[string]
 
-    levelTopPad:     float
-    levelBottomPad:  float
+    currSpecialWall:   Natural
+    currFloorColor:    Natural
 
-    linkSrcLocation: Location
+    levelTopPad:       float
+    levelBottomPad:    float
+
+    linkSrcLocation:   Location
 
     drawLevelParams:   DrawLevelParams
     toolbarDrawParams: DrawLevelParams
 
-    oldPaperPattern: Paint
+    oldPaperPattern:   Paint
 
 
   EditMode* = enum
@@ -154,10 +159,12 @@ type
     action:     proc (a: var AppContext)
 
   NewLevelDialogParams = object
-    isOpen:     bool
-    name:       string
-    rows:       string
-    cols:       string
+    isOpen:       bool
+    locationName: string
+    levelName:    string
+    elevation:    string
+    rows:         string
+    cols:         string
 
   EditNoteDialogParams = object
     isOpen:     bool
@@ -287,6 +294,56 @@ proc renderStatusBar(y: float, winWidth: float, a) =
 
 # }}}
 
+# {{{ calcSortedLevelNames)
+proc calcSortedLevelNames(a) =
+  alias(ui, a.ui)
+  alias(levels, a.doc.map.levels)
+
+  proc mkDropdownLevelName(l: Level): string =
+    let elevation = if l.elevation == 0: "G" else: $l.elevation
+    let dash = "\u2013"
+    if l.levelName == "":
+      fmt"{l.locationName} ({elevation})"
+    else:
+      fmt"{l.locationName} {dash} {l.levelName} ({elevation})"
+
+  var sortedLevelsWithIndex = zip(levels, (0..levels.high).toSeq)
+  sortedLevelsWithIndex.sort(
+    proc (a, b: tuple[level: Level, idx: int]): int =
+      var c = cmp(a.level.locationName, b.level.locationName)
+      if c != 0: return c
+
+      c = cmp(b.level.elevation, a.level.elevation)
+      if c != 0: return c
+
+      # TODO ensure two levels with the same elevation & location name
+      # cannot have the same level name
+      return cmp(a.level.levelName, b.level.levelName)
+  )
+
+  ui.sortedLevelNames = newSeqOfCap[string](levels.len)
+  ui.sortedLevelIdxToLevelIdx = initTable[Natural, Natural]()
+
+  for (sortedIdx, levelWithIdx) in sortedLevelsWithIndex.pairs:
+    let (level, levelIdx) = levelWithIdx
+    ui.sortedLevelNames.add(mkDropdownLevelName(level))
+    ui.sortedLevelIdxToLevelIdx[sortedIdx] = levelIdx
+
+# }}}
+# {{{ addLevel()
+proc addLevel(a; l: Level) =
+  a.doc.map.levels.add(l)
+  calcSortedLevelNames(a)
+
+# }}}
+# {{{ delLevel()
+proc delLevel(a; levelIdx: Natural) =
+  # TODO recalc links
+  a.doc.map.levels.del(levelIdx)
+  calcSortedLevelNames(a)
+
+# }}}
+
 # {{{ openMap()
 proc resetCursorAndViewStart(a)
 
@@ -392,8 +449,8 @@ proc loadTheme(index: Natural, a) =
     d.itemColor                = s.itemColor
     d.itemColorHover           = s.itemColorHover
     d.itemBackgroundColorHover = s.itemBgColorHover
-    d.itemAlign                = haCenter
-    d.itemListPadHoriz         = 0
+    d.itemAlign                = haLeft
+    d.itemListPadHoriz         = 10
 
 # }}}
 
@@ -669,7 +726,7 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
     dialogWidth = 350.0
     dialogHeight = 160.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconFloppy}  Save changes?")
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconFloppy}  Save Changes?")
   a.clearStatusMessage()
 
   let
@@ -726,22 +783,24 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
 # {{{ New level dialog
 proc openNewLevelDialog(a) =
   let l = getCurrLevel(a)
-  a.dialog.newLevelDialog.name = ""
+  a.dialog.newLevelDialog.locationName = l.locationName
+  a.dialog.newLevelDialog.levelName = l.levelName
+  a.dialog.newLevelDialog.elevation = $l.elevation
   a.dialog.newLevelDialog.rows = $l.rows
   a.dialog.newLevelDialog.cols = $l.cols
   a.dialog.newLevelDialog.isOpen = true
 
 proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   let
-    dialogWidth = 350.0
-    dialogHeight = 224.0
+    dialogWidth = 410.0
+    dialogHeight = 300.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New map")
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Level")
   a.clearStatusMessage()
 
   let
     h = 24.0
-    labelWidth = 70.0
+    labelWidth = 130.0
     buttonWidth = 80.0
     buttonPad = 15.0
 
@@ -749,12 +808,24 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     x = 30.0
     y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Name")
-  dlg.name = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
+  koi.label(x, y, labelWidth, h, "Location Name")
+  dlg.locationName = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.locationName
   )
 
-  y += 40
+  y += 32
+  koi.label(x, y, labelWidth, h, "Level Name")
+  dlg.levelName = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.levelName
+  )
+
+  y += 44
+  koi.label(x, y, labelWidth, h, "Elevation")
+  dlg.elevation = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.elevation
+  )
+
+  y += 44
   koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
@@ -768,11 +839,15 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
   proc okAction(dlg: var NewLevelDialogParams, a) =
     # TODO number error checking
-    let rows = parseInt(dlg.rows)
-    let cols = parseInt(dlg.cols)
+    let
+      rows = parseInt(dlg.rows)
+      cols = parseInt(dlg.cols)
+      elevation = parseInt(dlg.elevation)
 
-    let newLevel = newLevel(dlg.name, level=0, rows, cols)
-    a.doc.map.levels.add(newLevel)
+      newLevel = newLevel(dlg.locationName, dlg.levelName, elevation,
+                          rows, cols)
+
+    addLevel(a, newLevel)
     a.doc.levelStyles.add(getCurrLevelStyle(a))
 
     a.doc.filename = ""
@@ -1303,7 +1378,9 @@ proc handleLevelEvents(a) =
         let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
         ui.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
-        map.levels[cur.level] = newLevel(l.name, l.level, l.rows, l.cols)
+        map.levels[cur.level] = newLevel(
+          l.locationName, l.levelName, l.elevation, l.rows, l.cols
+        )
 
         dp.selStartRow = 0
         dp.selStartCol = 0
@@ -1397,7 +1474,9 @@ proc handleLevelEvents(a) =
           a.dialog.saveDiscardDialog.isOpen = true
           a.dialog.saveDiscardDialog.action = proc (a: var AppContext) =
             a.doc.map = newMap()
-            a.doc.map.levels.add(newLevel("Untitled", level=0, 16, 16))
+            a.doc.map.levels.add(
+              newLevel("Untitled", "", elevation=0, rows=16, cols=16)
+            )
             # TODO
             openNewLevelDialog(a)
         else:
@@ -1795,12 +1874,9 @@ proc renderUI() =
 
   const LevelDropdownWidth = 320
 
-  # Levels dropdown
-  var items = a.doc.map.levels.mapIt(it.name & " \u2013 Level " & $it.level)
-
   ui.cursor.level = koi.dropdown(
     (winWidth - LevelDropdownWidth)*0.5, 45, LevelDropdownWidth, 24.0,   # TODO calc y
-    items, tooltip = "Current map level", ui.cursor.level,
+    ui.sortedLevelNames, tooltip = "Current map level", ui.cursor.level,
     style = a.theme.levelDropdownStyle
   )
 
@@ -2002,13 +2078,13 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   # TODO proper init
   a.doc.map = newMap()
-  a.doc.map.levels.add(newLevel("", level=0, 16, 16))
+  addLevel(a, newLevel("", "", elevation=0, rows=16, cols=16))
 
 #  let filename = "EOB III - Crystal Tower L2 notes.grm"
 #  let filename = "EOB III - Crystal Tower L2.grm"
 # let filename = "drawtest.grm"
-#  let filename = "notetest.grm"
-  let filename = "pool-of-radiance-library.grm"
+  let filename = "notetest.grm"
+#  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
   a.doc.map = readMap(filename)
   a.doc.filename = filename
@@ -2018,10 +2094,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.win.renderFrameCb = renderFrame
 
   # TODO for development
-  a.win.size = (960, 1040)
-  a.win.pos = (960, 0)
-#  a.win.size = (700, 900)
-#  a.win.pos = (900, 0)
+#  a.win.size = (960, 1040)
+#  a.win.pos = (960, 0)
+  a.win.size = (700, 900)
+  a.win.pos = (900, 0)
   a.win.show()
 
 

@@ -1429,25 +1429,19 @@ proc drawNote(x, y: float, note: Note, ctx) =
   let w = dp.gridSize*0.4
 
   case note.kind
-  of nkIndexed:
-    drawIndexedNote(x, y, note.index, note.indexColor, ctx)
+  of nkIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
+  of nkCustomId: drawCustomIdNote(x, y, note.customId, ctx)
+  of nkIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon], ctx)
+  of nkComment:  discard
 
-  of nkCustomId:
-    drawCustomIdNote(x, y, note.customId, ctx)
-
-  of nkIcon:
-    drawIcon(x, y, 0, 0, NoteIcons[note.icon], ctx)
-
-  of nkComment:
-    discard
-
-  vg.fillColor(ls.noteLevelCommentColor)
-  vg.beginPath()
-  vg.moveTo(x + dp.gridSize - w, y)
-  vg.lineTo(x + dp.gridSize + 1, y + w+1)
-  vg.lineTo(x + dp.gridSize + 1, y)
-  vg.closePath()
-  vg.fill()
+  if note.kind != nkIndexed:
+    vg.fillColor(ls.noteLevelCommentColor)
+    vg.beginPath()
+    vg.moveTo(x + dp.gridSize - w, y)
+    vg.lineTo(x + dp.gridSize + 1, y + w+1)
+    vg.lineTo(x + dp.gridSize + 1, y)
+    vg.closePath()
+    vg.fill()
 
   # }}}
 # {{{ drawNotes()

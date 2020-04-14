@@ -85,26 +85,21 @@ proc readLinks(rr): BiTable[Location, Location] =
     dec(numLinks)
 
 
-proc readLevelProperties_V1(rr): (string, int, Natural, Natural) =
+proc readLevelProperties_V1(rr): Level =
   let
-    name  = rr.readWStr()
-    level = rr.read(int16).int
-    rows  = rr.read(uint16).Natural
-    cols  = rr.read(uint16).Natural
-  result = (name, level, rows, cols)
-
+    locationName = rr.readWStr()
+    levelName = rr.readWStr()
+    elevation = rr.read(int16).int
+    rows = rr.read(uint16).Natural
+    cols = rr.read(uint16).Natural
+  result = newLevel(locationName, levelName, elevation, rows, cols)
 
 proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
   var cells = newSeqOfCap[Cell](numCells)
   for i in 0..<numCells:
     var c: Cell
-    # TODO
-    #c.floor = mapFloor(rr.read(uint8)).Floor
     c.floor = rr.read(uint8).Floor
     c.floorOrientation = rr.read(uint8).Orientation
-    # TODO
-    #c.wallN = mapWall(rr.read(uint8)).Wall
-    #c.wallW = mapWall(rr.read(uint8)).Wall
     c.wallN = rr.read(uint8).Wall
     c.wallW = rr.read(uint8).Wall
     cells.add(c)
@@ -141,7 +136,7 @@ proc readLevel(rr): Level =
   var
     propCursor = Cursor.none
     dataCursor = Cursor.none
-    annoCursor = Cursor.none
+    noteCursor = Cursor.none
 
   while rr.hasNextChunk():
     let ci = rr.nextChunk()
@@ -158,9 +153,9 @@ proc readLevel(rr): Level =
         dataCursor = rr.cursor.some
 
       of FourCC_GRDM_lvl_note:
-        if annoCursor.isSome:
+        if noteCursor.isSome:
           chunkOnlyOnceError(FourCC_GRDM_lvl_note, groupChunkId)
-        annoCursor = rr.cursor.some
+        noteCursor = rr.cursor.some
       else:
         invalidChunkError(ci.id, FourCC_GRDM_lvls)
     else:
@@ -170,18 +165,20 @@ proc readLevel(rr): Level =
   if dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvl_cell)
 
   rr.cursor = propCursor.get
-  let (name, level, rows, cols) = readLevelProperties_V1(rr)
-  var l = newLevel(name, level, rows, cols)
+  var level = readLevelProperties_V1(rr)
 
   rr.cursor = dataCursor.get
-  let numCells = (rows+1) * (cols+1)   # because of the South & East borders
-  l.cellGrid.cells = readLevelData_V1(rr, numCells)
 
-  if annoCursor.isSome:
-    rr.cursor = annoCursor.get
-    readLevelNotes_V1(rr, l)
+  # because of the South & East borders
+  let numCells = (level.rows+1) * (level.cols+1)   
 
-  result = l
+  level.cellGrid.cells = readLevelData_V1(rr, numCells)
+
+  if noteCursor.isSome:
+    rr.cursor = noteCursor.get
+    readLevelNotes_V1(rr, level)
+
+  result = level
 
 
 proc readLevelList(rr): seq[Level] =
@@ -311,8 +308,9 @@ proc writeLinks(rw; links: BiTable[Location, Location]) =
 
 proc writeLevelProperties(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_lvl_prop)
-  rw.writeWStr(l.name)
-  rw.write(l.level.int16)
+  rw.writeWStr(l.locationName)
+  rw.writeWStr(l.levelName)
+  rw.write(l.elevation.int16)
   rw.write(l.rows.uint16)
   rw.write(l.cols.uint16)
   rw.endChunk()

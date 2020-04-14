@@ -231,8 +231,13 @@ proc nudgeLevel*(map; level, destRow, destCol: int, cb: SelectionBuffer, um) =
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
   let action = proc (m: var Map) =
-    var l = newLevel(cb.level.name, cb.level.level,
-                     cb.level.rows, cb.level.cols)
+    var l = newLevel(
+      cb.level.locationName,
+      cb.level.levelName,
+      cb.level.elevation,
+      cb.level.rows,
+      cb.level.cols
+    )
     l.paste(destRow, destCol, cb.level, cb.selection)
     m.levels[level] = l
 

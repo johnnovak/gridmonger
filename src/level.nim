@@ -11,12 +11,16 @@ import utils
 
 using l: Level
 
-proc newLevel*(name: string, level: int, rows, cols: Natural): Level =
+proc newLevel*(locationName, levelName: string, elevation: int,
+               rows, cols: Natural): Level =
+
   result = new Level
-  result.name = name
-  result.level = level
+  result.locationName = locationName
+  result.levelName = levelName
+  result.elevation = elevation
   result.cellGrid = newCellGrid(rows, cols)
   result.notes = initTable[Natural, Note]()
+
 
 proc rows*(l): Natural {.inline.} = l.cellGrid.rows
 proc cols*(l): Natural {.inline.} = l.cellGrid.cols
@@ -209,7 +213,7 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural],
   inc(srcRect.r2, border)
   inc(srcRect.c2, border)
 
-  var dest = newLevel(src.name, src.level,
+  var dest = newLevel(src.locationName, src.levelName, src.elevation,
                       rect.rows + border*2, rect.cols + border*2)
   dest.copyFrom(destRow, destCol, src, srcRect)
 
@@ -278,7 +282,9 @@ proc resize*(l; newRows, newCols: Natural, align: Direction): Level =
   copyRect.r2 = copyRect.r1 + intRect.rows
   copyRect.c2 = copyRect.c1 + intRect.cols
 
-  result = newLevel(l.name, l.level, newRows, newCols)
+  result = newLevel(l.locationName, l.levelName, l.elevation,
+                    newRows, newCols)
+
   result.copyFrom(destRow, destCol, l, copyRect)
 
 

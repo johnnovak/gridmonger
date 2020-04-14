@@ -1,4 +1,3 @@
-
 RIFF ('GRDM'            # Gridmonger map file
     LIST ('INFO'
         'INAM'          # Name
@@ -27,10 +26,11 @@ RIFF ('GRDM'            # Gridmonger map file
     UINT8   format version
 
 'prop'
-    BSTR    name
-    INT16   level
-    UINT16  numRows
-    UINT16  numColums
+    BSTR    locationName  (minLen=1, maxLen=100)
+    BSTR    levelName     (minLen=0, maxLen=100)
+    INT16   elevation     (min=-200, max=200)
+    UINT16  numRows       (min=1, max=5000)
+    UINT16  numColums     (max=1, max=5000)
 
 'cell'
     (numRows * numColums) records of:
@@ -41,14 +41,14 @@ RIFF ('GRDM'            # Gridmonger map file
     UINT8  wallWest
 
 'note'
-    UINT16  numNotes
-    UINT16  row
-    UINT16  column
+    UINT16  numNotes      (max=5000)
+    UINT16  row           (max=numRows-1 of the given level)
+    UINT16  column        (max=numColumns-1 of the given level)
     UINT8   kind
 
     if kind == 0 (indexed)
         UINT16  index
-        UINT8   indexColor
+        UINT8   color
 
     if kind == 1 (customId)
         BSTR    custom ID
@@ -56,23 +56,23 @@ RIFF ('GRDM'            # Gridmonger map file
     WSTR    text
 
 'lnks'
-    UINT16  numLinks
+    UINT16  numLinks           (max=10000)
 
     numLinks records of:
 
-    UINT16  sourceLevel
-    UINT16  sourceColumn
-    UINT16  sourceRow
+    UINT16  sourceLevel        (max=(number of levels) - 1)
+    UINT16  sourceRow          (max=numRows-1 of the given level)
+    UINT16  sourceColumn       (max=numColumns-1 of the given level)
 
-    UINT16  destinationLevel
-    UINT16  destinationColumn
-    UINT16  destinationRow
+    UINT16  destinationLevel   (max=(number of levels) - 1)
+    UINT16  destinationRow     (max=numRows-1 of the given level)
+    UINT16  destinationColumn  (max=numColumns-1 of the given level)
 
 TODO
 'disp'
-    BSTR    themeName
-    UINT8   currMap
-    UINT8   zoomLevel
-    UINT8   showCoords
+    BSTR    themeName          (min=1, max=255)
+    UINT8   currLevel          (max=(number of levels) - 1)
+    UINT8   zoomLevel          (min=1, max=20)
+    UINT8   showCoords         (0 or 1)
     UINT8   gridStyle
 
