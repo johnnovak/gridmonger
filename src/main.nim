@@ -97,9 +97,6 @@ type
     showNotesPane:   bool
 
   UI = object
-    sortedLevelNames:   seq[string]
-    sortedLevelIdxToLevelIdx: Table[Natural, Natural]
-
     style:             UIStyle
     cursor:            Location
     editMode:          EditMode
@@ -215,7 +212,7 @@ proc mapHasLevels(a): bool =
 # {{{ getCurrLevelIdx()
 proc getCurrLevelIdx(a): Natural =
   let sortedLevelIdx = a.ui.cursor.level
-  a.ui.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+  a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
 
 # }}}
 # {{{ getCurrLevel()
@@ -311,56 +308,6 @@ proc renderStatusBar(y: float, winWidth: float, a) =
 
 # }}}
 
-# {{{ refreshSortedLevelNames)
-proc refreshSortedLevelNames(a) =
-  alias(ui, a.ui)
-  alias(levels, a.doc.map.levels)
-
-  proc mkDropdownLevelName(l: Level): string =
-    let elevation = if l.elevation == 0: "G" else: $l.elevation
-    let dash = "\u2013"
-    if l.levelName == "":
-      fmt"{l.locationName} ({elevation})"
-    else:
-      fmt"{l.locationName} {dash} {l.levelName} ({elevation})"
-
-  var sortedLevelsWithIndex = zip(levels, (0..levels.high).toSeq)
-  sortedLevelsWithIndex.sort(
-    proc (a, b: tuple[level: Level, idx: int]): int =
-      var c = cmp(a.level.locationName, b.level.locationName)
-      if c != 0: return c
-
-      c = cmp(b.level.elevation, a.level.elevation)
-      if c != 0: return c
-
-      # TODO ensure two levels with the same elevation & location name
-      # cannot have the same level name
-      return cmp(a.level.levelName, b.level.levelName)
-  )
-
-  ui.sortedLevelNames = newSeqOfCap[string](levels.len)
-  ui.sortedLevelIdxToLevelIdx = initTable[Natural, Natural]()
-
-  for (sortedIdx, levelWithIdx) in sortedLevelsWithIndex.pairs:
-    let (level, levelIdx) = levelWithIdx
-    ui.sortedLevelNames.add(mkDropdownLevelName(level))
-    ui.sortedLevelIdxToLevelIdx[sortedIdx] = levelIdx
-
-# }}}
-# {{{ addLevel()
-proc addLevel(a; l: Level) =
-  a.doc.map.levels.add(l)
-  refreshSortedLevelNames(a)
-
-# }}}
-# {{{ delLevel()
-proc delLevel(a; levelIdx: Natural) =
-  # TODO recalc links
-  a.doc.map.levels.del(levelIdx)
-  refreshSortedLevelNames(a)
-
-# }}}
-
 # {{{ openMap()
 proc resetCursorAndViewStart(a)
 
@@ -373,7 +320,6 @@ proc openMap(a) =
       try:
         a.doc.map = readMap(filename)
         a.doc.filename = filename
-        a.win.title = filename
 
         initUndoManager(a.undoManager)
 
@@ -398,7 +344,6 @@ proc saveMapAsAction(a) =
         filename = addFileExt(filename, MapFileExt)
         saveMap(filename, a)
         a.doc.filename = filename
-        a.win.title = filename
       except CatchableError as e:
         # TODO log stracktrace?
         setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
@@ -467,6 +412,14 @@ proc loadTheme(index: Natural, a) =
 
 # }}}
 
+# {{{ getPxRatio()
+proc getPxRatio(a): float =
+  let
+    (winWidth, _) = a.win.size
+    (fbWidth, _) = a.win.framebufferSize
+  result = fbWidth / winWidth
+
+# }}}
 # {{{ isKeyDown()
 func isKeyDown(ke: KeyEvent, keys: set[Key],
                mods: set[ModifierKey] = {}, repeat=false): bool =
@@ -910,7 +863,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
     level.locationName = dlg.locationName
     level.levelName = dlg.levelName
     level.elevation = elevation
-    refreshSortedLevelNames(a)
+    a.doc.map.refreshSortedLevelNames()
 
     koi.closeDialog()
     dlg.isOpen = false
@@ -994,7 +947,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
       newLevel = newLevel(dlg.locationName, dlg.levelName, elevation,
                           rows, cols)
 
-    addLevel(a, newLevel)
+    a.doc.map.addLevel(newLevel)
     a.ui.cursor.level = a.doc.map.levels.high
 
     setStatusMessage(IconFile, fmt"New {rows}x{cols} level created", a)
@@ -1049,11 +1002,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 
   proc okAction(dlg: var NewMapDialogParams, a) =
     a.doc.filename = ""
-    a.win.title = "[Untitled]"
-
-    a.doc.map = newMap()
-    refreshSortedLevelNames(a)
-
+    a.doc.map = newMap(dlg.name)
     initUndoManager(a.undoManager)
 
     resetCursorAndViewStart(a)
@@ -1968,15 +1917,6 @@ proc handleLevelEventsNoLevels(a) =
     elif ke.isKeyDown(keyPageDown, {mkAlt, mkCtrl}):   nextThemeAction(a)
 
 # }}}
-
-# {{{ getPxRatio()
-proc getPxRatio(a): float =
-  let
-    (winWidth, _) = a.win.size
-    (fbWidth, _) = a.win.framebufferSize
-  result = fbWidth / winWidth
-
-# }}}
 # {{{ renderUI()
 
 proc specialWallDrawProc(ls: LevelStyle,
@@ -2065,8 +2005,8 @@ proc renderUI() =
 
     ui.cursor.level = koi.dropdown(
       (winWidth - LevelDropdownWidth)*0.5, 45, LevelDropdownWidth, 24.0,   # TODO calc y
-      ui.sortedLevelNames, tooltip = "Current map level", ui.cursor.level,
-      style = a.theme.levelDropdownStyle
+      a.doc.map.sortedLevelNames, tooltip = "Current map level",
+      ui.cursor.level, style = a.theme.levelDropdownStyle
     )
 
     updateViewStartAndCursorPosition(a)
@@ -2095,26 +2035,33 @@ proc renderUI() =
         a
       )
 
-  # Right-side toolbar
-  ui.currSpecialWall = koi.radioButtons(
-    winWidth - 60.0, 90, 36, 35,
-    labels = newSeq[string](SpecialWalls.len),
-    tooltips = @[],
-    ui.currSpecialWall,
-    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
-    drawProc=specialWallDrawProc(ls, ui.toolbarDrawParams).some
-  )
+    # Right-side toolbar
+    ui.currSpecialWall = koi.radioButtons(
+      winWidth - 60.0, 90, 36, 35,
+      labels = newSeq[string](SpecialWalls.len),
+      tooltips = @[],
+      ui.currSpecialWall,
+      layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
+      drawProc=specialWallDrawProc(ls, ui.toolbarDrawParams).some
+    )
 
-  ui.currFloorColor = koi.radioButtons(
-#    winWidth - 50.0, 90, 28, 28,
-    winWidth - 57.0, 460, 30, 30,
-    labels = newSeq[string](4),
-    tooltips = @[],
-    ui.currFloorColor,
-    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
-    drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
-                                      ls.cursorColor).some
-  )
+    ui.currFloorColor = koi.radioButtons(
+  #    winWidth - 50.0, 90, 28, 28,
+      winWidth - 57.0, 460, 30, 30,
+      labels = newSeq[string](4),
+      tooltips = @[],
+      ui.currFloorColor,
+      layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
+      drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
+                                        ls.cursorColor).some
+    )
+
+  else:
+    vg.fontSize(22)
+    vg.fillColor(ls.drawColor)
+    vg.textAlign(haCenter, vaMiddle)
+    var y = winHeight*0.5
+    discard vg.text(winWidth*0.5 , y, "Empty map")
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
@@ -2153,6 +2100,7 @@ proc renderFramePre(win: CSDWindow) =
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
 
+  a.win.title = a.doc.map.name
   a.win.modified = a.undoManager.isModified
 
 # }}}
@@ -2267,8 +2215,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   loadTheme(themeIndex, a)
 
   # TODO proper init
-  a.doc.map = newMap()
-  addLevel(a, newLevel("", "", elevation=0, rows=16, cols=16))
+  a.doc.map = newMap("Untitled")
 
   initDrawLevelParams(a)
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, DefaultZoomLevel)
@@ -2281,24 +2228,23 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-  let filename = "EOB III - Crystal Tower L2 notes.grm"
+#  let filename = "EOB III - Crystal Tower L2 notes.grm"
 #  let filename = "EOB III - Crystal Tower L2.grm"
 # let filename = "drawtest.grm"
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
-  a.doc.map = readMap(filename)
-  a.doc.filename = filename
-  a.win.title = filename
+#  a.doc.map = readMap(filename)
+#  a.doc.filename = filename
 
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame
 
   # TODO for development
-  a.win.size = (960, 1040)
-  a.win.pos = (960, 0)
-#  a.win.size = (700, 900)
-#  a.win.pos = (900, 0)
+#  a.win.size = (960, 1040)
+#  a.win.pos = (960, 0)
+  a.win.size = (700, 900)
+  a.win.pos = (900, 0)
   a.win.show()
 
 

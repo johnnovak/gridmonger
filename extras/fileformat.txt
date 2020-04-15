@@ -6,7 +6,7 @@ RIFF ('GRDM'            # Gridmonger map file
         'ICRD'          # Creation Date
         'ISFT'          # Software
     )
-    'maph'              # Map
+    'map '              # Map
     LIST ('lvls'        # List of maps
         LIST ('lvl '    # Level
             'prop'      # Level properties
@@ -22,8 +22,9 @@ RIFF ('GRDM'            # Gridmonger map file
 )
 
 
-'maph'
-    UINT8   format version
+'map '
+    UINT16  format version
+    BSTR    name
 
 'prop'
     BSTR    locationName  (minLen=1, maxLen=100)

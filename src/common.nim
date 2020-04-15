@@ -35,8 +35,13 @@ const
 
 type
   Map* = ref object
-    levels*:   seq[Level]
-    links*:    BiTable[Location, Location]
+    name*:   string
+    levels*: seq[Level]
+    links*:  BiTable[Location, Location]
+
+    sortedLevelNames*:         seq[string]
+    sortedLevelIdxToLevelIdx*: Table[Natural, Natural]
+
 
   Level* = ref object
     locationName*: string

@@ -16,7 +16,7 @@ const CurrentMapVersion = 1
 
 const
   FourCC_GRDM          = "GRMM"
-  FourCC_GRDM_maph     = "maph"
+  FourCC_GRDM_map      = "map "
   FourCC_GRDM_lnks     = "lnks"
   FourCC_GRDM_lvls     = "lvls"
   FourCC_GRDM_lvl      = "lvl "
@@ -24,10 +24,6 @@ const
   FourCC_GRDM_lvl_cell = "cell"
   FourCC_GRDM_lvl_note = "note"
   FourCC_GRDM_them     = "them"
-
-type
-  MapHeaderInfo = object
-    version: Natural
 
 
 type MapReadError* = object of IOError
@@ -170,7 +166,7 @@ proc readLevel(rr): Level =
   rr.cursor = dataCursor.get
 
   # because of the South & East borders
-  let numCells = (level.rows+1) * (level.cols+1)   
+  let numCells = (level.rows+1) * (level.cols+1)
 
   level.cellGrid.cells = readLevelData_V1(rr, numCells)
 
@@ -197,12 +193,13 @@ proc readLevelList(rr): seq[Level] =
   result = ml
 
 
-proc readMapHeader(rr): MapHeaderInfo =
-  var h: MapHeaderInfo
-  h.version = rr.read(uint16).Natural
-  if h.version > CurrentMapVersion:
+proc readMap(rr): Map =
+  let version = rr.read(uint16).Natural
+  if version > CurrentMapVersion:
     raiseMapReadError("Unsupported map file version: {h.version}")
-  result = h
+
+  let name = rr.readBStr()
+  result = newMap(name)
 
 
 # TODO return more than just a single map
@@ -217,7 +214,7 @@ proc readMap*(filename: string): Map =
           fmt"RIFF formatTypeId: {fourCCToCharStr(riffChunk.formatTypeId)}")
 
     var
-      mapHeaderCursor = Cursor.none
+      mapCursor = Cursor.none
       linksCursor = Cursor.none
       levelListCursor = Cursor.none
       themeCursor = Cursor.none
@@ -238,9 +235,9 @@ proc readMap*(filename: string): Map =
 
       elif ci.kind == ckChunk:
         case ci.id
-        of FourCC_GRDM_maph:
-          if mapHeaderCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_maph)
-          mapHeaderCursor = rr.cursor.some
+        of FourCC_GRDM_map:
+          if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_map)
+          mapCursor = rr.cursor.some
 
         of FourCC_GRDM_lnks:
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
@@ -253,22 +250,23 @@ proc readMap*(filename: string): Map =
         else: discard   # skip unknown top level chunks
 
     # Check for mandatory chunks
-    if mapHeaderCursor.isNone: chunkNotFoundError(FourCC_GRDM_maph)
+    if mapCursor.isNone:       chunkNotFoundError(FourCC_GRDM_map)
     if levelListCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvls)
     if linksCursor.isNone:     chunkNotFoundError(FourCC_GRDM_lnks)
 
     # Load chunks
-    rr.cursor = mapHeaderCursor.get
-    discard readMapHeader(rr)
-
-    result = newMap()
+    rr.cursor = mapCursor.get
+    let m = readMap(rr)
 
     rr.cursor = levelListCursor.get
     rr.enterGroup()
-    result.levels = readLevelList(rr)
+    m.levels = readLevelList(rr)
+    m.refreshSortedLevelNames()
 
     rr.cursor = linksCursor.get
-    result.links = readLinks(rr)
+    m.links = readLinks(rr)
+
+    result = m
 
   except MapReadError as e:
     echo getStackTrace(e)
@@ -364,10 +362,10 @@ proc writeLevelList(rw; levels: seq[Level]) =
     writeLevel(rw, l)
   rw.endChunk()
 
-
-proc writeMapHeader(rw) =
-  rw.beginChunk(FourCC_GRDM_maph)
+proc writeMap(rw; m: Map) =
+  rw.beginChunk(FourCC_GRDM_map)
   rw.write(CurrentMapVersion.uint16)
+  rw.writeBStr(m.name)
   rw.endChunk()
 
 
@@ -376,8 +374,7 @@ proc writeMap*(m: Map, filename: string) =
   try:
     rw = createRiffFile(filename, FourCC_GRDM)
 
-    # TODO writeMapInfo(rw)
-    writeMapHeader(rw)
+    writeMap(rw, m)
     writeLevelList(rw, m.levels)
     writeLinks(rw, m.links)
 # TODO   writeTheme(rw)
