@@ -88,13 +88,13 @@ type
 
 
   Document = object
-    filename:        string
-    map:             Map
-    levelStyle:      LevelStyle
+    filename:          string
+    map:               Map
+    levelStyle:        LevelStyle
 
   Options = object
-    scrollMargin:    Natural
-    showNotesPane:   bool
+    scrollMargin:      Natural
+    showNotesPane:     bool
 
   UI = object
     style:             UIStyle
@@ -147,6 +147,7 @@ type
   Dialog = object
     saveDiscardDialog:    SaveDiscardDialogParams
     newMapDialog:         NewMapDialogParams
+    editMapPropsDialog:   EditMapPropsDialogParams
     newLevelDialog:       NewLevelDialogParams
     editLevelPropsDialog: EditLevelPropsParams
     editNoteDialog:       EditNoteDialogParams
@@ -157,6 +158,10 @@ type
     action:       proc (a: var AppContext)
 
   NewMapDialogParams = object
+    isOpen:       bool
+    name:         string
+
+  EditMapPropsDialogParams = object
     isOpen:       bool
     name:         string
 
@@ -209,16 +214,15 @@ proc mapHasLevels(a): bool =
   a.doc.map.levels.len > 0
 
 # }}}
-# {{{ getCurrLevelIdx()
-proc getCurrLevelIdx(a): Natural =
-  let sortedLevelIdx = a.ui.cursor.level
-  a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+# {{{ getCurrSortedLevelIdx()
+proc getCurrSortedLevelIdx(a): Natural =
+  a.doc.map.findSortedLevelIdxByLevelIdx(a.ui.cursor.level)
 
 # }}}
 # {{{ getCurrLevel()
 # TODO convert to template
 proc getCurrLevel(a): Level =
-  a.doc.map.levels[getCurrLevelIdx(a)]
+  a.doc.map.levels[a.ui.cursor.level]
 
 # }}}
 # {{{ clearStatusMessage()
@@ -657,8 +661,10 @@ proc openNewLevelDialog(a) =
   if mapHasLevels(a):
     let l = getCurrLevel(a)
     dlg.locationName = l.locationName
-    dlg.levelName = l.levelName
-    dlg.elevation = $l.elevation
+    dlg.levelName = ""
+    dlg.elevation = if   l.elevation > 0: $(l.elevation + 1)
+                    elif l.elevation < 0: $(l.elevation - 1)
+                    else: "0"
     dlg.rows = $l.rows
     dlg.cols = $l.cols
   else:
@@ -818,77 +824,6 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   koi.endDialog()
 
 # }}}
-# {{{ Edit level properties dialog
-proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
-  let
-    dialogWidth = 410.0
-    dialogHeight = 224.0
-
-  koi.beginDialog(dialogWidth, dialogHeight,
-                  fmt"{IconNewFile}  Edit Level Properties")
-  a.clearStatusMessage()
-
-  let
-    h = 24.0
-    labelWidth = 130.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
-
-  var
-    x = 30.0
-    y = 60.0
-
-  koi.label(x, y, labelWidth, h, "Location Name")
-  dlg.locationName = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.locationName
-  )
-
-  y += 32
-  koi.label(x, y, labelWidth, h, "Level Name")
-  dlg.levelName = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.levelName
-  )
-
-  y += 44
-  koi.label(x, y, labelWidth, h, "Elevation")
-  dlg.elevation = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.elevation
-  )
-
-  proc okAction(dlg: var EditLevelPropsParams, a) =
-    # TODO number error checking
-    let elevation = parseInt(dlg.elevation)
-
-    var level = getCurrLevel(a)
-    level.locationName = dlg.locationName
-    level.levelName = dlg.levelName
-    level.elevation = elevation
-    a.doc.map.refreshSortedLevelNames()
-
-    koi.closeDialog()
-    dlg.isOpen = false
-
-  proc cancelAction(dlg: var EditLevelPropsParams, a) =
-    koi.closeDialog()
-    dlg.isOpen = false
-
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
-
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
-    okAction(dlg, a)
-
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-    cancelAction(dlg, a)
-
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
-
-  koi.endDialog()
-
-# }}}
 # {{{ New level dialog
 proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   let
@@ -976,6 +911,77 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   koi.endDialog()
 
 # }}}
+# {{{ Edit level properties dialog
+proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
+  let
+    dialogWidth = 410.0
+    dialogHeight = 224.0
+
+  koi.beginDialog(dialogWidth, dialogHeight,
+                  fmt"{IconNewFile}  Edit Level Properties")
+  a.clearStatusMessage()
+
+  let
+    h = 24.0
+    labelWidth = 130.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Location Name")
+  dlg.locationName = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.locationName
+  )
+
+  y += 32
+  koi.label(x, y, labelWidth, h, "Level Name")
+  dlg.levelName = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.levelName
+  )
+
+  y += 44
+  koi.label(x, y, labelWidth, h, "Elevation")
+  dlg.elevation = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.elevation
+  )
+
+  proc okAction(dlg: var EditLevelPropsParams, a) =
+    # TODO number error checking
+    let elevation = parseInt(dlg.elevation)
+
+    actions.setLevelProps(a.doc.map, a.ui.cursor.level,
+                          dlg.locationName, dlg.levelName, elevation,
+                          a.undoManager)
+
+    setStatusMessage(fmt"Level properties updated", a)
+
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  proc cancelAction(dlg: var EditLevelPropsParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+  for ke in koi.keyBuf():
+    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+
+  koi.endDialog()
+
+# }}}
 # {{{ New map dialog
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
   let
@@ -1012,6 +1018,60 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     dlg.isOpen = false
 
   proc cancelAction(dlg: var NewMapDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+  for ke in koi.keyBuf():
+    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+
+  koi.endDialog()
+
+# }}}
+# {{{ Edit map properties dialog
+proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
+  let
+    dialogWidth = 410.0
+    dialogHeight = 150.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  Edit Map Properties")
+  a.clearStatusMessage()
+
+  let
+    h = 24.0
+    labelWidth = 130.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Name")
+  dlg.name = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
+  )
+
+  proc okAction(dlg: var EditMapPropsDialogParams, a) =
+    # TODO should be action
+    a.doc.map.name = dlg.name
+
+    setStatusMessage(IconFile, fmt"Map properties updated", a)
+
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  proc cancelAction(dlg: var EditMapPropsDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1307,7 +1367,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     of raBottom:      South
     of raBottomRight: SouthEast
 
-    actions.resizeLevel(a.doc.map, getCurrLevelIdx(a), newRows, newCols, align,
+    actions.resizeLevel(a.doc.map, a.ui.cursor.level, newRows, newCols, align,
                         a.undoManager)
 
     setStatusMessage(IconCrop, "Level resized", a)
@@ -1527,7 +1587,7 @@ proc handleLevelEvents(a) =
         let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
         ui.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
-        map.levels[getCurrLevelIdx(a)] = newLevel(
+        map.levels[cur.level] = newLevel(
           l.locationName, l.levelName, l.elevation, l.rows, l.cols
         )
 
@@ -1626,6 +1686,11 @@ proc handleLevelEvents(a) =
         dlg.locationName = l.locationName
         dlg.levelName = l.levelName
         dlg.elevation = $l.elevation
+        dlg.isOpen = true
+
+      elif ke.isKeyDown(keyP, {mkCtrl, mkAlt}):
+        alias(dlg, a.dialog.editMapPropsDialog)
+        dlg.name = $map.name
         dlg.isOpen = true
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
@@ -1762,7 +1827,7 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(keyX, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.eraseSelection(map, getCurrLevelIdx(a),
+          actions.eraseSelection(map, cur.level,
                                  ui.copyBuf.get.selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconCut, "Cut selection to buffer", a)
@@ -1770,7 +1835,7 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(keyE, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.eraseSelection(map, getCurrLevelIdx(a),
+          actions.eraseSelection(map, cur.level,
                                  ui.copyBuf.get.selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconEraser, "Erased selection", a)
@@ -1778,7 +1843,7 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(keyF, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.fillSelection(map, getCurrLevelIdx(a),
+          actions.fillSelection(map, cur.level,
                                 ui.copyBuf.get.selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Filled selection", a)
@@ -1786,7 +1851,7 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(Key.keyS, {mkCtrl}):
         let bbox = copySelection(a)
         if bbox.isSome:
-          actions.surroundSelectionWithWalls(map, getCurrLevelIdx(a),
+          actions.surroundSelectionWithWalls(map, cur.level,
                                              ui.copyBuf.get.selection,
                                              bbox.get, um)
           exitSelectMode(a)
@@ -1796,7 +1861,7 @@ proc handleLevelEvents(a) =
         let sel = ui.selection.get
         let bbox = sel.boundingBox()
         if bbox.isSome:
-          actions.cropLevel(map, getCurrLevelIdx(a), bbox.get, um)
+          actions.cropLevel(map, cur.level, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped map to selection", a)
 
@@ -1870,14 +1935,14 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
 
       elif ke.isKeyDown(keyEnter):
-        actions.nudgeLevel(map, getCurrLevelIdx(a),
+        actions.nudgeLevel(map, cur.level,
                            dp.selStartRow, dp.selStartCol, ui.nudgeBuf.get, um)
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
       elif ke.isKeyDown(keyEscape):
         ui.editMode = emNormal
-        map.levels[getCurrLevelIdx(a)] = ui.nudgeBuf.get.level
+        map.levels[cur.level] = ui.nudgeBuf.get.level
         ui.nudgeBuf = SelectionBuffer.none
         a.clearStatusMessage()
 
@@ -2003,11 +2068,14 @@ proc renderUI() =
   if mapHasLevels(a):
     const LevelDropdownWidth = 320
 
-    ui.cursor.level = koi.dropdown(
+    let sortedLevelIdx = koi.dropdown(
       (winWidth - LevelDropdownWidth)*0.5, 45, LevelDropdownWidth, 24.0,   # TODO calc y
-      a.doc.map.sortedLevelNames, tooltip = "Current map level",
-      ui.cursor.level, style = a.theme.levelDropdownStyle
+      a.doc.map.sortedLevelNames,
+      tooltip = "Current map level",
+      getCurrSortedLevelIdx(a),
+      style = a.theme.levelDropdownStyle
     )
+    ui.cursor.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
 
     updateViewStartAndCursorPosition(a)
 
@@ -2074,6 +2142,9 @@ proc renderUI() =
   elif dlg.newMapDialog.isOpen:
     newMapDialog(dlg.newMapDialog, a)
 
+  elif dlg.editMapPropsDialog.isOpen:
+    editMapPropsDialog(dlg.editMapPropsDialog, a)
+
   elif dlg.newLevelDialog.isOpen:
     newLevelDialog(dlg.newLevelDialog, a)
 
@@ -2117,10 +2188,8 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
     a.theme.nextThemeIndex = Natural.none
 
   if doHandleEvents:
-    if a.doc.map.levels.len == 0:
-      handleLevelEventsNoLevels(a)
-    else:
-      handleLevelEvents(a)
+    if mapHasLevels(a): handleLevelEvents(a)
+    else:               handleLevelEventsNoLevels(a)
 
   renderUI()
 

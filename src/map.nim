@@ -20,6 +20,13 @@ proc newMap*(name: string): Map =
   result = m
 
 
+proc findSortedLevelIdxByLevelIdx*(m; i: Natural): Natural =
+  for sortedLevelIdx, levelIdx in m.sortedLevelIdxToLevelIdx.pairs:
+    if i == levelIdx:
+      return sortedLevelIdx
+  assert false
+
+
 proc refreshSortedLevelNames*(m) =
   proc mkSortedLevelName(l: Level): string =
     let elevation = if l.elevation == 0: "G" else: $l.elevation

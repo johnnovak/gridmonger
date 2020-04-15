@@ -2,6 +2,7 @@ import options
 
 import common
 import level
+import map
 import rect
 import selection
 import undomanager
@@ -14,7 +15,7 @@ using
   um: var UndoManager[Map]
 
 # {{{ fullLevelAction()
-template fullLevelAction(map; level: Natural, um;
+template fullLevelAction(map; level: Natural; um;
                          actionName: string, actionMap, actionBody: untyped) =
   let action = proc (actionMap: var Map) =
     actionBody
@@ -28,7 +29,7 @@ template fullLevelAction(map; level: Natural, um;
 
 # }}}
 # {{{ cellAreaAction()
-template cellAreaAction(map; level: Natural, rect: Rect[Natural], um;
+template cellAreaAction(map; level: Natural, rect: Rect[Natural]; um;
                         actionName: string, actionMap, actionBody: untyped) =
   let action = proc (actionMap: var Map) =
     actionBody
@@ -56,21 +57,21 @@ template singleCellAction(map; loc: Location; um;
 # }}}
 
 # {{{ eraseCellWalls*()
-proc eraseCellWalls*(map; loc: Location, um) =
+proc eraseCellWalls*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell walls", m):
     alias(l, m.levels[loc.level])
     l.eraseCellWalls(loc.row, loc.col)
 
 # }}}
 # {{{ eraseCell*()
-proc eraseCell*(map; loc: Location, um) =
+proc eraseCell*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell", m):
     alias(l, m.levels[loc.level])
     l.eraseCell(loc.row, loc.col)
 
 # }}}
 # {{{ eraseSelection*()
-proc eraseSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural], um) =
+proc eraseSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural]; um) =
   cellAreaAction(map, level, bbox, um, "Erase selection", m):
     alias(l, m.levels[level])
     for r in 0..<sel.rows:
@@ -82,7 +83,7 @@ proc eraseSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural], u
 
 # }}}
 # {{{ fillSelection*()
-proc fillSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural], um) =
+proc fillSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural]; um) =
   cellAreaAction(map, level, bbox, um, "Fill selection", m):
     alias(l, m.levels[level])
     for r in 0..<sel.rows:
@@ -116,7 +117,7 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection, bbox: Rect
 
 # }}}
 # {{{ paste*()
-proc paste*(map; dest: Location, cb: SelectionBuffer, um) =
+proc paste*(map; dest: Location, cb: SelectionBuffer; um) =
   let rect = rectN(
     dest.row,
     dest.col,
@@ -136,21 +137,21 @@ proc paste*(map; dest: Location, cb: SelectionBuffer, um) =
 
 # }}}
 # {{{ setWall*()
-proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall, um) =
+proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
   singleCellAction(map, loc, um, "Set wall", m):
     alias(l, m.levels[loc.level])
     l.setWall(loc.row, loc.col, dir, w)
 
 # }}}
 # {{{ setFloor*()
-proc setFloor*(map; loc: Location, f: Floor, um) =
+proc setFloor*(map; loc: Location, f: Floor; um) =
   singleCellAction(map, loc, um, "Set floor", m):
     alias(l, m.levels[loc.level])
     l.setFloor(loc.row, loc.col, f)
 
 # }}}
 # {{{ setOrientedFloor*()
-proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation, um) =
+proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
   singleCellAction(map, loc, um, "Set oriented floor", m):
     alias(l, m.levels[loc.level])
     l.setFloor(loc.row, loc.col, f)
@@ -158,7 +159,7 @@ proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation, um) =
 
 # }}}
 # {{{ excavate*()
-proc excavate*(map; loc: Location, um) =
+proc excavate*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Excavate", m):
     alias(l, m.levels[loc.level])
     alias(c, loc.col)
@@ -189,7 +190,7 @@ proc excavate*(map; loc: Location, um) =
 
 # }}}
 # {{{ toggleFloorOrientation*()
-proc toggleFloorOrientation*(map; loc: Location, um) =
+proc toggleFloorOrientation*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Toggle floor orientation", m):
     alias(l, m.levels[loc.level])
     alias(c, loc.col)
@@ -200,34 +201,36 @@ proc toggleFloorOrientation*(map; loc: Location, um) =
 
 # }}}
 # {{{ setNote*()
-proc setNote*(map; loc: Location, n: Note, um) =
+proc setNote*(map; loc: Location, n: Note; um) =
   singleCellAction(map, loc, um, "Set note", m):
     alias(l, m.levels[loc.level])
     l.setNote(loc.row, loc.col, n)
 
 # }}}
 # {{{ eraseNote*()
-proc eraseNote*(map; loc: Location, um) =
+proc eraseNote*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase note", m):
     alias(l, m.levels[loc.level])
     l.delNote(loc.row, loc.col)
 
 # }}}
+
 # {{{ resizeLevel*()
-proc resizeLevel*(map; level, newRows, newCols: Natural, align: Direction, um) =
+proc resizeLevel*(map; level, newRows, newCols: Natural, align: Direction; um) =
   fullLevelAction(map, level, um, "Resize level", m):
     alias(l, m.levels[level])
     l = l.resize(newRows, newCols, align)
 
 # }}}
 # {{{ cropLevel*()
-proc cropLevel*(map; level: Natural, rect: Rect[Natural], um) =
+proc cropLevel*(map; level: Natural, rect: Rect[Natural]; um) =
   fullLevelAction(map, level, um, "Crop level", m):
     m.levels[level] = newLevelFrom(m.levels[level], rect)
 
 # }}}
 # {{{ nudgeLevel*()
-proc nudgeLevel*(map; level, destRow, destCol: int, cb: SelectionBuffer, um) =
+# TODO simplify, use fullLevelAction
+proc nudgeLevel*(map; level, destRow, destCol: int, cb: SelectionBuffer; um) =
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
   let action = proc (m: var Map) =
@@ -246,6 +249,33 @@ proc nudgeLevel*(map; level, destRow, destCol: int, cb: SelectionBuffer, um) =
     m.levels[level] = undoLevel
 
   um.storeUndoState("Nudge level", action, undoAction)
+  action(map)
+
+# }}}
+# {{{ setLevelProps()
+proc setLevelProps*(map; level: Natural, locationName, levelName: string,
+                    elevation: int; um) =
+
+  let action = proc (m: var Map) =
+    alias(l, m.levels[level])
+    l.locationName = locationName
+    l.levelName = levelName
+    l.elevation = elevation
+    m.refreshSortedLevelNames()
+
+  alias(l, map.levels[level])
+  let oldLocationName = l.locationName
+  let oldLevelName = l.levelName
+  let oldElevation = l.elevation
+
+  var undoAction = proc (m: var Map) =
+    alias(l, m.levels[level])
+    l.locationName = oldLocationName
+    l.levelName = oldLevelName
+    l.elevation = oldElevation
+    m.refreshSortedLevelNames()
+
+  um.storeUndoState("Edit level properties", action, undoAction)
   action(map)
 
 # }}}
