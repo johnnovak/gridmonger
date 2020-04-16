@@ -1,4 +1,5 @@
 import options
+import strformat
 
 import common
 import level
@@ -9,41 +10,62 @@ import undomanager
 import utils
 
 
+type UndoStateData* = object
+  actionName*: string
+  location*: Location
+
 using
   map: var Map
   m: var Map
-  um: var UndoManager[Map]
+  um: var UndoManager[Map, UndoStateData]
 
 # {{{ fullLevelAction()
-template fullLevelAction(map; level: Natural; um;
-                         actionName: string, actionMap, actionBody: untyped) =
-  let action = proc (actionMap: var Map) =
+# TODO investigate why we need to use different parameter names in nested
+# templates
+template fullLevelAction(map; loc: Location; um;
+                         actName: string, actionMap, actionBody: untyped) =
+
+  let usd = UndoStateData(actionName: actName, location: loc)
+
+  let action = proc (actionMap: var Map): UndoStateData =
     actionBody
+    result = usd
 
-  var undoLevel = newLevelFrom(map.levels[level])
-  var undoAction = proc (m: var Map) =
-    m.levels[level] = undoLevel
+  var undoLevel = newLevelFrom(map.levels[loc.level])
+  var undoAction = proc (m: var Map): UndoStateData =
+    m.levels[loc.level] = undoLevel
+    result = usd
 
-  um.storeUndoState(actionName, action, undoAction)
-  action(map)
+  um.storeUndoState(action, undoAction)
+  discard action(map)
 
 # }}}
 # {{{ cellAreaAction()
-template cellAreaAction(map; level: Natural, rect: Rect[Natural]; um;
-                        actionName: string, actionMap, actionBody: untyped) =
-  let action = proc (actionMap: var Map) =
+# TODO investigate why we need to use different parameter names in nested
+# templates
+template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
+                        actName: string, actionMap, actionBody: untyped) =
+
+  let usd = UndoStateData(
+    actionName: actName,
+    location: Location(level: lvl, row: rect.r1, col: rect.c1)
+  )
+
+  let action = proc (actionMap: var Map): UndoStateData =
     actionBody
-    actionMap.levels[level].reindexNotes()
+    actionMap.levels[lvl].reindexNotes()
+    result = usd
 
-  var undoLevel = newLevelFrom(map.levels[level], rect)
+  var undoLevel = newLevelFrom(map.levels[lvl], rect)
 
-  var undoAction = proc (m: var Map) =
-    m.levels[level].copyFrom(destRow=rect.r1, destCol=rect.c1, src=undoLevel,
-                             srcRect=rectN(0, 0, rect.rows, rect.cols))
-    m.levels[level].reindexNotes()
+  var undoAction = proc (m: var Map): UndoStateData =
+    m.levels[lvl].copyFrom(destRow=rect.r1, destCol=rect.c1, src=undoLevel,
+                           srcRect=rectN(0, 0, rect.rows, rect.cols))
+    m.levels[lvl].reindexNotes()
+    result = usd
 
-  um.storeUndoState(actionName, action, undoAction)
-  action(map)
+  um.storeUndoState(action, undoAction)
+  discard action(map)
 
 # }}}
 # {{{ singleCellAction()
@@ -63,6 +85,7 @@ proc eraseCellWalls*(map; loc: Location; um) =
     l.eraseCellWalls(loc.row, loc.col)
 
 # }}}
+
 # {{{ eraseCell*()
 proc eraseCell*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell", m):
@@ -96,8 +119,8 @@ proc fillSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural]; um
 
 # }}}
 # {{{ surroundSelection*()
-proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection, bbox: Rect[Natural],
-                                 um) =
+proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
+                                 bbox: Rect[Natural], um) =
   cellAreaAction(map, level, bbox, um, "Surround selection with walls", m):
     alias(l, m.levels[level])
     for r in 0..<sel.rows:
@@ -138,21 +161,21 @@ proc paste*(map; dest: Location, cb: SelectionBuffer; um) =
 # }}}
 # {{{ setWall*()
 proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
-  singleCellAction(map, loc, um, "Set wall", m):
+  singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
     alias(l, m.levels[loc.level])
     l.setWall(loc.row, loc.col, dir, w)
 
 # }}}
 # {{{ setFloor*()
 proc setFloor*(map; loc: Location, f: Floor; um) =
-  singleCellAction(map, loc, um, "Set floor", m):
+  singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
     alias(l, m.levels[loc.level])
     l.setFloor(loc.row, loc.col, f)
 
 # }}}
 # {{{ setOrientedFloor*()
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
-  singleCellAction(map, loc, um, "Set oriented floor", m):
+  singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
     alias(l, m.levels[loc.level])
     l.setFloor(loc.row, loc.col, f)
     l.setFloorOrientation(loc.row, loc.col, ot)
@@ -216,24 +239,29 @@ proc eraseNote*(map; loc: Location; um) =
 # }}}
 
 # {{{ resizeLevel*()
-proc resizeLevel*(map; level, newRows, newCols: Natural, align: Direction; um) =
-  fullLevelAction(map, level, um, "Resize level", m):
-    alias(l, m.levels[level])
+proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
+                  align: Direction; um) =
+  fullLevelAction(map, loc, um, "Resize level", m):
+    alias(l, m.levels[loc.level])
     l = l.resize(newRows, newCols, align)
 
 # }}}
 # {{{ cropLevel*()
-proc cropLevel*(map; level: Natural, rect: Rect[Natural]; um) =
-  fullLevelAction(map, level, um, "Crop level", m):
-    m.levels[level] = newLevelFrom(m.levels[level], rect)
+proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
+  fullLevelAction(map, loc, um, "Crop level", m):
+    m.levels[loc.level] = newLevelFrom(m.levels[loc.level], rect)
 
 # }}}
 # {{{ nudgeLevel*()
 # TODO simplify, use fullLevelAction
-proc nudgeLevel*(map; level, destRow, destCol: int, cb: SelectionBuffer; um) =
+proc nudgeLevel*(map; loc: Location, destRow, destCol: int, cb: SelectionBuffer;
+                 um) =
+
+  let usd = UndoStateData(actionName: "Nudge level", location: loc)
+
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
-  let action = proc (m: var Map) =
+  let action = proc (m: var Map): UndoStateData =
     var l = newLevel(
       cb.level.locationName,
       cb.level.levelName,
@@ -242,41 +270,47 @@ proc nudgeLevel*(map; level, destRow, destCol: int, cb: SelectionBuffer; um) =
       cb.level.cols
     )
     l.paste(destRow, destCol, cb.level, cb.selection)
-    m.levels[level] = l
+    m.levels[loc.level] = l
+    result = usd
 
   var undoLevel = newLevelFrom(cb.level)
-  var undoAction = proc (m: var Map) =
-    m.levels[level] = undoLevel
+  var undoAction = proc (m: var Map): UndoStateData =
+    m.levels[loc.level] = undoLevel
+    result = usd
 
-  um.storeUndoState("Nudge level", action, undoAction)
-  action(map)
+  um.storeUndoState(action, undoAction)
+  discard action(map)
 
 # }}}
 # {{{ setLevelProps()
-proc setLevelProps*(map; level: Natural, locationName, levelName: string,
+proc setLevelProps*(map; loc: Location, locationName, levelName: string,
                     elevation: int; um) =
 
-  let action = proc (m: var Map) =
-    alias(l, m.levels[level])
+  let usd = UndoStateData(actionName: "Edit level properties", location: loc)
+
+  let action = proc (m: var Map): UndoStateData =
+    alias(l, m.levels[loc.level])
     l.locationName = locationName
     l.levelName = levelName
     l.elevation = elevation
     m.refreshSortedLevelNames()
+    result = usd
 
-  alias(l, map.levels[level])
+  alias(l, map.levels[loc.level])
   let oldLocationName = l.locationName
   let oldLevelName = l.levelName
   let oldElevation = l.elevation
 
-  var undoAction = proc (m: var Map) =
-    alias(l, m.levels[level])
+  var undoAction = proc (m: var Map): UndoStateData =
+    alias(l, m.levels[loc.level])
     l.locationName = oldLocationName
     l.levelName = oldLevelName
     l.elevation = oldElevation
     m.refreshSortedLevelNames()
+    result = usd
 
-  um.storeUndoState("Edit level properties", action, undoAction)
-  action(map)
+  um.storeUndoState(action, undoAction)
+  discard action(map)
 
 # }}}
 

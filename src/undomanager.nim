@@ -1,36 +1,33 @@
 import options
 
-
 type
-  UndoManager*[S] = ref object
-    states:        seq[UndoState[S]]
+  UndoManager*[S, R] = ref object
+    states:        seq[UndoState[S, R]]
     currState:     int
     lastSaveState: int
 
-  ActionProc*[S] = proc (s: var S)
+  ActionProc*[S, R] = proc (s: var S): R
 
-  UndoState[S] = object
-    action:     ActionProc[S]
-    actionName: string
-    undoAction: ActionProc[S]
+  UndoState[S, R] = object
+    action:     ActionProc[S, R]
+    undoAction: ActionProc[S, R]
 
 
-proc initUndoManager*[S](m: var UndoManager[S]) =
+proc initUndoManager*[S, R](m: var UndoManager[S, R]) =
   m.states = @[]
   m.currState = 0
   m.lastSaveState = 0
 
-proc newUndoManager*[S](): UndoManager[S] =
-  result = new UndoManager[S]
+proc newUndoManager*[S, R](): UndoManager[S, R] =
+  result = new UndoManager[S, R]
   initUndoManager(result)
 
 
-proc storeUndoState*[S](m: var UndoManager[S],
-                        actionName: string,
-                        action, undoAction: ActionProc[S]) =
+proc storeUndoState*[S, R](m: var UndoManager[S, R],
+                           action, undoAction: ActionProc[S, R]) =
 
   if m.states.len == 0:
-    m.states.add(UndoState[S]())
+    m.states.add(UndoState[S, R]())
     m.currState = 0
 
   # Discard later states if we're not at the last one
@@ -39,33 +36,30 @@ proc storeUndoState*[S](m: var UndoManager[S],
     m.lastSaveState = -1
 
   m.states[m.currState].action = action
-  m.states[m.currState].actionName = actionName
-  m.states.add(UndoState[S](action: nil, undoAction: undoAction))
+  m.states.add(UndoState[S, R](action: nil, undoAction: undoAction))
   inc(m.currState)
 
 
-proc canUndo*[S](m: UndoManager[S]): bool =
+proc canUndo*[S, R](m: UndoManager[S, R]): bool =
   m.currState > 0
 
-proc undo*[S](m: var UndoManager[S], s: var S): string =
+proc undo*[S, R](m: var UndoManager[S, R], s: var S): R =
   if m.canUndo():
-    m.states[m.currState].undoAction(s)
+    result = m.states[m.currState].undoAction(s)
     dec(m.currState)
-    result = m.states[m.currState].actionName
 
-proc canRedo*[S](m: UndoManager[S]): bool =
+proc canRedo*[S, R](m: UndoManager[S, R]): bool =
   m.currState < m.states.high
 
-proc redo*[S](m: var UndoManager[S], s: var S): string =
+proc redo*[S, R](m: var UndoManager[S, R], s: var S): R =
   if m.canRedo():
-    m.states[m.currState].action(s)
-    result = m.states[m.currState].actionName
+    result = m.states[m.currState].action(s)
     inc(m.currState)
 
-proc setLastSaveState*[S](m: var UndoManager[S]) =
+proc setLastSaveState*[S, R](m: var UndoManager[S, R]) =
   m.lastSaveState = m.currState
 
-proc isModified*[S](m: UndoManager[S]): bool =
+proc isModified*[S, R](m: UndoManager[S, R]): bool =
   m.currState != m.lastSaveState
 
 # vim: et:ts=2:sw=2:fdm=marker

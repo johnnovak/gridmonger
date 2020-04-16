@@ -30,11 +30,10 @@ proc findSortedLevelIdxByLevelIdx*(m; i: Natural): Natural =
 proc refreshSortedLevelNames*(m) =
   proc mkSortedLevelName(l: Level): string =
     let elevation = if l.elevation == 0: "G" else: $l.elevation
-    let dash = "\u2013"
     if l.levelName == "":
       fmt"{l.locationName} ({elevation})"
     else:
-      fmt"{l.locationName} {dash} {l.levelName} ({elevation})"
+      fmt"{l.locationName} {EnDash} {l.levelName} ({elevation})"
 
   var sortedLevelsWithIndex = zip(m.levels, (0..m.levels.high).toSeq)
   sortedLevelsWithIndex.sort(

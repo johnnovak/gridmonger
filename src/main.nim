@@ -68,7 +68,7 @@ type
     theme:       Theme
     dialog:      Dialog
 
-    undoManager: UndoManager[Map]
+    undoManager: UndoManager[Map, UndoStateData]
 
     shouldClose: bool
 
@@ -1030,7 +1030,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
     # TODO number error checking
     let elevation = parseInt(dlg.elevation)
 
-    actions.setLevelProps(a.doc.map, a.ui.cursor.level,
+    actions.setLevelProps(a.doc.map, a.ui.cursor,
                           dlg.locationName, dlg.levelName, elevation,
                           a.undoManager)
 
@@ -1139,7 +1139,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     of raBottom:      South
     of raBottomRight: SouthEast
 
-    actions.resizeLevel(a.doc.map, a.ui.cursor.level, newRows, newCols, align,
+    actions.resizeLevel(a.doc.map, a.ui.cursor, newRows, newCols, align,
                         a.undoManager)
 
     setStatusMessage(IconCrop, "Level resized", a)
@@ -1641,18 +1641,20 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyU, repeat=true):
         if um.canUndo():
-          let actionName = um.undo(map)
-          # TODO move cursor to action
-          setStatusMessage(IconUndo, fmt"Undid action: {actionName}", a)
+          let undoStateData = um.undo(map)
+          moveCursorTo(undoStateData.location, a)
+          setStatusMessage(IconUndo,
+                           fmt"Undid action: {undoStateData.actionName}", a)
         else:
           setStatusMessage(IconWarning, "Nothing to undo", a)
 
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
         if um.canRedo():
-          let actionName = um.redo(map)
-          # TODO move cursor to action
-          setStatusMessage(IconRedo, fmt"Redid action: {actionName}", a)
+          let undoStateData = um.redo(map)
+          moveCursorTo(undoStateData.location, a)
+          setStatusMessage(IconRedo,
+                           fmt"Redid action: {undoStateData.actionName}", a)
         else:
           setStatusMessage(IconWarning, "Nothing to redo", a)
 
@@ -1919,7 +1921,7 @@ proc handleLevelEvents(a) =
         let sel = ui.selection.get
         let bbox = sel.boundingBox()
         if bbox.isSome:
-          actions.cropLevel(map, cur.level, bbox.get, um)
+          actions.cropLevel(map, cur, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped map to selection", a)
 
@@ -2005,8 +2007,8 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
       elif ke.isKeyDown(keyEnter):
-        actions.nudgeLevel(map, cur.level,
-                           dp.selStartRow, dp.selStartCol, ui.nudgeBuf.get, um)
+        actions.nudgeLevel(map, cur, dp.selStartRow, dp.selStartCol,
+                           ui.nudgeBuf.get, um)
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
@@ -2389,7 +2391,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a = new AppContext
   a.win = win
   a.vg = vg
-  a.undoManager = newUndoManager[Map]()
+  a.undoManager = newUndoManager[Map, UndoStateData]()
 
   loadFonts(vg)
   loadImages(vg, a)

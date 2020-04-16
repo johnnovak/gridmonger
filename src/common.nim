@@ -7,6 +7,7 @@ import tables
 
 
 const
+  EnDash* = "\u2013"
   TextVertAlignFactor* = 0.55
 
 type
