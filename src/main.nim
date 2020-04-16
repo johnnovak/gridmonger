@@ -55,6 +55,7 @@ const
   ThemesDir = "themes"
 
   DefaultZoomLevel = 9
+  CursorJump = 5
 
   StatusBarHeight = 26.0
 
@@ -569,8 +570,8 @@ proc moveCursor(dir: CardinalDir, steps: Natural, a) =
 
 # }}}
 # {{{ moveCursorAndSelStart()
-proc moveCursorAndSelStart(dir: CardinalDir, a) =
-  moveCursor(dir, steps=1, a)
+proc moveCursorAndSelStart(dir: CardinalDir, steps: Natural, a) =
+  moveCursor(dir, steps, a)
   a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
   a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
@@ -1507,14 +1508,33 @@ proc handleLevelEvents(a) =
     MoveKeysUp    = {keyUp,    keyK, keyKp8}
     MoveKeysDown  = {keyDown,  keyJ, keyKp2}
 
+  template handleMoveKeys(moveHandler: untyped) =
+    if   ke.isKeyDown(MoveKeysLeft,  repeat=true): moveHandler(dirW, a)
+    elif ke.isKeyDown(MoveKeysRight, repeat=true): moveHandler(dirE, a)
+    elif ke.isKeyDown(MoveKeysUp,    repeat=true): moveHandler(dirN, a)
+    elif ke.isKeyDown(MoveKeysDown,  repeat=true): moveHandler(dirS, a)
+
+  template handleMoveCursor() =
+    if   ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
+    elif ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
+    elif ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
+    elif ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
+
+    elif ke.isKeyDown(MoveKeysLeft,  {mkCtrl}, repeat=true):
+      moveCursor(dirW, steps=CursorJump, a)
+    elif ke.isKeyDown(MoveKeysRight, {mkCtrl}, repeat=true):
+      moveCursor(dirE, steps=CursorJump, a)
+    elif ke.isKeyDown(MoveKeysUp,    {mkCtrl}, repeat=true):
+      moveCursor(dirN, steps=CursorJump, a)
+    elif ke.isKeyDown(MoveKeysDown,  {mkCtrl}, repeat=true):
+      moveCursor(dirS, steps=CursorJump, a)
+
+
   # TODO these should be part of the level component event handler
   for ke in koi.keyBuf():
     case ui.editMode:
     of emNormal:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
+      handleMoveCursor()
 
       if ke.isKeyDown(keyLeft, {mkCtrl}):
         let (w, h) = win.size
@@ -1783,12 +1803,9 @@ proc handleLevelEvents(a) =
           moveCursor(dir, steps=1, a)
           actions.setFloor(map, cur, fEmpty, um)
 
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(dirW, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): handleMoveKey(dirE, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): handleMoveKey(dirN, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): handleMoveKey(dirS, a)
+      handleMoveKeys(handleMoveKey)
 
-      elif ke.isKeyUp({keyD, keyE, keyF}):
+      if ke.isKeyUp({keyD, keyE, keyF}):
         ui.editMode = emNormal
         a.clearStatusMessage()
 
@@ -1799,12 +1816,9 @@ proc handleLevelEvents(a) =
                   else: wWall
           actions.setWall(map, cur, dir, w, um)
 
-      if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
-      if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
-      if ke.isKeyDown(MoveKeysUp):    handleMoveKey(dirN, a)
-      if ke.isKeyDown(MoveKeysDown):  handleMoveKey(dirS, a)
+      handleMoveKeys(handleMoveKey)
 
-      elif ke.isKeyUp({keyW}):
+      if ke.isKeyUp({keyW}):
         ui.editMode = emNormal
         a.clearStatusMessage()
 
@@ -1823,20 +1837,14 @@ proc handleLevelEvents(a) =
                   else: curSpecWall
           actions.setWall(map, cur, dir, w, um)
 
-      if ke.isKeyDown(MoveKeysLeft):  handleMoveKey(dirW, a)
-      if ke.isKeyDown(MoveKeysRight): handleMoveKey(dirE, a)
-      if ke.isKeyDown(MoveKeysUp):    handleMoveKey(dirN, a)
-      if ke.isKeyDown(MoveKeysDown):  handleMoveKey(dirS, a)
+      handleMoveKeys(handleMoveKey)
 
-      elif ke.isKeyUp({keyR}):
+      if ke.isKeyUp({keyR}):
         ui.editMode = emNormal
         a.clearStatusMessage()
 
     of emSelect:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
+      handleMoveCursor()
 
       if win.isKeyDown(keyLeftControl) or win.isKeyDown(keyRightControl):
         setSelectModeActionMessage(a)
@@ -1914,10 +1922,7 @@ proc handleLevelEvents(a) =
         a.clearStatusMessage()
 
     of emSelectRect:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
+      handleMoveCursor()
 
       var r1,c1, r2,c2: Natural
       if ui.selRect.get.startRow <= cur.row:
@@ -1943,16 +1948,28 @@ proc handleLevelEvents(a) =
 
     of emPastePreview:
       if ke.isKeyDown(MoveKeysLeft,  repeat=true):
-        moveCursorAndSelStart(dirW, a)
+        moveCursorAndSelStart(dirW, steps=1, a)
 
-      if ke.isKeyDown(MoveKeysRight, repeat=true):
-        moveCursorAndSelStart(dirE, a)
+      elif ke.isKeyDown(MoveKeysRight, repeat=true):
+        moveCursorAndSelStart(dirE, steps=1, a)
 
-      if ke.isKeyDown(MoveKeysUp,    repeat=true):
-        moveCursorAndSelStart(dirN, a)
+      elif ke.isKeyDown(MoveKeysUp,    repeat=true):
+        moveCursorAndSelStart(dirN, steps=1, a)
 
-      if ke.isKeyDown(MoveKeysDown,  repeat=true):
-        moveCursorAndSelStart(dirS, a)
+      elif ke.isKeyDown(MoveKeysDown,  repeat=true):
+        moveCursorAndSelStart(dirS, steps=1, a)
+
+      elif ke.isKeyDown(MoveKeysLeft,  {mkCtrl}, repeat=true):
+        moveCursorAndSelStart(dirW, steps=CursorJump, a)
+
+      elif ke.isKeyDown(MoveKeysRight, {mkCtrl}, repeat=true):
+        moveCursorAndSelStart(dirE, steps=CursorJump, a)
+
+      elif ke.isKeyDown(MoveKeysUp,    {mkCtrl}, repeat=true):
+        moveCursorAndSelStart(dirN, steps=CursorJump, a)
+
+      elif ke.isKeyDown(MoveKeysDown,  {mkCtrl}, repeat=true):
+        moveCursorAndSelStart(dirS, steps=CursorJump, a)
 
       elif ke.isKeyDown({keyEnter, keyP}):
         actions.paste(map, cur, ui.copyBuf.get, um)
@@ -1967,12 +1984,9 @@ proc handleLevelEvents(a) =
         a.clearStatusMessage()
 
     of emNudgePreview:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveSelStart(dirW, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveSelStart(dirE, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveSelStart(dirN, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveSelStart(dirS, a)
+      handleMoveKeys(moveSelStart)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
+      if ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
       elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
 
       elif ke.isKeyDown(keyEnter):
@@ -1988,10 +2002,7 @@ proc handleLevelEvents(a) =
         a.clearStatusMessage()
 
     of emSetTeleportDestination:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
+      handleMoveCursor()
 
       if ke.isKeyDown(keyEnter):
         setFloor(fTeleportDestination, a)
