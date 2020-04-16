@@ -30,25 +30,6 @@ import undomanager
 import utils
 
 
-const SpecialWalls = @[
-  wIllusoryWall,
-  wInvisibleWall,
-  wDoor,
-  wLockedDoor,
-  wArchway,
-  wSecretDoor,
-  wLeverSW,
-  wNicheSW,
-  wStatueSW,
-  wKeyhole
-]
-
-var DialogWarningLabelStyle = koi.getDefaultLabelStyle()
-DialogWarningLabelStyle.fontSize = 14
-DialogWarningLabelStyle.color = rgb(1.0, 0.4, 0.4)
-DialogWarningLabelStyle.align = haLeft
-
-
 # {{{ Constants
 const
   ThemesDir = "themes"
@@ -213,6 +194,26 @@ var g_app: AppContext
 using a: var AppContext
 
 # }}}
+# {{{ Misc
+const SpecialWalls = @[
+  wIllusoryWall,
+  wInvisibleWall,
+  wDoor,
+  wLockedDoor,
+  wArchway,
+  wSecretDoor,
+  wLeverSW,
+  wNicheSW,
+  wStatueSW,
+  wKeyhole
+]
+
+var DialogWarningLabelStyle = koi.getDefaultLabelStyle()
+DialogWarningLabelStyle.fontSize = 14
+DialogWarningLabelStyle.color = rgb(1.0, 0.4, 0.4)
+DialogWarningLabelStyle.align = haLeft
+
+# }}}
 
 # {{{ mapHasLevels()
 proc mapHasLevels(a): bool =
@@ -362,19 +363,23 @@ proc saveMapAction(a) =
   else: saveMapAsAction(a)
 
 # }}}
-# {{{ Theme support
+# {{{ searchThemes()
 proc searchThemes(a) =
   for path in walkFiles(fmt"{ThemesDir}/*.cfg"):
     let (_, name, _) = splitFile(path)
     a.theme.themeNames.add(name)
   sort(a.theme.themeNames)
 
+# }}}
+# {{{ findThemeIndex()
 proc findThemeIndex(name: string, a): int =
   for i, n in a.theme.themeNames:
     if n == name:
       return i
   return -1
 
+# }}}
+# {{{ loadTheme()
 proc loadTheme(index: Natural, a) =
   let name = a.theme.themeNames[index]
   let (uiStyle, levelStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
@@ -1514,49 +1519,6 @@ proc setOrCycleFloorAction(first, last: Floor, forward: bool, a) =
 
 # }}}
 
-# {{{ drawNotesPane()
-proc drawNotesPane(x, y, w, h: float, a) =
-  alias(vg, a.vg)
-  alias(ls, a.doc.levelStyle)
-
-  let l = getCurrLevel(a)
-  let cur = a.ui.cursor
-
-  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
-     l.hasNote(cur.row, cur.col):
-
-    let note = l.getNote(cur.row, cur.col)
-    case note.kind
-    of nkIndexed:
-      drawIndexedNote(x-40, y-12, note.index, 36,
-                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
-                      fgColor=ls.notePaneIndexColor, vg)
-
-    of nkCustomId:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-22, y-2, note.customId)
-
-    of nkIcon:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-3, NoteIcons[note.icon])
-
-    of nkComment:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-2, IconComment)
-
-    vg.fillColor(ls.notePaneTextColor)
-    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.4)
-    vg.scissor(x, y, w, h)
-    vg.textBox(x, y, w, note.text)
-    vg.resetScissor()
-
-
-# }}}
-
 # {{{ handleLevelEvents()
 proc handleLevelEvents(a) =
   alias(ui, a.ui)
@@ -2092,6 +2054,49 @@ proc handleLevelEventsNoLevels(a) =
     elif ke.isKeyDown(keyPageDown, {mkAlt, mkCtrl}):   nextThemeAction(a)
 
 # }}}
+
+# {{{ drawNotesPane()
+proc drawNotesPane(x, y, w, h: float, a) =
+  alias(vg, a.vg)
+  alias(ls, a.doc.levelStyle)
+
+  let l = getCurrLevel(a)
+  let cur = a.ui.cursor
+
+  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
+     l.hasNote(cur.row, cur.col):
+
+    let note = l.getNote(cur.row, cur.col)
+    case note.kind
+    of nkIndexed:
+      drawIndexedNote(x-40, y-12, note.index, 36,
+                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
+                      fgColor=ls.notePaneIndexColor, vg)
+
+    of nkCustomId:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-22, y-2, note.customId)
+
+    of nkIcon:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-3, NoteIcons[note.icon])
+
+    of nkComment:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-2, IconComment)
+
+    vg.fillColor(ls.notePaneTextColor)
+    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.4)
+    vg.scissor(x, y, w, h)
+    vg.textBox(x, y, w, note.text)
+    vg.resetScissor()
+
+
+# }}}
 # {{{ renderUI()
 
 proc specialWallDrawProc(ls: LevelStyle,
@@ -2129,13 +2134,13 @@ proc specialWallDrawProc(ls: LevelStyle,
       vg.resetScissor()
 
     case SpecialWalls[buttonIdx]
-    of wNone:          discard
-    of wWall:          drawSolidWallHoriz(cx, cy, ctx)
-    of wIllusoryWall:  drawIllusoryWallHoriz(cx+2, cy, ctx)
-    of wInvisibleWall: drawInvisibleWallHoriz(cx, cy, ctx)
-    of wDoor:          drawDoorHoriz(cx, cy, ctx)
-    of wLockedDoor:    drawLockedDoorHoriz(cx, cy, ctx)
-    of wArchway:       drawArchwayHoriz(cx, cy, ctx)
+    of wNone:           discard
+    of wWall:           drawSolidWallHoriz(cx, cy, ctx)
+    of wIllusoryWall:   drawIllusoryWallHoriz(cx+2, cy, ctx)
+    of wInvisibleWall:  drawInvisibleWallHoriz(cx, cy, ctx)
+    of wDoor:           drawDoorHoriz(cx, cy, ctx)
+    of wLockedDoor:     drawLockedDoorHoriz(cx, cy, ctx)
+    of wArchway:        drawArchwayHoriz(cx, cy, ctx)
 
     of wSecretDoor:
       drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
@@ -2143,7 +2148,7 @@ proc specialWallDrawProc(ls: LevelStyle,
     of wLeverSW:
       drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
 
-    of wNicheSW:       drawNicheHorizSW(cx, cy, ctx)
+    of wNicheSW:        drawNicheHorizSW(cx, cy, ctx)
 
     of wStatueSW:
       drawAtZoomLevel6: drawStatueHorizSW(cx-2, cy+2, ctx)
@@ -2315,6 +2320,7 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
           koi.setFramesLeft()
         else:
           a.shouldClose = true
+
 # }}}
 
 # {{{ Init & cleanup
