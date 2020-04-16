@@ -186,6 +186,7 @@ proc readLevelList(rr): seq[Level] =
       of FourCC_GRDM_lvl:
         rr.enterGroup()
         ml.add(readLevel(rr))
+        rr.exitGroup()
       else:
         invalidListChunkError(ci.formatTypeId, FourCC_GRDM_lvls)
     else:

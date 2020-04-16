@@ -44,6 +44,11 @@ const SpecialWalls = @[
   wKeyhole
 ]
 
+var DialogWarningLabelStyle = koi.getDefaultLabelStyle()
+DialogWarningLabelStyle.fontSize = 14
+DialogWarningLabelStyle.color = rgb(1.0, 0.4, 0.4)
+DialogWarningLabelStyle.align = haLeft
+
 
 # {{{ Constants
 const
@@ -466,6 +471,7 @@ proc moveCurrGridIcon(numIcons, iconsPerRow: Natural, iconIdx: int,
 # }}}
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
+  a.ui.cursor.level = 0
   a.ui.cursor.row = 0
   a.ui.cursor.col = 0
   a.ui.drawLevelParams.viewStartRow = 0
@@ -488,8 +494,7 @@ proc updateViewStartAndCursorPosition(a) =
   if a.opt.showNotesPane:
    drawAreaHeight -= NotesPaneTopPad + NotesPaneHeight + NotesPaneBottomPad
 
-  let
-    drawAreaWidth = winWidth - LevelLeftPad - LevelRightPad
+  let drawAreaWidth = winWidth - LevelLeftPad - LevelRightPad
 
   dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), l.cols)
@@ -525,46 +530,47 @@ proc showCellCoords(show: bool, a) =
 
 # }}}
 # {{{ moveCursor()
-proc moveCursor(dir: CardinalDir, a) =
+proc moveCursor(dir: CardinalDir, steps: Natural, a) =
+  alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
-  let l = getCurrLevel(a)
 
-  var
-    cx = a.ui.cursor.col
-    cy = a.ui.cursor.row
-    sx = dp.viewStartCol
-    sy = dp.viewStartRow
+  let l = getCurrLevel(a)
+  let sm = a.opt.scrollMargin
 
   case dir:
   of dirE:
-    cx = min(cx+1, l.cols-1)
-    if cx - sx > dp.viewCols-1 - a.opt.scrollMargin:
-      sx = min(max(l.cols - dp.viewCols, 0), sx+1)
+    cur.col = min(cur.col + steps, l.cols-1)
+    let viewCol = cur.col - dp.viewStartCol
+    let viewColMax = dp.viewCols-1 - sm
+    if viewCol > viewColMax:
+      dp.viewStartCol = min(max(l.cols - dp.viewCols, 0),
+                            dp.viewStartCol + (viewCol - viewColMax))
 
   of dirS:
-    cy = min(cy+1, l.rows-1)
-    if cy - sy > dp.viewRows-1 - a.opt.scrollMargin:
-      sy = min(max(l.rows - dp.viewRows, 0), sy+1)
+    cur.row = min(cur.row + steps, l.rows-1)
+    let viewRow = cur.row - dp.viewStartRow
+    let viewRowMax = dp.viewRows-1 - sm
+    if viewRow > viewRowMax:
+      dp.viewStartRow = min(max(l.rows - dp.viewRows, 0),
+                            dp.viewStartRow + (viewRow - viewRowMax))
 
   of dirW:
-    cx = max(cx-1, 0)
-    if cx < sx + a.opt.scrollMargin:
-      sx = max(sx-1, 0)
+    cur.col = max(cur.col - steps, 0)
+    let viewCol = cur.col - dp.viewStartCol
+    if viewCol < sm:
+      dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
 
   of dirN:
-    cy = max(cy-1, 0)
-    if cy < sy + a.opt.scrollMargin:
-      sy = max(sy-1, 0)
+    cur.row = max(cur.row - steps, 0)
+    let viewRow = cur.row - dp.viewStartRow
+    if viewRow < sm:
+      dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
 
-  a.ui.cursor.row = cy
-  a.ui.cursor.col = cx
-  dp.viewStartRow = sy
-  dp.viewStartCol = sx
 
 # }}}
 # {{{ moveCursorAndSelStart()
 proc moveCursorAndSelStart(dir: CardinalDir, a) =
-  moveCursor(dir, a)
+  moveCursor(dir, steps=1, a)
   a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
   a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
@@ -589,6 +595,22 @@ proc moveSelStart(dir: CardinalDir, a) =
   of dirN:
     if dp.selStartRow + rows > 1: dec(dp.selStartRow)
 
+
+# }}}
+# {{{ moveCursorTo()
+proc moveCursorTo(loc: Location, a) =
+  alias(cur, a.ui.cursor)
+  alias(dp, a.ui.drawLevelParams)
+
+  cur.level = loc.level
+
+  let  dx = loc.col - cur.col
+  if   dx < 0: moveCursor(dirW, -dx, a)
+  elif dx > 0: moveCursor(dirE,  dx, a)
+
+  let  dy = loc.row - cur.row
+  if   dy < 0: moveCursor(dirN, -dy, a)
+  elif dy > 0: moveCursor(dirS,  dy, a)
 
 # }}}
 # {{{ setSelectModeSelectMessage()
@@ -650,7 +672,14 @@ proc copySelection(a): Option[Rect[Natural]] =
 # {{{ openNewMapDialog()
 proc openNewMapDialog(a) =
   alias(dlg, a.dialog.newMapDialog)
-  dlg.name = ""
+  dlg.name = "Untitled Map"
+  dlg.isOpen = true
+
+# }}}
+# {{{ openMapPropsDialog()
+proc openMapPropsDialog(a) =
+  alias(dlg, a.dialog.editMapPropsDialog)
+  dlg.name = $a.doc.map.name
   dlg.isOpen = true
 
 # }}}
@@ -668,7 +697,7 @@ proc openNewLevelDialog(a) =
     dlg.rows = $l.rows
     dlg.cols = $l.cols
   else:
-    dlg.locationName = ""
+    dlg.locationName = "Untitled Location"
     dlg.levelName = ""
     dlg.elevation = "0"
     dlg.rows = "16"
@@ -828,7 +857,7 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
 proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   let
     dialogWidth = 410.0
-    dialogHeight = 300.0
+    dialogHeight = 334.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Level")
   a.clearStatusMessage()
@@ -872,7 +901,20 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
   )
 
+  # Validation
+  var validationError = ""
+  if dlg.locationName == "":
+    validationError = fmt"{IconWarning}  Location name is mandatory"
+
+  y += 44
+
+  if validationError != "":
+    koi.label(x, y, dialogWidth, h, validationError,
+              style=DialogWarningLabelStyle)
+
   proc okAction(dlg: var NewLevelDialogParams, a) =
+    if validationError != "": return
+
     # TODO number error checking
     let
       rows = parseInt(dlg.rows)
@@ -897,7 +939,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+                disabled=validationError != ""):
     okAction(dlg, a)
 
   x += buttonWidth + 10
@@ -1468,10 +1511,10 @@ proc handleLevelEvents(a) =
   for ke in koi.keyBuf():
     case ui.editMode:
     of emNormal:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
 
       if ke.isKeyDown(keyLeft, {mkCtrl}):
         let (w, h) = win.size
@@ -1603,14 +1646,14 @@ proc handleLevelEvents(a) =
         if l.getFloor(cur.row, cur.col) == fTeleportSource:
           if map.links.hasKey(cur):
             let dest = map.links[cur]
-            cur = dest
+            moveCursorTo(dest, a)
           else:
             setStatusMessage(IconWarning, "Teleport has no destination set", a)
 
         elif l.getFloor(cur.row, cur.col) == fTeleportDestination:
           let dest = cur
           let src = map.links.getKeyByVal(dest)
-          cur = src
+          moveCursorTo(src, a)
 
         else:
           setStatusMessage(IconWarning, "Current cell is not a teleport", a)
@@ -1689,9 +1732,7 @@ proc handleLevelEvents(a) =
         dlg.isOpen = true
 
       elif ke.isKeyDown(keyP, {mkCtrl, mkAlt}):
-        alias(dlg, a.dialog.editMapPropsDialog)
-        dlg.name = $map.name
-        dlg.isOpen = true
+        openMapPropsDialog(a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
         alias(dlg, a.dialog.resizeLevelDialog)
@@ -1731,15 +1772,15 @@ proc handleLevelEvents(a) =
     of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: CardinalDir, a) =
         if ui.editMode == emExcavate:
-          moveCursor(dir, a)
+          moveCursor(dir, steps=1, a)
           actions.excavate(map, cur, um)
 
         elif ui.editMode == emEraseCell:
-          moveCursor(dir, a)
+          moveCursor(dir, steps=1, a)
           actions.eraseCell(map, cur, um)
 
         elif ui.editMode == emClearFloor:
-          moveCursor(dir, a)
+          moveCursor(dir, steps=1, a)
           actions.setFloor(map, cur, fEmpty, um)
 
       if ke.isKeyDown(MoveKeysLeft,  repeat=true): handleMoveKey(dirW, a)
@@ -1792,10 +1833,10 @@ proc handleLevelEvents(a) =
         a.clearStatusMessage()
 
     of emSelect:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
 
       if win.isKeyDown(keyLeftControl) or win.isKeyDown(keyRightControl):
         setSelectModeActionMessage(a)
@@ -1873,10 +1914,10 @@ proc handleLevelEvents(a) =
         a.clearStatusMessage()
 
     of emSelectRect:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
 
       var r1,c1, r2,c2: Natural
       if ui.selRect.get.startRow <= cur.row:
@@ -1947,10 +1988,10 @@ proc handleLevelEvents(a) =
         a.clearStatusMessage()
 
     of emSetTeleportDestination:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, a)
-      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, a)
-      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, a)
-      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, a)
+      if ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
+      if ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
+      if ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
+      if ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
 
       if ke.isKeyDown(keyEnter):
         setFloor(fTeleportDestination, a)
@@ -1971,6 +2012,8 @@ proc handleLevelEvents(a) =
 proc handleLevelEventsNoLevels(a) =
   for ke in koi.keyBuf():
     if   ke.isKeyDown(keyN,        {mkCtrl, mkAlt}):   newMapAction(a)
+    elif ke.isKeyDown(keyP,        {mkCtrl, mkAlt}):   openMapPropsDialog(a)
+
     elif ke.isKeyDown(keyO,        {mkCtrl}):          openMapAction(a)
     elif ke.isKeyDown(Key.keyS,    {mkCtrl}):          saveMapAction(a)
     elif ke.isKeyDown(Key.keyS,    {mkCtrl, mkShift}): saveMapAsAction(a)
@@ -2284,7 +2327,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   loadTheme(themeIndex, a)
 
   # TODO proper init
-  a.doc.map = newMap("Untitled")
+  a.doc.map = newMap("Untitled Map")
 
   initDrawLevelParams(a)
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, DefaultZoomLevel)
@@ -2303,8 +2346,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
-#  a.doc.map = readMap(filename)
-#  a.doc.filename = filename
+#  let filename = "moveto-test.grm"
+  let filename = "pool-of-radiance-multi.grm"
+  a.doc.map = readMap(filename)
+  a.doc.filename = filename
 
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame

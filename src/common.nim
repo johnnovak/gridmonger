@@ -208,5 +208,17 @@ type
     level*:     Level
     selection*: Selection
 
+# Field constraints
+const
+  LevelLocationNameMinLen = 1
+  LevelLocationNameMaxLen = 100
+  LevelNameMinLen = 0
+  LevelNameMaxLen = 100
+  LevelElevationMin = -200
+  LevelElevationMax = 200
+  LevelNumRowsMin = 1
+  LevelNumRowsMax = 5000
+  LevelNumColumsMin = 1
+  LevelNumColumsMax = 5000
 
 # vim: et:ts=2:sw=2:fdm=marker
