@@ -6,7 +6,6 @@ import common
 import cellgrid
 import rect
 import selection
-import utils
 
 
 using l: Level

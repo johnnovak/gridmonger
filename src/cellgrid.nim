@@ -1,5 +1,3 @@
-import sugar
-
 import common
 import rect
 

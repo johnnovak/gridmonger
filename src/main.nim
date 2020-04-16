@@ -6,7 +6,6 @@ import os
 import sequtils
 import strformat
 import strutils
-import sugar
 import tables
 
 import glad/gl
@@ -601,7 +600,6 @@ proc moveSelStart(dir: CardinalDir, a) =
 # {{{ moveCursorTo()
 proc moveCursorTo(loc: Location, a) =
   alias(cur, a.ui.cursor)
-  alias(dp, a.ui.drawLevelParams)
 
   cur.level = loc.level
 
@@ -670,129 +668,6 @@ proc copySelection(a): Option[Rect[Natural]] =
 
 # }}}
 
-# {{{ openNewMapDialog()
-proc openNewMapDialog(a) =
-  alias(dlg, a.dialog.newMapDialog)
-  dlg.name = "Untitled Map"
-  dlg.isOpen = true
-
-# }}}
-# {{{ openMapPropsDialog()
-proc openMapPropsDialog(a) =
-  alias(dlg, a.dialog.editMapPropsDialog)
-  dlg.name = $a.doc.map.name
-  dlg.isOpen = true
-
-# }}}
-# {{{ openNewLevelDialog()
-proc openNewLevelDialog(a) =
-  alias(dlg, a.dialog.newLevelDialog)
-
-  if mapHasLevels(a):
-    let l = getCurrLevel(a)
-    dlg.locationName = l.locationName
-    dlg.levelName = ""
-    dlg.elevation = if   l.elevation > 0: $(l.elevation + 1)
-                    elif l.elevation < 0: $(l.elevation - 1)
-                    else: "0"
-    dlg.rows = $l.rows
-    dlg.cols = $l.cols
-  else:
-    dlg.locationName = "Untitled Location"
-    dlg.levelName = ""
-    dlg.elevation = "0"
-    dlg.rows = "16"
-    dlg.cols = "16"
-
-  dlg.isOpen = true
-
-# }}}
-# {{{ newMapAction()
-proc newMapAction(a) =
-  if a.undoManager.isModified:
-    a.dialog.saveDiscardDialog.isOpen = true
-    a.dialog.saveDiscardDialog.action = proc (a: var AppContext) =
-      openNewMapDialog(a)
-  else:
-    openNewMapDialog(a)
-
-# }}}
-# {{{ openMapAction()
-proc openMapAction(a) =
-  alias(dlg, a.dialog.saveDiscardDialog)
-  if a.undoManager.isModified:
-    dlg.isOpen = true
-    dlg.action = openMap
-  else:
-    openMap(a)
-
-# }}}
-# {{{ reloadThemeAction()
-proc reloadThemeAction(a) =
-  a.theme.nextThemeIndex = a.theme.currThemeIndex.some
-  koi.setFramesLeft()
-
-# }}}
-# {{{ prevThemeAction()
-proc prevThemeAction(a) =
-  var i = a.theme.currThemeIndex
-  if i == 0: i = a.theme.themeNames.high else: dec(i)
-  a.theme.nextThemeIndex = i.some
-  koi.setFramesLeft()
-
-# }}}
-# {{{ nextThemeAction()
-proc nextThemeAction(a) =
-  var i = a.theme.currThemeIndex
-  inc(i)
-  if i > a.theme.themeNames.high: i = 0
-  a.theme.nextThemeIndex = i.some
-  koi.setFramesLeft()
-
-# }}}
-
-# {{{ drawNotesPane()
-proc drawNotesPane(x, y, w, h: float, a) =
-  alias(vg, a.vg)
-  alias(ls, a.doc.levelStyle)
-
-  let l = getCurrLevel(a)
-  let cur = a.ui.cursor
-
-  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
-     l.hasNote(cur.row, cur.col):
-
-    let note = l.getNote(cur.row, cur.col)
-    case note.kind
-    of nkIndexed:
-      drawIndexedNote(x-40, y-12, note.index, 36,
-                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
-                      fgColor=ls.notePaneIndexColor, vg)
-
-    of nkCustomId:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-22, y-2, note.customId)
-
-    of nkIcon:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-3, NoteIcons[note.icon])
-
-    of nkComment:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-2, IconComment)
-
-    vg.fillColor(ls.notePaneTextColor)
-    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.4)
-    vg.scissor(x, y, w, h)
-    vg.textBox(x, y, w, note.text)
-    vg.resetScissor()
-
-
-# }}}
 # {{{ Dialogs
 # {{{ Save/discard changes dialog
 proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
@@ -854,7 +729,151 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   koi.endDialog()
 
 # }}}
+# {{{ New map dialog
+proc openNewMapDialog(a) =
+  alias(dlg, a.dialog.newMapDialog)
+  dlg.name = "Untitled Map"
+  dlg.isOpen = true
+
+
+proc newMapDialog(dlg: var NewMapDialogParams, a) =
+  let
+    dialogWidth = 410.0
+    dialogHeight = 150.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Map")
+  a.clearStatusMessage()
+
+  let
+    h = 24.0
+    labelWidth = 130.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Name")
+  dlg.name = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
+  )
+
+  proc okAction(dlg: var NewMapDialogParams, a) =
+    a.doc.filename = ""
+    a.doc.map = newMap(dlg.name)
+    initUndoManager(a.undoManager)
+
+    resetCursorAndViewStart(a)
+    setStatusMessage(IconFile, fmt"New map created", a)
+
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  proc cancelAction(dlg: var NewMapDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+  for ke in koi.keyBuf():
+    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+
+  koi.endDialog()
+
+# }}}
+# {{{ Edit map properties dialog
+proc openMapPropsDialog(a) =
+  alias(dlg, a.dialog.editMapPropsDialog)
+  dlg.name = $a.doc.map.name
+  dlg.isOpen = true
+
+
+proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
+  let
+    dialogWidth = 410.0
+    dialogHeight = 150.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  Edit Map Properties")
+  a.clearStatusMessage()
+
+  let
+    h = 24.0
+    labelWidth = 130.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Name")
+  dlg.name = koi.textField(
+    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
+  )
+
+  proc okAction(dlg: var EditMapPropsDialogParams, a) =
+    # TODO should be action
+    a.doc.map.name = dlg.name
+
+    setStatusMessage(IconFile, fmt"Map properties updated", a)
+
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  proc cancelAction(dlg: var EditMapPropsDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+  for ke in koi.keyBuf():
+    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+
+  koi.endDialog()
+
+# }}}
 # {{{ New level dialog
+proc openNewLevelDialog(a) =
+  alias(dlg, a.dialog.newLevelDialog)
+
+  if mapHasLevels(a):
+    let l = getCurrLevel(a)
+    dlg.locationName = l.locationName
+    dlg.levelName = ""
+    dlg.elevation = if   l.elevation > 0: $(l.elevation + 1)
+                    elif l.elevation < 0: $(l.elevation - 1)
+                    else: "0"
+    dlg.rows = $l.rows
+    dlg.cols = $l.cols
+  else:
+    dlg.locationName = "Untitled Location"
+    dlg.levelName = ""
+    dlg.elevation = "0"
+    dlg.rows = "16"
+    dlg.cols = "16"
+
+  dlg.isOpen = true
+
+
 proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   let
     dialogWidth = 410.0
@@ -956,6 +975,16 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
 # }}}
 # {{{ Edit level properties dialog
+proc openEditLevelPropsDialog(a) =
+  alias(dlg, a.dialog.editLevelPropsDialog)
+
+  let l = getCurrLevel(a)
+  dlg.locationName = l.locationName
+  dlg.levelName = l.levelName
+  dlg.elevation = $l.elevation
+  dlg.isOpen = true
+
+
 proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   let
     dialogWidth = 410.0
@@ -1026,47 +1055,96 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   koi.endDialog()
 
 # }}}
-# {{{ New map dialog
-proc newMapDialog(dlg: var NewMapDialogParams, a) =
-  let
-    dialogWidth = 410.0
-    dialogHeight = 150.0
+# {{{ Resize level dialog
+proc openResizeLevelDialog(a) =
+  alias(dlg, a.dialog.resizeLevelDialog)
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Map")
+  let l = getCurrLevel(a)
+  dlg.rows = $l.rows
+  dlg.cols = $l.cols
+  dlg.anchor = raCenter
+  dlg.isOpen = true
+
+
+proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
+
+  let dialogWidth = 270.0
+  let dialogHeight = 300.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCrop}  Resize Level")
   a.clearStatusMessage()
 
   let
     h = 24.0
-    labelWidth = 130.0
+    labelWidth = 70.0
     buttonWidth = 80.0
     buttonPad = 15.0
 
-  var
-    x = 30.0
-    y = 60.0
+  var x = 30.0
+  var y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Name")
-  dlg.name = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
+  koi.label(x, y, labelWidth, h, "Rows")
+  dlg.rows = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
   )
 
-  proc okAction(dlg: var NewMapDialogParams, a) =
-    a.doc.filename = ""
-    a.doc.map = newMap(dlg.name)
-    initUndoManager(a.undoManager)
+  y += 32
+  koi.label(x, y, labelWidth, h, "Columns")
+  dlg.cols = koi.textField(
+    x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
+  )
 
-    resetCursorAndViewStart(a)
-    setStatusMessage(IconFile, fmt"New map created", a)
+  const IconsPerRow = 3
 
-    koi.closeDialog()
-    dlg.isOpen = false
+  const AnchorIcons = @[
+    IconArrowUpLeft,   IconArrowUp,   IconArrowUpRight,
+    IconArrowLeft,     IconCircleInv, IconArrowRight,
+    IconArrowDownLeft, IconArrowDown, IconArrowDownRight
+  ]
 
-  proc cancelAction(dlg: var NewMapDialogParams, a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+  y += 40
+  koi.label(x, y, labelWidth, h, "Anchor")
+  dlg.anchor = koi.radioButtons(
+    x + labelWidth, y, 35, 35,
+    labels = AnchorIcons,
+    tooltips = @["Top-left", "Top", "Top-right",
+                 "Left", "Center", "Right",
+                 "Bottom-left", "Bottom", "Bottom-right"],
+    ord(dlg.anchor),
+    layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: IconsPerRow),
+    style=GridIconRadioButtonsStyle
+  ).ResizeAnchor
 
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
+
+  proc okAction(dlg: var ResizeLevelDialogParams, a) =
+    # TODO number error checking
+    let newRows = parseInt(dlg.rows)
+    let newCols = parseInt(dlg.cols)
+
+    let align = case dlg.anchor
+    of raTopLeft:     NorthWest
+    of raTop:         North
+    of raTopRight:    NorthEast
+    of raLeft:        West
+    of raCenter:      {}
+    of raRight:       East
+    of raBottomLeft:  SouthWest
+    of raBottom:      South
+    of raBottomRight: SouthEast
+
+    actions.resizeLevel(a.doc.map, a.ui.cursor.level, newRows, newCols, align,
+                        a.undoManager)
+
+    setStatusMessage(IconCrop, "Level resized", a)
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  proc cancelAction(dlg: var ResizeLevelDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
 
   if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
     okAction(dlg, a)
@@ -1075,68 +1153,64 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
-
-  koi.endDialog()
-
-# }}}
-# {{{ Edit map properties dialog
-proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
-  let
-    dialogWidth = 410.0
-    dialogHeight = 150.0
-
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  Edit Map Properties")
-  a.clearStatusMessage()
-
-  let
-    h = 24.0
-    labelWidth = 130.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
-
-  var
-    x = 30.0
-    y = 60.0
-
-  koi.label(x, y, labelWidth, h, "Name")
-  dlg.name = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
-  )
-
-  proc okAction(dlg: var EditMapPropsDialogParams, a) =
-    # TODO should be action
-    a.doc.map.name = dlg.name
-
-    setStatusMessage(IconFile, fmt"Map properties updated", a)
-
-    koi.closeDialog()
-    dlg.isOpen = false
-
-  proc cancelAction(dlg: var EditMapPropsDialogParams, a) =
-    koi.closeDialog()
-    dlg.isOpen = false
-
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
-
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
-    okAction(dlg, a)
-
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-    cancelAction(dlg, a)
+  proc moveIcon(iconIDx: Natural, dc: int = 0, dr: int = 0): Natural =
+    moveCurrGridIcon(AnchorIcons.len, IconsPerRow, iconIdx, dc, dr)
 
   for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
+    if   ke.isKeyDown(keyH, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dc= -1).ResizeAnchor
+
+    elif ke.isKeyDown(keyL, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dc=1).ResizeAnchor
+
+    elif ke.isKeyDown(keyK, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dr= -1).ResizeAnchor
+
+    elif ke.isKeyDown(keyJ, repeat=true):
+      dlg.anchor = moveIcon(ord(dlg.anchor), dr=1).ResizeAnchor
+
+    elif ke.isKeyDown(keyEscape): cancelAction(dlg, a)
     elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+
+    koi.setFramesLeft()
 
   koi.endDialog()
 
 # }}}
 # {{{ Edit note dialog
+proc openEditNoteDialog(a) =
+  alias(dlg, a.dialog.editNoteDialog)
+  alias(cur, a.ui.cursor)
+
+  let l = getCurrLevel(a)
+  dlg.row = cur.row
+  dlg.col = cur.col
+
+  if l.hasNote(cur.row, cur.col):
+    let note = l.getNote(cur.row, cur.col)
+    dlg.editMode = true
+    dlg.kind = note.kind
+    dlg.text = note.text
+
+    if note.kind == nkIndexed:
+      dlg.index = note.index
+      dlg.indexColor = note.indexColor
+    elif note.kind == nkIcon:
+      dlg.icon = note.icon
+
+    if note.kind == nkCustomId:
+      dlg.customId = note.customId
+    else:
+      dlg.customId = ""
+
+  else:
+    dlg.editMode = false
+    dlg.customId = ""
+    dlg.text = ""
+
+  dlg.isOpen = true
+
+
 proc colorRadioButtonDrawProc(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
 
@@ -1341,119 +1415,146 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   koi.endDialog()
 
 # }}}
-# {{{ Resize level dialog
+# }}}
 
-proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
-
-  let dialogWidth = 270.0
-  let dialogHeight = 300.0
-
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCrop}  Resize Level")
-  a.clearStatusMessage()
-
-  let
-    h = 24.0
-    labelWidth = 70.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
-
-  var x = 30.0
-  var y = 60.0
-
-  koi.label(x, y, labelWidth, h, "Rows")
-  dlg.rows = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
-  )
-
-  y += 32
-  koi.label(x, y, labelWidth, h, "Columns")
-  dlg.cols = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
-  )
-
-  const IconsPerRow = 3
-
-  const AnchorIcons = @[
-    IconArrowUpLeft,   IconArrowUp,   IconArrowUpRight,
-    IconArrowLeft,     IconCircleInv, IconArrowRight,
-    IconArrowDownLeft, IconArrowDown, IconArrowDownRight
-  ]
-
-  y += 40
-  koi.label(x, y, labelWidth, h, "Anchor")
-  dlg.anchor = koi.radioButtons(
-    x + labelWidth, y, 35, 35,
-    labels = AnchorIcons,
-    tooltips = @["Top-left", "Top", "Top-right",
-                 "Left", "Center", "Right",
-                 "Bottom-left", "Bottom", "Bottom-right"],
-    ord(dlg.anchor),
-    layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: IconsPerRow),
-    style=GridIconRadioButtonsStyle
-  ).ResizeAnchor
-
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
-
-  proc okAction(dlg: var ResizeLevelDialogParams, a) =
-    # TODO number error checking
-    let newRows = parseInt(dlg.rows)
-    let newCols = parseInt(dlg.cols)
-
-    let align = case dlg.anchor
-    of raTopLeft:     NorthWest
-    of raTop:         North
-    of raTopRight:    NorthEast
-    of raLeft:        West
-    of raCenter:      {}
-    of raRight:       East
-    of raBottomLeft:  SouthWest
-    of raBottom:      South
-    of raBottomRight: SouthEast
-
-    actions.resizeLevel(a.doc.map, a.ui.cursor.level, newRows, newCols, align,
-                        a.undoManager)
-
-    setStatusMessage(IconCrop, "Level resized", a)
-    koi.closeDialog()
-    dlg.isOpen = false
-
-
-  proc cancelAction(dlg: var ResizeLevelDialogParams, a) =
-    koi.closeDialog()
-    dlg.isOpen = false
-
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
-    okAction(dlg, a)
-
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
-    cancelAction(dlg, a)
-
-  proc moveIcon(iconIDx: Natural, dc: int = 0, dr: int = 0): Natural =
-    moveCurrGridIcon(AnchorIcons.len, IconsPerRow, iconIdx, dc, dr)
-
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyH, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dc= -1).ResizeAnchor
-
-    elif ke.isKeyDown(keyL, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dc=1).ResizeAnchor
-
-    elif ke.isKeyDown(keyK, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dr= -1).ResizeAnchor
-
-    elif ke.isKeyDown(keyJ, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dr=1).ResizeAnchor
-
-    elif ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
-
-    koi.setFramesLeft()
-
-  koi.endDialog()
+# {{{ newMapAction()
+proc newMapAction(a) =
+  if a.undoManager.isModified:
+    a.dialog.saveDiscardDialog.isOpen = true
+    a.dialog.saveDiscardDialog.action = proc (a: var AppContext) =
+      openNewMapDialog(a)
+  else:
+    openNewMapDialog(a)
 
 # }}}
+# {{{ openMapAction()
+proc openMapAction(a) =
+  alias(dlg, a.dialog.saveDiscardDialog)
+  if a.undoManager.isModified:
+    dlg.isOpen = true
+    dlg.action = openMap
+  else:
+    openMap(a)
+
+# }}}
+# {{{ reloadThemeAction()
+proc reloadThemeAction(a) =
+  a.theme.nextThemeIndex = a.theme.currThemeIndex.some
+  koi.setFramesLeft()
+
+# }}}
+# {{{ prevThemeAction()
+proc prevThemeAction(a) =
+  var i = a.theme.currThemeIndex
+  if i == 0: i = a.theme.themeNames.high else: dec(i)
+  a.theme.nextThemeIndex = i.some
+  koi.setFramesLeft()
+
+# }}}
+# {{{ nextThemeAction()
+proc nextThemeAction(a) =
+  var i = a.theme.currThemeIndex
+  inc(i)
+  if i > a.theme.themeNames.high: i = 0
+  a.theme.nextThemeIndex = i.some
+  koi.setFramesLeft()
+
+# }}}
+# {{{ prevLevelAction()
+proc prevLevelAction(a) =
+  alias(cur, a.ui.cursor)
+  if cur.level > 0:
+    dec(cur.level)
+
+# }}}
+# {{{ nextLevelAction()
+proc nextLevelAction(a) =
+  alias(cur, a.ui.cursor)
+  if cur.level < a.doc.map.levels.len-1:
+    inc(cur.level)
+
+# }}}
+# {{{ incZoomLevelAction()
+proc incZoomLevelAction(a) =
+  incZoomLevel(a.doc.levelStyle, a.ui.drawLevelParams)
+
+# }}}
+# {{{ decZoomLevelAction()
+proc decZoomLevelAction(a) =
+  decZoomLevel(a.doc.levelStyle, a.ui.drawLevelParams)
+
+# }}}
+# {{{ setFloorAction()
+proc setFloorAction(f: Floor, a) =
+  alias(cur, a.ui.cursor)
+
+  let ot = getCurrLevel(a).guessFloorOrientation(cur.row, cur.col)
+  actions.setOrientedFloor(a.doc.map, cur, f, ot, a.undoManager)
+  setStatusMessage(fmt"Set floor – {f}", a)
+
+# }}}
+# {{{ setOrCycleFloorAction()
+proc setOrCycleFloorAction(first, last: Floor, forward: bool, a) =
+  assert first <= last
+
+  alias(cur, a.ui.cursor)
+
+  var floor = getCurrLevel(a).getFloor(cur.row, cur.col)
+
+  if floor >= first and floor <= last:
+    var f = ord(floor)
+    let first = ord(first)
+    let last = ord(last)
+    if forward: inc(f) else: dec(f)
+    floor = (first + floorMod(f-first, last-first+1)).Floor
+  else:
+    floor = if forward: first else: last
+
+  setFloorAction(floor, a)
+
+# }}}
+
+# {{{ drawNotesPane()
+proc drawNotesPane(x, y, w, h: float, a) =
+  alias(vg, a.vg)
+  alias(ls, a.doc.levelStyle)
+
+  let l = getCurrLevel(a)
+  let cur = a.ui.cursor
+
+  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
+     l.hasNote(cur.row, cur.col):
+
+    let note = l.getNote(cur.row, cur.col)
+    case note.kind
+    of nkIndexed:
+      drawIndexedNote(x-40, y-12, note.index, 36,
+                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
+                      fgColor=ls.notePaneIndexColor, vg)
+
+    of nkCustomId:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-22, y-2, note.customId)
+
+    of nkIcon:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-3, NoteIcons[note.icon])
+
+    of nkComment:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x-20, y-2, IconComment)
+
+    vg.fillColor(ls.notePaneTextColor)
+    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.4)
+    vg.scissor(x, y, w, h)
+    vg.textBox(x, y, w, note.text)
+    vg.resetScissor()
+
+
 # }}}
 
 # {{{ handleLevelEvents()
@@ -1463,44 +1564,9 @@ proc handleLevelEvents(a) =
   alias(cur, a.ui.cursor)
   alias(um, a.undoManager)
   alias(dp, a.ui.drawLevelParams)
-  alias(ls, a.doc.levelStyle)
   alias(win, a.win)
 
   var l = getCurrLevel(a)
-
-  proc mkFloorMessage(f: Floor): string =
-    fmt"Set floor – {f}"
-
-  proc setFloorOrientationStatusMessage(o: Orientation, a) =
-    if o == Horiz:
-      setStatusMessage(IconArrowsHoriz, "Floor orientation set to horizontal", a)
-    else:
-      setStatusMessage(IconArrowsVert, "Floor orientation set to vertical", a)
-
-  proc incZoomLevel(a) =
-    incZoomLevel(ls, dp)
-
-  proc decZoomLevel(a) =
-    decZoomLevel(ls, dp)
-
-  proc setFloor(f: Floor, a) =
-    let ot = l.guessFloorOrientation(cur.row, cur.col)
-    actions.setOrientedFloor(map, cur, f, ot, um)
-    setStatusMessage(mkFloorMessage(f), a)
-
-  proc setOrCycleFloor(first, last: Floor, forward: bool, a) =
-    assert first <= last
-
-    var floor = l.getFloor(cur.row, cur.col)
-    if floor >= first and floor <= last:
-      var f = ord(floor)
-      let first = ord(first)
-      let last = ord(last)
-      if forward: inc(f) else: dec(f)
-      floor = (first + floorMod(f-first, last-first+1)).Floor
-    else:
-      floor = if forward: first else: last
-    setFloor(floor, a)
 
   const
     MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
@@ -1522,26 +1588,27 @@ proc handleLevelEvents(a) =
 
     elif ke.isKeyDown(MoveKeysLeft,  {mkCtrl}, repeat=true):
       moveCursor(dirW, steps=CursorJump, a)
+
     elif ke.isKeyDown(MoveKeysRight, {mkCtrl}, repeat=true):
       moveCursor(dirE, steps=CursorJump, a)
+
     elif ke.isKeyDown(MoveKeysUp,    {mkCtrl}, repeat=true):
       moveCursor(dirN, steps=CursorJump, a)
+
     elif ke.isKeyDown(MoveKeysDown,  {mkCtrl}, repeat=true):
       moveCursor(dirS, steps=CursorJump, a)
 
-
-  # TODO these should be part of the level component event handler
   for ke in koi.keyBuf():
     case ui.editMode:
+    # {{{ emNormal
     of emNormal:
       handleMoveCursor()
 
-      if ke.isKeyDown(keyLeft, {mkCtrl}):
-        let (w, h) = win.size
-        win.size = (w - 10, h)
-      elif ke.isKeyDown(keyRight, {mkCtrl}):
-        let (w, h) = win.size
-        win.size = (w + 10, h)
+      if   ke.isKeyDown(keyPageUp) or ke.isKeyDown(keyMinus, {mkCtrl}):
+        prevLevelAction(a)
+
+      elif ke.isKeyDown(keyPageDown) or ke.isKeyDown(keyEqual, {mkCtrl}):
+        nextLevelAction(a)
 
       elif ke.isKeyDown(keyD):
         ui.editMode = emExcavate
@@ -1563,8 +1630,12 @@ proc handleLevelEvents(a) =
 
       elif ke.isKeyDown(keyO):
         actions.toggleFloorOrientation(map, cur, um)
-        setFloorOrientationStatusMessage(
-          l.getFloorOrientation(cur.row, cur.col), a)
+        if l.getFloorOrientation(cur.row, cur.col) == Horiz:
+          setStatusMessage(IconArrowsHoriz,
+                           "Floor orientation set to horizontal", a)
+        else:
+          setStatusMessage(IconArrowsVert,
+                           "Floor orientation set to vertical", a)
 
       elif ke.isKeyDown(keyW):
         ui.editMode = emDrawWall
@@ -1576,25 +1647,26 @@ proc handleLevelEvents(a) =
                          @[IconArrowsAll, "set/clear"], a)
 
       elif ke.isKeyDown(key1) or ke.isKeyDown(key1, {mkShift}):
-        setOrCycleFloor(fDoor, fSecretDoor, forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(fDoor, fSecretDoor,
+                               forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key2) or ke.isKeyDown(key2, {mkShift}):
-        setOrCycleFloor(fPressurePlate, fHiddenPressurePlate,
-                        forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(fPressurePlate, fHiddenPressurePlate,
+                              forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key3) or ke.isKeyDown(key3, {mkShift}):
-        setOrCycleFloor(fClosedPit, fCeilingPit,
-                        forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(fClosedPit, fCeilingPit,
+                              forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key4) or ke.isKeyDown(key4, {mkShift}):
-        setFloor(fTeleportSource, a)
+        setFloorAction(fTeleportSource, a)
 
       elif ke.isKeyDown(key5) or ke.isKeyDown(key5, {mkShift}):
-        setOrCycleFloor(fStairsDown, fExitDoor,
-                        forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(fStairsDown, fExitDoor,
+                              forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key6) or ke.isKeyDown(key6, {mkShift}):
-        setFloor(fSpinner, a)
+        setFloorAction(fSpinner, a)
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if ui.currSpecialWall > 0: dec(ui.currSpecialWall)
@@ -1690,12 +1762,12 @@ proc handleLevelEvents(a) =
                            "Current cell is not a teleport source", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
-        incZoomLevel(a)
+        incZoomLevelAction(a)
         setStatusMessage(IconZoomIn,
           fmt"Zoomed in – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyMinus, repeat=true):
-        decZoomLevel(a)
+        decZoomLevelAction(a)
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
@@ -1703,33 +1775,7 @@ proc handleLevelEvents(a) =
         if l.getFloor(cur.row, cur.col) == fNone:
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
-          alias(dlg, a.dialog.editNoteDialog)
-          dlg.row = cur.row
-          dlg.col = cur.col
-
-          if l.hasNote(cur.row, cur.col):
-            let note = l.getNote(cur.row, cur.col)
-            dlg.editMode = true
-            dlg.kind = note.kind
-            dlg.text = note.text
-
-            if note.kind == nkIndexed:
-              dlg.index = note.index
-              dlg.indexColor = note.indexColor
-            elif note.kind == nkIcon:
-              dlg.icon = note.icon
-
-            if note.kind == nkCustomId:
-              dlg.customId = note.customId
-            else:
-              dlg.customId = ""
-
-          else:
-            dlg.editMode = false
-            dlg.customId = ""
-            dlg.text = ""
-
-          dlg.isOpen = true
+          openEditNoteDialog(a)
 
       elif ke.isKeyDown(keyN, {mkShift}):
         if l.getFloor(cur.row, cur.col) == fNone:
@@ -1745,21 +1791,13 @@ proc handleLevelEvents(a) =
         newMapAction(a)
 
       elif ke.isKeyDown(keyP, {mkCtrl}):
-        alias(dlg, a.dialog.editLevelPropsDialog)
-        dlg.locationName = l.locationName
-        dlg.levelName = l.levelName
-        dlg.elevation = $l.elevation
-        dlg.isOpen = true
+        openEditLevelPropsDialog(a)
 
       elif ke.isKeyDown(keyP, {mkCtrl, mkAlt}):
         openMapPropsDialog(a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
-        alias(dlg, a.dialog.resizeLevelDialog)
-        dlg.rows = $l.rows
-        dlg.cols = $l.cols
-        dlg.anchor = raCenter
-        dlg.isOpen = true
+        openResizeLevelDialog(a)
 
       elif ke.isKeyDown(keyO, {mkCtrl}):              openMapAction(a)
       elif ke.isKeyDown(Key.keyS, {mkCtrl}):          saveMapAction(a)
@@ -1789,6 +1827,8 @@ proc handleLevelEvents(a) =
           setStatusMessage(fmt"Notes pane hidden", a)
           a.opt.showNotesPane = true
 
+    # }}}
+    # {{{ emExcavate, emEraseCell, emClearFloor
     of emExcavate, emEraseCell, emClearFloor:
       proc handleMoveKey(dir: CardinalDir, a) =
         if ui.editMode == emExcavate:
@@ -1809,6 +1849,8 @@ proc handleLevelEvents(a) =
         ui.editMode = emNormal
         a.clearStatusMessage()
 
+    # }}}
+    # {{{ emDrawWall
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir, a) =
         if canSetWall(l, cur.row, cur.col, dir):
@@ -1822,6 +1864,8 @@ proc handleLevelEvents(a) =
         ui.editMode = emNormal
         a.clearStatusMessage()
 
+    # }}}
+    # {{{ emDrawWallSpecial
     of emDrawWallSpecial:
       proc handleMoveKey(dir: CardinalDir, a) =
         if canSetWall(l, cur.row, cur.col, dir):
@@ -1843,9 +1887,12 @@ proc handleLevelEvents(a) =
         ui.editMode = emNormal
         a.clearStatusMessage()
 
+    # }}}
+    # {{{ emSelect
     of emSelect:
       handleMoveCursor()
 
+      # TODO don't use win
       if win.isKeyDown(keyLeftControl) or win.isKeyDown(keyRightControl):
         setSelectModeActionMessage(a)
       else:
@@ -1914,13 +1961,15 @@ proc handleLevelEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped map to selection", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
-      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
+      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
       elif ke.isKeyDown(keyEscape):
         exitSelectMode(a)
         a.clearStatusMessage()
 
+    # }}}
+    # {{{ emSelectRect
     of emSelectRect:
       handleMoveCursor()
 
@@ -1946,6 +1995,8 @@ proc handleLevelEvents(a) =
         ui.selRect = SelectionRect.none
         ui.editMode = emSelect
 
+    # }}}
+    # {{{ emPastePreview
     of emPastePreview:
       if ke.isKeyDown(MoveKeysLeft,  repeat=true):
         moveCursorAndSelStart(dirW, steps=1, a)
@@ -1976,18 +2027,20 @@ proc handleLevelEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
-      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
+      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
       elif ke.isKeyDown(keyEscape):
         ui.editMode = emNormal
         a.clearStatusMessage()
 
+    # }}}
+    # {{{ emNudgePreview
     of emNudgePreview:
       handleMoveKeys(moveSelStart)
 
-      if ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
-      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
+      if   ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
       elif ke.isKeyDown(keyEnter):
         actions.nudgeLevel(map, cur.level,
@@ -2001,22 +2054,25 @@ proc handleLevelEvents(a) =
         ui.nudgeBuf = SelectionBuffer.none
         a.clearStatusMessage()
 
+    # }}}
+    # {{{ emSetTeleportDestination
     of emSetTeleportDestination:
       handleMoveCursor()
 
       if ke.isKeyDown(keyEnter):
-        setFloor(fTeleportDestination, a)
+        setFloorAction(fTeleportDestination, a)
         map.links[ui.linkSrcLocation] = cur
         ui.editMode = emNormal
         setStatusMessage(IconTeleport, "Teleport destination set", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): a.incZoomLevel()
-      elif ke.isKeyDown(keyMinus, repeat=true): a.decZoomLevel()
+      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
       elif ke.isKeyDown(keyEscape):
         ui.editMode = emNormal
         a.clearStatusMessage()
 
+    # }}}
 
 # }}}
 # {{{ handleLevelEventsNoLevels()
