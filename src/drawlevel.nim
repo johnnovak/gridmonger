@@ -1732,14 +1732,13 @@ proc drawLevel*(l: Level, ctx) =
   if ls.outerShadowEnabled:
     drawOuterShadows(viewBuf, ctx)
 
+  drawWalls(viewBuf, ctx)
+
   if dp.selection.isSome:
     drawSelection(ctx)
 
   if dp.selectionBuffer.isSome:
     drawSelectionHighlight(ctx)
-
-  # TODO blend selection/preview tint with wall color
-  drawWalls(viewBuf, ctx)
 
   if dp.drawCursorGuides:
     drawCursorGuides(ctx)
