@@ -156,6 +156,9 @@ proc paste*(l; destRow, destCol: int, src: Level, sel: Selection) =
           let floor = src.getFloor(srcRow, srcCol)
           l.setFloor(r,c, floor)
 
+          let ot = src.getFloorOrientation(srcRow, srcCol)
+          l.setFloorOrientation(r,c, ot)
+
           template copyWall(dir: CardinalDir) =
             let w = src.getWall(srcRow, srcCol, dir)
             l.setWall(r,c, dir, w)
