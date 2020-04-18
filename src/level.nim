@@ -75,16 +75,6 @@ proc delNotes(l; rect: Rect[Natural]) =
       toDel.add((r,c))
   for (r,c) in toDel: l.delNote(r,c)
 
-# TODO used?
-#proc delNotes*(l) =
-#  l.notes = initTable[Natural, Note]()
-
-# TODO used?
-#proc maxNoteIndex*(l): Natural =
-#  for n in l.notes.values():
-#    if n.kind == nkIndexed:
-#      result = max(result, n.index)
-
 proc convertNoteToComment(l; r,c: Natural) =
   if l.hasNote(r,c):
     let note = l.getNote(r,c)
@@ -122,13 +112,15 @@ proc setFloorOrientation*(l; r,c: Natural, ot: Orientation) {.inline.} =
 proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool =
   l.cellGrid.isNeighbourCellEmpty(r,c, dir)
 
+proc isFloorEmpty*(l; r,c: Natural): bool {.inline.} =
+  l.cellGrid.isFloorEmpty(r,c)
 
 proc eraseOrphanedWalls*(l; r,c: Natural) =
   template cleanWall(dir: CardinalDir) =
     if l.isNeighbourCellEmpty(r,c, {dir}):
       l.setWall(r,c, dir, wNone)
 
-  if l.getFloor(r,c) == fNone:
+  if l.isFloorEmpty(r,c):
     cleanWall(dirN)
     cleanWall(dirW)
     cleanWall(dirS)
@@ -162,7 +154,7 @@ proc paste*(l; destRow, destCol: int, src: Level, sel: Selection) =
             let w = src.getWall(srcRow, srcCol, dir)
             l.setWall(r,c, dir, w)
 
-          if floor == fNone:
+          if floor.isFloorEmpty:
             l.eraseOrphanedWalls(r,c)
           else:
             copyWall(dirN)

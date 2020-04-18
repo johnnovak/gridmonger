@@ -56,7 +56,7 @@ type
     drawColor*:              Color
     lightDrawColor*:         Color
     floorColor*:             Color
-    thinLines*:              bool
+    lineWidth*:              LineWidth
 
     bgHatchEnabled*:         bool
     bgHatchColor*:           Color
@@ -99,6 +99,9 @@ type
     notePaneIndexBgColor*:   seq[Color]
 
 
+  LineWidth* = enum
+    lwThin, lwNormal, lwThick
+
   GridStyle* = enum
     gsNone, gsSolid, gsLoose, gsDashed
 
@@ -126,7 +129,8 @@ type
 
   Floor* = enum
     fNone                = (  0, "blank"),
-    fEmpty               = (  1, "empty"),
+    fEmpty               = (  1, "empty"),  # TODO rename to blank? interferes with isFloorEmpty
+    fTrail               = (  2, "trail"),
     fDoor                = ( 20, "door"),
     fLockedDoor          = ( 21, "locked door"),
     fArchway             = ( 22, "archway"),

@@ -37,22 +37,29 @@ const
   DefaultZoomLevel = 9
   CursorJump = 5
 
-  StatusBarHeight = 26.0
+  StatusBarHeight         = 26.0
 
-  LevelLeftPad           = 50.0
-  LevelRightPad          = 113.0
-  LevelTopPadCoords      = 85.0
-  LevelBottomPadCoords   = 40.0
-  LevelTopPadNoCoords    = 65.0
-  LevelBottomPadNoCoords = 10.0
+  LevelTopPad_Coords      = 85.0
+  LevelRightPad_Coords    = 113.0
+  LevelBottomPad_Coords   = 40.0
+  LevelLeftPad_Coords     = 50.0
 
-  NotesPaneTopPad = 10.0
-  NotesPaneHeight = 40.0
-  NotesPaneBottomPad = 10.0
+  LevelTopPad_NoCoords    = 65.0
+  LevelRightPad_NoCoords  = 83.0
+  LevelBottomPad_NoCoords = 10.0
+  LevelLeftPad_NoCoords   = 28.0
+
+  NotesPaneHeight         = 40.0
+  NotesPaneTopPad         = 10.0
+  NotesPaneRightPad       = 25.0
+  NotesPaneBottomPad      = 10.0
+  NotesPaneLeftPad        = 20.0
+
+  ToolbarRightPad         = 56.0
 
 
 const
-  MapFileExt * = "grm"
+  MapFileExt = "grm"
   GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
 
 # }}}
@@ -82,10 +89,15 @@ type
     scrollMargin:      Natural
     showNotesPane:     bool
 
+    drawTrail:         bool
+
+
   UI = object
     style:             UIStyle
     cursor:            Location
+    cursorOrient:      CardinalDir
     editMode:          EditMode
+    moveMode:          MoveMode
 
     selection:         Option[Selection]
     selRect:           Option[SelectionRect]
@@ -100,7 +112,9 @@ type
     currFloorColor:    Natural
 
     levelTopPad:       float
+    levelRightPad:     float
     levelBottomPad:    float
+    levelLeftPad:      float
 
     linkSrcLocation:   Location
 
@@ -123,6 +137,10 @@ type
     emNudgePreview,
     emSetTeleportDestination
 
+  MoveMode* = enum
+    mmCursor,
+    mmWalk
+
   Theme = object
     themeNames:           seq[string]
     currThemeIndex:       Natural
@@ -132,8 +150,10 @@ type
 
   Dialog = object
     saveDiscardDialog:    SaveDiscardDialogParams
+
     newMapDialog:         NewMapDialogParams
     editMapPropsDialog:   EditMapPropsDialogParams
+
     newLevelDialog:       NewLevelDialogParams
     editLevelPropsDialog: EditLevelPropsParams
     editNoteDialog:       EditNoteDialogParams
@@ -259,6 +279,8 @@ proc renderStatusBar(y: float, winWidth: float, a) =
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
   # Bar background
+  vg.save()
+
   vg.beginPath()
   vg.rect(0, y, winWidth, StatusBarHeight)
   vg.fillColor(s.backgroundColor)
@@ -276,7 +298,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
     vg.textAlign(haLeft, vaMiddle)
     discard vg.text(winWidth - tw - 7, ty, cursorPos)
 
-    vg.scissor(0, y, winWidth - tw - 15, StatusBarHeight)
+    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
 
   # Display icon & message
   const
@@ -314,7 +336,7 @@ proc renderStatusBar(y: float, winWidth: float, a) =
       let tx = vg.text(x, ty, text)
       x = tx + CommandTextPadX
 
-  vg.resetScissor()
+  vg.restore()
 
 # }}}
 
@@ -411,12 +433,15 @@ proc loadTheme(index: Natural, a) =
     d.buttonFillColorHover     = s.buttonColorHover
     d.buttonFillColorDown      = s.buttonColor
     d.buttonFillColorActive    = s.buttonColor
+    d.buttonFillColorDisabled  = s.buttonColor
     d.labelFontSize            = 15.0
     d.labelColor               = s.labelColor
     d.labelColorHover          = s.labelColor
-    d.labelColorActive         = s.labelColor
     d.labelColorDown           = s.labelColor
+    d.labelColorActive         = s.labelColor
+    d.labelColorDisabled       = s.labelColor
     d.labelAlign               = haCenter
+    d.itemAlign                = haCenter
     d.itemListFillColor        = s.itemListColor
     d.itemColor                = s.itemColor
     d.itemColorHover           = s.itemColorHover
@@ -486,20 +511,23 @@ proc resetCursorAndViewStart(a) =
 # {{{ updateViewStartAndCursorPosition()
 proc updateViewStartAndCursorPosition(a) =
   alias(dp, a.ui.drawLevelParams)
+  alias(ui, a.ui)
+  alias(cur, a.ui.cursor)
+
   let l = getCurrLevel(a)
 
   let (winWidth, winHeight) = a.win.size
 
-  dp.startX = LevelLeftPad
-  dp.startY = TitleBarHeight + a.ui.levelTopPad
+  dp.startX = ui.levelLeftPad
+  dp.startY = TitleBarHeight + ui.levelTopPad
 
   var drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
-                       a.ui.levelTopPad - a.ui.levelBottomPad
+                       ui.levelTopPad - ui.levelBottomPad
 
   if a.opt.showNotesPane:
    drawAreaHeight -= NotesPaneTopPad + NotesPaneHeight + NotesPaneBottomPad
 
-  let drawAreaWidth = winWidth - LevelLeftPad - LevelRightPad
+  let drawAreaWidth = winWidth - ui.levelLeftPad - ui.levelRightPad
 
   dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), l.cols)
@@ -510,13 +538,13 @@ proc updateViewStartAndCursorPosition(a) =
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
   let viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
-  a.ui.cursor.row = min(
+  cur.row = min(
     max(viewEndRow, dp.viewStartRow),
-    a.ui.cursor.row
+    cur.row
   )
-  a.ui.cursor.col = min(
+  cur.col = min(
     max(viewEndCol, dp.viewStartCol),
-    a.ui.cursor.col
+    cur.col
   )
 
 # }}}
@@ -525,12 +553,16 @@ proc showCellCoords(show: bool, a) =
   alias(dp, a.ui.drawLevelParams)
 
   if show:
-    a.ui.levelTopPad = LevelTopPadCoords
-    a.ui.levelBottomPad = LevelBottomPadCoords
+    a.ui.levelTopPad    = LevelTopPad_Coords
+    a.ui.levelRightPad  = LevelRightPad_Coords
+    a.ui.levelBottomPad = LevelBottomPad_Coords
+    a.ui.levelLeftPad   = LevelLeftPad_Coords
     dp.drawCellCoords = true
   else:
-    a.ui.levelTopPad = LevelTopPadNoCoords
-    a.ui.levelBottomPad = LevelBottomPadNoCoords
+    a.ui.levelTopPad    = LevelTopPad_NoCoords
+    a.ui.levelRightPad  = LevelRightPad_NoCoords
+    a.ui.levelBottomPad = LevelBottomPad_NoCoords
+    a.ui.levelLeftPad   = LevelLeftPad_NoCoords
     dp.drawCellCoords = false
 
 # }}}
@@ -760,9 +792,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     y = 60.0
 
   koi.label(x, y, labelWidth, h, "Name")
-  dlg.name = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
-  )
+  dlg.name = koi.textField(x + labelWidth, y, 220.0, h, dlg.name)
 
   proc okAction(dlg: var NewMapDialogParams, a) =
     a.doc.filename = ""
@@ -770,7 +800,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     initUndoManager(a.undoManager)
 
     resetCursorAndViewStart(a)
-    setStatusMessage(IconFile, fmt"New map created", a)
+    setStatusMessage(IconFile, "New map created", a)
 
     koi.closeDialog()
     dlg.isOpen = false
@@ -822,15 +852,13 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
     y = 60.0
 
   koi.label(x, y, labelWidth, h, "Name")
-  dlg.name = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.name
-  )
+  dlg.name = koi.textField(x + labelWidth, y, 220.0, h, dlg.name)
 
   proc okAction(dlg: var EditMapPropsDialogParams, a) =
     # TODO should be action
     a.doc.map.name = dlg.name
 
-    setStatusMessage(IconFile, fmt"Map properties updated", a)
+    setStatusMessage(IconFile, "Map properties updated", a)
 
     koi.closeDialog()
     dlg.isOpen = false
@@ -899,31 +927,31 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
   koi.label(x, y, labelWidth, h, "Location Name")
   dlg.locationName = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.locationName
+    x + labelWidth, y, 220.0, h, dlg.locationName
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Level Name")
   dlg.levelName = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.levelName
+    x + labelWidth, y, 220.0, h, dlg.levelName
   )
 
   y += 44
   koi.label(x, y, labelWidth, h, "Elevation")
   dlg.elevation = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.elevation
+    x + labelWidth, y, 60.0, h, dlg.elevation
   )
 
   y += 44
   koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
+    x + labelWidth, y, 60.0, h, dlg.rows
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Columns")
   dlg.cols = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
+    x + labelWidth, y, 60.0, h, dlg.cols
   )
 
   # Validation
@@ -1011,19 +1039,19 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
 
   koi.label(x, y, labelWidth, h, "Location Name")
   dlg.locationName = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.locationName
+    x + labelWidth, y, 220.0, h, dlg.locationName
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Level Name")
   dlg.levelName = koi.textField(
-    x + labelWidth, y, 220.0, h, tooltip = "", dlg.levelName
+    x + labelWidth, y, 220.0, h, dlg.levelName
   )
 
   y += 44
   koi.label(x, y, labelWidth, h, "Elevation")
   dlg.elevation = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.elevation
+    x + labelWidth, y, 60.0, h, dlg.elevation
   )
 
   proc okAction(dlg: var EditLevelPropsParams, a) =
@@ -1090,13 +1118,13 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
 
   koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.rows
+    x + labelWidth, y, 60.0, h, dlg.rows
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Columns")
   dlg.cols = koi.textField(
-    x + labelWidth, y, 60.0, h, tooltip = "", dlg.cols
+    x + labelWidth, y, 60.0, h, dlg.cols
   )
 
   const IconsPerRow = 3
@@ -1112,10 +1140,10 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
   dlg.anchor = koi.radioButtons(
     x + labelWidth, y, 35, 35,
     labels = AnchorIcons,
+    ord(dlg.anchor),
     tooltips = @["Top-left", "Top", "Top-right",
                  "Left", "Center", "Right",
                  "Bottom-left", "Bottom", "Bottom-right"],
-    ord(dlg.anchor),
     layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: IconsPerRow),
     style=GridIconRadioButtonsStyle
   ).ResizeAnchor
@@ -1282,7 +1310,6 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     koi.radioButtons(
       x + labelWidth, y, 282, h,
       labels = @["None", "Number", "ID", "Icon"],
-      tooltips = @[],
       ord(dlg.kind)
     )
   )
@@ -1290,7 +1317,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   y += 40
   koi.label(x, y, labelWidth, h, "Text")
   dlg.text = koi.textField(
-    x + labelWidth, y, 355, h, tooltip = "", dlg.text
+    x + labelWidth, y, 355, h, dlg.text
   )
 
   y += 64
@@ -1304,8 +1331,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     dlg.indexColor = koi.radioButtons(
       x + labelWidth, y, 28, 28,
       labels = newSeq[string](ls.noteLevelIndexBgColor.len),
-      tooltips = @[],
       dlg.indexColor,
+      tooltips = @[],
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
       drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
                                         ls.cursorColor).some
@@ -1314,7 +1341,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   of nkCustomId:
     koi.label(x, y, labelWidth, h, "ID")
     dlg.customId = koi.textField(
-      x + labelWidth, y, 50.0, h, tooltip = "", dlg.customId
+      x + labelWidth, y, 50.0, h, dlg.customId
     )
 
   of nkIcon:
@@ -1322,8 +1349,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     dlg.icon = koi.radioButtons(
       x + labelWidth, y, 35, 35,
       labels = NoteIcons,
-      tooltips = @[],
       dlg.icon,
+      tooltips = @[],
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 10),
       style=GridIconRadioButtonsStyle
     )
@@ -1534,7 +1561,58 @@ proc handleLevelEvents(a) =
     MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
     MoveKeysRight = {keyRight, keyL, keyKp6}
     MoveKeysUp    = {keyUp,    keyK, keyKp8}
-    MoveKeysDown  = {keyDown,  keyJ, keyKp2}
+    MoveKeysDown  = {keyDown,  keyJ, keyKp2, keyKp5}
+
+  const
+    WalkKeysForward     = {keyKp8, keyUp}
+    WalkKeysBackward    = {keyKp2, keyKp5, keyDown}
+    WalkKeysStrafeLeft  = {keyKp4, keyLeft}
+    WalkKeysStrafeRight = {keyKp6, keyRight}
+    WalkKeysTurnLeft    = {keyKp7}
+    WalkKeysTurnRight   = {keyKp9}
+    WalkTurnKeys        = WalkKeysTurnLeft + WalkKeysTurnRight
+
+  proc turnLeft(dir: CardinalDir): CardinalDir =
+    CardinalDir(floorMod(ord(dir) - 1, ord(CardinalDir.high) + 1))
+
+  proc turnRight(dir: CardinalDir): CardinalDir =
+    CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
+
+  proc setTrailAtCursor(a) =
+    if a.opt.drawTrail:
+      if l.isFloorEmpty(cur.row, cur.col):
+        actions.setFloor(map, cur, fTrail, um)
+
+  template handleMoveWalk() =
+    if ke.isKeyDown(WalkKeysForward, repeat=true):
+      setTrailAtCursor(a)
+      moveCursor(ui.cursorOrient, steps=1, a)
+      setTrailAtCursor(a)
+
+    elif ke.isKeyDown(WalkKeysBackward, repeat=true):
+      let backward = turnLeft(turnLeft(ui.cursorOrient))
+      setTrailAtCursor(a)
+      moveCursor(backward, steps=1, a)
+      setTrailAtCursor(a)
+
+    elif ke.isKeyDown(WalkKeysStrafeLeft, repeat=true):
+      let left = turnLeft(ui.cursorOrient)
+      setTrailAtCursor(a)
+      moveCursor(left, steps=1, a)
+      setTrailAtCursor(a)
+
+    elif ke.isKeyDown(WalkKeysStrafeRight, repeat=true):
+      let right = turnRight(ui.cursorOrient)
+      setTrailAtCursor(a)
+      moveCursor(right, steps=1, a)
+      setTrailAtCursor(a)
+
+    elif ke.isKeyDown(WalkKeysTurnLeft, repeat=true):
+      ui.cursorOrient = turnLeft(ui.cursorOrient)
+
+    elif ke.isKeyDown(WalkKeysTurnRight, repeat=true):
+      ui.cursorOrient = turnRight(ui.cursorOrient)
+
 
   template handleMoveKeys(moveHandler: untyped) =
     if   ke.isKeyDown(MoveKeysLeft,  repeat=true): moveHandler(dirW, a)
@@ -1560,17 +1638,23 @@ proc handleLevelEvents(a) =
     elif ke.isKeyDown(MoveKeysDown,  {mkCtrl}, repeat=true):
       moveCursor(dirS, steps=CursorJump, a)
 
+
   for ke in koi.keyBuf():
     case ui.editMode:
     # {{{ emNormal
     of emNormal:
-      handleMoveCursor()
+      case ui.moveMode
+      of mmCursor: handleMoveCursor()
+      of mmWalk:   handleMoveWalk()
 
       if   ke.isKeyDown(keyPageUp) or ke.isKeyDown(keyMinus, {mkCtrl}):
         prevLevelAction(a)
 
       elif ke.isKeyDown(keyPageDown) or ke.isKeyDown(keyEqual, {mkCtrl}):
         nextLevelAction(a)
+
+      elif ke.isKeyDown(keyTab):
+        ui.moveMode = if ui.moveMode == mmCursor: mmWalk else: mmCursor
 
       elif ke.isKeyDown(keyD):
         ui.editMode = emExcavate
@@ -1736,13 +1820,13 @@ proc handleLevelEvents(a) =
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyN):
-        if l.getFloor(cur.row, cur.col) == fNone:
+        if l.isFloorEmpty(cur.row, cur.col):
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
           openEditNoteDialog(a)
 
       elif ke.isKeyDown(keyN, {mkShift}):
-        if l.getFloor(cur.row, cur.col) == fNone:
+        if l.isFloorEmpty(cur.row, cur.col):
           setStatusMessage(IconWarning, "No note to delete in cell", a)
         else:
           actions.eraseNote(map, cur, um)
@@ -1785,29 +1869,32 @@ proc handleLevelEvents(a) =
 
       elif ke.isKeyDown(keyN, {mkAlt}):
         if a.opt.showNotesPane:
-          setStatusMessage(fmt"Notes pane shown", a)
+          setStatusMessage("Notes pane shown", a)
           a.opt.showNotesPane = false
         else:
-          setStatusMessage(fmt"Notes pane hidden", a)
+          setStatusMessage("Notes pane hidden", a)
           a.opt.showNotesPane = true
+
+      elif ui.moveMode == mmWalk and ke.isKeyDown(keyT):
+        if a.opt.drawTrail:
+          setStatusMessage(IconPaw, "Trail mode turned off", a)
+          a.opt.drawTrail = false
+        else:
+          setStatusMessage(IconPaw, "Trail mode turned on", a)
+          a.opt.drawTrail = true
 
     # }}}
     # {{{ emExcavate, emEraseCell, emClearFloor
     of emExcavate, emEraseCell, emClearFloor:
-      proc handleMoveKey(dir: CardinalDir, a) =
-        if ui.editMode == emExcavate:
-          moveCursor(dir, steps=1, a)
-          actions.excavate(map, cur, um)
+      let prevCursor = cur
+      case ui.moveMode
+      of mmCursor: handleMoveCursor()
+      of mmWalk:   handleMoveWalk()
 
-        elif ui.editMode == emEraseCell:
-          moveCursor(dir, steps=1, a)
-          actions.eraseCell(map, cur, um)
-
-        elif ui.editMode == emClearFloor:
-          moveCursor(dir, steps=1, a)
-          actions.setFloor(map, cur, fEmpty, um)
-
-      handleMoveKeys(handleMoveKey)
+      if cur != prevCursor:
+        if   ui.editMode == emExcavate:   actions.excavate(map, cur, um)
+        elif ui.editMode == emEraseCell:  actions.eraseCell(map, cur, um)
+        elif ui.editMode == emClearFloor: actions.setFloor(map, cur, fEmpty, um)
 
       if ke.isKeyUp({keyD, keyE, keyF}):
         ui.editMode = emNormal
@@ -2023,7 +2110,15 @@ proc handleLevelEvents(a) =
     of emSetTeleportDestination:
       handleMoveCursor()
 
-      if ke.isKeyDown(keyEnter):
+      if ke.isKeyDown({keyPageUp, keyKpSubtract}) or
+         ke.isKeyDown(keyMinus, {mkCtrl}):
+        prevLevelAction(a)
+
+      elif ke.isKeyDown({keyPageDown, keyKpAdd}) or
+           ke.isKeyDown(keyEqual, {mkCtrl}):
+        nextLevelAction(a)
+
+      elif ke.isKeyDown(keyEnter):
         setFloorAction(fTeleportDestination, a)
         map.links[ui.linkSrcLocation] = cur
         ui.editMode = emNormal
@@ -2037,7 +2132,6 @@ proc handleLevelEvents(a) =
         a.clearStatusMessage()
 
     # }}}
-
 # }}}
 # {{{ handleLevelEventsNoLevels()
 proc handleLevelEventsNoLevels(a) =
@@ -2062,6 +2156,8 @@ proc drawNotesPane(x, y, w, h: float, a) =
   alias(vg, a.vg)
   alias(ls, a.doc.levelStyle)
 
+  vg.save()
+
   let l = getCurrLevel(a)
   let cur = a.ui.cursor
 
@@ -2071,32 +2167,32 @@ proc drawNotesPane(x, y, w, h: float, a) =
     let note = l.getNote(cur.row, cur.col)
     case note.kind
     of nkIndexed:
-      drawIndexedNote(x-40, y-12, note.index, 36,
+      drawIndexedNote(x, y-12, note.index, 36,
                       bgColor=ls.notePaneIndexBgColor[note.indexColor],
                       fgColor=ls.notePaneIndexColor, vg)
 
     of nkCustomId:
       vg.fillColor(ls.notePaneTextColor)
       vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-22, y-2, note.customId)
+      discard vg.text(x+18, y-2, note.customId)
 
     of nkIcon:
       vg.fillColor(ls.notePaneTextColor)
       vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-3, NoteIcons[note.icon])
+      discard vg.text(x+20, y-3, NoteIcons[note.icon])
 
     of nkComment:
       vg.fillColor(ls.notePaneTextColor)
       vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x-20, y-2, IconComment)
+      discard vg.text(x+20, y-2, IconComment)
 
     vg.fillColor(ls.notePaneTextColor)
     vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
-    vg.scissor(x, y, w, h)
-    vg.textBox(x, y, w, note.text)
-    vg.resetScissor()
+    vg.intersectScissor(x+40, y, w-40, h)
+    vg.textBox(x+40, y, w-40, note.text)
 
+  vg.restore()
 
 # }}}
 # {{{ renderUI()
@@ -2128,12 +2224,13 @@ proc specialWallDrawProc(ls: LevelStyle,
     var cy = y + 15
 
     template drawAtZoomLevel6(body: untyped) =
+      vg.save()
       # A bit messy... but so is life! =8)
       dp.setZoomLevel(ls, 6)
-      vg.scissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
+      vg.intersectScissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
       body
       dp.setZoomLevel(ls, 4)
-      vg.resetScissor()
+      vg.restore()
 
     case SpecialWalls[buttonIdx]
     of wNone:           discard
@@ -2183,13 +2280,22 @@ proc renderUI() =
   vg.fill()
 
   if mapHasLevels(a):
-    const LevelDropdownWidth = 320
+    let levelItems = a.doc.map.sortedLevelNames
+    let levelSelectedItem = getCurrSortedLevelIdx(a)
+
+    vg.fontSize(a.theme.levelDropdownStyle.labelFontSize)
+    let levelDropdownWidth = vg.textWidth(levelItems[levelSelectedItem]) +
+                             a.theme.levelDropdownStyle.labelPadHoriz * 2 + 8
 
     let sortedLevelIdx = koi.dropdown(
-      (winWidth - LevelDropdownWidth)*0.5, 45, LevelDropdownWidth, 24.0,   # TODO calc y
-      a.doc.map.sortedLevelNames,
-      tooltip = "Current map level",
-      getCurrSortedLevelIdx(a),
+      x = (winWidth - levelDropdownWidth)*0.5,
+      y = 45,
+      w = levelDropdownWidth,
+      h = 24.0,   # TODO calc y
+      levelItems,
+      levelSelectedItem,
+      tooltip = "",
+      disabled = not (ui.editMode in {emNormal, emSetTeleportDestination}),
       style = a.theme.levelDropdownStyle
     )
     ui.cursor.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
@@ -2200,6 +2306,11 @@ proc renderUI() =
     if dp.viewRows > 0 and dp.viewCols > 0:
       dp.cursorRow = ui.cursor.row
       dp.cursorCol = ui.cursor.col
+
+      dp.cursorOrient = CardinalDir.none
+      if ui.moveMode == mmWalk and
+         ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
+        dp.cursorOrient = ui.cursorOrient.some
 
       dp.selection = ui.selection
       dp.selectionRect = ui.selRect
@@ -2213,40 +2324,52 @@ proc renderUI() =
 
     if a.opt.showNotesPane:
       drawNotesPane(
-        x = LevelLeftPad,
+        x = NotesPaneLeftPad,
         y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
-        w = winWidth - LevelLeftPad*2,  # TODO
+        w = winWidth - NotesPaneLeftPad - NotesPaneRightPad,
         h = NotesPaneHeight,
         a
       )
 
     # Right-side toolbar
     ui.currSpecialWall = koi.radioButtons(
-      winWidth - 60.0, 90, 36, 35,
+      x = winWidth - ToolbarRightPad,
+      y = 90,
+      w = 36,
+      h = 35,
       labels = newSeq[string](SpecialWalls.len),
-      tooltips = @[],
       ui.currSpecialWall,
+      tooltips = @[],
       layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
       drawProc=specialWallDrawProc(ls, ui.toolbarDrawParams).some
     )
 
     ui.currFloorColor = koi.radioButtons(
-  #    winWidth - 50.0, 90, 28, 28,
-      winWidth - 57.0, 460, 30, 30,
+      x = winWidth - ToolbarRightPad + 3,
+      y = 460,
+      w = 30,
+      h = 30,
       labels = newSeq[string](4),
-      tooltips = @[],
       ui.currFloorColor,
+      tooltips = @[],
       layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
       drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
                                         ls.cursorColor).some
     )
+
+    # Option indicators
+    if a.ui.moveMode == mmWalk and a.opt.drawTrail:
+      vg.setFont(18.0)
+      vg.fillColor(ls.coordsHighlightColor)
+      discard vg.text(winWidth.float - 44, 56, IconPaw)
+
 
   else:
     vg.fontSize(22)
     vg.fillColor(ls.drawColor)
     vg.textAlign(haCenter, vaMiddle)
     var y = winHeight*0.5
-    discard vg.text(winWidth*0.5 , y, "Empty map")
+    discard vg.text(winWidth*0.5, y, "Empty map")
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
@@ -2397,7 +2520,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   loadImages(vg, a)
 
   searchThemes(a)
-  var themeIndex = findThemeIndex("oldpaper", a)
+  var themeIndex = findThemeIndex("inverted", a)
   if themeIndex == -1: themeIndex = 0
   loadTheme(themeIndex, a)
 
@@ -2415,14 +2538,14 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-#  let filename = "EOB III - Crystal Tower L2 notes.grm"
+  let filename = "EOB III - Crystal Tower L2 notes.grm"
 #  let filename = "EOB III - Crystal Tower L2.grm"
 # let filename = "drawtest.grm"
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
 #  let filename = "moveto-test.grm"
-  let filename = "pool-of-radiance-multi.grm"
+#  let filename = "pool-of-radiance-multi.grm"
   a.doc.map = readMap(filename)
   a.doc.filename = filename
 
@@ -2430,10 +2553,10 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.win.renderFrameCb = renderFrame
 
   # TODO for development
-#  a.win.size = (960, 1040)
-#  a.win.pos = (960, 0)
-  a.win.size = (700, 900)
-  a.win.pos = (900, 0)
+  a.win.size = (960, 1040)
+  a.win.pos = (960, 0)
+#  a.win.size = (700, 900)
+#  a.win.pos = (900, 0)
   a.win.show()
 
 

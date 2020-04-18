@@ -54,6 +54,7 @@ type
 
     cursorRow*:    Natural
     cursorCol*:    Natural
+    cursorOrient*: Option[CardinalDir]
 
     viewStartRow*: Natural
     viewStartCol*: Natural
@@ -84,6 +85,7 @@ type
     thinStrokeWidth:    float
     normalStrokeWidth:  float
 
+    lineWidth:          LineWidth
     thinOffs:           float
     vertTransformXOffs: float
 
@@ -150,7 +152,15 @@ proc setZoomLevel*(dp; ls; zl: Natural) =
   dp.zoomLevel = zl
   dp.gridSize = MinGridSize + zl*ZoomStep
 
-  if zl < 3 or ls.thinLines:
+  dp.lineWidth = ls.lineWidth
+
+  if dp.lineWidth == lwThin:
+    dp.thinStrokeWidth = 1.0
+    dp.normalStrokeWidth = 1.0
+    dp.thinOffs = 1.0
+    dp.vertTransformXOffs = 1.0
+
+  elif zl < 3 or dp.lineWidth == lwNormal:
     dp.thinStrokeWidth = 2.0
     dp.normalStrokeWidth = 2.0
     dp.thinOffs = 1.0
@@ -321,6 +331,8 @@ proc drawBackgroundHatch(ctx) =
 
   let sw = ls.bgHatchStrokeWidth
 
+  vg.save()
+
   vg.strokeColor(ls.bgHatchColor)
   vg.strokeWidth(sw)
 
@@ -333,7 +345,7 @@ proc drawBackgroundHatch(ctx) =
   let startX = snap(dp.startX, sw)
   let startY = snap(dp.startY, sw)
 
-  vg.scissor(dp.startX, dp.startY, w, h)
+  vg.intersectScissor(dp.startX, dp.startY, w, h)
 
   var
     x1 = startX - offs
@@ -351,7 +363,7 @@ proc drawBackgroundHatch(ctx) =
     y2 += lineSpacing
   vg.stroke()
 
-  vg.resetScissor()
+  vg.restore()
 
 # }}}
 # {{{ drawCellCoords()
@@ -428,10 +440,35 @@ proc drawCursor(ctx) =
       x = cellX(viewCol, dp)
       y = cellY(viewRow, dp)
       a = dp.gridSize
+      a2 = a*0.5
 
     vg.fillColor(ls.cursorColor)
     vg.beginPath()
-    vg.rect(x, y, a, a)
+
+    if dp.cursorOrient.isSome:
+      case dp.cursorOrient.get
+      of dirN:
+        vg.moveTo(x,    y+a)
+        vg.lineTo(x+a2, y)
+        vg.lineTo(x+a,  y+a)
+
+      of dirE:
+        vg.moveTo(x,   y)
+        vg.lineTo(x+a, y+a2)
+        vg.lineTo(x,   y+a)
+
+      of dirS:
+        vg.moveTo(x, y)
+        vg.lineTo(x+a2, y+a)
+        vg.lineTo(x+a, y)
+
+      of dirW:
+        vg.moveTo(x+a, y)
+        vg.lineTo(x,   y+a2)
+        vg.lineTo(x+a, y+a)
+    else:
+      vg.rect(x, y, a, a)
+
     vg.fill()
 
 # }}}
@@ -491,9 +528,8 @@ proc drawCellOutlines(l: Level, ctx) =
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
       if isOutline(dp.viewStartRow+r, dp.viewStartCol+c):
-        let
-          x = snap(cellX(c, dp), sw)
-          y = snap(cellY(r, dp), sw)
+        let x = snap(cellX(c, dp), sw)
+        let y = snap(cellY(r, dp), sw)
 
         vg.rect(x, y, dp.gridSize, dp.gridSize)
 
@@ -658,69 +694,6 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf, ctx) =
 
 # }}}
 
-# {{{ drawIcon*()
-proc drawIcon*(x, y, ox, oy: float, icon: string,
-              gridSize: float, color: Color, fontSizeFactor: float,
-              vg: NVGContext) =
-
-  vg.setFont(gridSize * fontSizeFactor)
-  vg.fillColor(color)
-  vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + gridSize*ox + gridSize*0.51,
-                  y + gridSize*oy + gridSize*0.58, icon)
-
-template drawIcon*(x, y, ox, oy: float, icon: string, ctx) =
-  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ls.drawColor,
-          fontSizeFactor=0.53, ctx.vg)
-
-# }}}
-# {{{ drawIndexedNote*()
-proc drawIndexedNote*(x, y: float, i: Natural, size: float,
-                      bgColor, fgColor: Color, vg: NVGContext) =
-  vg.fillColor(bgColor)
-  vg.beginPath()
-  vg.circle(x + size*0.5, y + size*0.5, size*0.35)
-  vg.fill()
-
-  vg.setFont((size*0.4).float)
-  vg.fillColor(fgColor)
-  vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + size*0.51, y + size*0.54, $i)
-
-proc drawIndexedNote*(x, y: float, index: Natural, colorIdx: Natural, ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  drawIndexedNote(x, y, index, dp.gridSize,
-                  bgColor=ls.noteLevelIndexBgColor[colorIdx],
-                  fgColor=ls.noteLevelIndexColor, vg)
-
-# }}}
-# {{{ drawCustomIdNote*()
-proc drawCustomIdNote*(x, y: float, s: string, ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  vg.setFont((dp.gridSize * 0.48).float)
-  vg.fillColor(ls.noteLevelTextColor)
-  vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + dp.gridSize*0.52,
-                  y + dp.gridSize*0.55, s)
-
-# }}}
-# {{{ drawFloorBg()
-proc drawFloorBg(x, y: float, color: Color, ctx) =
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  vg.beginPath()
-  vg.fillColor(color)
-  vg.rect(x, y, dp.gridSize, dp.gridSize)
-  vg.fill()
-
-# }}}
 # {{{ drawGrid()
 proc drawGrid(x, y: float, color: Color, ctx) =
   alias(ls, ctx.ls)
@@ -747,7 +720,6 @@ proc drawGrid(x, y: float, color: Color, ctx) =
     vg.moveTo(snap(x, sw), snap(y1, sw))
     vg.lineTo(snap(x, sw), snap(y2, sw))
     vg.stroke()
-    vg.stroke()
 
   of gsLoose:
     let
@@ -766,6 +738,97 @@ proc drawGrid(x, y: float, color: Color, ctx) =
 
   of gsDashed:
     discard
+
+# }}}
+# {{{ drawFloorBg()
+proc drawFloorBg(x, y: float, color: Color, ctx) =
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  vg.beginPath()
+  vg.fillColor(color)
+  vg.rect(x, y, dp.gridSize, dp.gridSize)
+  vg.fill()
+
+# }}}
+# {{{ drawIcon()
+proc drawIcon(x, y, ox, oy: float, icon: string,
+              gridSize: float, color: Color, fontSizeFactor: float,
+              vg: NVGContext) =
+
+  vg.setFont(gridSize * fontSizeFactor)
+  vg.fillColor(color)
+  vg.textAlign(haCenter, vaMiddle)
+  discard vg.text(x + gridSize*ox + gridSize*0.51,
+                  y + gridSize*oy + gridSize*0.58, icon)
+
+template drawIcon(x, y, ox, oy: float, icon: string, ctx) =
+  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ls.drawColor,
+          fontSizeFactor=0.53, ctx.vg)
+
+# }}}
+# {{{ drawIndexedNote*()
+proc drawIndexedNote*(x, y: float, i: Natural, size: float,
+                      bgColor, fgColor: Color, vg: NVGContext) =
+  vg.fillColor(bgColor)
+  vg.beginPath()
+  vg.circle(x + size*0.5, y + size*0.5, size*0.35)
+  vg.fill()
+
+  vg.setFont((size*0.4).float)
+  vg.fillColor(fgColor)
+  vg.textAlign(haCenter, vaMiddle)
+  discard vg.text(x + size*0.51, y + size*0.54, $i)
+
+proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  drawIndexedNote(x, y, index, dp.gridSize,
+                  bgColor=ls.noteLevelIndexBgColor[colorIdx],
+                  fgColor=ls.noteLevelIndexColor, vg)
+
+# }}}
+# {{{ drawCustomIdNote()
+proc drawCustomIdNote(x, y: float, s: string, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  vg.setFont((dp.gridSize * 0.48).float)
+  vg.fillColor(ls.noteLevelTextColor)
+  vg.textAlign(haCenter, vaMiddle)
+  discard vg.text(x + dp.gridSize*0.52,
+                  y + dp.gridSize*0.55, s)
+
+# }}}
+
+# {{{ drawTrail()
+proc drawTrail(x, y: float, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    offs = (dp.gridSize * 0.38).int
+    sw = dp.thinStrokeWidth
+
+  var x1, y1: float
+  if dp.lineWidth == lwThin:
+    x1 = x + offs
+    y1 = y + offs
+  else:
+    let sw2 = sw*0.5
+    x1 = snap(x + offs - sw2, sw)
+    y1 = snap(y + offs - sw2, sw)
+
+  let a = dp.gridSize - 2*offs + sw + 1 - dp.thinOffs
+
+  vg.fillColor(ls.lightDrawColor)
+  vg.beginPath()
+  vg.rect(x1, y1, a, a)
+  vg.fill()
 
 # }}}
 # {{{ drawSecretDoor()
@@ -841,10 +904,17 @@ proc drawOpenPitWithColor(x, y: float, color: Color, ctx) =
   let
     offs = (dp.gridSize * 0.3).int
     sw = dp.thinStrokeWidth
-    sw2 = sw*0.5
+
+  var x1, y1: float
+  if dp.lineWidth == lwThin:
+    x1 = x + offs
+    y1 = y + offs
+  else:
+    let sw2 = sw*0.5
     x1 = snap(x + offs - sw2, sw)
     y1 = snap(y + offs - sw2, sw)
-    a = dp.gridSize - 2*offs + sw + 1 - dp.thinOffs
+
+  let a = dp.gridSize - 2*offs + sw + 1 - dp.thinOffs
 
   vg.fillColor(color)
   vg.beginPath()
@@ -1014,7 +1084,7 @@ proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
   let
     o = dp.thinOffs
     wallLen = (dp.gridSize * 0.25).int
-    doorWidthOffs = (if dp.zoomLevel < 4 or ls.thinLines: -1.0 else: 0)
+    doorWidthOffs = -o # (if dp.zoomLevel < 4 or ls.thinLines: -1.0 else: 0)
     doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
     xs = x
     y  = y
@@ -1041,7 +1111,10 @@ proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
   vg.strokeWidth(sw)
   vg.beginPath()
   if fill:
-    vg.rect(snap(x1, sw), snap(y1-o-1, sw), x2-x1+1, y2-y1+3+o)
+    if dp.lineWidth == lwThin:
+      vg.rect(x1+1, y1-o, x2-x1, y2-y1+2+o)
+    else:
+      vg.rect(snap(x1, sw), snap(y1-o-1, sw), x2-x1+1, y2-y1+3+o)
     vg.fill()
   else:
     vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
@@ -1341,7 +1414,9 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
     y = cellY(viewRow, dp)
 
   template drawOriented(drawProc: untyped) =
-    vg.scissor(x, y, dp.gridSize+1, dp.gridSize+1)
+    vg.save()
+
+    vg.intersectScissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
     case viewBuf.getFloorOrientation(bufRow, bufCol):
     of Horiz:
@@ -1350,14 +1425,16 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
       setVertTransform(x + floor(dp.gridSize*0.5), y, ctx)
       drawProc(0, 0, ctx)
       vg.resetTransform()
-    vg.resetScissor()
+
+    vg.restore()
 
   template draw(drawProc: untyped) =
     drawProc(x, y, ctx)
 
   case viewBuf.getFloor(bufRow, bufCol)
-  of fNone:                discard # TODO?
-  of fEmpty:               discard #
+  of fNone:                discard
+  of fEmpty:               discard
+  of fTrail:               draw(drawTrail)
   of fDoor:                drawOriented(drawDoorHoriz)
   of fLockedDoor:          drawOriented(drawLockedDoorHoriz)
   of fArchway:             drawOriented(drawArchwayHoriz)
@@ -1387,7 +1464,7 @@ proc drawBackgroundGrid(viewBuf: Level, ctx) =
         bufRow = viewRow+1
         bufCol = viewCol+1
 
-      if viewBuf.getFloor(bufRow, bufCol) == fNone:
+      if viewBuf.isFloorEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         drawGrid(x, y, ls.gridColorBackground, ctx)
@@ -1404,7 +1481,7 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
         bufRow = viewRow+1
         bufCol = viewCol+1
 
-      if viewBuf.getFloor(bufRow, bufCol) != fNone:
+      if not viewBuf.isFloorEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         drawFloorBg(x, y, ls.floorColor, ctx)
@@ -1426,7 +1503,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let w = dp.gridSize*0.4
+  let w = dp.gridSize*0.3
 
   case note.kind
   of nkIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
@@ -1656,9 +1733,9 @@ proc drawOuterShadows(viewBuf: Level, ctx) =
   vg.fill()
 # }}}
 
-# {{{ mergeSelectionAndOutlineBuffers*()
-proc mergeSelectionAndOutlineBuffers*(viewBuf: Level,
-                                      outlineBuf: Option[OutlineBuf], dp) =
+# {{{ mergeSelectionAndOutlineBuffers()
+proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
+                                     outlineBuf: Option[OutlineBuf], dp) =
   if dp.selectionBuffer.isSome:
     let startRow = dp.selStartRow - dp.viewStartRow + 1
     let startCol = dp.selStartCol - dp.viewStartCol + 1

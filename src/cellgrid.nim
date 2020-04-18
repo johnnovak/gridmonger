@@ -66,6 +66,15 @@ proc setFloorOrientation*(g; r,c: Natural, ot: Orientation) {.inline.} =
   g[r,c].floorOrientation = ot
 
 
+const EmptyFloors = {fNone, fTrail}
+
+proc isFloorEmpty*(f: Floor): bool {.inline.} =
+  f in EmptyFloors
+
+proc isFloorEmpty*(g; r,c: Natural): bool {.inline.} =
+  g.getFloor(r,c).isFloorEmpty
+
+
 proc fill*(g; rect: Rect[Natural], cell: Cell) =
   assert rect.r1 < g.rows
   assert rect.c1 < g.cols
@@ -126,21 +135,29 @@ proc copyFrom*(g; destRow, destCol: Natural,
 
 
 proc isNeighbourCellEmpty*(g; r,c: Natural, dir: Direction): bool =
+
   if dir == North:
-    result = r == 0 or g[r-1, c].floor == fNone
+    result = r == 0 or g.isFloorEmpty(r-1, c)
+
   elif dir == NorthEast:
-    result = r == 0 or g[r-1, c+1].floor == fNone
+    result = r == 0 or c == g.cols-1 or g.isFloorEmpty(r-1, c+1)
+
   elif dir == East:
-    result = g[r, c+1].floor == fNone
+    result = c == g.cols-1 or g.isFloorEmpty(r, c+1)
+
   elif dir == SouthEast:
-    result = g[r+1, c+1].floor == fNone
+    result = r == g.rows-1 or c == g.cols-1 or g.isFloorEmpty(r+1, c+1)
+
   elif dir == South:
-    result = g[r+1, c].floor == fNone
+    result = r == g.rows-1 or g.isFloorEmpty(r+1, c)
+
   elif dir == SouthWest:
-    result = c == 0 or g[r+1, c-1].floor == fNone
+    result = r == g.rows-1 or c == 0 or g.isFloorEmpty(r+1, c-1)
+
   elif dir == West:
-    result = c == 0 or g[r, c-1].floor == fNone
+    result = c == 0 or g.isFloorEmpty(r, c-1)
+
   elif dir == NorthWest:
-    result = c == 0 or r == 0 or g[r-1, c-1].floor == fNone
+    result = c == 0 or r == 0 or g.isFloorEmpty(r-1, c-1)
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -90,7 +90,7 @@ DefaultLevelStyle.backgroundColor = gray(0.4)
 DefaultLevelStyle.drawColor       = gray(0.1)
 DefaultLevelStyle.lightDrawColor  = gray(0.6)
 DefaultLevelStyle.floorColor      = gray(0.9)
-DefaultLevelStyle.thinLines       = false
+DefaultLevelStyle.lineWidth       = lwNormal
 
 DefaultLevelStyle.bgHatchEnabled       = true
 DefaultLevelStyle.bgHatchColor         = gray(0.0, 0.4)
@@ -289,7 +289,7 @@ proc parseLevelSection(c: Config): LevelStyle =
   c.getColor(S, "drawColor",                s.drawColor)
   c.getColor(S, "lightDrawColor",           s.lightDrawColor)
   c.getColor(S, "floorColor",               s.floorColor)
-  c.getBool( S, "thinLines",                s.thinLines)
+  getEnum[LineWidth](c, S, "lineWidth", s.lineWidth)
 
   c.getBool( S, "bgHatch",                  s.bgHatchEnabled)
   c.getColor(S, "bgHatchColor",             s.bgHatchColor)

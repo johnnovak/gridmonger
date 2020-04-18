@@ -191,22 +191,22 @@ proc excavate*(map; loc: Location; um) =
     l.eraseCell(r,c)
     l.setFloor(r,c, fEmpty)
 
-    if r == 0 or l.getFloor(r-1, c) == fNone:
+    if r == 0 or l.isFloorEmpty(r-1, c):
       l.setWall(r,c, dirN, wWall)
     else:
       l.setWall(r,c, dirN, wNone)
 
-    if c == 0 or l.getFloor(r, c-1) == fNone:
+    if c == 0 or l.isFloorEmpty(r, c-1):
       l.setWall(r,c, dirW, wWall)
     else:
       l.setWall(r,c, dirW, wNone)
 
-    if r == l.rows-1 or l.getFloor(r+1, c) == fNone:
+    if r == l.rows-1 or l.isFloorEmpty(r+1, c):
       l.setWall(r,c, dirS, wWall)
     else:
       l.setWall(r,c, dirS, wNone)
 
-    if c == l.cols-1 or l.getFloor(r, c+1) == fNone:
+    if c == l.cols-1 or l.isFloorEmpty(r, c+1):
       l.setWall(r,c, dirE, wWall)
     else:
       l.setWall(r,c, dirE, wNone)
