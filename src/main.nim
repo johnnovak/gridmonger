@@ -49,9 +49,9 @@ const
   LevelBottomPad_NoCoords = 10.0
   LevelLeftPad_NoCoords   = 28.0
 
-  NotesPaneHeight         = 40.0
+  NotesPaneHeight         = 60.0
   NotesPaneTopPad         = 10.0
-  NotesPaneRightPad       = 25.0
+  NotesPaneRightPad       = 100.0
   NotesPaneBottomPad      = 10.0
   NotesPaneLeftPad        = 20.0
 
@@ -90,6 +90,7 @@ type
     showNotesPane:     bool
 
     drawTrail:         bool
+    wasdMode:          bool
 
 
   UI = object
@@ -1554,6 +1555,7 @@ proc handleLevelEvents(a) =
   alias(um, a.undoManager)
   alias(dp, a.ui.drawLevelParams)
   alias(win, a.win)
+  alias(opt, a.opt)
 
   var l = getCurrLevel(a)
 
@@ -1579,38 +1581,56 @@ proc handleLevelEvents(a) =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
 
   proc setTrailAtCursor(a) =
-    if a.opt.drawTrail:
+    if opt.drawTrail:
       if l.isFloorEmpty(cur.row, cur.col):
         actions.setFloor(map, cur, fTrail, um)
 
   template handleMoveWalk() =
-    if ke.isKeyDown(WalkKeysForward, repeat=true):
+    var forwardKeys, backwardKeys, strafeLeftKeys, strafeRightKeys,
+        turnLeftKeys, turnRightKeys: set[Key]
+
+    if opt.wasdMode:
+      forwardKeys     = {keyW} + WalkKeysForward
+      backwardKeys    = {Key.keyS} + WalkKeysBackward
+      strafeLeftKeys  = {keyA} + WalkKeysStrafeLeft
+      strafeRightKeys = {keyD} + WalkKeysStrafeRight
+      turnLeftKeys    = {keyQ} + WalkKeysTurnLeft
+      turnRightKeys   = {keyE} + WalkKeysTurnRight
+    else:
+      forwardKeys     = WalkKeysForward
+      backwardKeys    = WalkKeysBackward
+      strafeLeftKeys  = WalkKeysStrafeLeft
+      strafeRightKeys = WalkKeysStrafeRight
+      turnLeftKeys    = WalkKeysTurnLeft
+      turnRightKeys   = WalkKeysTurnRight
+
+    if ke.isKeyDown(forwardKeys, repeat=true):
       setTrailAtCursor(a)
       moveCursor(ui.cursorOrient, steps=1, a)
       setTrailAtCursor(a)
 
-    elif ke.isKeyDown(WalkKeysBackward, repeat=true):
+    elif ke.isKeyDown(backwardKeys, repeat=true):
       let backward = turnLeft(turnLeft(ui.cursorOrient))
       setTrailAtCursor(a)
       moveCursor(backward, steps=1, a)
       setTrailAtCursor(a)
 
-    elif ke.isKeyDown(WalkKeysStrafeLeft, repeat=true):
+    elif ke.isKeyDown(strafeLeftKeys, repeat=true):
       let left = turnLeft(ui.cursorOrient)
       setTrailAtCursor(a)
       moveCursor(left, steps=1, a)
       setTrailAtCursor(a)
 
-    elif ke.isKeyDown(WalkKeysStrafeRight, repeat=true):
+    elif ke.isKeyDown(strafeRightKeys, repeat=true):
       let right = turnRight(ui.cursorOrient)
       setTrailAtCursor(a)
       moveCursor(right, steps=1, a)
       setTrailAtCursor(a)
 
-    elif ke.isKeyDown(WalkKeysTurnLeft, repeat=true):
+    elif ke.isKeyDown(turnLeftKeys, repeat=true):
       ui.cursorOrient = turnLeft(ui.cursorOrient)
 
-    elif ke.isKeyDown(WalkKeysTurnRight, repeat=true):
+    elif ke.isKeyDown(turnRightKeys, repeat=true):
       ui.cursorOrient = turnRight(ui.cursorOrient)
 
 
@@ -1656,13 +1676,14 @@ proc handleLevelEvents(a) =
       elif ke.isKeyDown(keyTab):
         ui.moveMode = if ui.moveMode == mmCursor: mmWalk else: mmCursor
 
-      elif ke.isKeyDown(keyD):
+      elif (opt.wasdMode and koi.mbLeftDown()) or
+           (not opt.wasdMode and ke.isKeyDown(keyD)):
         ui.editMode = emExcavate
         setStatusMessage(IconPencil, "Excavate tunnel",
                          @[IconArrowsAll, "draw"], a)
         actions.excavate(map, cur, um)
 
-      elif ke.isKeyDown(keyE):
+      elif not opt.wasdMode and ke.isKeyDown(keyE):
         ui.editMode = emEraseCell
         setStatusMessage(IconEraser, "Erase cells",
                          @[IconArrowsAll, "erase"], a)
@@ -1683,7 +1704,7 @@ proc handleLevelEvents(a) =
           setStatusMessage(IconArrowsVert,
                            "Floor orientation set to vertical", a)
 
-      elif ke.isKeyDown(keyW):
+      elif not opt.wasdMode and ke.isKeyDown(keyW):
         ui.editMode = emDrawWall
         setStatusMessage("", "Draw walls", @[IconArrowsAll, "set/clear"], a)
 
@@ -1868,20 +1889,29 @@ proc handleLevelEvents(a) =
         setStatusMessage(fmt"Cell coordinates turned {state}", a)
 
       elif ke.isKeyDown(keyN, {mkAlt}):
-        if a.opt.showNotesPane:
+        if opt.showNotesPane:
           setStatusMessage("Notes pane shown", a)
-          a.opt.showNotesPane = false
+          opt.showNotesPane = false
         else:
           setStatusMessage("Notes pane hidden", a)
-          a.opt.showNotesPane = true
+          opt.showNotesPane = true
 
-      elif ui.moveMode == mmWalk and ke.isKeyDown(keyT):
-        if a.opt.drawTrail:
-          setStatusMessage(IconPaw, "Trail mode turned off", a)
-          a.opt.drawTrail = false
+      elif ke.isKeyDown(keyW, {mkAlt}):
+        if opt.wasdMode:
+          setStatusMessage(IconMouse, "WASD+mouse mode turned off", a)
+          opt.wasdMode = false
         else:
-          setStatusMessage(IconPaw, "Trail mode turned on", a)
-          a.opt.drawTrail = true
+          setStatusMessage(IconMouse, "WASD+mouse mode turned on", a)
+          opt.wasdMode = true
+
+      if ui.moveMode == mmWalk:
+        if ke.isKeyDown(keyT):
+          if opt.drawTrail:
+            setStatusMessage(IconShoePrints, "Trail mode turned off", a)
+            opt.drawTrail = false
+          else:
+            setStatusMessage(IconShoePrints, "Trail mode turned on", a)
+            opt.drawTrail = true
 
     # }}}
     # {{{ emExcavate, emEraseCell, emClearFloor
@@ -1896,7 +1926,8 @@ proc handleLevelEvents(a) =
         elif ui.editMode == emEraseCell:  actions.eraseCell(map, cur, um)
         elif ui.editMode == emClearFloor: actions.setFloor(map, cur, fEmpty, um)
 
-      if ke.isKeyUp({keyD, keyE, keyF}):
+      elif (opt.wasdMode and win.mouseButtonUp(mbLeft)) or
+           (not opt.wasdMode and ke.isKeyDown(keyD)):
         ui.editMode = emNormal
         a.clearStatusMessage()
 
@@ -2357,11 +2388,37 @@ proc renderUI() =
                                         ls.cursorColor).some
     )
 
-    # Option indicators
-    if a.ui.moveMode == mmWalk and a.opt.drawTrail:
-      vg.setFont(18.0)
-      vg.fillColor(ls.coordsHighlightColor)
-      discard vg.text(winWidth.float - 44, 56, IconPaw)
+    # Mode & option indicators
+    vg.setFont(16.0, horizAlign=haRight, vertAlign=vaMiddle)
+    vg.fillColor(ls.coordsHighlightColor)
+
+    let y = winHeight.float - 50
+
+    if a.ui.moveMode == mmWalk:
+      if a.opt.drawTrail:
+        vg.fontSize(20)
+        discard vg.text(winWidth.float - 17, y-34, IconShoePrints)
+        vg.fontSize(16)
+
+    vg.textAlign(haRight)
+
+    case a.ui.moveMode:
+    of mmCursor:
+      let mode = case a.ui.editMode:
+      of emNormal, emExcavate, emDrawWall, emDrawWallSpecial,
+         emEraseCell, emClearFloor: "Normal"
+      of emSelect, emSelectRect: "Select"
+      of emPastePreview: "Paste"
+      of emNudgePreview: "Nudge"
+      of emSetTeleportDestination: "Set link"
+
+      discard vg.text(winWidth.float - 15, y, mode)
+
+    of mmWalk:
+      if a.opt.wasdMode:
+        discard vg.text(winWidth.float - 15, y, fmt"WASD+{IconMouse}")
+      else:
+        discard vg.text(winWidth.float - 15, y, "Walk")
 
 
   else:

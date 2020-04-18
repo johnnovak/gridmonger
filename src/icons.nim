@@ -77,7 +77,8 @@ const
   IconPower* = "\ue9b5"
   IconShield* = "\uf132"
   IconShip* = "\ue944"
-  IconSkull* = "\ue902"
+#  IconSkull* = "\ue902"
+  IconSkull* = "\ueaa1"
   IconSpinner* = "\ue910"
   IconStairsDown* = "\ue90c"
   IconStairsUp* = "\ue90d"
@@ -88,13 +89,46 @@ const
   IconTrophy* = "\uf091"
   IconYinYang* = "\ue952"
 
+  # new
+  IconShovel* = "\ue90e"
+  IconAxe* = "\ue917"
+  IconPickAxe* = "\ue90f"
+#  IconBeer2* = "\ue92a"
+#  IconBook2* = "\ue93a"
+  IconSword* = "\ue946"
+  IconChessboard* = "\ue963"
+  IconCog2* = "\ue970"
+  IconCrossedAxes* = "\ue979"
+#  IconDiamond2* = "\ue992"
+  IconWand* = "\ue9b6"
+  IconFootprint* = "\ue9d2"
+  IconHammer* = "\ue9ee"
+  IconHelmet* = "\ue9fe"
+#  IconKey2* = "\uea16"   delete
+#  IconKnifeFork* = "\uea18"
+  IconLargeHammer* = "\uea1d"
+  IconLever* = "\uea29"
+#  IconMatch* = "\uea3a"
+#  IconPineTree* = "\uea62"
+  IconPlayer* = "\uea6f"
+  IconCrown* = "\uea74"
+  IconRadioactive* = "\uea79"
+  IconShoePrints* = "\uea98"
+  IconFire* = "\ueaa3"
+  IconSunSymbol* = "\ueabc"
+  IconSun* = "\ueabd"
+  IconTorch* = "\uead1"
+  IconTower* = "\uead2"
+  IconWaterDrop* = "\ueae4"
+  IconWoodenSign* = "\ueae9"
+
 
 const NoteIcons* = @[
-  IconAsterisk,
-  IconCircle,
-  IconCircleInv,
-  IconBullseye,
-  IconStar,
+  IconAxe,
+  IconSword,
+  IconWaterDrop,
+  IconWoodenSign,
+  IconHelmet,
   IconPower,
 
   IconSkull,
@@ -131,11 +165,11 @@ const NoteIcons* = @[
   IconYinYang,
 
   # Placeholders
-  "1",
-  "2",
-  "3",
-  "4",
-  "5"
+  IconCrossedAxes,
+  IconFire,
+  IconSun,
+  IconTorch,
+  IconTower
 ]
 
 # vim: et:ts=2:sw=2:fdm=marker
