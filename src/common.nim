@@ -69,7 +69,8 @@ type
     cursorColor*:            Color
     cursorGuideColor*:       Color
 
-    gridStyle*:              GridStyle
+    gridStyleBackground*:    GridStyle
+    gridStyleFloor*:         GridStyle
     gridColorBackground*:    Color
     gridColorFloor*:         Color
 
@@ -89,7 +90,7 @@ type
     pastePreviewColor*:      Color
     selectionColor*:         Color
 
-    noteLevelTextColor*:     Color
+    noteLevelMarkerColor*:    Color
     noteLevelCommentColor*:  Color
     noteLevelIndexColor*:    Color
     noteLevelIndexBgColor*:  seq[Color]
@@ -103,7 +104,7 @@ type
     lwThin, lwNormal, lwThick
 
   GridStyle* = enum
-    gsNone, gsSolid, gsLoose, gsDashed
+    gsNone, gsSolid, gsLoose, gsCross
 
   OutlineStyle* = enum
     osNone, osCell, osSquareEdges, osRoundedEdges, osRoundedEdgesFilled

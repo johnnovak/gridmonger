@@ -1855,8 +1855,6 @@ proc drawNotesPane(x, y, w, h: float, a) =
   alias(vg, a.vg)
   alias(ls, a.doc.levelStyle)
 
-  vg.save()
-
   let l = getCurrLevel(a)
   let cur = a.ui.cursor
 
@@ -1864,6 +1862,10 @@ proc drawNotesPane(x, y, w, h: float, a) =
      l.hasNote(cur.row, cur.col):
 
     let note = l.getNote(cur.row, cur.col)
+    if note.text == "": return
+
+    vg.save()
+
     case note.kind
     of nkIndexed:
       drawIndexedNote(x, y-12, note.index, 36,
@@ -1891,34 +1893,26 @@ proc drawNotesPane(x, y, w, h: float, a) =
     vg.intersectScissor(x+40, y, w-40, h)
     vg.textBox(x+40, y, w-40, note.text)
 
-  vg.restore()
+    vg.restore()
 
 # }}}
 # {{{ drawModeAndOptionIndicators()
 proc drawModeAndOptionIndicators(a) =
   alias(vg, a.vg)
+  alias(ui, a.ui)
   alias(ls, a.doc.levelStyle)
-
-  let winWidth = koi.winWidth().float
-  let y = koi.winHeight().float - 50
 
   vg.save()
 
-  vg.setFont(16.0, horizAlign=haRight, vertAlign=vaMiddle)
   vg.fillColor(ls.coordsHighlightColor)
 
   if a.opt.drawTrail:
     vg.fontSize(20)
-    discard vg.text(winWidth - 17, y-61, IconShoePrints)
-    vg.fontSize(16)
-
-  vg.textAlign(haRight)
-
-  var mode = if a.opt.walkMode: "Walk" else: "Normal"
-  discard vg.text(winWidth - 15, y, mode)
+    discard vg.text(100, TitleBarHeight + 32, IconShoePrints)
 
   if a.opt.wasdMode:
-    discard vg.text(winWidth - 15, y-28, fmt"WASD+{IconMouse}")
+    vg.setFont(15.0)
+    discard vg.text(ui.levelLeftPad, TitleBarHeight + 32, fmt"WASD+{IconMouse}")
 
   vg.restore()
 

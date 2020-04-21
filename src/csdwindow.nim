@@ -23,8 +23,8 @@ const
 
   WindowResizeEdgeWidth = 10.0
   WindowResizeCornerSize = 20.0
-  WindowMinWidth = 400
-  WindowMinHeight = 200
+  WindowMinWidth = 640
+  WindowMinHeight = 480
 
 #  {{{ CSDWindow
 type

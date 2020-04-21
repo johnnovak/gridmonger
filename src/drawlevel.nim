@@ -25,6 +25,8 @@ const
   MinLineHatchSize = 3
   MaxLineHatchSize = 8
 
+  DefaultIconFontSizeFactor = 0.53
+
 # Naming conventions
 # ------------------
 #
@@ -695,7 +697,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf, ctx) =
 # }}}
 
 # {{{ drawGrid()
-proc drawGrid(x, y: float, color: Color, ctx) =
+proc drawGrid(x, y: float, color: Color, gridStyle: GridStyle; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -704,7 +706,7 @@ proc drawGrid(x, y: float, color: Color, ctx) =
   vg.strokeColor(color)
   vg.strokeWidth(sw)
 
-  case ls.gridStyle
+  case gridStyle
   of gsNone: discard
 
   of gsSolid:
@@ -736,8 +738,28 @@ proc drawGrid(x, y: float, color: Color, ctx) =
     vg.lineTo(snap(x, sw), snap(y2, sw))
     vg.stroke()
 
-  of gsDashed:
-    discard
+  of gsCross:
+    let
+      offs = dp.gridSize * 0.2
+      x1 = x + offs
+      x2 = x + dp.gridSize - offs
+      xe = x + dp.gridSize
+
+      y1 = y + offs
+      y2 = y + dp.gridSize - offs
+      ye = y + dp.gridSize
+
+    vg.beginPath()
+    vg.moveTo(snap(x, sw), snap(y, sw))
+    vg.lineTo(snap(x1, sw), snap(y, sw))
+    vg.moveTo(snap(x2, sw), snap(y, sw))
+    vg.lineTo(snap(xe, sw), snap(y, sw))
+
+    vg.moveTo(snap(x, sw), snap(y, sw))
+    vg.lineTo(snap(x, sw), snap(y1, sw))
+    vg.moveTo(snap(x, sw), snap(y2, sw))
+    vg.lineTo(snap(x, sw), snap(ye, sw))
+    vg.stroke()
 
 # }}}
 # {{{ drawFloorBg()
@@ -764,7 +786,7 @@ proc drawIcon(x, y, ox, oy: float, icon: string,
 
 template drawIcon(x, y, ox, oy: float, icon: string, ctx) =
   drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ls.drawColor,
-          fontSizeFactor=0.53, ctx.vg)
+          DefaultIconFontSizeFactor, ctx.vg)
 
 # }}}
 # {{{ drawIndexedNote*()
@@ -797,7 +819,7 @@ proc drawCustomIdNote(x, y: float, s: string, ctx) =
   alias(vg, ctx.vg)
 
   vg.setFont((dp.gridSize * 0.48).float)
-  vg.fillColor(ls.noteLevelTextColor)
+  vg.fillColor(ls.noteLevelMarkerColor)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*0.52,
                   y + dp.gridSize*0.55, s)
@@ -846,7 +868,7 @@ proc drawSecretDoor(x, y: float, isCursorActive: bool, ctx) =
   let
     icon = "S"
     bgCol = if isCursorActive: ls.cursorColor else: ls.floorColor
-    fontSizeFactor = 0.53
+    fontSizeFactor = DefaultIconFontSizeFactor
     gs = dp.gridSize
 
   drawIcon(x-2, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
@@ -1487,7 +1509,7 @@ proc drawBackgroundGrid(viewBuf: Level, ctx) =
       if viewBuf.isFloorEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        drawGrid(x, y, ls.gridColorBackground, ctx)
+        drawGrid(x, y, ls.gridColorBackground, ls.gridStyleBackground, ctx)
 
 # }}}
 # {{{ drawCellBackgroundsAndGrid()
@@ -1505,7 +1527,7 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         drawFloorBg(x, y, ls.floorColor, ctx)
-        drawGrid(x, y, ls.gridColorFloor, ctx)
+        drawGrid(x, y, ls.gridColorFloor, ls.gridStyleFloor, ctx)
 
 # }}}
 # {{{ drawFloors()
@@ -1526,12 +1548,15 @@ proc drawNote(x, y: float, note: Note, ctx) =
   let w = dp.gridSize*0.3
 
   case note.kind
+  of nkComment:  discard
   of nkIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
   of nkCustomId: drawCustomIdNote(x, y, note.customId, ctx)
-  of nkIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon], ctx)
-  of nkComment:  discard
 
-  if note.kind != nkIndexed:
+  of nkIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
+                          dp.gridSize, ls.noteLevelMarkerColor,
+                          DefaultIconFontSizeFactor, vg)
+
+  if note.kind != nkIndexed and note.text != "":
     vg.fillColor(ls.noteLevelCommentColor)
     vg.beginPath()
     vg.moveTo(x + dp.gridSize - w, y)

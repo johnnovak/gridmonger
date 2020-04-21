@@ -103,7 +103,8 @@ DefaultLevelStyle.coordsHighlightColor = rgb(1.0, 0.75, 0.0)
 DefaultLevelStyle.cursorColor          = rgb(1.0, 0.65, 0.0)
 DefaultLevelStyle.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
 
-DefaultLevelStyle.gridStyle            = gsSolid
+DefaultLevelStyle.gridStyleBackground  = gsSolid
+DefaultLevelStyle.gridStyleFloor       = gsSolid
 DefaultLevelStyle.gridColorBackground  = gray(0.0, 0.2)
 DefaultLevelStyle.gridColorFloor       = gray(0.0, 0.22)
 
@@ -123,7 +124,7 @@ DefaultLevelStyle.outerShadowWidthFactor = 0.125
 DefaultLevelStyle.selectionColor         = rgba(1.0, 0.5, 0.5, 0.4)
 DefaultLevelStyle.pastePreviewColor      = rgba(0.2, 0.6, 1.0, 0.4)
 
-DefaultLevelStyle.noteLevelTextColor       = gray(0.85)
+DefaultLevelStyle.noteLevelMarkerColor     = gray(0.85)
 DefaultLevelStyle.noteLevelCommentColor    = rgba(1.0, 0.2, 0.0, 0.8)
 DefaultLevelStyle.noteLevelIndexColor      = gray(0.85)
 DefaultLevelStyle.noteLevelIndexBgColor    = @[gray(0.0, 0.2),
@@ -302,7 +303,8 @@ proc parseLevelSection(c: Config): LevelStyle =
   c.getColor(S, "cursorColor",              s.cursorColor)
   c.getColor(S, "cursorGuideColor",         s.cursorGuideColor)
 
-  getEnum[GridStyle](c, S, "gridStyle",     s.gridStyle)
+  getEnum[GridStyle](c, S, "gridStyleBackground", s.gridStyleBackground)
+  getEnum[GridStyle](c, S, "gridStyleFloor", s.gridStyleFloor)
   c.getColor(S, "gridColorBackground",      s.gridColorBackground)
   c.getColor(S, "gridColorFloor",           s.gridColorFloor)
 
@@ -322,7 +324,7 @@ proc parseLevelSection(c: Config): LevelStyle =
   c.getColor(S, "pastePreviewColor",        s.pastePreviewColor)
   c.getColor(S, "selectionColor",           s.selectionColor)
 
-  c.getColor(S, "noteLevelTextColor",         s.noteLevelTextColor)
+  c.getColor(S, "noteLevelMarkerColor",       s.noteLevelMarkerColor)
   c.getColor(S, "noteLevelCommentColor",      s.noteLevelCommentColor)
   c.getColor(S, "noteLevelIndexColor",        s.noteLevelIndexColor)
   c.getColor(S, "noteLevelIndexBgColor1",     s.noteLevelIndexBgColor[0])
