@@ -222,7 +222,8 @@ using a: var AppContext
 
 type AppShortcut = enum
   scAccept,
-  scCancel
+  scCancel,
+  scDiscard,
 
 # TODO some shortcuts win/mac specific?
 let g_appShortcuts = {
@@ -231,9 +232,9 @@ let g_appShortcuts = {
                     mkKeyShortcut(keyKpEnter,       {})],
 
   scCancel:       @[mkKeyShortcut(keyEscape,        {}),
-                    mkKeyShortcut(keyLeftBracket,   {mkCtrl})]
+                    mkKeyShortcut(keyLeftBracket,   {mkCtrl})],
 
-  scDiscard:      @[mkKeyShortcut(keyD,             {mkAlt})]
+  scDiscard:      @[mkKeyShortcut(keyD,             {mkAlt})],
 
 }.toTable
 
@@ -498,7 +499,7 @@ func isKeyDown(ev: Event, key: Key,
 func isKeyUp(ev: Event, keys: set[Key]): bool =
   ev.action == kaUp and ev.key in keys
 
-proc isDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
+proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
   if ev.kind == ekKey:
     let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
     if ev.action in a:
@@ -1711,34 +1712,39 @@ proc renderLevel(a) =
           if note.text != "":
             const PadX = 10
             const PadY = 8
-            var x = koi.mx() + PadX + 16
-            var y = koi.my() + PadY + 14
-            var w = 220.0
+
+            var noteBoxX = koi.mx() + 16
+            var noteBoxY = koi.my() + 14
+            let noteBoxW = 220.0
 
             vg.setFont(14.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
             vg.textLineHeight(1.5)
 
-            let bounds = vg.textBoxBounds(x, y, w, note.text)
-            let h = bounds.b[3] - bounds.b[1]
-            w = bounds.b[2] - bounds.b[0]
+            let
+              bounds = vg.textBoxBounds(noteBoxX + PadX,
+                                        noteBoxY + PadY,
+                                        noteBoxW - PadX*2, note.text)
+              noteTextH = bounds.y2 - bounds.y1
+              noteTextW = bounds.x2 - bounds.x1
+              noteBoxH = noteTextH + PadY*2
 
-            let xOver = x + w - (dp.startX + ui.levelDrawAreaWidth)
+              xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
+              yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
+
             if xOver > 0:
-              x -= xOver
-              y += 8
+              noteBoxX -= xOver
+              if yOver <= 0: noteBoxY += 8
 
-            let yOver = y + h - (dp.startY + ui.levelDrawAreaHeight)
             if yOver > 0:
-              echo "over"
-              y -= yOver
+              noteBoxY -= noteBoxH + 22
 
             vg.fillColor(rgba(20, 20, 28, 240))
             vg.beginPath()
-            vg.roundedRect(x-PadX, y-PadY, w+PadX*2, h+PadY*2, 5)
+            vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
             vg.fill()
 
             vg.fillColor(rgb(252, 252, 255))
-            vg.textBox(x, y, w, note.text)
+            vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
 
 
 # }}}
