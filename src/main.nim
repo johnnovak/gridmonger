@@ -40,22 +40,24 @@ const
   StatusBarHeight         = 26.0
 
   LevelTopPad_Coords      = 85.0
-  LevelRightPad_Coords    = 113.0
+  LevelRightPad_Coords    = 50.0
   LevelBottomPad_Coords   = 40.0
   LevelLeftPad_Coords     = 50.0
 
   LevelTopPad_NoCoords    = 65.0
-  LevelRightPad_NoCoords  = 83.0
+  LevelRightPad_NoCoords  = 28.0
   LevelBottomPad_NoCoords = 10.0
   LevelLeftPad_NoCoords   = 28.0
 
   NotesPaneHeight         = 60.0
   NotesPaneTopPad         = 10.0
-  NotesPaneRightPad       = 100.0
+  NotesPaneRightPad       = 110.0
   NotesPaneBottomPad      = 10.0
   NotesPaneLeftPad        = 20.0
 
-  ToolbarRightPad         = 56.0
+  ToolsPaneWidth          = 60.0
+  ToolsPaneTopPad         = 91.0
+  ToolsPaneBottomPad      = 30.0
 
 
 const
@@ -75,8 +77,6 @@ type
     theme:       Theme
     dialog:      Dialog
 
-    undoManager: UndoManager[Map, UndoStateData]
-
     shouldClose: bool
 
 
@@ -84,12 +84,15 @@ type
     filename:          string
     map:               Map
     levelStyle:        LevelStyle
+    undoManager:       UndoManager[Map, UndoStateData]
 
   Options = object
     scrollMargin:      Natural
     showNotesPane:     bool
+    showToolsPane:     bool
 
     drawTrail:         bool
+    walkMode:          bool
     wasdMode:          bool
 
 
@@ -98,7 +101,6 @@ type
     cursor:            Location
     cursorOrient:      CardinalDir
     editMode:          EditMode
-    moveMode:          MoveMode
 
     selection:         Option[Selection]
     selRect:           Option[SelectionRect]
@@ -122,7 +124,12 @@ type
     drawLevelParams:   DrawLevelParams
     toolbarDrawParams: DrawLevelParams
 
+    levelDrawAreaWidth:  float
+    levelDrawAreaHeight: float
+
     oldPaperPattern:   Paint
+
+    aboutButtonStyle:  ButtonStyle
 
 
   EditMode* = enum
@@ -137,10 +144,6 @@ type
     emPastePreview,
     emNudgePreview,
     emSetTeleportDestination
-
-  MoveMode* = enum
-    mmCursor,
-    mmWalk
 
   Theme = object
     themeNames:           seq[string]
@@ -215,6 +218,26 @@ var g_app: AppContext
 using a: var AppContext
 
 # }}}
+# {{{ Keyboard shortcuts
+
+type AppShortcut = enum
+  scAccept,
+  scCancel
+
+# TODO some shortcuts win/mac specific?
+let g_appShortcuts = {
+
+  scAccept:       @[mkKeyShortcut(keyEnter,         {}),
+                    mkKeyShortcut(keyKpEnter,       {})],
+
+  scCancel:       @[mkKeyShortcut(keyEscape,        {}),
+                    mkKeyShortcut(keyLeftBracket,   {mkCtrl})]
+
+  scDiscard:      @[mkKeyShortcut(keyD,             {mkAlt})]
+
+}.toTable
+
+# }}}
 # {{{ Misc
 const SpecialWalls = @[
   wIllusoryWall,
@@ -254,7 +277,7 @@ proc getCurrLevel(a): Level =
 # }}}
 # {{{ clearStatusMessage()
 proc clearStatusMessage(a) =
-  a.ui.statusIcon = ""
+  a.ui.statusIcon = NoIcon
   a.ui.statusMessage = ""
   a.ui.statusCommands = @[]
 
@@ -266,14 +289,14 @@ proc setStatusMessage(icon, msg: string, commands: seq[string], a) =
   a.ui.statusCommands = commands
 
 proc setStatusMessage(icon, msg: string, a) =
-  setStatusMessage(icon , msg, commands = @[], a)
+  setStatusMessage(icon, msg, commands = @[], a)
 
 proc setStatusMessage(msg: string, a) =
-  setStatusMessage(icon = "", msg, commands = @[], a)
+  setStatusMessage(NoIcon, msg, commands = @[], a)
 
 # }}}
-# {{{ renderStatusBar()
-proc renderStatusBar(y: float, winWidth: float, a) =
+# {{{ drawStatusBar()
+proc drawStatusBar(y: float, winWidth: float, a) =
   alias(vg, a.vg)
   alias(s, a.ui.style.statusBarStyle)
 
@@ -354,7 +377,7 @@ proc openMap(a) =
         a.doc.map = readMap(filename)
         a.doc.filename = filename
 
-        initUndoManager(a.undoManager)
+        initUndoManager(a.doc.undoManager)
 
         resetCursorAndViewStart(a)
         setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
@@ -366,7 +389,7 @@ proc openMap(a) =
 # {{{ saveMapAction()
 proc saveMap(filename: string, a) =
   writeMap(a.doc.map, filename)
-  a.undoManager.setLastSaveState()
+  a.doc.undoManager.setLastSaveState()
   setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
 
 proc saveMapAsAction(a) =
@@ -453,6 +476,7 @@ proc loadTheme(index: Natural, a) =
 # }}}
 
 # {{{ getPxRatio()
+# TODO move to koi?
 proc getPxRatio(a): float =
   let
     (winWidth, _) = a.win.size
@@ -460,18 +484,26 @@ proc getPxRatio(a): float =
   result = fbWidth / winWidth
 
 # }}}
-# {{{ isKeyDown()
-func isKeyDown(ke: KeyEvent, keys: set[Key],
+# {{{ Key handling
+# TODO change all into isShorcut* (if possible)
+func isKeyDown(ev: Event, keys: set[Key],
                mods: set[ModifierKey] = {}, repeat=false): bool =
   let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  ke.action in a and ke.key in keys and ke.mods == mods
+  ev.action in a and ev.key in keys and ev.mods == mods
 
-func isKeyDown(ke: KeyEvent, key: Key,
+func isKeyDown(ev: Event, key: Key,
                mods: set[ModifierKey] = {}, repeat=false): bool =
-  isKeyDown(ke, {key}, mods, repeat)
+  isKeyDown(ev, {key}, mods, repeat)
 
-func isKeyUp(ke: KeyEvent, keys: set[Key]): bool =
-  ke.action == kaUp and ke.key in keys
+func isKeyUp(ev: Event, keys: set[Key]): bool =
+  ev.action == kaUp and ev.key in keys
+
+proc isDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
+  if ev.kind == ekKey:
+    let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
+    if ev.action in a:
+      let sc = mkKeyShortcut(ev.key, ev.mods)
+      result = sc in g_appShortcuts[shortcut]
 
 # }}}
 # {{{ moveCurrGridIcon()
@@ -517,18 +549,33 @@ proc updateViewStartAndCursorPosition(a) =
 
   let l = getCurrLevel(a)
 
-  let (winWidth, winHeight) = a.win.size
+  if dp.drawCellCoords:
+    a.ui.levelTopPad    = LevelTopPad_Coords
+    a.ui.levelRightPad  = LevelRightPad_Coords
+    a.ui.levelBottomPad = LevelBottomPad_Coords
+    a.ui.levelLeftPad   = LevelLeftPad_Coords
+  else:
+    a.ui.levelTopPad    = LevelTopPad_NoCoords
+    a.ui.levelRightPad  = LevelRightPad_NoCoords
+    a.ui.levelBottomPad = LevelBottomPad_NoCoords
+    a.ui.levelLeftPad   = LevelLeftPad_NoCoords
 
   dp.startX = ui.levelLeftPad
   dp.startY = TitleBarHeight + ui.levelTopPad
 
-  var drawAreaHeight = winHeight - TitleBarHeight - StatusBarHeight -
+  var drawAreaHeight = koi.winHeight() - TitleBarHeight - StatusBarHeight -
                        ui.levelTopPad - ui.levelBottomPad
 
   if a.opt.showNotesPane:
    drawAreaHeight -= NotesPaneTopPad + NotesPaneHeight + NotesPaneBottomPad
 
-  let drawAreaWidth = winWidth - ui.levelLeftPad - ui.levelRightPad
+  var drawAreaWidth = koi.winWidth() - ui.levelLeftPad - ui.levelRightPad
+
+  if a.opt.showToolsPane:
+    drawAreaWidth -= ToolsPaneWidth
+
+  ui.levelDrawAreaWidth = drawAreaWidth
+  ui.levelDrawAreaHeight = drawAreaHeight
 
   dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), l.cols)
@@ -547,24 +594,6 @@ proc updateViewStartAndCursorPosition(a) =
     max(viewEndCol, dp.viewStartCol),
     cur.col
   )
-
-# }}}
-# {{{ showCellCoords()
-proc showCellCoords(show: bool, a) =
-  alias(dp, a.ui.drawLevelParams)
-
-  if show:
-    a.ui.levelTopPad    = LevelTopPad_Coords
-    a.ui.levelRightPad  = LevelRightPad_Coords
-    a.ui.levelBottomPad = LevelBottomPad_Coords
-    a.ui.levelLeftPad   = LevelLeftPad_Coords
-    dp.drawCellCoords = true
-  else:
-    a.ui.levelTopPad    = LevelTopPad_NoCoords
-    a.ui.levelRightPad  = LevelRightPad_NoCoords
-    a.ui.levelBottomPad = LevelBottomPad_NoCoords
-    a.ui.levelLeftPad   = LevelLeftPad_NoCoords
-    dp.drawCellCoords = false
 
 # }}}
 # {{{ moveCursor()
@@ -604,13 +633,6 @@ proc moveCursor(dir: CardinalDir, steps: Natural, a) =
     if viewRow < sm:
       dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
 
-
-# }}}
-# {{{ moveCursorAndSelStart()
-proc moveCursorAndSelStart(dir: CardinalDir, steps: Natural, a) =
-  moveCursor(dir, steps, a)
-  a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
-  a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
 # }}}
 # {{{ moveSelStart()
@@ -656,13 +678,13 @@ proc setSelectModeSelectMessage(a) =
                    @["D", "draw", "E", "erase",
                      "R", "add rect", "S", "sub rect",
                      "A", "mark all", "U", "unmark all",
-                     "Ctrl", "actions"], a)
+                     "C/Y", "copy", "X", "cut",
+                     "Ctrl", "special"], a)
 # }}}
 # {{{ setSelectModeActionMessage()
 proc setSelectModeActionMessage(a) =
   setStatusMessage(IconSelection, "Mark selection",
-                   @["Ctrl+C", "copy", "Ctrl+X", "cut",
-                     "Ctrl+E", "erase", "Ctrl+F", "fill",
+                   @["Ctrl+E", "erase", "Ctrl+F", "fill",
                      "Ctrl+S", "surround", "Ctrl+R", "crop"], a)
 # }}}
 # {{{ enterSelectMode()
@@ -680,7 +702,7 @@ proc exitSelectMode(a) =
   a.ui.editMode = emNormal
   a.ui.selection = Selection.none
   a.ui.drawLevelParams.drawCursorGuides = false
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
 # }}}
 # {{{ copySelection()
@@ -714,7 +736,7 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
     dialogHeight = 160.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconFloppy}  Save Changes?")
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
   let
     h = 24.0
@@ -759,10 +781,11 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape):     cancelAction(dlg, a)
-    elif ke.isKeyDown(keyD, {mkAlt}): discardAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):      saveAction(dlg, a)
+  if koi.hasEvent():
+    let ke = koi.currEvent()
+    if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
+    elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
+    elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
 
   koi.endDialog()
 
@@ -775,6 +798,8 @@ proc openNewMapDialog(a) =
 
 
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
+  alias(sc, g_appShortcuts)
+
   let
     dialogWidth = 410.0
     dialogHeight = 150.0
@@ -798,7 +823,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
   proc okAction(dlg: var NewMapDialogParams, a) =
     a.doc.filename = ""
     a.doc.map = newMap(dlg.name)
-    initUndoManager(a.undoManager)
+    initUndoManager(a.doc.undoManager)
 
     resetCursorAndViewStart(a)
     setStatusMessage(IconFile, "New map created", a)
@@ -820,9 +845,10 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+  if koi.hasEvent():
+    let ke = koi.currEvent()
+    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
 
@@ -840,7 +866,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
     dialogHeight = 150.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  Edit Map Properties")
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
   let
     h = 24.0
@@ -878,9 +904,10 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+  if koi.hasEvent():
+    let ke = koi.currEvent()
+    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
 
@@ -914,7 +941,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     dialogHeight = 334.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Level")
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
   let
     h = 24.0
@@ -1001,9 +1028,10 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+  if koi.hasEvent():
+    let ke = koi.currEvent()
+    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
 
@@ -1026,7 +1054,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
 
   koi.beginDialog(dialogWidth, dialogHeight,
                   fmt"{IconNewFile}  Edit Level Properties")
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
   let
     h = 24.0
@@ -1061,7 +1089,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
 
     actions.setLevelProps(a.doc.map, a.ui.cursor,
                           dlg.locationName, dlg.levelName, elevation,
-                          a.undoManager)
+                          a.doc.undoManager)
 
     setStatusMessage(fmt"Level properties updated", a)
 
@@ -1082,9 +1110,10 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  for ke in koi.keyBuf():
-    if   ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+  if koi.hasEvent():
+    let ke = koi.currEvent()
+    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
 
@@ -1106,7 +1135,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
   let dialogHeight = 300.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCrop}  Resize Level")
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
   let
     h = 24.0
@@ -1169,7 +1198,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     of raBottomRight: SouthEast
 
     actions.resizeLevel(a.doc.map, a.ui.cursor, newRows, newCols, align,
-                        a.undoManager)
+                        a.doc.undoManager)
 
     setStatusMessage(IconCrop, "Level resized", a)
     koi.closeDialog()
@@ -1190,7 +1219,8 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
   proc moveIcon(iconIDx: Natural, dc: int = 0, dr: int = 0): Natural =
     moveCurrGridIcon(AnchorIcons.len, IconsPerRow, iconIdx, dc, dr)
 
-  for ke in koi.keyBuf():
+  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+    let ke = koi.currEvent()
     if   ke.isKeyDown(keyH, repeat=true):
       dlg.anchor = moveIcon(ord(dlg.anchor), dc= -1).ResizeAnchor
 
@@ -1203,8 +1233,8 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     elif ke.isKeyDown(keyJ, repeat=true):
       dlg.anchor = moveIcon(ord(dlg.anchor), dr=1).ResizeAnchor
 
-    elif ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
     koi.setFramesLeft()
 
@@ -1295,7 +1325,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     title = (if dlg.editMode: "Edit" else: "Add") & " Note"
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCommentInv}  {title}")
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
   let
     h = 24.0
@@ -1372,7 +1402,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     of nkIcon:     note.icon = dlg.icon
     of nkComment:  discard
 
-    actions.setNote(a.doc.map, a.ui.cursor, note, a.undoManager)
+    actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
     setStatusMessage(IconComment, "Set cell note", a)
     koi.closeDialog()
@@ -1393,7 +1423,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   proc moveIcon(iconIdx: Natural, dc: int = 0, dr: int = 0): Natural =
     moveCurrGridIcon(NoteIcons.len, IconsPerRow, iconIdx, dc, dr)
 
-  for ke in koi.keyBuf():
+  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+    let ke = koi.currEvent()
+
     if   ke.isKeyDown(key1, {mkCtrl}):
       dlg.kind = nkComment
 
@@ -1440,8 +1472,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       of nkComment, nkIndexed, nkCustomId: discard
       of nkIcon: dlg.icon = moveIcon(dlg.icon, dr=1)
 
-    elif ke.isKeyDown(keyEscape): cancelAction(dlg, a)
-    elif ke.isKeyDown(keyEnter):  okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
     koi.setFramesLeft()
 
@@ -1452,7 +1484,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
 # {{{ newMapAction()
 proc newMapAction(a) =
-  if a.undoManager.isModified:
+  if a.doc.undoManager.isModified:
     a.dialog.saveDiscardDialog.isOpen = true
     a.dialog.saveDiscardDialog.action = proc (a: var AppContext) =
       openNewMapDialog(a)
@@ -1463,7 +1495,7 @@ proc newMapAction(a) =
 # {{{ openMapAction()
 proc openMapAction(a) =
   alias(dlg, a.dialog.saveDiscardDialog)
-  if a.undoManager.isModified:
+  if a.doc.undoManager.isModified:
     dlg.isOpen = true
     dlg.action = openMap
   else:
@@ -1522,7 +1554,7 @@ proc setFloorAction(f: Floor, a) =
   alias(cur, a.ui.cursor)
 
   let ot = getCurrLevel(a).guessFloorOrientation(cur.row, cur.col)
-  actions.setOrientedFloor(a.doc.map, cur, f, ot, a.undoManager)
+  actions.setOrientedFloor(a.doc.map, cur, f, ot, a.doc.undoManager)
   setStatusMessage(fmt"Set floor – {f}", a)
 
 # }}}
@@ -1546,33 +1578,396 @@ proc setOrCycleFloorAction(first, last: Floor, forward: bool, a) =
   setFloorAction(floor, a)
 
 # }}}
+# {{{ startExcavateAction()
+proc startExcavateAction(a) =
+  actions.excavate(a.doc.map, a.ui.cursor, a.doc.undoManager)
+  setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll, "draw"], a)
 
-# {{{ handleLevelEvents()
-proc handleLevelEvents(a) =
+# }}}
+# {{{ startEraseCellsAction()
+proc startEraseCellsAction(a) =
+  actions.eraseCell(a.doc.map, a.ui.cursor, a.doc.undoManager)
+  setStatusMessage(IconEraser, "Erase cells", @[IconArrowsAll, "erase"], a)
+
+# }}}
+# {{{ startDrawWallsAction()
+proc startDrawWallsAction(a) =
+  setStatusMessage("", "Draw walls", @[IconArrowsAll, "set/clear"], a)
+
+# }}}
+
+# {{{ drawEmptyMap()
+proc drawEmptyMap(a) =
+  alias(vg, a.vg)
+  alias(ls, a.doc.levelStyle)
+
+  vg.save()
+
+  vg.fontSize(22)
+  vg.fillColor(ls.drawColor)
+  vg.textAlign(haCenter, vaMiddle)
+  var y = koi.winHeight() * 0.5
+  discard vg.text(koi.winWidth() * 0.5, y, "Empty map")
+
+  vg.save()
+
+# }}}
+# {{{ renderLevel()
+proc renderLevel(a) =
+  alias(dp, a.ui.drawLevelParams)
+  alias(ui, a.ui)
+  alias(opt, a.opt)
+  alias(vg, a.vg)
+
+  let i = instantiationInfo(fullPaths=true)
+  let id = koi.generateId(i.filename, i.line, "gridmonger-level")
+
+  updateViewStartAndCursorPosition(a)
+
+  let
+    x = dp.startX
+    y = dp.startY
+    w = dp.viewCols * dp.gridSize
+    h = dp.viewRows * dp.gridSize
+
+  # Hit testing
+  if koi.isHit(x, y, w, h):
+    koi.setHot(id)
+    if koi.noActiveItem() and
+       (koi.mbLeftDown() or koi.mbRightDown() or koi.mbMiddleDown()):
+      koi.setActive(id)
+
+  # We're only handling the mouse events inside the level "widget" because
+  # all keyboard events are global.
+  if koi.isHot(id):
+    if isActive(id):
+      if opt.wasdMode:
+        if ui.editMode == emNormal:
+          if koi.mbLeftDown():
+            ui.editMode = emExcavate
+            startExcavateAction(a)
+
+          elif koi.mbRightDown():
+            ui.editMode = emDrawWall
+            startDrawWallsAction(a)
+
+          elif koi.mbMiddleDown():
+            ui.editMode = emEraseCell
+            startEraseCellsAction(a)
+
+        elif ui.editMode == emExcavate:
+          if not koi.mbLeftDown():
+            ui.editMode = emNormal
+            clearStatusMessage(a)
+
+        elif ui.editMode == emDrawWall:
+          if not koi.mbRightDown():
+            ui.editMode = emNormal
+            clearStatusMessage(a)
+
+        elif ui.editMode == emEraseCell:
+          if not koi.mbMiddleDown():
+            ui.editMode = emNormal
+            clearStatusMessage(a)
+
+  # Draw level
+  if dp.viewRows > 0 and dp.viewCols > 0:
+    dp.cursorRow = ui.cursor.row
+    dp.cursorCol = ui.cursor.col
+
+    dp.cursorOrient = CardinalDir.none
+    if opt.walkMode and
+       ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
+      dp.cursorOrient = ui.cursorOrient.some
+
+    dp.selection = ui.selection
+    dp.selectionRect = ui.selRect
+
+    dp.selectionBuffer =
+      if ui.editMode == emPastePreview: ui.copyBuf
+      elif ui.editMode == emNudgePreview: ui.nudgeBuf
+      else: SelectionBuffer.none
+
+    drawLevel(getCurrLevel(a), DrawLevelContext(ls: a.doc.levelStyle,
+                                                dp: dp, vg: a.vg))
+
+  if koi.isHot(id):
+    if not (opt.wasdMode and isActive(id)):
+      let
+        mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
+        mouseViewCol = ((koi.mx() - dp.startX) / dp.gridSize).int
+
+        mouseRow = dp.viewStartRow + mouseViewRow
+        mouseCol = dp.viewStartCol + mouseViewCol
+
+      if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
+         mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
+
+        let l = getCurrLevel(a)
+
+        if l.hasNote(mouseRow, mouseCol):
+          let note = l.getNote(mouseRow, mouseCol)
+
+          if note.text != "":
+            const PadX = 10
+            const PadY = 8
+            var x = koi.mx() + PadX + 16
+            var y = koi.my() + PadY + 14
+            var w = 220.0
+
+            vg.setFont(14.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+            vg.textLineHeight(1.5)
+
+            let bounds = vg.textBoxBounds(x, y, w, note.text)
+            let h = bounds.b[3] - bounds.b[1]
+            w = bounds.b[2] - bounds.b[0]
+
+            let xOver = x + w - (dp.startX + ui.levelDrawAreaWidth)
+            if xOver > 0:
+              x -= xOver
+              y += 8
+
+            let yOver = y + h - (dp.startY + ui.levelDrawAreaHeight)
+            if yOver > 0:
+              echo "over"
+              y -= yOver
+
+            vg.fillColor(rgba(20, 20, 28, 240))
+            vg.beginPath()
+            vg.roundedRect(x-PadX, y-PadY, w+PadX*2, h+PadY*2, 5)
+            vg.fill()
+
+            vg.fillColor(rgb(252, 252, 255))
+            vg.textBox(x, y, w, note.text)
+
+
+# }}}
+# {{{ renderToolsPane()
+# {{{ specialWallDrawProc()
+proc specialWallDrawProc(ls: LevelStyle,
+                         dp: DrawLevelParams): RadioButtonsDrawProc =
+  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
+               hover, active, down, first, last: bool,
+               x, y, w, h: float, style: RadioButtonsStyle) =
+
+    var col = if active: ls.cursorColor else: ls.floorColor
+
+    if hover:
+      col = col.lerp(white(), 0.3)
+    if down:
+      col = col.lerp(black(), 0.3)
+
+    # Nasty stuff, but it's not really worth refactoring everything for
+    # this little aesthetic fix...
+    let savedFloorColor = ls.floorColor
+    ls.floorColor = gray(0, 0)  # transparent
+
+    const Pad = 5
+
+    vg.beginPath()
+    vg.fillColor(col)
+    vg.rect(x, y, w-Pad, h-Pad)
+    vg.fill()
+
+    dp.setZoomLevel(ls, 4)
+    let ctx = DrawLevelContext(ls: ls, dp: dp, vg: vg)
+
+    var cx = x + 5
+    var cy = y + 15
+
+    template drawAtZoomLevel6(body: untyped) =
+      vg.save()
+      # A bit messy... but so is life! =8)
+      dp.setZoomLevel(ls, 6)
+      vg.intersectScissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
+      body
+      dp.setZoomLevel(ls, 4)
+      vg.restore()
+
+    case SpecialWalls[buttonIdx]
+    of wNone:           discard
+    of wWall:           drawSolidWallHoriz(cx, cy, ctx)
+    of wIllusoryWall:   drawIllusoryWallHoriz(cx+2, cy, ctx)
+    of wInvisibleWall:  drawInvisibleWallHoriz(cx, cy, ctx)
+    of wDoor:           drawDoorHoriz(cx, cy, ctx)
+    of wLockedDoor:     drawLockedDoorHoriz(cx, cy, ctx)
+    of wArchway:        drawArchwayHoriz(cx, cy, ctx)
+
+    of wSecretDoor:
+      drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
+
+    of wLeverSW:
+      drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
+
+    of wNicheSW:        drawNicheHorizSW(cx, cy, ctx)
+
+    of wStatueSW:
+      drawAtZoomLevel6: drawStatueHorizSW(cx-2, cy+2, ctx)
+
+    of wKeyhole:
+      drawAtZoomLevel6: drawKeyholeHoriz(cx-2, cy, ctx)
+
+    else: discard
+
+    # ...aaaaand restore it!
+    ls.floorColor = savedFloorColor
+
+# }}}
+
+proc renderToolsPane(x, y, w, h: float, a) =
+  alias(ui, a.ui)
+  alias(ls, a.doc.levelStyle)
+
+  ui.currSpecialWall = koi.radioButtons(
+    x = x,
+    y = y,
+    w = 36,
+    h = 35,
+    labels = newSeq[string](SpecialWalls.len),
+    ui.currSpecialWall,
+    tooltips = @[],
+    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
+    drawProc=specialWallDrawProc(ls, ui.toolbarDrawParams).some
+  )
+
+  ui.currFloorColor = koi.radioButtons(
+    x = x + 3,
+    y = y + 374,
+    w = 30,
+    h = 30,
+    labels = newSeq[string](4),
+    ui.currFloorColor,
+    tooltips = @[],
+    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
+    drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
+                                      ls.cursorColor).some
+  )
+
+# }}}
+# {{{ drawNotesPane()
+proc drawNotesPane(x, y, w, h: float, a) =
+  alias(vg, a.vg)
+  alias(ls, a.doc.levelStyle)
+
+  vg.save()
+
+  let l = getCurrLevel(a)
+  let cur = a.ui.cursor
+
+  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
+     l.hasNote(cur.row, cur.col):
+
+    let note = l.getNote(cur.row, cur.col)
+    case note.kind
+    of nkIndexed:
+      drawIndexedNote(x, y-12, note.index, 36,
+                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
+                      fgColor=ls.notePaneIndexColor, vg)
+
+    of nkCustomId:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x+18, y-2, note.customId)
+
+    of nkIcon:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x+20, y-3, NoteIcons[note.icon])
+
+    of nkComment:
+      vg.fillColor(ls.notePaneTextColor)
+      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x+20, y-2, IconComment)
+
+    vg.fillColor(ls.notePaneTextColor)
+    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.4)
+    vg.intersectScissor(x+40, y, w-40, h)
+    vg.textBox(x+40, y, w-40, note.text)
+
+  vg.restore()
+
+# }}}
+# {{{ drawModeAndOptionIndicators()
+proc drawModeAndOptionIndicators(a) =
+  alias(vg, a.vg)
+  alias(ls, a.doc.levelStyle)
+
+  let winWidth = koi.winWidth().float
+  let y = koi.winHeight().float - 50
+
+  vg.save()
+
+  vg.setFont(16.0, horizAlign=haRight, vertAlign=vaMiddle)
+  vg.fillColor(ls.coordsHighlightColor)
+
+  if a.opt.drawTrail:
+    vg.fontSize(20)
+    discard vg.text(winWidth - 17, y-61, IconShoePrints)
+    vg.fontSize(16)
+
+  vg.textAlign(haRight)
+
+  var mode = if a.opt.walkMode: "Walk" else: "Normal"
+  discard vg.text(winWidth - 15, y, mode)
+
+  if a.opt.wasdMode:
+    discard vg.text(winWidth - 15, y-28, fmt"WASD+{IconMouse}")
+
+  vg.restore()
+
+# }}}
+
+# {{{ handleGlobalKeyEvents()
+proc handleGlobalKeyEvents(a) =
   alias(ui, a.ui)
   alias(map, a.doc.map)
   alias(cur, a.ui.cursor)
-  alias(um, a.undoManager)
+  alias(um, a.doc.undoManager)
   alias(dp, a.ui.drawLevelParams)
-  alias(win, a.win)
   alias(opt, a.opt)
 
   var l = getCurrLevel(a)
 
-  const
-    MoveKeysLeft  = {keyLeft,  keyH, keyKp4}
-    MoveKeysRight = {keyRight, keyL, keyKp6}
-    MoveKeysUp    = {keyUp,    keyK, keyKp8}
-    MoveKeysDown  = {keyDown,  keyJ, keyKp2, keyKp5}
+  type
+    MoveKeys = object
+      left, right, up, down: set[Key]
+
+    WalkKeys = object
+      forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
 
   const
-    WalkKeysForward     = {keyKp8, keyUp}
-    WalkKeysBackward    = {keyKp2, keyKp5, keyDown}
-    WalkKeysStrafeLeft  = {keyKp4, keyLeft}
-    WalkKeysStrafeRight = {keyKp6, keyRight}
-    WalkKeysTurnLeft    = {keyKp7}
-    WalkKeysTurnRight   = {keyKp9}
-    WalkTurnKeys        = WalkKeysTurnLeft + WalkKeysTurnRight
+    MoveKeysCursor = MoveKeys(
+      left  : {keyLeft,     keyH, keyKp4},
+      right : {keyRight,    keyL, keyKp6},
+      up    : {keyUp,       keyK, keyKp8},
+      down  : {Key.keyDown, keyJ, keyKp2, keyKp5}
+    )
+
+    MoveKeysWasd = MoveKeys(
+      left  : MoveKeysCursor.left  + {keyA},
+      right : MoveKeysCursor.right + {keyD},
+      up    : MoveKeysCursor.up    + {keyW},
+      down  : MoveKeysCursor.down  + {Key.keyS}
+    )
+
+    WalkKeysCursor = WalkKeys(
+      forward     : {keyKp8, keyUp},
+      backward    : {keyKp2, keyKp5, Key.keyDown},
+      strafeLeft  : {keyKp4, keyLeft},
+      strafeRight : {keyKp6, keyRight},
+      turnLeft    : {keyKp7},
+      turnRight   : {keyKp9}
+    )
+
+    WalkKeysWasd = WalkKeys(
+      forward     : WalkKeysCursor.forward     + {keyW},
+      backward    : WalkKeysCursor.backward    + {Key.keyS},
+      strafeLeft  : WalkKeysCursor.strafeLeft  + {keyA},
+      strafeRight : WalkKeysCursor.strafeRight + {keyD},
+      turnLeft    : WalkKeysCursor.turnLeft    + {keyQ},
+      turnRight   : WalkKeysCursor.turnRight   + {keyE}
+    )
 
   proc turnLeft(dir: CardinalDir): CardinalDir =
     CardinalDir(floorMod(ord(dir) - 1, ord(CardinalDir.high) + 1))
@@ -1581,113 +1976,102 @@ proc handleLevelEvents(a) =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
 
   proc setTrailAtCursor(a) =
-    if opt.drawTrail:
-      if l.isFloorEmpty(cur.row, cur.col):
-        actions.setFloor(map, cur, fTrail, um)
+    if l.isFloorEmpty(cur.row, cur.col):
+      actions.setFloor(map, cur, fTrail, um)
+
+  proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
+    opt = not opt
+    let state = if opt: on else: off
+    setStatusMessage(icon, fmt"{msg} {state}", a)
+
+  proc toggleShowOption(opt: var bool, icon, msg: string; a) =
+    toggleOption(opt, icon, msg, on="shown", off="hidden", a)
+
+  proc toggleOnOffOption(opt: var bool, icon, msg: string; a) =
+    toggleOption(opt, icon, msg, on="on", off="off", a)
+
 
   template handleMoveWalk() =
-    var forwardKeys, backwardKeys, strafeLeftKeys, strafeRightKeys,
-        turnLeftKeys, turnRightKeys: set[Key]
+    let k = if opt.wasdMode: WalkKeysWasd else: WalkKeysCursor
 
-    if opt.wasdMode:
-      forwardKeys     = {keyW} + WalkKeysForward
-      backwardKeys    = {Key.keyS} + WalkKeysBackward
-      strafeLeftKeys  = {keyA} + WalkKeysStrafeLeft
-      strafeRightKeys = {keyD} + WalkKeysStrafeRight
-      turnLeftKeys    = {keyQ} + WalkKeysTurnLeft
-      turnRightKeys   = {keyE} + WalkKeysTurnRight
-    else:
-      forwardKeys     = WalkKeysForward
-      backwardKeys    = WalkKeysBackward
-      strafeLeftKeys  = WalkKeysStrafeLeft
-      strafeRightKeys = WalkKeysStrafeRight
-      turnLeftKeys    = WalkKeysTurnLeft
-      turnRightKeys   = WalkKeysTurnRight
-
-    if ke.isKeyDown(forwardKeys, repeat=true):
-      setTrailAtCursor(a)
+    if ke.isKeyDown(k.forward, repeat=true):
       moveCursor(ui.cursorOrient, steps=1, a)
-      setTrailAtCursor(a)
 
-    elif ke.isKeyDown(backwardKeys, repeat=true):
+    elif ke.isKeyDown(k.backward, repeat=true):
       let backward = turnLeft(turnLeft(ui.cursorOrient))
-      setTrailAtCursor(a)
       moveCursor(backward, steps=1, a)
-      setTrailAtCursor(a)
 
-    elif ke.isKeyDown(strafeLeftKeys, repeat=true):
+    elif ke.isKeyDown(k.strafeLeft, repeat=true):
       let left = turnLeft(ui.cursorOrient)
-      setTrailAtCursor(a)
       moveCursor(left, steps=1, a)
-      setTrailAtCursor(a)
 
-    elif ke.isKeyDown(strafeRightKeys, repeat=true):
+    elif ke.isKeyDown(k.strafeRight, repeat=true):
       let right = turnRight(ui.cursorOrient)
-      setTrailAtCursor(a)
       moveCursor(right, steps=1, a)
-      setTrailAtCursor(a)
 
-    elif ke.isKeyDown(turnLeftKeys, repeat=true):
+    elif ke.isKeyDown(k.turnLeft, repeat=true):
       ui.cursorOrient = turnLeft(ui.cursorOrient)
 
-    elif ke.isKeyDown(turnRightKeys, repeat=true):
+    elif ke.isKeyDown(k.turnRight, repeat=true):
       ui.cursorOrient = turnRight(ui.cursorOrient)
 
 
   template handleMoveKeys(moveHandler: untyped) =
-    if   ke.isKeyDown(MoveKeysLeft,  repeat=true): moveHandler(dirW, a)
-    elif ke.isKeyDown(MoveKeysRight, repeat=true): moveHandler(dirE, a)
-    elif ke.isKeyDown(MoveKeysUp,    repeat=true): moveHandler(dirN, a)
-    elif ke.isKeyDown(MoveKeysDown,  repeat=true): moveHandler(dirS, a)
+    let k = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
 
-  template handleMoveCursor() =
-    if   ke.isKeyDown(MoveKeysLeft,  repeat=true): moveCursor(dirW, steps=1, a)
-    elif ke.isKeyDown(MoveKeysRight, repeat=true): moveCursor(dirE, steps=1, a)
-    elif ke.isKeyDown(MoveKeysUp,    repeat=true): moveCursor(dirN, steps=1, a)
-    elif ke.isKeyDown(MoveKeysDown,  repeat=true): moveCursor(dirS, steps=1, a)
-
-    elif ke.isKeyDown(MoveKeysLeft,  {mkCtrl}, repeat=true):
-      moveCursor(dirW, steps=CursorJump, a)
-
-    elif ke.isKeyDown(MoveKeysRight, {mkCtrl}, repeat=true):
-      moveCursor(dirE, steps=CursorJump, a)
-
-    elif ke.isKeyDown(MoveKeysUp,    {mkCtrl}, repeat=true):
-      moveCursor(dirN, steps=CursorJump, a)
-
-    elif ke.isKeyDown(MoveKeysDown,  {mkCtrl}, repeat=true):
-      moveCursor(dirS, steps=CursorJump, a)
+    if   ke.isKeyDown(k.left,  repeat=true): moveHandler(dirW, a)
+    elif ke.isKeyDown(k.right, repeat=true): moveHandler(dirE, a)
+    elif ke.isKeyDown(k.up,    repeat=true): moveHandler(dirN, a)
+    elif ke.isKeyDown(k.down,  repeat=true): moveHandler(dirS, a)
 
 
-  for ke in koi.keyBuf():
+  template handleMoveCursor(k: MoveKeys) =
+    const j = CursorJump
+
+    if   ke.isKeyDown(k.left,  repeat=true): moveCursor(dirW, 1, a)
+    elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, 1, a)
+    elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, 1, a)
+    elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, 1, a)
+
+    elif ke.isKeyDown(k.left,  {mkCtrl}, repeat=true): moveCursor(dirW, j, a)
+    elif ke.isKeyDown(k.right, {mkCtrl}, repeat=true): moveCursor(dirE, j, a)
+    elif ke.isKeyDown(k.up,    {mkCtrl}, repeat=true): moveCursor(dirN, j, a)
+    elif ke.isKeyDown(k.down,  {mkCtrl}, repeat=true): moveCursor(dirS, j, a)
+
+
+  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+    let ke = koi.currEvent()
+
     case ui.editMode:
     # {{{ emNormal
     of emNormal:
-      case ui.moveMode
-      of mmCursor: handleMoveCursor()
-      of mmWalk:   handleMoveWalk()
+      # This to prevent creating an undoable action for every turn in walk
+      # mode
+      let prevCursor = cur
 
-      if   ke.isKeyDown(keyPageUp) or ke.isKeyDown(keyMinus, {mkCtrl}):
+      if opt.walkMode: handleMoveWalk()
+      else:
+        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        handleMoveCursor(moveKeys)
+
+      if opt.drawTrail and cur != prevCursor:
+        setTrailAtCursor(a)
+
+      elif ke.isKeyDown({keyPageUp, keyKpSubtract}) or
+         ke.isKeyDown(keyMinus, {mkCtrl}):
         prevLevelAction(a)
 
-      elif ke.isKeyDown(keyPageDown) or ke.isKeyDown(keyEqual, {mkCtrl}):
+      elif ke.isKeyDown({keyPageDown, keyKpAdd}) or
+           ke.isKeyDown(keyEqual, {mkCtrl}):
         nextLevelAction(a)
 
-      elif ke.isKeyDown(keyTab):
-        ui.moveMode = if ui.moveMode == mmCursor: mmWalk else: mmCursor
-
-      elif (opt.wasdMode and koi.mbLeftDown()) or
-           (not opt.wasdMode and ke.isKeyDown(keyD)):
+      elif not opt.wasdMode and ke.isKeyDown(keyD):
         ui.editMode = emExcavate
-        setStatusMessage(IconPencil, "Excavate tunnel",
-                         @[IconArrowsAll, "draw"], a)
-        actions.excavate(map, cur, um)
+        startExcavateAction(a)
 
       elif not opt.wasdMode and ke.isKeyDown(keyE):
         ui.editMode = emEraseCell
-        setStatusMessage(IconEraser, "Erase cells",
-                         @[IconArrowsAll, "erase"], a)
-        actions.eraseCell(map, cur, um)
+        startEraseCellsAction(a)
 
       elif ke.isKeyDown(keyF):
         ui.editMode = emClearFloor
@@ -1706,7 +2090,7 @@ proc handleLevelEvents(a) =
 
       elif not opt.wasdMode and ke.isKeyDown(keyW):
         ui.editMode = emDrawWall
-        setStatusMessage("", "Draw walls", @[IconArrowsAll, "set/clear"], a)
+        startDrawWallsAction(a)
 
       elif ke.isKeyDown(keyR):
         ui.editMode = emDrawWallSpecial
@@ -1878,58 +2262,49 @@ proc handleLevelEvents(a) =
 
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
-        var state: string
-        if dp.drawCellCoords:
-          showCellCoords(false, a)
-          state = "off"
-        else:
-          showCellCoords(true, a)
-          state = "on"
-
-        setStatusMessage(fmt"Cell coordinates turned {state}", a)
+        toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
 
       elif ke.isKeyDown(keyN, {mkAlt}):
-        if opt.showNotesPane:
-          setStatusMessage("Notes pane shown", a)
-          opt.showNotesPane = false
-        else:
-          setStatusMessage("Notes pane hidden", a)
-          opt.showNotesPane = true
+        toggleShowOption(opt.showNotesPane, NoIcon, "Notes pane", a)
 
-      elif ke.isKeyDown(keyW, {mkAlt}):
-        if opt.wasdMode:
-          setStatusMessage(IconMouse, "WASD+mouse mode turned off", a)
-          opt.wasdMode = false
-        else:
-          setStatusMessage(IconMouse, "WASD+mouse mode turned on", a)
-          opt.wasdMode = true
+      elif ke.isKeyDown(keyT, {mkAlt}):
+        toggleShowOption(opt.showToolsPane, NoIcon, "Tools pane", a)
 
-      if ui.moveMode == mmWalk:
-        if ke.isKeyDown(keyT):
-          if opt.drawTrail:
-            setStatusMessage(IconShoePrints, "Trail mode turned off", a)
-            opt.drawTrail = false
-          else:
-            setStatusMessage(IconShoePrints, "Trail mode turned on", a)
-            opt.drawTrail = true
+      elif ke.isKeyDown(keyBackslash):
+        opt.walkMode = not opt.walkMode
+        let msg = if opt.walkMode: "Walk mode" else: "Normal mode"
+        setStatusMessage(msg, a)
+
+      elif ke.isKeyDown(keyTab):
+        toggleOnOffOption(opt.wasdMode, IconMouse, "WASD mode", a)
+
+      elif ke.isKeyDown(keyT):
+        toggleOnOffOption(opt.drawTrail, IconShoePrints, "Draw trail", a)
 
     # }}}
     # {{{ emExcavate, emEraseCell, emClearFloor
     of emExcavate, emEraseCell, emClearFloor:
+      # This to prevent creating an undoable action for every turn in walk
+      # mode
       let prevCursor = cur
-      case ui.moveMode
-      of mmCursor: handleMoveCursor()
-      of mmWalk:   handleMoveWalk()
+
+      if opt.walkMode: handleMoveWalk()
+      else:
+        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        handleMoveCursor(moveKeys)
 
       if cur != prevCursor:
         if   ui.editMode == emExcavate:   actions.excavate(map, cur, um)
         elif ui.editMode == emEraseCell:  actions.eraseCell(map, cur, um)
         elif ui.editMode == emClearFloor: actions.setFloor(map, cur, fEmpty, um)
 
-      elif (opt.wasdMode and win.mouseButtonUp(mbLeft)) or
-           (not opt.wasdMode and ke.isKeyDown(keyD)):
+      if not opt.wasdMode and ke.isKeyUp({keyD, keyE}):
         ui.editMode = emNormal
-        a.clearStatusMessage()
+        clearStatusMessage(a)
+
+      if ke.isKeyUp({keyF}):
+        ui.editMode = emNormal
+        clearStatusMessage(a)
 
     # }}}
     # {{{ emDrawWall
@@ -1942,9 +2317,9 @@ proc handleLevelEvents(a) =
 
       handleMoveKeys(handleMoveKey)
 
-      if ke.isKeyUp({keyW}):
+      if not opt.wasdMode and ke.isKeyUp({keyW}):
         ui.editMode = emNormal
-        a.clearStatusMessage()
+        clearStatusMessage(a)
 
     # }}}
     # {{{ emDrawWallSpecial
@@ -1967,22 +2342,18 @@ proc handleLevelEvents(a) =
 
       if ke.isKeyUp({keyR}):
         ui.editMode = emNormal
-        a.clearStatusMessage()
+        clearStatusMessage(a)
 
     # }}}
     # {{{ emSelect
     of emSelect:
-      handleMoveCursor()
+      handleMoveCursor(MoveKeysCursor)
 
-      # TODO don't use win
-      if win.isKeyDown(keyLeftControl) or win.isKeyDown(keyRightControl):
-        setSelectModeActionMessage(a)
-      else:
-        setSelectModeSelectMessage(a)
+      if koi.ctrlDown(): setSelectModeActionMessage(a)
+      else:              setSelectModeSelectMessage(a)
 
-      # TODO don't use win
-      if   win.isKeyDown(keyD): ui.selection.get[cur.row, cur.col] = true
-      elif win.isKeyDown(keyE): ui.selection.get[cur.row, cur.col] = false
+      if   koi.keyDown(keyD): ui.selection.get[cur.row, cur.col] = true
+      elif koi.keyDown(keyE): ui.selection.get[cur.row, cur.col] = false
 
       if   ke.isKeyDown(keyA): ui.selection.get.fill(true)
       elif ke.isKeyDown(keyU): ui.selection.get.fill(false)
@@ -1996,13 +2367,13 @@ proc handleLevelEvents(a) =
           selected: ke.isKeyDown(keyR)
         ))
 
-      elif ke.isKeyDown(keyC, {mkCtrl}):
+      elif ke.isKeyDown({keyC, keyY}):
         let bbox = copySelection(a)
         if bbox.isSome:
           exitSelectMode(a)
           setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
-      elif ke.isKeyDown(keyX, {mkCtrl}):
+      elif ke.isKeyDown(keyX):
         let bbox = copySelection(a)
         if bbox.isSome:
           actions.eraseSelection(map, cur.level,
@@ -2053,7 +2424,7 @@ proc handleLevelEvents(a) =
     # }}}
     # {{{ emSelectRect
     of emSelectRect:
-      handleMoveCursor()
+      handleMoveCursor(MoveKeysCursor)
 
       var r1,c1, r2,c2: Natural
       if ui.selRect.get.startRow <= cur.row:
@@ -2080,31 +2451,15 @@ proc handleLevelEvents(a) =
     # }}}
     # {{{ emPastePreview
     of emPastePreview:
-      if ke.isKeyDown(MoveKeysLeft,  repeat=true):
-        moveCursorAndSelStart(dirW, steps=1, a)
+      if opt.walkMode: handleMoveWalk()
+      else:
+        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        handleMoveCursor(moveKeys)
 
-      elif ke.isKeyDown(MoveKeysRight, repeat=true):
-        moveCursorAndSelStart(dirE, steps=1, a)
+      a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
+      a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
-      elif ke.isKeyDown(MoveKeysUp,    repeat=true):
-        moveCursorAndSelStart(dirN, steps=1, a)
-
-      elif ke.isKeyDown(MoveKeysDown,  repeat=true):
-        moveCursorAndSelStart(dirS, steps=1, a)
-
-      elif ke.isKeyDown(MoveKeysLeft,  {mkCtrl}, repeat=true):
-        moveCursorAndSelStart(dirW, steps=CursorJump, a)
-
-      elif ke.isKeyDown(MoveKeysRight, {mkCtrl}, repeat=true):
-        moveCursorAndSelStart(dirE, steps=CursorJump, a)
-
-      elif ke.isKeyDown(MoveKeysUp,    {mkCtrl}, repeat=true):
-        moveCursorAndSelStart(dirN, steps=CursorJump, a)
-
-      elif ke.isKeyDown(MoveKeysDown,  {mkCtrl}, repeat=true):
-        moveCursorAndSelStart(dirS, steps=CursorJump, a)
-
-      elif ke.isKeyDown({keyEnter, keyP}):
+      if ke.isKeyDown({keyEnter, keyP}):
         actions.paste(map, cur, ui.copyBuf.get, um)
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
@@ -2114,7 +2469,7 @@ proc handleLevelEvents(a) =
 
       elif ke.isKeyDown(keyEscape):
         ui.editMode = emNormal
-        a.clearStatusMessage()
+        clearStatusMessage(a)
 
     # }}}
     # {{{ emNudgePreview
@@ -2134,12 +2489,15 @@ proc handleLevelEvents(a) =
         ui.editMode = emNormal
         map.levels[cur.level] = ui.nudgeBuf.get.level
         ui.nudgeBuf = SelectionBuffer.none
-        a.clearStatusMessage()
+        clearStatusMessage(a)
 
     # }}}
     # {{{ emSetTeleportDestination
     of emSetTeleportDestination:
-      handleMoveCursor()
+      if opt.walkMode: handleMoveWalk()
+      else:
+        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        handleMoveCursor(moveKeys)
 
       if ke.isKeyDown({keyPageUp, keyKpSubtract}) or
          ke.isKeyDown(keyMinus, {mkCtrl}):
@@ -2160,13 +2518,16 @@ proc handleLevelEvents(a) =
 
       elif ke.isKeyDown(keyEscape):
         ui.editMode = emNormal
-        a.clearStatusMessage()
+        clearStatusMessage(a)
 
     # }}}
+
 # }}}
-# {{{ handleLevelEventsNoLevels()
-proc handleLevelEventsNoLevels(a) =
-  for ke in koi.keyBuf():
+# {{{ handleGlobalKeyEvents_NoLevels()
+proc handleGlobalKeyEvents_NoLevels(a) =
+  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+    let ke = koi.currEvent()
+
     if   ke.isKeyDown(keyN,        {mkCtrl, mkAlt}):   newMapAction(a)
     elif ke.isKeyDown(keyP,        {mkCtrl, mkAlt}):   openMapPropsDialog(a)
 
@@ -2176,131 +2537,25 @@ proc handleLevelEventsNoLevels(a) =
 
     elif ke.isKeyDown(keyN,        {mkCtrl}):          openNewLevelDialog(a)
 
-    elif ke.isKeyDown(keyR,        {mkAlt, mkCtrl}):   reloadThemeAction(a)
-    elif ke.isKeyDown(keyPageUp,   {mkAlt, mkCtrl}):   prevThemeAction(a)
-    elif ke.isKeyDown(keyPageDown, {mkAlt, mkCtrl}):   nextThemeAction(a)
+    elif ke.isKeyDown(keyR,        {mkCtrl, mkAlt}):   reloadThemeAction(a)
+    elif ke.isKeyDown(keyPageUp,   {mkCtrl, mkAlt}):   prevThemeAction(a)
+    elif ke.isKeyDown(keyPageDown, {mkCtrl, mkAlt}):   nextThemeAction(a)
 
 # }}}
 
-# {{{ drawNotesPane()
-proc drawNotesPane(x, y, w, h: float, a) =
-  alias(vg, a.vg)
-  alias(ls, a.doc.levelStyle)
-
-  vg.save()
-
-  let l = getCurrLevel(a)
-  let cur = a.ui.cursor
-
-  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
-     l.hasNote(cur.row, cur.col):
-
-    let note = l.getNote(cur.row, cur.col)
-    case note.kind
-    of nkIndexed:
-      drawIndexedNote(x, y-12, note.index, 36,
-                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
-                      fgColor=ls.notePaneIndexColor, vg)
-
-    of nkCustomId:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+18, y-2, note.customId)
-
-    of nkIcon:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y-3, NoteIcons[note.icon])
-
-    of nkComment:
-      vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y-2, IconComment)
-
-    vg.fillColor(ls.notePaneTextColor)
-    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.4)
-    vg.intersectScissor(x+40, y, w-40, h)
-    vg.textBox(x+40, y, w-40, note.text)
-
-  vg.restore()
-
-# }}}
 # {{{ renderUI()
-
-proc specialWallDrawProc(ls: LevelStyle,
-                         dp: DrawLevelParams): RadioButtonsDrawProc =
-  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               hover, active, down, first, last: bool,
-               x, y, w, h: float, style: RadioButtonsStyle) =
-
-    var col = if active: ls.cursorColor else: ls.floorColor
-
-    if hover:
-      col = col.lerp(white(), 0.3)
-    if down:
-      col = col.lerp(black(), 0.3)
-
-    const Pad = 5
-
-    vg.beginPath()
-    vg.fillColor(col)
-    vg.rect(x, y, w-Pad, h-Pad)
-    vg.fill()
-
-    dp.setZoomLevel(ls, 4)
-    let ctx = DrawLevelContext(ls: ls, dp: dp, vg: vg)
-
-    var cx = x + 5
-    var cy = y + 15
-
-    template drawAtZoomLevel6(body: untyped) =
-      vg.save()
-      # A bit messy... but so is life! =8)
-      dp.setZoomLevel(ls, 6)
-      vg.intersectScissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
-      body
-      dp.setZoomLevel(ls, 4)
-      vg.restore()
-
-    case SpecialWalls[buttonIdx]
-    of wNone:           discard
-    of wWall:           drawSolidWallHoriz(cx, cy, ctx)
-    of wIllusoryWall:   drawIllusoryWallHoriz(cx+2, cy, ctx)
-    of wInvisibleWall:  drawInvisibleWallHoriz(cx, cy, ctx)
-    of wDoor:           drawDoorHoriz(cx, cy, ctx)
-    of wLockedDoor:     drawLockedDoorHoriz(cx, cy, ctx)
-    of wArchway:        drawArchwayHoriz(cx, cy, ctx)
-
-    of wSecretDoor:
-      drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
-
-    of wLeverSW:
-      drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
-
-    of wNicheSW:        drawNicheHorizSW(cx, cy, ctx)
-
-    of wStatueSW:
-      drawAtZoomLevel6: drawStatueHorizSW(cx-2, cy+2, ctx)
-
-    of wKeyhole:
-      drawAtZoomLevel6: drawKeyholeHoriz(cx-2, cy, ctx)
-
-    else: discard
-
-
 proc renderUI() =
   alias(a, g_app)
   alias(ui, a.ui)
-  alias(dp, a.ui.drawLevelParams)
-  alias(ls, a.doc.levelStyle)
   alias(vg, a.vg)
   alias(dlg, a.dialog)
 
-  let (winWidth, winHeight) = a.win.size
+  let winWidth = koi.winWidth()
+  let winHeight = koi.winHeight()
 
   # Clear background
   vg.beginPath()
+  # TODO shouldn't calculate visible window area manually
   vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
 
   # TODO extend logic for other images
@@ -2310,7 +2565,15 @@ proc renderUI() =
     vg.fillColor(ui.style.backgroundColor)
   vg.fill()
 
-  if mapHasLevels(a):
+  # About button
+  if button(x = winWidth - 55, y = 45, w = 20, h = 24, IconQuestion,
+            style = ui.aboutButtonStyle):
+    # TODO
+    discard
+
+  if not mapHasLevels(a):
+    drawEmptyMap(a)
+  else:
     let levelItems = a.doc.map.sortedLevelNames
     let levelSelectedItem = getCurrSortedLevelIdx(a)
 
@@ -2331,27 +2594,7 @@ proc renderUI() =
     )
     ui.cursor.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
 
-    updateViewStartAndCursorPosition(a)
-
-    # Draw current level
-    if dp.viewRows > 0 and dp.viewCols > 0:
-      dp.cursorRow = ui.cursor.row
-      dp.cursorCol = ui.cursor.col
-
-      dp.cursorOrient = CardinalDir.none
-      if ui.moveMode == mmWalk and
-         ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
-        dp.cursorOrient = ui.cursorOrient.some
-
-      dp.selection = ui.selection
-      dp.selectionRect = ui.selRect
-
-      dp.selectionBuffer =
-        if ui.editMode == emPastePreview: ui.copyBuf
-        elif ui.editMode == emNudgePreview: ui.nudgeBuf
-        else: SelectionBuffer.none
-
-      drawLevel(getCurrLevel(a), DrawLevelContext(ls: ls, dp: dp, vg: a.vg))
+    renderLevel(a)
 
     if a.opt.showNotesPane:
       drawNotesPane(
@@ -2362,75 +2605,21 @@ proc renderUI() =
         a
       )
 
-    # Right-side toolbar
-    ui.currSpecialWall = koi.radioButtons(
-      x = winWidth - ToolbarRightPad,
-      y = 90,
-      w = 36,
-      h = 35,
-      labels = newSeq[string](SpecialWalls.len),
-      ui.currSpecialWall,
-      tooltips = @[],
-      layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
-      drawProc=specialWallDrawProc(ls, ui.toolbarDrawParams).some
-    )
+    if a.opt.showToolsPane:
+      renderToolsPane(
+        x = winWidth - ToolsPaneWidth,
+        y = ToolsPaneTopPad,
+        w = ToolsPaneWidth,
+        h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
+        a
+      )
 
-    ui.currFloorColor = koi.radioButtons(
-      x = winWidth - ToolbarRightPad + 3,
-      y = 460,
-      w = 30,
-      h = 30,
-      labels = newSeq[string](4),
-      ui.currFloorColor,
-      tooltips = @[],
-      layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
-      drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
-                                        ls.cursorColor).some
-    )
+    drawModeAndOptionIndicators(a)
 
-    # Mode & option indicators
-    vg.setFont(16.0, horizAlign=haRight, vertAlign=vaMiddle)
-    vg.fillColor(ls.coordsHighlightColor)
-
-    let y = winHeight.float - 50
-
-    if a.ui.moveMode == mmWalk:
-      if a.opt.drawTrail:
-        vg.fontSize(20)
-        discard vg.text(winWidth.float - 17, y-34, IconShoePrints)
-        vg.fontSize(16)
-
-    vg.textAlign(haRight)
-
-    case a.ui.moveMode:
-    of mmCursor:
-      let mode = case a.ui.editMode:
-      of emNormal, emExcavate, emDrawWall, emDrawWallSpecial,
-         emEraseCell, emClearFloor: "Normal"
-      of emSelect, emSelectRect: "Select"
-      of emPastePreview: "Paste"
-      of emNudgePreview: "Nudge"
-      of emSetTeleportDestination: "Set link"
-
-      discard vg.text(winWidth.float - 15, y, mode)
-
-    of mmWalk:
-      if a.opt.wasdMode:
-        discard vg.text(winWidth.float - 15, y, fmt"WASD+{IconMouse}")
-      else:
-        discard vg.text(winWidth.float - 15, y, "Walk")
-
-
-  else:
-    vg.fontSize(22)
-    vg.fillColor(ls.drawColor)
-    vg.textAlign(haCenter, vaMiddle)
-    var y = winHeight*0.5
-    discard vg.text(winWidth*0.5, y, "Empty map")
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
-  renderStatusBar(statusBarY, winWidth.float, a)
+  drawStatusBar(statusBarY, winWidth.float, a)
 
   # Dialogs
   if dlg.saveDiscardDialog.isOpen:
@@ -2469,7 +2658,7 @@ proc renderFramePre(win: CSDWindow) =
     # displaying the status message
 
   a.win.title = a.doc.map.name
-  a.win.modified = a.undoManager.isModified
+  a.win.modified = a.doc.undoManager.isModified
 
 # }}}
 # {{{ renderFrame()
@@ -2485,8 +2674,8 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
     a.theme.nextThemeIndex = Natural.none
 
   if doHandleEvents:
-    if mapHasLevels(a): handleLevelEvents(a)
-    else:               handleLevelEventsNoLevels(a)
+    if mapHasLevels(a): handleGlobalKeyEvents(a)
+    else:               handleGlobalKeyEvents_NoLevels(a)
 
   renderUI()
 
@@ -2495,8 +2684,10 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
     when defined(NO_QUIT_DIALOG):
       a.shouldClose = true
     else:
-      if not koi.isDialogActive():
-        if a.undoManager.isModified:
+      # TODO can we get rid of the isDialogOpen check somehow? (and then
+      # remove from the koi API)
+      if not koi.isDialogOpen():
+        if a.doc.undoManager.isModified:
           a.dialog.saveDiscardDialog.isOpen = true
           a.dialog.saveDiscardDialog.action = proc (a) = a.shouldClose = true
           koi.setFramesLeft()
@@ -2571,13 +2762,26 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a = new AppContext
   a.win = win
   a.vg = vg
-  a.undoManager = newUndoManager[Map, UndoStateData]()
+  a.doc.undoManager = newUndoManager[Map, UndoStateData]()
 
   loadFonts(vg)
   loadImages(vg, a)
 
+
+  let bs = koi.getDefaultButtonStyle()
+
+  bs.labelFontSize   = 20.0
+  bs.labelPadHoriz   = 0
+  bs.labelOnly       = true
+  bs.labelColor      = gray(1.0, 0.5)
+  bs.labelColorHover = gray(1.0, 0.7)
+  bs.labelColorDown  = gray(1.0, 0.9)
+
+  a.ui.aboutButtonStyle = bs
+
+
   searchThemes(a)
-  var themeIndex = findThemeIndex("inverted", a)
+  var themeIndex = findThemeIndex("beholder", a)
   if themeIndex == -1: themeIndex = 0
   loadTheme(themeIndex, a)
 
@@ -2590,8 +2794,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
-  showCellCoords(true, a)
+  a.ui.drawLevelParams.drawCellCoords = true
   a.opt.showNotesPane = true
+  a.opt.showToolsPane = true
 
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 

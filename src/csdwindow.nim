@@ -153,13 +153,6 @@ proc shouldClose*(win): bool =
 proc `shouldClose=`*(win; state: bool) =
   win.w.shouldClose = state
 
-# TODO move to koi?
-proc isKeyDown*(win; key: Key): bool =
-  win.w.isKeyDown(key)
-
-proc mouseButtonUp*(win; button: MouseButton): bool =
-  win.w.mouseButtonUp(button)
-
 proc resizing*(win): bool =
   win.dragState == wdsResizing
 

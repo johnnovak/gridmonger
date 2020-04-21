@@ -832,9 +832,10 @@ proc drawTrail(x, y: float, ctx) =
 
 # }}}
 # {{{ drawSecretDoor()
-proc drawSecretDoor(x, y: float, ctx) =
+proc drawSecretDoor(x, y: float, isCursorActive: bool, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
+
   alias(vg, ctx.vg)
 
   vg.beginPath()
@@ -844,14 +845,14 @@ proc drawSecretDoor(x, y: float, ctx) =
 
   let
     icon = "S"
-    bgCol = ls.floorColor
+    bgCol = if isCursorActive: ls.cursorColor else: ls.floorColor
     fontSizeFactor = 0.53
     gs = dp.gridSize
 
-  drawIcon(x-1, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x+1, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y-1, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y+1, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x-2, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x+2, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y-2, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y+2, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
 
   drawIcon(x, y, 0, 0, icon, gs, ls.drawColor, fontSizeFactor, vg)
 
@@ -1227,6 +1228,7 @@ proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
     xe = snap(x + dp.gridSize, sw)
     y = snap(y, sw)
 
+  # Draw wall
   vg.lineCap(lcjRound)
   vg.beginPath()
   vg.strokeColor(ls.drawColor)
@@ -1235,9 +1237,15 @@ proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
   vg.lineTo(xe, y)
   vg.stroke()
 
-  let
-    lw = floor(dp.gridSize*0.2)
-    lx = snap(x + (dp.gridSize-lw)*0.5, sw)
+  # Draw lever
+  let lw = floor(dp.gridSize*0.2)
+  var lx, ly: float
+
+  if dp.lineWidth == lwThin:
+    lx = floor(x + (dp.gridSize-lw)*0.5 + 0.5)
+    ly = if northEast: y-0.5 else: y-lw+0.5
+  else:
+    lx = snap(x + (dp.gridSize-lw)*0.5 + 0.5, sw)
     ly = if northEast: y else: y-lw
 
   vg.fillColor(ls.drawColor)
@@ -1375,11 +1383,19 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
   vg.fill()
   vg.stroke()
 
-  let hole = kl-6 
-  if hole >= 2:
+  # Keyhole
+  var i, h: float
+  if dp.lineWidth == lwThin:
+    i = 3.5
+    h = kl-7
+  else:
+    i = 3
+    h = kl-6
+
+  if h >= 2:
     vg.fillColor(ls.drawColor)
     vg.beginPath()
-    vg.rect(kx+3, ky+3, hole, hole)
+    vg.rect(kx+i, ky+i, h, h)
     vg.fill()
 
   # Wall end
@@ -1438,7 +1454,11 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   of fDoor:                drawOriented(drawDoorHoriz)
   of fLockedDoor:          drawOriented(drawLockedDoorHoriz)
   of fArchway:             drawOriented(drawArchwayHoriz)
-  of fSecretDoor:          draw(drawSecretDoor)
+
+  of fSecretDoor:          drawSecretDoor(x, y,
+                                          isCursorActive(viewRow, viewCol, dp),
+                                          ctx)
+
   of fPressurePlate:       draw(drawPressurePlate)
   of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
   of fClosedPit:           draw(drawClosedPit)
