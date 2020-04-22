@@ -2,6 +2,7 @@ import algorithm
 import math
 import options
 import strformat
+import sugar
 
 import riff
 
@@ -289,7 +290,9 @@ proc writeLinks(rw; links: BiTable[Location, Location]) =
   rw.beginChunk(FourCC_GRDM_lnks)
   rw.write(links.len.uint16)
 
-  var sortedKeys = links.keys()
+  var sortedKeys = collect(newSeqOfCap(links.len)):
+    for k in links.keys(): k
+
   sort(sortedKeys)
 
   proc writeLocation(loc: Location) =

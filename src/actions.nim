@@ -1,6 +1,7 @@
 import options
 import strformat
 
+import bitable
 import common
 import level
 import map
@@ -16,8 +17,8 @@ type UndoStateData* = object
 
 using
   map: var Map
-  m: var Map
-  um: var UndoManager[Map, UndoStateData]
+  m:   var Map
+  um:  var UndoManager[Map, UndoStateData]
 
 # {{{ fullLevelAction()
 # TODO investigate why we need to use different parameter names in nested
@@ -31,8 +32,8 @@ template fullLevelAction(map; loc: Location; um;
     actionBody
     result = usd
 
-  var undoLevel = newLevelFrom(map.levels[loc.level])
-  var undoAction = proc (m: var Map): UndoStateData =
+  let undoLevel = newLevelFrom(map.levels[loc.level])
+  let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel
     result = usd
 
@@ -41,13 +42,12 @@ template fullLevelAction(map; loc: Location; um;
 
 # }}}
 # {{{ cellAreaAction()
-# TODO investigate why we need to use different parameter names in nested
-# templates
 template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
                         actName: string, actionMap, actionBody: untyped) =
 
   let usd = UndoStateData(
     actionName: actName,
+    # TODO raise bug for this (doesn't compile if lvl is renamed to level)
     location: Location(level: lvl, row: rect.r1, col: rect.c1)
   )
 
@@ -56,12 +56,21 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
     actionMap.levels[lvl].reindexNotes()
     result = usd
 
-  var undoLevel = newLevelFrom(map.levels[lvl], rect)
+  let linksFromArea = map.getLinksFromRect(lvl, rect)
+  let linksToArea = map.getLinksToRect(lvl, rect)
 
-  var undoAction = proc (m: var Map): UndoStateData =
-    m.levels[lvl].copyFrom(destRow=rect.r1, destCol=rect.c1, src=undoLevel,
-                           srcRect=rectN(0, 0, rect.rows, rect.cols))
+  let undoLevel = newLevelFrom(map.levels[lvl], rect)
+
+  let undoAction = proc (m: var Map): UndoStateData =
+    m.levels[lvl].copyFrom(
+      destRow = rect.r1,
+      destCol = rect.c1,
+      src     = undoLevel,
+      srcRect = rectN(0, 0, rect.rows, rect.cols)
+    )
     m.levels[lvl].reindexNotes()
+    m.links.addAll(linksFromArea)
+    m.links.addAll(linksToArea)
     result = usd
 
   um.storeUndoState(action, undoAction)
@@ -71,9 +80,11 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
 # {{{ singleCellAction()
 template singleCellAction(map; loc: Location; um;
                           actionName: string; actionMap, actionBody: untyped) =
-  let c = loc.col
-  let r = loc.row
-  let cellRect = rectN(r, c, r+1, c+1)
+  let
+    c = loc.col
+    r = loc.row
+    cellRect = rectN(r, c, r+1, c+1)
+
   cellAreaAction(map, loc.level, cellRect, um, actionName, actionMap, actionBody)
 
 # }}}
@@ -81,28 +92,28 @@ template singleCellAction(map; loc: Location; um;
 # {{{ eraseCellWalls*()
 proc eraseCellWalls*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell walls", m):
-    alias(l, m.levels[loc.level])
-    l.eraseCellWalls(loc.row, loc.col)
+    m.eraseCellWalls(loc)
 
 # }}}
 
 # {{{ eraseCell*()
 proc eraseCell*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell", m):
-    alias(l, m.levels[loc.level])
-    l.eraseCell(loc.row, loc.col)
+    m.eraseCell(loc)
 
 # }}}
 # {{{ eraseSelection*()
 proc eraseSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural]; um) =
   cellAreaAction(map, level, bbox, um, "Erase selection", m):
-    alias(l, m.levels[level])
+    var loc: Location
+    loc.level = level
+
     for r in 0..<sel.rows:
       for c in 0..<sel.cols:
         if sel[r,c]:
-          let row = bbox.r1+r
-          let col = bbox.c1+c
-          l.eraseCell(row, col)
+          loc.row = bbox.r1+r
+          loc.col = bbox.c1+c
+          m.eraseCell(loc)
 
 # }}}
 # {{{ fillSelection*()
@@ -162,23 +173,20 @@ proc paste*(map; dest: Location, cb: SelectionBuffer; um) =
 # {{{ setWall*()
 proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
   singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
-    alias(l, m.levels[loc.level])
-    l.setWall(loc.row, loc.col, dir, w)
+    m.setWall(loc, dir, w)
 
 # }}}
 # {{{ setFloor*()
 proc setFloor*(map; loc: Location, f: Floor; um) =
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
-    alias(l, m.levels[loc.level])
-    l.setFloor(loc.row, loc.col, f)
+    m.setFloor(loc, f)
 
 # }}}
 # {{{ setOrientedFloor*()
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
   singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
-    alias(l, m.levels[loc.level])
-    l.setFloor(loc.row, loc.col, f)
-    l.setFloorOrientation(loc.row, loc.col, ot)
+    m.setFloor(loc, f)
+    m.setFloorOrientation(loc, ot)
 
 # }}}
 # {{{ excavate*()
@@ -188,39 +196,35 @@ proc excavate*(map; loc: Location; um) =
     alias(c, loc.col)
     alias(r, loc.row)
 
-    l.eraseCell(r,c)
-    l.setFloor(r,c, fEmpty)
+    m.eraseCell(loc)
+    m.setFloor(loc, fEmpty)
 
     if r == 0 or l.isFloorEmpty(r-1, c):
-      l.setWall(r,c, dirN, wWall)
+      m.setWall(loc, dirN, wWall)
     else:
-      l.setWall(r,c, dirN, wNone)
+      m.setWall(loc, dirN, wNone)
 
     if c == 0 or l.isFloorEmpty(r, c-1):
-      l.setWall(r,c, dirW, wWall)
+      m.setWall(loc, dirW, wWall)
     else:
-      l.setWall(r,c, dirW, wNone)
+      m.setWall(loc, dirW, wNone)
 
     if r == l.rows-1 or l.isFloorEmpty(r+1, c):
-      l.setWall(r,c, dirS, wWall)
+      m.setWall(loc, dirS, wWall)
     else:
-      l.setWall(r,c, dirS, wNone)
+      m.setWall(loc, dirS, wNone)
 
     if c == l.cols-1 or l.isFloorEmpty(r, c+1):
-      l.setWall(r,c, dirE, wWall)
+      m.setWall(loc, dirE, wWall)
     else:
-      l.setWall(r,c, dirE, wNone)
+      m.setWall(loc, dirE, wNone)
 
 # }}}
 # {{{ toggleFloorOrientation*()
 proc toggleFloorOrientation*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Toggle floor orientation", m):
-    alias(l, m.levels[loc.level])
-    alias(c, loc.col)
-    alias(r, loc.row)
-
-    let newOt = if l.getFloorOrientation(r,c) == Horiz: Vert else: Horiz
-    l.setFloorOrientation(r,c, newOt)
+    let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
+    m.setFloorOrientation(loc, newOt)
 
 # }}}
 # {{{ setNote*()
@@ -254,27 +258,30 @@ proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
 # }}}
 # {{{ nudgeLevel*()
 # TODO simplify, use fullLevelAction
-proc nudgeLevel*(map; loc: Location, destRow, destCol: int, cb: SelectionBuffer;
-                 um) =
+proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
+                 sb: SelectionBuffer; um) =
 
   let usd = UndoStateData(actionName: "Nudge level", location: loc)
+
+  let linksFromLevel = map.getLinksFromLevel(loc.level)
+  let linksToLevel = map.getLinksToLevel(loc.level)
 
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
   let action = proc (m: var Map): UndoStateData =
     var l = newLevel(
-      cb.level.locationName,
-      cb.level.levelName,
-      cb.level.elevation,
-      cb.level.rows,
-      cb.level.cols
+      sb.level.locationName,
+      sb.level.levelName,
+      sb.level.elevation,
+      sb.level.rows,
+      sb.level.cols
     )
-    l.paste(destRow, destCol, cb.level, cb.selection)
+    l.paste(destRow, destCol, sb.level, sb.selection)
     m.levels[loc.level] = l
     result = usd
 
-  var undoLevel = newLevelFrom(cb.level)
-  var undoAction = proc (m: var Map): UndoStateData =
+  let undoLevel = newLevelFrom(sb.level)
+  let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel
     result = usd
 
@@ -311,6 +318,29 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
 
   um.storeUndoState(action, undoAction)
   discard action(map)
+
+# }}}
+
+# {{{ setLink()
+proc setLink*(map; src, dest: Location; um) =
+  let srcFloor = map.getFloor(src)
+
+  var destFloor: Floor
+  if   srcFloor in LinkPitSources:  destFloor = fCeilingPit
+  elif srcFloor == fTeleportSource: destFloor = fTeleportDestination
+  elif srcFloor == fExitDoor:       destFloor = fExitDoor
+  elif srcFloor in LinkStairs:
+    if src.level < dest.level: destFloor = fStairsDown
+    else: destFloor = fStairsUp
+
+  # TODO fix src stairs if needed
+
+  let linkType = linkSourceToString(srcFloor)
+
+  singleCellAction(map, dest, um,
+                   fmt"Set link destination {EnDash} {linkType}", m):
+    m.setFloor(dest, destFloor)
+    m.links[src] = dest
 
 # }}}
 

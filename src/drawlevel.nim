@@ -6,6 +6,7 @@ import glad/gl
 import koi
 import nanovg
 
+import bitable
 import common
 import icons
 import level
@@ -1545,8 +1546,6 @@ proc drawNote(x, y: float, note: Note, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let w = dp.gridSize*0.3
-
   case note.kind
   of nkComment:  discard
   of nkIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
@@ -1557,6 +1556,8 @@ proc drawNote(x, y: float, note: Note, ctx) =
                           DefaultIconFontSizeFactor, vg)
 
   if note.kind != nkIndexed and note.text != "":
+    let w = dp.gridSize*0.3
+
     vg.fillColor(ls.noteLevelCommentColor)
     vg.beginPath()
     vg.moveTo(x + dp.gridSize - w, y)
@@ -1581,6 +1582,43 @@ proc drawNotes(viewBuf: Level, ctx) =
           y = cellY(viewRow, dp)
 
         drawNote(x, y, note, ctx)
+
+# }}}
+# {{{ drawLinkMarker()
+proc drawLinkMarker(x, y: float, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let w = dp.gridSize*0.3
+
+  vg.fillColor(rgba(1.0, 0, 0, 0.5))
+  vg.beginPath()
+  vg.moveTo(x,   y + dp.gridSize - w)
+  vg.lineTo(x,   y + dp.gridSize)
+  vg.lineTo(x+w, y + dp.gridSize)
+  vg.closePath()
+  vg.fill()
+
+  # }}}
+# {{{ drawLinkMarkers()
+proc drawLinkMarkers(map: Map, level: Natural, ctx) =
+  alias(dp, ctx.dp)
+
+  var loc: Location
+  loc.level = level
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      loc.row = dp.viewStartRow + viewRow
+      loc.col = dp.viewStartCol + viewCol
+
+      if map.links.hasKey(loc) or map.links.hasVal(loc):
+        let
+          x = cellX(viewCol, dp)
+          y = cellY(viewRow, dp)
+
+        drawLinkMarker(x, y, ctx)
 
 # }}}
 
@@ -1801,10 +1839,11 @@ proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
           ob[r,c] = {}
 
 # }}}
-# {{{ drawLevel*()
-proc drawLevel*(l: Level, ctx) =
+# {{{ drawMap*()
+proc drawMap*(map: Map, level: Natural, ctx) =
   alias(dp, ctx.dp)
   alias(ls, ctx.ls)
+  alias(l, map.levels[level])
 
   assert dp.viewStartRow + dp.viewRows <= l.rows
   assert dp.viewStartCol + dp.viewCols <= l.cols
@@ -1846,6 +1885,7 @@ proc drawLevel*(l: Level, ctx) =
 
   drawFloors(viewBuf, ctx)
   drawNotes(viewBuf, ctx)
+  drawLinkMarkers(map, level, ctx)
 
   # TODO finish shadow implementation (draw corners)
   if ls.innerShadowEnabled:

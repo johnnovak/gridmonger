@@ -59,7 +59,6 @@ const
   ToolsPaneTopPad         = 91.0
   ToolsPaneBottomPad      = 30.0
 
-
 const
   MapFileExt = "grm"
   GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
@@ -143,7 +142,7 @@ type
     emSelectRect
     emPastePreview,
     emNudgePreview,
-    emSetTeleportDestination
+    emSetCellLink
 
   Theme = object
     themeNames:           seq[string]
@@ -1003,8 +1002,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
       cols = parseInt(dlg.cols)
       elevation = parseInt(dlg.elevation)
 
-      newLevel = newLevel(dlg.locationName, dlg.levelName, elevation,
-                          rows, cols)
+      newLevel = newLevel(dlg.locationName, dlg.levelName,
+                          elevation, rows, cols)
 
     a.doc.map.addLevel(newLevel)
     a.ui.cursor.level = a.doc.map.levels.high
@@ -1554,7 +1553,7 @@ proc decZoomLevelAction(a) =
 proc setFloorAction(f: Floor, a) =
   alias(cur, a.ui.cursor)
 
-  let ot = getCurrLevel(a).guessFloorOrientation(cur.row, cur.col)
+  let ot = a.doc.map.guessFloorOrientation(cur)
   actions.setOrientedFloor(a.doc.map, cur, f, ot, a.doc.undoManager)
   setStatusMessage(fmt"Set floor – {f}", a)
 
@@ -1563,9 +1562,7 @@ proc setFloorAction(f: Floor, a) =
 proc setOrCycleFloorAction(first, last: Floor, forward: bool, a) =
   assert first <= last
 
-  alias(cur, a.ui.cursor)
-
-  var floor = getCurrLevel(a).getFloor(cur.row, cur.col)
+  var floor = a.doc.map.getFloor(a.ui.cursor)
 
   if floor >= first and floor <= last:
     var f = ord(floor)
@@ -1689,8 +1686,11 @@ proc renderLevel(a) =
       elif ui.editMode == emNudgePreview: ui.nudgeBuf
       else: SelectionBuffer.none
 
-    drawLevel(getCurrLevel(a), DrawLevelContext(ls: a.doc.levelStyle,
-                                                dp: dp, vg: a.vg))
+    drawMap(
+      a.doc.map,
+      ui.cursor.level,
+      DrawLevelContext(ls: a.doc.levelStyle, dp: dp, vg: a.vg)
+    )
 
   if koi.isHot(id):
     if not (opt.wasdMode and isActive(id)):
@@ -1713,9 +1713,10 @@ proc renderLevel(a) =
             const PadX = 10
             const PadY = 8
 
-            var noteBoxX = koi.mx() + 16
-            var noteBoxY = koi.my() + 14
-            let noteBoxW = 220.0
+            var
+              noteBoxX = koi.mx() + 16
+              noteBoxY = koi.my() + 20
+              noteBoxW = 250.0
 
             vg.setFont(14.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
             vg.textLineHeight(1.5)
@@ -1728,12 +1729,14 @@ proc renderLevel(a) =
               noteTextW = bounds.x2 - bounds.x1
               noteBoxH = noteTextH + PadY*2
 
+            noteBoxW = noteTextW + PadX*2
+
+            let
               xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
               yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
 
             if xOver > 0:
               noteBoxX -= xOver
-              if yOver <= 0: noteBoxY += 8
 
             if yOver > 0:
               noteBoxY -= noteBoxH + 22
@@ -1902,17 +1905,21 @@ proc drawModeAndOptionIndicators(a) =
   alias(ui, a.ui)
   alias(ls, a.doc.levelStyle)
 
+  var x = ui.levelLeftPad
+  let y = TitleBarHeight + 32
+
   vg.save()
 
   vg.fillColor(ls.coordsHighlightColor)
 
-  if a.opt.drawTrail:
-    vg.fontSize(20)
-    discard vg.text(100, TitleBarHeight + 32, IconShoePrints)
-
   if a.opt.wasdMode:
     vg.setFont(15.0)
-    discard vg.text(ui.levelLeftPad, TitleBarHeight + 32, fmt"WASD+{IconMouse}")
+    discard vg.text(x, y, fmt"WASD+{IconMouse}")
+    x += 80
+
+  if a.opt.drawTrail:
+    vg.setFont(19)
+    discard vg.text(x, y+1, IconShoePrints)
 
   vg.restore()
 
@@ -1976,7 +1983,7 @@ proc handleGlobalKeyEvents(a) =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
 
   proc setTrailAtCursor(a) =
-    if l.isFloorEmpty(cur.row, cur.col):
+    if map.isFloorEmpty(cur):
       actions.setFloor(map, cur, fTrail, um)
 
   proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
@@ -2081,7 +2088,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyO):
         actions.toggleFloorOrientation(map, cur, um)
-        if l.getFloorOrientation(cur.row, cur.col) == Horiz:
+        if map.getFloorOrientation(cur) == Horiz:
           setStatusMessage(IconArrowsHoriz,
                            "Floor orientation set to horizontal", a)
         else:
@@ -2188,31 +2195,39 @@ proc handleGlobalKeyEvents(a) =
                          "Enter", "confirm", "Esc", "exit"], a)
 
       elif ke.isKeyDown(keyG):
-        if l.getFloor(cur.row, cur.col) == fTeleportSource:
-          if map.links.hasKey(cur):
-            let dest = map.links[cur]
+        let floor = map.getFloor(cur)
+
+        if floor in LinkSources:
+          let src = cur
+          if map.links.hasKey(src):
+            let dest = map.links[src]
             moveCursorTo(dest, a)
           else:
-            setStatusMessage(IconWarning, "Teleport has no destination set", a)
+            setStatusMessage(IconWarning,
+                             "Cell is not linked to a destination", a)
 
-        elif l.getFloor(cur.row, cur.col) == fTeleportDestination:
+        elif floor in LinkDestinations:
           let dest = cur
-          let src = map.links.getKeyByVal(dest)
-          moveCursorTo(src, a)
-
+          if map.links.hasVal(dest):
+            let src = map.links.getKeyByVal(dest)
+            moveCursorTo(src, a)
         else:
-          setStatusMessage(IconWarning, "Current cell is not a teleport", a)
+          setStatusMessage(IconWarning, "Cell is not linked to a source", a)
 
       elif ke.isKeyDown(keyG, {mkShift}):
-        if l.getFloor(cur.row, cur.col) == fTeleportSource:
+        let floor = map.getFloor(cur)
+        if floor in LinkSources:
           ui.linkSrcLocation = cur
-          ui.editMode = emSetTeleportDestination
-          setStatusMessage(IconTeleport, "Set teleport destination",
+          ui.editMode = emSetCellLink
+
+          # TODO icon per type
+          setStatusMessage(IconArrowRight,
+                           "Set {linkSourceToString(floor)} destination",
                            @[IconArrowsAll, "select cell",
-                           "Enter", "confirm", "Esc", "cancel"], a)
+                           "Enter", "set", "Esc", "cancel"], a)
         else:
           setStatusMessage(IconWarning,
-                           "Current cell is not a teleport source", a)
+                           "Cannot link current cell", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         incZoomLevelAction(a)
@@ -2225,13 +2240,13 @@ proc handleGlobalKeyEvents(a) =
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyN):
-        if l.isFloorEmpty(cur.row, cur.col):
+        if map.isFloorEmpty(cur):
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
           openEditNoteDialog(a)
 
       elif ke.isKeyDown(keyN, {mkShift}):
-        if l.isFloorEmpty(cur.row, cur.col):
+        if map.isFloorEmpty(cur):
           setStatusMessage(IconWarning, "No note to delete in cell", a)
         else:
           actions.eraseNote(map, cur, um)
@@ -2310,8 +2325,8 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emDrawWall
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir, a) =
-        if canSetWall(l, cur.row, cur.col, dir):
-          let w = if l.getWall(cur.row, cur.col, dir) == wWall: wNone
+        if map.canSetWall(cur, dir):
+          let w = if map.getWall(cur, dir) == wWall: wNone
                   else: wWall
           actions.setWall(map, cur, dir, w, um)
 
@@ -2325,7 +2340,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emDrawWallSpecial
     of emDrawWallSpecial:
       proc handleMoveKey(dir: CardinalDir, a) =
-        if canSetWall(l, cur.row, cur.col, dir):
+        if map.canSetWall(cur, dir):
           var curSpecWall = SpecialWalls[ui.currSpecialWall]
           if   curSpecWall == wLeverSw:
             if dir in {dirN, dirE}: curSpecWall = wLeverNE
@@ -2334,7 +2349,7 @@ proc handleGlobalKeyEvents(a) =
           elif curSpecWall == wStatueSw:
             if dir in {dirN, dirE}: curSpecWall = wStatueNE
 
-          let w = if l.getWall(cur.row, cur.col, dir) == curSpecWall: wNone
+          let w = if map.getWall(cur, dir) == curSpecWall: wNone
                   else: curSpecWall
           actions.setWall(map, cur, dir, w, um)
 
@@ -2492,8 +2507,8 @@ proc handleGlobalKeyEvents(a) =
         clearStatusMessage(a)
 
     # }}}
-    # {{{ emSetTeleportDestination
-    of emSetTeleportDestination:
+    # {{{ emSetCellLink
+    of emSetCellLink:
       if opt.walkMode: handleMoveWalk()
       else:
         let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
@@ -2508,10 +2523,9 @@ proc handleGlobalKeyEvents(a) =
         nextLevelAction(a)
 
       elif ke.isKeyDown(keyEnter):
-        setFloorAction(fTeleportDestination, a)
-        map.links[ui.linkSrcLocation] = cur
+        actions.setLink(map, src=ui.linkSrcLocation, dest=cur, um)
         ui.editMode = emNormal
-        setStatusMessage(IconTeleport, "Teleport destination set", a)
+        setStatusMessage(IconArrowRight, "Teleport {linkType} set", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
@@ -2589,7 +2603,7 @@ proc renderUI() =
       levelItems,
       levelSelectedItem,
       tooltip = "",
-      disabled = not (ui.editMode in {emNormal, emSetTeleportDestination}),
+      disabled = not (ui.editMode in {emNormal, emSetCellLink}),
       style = a.theme.levelDropdownStyle
     )
     ui.cursor.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
@@ -2800,13 +2814,13 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-  let filename = "EOB III - Crystal Tower L2 notes.grm"
+#  let filename = "EOB III - Crystal Tower L2 notes.grm"
 #  let filename = "EOB III - Crystal Tower L2.grm"
 # let filename = "drawtest.grm"
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
-#  let filename = "moveto-test.grm"
+  let filename = "linktest.grm"
 #  let filename = "pool-of-radiance-multi.grm"
   a.doc.map = readMap(filename)
   a.doc.filename = filename

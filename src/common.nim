@@ -35,10 +35,12 @@ const
 
 
 type
+  Links* = BiTable[Location, Location]
+
   Map* = ref object
     name*:   string
     levels*: seq[Level]
-    links*:  BiTable[Location, Location]
+    links*:  Links
 
     sortedLevelNames*:         seq[string]
     sortedLevelIdxToLevelIdx*: Table[Natural, Natural]
@@ -176,6 +178,24 @@ type
     of nkIndexed:  index*, indexColor*: Natural
     of nkCustomId: customId*: string
     of nkIcon:     icon*: Natural
+
+
+const
+  LinkPitSources*      = {fClosedPit, fOpenPit, fHiddenPit}
+  LinkPitDestinations* = {fCeilingPit}
+  LinkStairs*          = {fStairsDown, fStairsUp}
+
+  LinkSources* = LinkPitSources + LinkStairs + {fTeleportSource, fExitDoor}
+
+  LinkDestinations* = LinkPitDestinations + LinkStairs +
+                      {fTeleportDestination, fExitDoor}
+
+
+proc linkSourceToString*(f: Floor): string =
+  if   f in LinkPitSources:  return "floor"
+  elif f == fTeleportSource: return "teleport"
+  elif f in LinkStairs:      return "stairs"
+  elif f == fExitDoor:       return "door"
 
 
 proc hash*(ml: Location): Hash =

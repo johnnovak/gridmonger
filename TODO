@@ -1,29 +1,46 @@
 BUGS
- - excavate should delete floor & notes
- - cursor should be move to the top-left corner of the selection after cut/copy
- - cut and the paste back doesn't yield the same results
- - left edge of spinner symbols is cut off on high zoom levels on retina
-   screens
- - cut shouldn't cut walls of bordering cells
+  - cursor should be move to the top-left corner of the selection after cut/copy
+  - cut and the paste back doesn't yield the same results
+  - left edge of spinner symbols is cut off on high zoom levels on retina
+    screens
+  - cut shouldn't cut walls of bordering cells
+  - crash when text field values cannot be parsed as numbers
+  - colour picker is overdrawn to the statusbar in small windows
+  - link handling:
+    - resize
+    - nudge
+    - cut/copy/paste
+    - delete level
 
- - note dialog: radio button flicker during resize
+
+TODO
+  - note dialog:
+    if custom id is empty, ok should be disabled
+    if text is empty, ok should be disabled for comments
+
+  - dialog validations
+  - don't allow drawing on title & status bars (koi scissor stacking)
+  - better csdwindow separation (e.g. titlebar)
+  - proper multi-window handling in csdwindow
+  - delete level
+  - themes for all koi widgets
+  - koi: textarea widget
+  - koi: numeric field restrictions
+  - floor colours
+  - save last used config
+  - autosave
+  - save display params into file: cursor pos, level, theme, option settings
+    (basically used should continue where he left off after reopening a map)
+  - logging
+  - about dialog
+  - splash screen
+  - no crashes when attempting to load invalid files (log errors)
+  - pin window support
+  - attempt to fix resize csdwindow
+  - attempt to fix nasty concurrent redraw bug when resizing csdwindow
 
 FONT -
   neuton
   grenze
 
 
-TODO
-  note dialog:
-    if custom id is empty, ok should be disabled
-    if text is empty, ok should be disabled for comments
-
-  note index recalculation on delete, cut, erase, paste etc.
-  autosave
-  don't allow drawing on title & status bars
-  better csdwindow separation (e.g. titlebar)
-  dynamic width for the levels dropdown
-  proper multi-window handling in csdwindow
-  themes for all koi widgets
-  koi textarea widget
-  undo/redo - display action name
