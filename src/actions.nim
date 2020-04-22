@@ -257,14 +257,70 @@ proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
 
 # }}}
 # {{{ nudgeLevel*()
-# TODO simplify, use fullLevelAction
 proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
                  sb: SelectionBuffer; um) =
 
   let usd = UndoStateData(actionName: "Nudge level", location: loc)
 
-  let linksFromLevel = map.getLinksFromLevel(loc.level)
-  let linksToLevel = map.getLinksToLevel(loc.level)
+  let oldFromLinks = map.getLinksFromLevel(loc.level)
+  let oldToLinks   = map.getLinksToLevel(loc.level)
+
+  var newFromLinks = initBiTable[Location, Location]()
+  var newToLinks   = initBiTable[Location, Location]()
+
+  let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
+
+  for src, dest in oldFromLinks.pairs:
+    var r = src.row.int + destRow
+    var c = src.col.int + destCol
+    if levelRect.contains(r,c):
+      let newSrc = Location(level: src.level, row: r, col: c)
+
+      var newDest: Location
+      if dest.level == src.level:
+        r = dest.row.int + destRow
+        c = dest.col.int + destCol
+
+        if levelRect.contains(r,c):
+          newDest = Location(level: dest.level, row: r, col: c)
+        else:
+          continue
+      else:
+        newDest = dest
+
+      newFromLinks[newSrc] = newDest
+
+
+  for src, dest in oldToLinks.pairs:
+    var r = dest.row.int + destRow
+    var c = dest.col.int + destCol
+    if levelRect.contains(r,c):
+      let newDest = Location(level: dest.level, row: r, col: c)
+
+      var newSrc: Location
+      if src.level == dest.level:
+        r = src.row.int + destRow
+        c = src.col.int + destCol
+
+        if levelRect.contains(r,c):
+          newSrc = Location(level: src.level, row: r, col: c)
+        else:
+          continue
+      else:
+        newSrc = src
+
+      newToLinks[newSrc] = newDest
+
+
+  echo "******* OLD FROM LINKS ************"
+  dumpLinks(oldFromLinks)
+  echo "******* OLD TO LINKS ************"
+  dumpLinks(oldToLinks)
+
+  echo "******* NEW FROM LINKS ************"
+  dumpLinks(newFromLinks)
+  echo "******* NEW TO LINKS ************"
+  dumpLinks(newToLinks)
 
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
@@ -278,11 +334,26 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
     )
     l.paste(destRow, destCol, sb.level, sb.selection)
     m.levels[loc.level] = l
+
+    for k in oldFromLinks.keys: m.links.delByKey(k)
+    for k in oldToLinks.keys:   m.links.delByKey(k)
+
+    m.links.addAll(newFromLinks)
+    m.links.addAll(newToLinks)
+
     result = usd
+
 
   let undoLevel = newLevelFrom(sb.level)
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel
+
+    for k in newFromLinks.keys: m.links.delByKey(k)
+    for k in newtoLinks.keys:   m.links.delByKey(k)
+
+    m.links.addAll(oldFromLinks)
+    m.links.addAll(oldToLinks)
+
     result = usd
 
   um.storeUndoState(action, undoAction)

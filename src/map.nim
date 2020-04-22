@@ -86,7 +86,8 @@ proc getLinksFromRect*(m; level: Natural,
       src.row = r
       src.col = c
       if m.links.hasKey(src):
-        result[src] = m.links.getValByKey(src)
+        let dest = m.links.getValByKey(src)
+        result[src] = dest
 
 
 proc getLinksToRect*(m; level: Natural,
@@ -100,8 +101,14 @@ proc getLinksToRect*(m; level: Natural,
       dest.row = r
       dest.col = c
       if m.links.hasVal(dest):
-        result[m.links.getKeyByVal(dest)] = dest
+        let src = m.links.getKeyByVal(dest)
+        result[src] = dest
 
+proc dumpLinks*(l: Links) =
+  for src, dest in l.pairs:
+    echo "src: ", src
+    echo "dest: ", dest
+    echo ""
 
 proc getLinksFromLevel*(m; level: Natural): Links =
   result = initBiTable[Location, Location]()
