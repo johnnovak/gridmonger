@@ -191,11 +191,11 @@ const
                       {fTeleportDestination, fExitDoor}
 
 
-proc linkSourceToString*(f: Floor): string =
-  if   f in LinkPitSources:  return "floor"
-  elif f == fTeleportSource: return "teleport"
-  elif f in LinkStairs:      return "stairs"
-  elif f == fExitDoor:       return "door"
+proc linkFloorToString*(f: Floor): string =
+  if   f in (LinkPitSources + LinkDestinations): return "floor"
+  elif f in {fTeleportSource, fTeleportDestination}: return "teleport"
+  elif f in LinkStairs: return "stairs"
+  elif f == fExitDoor: return "door"
 
 
 proc hash*(ml: Location): Hash =

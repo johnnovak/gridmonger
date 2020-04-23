@@ -418,7 +418,9 @@ proc drawCellCoords(l: Level, ctx) =
     let
       yPos = cellY(r, dp) + dp.gridSize*0.5
       row = dp.viewStartRow + r
-      coord = $(l.rows - 1 - row)
+# TODO should be an option
+#      coord = $(l.rows - 1 - row)
+      coord = $row
 
     setTextHighlight(row == dp.cursorRow)
 
@@ -699,7 +701,6 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf, ctx) =
 
 # {{{ drawGrid()
 proc drawGrid(x, y: float, color: Color, gridStyle: GridStyle; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1586,13 +1587,12 @@ proc drawNotes(viewBuf: Level, ctx) =
 # }}}
 # {{{ drawLinkMarker()
 proc drawLinkMarker(x, y: float, ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   let w = dp.gridSize*0.3
 
-  vg.fillColor(rgba(1.0, 0, 0, 0.5))
+  vg.fillColor(rgba(1.0, 0, 0, 0.4))
   vg.beginPath()
   vg.moveTo(x,   y + dp.gridSize - w)
   vg.lineTo(x,   y + dp.gridSize)
@@ -1880,12 +1880,15 @@ proc drawMap*(map: Map, level: Natural, ctx) =
 
   drawCellBackgroundsAndGrid(viewBuf, ctx)
 
-  if dp.selectionBuffer.isNone:
+  let drawSelectionBuffer = dp.selectionBuffer.isSome
+  if not drawSelectionBuffer:
     drawCursor(ctx)
 
   drawFloors(viewBuf, ctx)
   drawNotes(viewBuf, ctx)
-  drawLinkMarkers(map, level, ctx)
+
+  if not drawSelectionBuffer:
+    drawLinkMarkers(map, level, ctx)
 
   # TODO finish shadow implementation (draw corners)
   if ls.innerShadowEnabled:
@@ -1899,7 +1902,7 @@ proc drawMap*(map: Map, level: Natural, ctx) =
   if dp.selection.isSome:
     drawSelection(ctx)
 
-  if dp.selectionBuffer.isSome:
+  if drawSelectionBuffer:
     drawSelectionHighlight(ctx)
 
   if dp.drawCursorGuides:

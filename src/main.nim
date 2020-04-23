@@ -15,12 +15,12 @@ import nanovg
 when not defined(DEBUG): import osdialog
 
 import actions
-import bitable
 import common
 import csdwindow
 import drawlevel
 import icons
 import level
+import links
 import map
 import persistence
 import rect
@@ -798,8 +798,6 @@ proc openNewMapDialog(a) =
 
 
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
-  alias(sc, g_appShortcuts)
-
   let
     dialogWidth = 410.0
     dialogHeight = 150.0
@@ -1998,7 +1996,7 @@ proc handleGlobalKeyEvents(a) =
     toggleOption(opt, icon, msg, on="on", off="off", a)
 
 
-  template handleMoveWalk() =
+  proc handleMoveWalk(ke: Event; a) =
     let k = if opt.wasdMode: WalkKeysWasd else: WalkKeysCursor
 
     if ke.isKeyDown(k.forward, repeat=true):
@@ -2023,7 +2021,7 @@ proc handleGlobalKeyEvents(a) =
       ui.cursorOrient = turnRight(ui.cursorOrient)
 
 
-  template handleMoveKeys(moveHandler: untyped) =
+  template handleMoveKeys(ke: Event, moveHandler: untyped) =
     let k = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
 
     if   ke.isKeyDown(k.left,  repeat=true): moveHandler(dirW, a)
@@ -2032,8 +2030,9 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.down,  repeat=true): moveHandler(dirS, a)
 
 
-  template handleMoveCursor(k: MoveKeys) =
+  proc handleMoveCursor(ke: Event, k: MoveKeys; a): bool =
     const j = CursorJump
+    result = true
 
     if   ke.isKeyDown(k.left,  repeat=true): moveCursor(dirW, 1, a)
     elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, 1, a)
@@ -2044,6 +2043,8 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.right, {mkCtrl}, repeat=true): moveCursor(dirE, j, a)
     elif ke.isKeyDown(k.up,    {mkCtrl}, repeat=true): moveCursor(dirN, j, a)
     elif ke.isKeyDown(k.down,  {mkCtrl}, repeat=true): moveCursor(dirS, j, a)
+
+    result = false
 
 
   if koi.hasEvent() and koi.currEvent().kind == ekKey:
@@ -2056,10 +2057,11 @@ proc handleGlobalKeyEvents(a) =
       # mode
       let prevCursor = cur
 
-      if opt.walkMode: handleMoveWalk()
+      if opt.walkMode: handleMoveWalk(ke, a)
       else:
         let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        handleMoveCursor(moveKeys)
+        if handleMoveCursor(ke, moveKeys, a):
+          setStatusMessage("moved", a)
 
       if opt.drawTrail and cur != prevCursor:
         setTrailAtCursor(a)
@@ -2196,23 +2198,40 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyG):
         let floor = map.getFloor(cur)
+        let linkType = capitalizeAscii(linkFloorToString(floor))
 
-        if floor in LinkSources:
+        proc jumpToDest(a): bool =
           let src = cur
-          if map.links.hasKey(src):
-            let dest = map.links[src]
+          if map.links.hasWithSrc(src):
+            let dest = map.links.getBySrc(src)
             moveCursorTo(dest, a)
-          else:
-            setStatusMessage(IconWarning,
-                             "Cell is not linked to a destination", a)
+            result = true
 
-        elif floor in LinkDestinations:
+        proc jumpToSrc(a): bool =
           let dest = cur
-          if map.links.hasVal(dest):
-            let src = map.links.getKeyByVal(dest)
+          if map.links.hasWithDest(dest):
+            let src = map.links.getByDest(dest)
             moveCursorTo(src, a)
+            result = true
+
+        if floor in (LinkPitSources + {fTeleportSource}):
+          if not jumpToDest(a):
+            setStatusMessage(IconWarning,
+                             fmt"{linkType} is not linked to a destination", a)
+
+        elif floor in (LinkPitDestinations + {fTeleportDestination}):
+          if not jumpToSrc(a):
+            setStatusMessage(IconWarning,
+                             "{linkType} is not linked to a source", a)
+
+        elif floor in (LinkStairs + {fExitDoor}):
+          if not jumpToDest(a):
+            if not jumpToSrc(a):
+              setStatusMessage(IconWarning, "{linktype} is not linked", a)
+
         else:
-          setStatusMessage(IconWarning, "Cell is not linked to a source", a)
+          setStatusMessage(IconWarning, "Not a linked cell", a)
+
 
       elif ke.isKeyDown(keyG, {mkShift}):
         let floor = map.getFloor(cur)
@@ -2222,7 +2241,7 @@ proc handleGlobalKeyEvents(a) =
 
           # TODO icon per type
           setStatusMessage(IconArrowRight,
-                           "Set {linkSourceToString(floor)} destination",
+                           fmt"Set {linkFloorToString(floor)} destination",
                            @[IconArrowsAll, "select cell",
                            "Enter", "set", "Esc", "cancel"], a)
         else:
@@ -2303,10 +2322,10 @@ proc handleGlobalKeyEvents(a) =
       # mode
       let prevCursor = cur
 
-      if opt.walkMode: handleMoveWalk()
+      if opt.walkMode: handleMoveWalk(ke, a)
       else:
         let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        handleMoveCursor(moveKeys)
+        discard handleMoveCursor(ke, moveKeys, a)
 
       if cur != prevCursor:
         if   ui.editMode == emExcavate:   actions.excavate(map, cur, um)
@@ -2330,7 +2349,7 @@ proc handleGlobalKeyEvents(a) =
                   else: wWall
           actions.setWall(map, cur, dir, w, um)
 
-      handleMoveKeys(handleMoveKey)
+      handleMoveKeys(ke, handleMoveKey)
 
       if not opt.wasdMode and ke.isKeyUp({keyW}):
         ui.editMode = emNormal
@@ -2353,7 +2372,7 @@ proc handleGlobalKeyEvents(a) =
                   else: curSpecWall
           actions.setWall(map, cur, dir, w, um)
 
-      handleMoveKeys(handleMoveKey)
+      handleMoveKeys(ke, handleMoveKey)
 
       if ke.isKeyUp({keyR}):
         ui.editMode = emNormal
@@ -2362,7 +2381,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSelect
     of emSelect:
-      handleMoveCursor(MoveKeysCursor)
+      discard handleMoveCursor(ke, MoveKeysCursor, a)
 
       if koi.ctrlDown(): setSelectModeActionMessage(a)
       else:              setSelectModeSelectMessage(a)
@@ -2439,7 +2458,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSelectRect
     of emSelectRect:
-      handleMoveCursor(MoveKeysCursor)
+      discard handleMoveCursor(ke, MoveKeysCursor, a)
 
       var r1,c1, r2,c2: Natural
       if ui.selRect.get.startRow <= cur.row:
@@ -2466,10 +2485,10 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emPastePreview
     of emPastePreview:
-      if opt.walkMode: handleMoveWalk()
+      if opt.walkMode: handleMoveWalk(ke, a)
       else:
         let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        handleMoveCursor(moveKeys)
+        discard handleMoveCursor(ke, moveKeys, a)
 
       a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
       a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
@@ -2489,7 +2508,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emNudgePreview
     of emNudgePreview:
-      handleMoveKeys(moveSelStart)
+      handleMoveKeys(ke, moveSelStart)
 
       if   ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
@@ -2509,10 +2528,10 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSetCellLink
     of emSetCellLink:
-      if opt.walkMode: handleMoveWalk()
+      if opt.walkMode: handleMoveWalk(ke, a)
       else:
         let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        handleMoveCursor(moveKeys)
+        discard handleMoveCursor(ke, moveKeys, a)
 
       if ke.isKeyDown({keyPageUp, keyKpSubtract}) or
          ke.isKeyDown(keyMinus, {mkCtrl}):
@@ -2525,7 +2544,10 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyEnter):
         actions.setLink(map, src=ui.linkSrcLocation, dest=cur, um)
         ui.editMode = emNormal
-        setStatusMessage(IconArrowRight, "Teleport {linkType} set", a)
+        let linkType = linkFloorToString(map.getFloor(cur))
+        setStatusMessage(IconArrowRight,
+                         fmt"{capitalizeAscii(linkType)} link destination set",
+                         a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)

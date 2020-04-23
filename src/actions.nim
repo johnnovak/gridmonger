@@ -1,9 +1,9 @@
 import options
 import strformat
 
-import bitable
 import common
 import level
+import links
 import map
 import rect
 import selection
@@ -56,8 +56,19 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
     actionMap.levels[lvl].reindexNotes()
     result = usd
 
-  let linksFromArea = map.getLinksFromRect(lvl, rect)
-  let linksToArea = map.getLinksToRect(lvl, rect)
+  let oldLinksFrom = map.links.filterBySrcInRect(lvl, rect)
+  let oldLinksTo   = map.links.filterByDestInRect(lvl, rect)
+
+  echo lvl
+  echo ""
+  echo rect
+  echo ""
+  echo "*** oldLinksFrom:"
+  oldLinksFrom.dump()
+  echo ""
+  echo "*** oldLinksTo:"
+  oldLinksTo.dump()
+  echo ""
 
   let undoLevel = newLevelFrom(map.levels[lvl], rect)
 
@@ -66,11 +77,25 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
-      srcRect = rectN(0, 0, rect.rows, rect.cols)
+      srcRect = rectN(0, 0, undoLevel.rows, undoLevel.cols)
     )
     m.levels[lvl].reindexNotes()
-    m.links.addAll(linksFromArea)
-    m.links.addAll(linksToArea)
+
+    # Delete existing links in undo area
+    let delRect = rectN(
+      rect.r1,
+      rect.c1,
+      rect.r1 + undoLevel.rows,
+      rect.c1 + undoLevel.cols
+    )
+    for src in m.links.filterBySrcInRect(lvl, delRect).keys:
+      m.links.delBySrc(src)
+
+    for src in m.links.filterByDestInRect(lvl, delRect).keys:
+      m.links.delBySrc(src)
+
+    m.links.addAll(oldLinksFrom)
+    m.links.addAll(oldLinksTo)
     result = usd
 
   um.storeUndoState(action, undoAction)
@@ -262,11 +287,11 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
 
   let usd = UndoStateData(actionName: "Nudge level", location: loc)
 
-  let oldFromLinks = map.getLinksFromLevel(loc.level)
-  let oldToLinks   = map.getLinksToLevel(loc.level)
+  let oldFromLinks = map.links.filterBySrcLevel(loc.level)
+  let oldToLinks   = map.links.filterByDestLevel(loc.level)
 
-  var newFromLinks = initBiTable[Location, Location]()
-  var newToLinks   = initBiTable[Location, Location]()
+  var newFromLinks = initLinks()
+  var newToLinks   = initLinks()
 
   let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
 
@@ -288,7 +313,7 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
       else:
         newDest = dest
 
-      newFromLinks[newSrc] = newDest
+      newFromLinks.set(newSrc, newDest)
 
 
   for src, dest in oldToLinks.pairs:
@@ -309,18 +334,8 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
       else:
         newSrc = src
 
-      newToLinks[newSrc] = newDest
+      newToLinks.set(newSrc, newDest)
 
-
-  echo "******* OLD FROM LINKS ************"
-  dumpLinks(oldFromLinks)
-  echo "******* OLD TO LINKS ************"
-  dumpLinks(oldToLinks)
-
-  echo "******* NEW FROM LINKS ************"
-  dumpLinks(newFromLinks)
-  echo "******* NEW TO LINKS ************"
-  dumpLinks(newToLinks)
 
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
@@ -406,12 +421,17 @@ proc setLink*(map; src, dest: Location; um) =
 
   # TODO fix src stairs if needed
 
-  let linkType = linkSourceToString(srcFloor)
+  let linkType = linkFloorToString(srcFloor)
+  map.links.dump()
 
   singleCellAction(map, dest, um,
                    fmt"Set link destination {EnDash} {linkType}", m):
+    # support for overwriting existing link support
+    # (delete existing links originating from src
+    m.links.delBySrc(src)
+
     m.setFloor(dest, destFloor)
-    m.links[src] = dest
+    m.links.set(src, dest)
 
 # }}}
 

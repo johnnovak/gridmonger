@@ -26,6 +26,9 @@ const
   WindowMinWidth = 640
   WindowMinHeight = 480
 
+  SmoothResize_RedrawHack = true
+  SmoothResize_NoVsyncHack = true
+
 #  {{{ CSDWindow
 type
   CSDWindow* = ref object
@@ -160,7 +163,9 @@ proc resizing*(win): bool =
 
 # {{{ restore()
 proc restore(win) =
-  glfw.swapInterval(0)
+  if SmoothResize_NoVsyncHack:
+    glfw.swapInterval(0)
+
   win.fastRedrawFrameCounter = 20
   win.w.pos = (win.oldPosX, win.oldPosY)
   win.w.size = (win.oldWidth, win.oldHeight)
@@ -175,7 +180,9 @@ proc maximize(win) =
   (win.oldPosX, win.oldPosY) = win.w.pos
   (win.oldWidth, win.oldHeight) = win.w.size
 
-  glfw.swapInterval(0)
+  if SmoothResize_NoVsyncHack:
+    glfw.swapInterval(0)
+
   win.fastRedrawFrameCounter = 20
   win.maximized = true
   win.maximizing = true
@@ -256,7 +263,9 @@ proc handleWindowDragEvents(win) =
         win.my0 = my
         (win.posX0, win.posY0) = win.w.pos
         win.dragState = wdsMoving
-        glfw.swapInterval(0)
+
+        if SmoothResize_NoVsyncHack:
+          glfw.swapInterval(0)
 
     if not win.maximized:
       if not koi.hasHotItem() and koi.noActiveItem():
@@ -290,7 +299,9 @@ proc handleWindowDragEvents(win) =
             win.dragState = wdsResizing
             # TODO maybe hide on OSX only?
 #            hideCursor()
-            glfw.swapInterval(0)
+#
+            if SmoothResize_NoVsyncHack:
+              glfw.swapInterval(0)
         else:
           showArrowCursor()
       else:
@@ -344,7 +355,9 @@ proc handleWindowDragEvents(win) =
           (win.posX0, win.posY0) = win.w.pos
     else:
       win.dragState = wdsNone
-      glfw.swapInterval(1)
+
+      if SmoothResize_NoVsyncHack:
+        glfw.swapInterval(1)
 
   of wdsResizing:
     # TODO add support for resizing on edges
@@ -406,7 +419,9 @@ proc handleWindowDragEvents(win) =
     else:
       win.dragState = wdsNone
       showCursor()
-      glfw.swapInterval(1)
+
+      if SmoothResize_NoVsyncHack:
+        glfw.swapInterval(1)
 
 # }}}
 
@@ -468,15 +483,16 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 
   glfw.swapBuffers(win.w)  # TODO
 
-  if win.fastRedrawFrameCounter > 0:
-    dec(win.fastRedrawFrameCounter)
-    if win.fastRedrawFrameCounter == 0:
-      glfw.swapInterval(1)
+  if SmoothResize_NoVsyncHack:
+    if win.fastRedrawFrameCounter > 0:
+      dec(win.fastRedrawFrameCounter)
+      if win.fastRedrawFrameCounter == 0:
+        glfw.swapInterval(1)
 
 # }}}
 
 proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-  when defined(windows):
+  if SmoothResize_RedrawHack:
     csdRenderFrame(g_window, doHandleEvents=false)
   else:
     discard
