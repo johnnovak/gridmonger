@@ -169,10 +169,12 @@ type
   NewMapDialogParams = object
     isOpen:       bool
     name:         string
+    activateFirstTextField: bool
 
   EditMapPropsDialogParams = object
     isOpen:       bool
     name:         string
+    activateFirstTextField: bool
 
   NewLevelDialogParams = object
     isOpen:       bool
@@ -181,12 +183,14 @@ type
     elevation:    string
     rows:         string
     cols:         string
+    activateFirstTextField: bool
 
   EditLevelPropsParams = object
     isOpen:       bool
     locationName: string
     levelName:    string
     elevation:    string
+    activateFirstTextField: bool
 
   EditNoteDialogParams = object
     isOpen:       bool
@@ -199,12 +203,14 @@ type
     customId:     string
     icon:         Natural
     text:         string
+    activateFirstTextField: bool
 
   ResizeLevelDialogParams = object
     isOpen:       bool
     rows:         string
     cols:         string
     anchor:       ResizeAnchor
+    activateFirstTextField: bool
 
   ResizeAnchor = enum
     raTopLeft,    raTop,    raTopRight,
@@ -220,6 +226,7 @@ using a: var AppContext
 # {{{ Keyboard shortcuts
 
 type AppShortcut = enum
+  scNextTextField,
   scAccept,
   scCancel,
   scDiscard,
@@ -227,13 +234,15 @@ type AppShortcut = enum
 # TODO some shortcuts win/mac specific?
 let g_appShortcuts = {
 
-  scAccept:       @[mkKeyShortcut(keyEnter,         {}),
-                    mkKeyShortcut(keyKpEnter,       {})],
+  scNextTextField:    @[mkKeyShortcut(keyTab,           {})],
 
-  scCancel:       @[mkKeyShortcut(keyEscape,        {}),
-                    mkKeyShortcut(keyLeftBracket,   {mkCtrl})],
+  scAccept:           @[mkKeyShortcut(keyEnter,         {}),
+                        mkKeyShortcut(keyKpEnter,       {})],
 
-  scDiscard:      @[mkKeyShortcut(keyD,             {mkAlt})],
+  scCancel:           @[mkKeyShortcut(keyEscape,        {}),
+                        mkKeyShortcut(keyLeftBracket,   {mkCtrl})],
+
+  scDiscard:          @[mkKeyShortcut(keyD,             {mkAlt})],
 
 }.toTable
 
@@ -249,7 +258,8 @@ const SpecialWalls = @[
   wLeverSW,
   wNicheSW,
   wStatueSW,
-  wKeyhole
+  wKeyhole,
+  wWritingSW
 ]
 
 var DialogWarningLabelStyle = koi.getDefaultLabelStyle()
@@ -800,7 +810,7 @@ proc openNewMapDialog(a) =
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
   let
     dialogWidth = 410.0
-    dialogHeight = 150.0
+    dialogHeight = 176.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Map")
   a.clearStatusMessage()
@@ -816,9 +826,34 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     y = 60.0
 
   koi.label(x, y, labelWidth, h, "Name")
-  dlg.name = koi.textField(x + labelWidth, y, 220.0, h, dlg.name)
+  dlg.name = koi.textField(
+    x + labelWidth, y, w = 220.0, h,
+    dlg.name,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: 0,
+      maxLen: MapNameMaxLen
+    ).some
+  )
+
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if dlg.name == "":
+    validationError = fmt"{IconWarning}  Name is mandatory"
+
+  y += 44
+
+  if validationError != "":
+    koi.label(x, y, dialogWidth, h, validationError,
+              style=DialogWarningLabelStyle)
+
 
   proc okAction(dlg: var NewMapDialogParams, a) =
+    if validationError != "": return
+
     a.doc.filename = ""
     a.doc.map = newMap(dlg.name)
     initUndoManager(a.doc.undoManager)
@@ -833,10 +868,12 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
+
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+                disabled=validationError != ""):
     okAction(dlg, a)
 
   x += buttonWidth + 10
@@ -845,7 +882,11 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 
   if koi.hasEvent():
     let ke = koi.currEvent()
-    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
@@ -861,7 +902,7 @@ proc openMapPropsDialog(a) =
 proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
   let
     dialogWidth = 410.0
-    dialogHeight = 150.0
+    dialogHeight = 176.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  Edit Map Properties")
   clearStatusMessage(a)
@@ -877,10 +918,34 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
     y = 60.0
 
   koi.label(x, y, labelWidth, h, "Name")
-  dlg.name = koi.textField(x + labelWidth, y, 220.0, h, dlg.name)
+  dlg.name = koi.textField(
+    x + labelWidth, y, w = 220.0, h,
+    dlg.name,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: 0,
+      maxLen: MapNameMaxLen
+    ).some
+  )
+
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if dlg.name == "":
+    validationError = fmt"{IconWarning}  Name is mandatory"
+
+  y += 44
+
+  if validationError != "":
+    koi.label(x, y, dialogWidth, h, validationError,
+              style=DialogWarningLabelStyle)
+
 
   proc okAction(dlg: var EditMapPropsDialogParams, a) =
-    # TODO should be action
+    if validationError != "": return
+
     a.doc.map.name = dlg.name
 
     setStatusMessage(IconFile, "Map properties updated", a)
@@ -895,7 +960,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+                disabled=validationError != ""):
     okAction(dlg, a)
 
   x += buttonWidth + 10
@@ -904,7 +970,11 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
 
   if koi.hasEvent():
     let ke = koi.currEvent()
-    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
@@ -953,31 +1023,62 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
   koi.label(x, y, labelWidth, h, "Location Name")
   dlg.locationName = koi.textField(
-    x + labelWidth, y, 220.0, h, dlg.locationName
+    x + labelWidth, y, w = 220.0, h,
+    dlg.locationName,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: 0,
+      maxLen: LevelLocationNameMaxLen
+    ).some
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Level Name")
   dlg.levelName = koi.textField(
-    x + labelWidth, y, 220.0, h, dlg.levelName
+    x + labelWidth, y, w = 220.0, h,
+    dlg.levelName,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: LevelNameMinLen,
+      maxLen: LevelNameMaxLen
+    ).some
   )
 
   y += 44
   koi.label(x, y, labelWidth, h, "Elevation")
   dlg.elevation = koi.textField(
-    x + labelWidth, y, 60.0, h, dlg.elevation
+    x + labelWidth, y, w = 60.0, h,
+    dlg.elevation,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: LevelElevationMin,
+      max: LevelElevationMax
+    ).some
   )
 
   y += 44
   koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
-    x + labelWidth, y, 60.0, h, dlg.rows
+    x + labelWidth, y, w = 60.0, h,
+    dlg.rows,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: LevelNumRowsMin,
+      max: LevelNumRowsMax
+    ).some
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Columns")
   dlg.cols = koi.textField(
-    x + labelWidth, y, 60.0, h, dlg.cols
+    x + labelWidth, y, w = 60.0, h,
+    dlg.cols,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: LevelNumColumnsMin,
+      max: LevelNumColumnsMax
+    ).some
   )
 
   # Validation
@@ -991,10 +1092,11 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     koi.label(x, y, dialogWidth, h, validationError,
               style=DialogWarningLabelStyle)
 
+
   proc okAction(dlg: var NewLevelDialogParams, a) =
     if validationError != "": return
 
-    # TODO number error checking
+    # TODO should be undoable action
     let
       rows = parseInt(dlg.rows)
       cols = parseInt(dlg.cols)
@@ -1026,9 +1128,15 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
+  dlg.activateFirstTextField = false
+
   if koi.hasEvent():
     let ke = koi.currEvent()
-    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
@@ -1048,7 +1156,7 @@ proc openEditLevelPropsDialog(a) =
 proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   let
     dialogWidth = 410.0
-    dialogHeight = 224.0
+    dialogHeight = 258.0
 
   koi.beginDialog(dialogWidth, dialogHeight,
                   fmt"{IconNewFile}  Edit Level Properties")
@@ -1066,23 +1174,56 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
 
   koi.label(x, y, labelWidth, h, "Location Name")
   dlg.locationName = koi.textField(
-    x + labelWidth, y, 220.0, h, dlg.locationName
+    x + labelWidth, y, w = 220.0, h,
+    dlg.locationName,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: 0,
+      maxLen: LevelLocationNameMaxLen
+    ).some
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Level Name")
   dlg.levelName = koi.textField(
-    x + labelWidth, y, 220.0, h, dlg.levelName
+    x + labelWidth, y, w = 220.0, h,
+    dlg.levelName,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: LevelNameMinLen,
+      maxLen: LevelNameMaxLen
+    ).some
   )
 
   y += 44
   koi.label(x, y, labelWidth, h, "Elevation")
   dlg.elevation = koi.textField(
-    x + labelWidth, y, 60.0, h, dlg.elevation
+    x + labelWidth, y, w = 60.0, h,
+    dlg.elevation,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: LevelElevationMin,
+      max: LevelElevationMax
+    ).some
   )
 
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if dlg.locationName == "":
+    validationError = fmt"{IconWarning}  Location name is mandatory"
+
+  y += 44
+
+  if validationError != "":
+    koi.label(x, y, dialogWidth, h, validationError,
+              style=DialogWarningLabelStyle)
+
   proc okAction(dlg: var EditLevelPropsParams, a) =
-    # TODO number error checking
+    if validationError != "": return
+
     let elevation = parseInt(dlg.elevation)
 
     actions.setLevelProps(a.doc.map, a.ui.cursor,
@@ -1101,7 +1242,8 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+                disabled=validationError != ""):
     okAction(dlg, a)
 
   x += buttonWidth + 10
@@ -1110,7 +1252,10 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
 
   if koi.hasEvent():
     let ke = koi.currEvent()
-    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
   koi.endDialog()
@@ -1146,13 +1291,26 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
 
   koi.label(x, y, labelWidth, h, "Rows")
   dlg.rows = koi.textField(
-    x + labelWidth, y, 60.0, h, dlg.rows
+    x + labelWidth, y, w = 60.0, h,
+    dlg.rows,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: LevelNumRowsMin,
+      max: LevelNumRowsMax
+    ).some
   )
 
   y += 32
   koi.label(x, y, labelWidth, h, "Columns")
   dlg.cols = koi.textField(
-    x + labelWidth, y, 60.0, h, dlg.cols
+    x + labelWidth, y, w = 60.0, h,
+    dlg.cols,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: LevelNumColumnsMin,
+      max: LevelNumColumnsMax
+    ).some
   )
 
   const IconsPerRow = 3
@@ -1178,6 +1336,9 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
 
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
+
+  dlg.activateFirstTextField = false
+
 
   proc okAction(dlg: var ResizeLevelDialogParams, a) =
     # TODO number error checking
@@ -1231,6 +1392,9 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     elif ke.isKeyDown(keyJ, repeat=true):
       dlg.anchor = moveIcon(ord(dlg.anchor), dr=1).ResizeAnchor
 
+    elif ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
@@ -1267,8 +1431,8 @@ proc openEditNoteDialog(a) =
 
   else:
     dlg.editMode = false
-    dlg.customId = ""
-    dlg.text = ""
+    dlg.customId = "A"
+    dlg.text = "Note text"
 
   dlg.isOpen = true
 
@@ -1346,7 +1510,13 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   y += 40
   koi.label(x, y, labelWidth, h, "Text")
   dlg.text = koi.textField(
-    x + labelWidth, y, 355, h, dlg.text
+    x + labelWidth, y, w = 355, h, dlg.text,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: 0,
+      maxLen: NoteTextMaxLen
+    ).some
   )
 
   y += 64
@@ -1370,7 +1540,13 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   of nkCustomId:
     koi.label(x, y, labelWidth, h, "ID")
     dlg.customId = koi.textField(
-      x + labelWidth, y, 50.0, h, dlg.customId
+      x + labelWidth, y, w = 50.0, h,
+      dlg.customId,
+      constraint = TextFieldConstraint(
+        kind: tckString,
+        minLen: 0,
+        maxLen: NoteCustomIdMaxLen
+      ).some
     )
 
   of nkIcon:
@@ -1386,10 +1562,40 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   of nkComment: discard
 
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationErrors: seq[string] = @[]
+
+  if dlg.kind in {nkComment, nkIndexed, nkCustomId}:
+    if dlg.text == "":
+      validationErrors.add(fmt"{IconWarning}  Text is mandatory")
+  if dlg.kind == nkCustomId:
+    if dlg.customId == "":
+      validationErrors.add(fmt"{IconWarning}  ID is mandatory")
+    else:
+      for c in dlg.customId:
+        if not isAlphaNumeric(c):
+          validationErrors.add(
+            fmt"{IconWarning}  ID must contain only alphanumeric characters " &
+            "(a-z, A-Z, 0-9)"
+          )
+          break
+
+
+  y += 44
+
+  for err in validationErrors:
+    koi.label(x, y, dialogWidth, h, err, style=DialogWarningLabelStyle)
+    y += 24
+
+
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
 
   proc okAction(dlg: var EditNoteDialogParams, a) =
+    if validationErrors.len > 0: return
+
     var note = Note(
       kind: dlg.kind,
       text: dlg.text
@@ -1411,12 +1617,15 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+                disabled=validationErrors.len > 0):
     okAction(dlg, a)
 
   x += buttonWidth + 10
   if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
+
 
   proc moveIcon(iconIdx: Natural, dc: int = 0, dr: int = 0): Natural =
     moveCurrGridIcon(NoteIcons.len, IconsPerRow, iconIdx, dc, dr)
@@ -1437,11 +1646,11 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       dlg.kind = nkIcon
 
     elif ke.isKeyDown(keyH, {mkCtrl}):
-      if dlg.kind > NoteKind.low: dec(dlg.kind)
+      if    dlg.kind > NoteKind.low: dec(dlg.kind)
       else: dlg.kind = NoteKind.high
 
     elif ke.isKeyDown(keyL, {mkCtrl}):
-      if dlg.kind < NoteKind.high: inc(dlg.kind)
+      if    dlg.kind < NoteKind.high: inc(dlg.kind)
       else: dlg.kind = NoteKind.low
 
     elif ke.isKeyDown(keyH, repeat=true):
@@ -1469,6 +1678,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       case dlg.kind
       of nkComment, nkIndexed, nkCustomId: discard
       of nkIcon: dlg.icon = moveIcon(dlg.icon, dr=1)
+
+    elif ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
@@ -1716,7 +1928,7 @@ proc renderLevel(a) =
               noteBoxY = koi.my() + 20
               noteBoxW = 250.0
 
-            vg.setFont(14.0, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+            vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
             vg.textLineHeight(1.5)
 
             let
@@ -1782,37 +1994,40 @@ proc specialWallDrawProc(ls: LevelStyle,
     var cx = x + 5
     var cy = y + 15
 
-    template drawAtZoomLevel6(body: untyped) =
+    template drawAtZoomLevel(zl: Natural, body: untyped) =
       vg.save()
       # A bit messy... but so is life! =8)
-      dp.setZoomLevel(ls, 6)
-      vg.intersectScissor(x+4.5, y+3, dp.gridSize-3, dp.gridSize-2)
+      dp.setZoomLevel(ls, zl)
+      vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
       body
       dp.setZoomLevel(ls, 4)
       vg.restore()
 
     case SpecialWalls[buttonIdx]
-    of wNone:           discard
-    of wWall:           drawSolidWallHoriz(cx, cy, ctx)
-    of wIllusoryWall:   drawIllusoryWallHoriz(cx+2, cy, ctx)
-    of wInvisibleWall:  drawInvisibleWallHoriz(cx, cy, ctx)
-    of wDoor:           drawDoorHoriz(cx, cy, ctx)
-    of wLockedDoor:     drawLockedDoorHoriz(cx, cy, ctx)
-    of wArchway:        drawArchwayHoriz(cx, cy, ctx)
+    of wNone:              discard
+    of wWall:              drawSolidWallHoriz(cx, cy, ctx)
+    of wIllusoryWall:      drawIllusoryWallHoriz(cx+2, cy, ctx)
+    of wInvisibleWall:     drawInvisibleWallHoriz(cx-2, cy, ctx)
+    of wDoor:              drawDoorHoriz(cx, cy, ctx)
+    of wLockedDoor:        drawLockedDoorHoriz(cx, cy, ctx)
+    of wArchway:           drawArchwayHoriz(cx, cy, ctx)
 
     of wSecretDoor:
-      drawAtZoomLevel6: drawSecretDoorHoriz(cx-2, cy, ctx)
+      drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ctx)
 
     of wLeverSW:
-      drawAtZoomLevel6: drawLeverHorizSW(cx-2, cy+1, ctx)
+      drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx)
 
-    of wNicheSW:        drawNicheHorizSW(cx, cy, ctx)
+    of wNicheSW:           drawNicheHorizSW(cx, cy, ctx)
 
     of wStatueSW:
-      drawAtZoomLevel6: drawStatueHorizSW(cx-2, cy+2, ctx)
+      drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ctx)
 
     of wKeyhole:
-      drawAtZoomLevel6: drawKeyholeHoriz(cx-2, cy, ctx)
+      drawAtZoomLevel(6):  drawKeyholeHoriz(cx-2, cy, ctx)
+
+    of wWritingSW:
+      drawAtZoomLevel(12): drawWritingHorizSW(cx-6, cy+4, ctx)
 
     else: discard
 
@@ -1837,6 +2052,8 @@ proc renderToolsPane(x, y, w, h: float, a) =
     drawProc=specialWallDrawProc(ls, ui.toolbarDrawParams).some
   )
 
+# TODO
+#[
   ui.currFloorColor = koi.radioButtons(
     x = x + 3,
     y = y + 374,
@@ -1849,6 +2066,7 @@ proc renderToolsPane(x, y, w, h: float, a) =
     drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
                                       ls.cursorColor).some
   )
+]#
 
 # }}}
 # {{{ drawNotesPane()
@@ -1875,21 +2093,21 @@ proc drawNotesPane(x, y, w, h: float, a) =
 
     of nkCustomId:
       vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(18.0, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+      vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+18, y-2, note.customId)
 
     of nkIcon:
       vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+20, y-3, NoteIcons[note.icon])
 
     of nkComment:
       vg.fillColor(ls.notePaneTextColor)
-      vg.setFont(19.0, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+20, y-2, IconComment)
 
     vg.fillColor(ls.notePaneTextColor)
-    vg.setFont(14.5, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
     vg.intersectScissor(x+40, y, w-40, h)
     vg.textBox(x+40, y, w-40, note.text)
@@ -2122,11 +2340,14 @@ proc handleGlobalKeyEvents(a) =
         setFloorAction(fTeleportSource, a)
 
       elif ke.isKeyDown(key5) or ke.isKeyDown(key5, {mkShift}):
-        setOrCycleFloorAction(fStairsDown, fExitDoor,
+        setOrCycleFloorAction(fStairsDown, fDoorExit,
                               forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key6) or ke.isKeyDown(key6, {mkShift}):
         setFloorAction(fSpinner, a)
+
+      elif ke.isKeyDown(key7) or ke.isKeyDown(key7, {mkShift}):
+        setFloorAction(fInvisibleBarrier, a)
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if ui.currSpecialWall > 0: dec(ui.currSpecialWall)
@@ -2224,7 +2445,7 @@ proc handleGlobalKeyEvents(a) =
             setStatusMessage(IconWarning,
                              "{linkType} is not linked to a source", a)
 
-        elif floor in (LinkStairs + {fExitDoor}):
+        elif floor in (LinkStairs + LinkDoors):
           if not jumpToDest(a):
             if not jumpToSrc(a):
               setStatusMessage(IconWarning, "{linktype} is not linked", a)
@@ -2240,7 +2461,7 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emSetCellLink
 
           # TODO icon per type
-          setStatusMessage(IconArrowRight,
+          setStatusMessage(IconLink,
                            fmt"Set {linkFloorToString(floor)} destination",
                            @[IconArrowsAll, "select cell",
                            "Enter", "set", "Esc", "cancel"], a)
@@ -2367,6 +2588,8 @@ proc handleGlobalKeyEvents(a) =
             if dir in {dirN, dirE}: curSpecWall = wNicheNE
           elif curSpecWall == wStatueSw:
             if dir in {dirN, dirE}: curSpecWall = wStatueNE
+          elif curSpecWall == wWritingSW:
+            if dir in {dirN, dirE}: curSpecWall = wWritingNE
 
           let w = if map.getWall(cur, dir) == curSpecWall: wNone
                   else: curSpecWall
@@ -2545,7 +2768,7 @@ proc handleGlobalKeyEvents(a) =
         actions.setLink(map, src=ui.linkSrcLocation, dest=cur, um)
         ui.editMode = emNormal
         let linkType = linkFloorToString(map.getFloor(cur))
-        setStatusMessage(IconArrowRight,
+        setStatusMessage(IconLink,
                          fmt"{capitalizeAscii(linkType)} link destination set",
                          a)
 

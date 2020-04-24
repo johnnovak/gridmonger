@@ -59,17 +59,6 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
   let oldLinksFrom = map.links.filterBySrcInRect(lvl, rect)
   let oldLinksTo   = map.links.filterByDestInRect(lvl, rect)
 
-  echo lvl
-  echo ""
-  echo rect
-  echo ""
-  echo "*** oldLinksFrom:"
-  oldLinksFrom.dump()
-  echo ""
-  echo "*** oldLinksTo:"
-  oldLinksTo.dump()
-  echo ""
-
   let undoLevel = newLevelFrom(map.levels[lvl], rect)
 
   let undoAction = proc (m: var Map): UndoStateData =
@@ -414,24 +403,69 @@ proc setLink*(map; src, dest: Location; um) =
   var destFloor: Floor
   if   srcFloor in LinkPitSources:  destFloor = fCeilingPit
   elif srcFloor == fTeleportSource: destFloor = fTeleportDestination
-  elif srcFloor == fExitDoor:       destFloor = fExitDoor
+  elif srcFloor == fDoorEnter:      destFloor = fDoorExit
+  elif srcFloor == fDoorExit:       destFloor = fDoorEnter
   elif srcFloor in LinkStairs:
-    if src.level < dest.level: destFloor = fStairsDown
-    else: destFloor = fStairsUp
+    if map.levels[src.level].elevation < map.levels[dest.level].elevation:
+      destFloor = fStairsDown
+      # TODO could be made undoable, but probably not worth bothering with it
+      map.setFloor(src, fStairsUp)
+    else:
+      destFloor = fStairsUp
+      map.setFloor(src, fStairsDown)
 
-  # TODO fix src stairs if needed
-
+  let level = dest.level
   let linkType = linkFloorToString(srcFloor)
-  map.links.dump()
 
-  singleCellAction(map, dest, um,
-                   fmt"Set link destination {EnDash} {linkType}", m):
-    # support for overwriting existing link support
-    # (delete existing links originating from src
+  let usd = UndoStateData(
+    actionName: fmt"Set link destination {EnDash} {linkType}",
+    location: Location(level: src.level, row: src.row, col: src.col)
+  )
+
+  # Do Action
+  let action = proc (m: var Map): UndoStateData =
+    # edge case: support for overwriting existing link
+    # (delete existing links originating from src)
     m.links.delBySrc(src)
 
     m.setFloor(dest, destFloor)
     m.links.set(src, dest)
+    m.levels[level].reindexNotes()
+    result = usd
+
+  # Undo Action
+  let
+    r = dest.row
+    c = dest.col
+    rect = rectN(r, c, r+1, c+1)  # single cell
+
+  let undoLevel = newLevelFrom(map.levels[level], rect)
+
+  var oldLinks = initLinks()
+  if map.links.hasWithSrc(dest):  oldLinks.set(dest, map.links.getBySrc(dest))
+  if map.links.hasWithDest(dest): oldLinks.set(map.links.getByDest(dest), dest)
+  if map.links.hasWithSrc(src):   oldLinks.set(src, map.links.getBySrc(src))
+  if map.links.hasWithDest(src):  oldLinks.set(map.links.getByDest(src), src)
+
+  let undoAction = proc (m: var Map): UndoStateData =
+    m.levels[level].copyFrom(
+      destRow = rect.r1,
+      destCol = rect.c1,
+      src     = undoLevel,
+      srcRect = rectN(0, 0, 1, 1)  # single cell
+    )
+    m.levels[level].reindexNotes()
+
+    # Delete existing links in undo area
+    m.links.delBySrc(dest)
+    m.links.delByDest(dest)
+
+    m.links.addAll(oldLinks)
+
+    result = usd
+
+  um.storeUndoState(action, undoAction)
+  discard action(map)
 
 # }}}
 

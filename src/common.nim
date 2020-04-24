@@ -92,7 +92,7 @@ type
     pastePreviewColor*:      Color
     selectionColor*:         Color
 
-    noteLevelMarkerColor*:    Color
+    noteLevelMarkerColor*:   Color
     noteLevelCommentColor*:  Color
     noteLevelIndexColor*:    Color
     noteLevelIndexBgColor*:  seq[Color]
@@ -101,6 +101,7 @@ type
     notePaneIndexColor*:     Color
     notePaneIndexBgColor*:   seq[Color]
 
+    linkMarkerColor*:        Color
 
   LineWidth* = enum
     lwThin, lwNormal, lwThick
@@ -146,10 +147,12 @@ type
     fCeilingPit          = ( 43, "ceiling pit"),
     fStairsDown          = ( 50, "stairs down"),
     fStairsUp            = ( 51, "stairs up"),
-    fExitDoor            = ( 52, "exit door"),
+    fDoorEnter           = ( 52, "entrance door"),
+    fDoorExit            = ( 53, "exit door"),
     fSpinner             = ( 60, "spinner"),
     fTeleportSource      = ( 70, "teleport"),
     fTeleportDestination = ( 71, "teleport destination"),
+    fInvisibleBarrier    = ( 80, "invisible barrier")
 
   Wall* = enum
     wNone          = (0, "none"),
@@ -167,6 +170,8 @@ type
     wStatueNE      = (50, "statue")
     wStatueSW      = (51, "statue")
     wKeyhole       = (60, "keyhole")
+    wWritingNE     = (70, "writing")
+    wWritingSW     = (71, "writing")
 
   NoteKind* = enum
     nkComment, nkIndexed, nkCustomId, nkIcon
@@ -184,18 +189,19 @@ const
   LinkPitSources*      = {fClosedPit, fOpenPit, fHiddenPit}
   LinkPitDestinations* = {fCeilingPit}
   LinkStairs*          = {fStairsDown, fStairsUp}
+  LinkDoors*           = {fDoorEnter, fDoorExit}
 
-  LinkSources* = LinkPitSources + LinkStairs + {fTeleportSource, fExitDoor}
+  LinkSources* = LinkPitSources + LinkStairs + LinkDoors + {fTeleportSource}
 
-  LinkDestinations* = LinkPitDestinations + LinkStairs +
-                      {fTeleportDestination, fExitDoor}
+  LinkDestinations* = LinkPitDestinations + LinkStairs + LinkDoors +
+                      {fTeleportDestination}
 
 
 proc linkFloorToString*(f: Floor): string =
-  if   f in (LinkPitSources + LinkDestinations): return "floor"
-  elif f in {fTeleportSource, fTeleportDestination}: return "teleport"
+  if   f in (LinkPitSources + LinkPitDestinations): return "pit"
   elif f in LinkStairs: return "stairs"
-  elif f == fExitDoor: return "door"
+  elif f in LinkDoors: return "door"
+  elif f in {fTeleportSource, fTeleportDestination}: return "teleport"
 
 
 proc hash*(ml: Location): Hash =
@@ -236,15 +242,23 @@ type
 
 # Field constraints
 const
-  LevelLocationNameMinLen = 1
-  LevelLocationNameMaxLen = 100
-  LevelNameMinLen = 0
-  LevelNameMaxLen = 100
-  LevelElevationMin = -200
-  LevelElevationMax = 200
-  LevelNumRowsMin = 1
-  LevelNumRowsMax = 5000
-  LevelNumColumsMin = 1
-  LevelNumColumsMax = 5000
+  MapNameMinLen* = 1
+  MapNameMaxLen* = 100
+
+  LevelLocationNameMinLen* = 1
+  LevelLocationNameMaxLen* = 100
+  LevelNameMinLen* = 0
+  LevelNameMaxLen* = 100
+  LevelElevationMin* = -200
+  LevelElevationMax* = 200
+  LevelNumRowsMin* = 1
+  LevelNumRowsMax* = 5000
+  LevelNumColumnsMin* = 1
+  LevelNumColumnsMax* = 5000
+
+  NoteTextMinLen* = 1
+  NoteTextMaxLen* = 400
+  NoteCustomIdMinLen* = 1
+  NoteCustomIdMaxLen* = 2
 
 # vim: et:ts=2:sw=2:fdm=marker

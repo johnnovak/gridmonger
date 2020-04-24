@@ -86,11 +86,11 @@ DefaultUIStyle.statusBarStyle     = DefaultStatusBarStyle
 # {{{ DefaultLevelStyle
 var DefaultLevelStyle = new LevelStyle
 
-DefaultLevelStyle.backgroundColor = gray(0.4)
-DefaultLevelStyle.drawColor       = gray(0.1)
-DefaultLevelStyle.lightDrawColor  = gray(0.6)
-DefaultLevelStyle.floorColor      = gray(0.9)
-DefaultLevelStyle.lineWidth       = lwNormal
+DefaultLevelStyle.backgroundColor      = gray(0.4)
+DefaultLevelStyle.drawColor            = gray(0.1)
+DefaultLevelStyle.lightDrawColor       = gray(0.6)
+DefaultLevelStyle.floorColor           = gray(0.9)
+DefaultLevelStyle.lineWidth            = lwNormal
 
 DefaultLevelStyle.bgHatchEnabled       = true
 DefaultLevelStyle.bgHatchColor         = gray(0.0, 0.4)
@@ -121,23 +121,25 @@ DefaultLevelStyle.outerShadowEnabled     = false
 DefaultLevelStyle.outerShadowColor       = gray(0.0, 0.1)
 DefaultLevelStyle.outerShadowWidthFactor = 0.125
 
-DefaultLevelStyle.selectionColor         = rgba(1.0, 0.5, 0.5, 0.4)
-DefaultLevelStyle.pastePreviewColor      = rgba(0.2, 0.6, 1.0, 0.4)
+DefaultLevelStyle.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
+DefaultLevelStyle.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
 
-DefaultLevelStyle.noteLevelMarkerColor     = gray(0.85)
-DefaultLevelStyle.noteLevelCommentColor    = rgba(1.0, 0.2, 0.0, 0.8)
-DefaultLevelStyle.noteLevelIndexColor      = gray(0.85)
-DefaultLevelStyle.noteLevelIndexBgColor    = @[gray(0.0, 0.2),
-                                           gray(0.0, 0.2),
-                                           gray(0.0, 0.2),
-                                           gray(0.0, 0.2)]
+DefaultLevelStyle.noteLevelMarkerColor  = gray(0.85)
+DefaultLevelStyle.noteLevelCommentColor = rgba(1.0, 0.2, 0.0, 0.8)
+DefaultLevelStyle.noteLevelIndexColor   = gray(0.85)
+DefaultLevelStyle.noteLevelIndexBgColor = @[gray(0.0, 0.2),
+                                            gray(0.0, 0.2),
+                                            gray(0.0, 0.2),
+                                            gray(0.0, 0.2)]
 
-DefaultLevelStyle.notePaneTextColor      = gray(0.1)
-DefaultLevelStyle.notePaneIndexColor     = gray(0.1)
-DefaultLevelStyle.notePaneIndexBgColor   = @[gray(1.0, 0.2),
+DefaultLevelStyle.notePaneTextColor    = gray(0.1)
+DefaultLevelStyle.notePaneIndexColor   = gray(0.1)
+DefaultLevelStyle.notePaneIndexBgColor = @[gray(1.0, 0.2),
                                            gray(1.0, 0.2),
                                            gray(1.0, 0.2),
                                            gray(1.0, 0.2)]
+
+DefaultLevelStyle.linkMarkerColor      = gray(0.85)
 
 # }}}
 
@@ -324,13 +326,13 @@ proc parseLevelSection(c: Config): LevelStyle =
   c.getColor(S, "pastePreviewColor",        s.pastePreviewColor)
   c.getColor(S, "selectionColor",           s.selectionColor)
 
-  c.getColor(S, "noteLevelMarkerColor",       s.noteLevelMarkerColor)
-  c.getColor(S, "noteLevelCommentColor",      s.noteLevelCommentColor)
-  c.getColor(S, "noteLevelIndexColor",        s.noteLevelIndexColor)
-  c.getColor(S, "noteLevelIndexBgColor1",     s.noteLevelIndexBgColor[0])
-  c.getColor(S, "noteLevelIndexBgColor2",     s.noteLevelIndexBgColor[1])
-  c.getColor(S, "noteLevelIndexBgColor3",     s.noteLevelIndexBgColor[2])
-  c.getColor(S, "noteLevelIndexBgColor4",     s.noteLevelIndexBgColor[3])
+  c.getColor(S, "noteLevelMarkerColor",     s.noteLevelMarkerColor)
+  c.getColor(S, "noteLevelCommentColor",    s.noteLevelCommentColor)
+  c.getColor(S, "noteLevelIndexColor",      s.noteLevelIndexColor)
+  c.getColor(S, "noteLevelIndexBgColor1",   s.noteLevelIndexBgColor[0])
+  c.getColor(S, "noteLevelIndexBgColor2",   s.noteLevelIndexBgColor[1])
+  c.getColor(S, "noteLevelIndexBgColor3",   s.noteLevelIndexBgColor[2])
+  c.getColor(S, "noteLevelIndexBgColor4",   s.noteLevelIndexBgColor[3])
 
   c.getColor(S, "notePaneTextColor",        s.notePaneTextColor)
   c.getColor(S, "notePaneIndexColor",       s.notePaneIndexColor)
@@ -338,6 +340,8 @@ proc parseLevelSection(c: Config): LevelStyle =
   c.getColor(S, "notePaneIndexBgColor2",    s.notePaneIndexBgColor[1])
   c.getColor(S, "notePaneIndexBgColor3",    s.notePaneIndexBgColor[2])
   c.getColor(S, "notePaneIndexBgColor4",    s.notePaneIndexBgColor[3])
+
+  c.getColor(S, "linkMarkerColor",          s.linkMarkerColor)
 
   result = s
 

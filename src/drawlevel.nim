@@ -418,9 +418,9 @@ proc drawCellCoords(l: Level, ctx) =
     let
       yPos = cellY(r, dp) + dp.gridSize*0.5
       row = dp.viewStartRow + r
+      coord = $(l.rows - 1 - row)
 # TODO should be an option
-#      coord = $(l.rows - 1 - row)
-      coord = $row
+#      coord = $row
 
     setTextHighlight(row == dp.cursorRow)
 
@@ -1004,10 +1004,16 @@ proc drawStairsUp(x, y: float, ctx) =
   drawIcon(x, y, 0, 0, IconStairsUp, ctx)
 
 # }}}
-# {{{ drawExitDoor()
-proc drawExitDoor(x, y: float, ctx) =
-  drawIcon(x, y, 0.05, 0, IconExit, ctx.dp.gridSize, ctx.ls.drawColor,
-           fontSizeFactor=0.7, ctx.vg)
+# {{{ drawDoorEnter()
+proc drawDoorEnter(x, y: float, ctx) =
+  drawIcon(x, y, 0.05, 0, IconDoorEnter, ctx.dp.gridSize, ctx.ls.drawColor,
+           fontSizeFactor=0.6, ctx.vg)
+
+# }}}
+# {{{ drawDoorExit()
+proc drawDoorExit(x, y: float, ctx) =
+  drawIcon(x, y, 0.05, 0, IconDoorExit, ctx.dp.gridSize, ctx.ls.drawColor,
+           fontSizeFactor=0.6, ctx.vg)
 
 # }}}
 # {{{ drawSpinner()
@@ -1025,6 +1031,12 @@ proc drawTeleportSource(x, y: float, ctx) =
 proc drawTeleportDestination(x, y: float, ctx) =
   drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize, ctx.ls.lightDrawColor,
            fontSizeFactor=0.7, ctx.vg)
+
+# }}}
+# {{{ drawInvisibleBarrier()
+proc drawInvisibleBarrier(x, y: float, ctx) =
+  drawIcon(x, y, 0, 0.015, IconBarrier, ctx.dp.gridSize, ctx.ls.lightDrawColor,
+           fontSizeFactor=1.0, ctx.vg)
 
 # }}}
 
@@ -1083,20 +1095,25 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
+  var sw = dp.normalStrokeWidth * 2
+  if dp.lineWidth == lwThin: sw *= 2
   let
-    o = dp.thinOffs
-    sw = dp.normalStrokeWidth
-    sw2 = dp.normalStrokeWidth * 2
-    xs = snap(x+sw*2+1 - o, sw2)
-    xe = snap(x + dp.gridSize-sw*2, sw2)
-    y = snap(y, sw2)
+    xs = x+sw
+    xe = x + dp.gridSize
+    y = snap(y, sw)
+    len = 1.0
+    pad = sw*2
 
-  vg.lineCap(lcjRound)
-  vg.beginPath()
+  vg.lineCap(lcjSquare)
   vg.strokeColor(ls.lightDrawColor)
-  vg.strokeWidth(sw2)
-  vg.moveTo(xs, y)
-  vg.lineTo(xe, y)
+  vg.strokeWidth(sw)
+
+  var x = xs
+  vg.beginPath()
+  while x <= xe:
+    vg.moveTo(snap(x, sw), y)
+    vg.lineTo(snap(min(x+len, xe), sw), y)
+    x += pad
   vg.stroke()
 
 # }}}
@@ -1246,23 +1263,14 @@ proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let
-    sw = dp.normalStrokeWidth
-    xs = snap(x, sw)
-    xe = snap(x + dp.gridSize, sw)
-    y = snap(y, sw)
-
-  # Draw wall
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.strokeColor(ls.drawColor)
-  vg.strokeWidth(sw)
-  vg.moveTo(xs, y)
-  vg.lineTo(xe, y)
-  vg.stroke()
+  drawSolidWallHoriz(x, y, ctx)
 
   # Draw lever
-  let lw = floor(dp.gridSize*0.2)
+  let
+    lw = floor(dp.gridSize*0.2)
+    sw = dp.normalStrokeWidth
+    y = snap(y, sw)
+
   var lx, ly: float
 
   if dp.lineWidth == lwThin:
@@ -1335,18 +1343,13 @@ proc drawStatueHoriz*(x, y: float, northEast: bool, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
+  drawSolidWallHoriz(x, y, ctx)
+
+  # Statue
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(ls.drawColor)
 
-  # Wall start
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(x, sw), snap(y, sw))
-  vg.lineTo(snap(x + dp.gridSize, sw), snap(y, sw))
-  vg.stroke()
-
-  # Arc
   const da = 1.3
   let
     cx = x + dp.gridSize*0.5
@@ -1390,7 +1393,7 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
   vg.lineCap(lcjRound)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1+1, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(y, sw))
   vg.stroke()
 
   # Keyhole border
@@ -1431,6 +1434,26 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
   vg.stroke()
 
 # }}}
+# {{{ drawWritingHoriz*()
+proc drawWritingHoriz*(x, y: float, northEast: bool, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  drawSolidWallHoriz(x, y, ctx)
+
+  let oy = if northEast: -0.33 else: -0.72
+
+  drawIcon(x, y, 0, oy, IconWriting,
+                        dp.gridSize, ls.drawColor, fontSizeFactor=0.7, vg)
+
+proc drawWritingHorizNE*(x, y: float, ctx) =
+  drawWritingHoriz(x, y, northEast=true, ctx)
+
+proc drawWritingHorizSW*(x, y: float, ctx) =
+  drawWritingHoriz(x, y, northEast=false, ctx)
+
+# }}}
 
 # {{{ setVertTransform()
 proc setVertTransform(x, y: float, ctx) =
@@ -1454,10 +1477,6 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
     y = cellY(viewRow, dp)
 
   template drawOriented(drawProc: untyped) =
-    vg.save()
-
-    vg.intersectScissor(x, y, dp.gridSize+1, dp.gridSize+1)
-
     case viewBuf.getFloorOrientation(bufRow, bufCol):
     of Horiz:
       drawProc(x, y + floor(dp.gridSize*0.5), ctx)
@@ -1466,10 +1485,12 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
       drawProc(0, 0, ctx)
       vg.resetTransform()
 
-    vg.restore()
-
   template draw(drawProc: untyped) =
     drawProc(x, y, ctx)
+
+
+  vg.save()
+  vg.intersectScissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
   case viewBuf.getFloor(bufRow, bufCol)
   of fNone:                discard
@@ -1491,10 +1512,14 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   of fCeilingPit:          draw(drawCeilingPit)
   of fStairsDown:          draw(drawStairsDown)
   of fStairsUp:            draw(drawStairsUp)
-  of fExitDoor:            draw(drawExitDoor)
+  of fDoorEnter:           draw(drawDoorEnter)
+  of fDoorExit:            draw(drawDoorExit)
   of fSpinner:             draw(drawSpinner)
   of fTeleportSource:      draw(drawTeleportSource)
   of fTeleportDestination: draw(drawTeleportDestination)
+  of fInvisibleBarrier:    draw(drawInvisibleBarrier)
+
+  vg.restore()
 
 # }}}
 # {{{ drawBackgroundGrid()
@@ -1589,10 +1614,11 @@ proc drawNotes(viewBuf: Level, ctx) =
 proc drawLinkMarker(x, y: float, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
+  alias(ls, ctx.ls)
 
   let w = dp.gridSize*0.3
 
-  vg.fillColor(rgba(1.0, 0, 0, 0.4))
+  vg.fillColor(ls.linkMarkerColor)
   vg.beginPath()
   vg.moveTo(x,   y + dp.gridSize - w)
   vg.lineTo(x,   y + dp.gridSize)
@@ -1651,6 +1677,8 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wStatueNE:      drawOriented(drawStatueHorizNE)
   of wStatueSW:      drawOriented(drawStatueHorizSW)
   of wKeyhole:       drawOriented(drawKeyholeHoriz)
+  of wWritingNE:     drawOriented(drawWritingHorizNE)
+  of wWritingSW:     drawOriented(drawWritingHorizSW)
 
 # }}}
 # {{{ drawCellWalls()
