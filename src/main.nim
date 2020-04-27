@@ -262,11 +262,6 @@ const SpecialWalls = @[
   wWritingSW
 ]
 
-var DialogWarningLabelStyle = koi.getDefaultLabelStyle()
-DialogWarningLabelStyle.fontSize = 14
-DialogWarningLabelStyle.color = rgb(1.0, 0.4, 0.4)
-DialogWarningLabelStyle.align = haLeft
-
 # }}}
 
 # {{{ mapHasLevels()
@@ -436,6 +431,10 @@ proc findThemeIndex(name: string, a): int =
 
 # }}}
 # {{{ loadTheme()
+# TODO move to ctx.ui
+var GridIconRadioButtonsStyle: RadioButtonsStyle
+var DialogWarningLabelStyle: LabelStyle
+
 proc loadTheme(index: Natural, a) =
   let name = a.theme.themeNames[index]
   let (uiStyle, levelStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
@@ -456,6 +455,90 @@ proc loadTheme(index: Natural, a) =
   alias(s, a.ui.style)
 
   a.win.setStyle(s.titleBarStyle)
+
+  block:
+    alias(s, s.buttonStyle)
+
+    var bs = koi.getDefaultButtonStyle()
+
+    bs.buttonFillColor         = s.bgColor
+    bs.buttonFillColorHover    = s.bgColorHover
+    bs.buttonFillColorDown     = s.bgColorActive
+    bs.buttonFillColorDisabled = s.bgColor
+    bs.labelColor              = s.labelColor
+    bs.labelColorHover         = s.labelColor
+    bs.labelColorDown          = s.labelColor
+    bs.labelColorDisabled      = s.bgColorActive
+
+    koi.setDefaultButtonStyle(bs)
+
+
+    var rs = koi.getDefaultRadioButtonsStyle()
+
+    rs.buttonFillColor         = s.bgColor
+    rs.buttonFillColorHover    = s.bgColorHover
+    rs.buttonFillColorDown     = s.bgColorActive
+    rs.buttonFillColorActive   = s.bgColorActive
+    rs.labelColor              = s.labelColor
+    rs.labelColorHover         = s.labelColor
+    rs.labelColorActive        = s.labelColor
+    rs.labelColorDown          = s.labelColor
+
+    koi.setDefaultRadioButtonsStyle(rs)
+
+    GridIconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
+    GridIconRadioButtonsStyle.buttonPadHoriz = 4.0
+    GridIconRadioButtonsStyle.buttonPadVert = 4.0
+    GridIconRadioButtonsStyle.buttonFillColor = s.bgColor
+    GridIconRadioButtonsStyle.buttonFillColorHover =  s.bgColorHover
+    GridIconRadioButtonsStyle.buttonFillColorDown = s.bgColorActive
+    GridIconRadioButtonsStyle.buttonFillColorActive = s.bgColorActive
+    GridIconRadioButtonsStyle.labelFontSize = 18.0
+    GridIconRadioButtonsStyle.labelColor = s.labelColor
+    GridIconRadioButtonsStyle.labelColorHover = s.labelColor
+    GridIconRadioButtonsStyle.labelColorDown = s.labelColor
+    GridIconRadioButtonsStyle.labelColorActive =  s.labelColor
+    GridIconRadioButtonsStyle.labelPadHoriz = 0
+    GridIconRadioButtonsStyle.labelPadHoriz = 0
+
+    DialogWarningLabelStyle = koi.getDefaultLabelStyle()
+    DialogWarningLabelStyle.fontSize = 14
+    DialogWarningLabelStyle.color = rgb(245, 98, 141)  # TODO
+    DialogWarningLabelStyle.align = haLeft
+
+
+  block:
+    alias(s, s.textFieldStyle)
+
+    var bs = koi.getDefaultTextFieldStyle()
+
+    bs.bgFillColor         = s.bgColor
+    bs.bgFillColorHover    = s.bgColorHover
+    bs.bgFillColorActive   = s.bgColorActive
+    bs.textColor           = s.textColor
+    bs.textColorHover      = s.textColor
+    bs.textColorActive     = s.textColorActive
+    bs.cursorColor         = s.cursorColor
+    bs.selectionColor      = s.selectionColor
+
+    koi.setDefaultTextFieldStyle(bs)
+
+  block:
+    alias(s, s.dialogStyle)
+
+    var bs = koi.getDefaultDialogStyle()
+
+    bs.backgroundColor   = s.backgroundColor
+    bs.titleBarBgColor   = s.titleBarBgColor
+    bs.titleBarTextColor = s.titleBarTextColor
+
+    koi.setDefaultDialogStyle(bs)
+
+
+    var ls = koi.getDefaultLabelStyle()
+    ls.color = s.labelColor
+    koi.setDefaultLabelStyle(ls)
+
 
   block:
     alias(d, a.theme.levelDropdownStyle)
@@ -517,18 +600,6 @@ proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
 
 # }}}
 # {{{ moveCurrGridIcon()
-
-var GridIconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
-GridIconRadioButtonsStyle.buttonPadHoriz = 4.0
-GridIconRadioButtonsStyle.buttonPadVert = 4.0
-GridIconRadioButtonsStyle.labelFontSize = 18.0
-# TODO color schould come from theme
-GridIconRadioButtonsStyle.labelColor = gray(0.1)
-GridIconRadioButtonsStyle.labelColorHover = gray(0.1)
-GridIconRadioButtonsStyle.labelColorDown = gray(0.1)
-GridIconRadioButtonsStyle.labelColorActive = gray(0.1)
-GridIconRadioButtonsStyle.labelPadHoriz = 0
-GridIconRadioButtonsStyle.labelPadHoriz = 0
 
 proc moveCurrGridIcon(numIcons, iconsPerRow: Natural, iconIdx: int,
                       dc: int = 0, dr: int = 0): Natural =
@@ -1738,15 +1809,17 @@ proc nextThemeAction(a) =
 # {{{ prevLevelAction()
 proc prevLevelAction(a) =
   alias(cur, a.ui.cursor)
-  if cur.level > 0:
-    dec(cur.level)
+  var si = getCurrSortedLevelIdx(a)
+  if si > 0:
+    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
 
 # }}}
 # {{{ nextLevelAction()
 proc nextLevelAction(a) =
   alias(cur, a.ui.cursor)
-  if cur.level < a.doc.map.levels.len-1:
-    inc(cur.level)
+  var si = getCurrSortedLevelIdx(a)
+  if si < a.doc.map.levels.len-1:
+    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
 
 # }}}
 # {{{ incZoomLevelAction()
@@ -1969,7 +2042,7 @@ proc specialWallDrawProc(ls: LevelStyle,
                hover, active, down, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
-    var col = if active: ls.cursorColor else: ls.floorColor
+    var col = if active: ls.cursorColor else: gray(1.0, 0.7)
 
     if hover:
       col = col.lerp(white(), 0.3)

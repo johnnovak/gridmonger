@@ -17,13 +17,74 @@ type ThemeParseError* = object of ValueError
 #proc raiseThemeParseError(s: string) =
 #  raise newException(ThemeParseError, s)
 
-const UISection = "ui"
-const UITitleBarSection      = fmt"{UISection}.titleBar"
-const UIStatusBarSection     = fmt"{UISection}.statusBar"
-const UILevelDropdownSection = fmt"{UISection}.levelDropdown"
+const
+  UISection = "ui"
+  UIButtonSection        = fmt"{UISection}.button"
+  UITextFieldSection     = fmt"{UISection}.textField"
+  UIDialogSection        = fmt"{UISection}.dialog"
+  UITitleBarSection      = fmt"{UISection}.titleBar"
+  UIStatusBarSection     = fmt"{UISection}.statusBar"
+  UILevelDropdownSection = fmt"{UISection}.levelDropdown"
 
-const LevelSection = "level"
+  LevelSection = "level"
 
+# {{{ UIButtonStyle
+type
+  UIButtonStyle* = ref object
+    bgColor*:           Color
+    bgColorHover*:      Color
+    bgColorDown*:       Color
+    bgColorActive*:     Color
+    labelColor*:        Color
+
+var DefaultUIButtonStyle = new UIButtonStyle
+
+DefaultUIButtonStyle.bgColor       = gray(0.4)
+DefaultUIButtonStyle.bgColorHover  = gray(0.4)
+DefaultUIButtonStyle.bgColorDown   = gray(0.4)
+DefaultUIButtonStyle.bgColorActive = gray(0.4)
+DefaultUIButtonStyle.labelColor    = gray(0.4)
+
+# }}}
+# {{{ UITextFieldStyle
+type
+  UITextFieldStyle* = ref object
+    bgColor*:           Color
+    bgColorHover*:      Color
+    bgColorActive*:     Color
+    textColor*:         Color
+    textColorActive*:   Color
+    cursorColor*:       Color
+    selectionColor*:    Color
+
+var DefaultUITextFieldStyle = new UITextFieldStyle
+
+DefaultUITextFieldStyle.bgColor         = gray(0.4)
+DefaultUITextFieldStyle.bgColorHover    = gray(0.4)
+DefaultUITextFieldStyle.bgColorActive   = gray(0.4)
+DefaultUITextFieldStyle.textColor       = gray(0.4)
+DefaultUITextFieldStyle.textColorActive = gray(0.4)
+DefaultUITextFieldStyle.cursorColor     = gray(0.4)
+DefaultUITextFieldStyle.selectionColor  = gray(0.4)
+
+
+# }}}
+# {{{ UIDialogStyle
+type
+  UIDialogStyle* = ref object
+    labelColor*:        Color
+    backgroundColor*:   Color
+    titleBarBgColor*:   Color
+    titleBarTextColor*: Color
+
+var DefaultUIDialogStyle = new UIDialogStyle
+
+DefaultUIDialogStyle.labelColor        = gray(0.4)
+DefaultUIDialogStyle.backgroundColor   = gray(0.4)
+DefaultUIDialogStyle.titleBarBgColor   = gray(0.4)
+DefaultUIDialogStyle.titleBarTextColor = gray(0.4)
+
+# }}}
 # {{{ LevelDropdownStyle
 type
   LevelDropdownStyle* = ref object
@@ -67,16 +128,22 @@ DefaultStatusBarStyle.commandColor     = gray(0.2)
 # {{{ UIStyle
 type
   UIStyle* = ref object
-    backgroundColor*:  Color
-    backgroundImage*:  string
-    titleBarStyle*:    CSDWindowStyle
+    backgroundColor*:    Color
+    backgroundImage*:    string
+    buttonStyle*:        UIButtonStyle
+    textFieldStyle*:     UITextFieldStyle
+    dialogStyle*:        UIDialogStyle
+    titleBarStyle*:      CSDWindowStyle
     levelDropdownStyle*: LevelDropdownStyle
-    statusBarStyle*:   StatusBarStyle
+    statusBarStyle*:     StatusBarStyle
 
 var DefaultUIStyle = new UIStyle
 
 DefaultUIStyle.backgroundColor    = gray(0.4)
 DefaultUIStyle.backgroundImage    = ""
+DefaultUIStyle.buttonStyle        = DefaultUIButtonStyle
+DefaultUIStyle.textFieldStyle     = DefaultUITextFieldStyle
+DefaultUIStyle.dialogStyle        = DefaultUIDialogStyle
 DefaultUIStyle.titleBarStyle      = getDefaultCSDWindowStyle()
 DefaultUIStyle.levelDropdownStyle = DefaultLevelDropdownStyle
 DefaultUIStyle.statusBarStyle     = DefaultStatusBarStyle
@@ -248,6 +315,37 @@ proc parseUISection(c: Config): UIStyle =
 
     c.getColor( S, "backgroundColor", s.backgroundColor)
     c.getString(S, "backgroundImage", s.backgroundImage)
+
+  block:
+    alias(s, result.buttonStyle)
+    let S = UIButtonSection
+
+    c.getColor(S, "bgColor",       s.bgColor)
+    c.getColor(S, "bgColorHover",  s.bgColorHover)
+    c.getColor(S, "bgColorDown",   s.bgColorDown)
+    c.getColor(S, "bgColorActive", s.bgColorActive)
+    c.getColor(S, "labelColor",    s.labelColor)
+
+  block:
+    alias(s, result.textFieldStyle)
+    let S = UITextFieldSection
+
+    c.getColor(S, "bgColor",         s.bgColor)
+    c.getColor(S, "bgColorHover",    s.bgColorHover)
+    c.getColor(S, "bgColorActive",   s.bgColorActive)
+    c.getColor(S, "textColor",       s.textColor)
+    c.getColor(S, "textColorActive", s.textColorActive)
+    c.getColor(S, "cursorColor",     s.cursorColor)
+    c.getColor(S, "selectionColor",  s.selectionColor)
+
+  block:
+    alias(s, result.dialogStyle)
+    let S = UIDialogSection
+
+    c.getColor(S, "labelColor",        s.labelColor)
+    c.getColor(S, "backgroundColor",   s.backgroundColor)
+    c.getColor(S, "titleBarBgColor",   s.titleBarBgColor)
+    c.getColor(S, "titleBarTextColor", s.titleBarTextColor)
 
   block:
     alias(s, result.titleBarStyle)

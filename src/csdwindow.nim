@@ -198,13 +198,19 @@ proc maximize(win) =
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   alias(s, win.style)
 
+  # TODO
+  let (bgColor, textColor) = if win.w.focused:
+    (rgb(40, 40, 65), gray(1.0, 0.6))
+  else:
+    (rgb(25, 25, 25), gray(1.0, 0.4))
+
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, TitleBarHeight)
-  vg.fillColor(s.backgroundColor)
+  vg.fillColor(bgColor)
   vg.fill()
 
   vg.setFont(TitleBarFontSize)
-  vg.fillColor(s.textColor)
+  vg.fillColor(textColor)
   vg.textAlign(haLeft, vaMiddle)
 
   let
