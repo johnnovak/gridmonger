@@ -43,6 +43,7 @@ template fullLevelAction(map; loc: Location; um;
 # }}}
 # {{{ cellAreaAction()
 template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
+                        groupWithPrev: bool,
                         actName: string, actionMap, actionBody: untyped) =
 
   let usd = UndoStateData(
@@ -87,7 +88,7 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
     m.links.addAll(oldLinksTo)
     result = usd
 
-  um.storeUndoState(action, undoAction)
+  um.storeUndoState(action, undoAction, groupWithPrev)
   discard action(map)
 
 # }}}
@@ -99,7 +100,8 @@ template singleCellAction(map; loc: Location; um;
     r = loc.row
     cellRect = rectN(r, c, r+1, c+1)
 
-  cellAreaAction(map, loc.level, cellRect, um, actionName, actionMap, actionBody)
+  cellAreaAction(map, loc.level, cellRect, um, groupWithPrev=false, 
+                 actionName, actionMap, actionBody)
 
 # }}}
 
@@ -109,7 +111,6 @@ proc eraseCellWalls*(map; loc: Location; um) =
     m.eraseCellWalls(loc)
 
 # }}}
-
 # {{{ eraseCell*()
 proc eraseCell*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell", m):
@@ -117,55 +118,70 @@ proc eraseCell*(map; loc: Location; um) =
 
 # }}}
 # {{{ eraseSelection*()
-proc eraseSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural]; um) =
-  cellAreaAction(map, level, bbox, um, "Erase selection", m):
+proc eraseSelection*(map; level: Natural, sel: Selection,
+                     bbox: Rect[Natural]; um) =
+
+  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+                 "Erase selection", m):
     var loc: Location
     loc.level = level
 
-    for r in 0..<sel.rows:
-      for c in 0..<sel.cols:
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
         if sel[r,c]:
-          loc.row = bbox.r1+r
-          loc.col = bbox.c1+c
+          loc.row = r
+          loc.col = c
           m.eraseCell(loc)
 
 # }}}
 # {{{ fillSelection*()
-proc fillSelection*(map; level: Natural, sel: Selection, bbox: Rect[Natural]; um) =
-  cellAreaAction(map, level, bbox, um, "Fill selection", m):
-    alias(l, m.levels[level])
-    for r in 0..<sel.rows:
-      for c in 0..<sel.cols:
+proc fillSelection*(map; level: Natural, sel: Selection,
+                    bbox: Rect[Natural]; um) =
+
+  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+                 "Fill selection", m):
+    var loc: Location
+    loc.level = level
+
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
         if sel[r,c]:
-          let row = bbox.r1+r
-          let col = bbox.c1+c
-          l.eraseCell(row, col)
-          l.setFloor(row, col, fEmpty)
+          loc.row = r
+          loc.col = c
+          m.eraseCell(loc)
+          m.setFloor(loc, fEmpty)
 
 # }}}
 # {{{ surroundSelection*()
 proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
                                  bbox: Rect[Natural], um) =
-  cellAreaAction(map, level, bbox, um, "Surround selection with walls", m):
-    alias(l, m.levels[level])
-    for r in 0..<sel.rows:
-      for c in 0..<sel.cols:
+
+  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+                 "Surround selection with walls", m):
+    var loc: Location
+    loc.level = level
+
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
         if sel[r,c]:
-          let row = bbox.r1+r
-          let col = bbox.c1+c
+          loc.row = r
+          loc.col = c
 
-          proc setWall(l: var Level, dir: CardinalDir) =
-            if l.canSetWall(row, col, dir):
-              l.setWall(row, col, dir, wWall)
+          proc setWall(m: var Map, dir: CardinalDir) =
+            if m.canSetWall(loc, dir):
+              m.setWall(loc, dir, wWall)
 
-          if sel.isNeighbourCellEmpty(r,c, dirN): l.setWall(dirN)
-          if sel.isNeighbourCellEmpty(r,c, dirE): l.setWall(dirE)
-          if sel.isNeighbourCellEmpty(r,c, dirS): l.setWall(dirS)
-          if sel.isNeighbourCellEmpty(r,c, dirW): l.setWall(dirW)
+          if sel.isNeighbourCellEmpty(r,c, dirN): setWall(m, dirN)
+          if sel.isNeighbourCellEmpty(r,c, dirE): setWall(m, dirE)
+          if sel.isNeighbourCellEmpty(r,c, dirS): setWall(m, dirS)
+          if sel.isNeighbourCellEmpty(r,c, dirW): setWall(m, dirW)
 
 # }}}
 # {{{ paste*()
-proc paste*(map; dest: Location, cb: SelectionBuffer; um) =
+proc paste*(map; dest: Location, cb: SelectionBuffer; um;
+            groupWithPrev: bool = false,
+            actionName: string = "Pasted buffer") =
+
   let rect = rectN(
     dest.row,
     dest.col,
@@ -178,26 +194,31 @@ proc paste*(map; dest: Location, cb: SelectionBuffer; um) =
       map.levels[dest.level].rows,
       map.levels[dest.level].cols)
   )
+
   if rect.isSome:
-    cellAreaAction(map, dest.level, rect.get, um, "Paste buffer", m):
+    cellAreaAction(map, dest.level, rect.get, um, groupWithPrev,
+                   actionName, m):
       alias(l, m.levels[dest.level])
       l.paste(dest.row, dest.col, cb.level, cb.selection)
 
 # }}}
 # {{{ setWall*()
 proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
+
   singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
     m.setWall(loc, dir, w)
 
 # }}}
 # {{{ setFloor*()
 proc setFloor*(map; loc: Location, f: Floor; um) =
+
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
     m.setFloor(loc, f)
 
 # }}}
 # {{{ setOrientedFloor*()
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
+
   singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
     m.setFloor(loc, f)
     m.setFloorOrientation(loc, ot)
@@ -205,6 +226,7 @@ proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
 # }}}
 # {{{ excavate*()
 proc excavate*(map; loc: Location; um) =
+
   singleCellAction(map, loc, um, "Excavate", m):
     alias(l, m.levels[loc.level])
     alias(c, loc.col)
@@ -236,6 +258,7 @@ proc excavate*(map; loc: Location; um) =
 # }}}
 # {{{ toggleFloorOrientation*()
 proc toggleFloorOrientation*(map; loc: Location; um) =
+
   singleCellAction(map, loc, um, "Toggle floor orientation", m):
     let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
     m.setFloorOrientation(loc, newOt)
@@ -243,6 +266,7 @@ proc toggleFloorOrientation*(map; loc: Location; um) =
 # }}}
 # {{{ setNote*()
 proc setNote*(map; loc: Location, n: Note; um) =
+
   singleCellAction(map, loc, um, "Set note", m):
     alias(l, m.levels[loc.level])
     l.setNote(loc.row, loc.col, n)
@@ -250,6 +274,7 @@ proc setNote*(map; loc: Location, n: Note; um) =
 # }}}
 # {{{ eraseNote*()
 proc eraseNote*(map; loc: Location; um) =
+
   singleCellAction(map, loc, um, "Erase note", m):
     alias(l, m.levels[loc.level])
     l.delNote(loc.row, loc.col)
@@ -259,6 +284,7 @@ proc eraseNote*(map; loc: Location; um) =
 # {{{ resizeLevel*()
 proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                   align: Direction; um) =
+
   fullLevelAction(map, loc, um, "Resize level", m):
     alias(l, m.levels[loc.level])
     l = l.resize(newRows, newCols, align)
@@ -266,6 +292,8 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 # }}}
 # {{{ cropLevel*()
 proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
+
+  # TODO link support
   fullLevelAction(map, loc, um, "Crop level", m):
     m.levels[loc.level] = newLevelFrom(m.levels[loc.level], rect)
 

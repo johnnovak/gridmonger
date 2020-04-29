@@ -7,7 +7,7 @@ RIFF ('GRDM'            # Gridmonger map file
         'ISFT'          # Software
     )
     'map '              # Map
-    LIST ('lvls'        # List of maps
+    LIST ('lvls'        # List of levels
         LIST ('lvl '    # Level
             'prop'      # Level properties
             'cell'      # Level cells

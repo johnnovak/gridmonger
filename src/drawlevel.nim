@@ -418,9 +418,9 @@ proc drawCellCoords(l: Level, ctx) =
     let
       yPos = cellY(r, dp) + dp.gridSize*0.5
       row = dp.viewStartRow + r
-      coord = $(l.rows - 1 - row)
+#      coord = $(l.rows - 1 - row)
 # TODO should be an option
-#      coord = $row
+      coord = $row
 
     setTextHighlight(row == dp.cursorRow)
 

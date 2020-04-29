@@ -141,6 +141,7 @@ type
     emSelect,
     emSelectRect
     emPastePreview,
+    emMovePreview,
     emNudgePreview,
     emSetCellLink
 
@@ -766,7 +767,8 @@ proc setSelectModeSelectMessage(a) =
 proc setSelectModeActionMessage(a) =
   setStatusMessage(IconSelection, "Mark selection",
                    @["Ctrl+E", "erase", "Ctrl+F", "fill",
-                     "Ctrl+S", "surround", "Ctrl+R", "crop"], a)
+                     "Ctrl+S", "surround", "Ctrl+R", "crop",
+                     "Ctrl+M", "move (cut+paste)"], a)
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
@@ -788,6 +790,7 @@ proc exitSelectMode(a) =
 # }}}
 # {{{ copySelection()
 proc copySelection(a): Option[Rect[Natural]] =
+  alias(ui, a.ui)
 
   proc eraseOrphanedWalls(cb: SelectionBuffer) =
     var l = cb.level
@@ -795,15 +798,60 @@ proc copySelection(a): Option[Rect[Natural]] =
       for c in 0..<l.cols:
         l.eraseOrphanedWalls(r,c)
 
-  let sel = a.ui.selection.get
-
+  let sel = ui.selection.get
   let bbox = sel.boundingBox()
+
   if bbox.isSome:
-    a.ui.copyBuf = some(SelectionBuffer(
-      selection: newSelectionFrom(a.ui.selection.get, bbox.get),
-      level: newLevelFrom(getCurrLevel(a), bbox.get)
+    let bbox = bbox.get
+
+    ui.copyBuf = some(SelectionBuffer(
+      selection: newSelectionFrom(sel, bbox),
+      level: newLevelFrom(getCurrLevel(a), bbox)
     ))
-    eraseOrphanedWalls(a.ui.copyBuf.get)
+    eraseOrphanedWalls(ui.copyBuf.get)
+
+  result = bbox
+
+# }}}
+# {{{ cutSelection()
+proc cutSelection(a): Option[Rect[Natural]] =
+  alias(ui, a.ui)
+  alias(map, a.doc.map)
+
+  let currLevel = ui.cursor.level
+
+  proc transformAndCollectLinks(origLinks: Links, transformedLinks: var Links,
+                                bbox: Rect[Natural]) =
+    for src, dest in origLinks.pairs():
+      var src = src
+      var dest = dest
+
+      # Transform location so it's relative to the top-left corner of the
+      # buffer
+      if src.level == currLevel and bbox.contains(src.row, src.col):
+        src.level = CopyBufferLevelIndex
+        src.row -= bbox.r1
+        src.col -= bbox.c1
+
+      if dest.level == currLevel and bbox.contains(dest.row, dest.col):
+        dest.level = CopyBufferLevelIndex
+        dest.row -= bbox.r1
+        dest.col -= bbox.c1
+
+      transformedLinks.set(src, dest)
+
+
+  let bbox = copySelection(a)
+
+  if bbox.isSome:
+    let
+      bbox = bbox.get
+      linksFrom = map.links.filterBySrcInRect(currLevel, bbox)
+      linksTo   = map.links.filterByDestInRect(currLevel, bbox)
+
+    ui.copyBuf.get.links = initLinks()
+    transformAndCollectLinks(linksFrom, ui.copyBuf.get.links, bbox)
+    transformAndCollectLinks(linksTo,   ui.copyBuf.get.links, bbox)
 
   result = bbox
 
@@ -1965,7 +2013,7 @@ proc renderLevel(a) =
     dp.selectionRect = ui.selRect
 
     dp.selectionBuffer =
-      if ui.editMode == emPastePreview: ui.copyBuf
+      if   ui.editMode in {emPastePreview, emMovePreview}: ui.copyBuf
       elif ui.editMode == emNudgePreview: ui.nudgeBuf
       else: SelectionBuffer.none
 
@@ -2704,34 +2752,56 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
       elif ke.isKeyDown(keyX):
-        let bbox = copySelection(a)
+        let selection = ui.selection.get
+        let bbox = cutSelection(a)
         if bbox.isSome:
-          actions.eraseSelection(map, cur.level,
-                                 ui.copyBuf.get.selection, bbox.get, um)
+          let bbox = bbox.get
+          actions.eraseSelection(map, cur.level, selection, bbox, um)
           exitSelectMode(a)
+          cur.row = bbox.r1
+          cur.col = bbox.c1
           setStatusMessage(IconCut, "Cut selection to buffer", a)
 
-      elif ke.isKeyDown(keyE, {mkCtrl}):
-        let bbox = copySelection(a)
+      elif ke.isKeyDown(keyM, {mkCtrl}):
+        let selection = ui.selection.get
+        let bbox = cutSelection(a)
         if bbox.isSome:
-          actions.eraseSelection(map, cur.level,
-                                 ui.copyBuf.get.selection, bbox.get, um)
+          let bbox = bbox.get
+          actions.eraseSelection(map, cur.level, selection, bbox, um)
+          exitSelectMode(a)
+
+          # Enter paste preview mode
+          cur.row = bbox.r1
+          cur.col = bbox.c1
+          dp.selStartRow = cur.row
+          dp.selStartCol = cur.col
+
+          ui.editMode = emMovePreview
+          setStatusMessage(IconTiles, "Move selection",
+                           @[IconArrowsAll, "placement",
+                           "Enter/P", "confirm", "Esc", "cancel"], a)
+
+      elif ke.isKeyDown(keyE, {mkCtrl}):
+        let selection = ui.selection.get
+        let bbox = selection.boundingBox()
+        if bbox.isSome:
+          actions.eraseSelection(map, cur.level, selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconEraser, "Erased selection", a)
 
       elif ke.isKeyDown(keyF, {mkCtrl}):
-        let bbox = copySelection(a)
+        let selection = ui.selection.get
+        let bbox = selection.boundingBox()
         if bbox.isSome:
-          actions.fillSelection(map, cur.level,
-                                ui.copyBuf.get.selection, bbox.get, um)
+          actions.fillSelection(map, cur.level, selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Filled selection", a)
 
       elif ke.isKeyDown(Key.keyS, {mkCtrl}):
-        let bbox = copySelection(a)
+        let selection = ui.selection.get
+        let bbox = selection.boundingBox()
         if bbox.isSome:
-          actions.surroundSelectionWithWalls(map, cur.level,
-                                             ui.copyBuf.get.selection,
+          actions.surroundSelectionWithWalls(map, cur.level, selection,
                                              bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Surrounded selection with walls", a)
@@ -2793,6 +2863,30 @@ proc handleGlobalKeyEvents(a) =
         actions.paste(map, cur, ui.copyBuf.get, um)
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
+
+      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
+
+      elif ke.isKeyDown(keyEscape):
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+
+    # }}}
+    # {{{ emMovePreview
+    of emMovePreview:
+      if opt.walkMode: handleMoveWalk(ke, a)
+      else:
+        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        discard handleMoveCursor(ke, moveKeys, a)
+
+      a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
+      a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
+
+      if ke.isKeyDown({keyEnter, keyP}):
+        actions.paste(map, cur, ui.copyBuf.get, um,
+                      groupWithPrev=true, actionName="Move selection")
+        ui.editMode = emNormal
+        setStatusMessage(IconPaste, "Moved selection", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
