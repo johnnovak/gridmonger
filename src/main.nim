@@ -105,6 +105,7 @@ type
     selRect:           Option[SelectionRect]
     copyBuf:           Option[SelectionBuffer]
     nudgeBuf:          Option[SelectionBuffer]
+    cutToBuffer:       bool
 
     statusIcon:        string
     statusMessage:     string
@@ -789,7 +790,7 @@ proc exitSelectMode(a) =
 
 # }}}
 # {{{ copySelection()
-proc copySelection(a): Option[Rect[Natural]] =
+proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   alias(ui, a.ui)
 
   proc eraseOrphanedWalls(cb: SelectionBuffer) =
@@ -804,17 +805,19 @@ proc copySelection(a): Option[Rect[Natural]] =
   if bbox.isSome:
     let bbox = bbox.get
 
-    ui.copyBuf = some(SelectionBuffer(
+    buf = some(SelectionBuffer(
       selection: newSelectionFrom(sel, bbox),
       level: newLevelFrom(getCurrLevel(a), bbox)
     ))
-    eraseOrphanedWalls(ui.copyBuf.get)
+    eraseOrphanedWalls(buf.get)
+
+    ui.cutToBuffer = false
 
   result = bbox
 
 # }}}
 # {{{ cutSelection()
-proc cutSelection(a): Option[Rect[Natural]] =
+proc cutSelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   alias(ui, a.ui)
   alias(map, a.doc.map)
 
@@ -822,6 +825,9 @@ proc cutSelection(a): Option[Rect[Natural]] =
 
   proc transformAndCollectLinks(origLinks: Links, transformedLinks: var Links,
                                 bbox: Rect[Natural]) =
+
+    # TODO use filterBySrcInRect
+    # TODO use filterByDestInRect
     for src, dest in origLinks.pairs():
       var src = src
       var dest = dest
@@ -841,7 +847,7 @@ proc cutSelection(a): Option[Rect[Natural]] =
       transformedLinks.set(src, dest)
 
 
-  let bbox = copySelection(a)
+  let bbox = copySelection(buf, a)
 
   if bbox.isSome:
     let
@@ -849,9 +855,11 @@ proc cutSelection(a): Option[Rect[Natural]] =
       linksFrom = map.links.filterBySrcInRect(currLevel, bbox)
       linksTo   = map.links.filterByDestInRect(currLevel, bbox)
 
-    ui.copyBuf.get.links = initLinks()
-    transformAndCollectLinks(linksFrom, ui.copyBuf.get.links, bbox)
-    transformAndCollectLinks(linksTo,   ui.copyBuf.get.links, bbox)
+    buf.get.links = initLinks()
+    transformAndCollectLinks(linksFrom, buf.get.links, bbox)
+    transformAndCollectLinks(linksTo,   buf.get.links, bbox)
+
+    ui.cutToBuffer = true
 
   result = bbox
 
@@ -2013,8 +2021,8 @@ proc renderLevel(a) =
     dp.selectionRect = ui.selRect
 
     dp.selectionBuffer =
-      if   ui.editMode in {emPastePreview, emMovePreview}: ui.copyBuf
-      elif ui.editMode == emNudgePreview: ui.nudgeBuf
+      if   ui.editMode == emPastePreview: ui.copyBuf
+      elif ui.editMode in {emMovePreview, emNudgePreview}: ui.nudgeBuf
       else: SelectionBuffer.none
 
     drawMap(
@@ -2505,6 +2513,8 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyP):
         if ui.copyBuf.isSome:
           actions.paste(map, cur, ui.copyBuf.get, um)
+          if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
+
           setStatusMessage(IconPaste, "Pasted buffer", a)
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
@@ -2746,14 +2756,14 @@ proc handleGlobalKeyEvents(a) =
         ))
 
       elif ke.isKeyDown({keyC, keyY}):
-        let bbox = copySelection(a)
+        let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           exitSelectMode(a)
           setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
       elif ke.isKeyDown(keyX):
         let selection = ui.selection.get
-        let bbox = cutSelection(a)
+        let bbox = cutSelection(ui.copyBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
           actions.eraseSelection(map, cur.level, selection, bbox, um)
@@ -2764,7 +2774,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyM, {mkCtrl}):
         let selection = ui.selection.get
-        let bbox = cutSelection(a)
+        let bbox = cutSelection(ui.nudgeBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
           actions.eraseSelection(map, cur.level, selection, bbox, um)
@@ -2861,6 +2871,8 @@ proc handleGlobalKeyEvents(a) =
 
       if ke.isKeyDown({keyEnter, keyP}):
         actions.paste(map, cur, ui.copyBuf.get, um)
+        if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
+
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
@@ -2883,8 +2895,9 @@ proc handleGlobalKeyEvents(a) =
       a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
       if ke.isKeyDown({keyEnter, keyP}):
-        actions.paste(map, cur, ui.copyBuf.get, um,
+        actions.paste(map, cur, ui.nudgeBuf.get, um,
                       groupWithPrev=true, actionName="Move selection")
+
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
 

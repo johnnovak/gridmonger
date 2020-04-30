@@ -44,7 +44,6 @@ proc getNote*(l; r,c: Natural): Note =
   l.notes[key]
 
 proc setNote*(l; r,c: Natural, note: Note) =
-  # TODO update links ? if overwriting floor with a marker
   let key = locationKey(l, r,c)
   l.notes[key] = note
 
@@ -131,16 +130,20 @@ proc eraseOrphanedWalls*(l; r,c: Natural) =
     cleanWall(dirE)
 
 
-proc paste*(l; destRow, destCol: int, src: Level, sel: Selection) =
-  # TODO update links
+proc paste*(l; destRow, destCol: int, src: Level,
+            sel: Selection): Option[Rect[Natural]] =
+
   let destRect = rectI(
     destRow, destCol,
     destRow + src.rows, destCol + src.cols
   ).intersect(
     rectI(0, 0, l.rows, l.cols)
   )
+
   if destRect.isSome:
     let dr = destRect.get
+    result = rectN(dr.r1, dr.c1, dr.r2, dr.c2).some
+
     for r in dr.r1..<dr.r2:
       for c in dr.c1..<dr.c2:
         var srcRow = r - dr.r1
@@ -174,7 +177,6 @@ proc paste*(l; destRow, destCol: int, src: Level, sel: Selection) =
 
 proc copyFrom*(l; destRow, destCol: Natural,
                src: Level, srcRect: Rect[Natural]) =
-  # TODO update links
 
   l.cellGrid.copyFrom(destRow, destCol, src.cellGrid, srcRect)
 
@@ -186,7 +188,6 @@ proc copyFrom*(l; destRow, destCol: Natural,
 
 proc newLevelFrom*(src: Level, rect: Rect[Natural],
                    border: Natural = 0): Level =
-  # TODO update links
   assert rect.r1 < src.rows
   assert rect.c1 < src.cols
   assert rect.r2 <= src.rows
@@ -222,7 +223,6 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural],
 
 
 proc newLevelFrom*(l): Level =
-  # TODO update links
   newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
 
 
@@ -246,7 +246,6 @@ proc guessFloorOrientation*(l; r,c: Natural): Orientation =
 
 
 proc resize*(l; newRows, newCols: Natural, align: Direction): Level =
-  # TODO update links
   var srcRect = rectI(0, 0, l.rows, l.cols)
 
   proc shiftHoriz(r: var Rect[int], d: int) =

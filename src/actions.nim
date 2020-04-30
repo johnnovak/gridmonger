@@ -178,15 +178,15 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
 
 # }}}
 # {{{ paste*()
-proc paste*(map; dest: Location, cb: SelectionBuffer; um;
+proc paste*(map; dest: Location, sb: SelectionBuffer; um;
             groupWithPrev: bool = false,
             actionName: string = "Pasted buffer") =
 
   let rect = rectN(
     dest.row,
     dest.col,
-    dest.row + cb.level.rows,
-    dest.col + cb.level.cols
+    dest.row + sb.level.rows,
+    dest.col + sb.level.cols
   ).intersect(
     rectN(
       0,
@@ -196,10 +196,42 @@ proc paste*(map; dest: Location, cb: SelectionBuffer; um;
   )
 
   if rect.isSome:
-    cellAreaAction(map, dest.level, rect.get, um, groupWithPrev,
-                   actionName, m):
+    cellAreaAction(map, dest.level, rect.get, um, groupWithPrev, actionName, m):
       alias(l, m.levels[dest.level])
-      l.paste(dest.row, dest.col, cb.level, cb.selection)
+
+      let bbox = l.paste(dest.row, dest.col, sb.level, sb.selection)
+
+      if bbox.isSome:
+        let bbox = bbox.get
+        var loc: Location
+        loc.level = dest.level
+
+        # Erase links in the paste area
+        for r in bbox.r1..<bbox.r2:
+          for c in bbox.c1..<bbox.c2:
+            loc.row = r
+            loc.col = c
+            m.eraseCellLinks(loc)
+
+        # Recreate links from the copy buffer
+        for s, d in sb.links.pairs():
+          echo "src: ", s, ", dest: ", d
+          var s = s
+          if s.level == CopyBufferLevelIndex:
+            s.level = dest.level
+            s.row += dest.row
+            s.col += dest.col
+
+          var d = d
+          if d.level == CopyBufferLevelIndex:
+            d.level = dest.level
+            d.row += dest.row
+            d.col += dest.col
+
+          echo "src: ", s, ", dest: ", d
+          echo ""
+
+          m.links.set(s, d)
 
 # }}}
 # {{{ setWall*()
@@ -312,6 +344,7 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
 
   let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
 
+  # TODO simplify, reduce duplication of logic?
   for src, dest in oldFromLinks.pairs:
     var r = src.row.int + destRow
     var c = src.col.int + destCol
@@ -364,7 +397,7 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
       sb.level.rows,
       sb.level.cols
     )
-    l.paste(destRow, destCol, sb.level, sb.selection)
+    discard l.paste(destRow, destCol, sb.level, sb.selection)
     m.levels[loc.level] = l
 
     for k in oldFromLinks.keys: m.links.delByKey(k)

@@ -68,6 +68,10 @@ proc delLevel*(m; levelIdx: Natural) =
   m.refreshSortedLevelNames()
 
 
+proc eraseCellLinks*(m; loc: Location) =
+  m.links.delBySrc(loc)
+  m.links.delByDest(loc)
+
 proc getFloor*(m; loc: Location): Floor {.inline.} =
   m.levels[loc.level].getFloor(loc.row, loc.col)
 
@@ -76,8 +80,7 @@ proc isFloorEmpty*(m; loc: Location): bool {.inline.} =
 
 proc setFloor*(m; loc: Location, f: Floor) =
   m.levels[loc.level].setFloor(loc.row, loc.col, f)
-  m.links.delBySrc(loc)
-  m.links.delByDest(loc)
+  m.eraseCellLinks(loc)
 
 proc getFloorOrientation*(m; loc: Location): Orientation {.inline.} =
   m.levels[loc.level].getFloorOrientation(loc.row, loc.col)
@@ -103,7 +106,6 @@ proc eraseCellWalls*(m; loc: Location) =
 
 proc eraseCell*(m; loc: Location) =
   m.levels[loc.level].eraseCell(loc.row, loc.col)
-  m.links.delBySrc(loc)
-  m.links.delByDest(loc)
+  m.eraseCellLinks(loc)
 
 # vim: et:ts=2:sw=2:fdm=marker
