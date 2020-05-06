@@ -69,17 +69,8 @@ proc delLevel*(m; levelIdx: Natural) =
 
 
 proc eraseCellLinks*(m; loc: Location) =
-  if loc.level != CopyBufferLevelIndex:
-    if m.links.hasWithSrc(loc):
-      let dest = m.links.getBySrc(loc)
-      if dest.level != CopyBufferLevelIndex:
-        m.links.delBySrc(loc)
-
-    if m.links.hasWithDest(loc):
-      let src = m.links.getByDest(loc)
-      if src.level != CopyBufferLevelIndex:
-        m.links.delByDest(loc)
-
+  m.links.delBySrc(loc)
+  m.links.delByDest(loc) 
 
 proc getFloor*(m; loc: Location): Floor {.inline.} =
   m.levels[loc.level].getFloor(loc.row, loc.col)
