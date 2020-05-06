@@ -69,29 +69,15 @@ proc delLevel*(m; levelIdx: Natural) =
 
 
 proc eraseCellLinks*(m; loc: Location) =
-#  echo ""
-#  echo "LINKS--------------"
-#  m.links.dump()
-
-#  echo ""
-#  m.links.dumpBiTable()
-#  echo ""
-
-#  echo "------------"
-#  echo "LOC: ", loc
-
   if loc.level != CopyBufferLevelIndex:
     if m.links.hasWithSrc(loc):
       let dest = m.links.getBySrc(loc)
       if dest.level != CopyBufferLevelIndex:
-        echo "*1"
         m.links.delBySrc(loc)
 
     if m.links.hasWithDest(loc):
       let src = m.links.getByDest(loc)
-      echo "src: ", src
       if src.level != CopyBufferLevelIndex:
-        echo "*2"
         m.links.delByDest(loc)
 
 

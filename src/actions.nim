@@ -57,8 +57,8 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
     actionMap.levels[lvl].reindexNotes()
     result = usd
 
-  let oldLinksFrom = map.links.filterBySrcInRect(lvl, rect)
-  let oldLinksTo   = map.links.filterByDestInRect(lvl, rect)
+  var oldLinks = map.links.filterBySrcInRect(lvl, rect)
+  oldLinks.addAll(map.links.filterByDestInRect(lvl, rect))
 
   let undoLevel = newLevelFrom(map.levels[lvl], rect)
 
@@ -84,8 +84,7 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
     for src in m.links.filterByDestInRect(lvl, delRect).keys:
       m.links.delBySrc(src)
 
-    m.links.addAll(oldLinksFrom)
-    m.links.addAll(oldLinksTo)
+    m.links.addAll(oldLinks)
     result = usd
 
   um.storeUndoState(action, undoAction, groupWithPrev)
@@ -180,15 +179,12 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
 # {{{ cut()
 proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
 
-  let usd = UndoStateData(actionName: "Cut selection", location: loc)
   let level = loc.level
 
   # TODO use cellAreaAction
 
   var oldLinks = map.links.filterBySrcInRect(level, bbox, sel.some)
   oldLinks.addAll(map.links.filterByDestInRect(level, bbox, sel.some))
-
-  let undoLevel = newLevelFrom(map.levels[level], bbox)
 
   proc transformAndCollectLinks(origLinks: Links, linksBuf: var Links,
                                 selection: Selection, bbox: Rect[Natural]) =
@@ -221,7 +217,10 @@ proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
   var newLinks = initLinks()
   transformAndCollectLinks(oldLinks, newLinks, sel, bbox)
 
-  let action = proc (m: var Map): UndoStateData =
+
+  cellAreaAction(map, level, bbox, um,
+                 groupWithPrev=false, "Cut selection", m):
+
     for s in oldLinks.keys: m.links.delBySrc(s)
     m.links.addAll(newLinks)
 
@@ -234,27 +233,6 @@ proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
           l.row = r
           l.col = c
           m.eraseCell(l)
-
-    result = usd
-
-
-  let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[level].copyFrom(
-      destRow = bbox.r1,
-      destCol = bbox.c1,
-      src     = undoLevel,
-      srcRect = rectN(0, 0, undoLevel.rows, undoLevel.cols)
-    )
-    m.levels[level].reindexNotes()
-
-    for s in newLinks.keys: m.links.delBySrc(s)
-    m.links.addAll(oldLinks)
-
-    result = usd
-
-
-  um.storeUndoState(action, undoAction)
-  discard action(map)
 
 # }}}
 # {{{ paste*()
