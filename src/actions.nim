@@ -21,8 +21,6 @@ using
   um:  var UndoManager[Map, UndoStateData]
 
 # {{{ fullLevelAction()
-# TODO investigate why we need to use different parameter names in nested
-# templates
 template fullLevelAction(map; loc: Location; um;
                          actName: string, actionMap, actionBody: untyped) =
 
@@ -49,6 +47,8 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
   let usd = UndoStateData(
     actionName: actName,
     # TODO raise bug for this (doesn't compile if lvl is renamed to level)
+    # TODO investigate why we need to use different parameter names in nested
+    # templates
     location: Location(level: lvl, row: rect.r1, col: rect.c1)
   )
 
@@ -100,7 +100,7 @@ template singleCellAction(map; loc: Location; um;
     r = loc.row
     cellRect = rectN(r, c, r+1, c+1)
 
-  cellAreaAction(map, loc.level, cellRect, um, groupWithPrev=false, 
+  cellAreaAction(map, loc.level, cellRect, um, groupWithPrev=false,
                  actionName, actionMap, actionBody)
 
 # }}}
@@ -177,34 +177,115 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
           if sel.isNeighbourCellEmpty(r,c, dirW): setWall(m, dirW)
 
 # }}}
+# {{{ cut()
+proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
+
+  let usd = UndoStateData(actionName: "Cut selection", location: loc)
+  let level = loc.level
+
+  # TODO use cellAreaAction
+
+  var oldLinks = map.links.filterBySrcInRect(level, bbox, sel.some)
+  oldLinks.addAll(map.links.filterByDestInRect(level, bbox, sel.some))
+
+  let undoLevel = newLevelFrom(map.levels[level], bbox)
+
+  proc transformAndCollectLinks(origLinks: Links, linksBuf: var Links,
+                                selection: Selection, bbox: Rect[Natural]) =
+    for src, dest in origLinks.pairs:
+      var src = src
+      var dest = dest
+      var addLink = false
+
+      # Transform location so it's relative to the top-left corner of the
+      # buffer
+      if src.level == level and
+         bbox.contains(src.row, src.col) and selection[src.row, src.col]:
+        src.level = CopyBufferLevelIndex
+        src.row = src.row - bbox.r1
+        src.col = src.col - bbox.c1
+        addLink = true
+
+      if dest.level == level and
+         bbox.contains(dest.row, dest.col) and selection[dest.row, dest.col]:
+
+        dest.level = CopyBufferLevelIndex
+        dest.row = dest.row - bbox.r1
+        dest.col = dest.col - bbox.c1
+        addLink = true
+
+      if addLink:
+        linksBuf.set(src, dest)
+
+
+  var newLinks = initLinks()
+  transformAndCollectLinks(oldLinks, newLinks, sel, bbox)
+
+  let action = proc (m: var Map): UndoStateData =
+    for s in oldLinks.keys: m.links.delBySrc(s)
+    m.links.addAll(newLinks)
+
+    var l: Location
+    l.level = level
+
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
+        if sel[r,c]:
+          l.row = r
+          l.col = c
+          m.eraseCell(l)
+
+    result = usd
+
+
+  let undoAction = proc (m: var Map): UndoStateData =
+    m.levels[level].copyFrom(
+      destRow = bbox.r1,
+      destCol = bbox.c1,
+      src     = undoLevel,
+      srcRect = rectN(0, 0, undoLevel.rows, undoLevel.cols)
+    )
+    m.levels[level].reindexNotes()
+
+    for s in newLinks.keys: m.links.delBySrc(s)
+    m.links.addAll(oldLinks)
+
+    result = usd
+
+
+  um.storeUndoState(action, undoAction)
+  discard action(map)
+
+# }}}
 # {{{ paste*()
-proc paste*(map; dest: Location, sb: SelectionBuffer; um;
+proc paste*(map; pasteLoc: Location, sb: SelectionBuffer; um;
             groupWithPrev: bool = false,
             actionName: string = "Pasted buffer") =
 
   let rect = rectN(
-    dest.row,
-    dest.col,
-    dest.row + sb.level.rows,
-    dest.col + sb.level.cols
+    pasteLoc.row,
+    pasteLoc.col,
+    pasteLoc.row + sb.level.rows,
+    pasteLoc.col + sb.level.cols
   ).intersect(
     rectN(
       0,
       0,
-      map.levels[dest.level].rows,
-      map.levels[dest.level].cols)
+      map.levels[pasteLoc.level].rows,
+      map.levels[pasteLoc.level].cols)
   )
 
   if rect.isSome:
-    cellAreaAction(map, dest.level, rect.get, um, groupWithPrev, actionName, m):
-      alias(l, m.levels[dest.level])
+    cellAreaAction(map, pasteLoc.level, rect.get, um,
+                   groupWithPrev, actionName, m):
+      alias(l, m.levels[pasteLoc.level])
 
-      let bbox = l.paste(dest.row, dest.col, sb.level, sb.selection)
+      let bbox = l.paste(pasteLoc.row, pasteLoc.col, sb.level, sb.selection)
 
       if bbox.isSome:
         let bbox = bbox.get
         var loc: Location
-        loc.level = dest.level
+        loc.level = pasteLoc.level
 
         # Erase links in the paste area
         for r in bbox.r1..<bbox.r2:
@@ -214,24 +295,38 @@ proc paste*(map; dest: Location, sb: SelectionBuffer; um;
             m.eraseCellLinks(loc)
 
         # Recreate links from the copy buffer
-        for s, d in sb.links.pairs():
-          echo "src: ", s, ", dest: ", d
-          var s = s
-          if s.level == CopyBufferLevelIndex:
-            s.level = dest.level
-            s.row += dest.row
-            s.col += dest.col
+        var linkKeysToRemove = newSeq[Location]()
+        var linksToAdd = initLinks()
 
-          var d = d
-          if d.level == CopyBufferLevelIndex:
-            d.level = dest.level
-            d.row += dest.row
-            d.col += dest.col
+        for src, dest in m.links.pairs:
+          var
+            src = src
+            dest = dest
+            addLink = false
+            srcInside = true
+            destInside = true
 
-          echo "src: ", s, ", dest: ", d
-          echo ""
+          if src.level == CopyBufferLevelIndex:
+            linkKeysToRemove.add(src)
+            src.level = pasteLoc.level
+            src.row += pasteLoc.row
+            src.col += pasteLoc.col
+            srcInside = bbox.contains(src.row, src.col)
+            addLink = true
 
-          m.links.set(s, d)
+          if dest.level == CopyBufferLevelIndex:
+            linkKeysToRemove.add(src)
+            dest.level = pasteLoc.level
+            dest.row += pasteLoc.row
+            dest.col += pasteLoc.col
+            destInside = bbox.contains(dest.row, dest.col)
+            addLink = true
+
+          if addLink and srcInside and destInside:
+            linksToAdd[src] = dest
+
+        for s in linkKeysToRemove: m.links.delByKey(s)
+        m.links.addAll(linksToAdd)
 
 # }}}
 # {{{ setWall*()
@@ -317,6 +412,7 @@ proc eraseNote*(map; loc: Location; um) =
 proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                   align: Direction; um) =
 
+  # TODO link support
   fullLevelAction(map, loc, um, "Resize level", m):
     alias(l, m.levels[loc.level])
     l = l.resize(newRows, newCols, align)
@@ -331,7 +427,7 @@ proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
 
 # }}}
 # {{{ nudgeLevel*()
-proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
+proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
                  sb: SelectionBuffer; um) =
 
   let usd = UndoStateData(actionName: "Nudge level", location: loc)
@@ -344,17 +440,17 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
 
   let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
 
-  # TODO simplify, reduce duplication of logic?
+  # TODO simplify, reduce duplication of logic? use cellAreaAction?
   for src, dest in oldFromLinks.pairs:
-    var r = src.row.int + destRow
-    var c = src.col.int + destCol
+    var r = src.row.int + rowOffs
+    var c = src.col.int + colOffs
     if levelRect.contains(r,c):
       let newSrc = Location(level: src.level, row: r, col: c)
 
       var newDest: Location
       if dest.level == src.level:
-        r = dest.row.int + destRow
-        c = dest.col.int + destCol
+        r = dest.row.int + rowOffs
+        c = dest.col.int + colOffs
 
         if levelRect.contains(r,c):
           newDest = Location(level: dest.level, row: r, col: c)
@@ -367,15 +463,15 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
 
 
   for src, dest in oldToLinks.pairs:
-    var r = dest.row.int + destRow
-    var c = dest.col.int + destCol
+    var r = dest.row.int + rowOffs
+    var c = dest.col.int + colOffs
     if levelRect.contains(r,c):
       let newDest = Location(level: dest.level, row: r, col: c)
 
       var newSrc: Location
       if src.level == dest.level:
-        r = src.row.int + destRow
-        c = src.col.int + destCol
+        r = src.row.int + rowOffs
+        c = src.col.int + colOffs
 
         if levelRect.contains(r,c):
           newSrc = Location(level: src.level, row: r, col: c)
@@ -397,7 +493,7 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
       sb.level.rows,
       sb.level.cols
     )
-    discard l.paste(destRow, destCol, sb.level, sb.selection)
+    discard l.paste(rowOffs, colOffs, sb.level, sb.selection)
     m.levels[loc.level] = l
 
     for k in oldFromLinks.keys: m.links.delByKey(k)
@@ -406,6 +502,9 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
     m.links.addAll(newFromLinks)
     m.links.addAll(newToLinks)
 
+    var usd = usd
+    usd.location.row = max(usd.location.row + rowOffs, 0)
+    usd.location.col = max(usd.location.col + colOffs, 0)
     result = usd
 
 
@@ -418,7 +517,6 @@ proc nudgeLevel*(map; loc: Location, destRow, destCol: int,
 
     m.links.addAll(oldFromLinks)
     m.links.addAll(oldToLinks)
-
     result = usd
 
   um.storeUndoState(action, undoAction)

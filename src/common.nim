@@ -239,7 +239,6 @@ type
   SelectionBuffer* = object
     level*:     Level
     selection*: Selection
-    links*:     Links
 
 const
   CopyBufferLevelIndex* = Natural.high   # internal, never written to disk

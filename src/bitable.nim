@@ -12,6 +12,15 @@ proc initBiTable*[K, V](
   result.keyToVal = initTable[K, V](initialSize)
   result.valToKey = initTable[V, K](initialSize)
 
+proc dumpBiTable*[K, V](t: BiTable[K, V]) =
+  echo "KEY TO VAL"
+  for k,v in t.keyToVal.pairs():
+    echo "1: ", k, ", 2: ", v
+  echo "VAL TO KEY"
+  for k,v in t.valToKey.pairs():
+    echo "1: ", k, ", 2: ", v
+
+
 proc len*[K, V](t: BiTable[K, V]): Natural =
   t.keyToVal.len
 
@@ -39,13 +48,6 @@ proc getValByKey*[K, V](t: BiTable[K, V], key: K): V =
 proc getKeyByVal*[K, V](t: BiTable[K, V], val: V): K =
   t.valToKey[val]
 
-proc `[]`*[K, V](t: BiTable[K, V], key: K): V =
-  t.getValByKey(key)
-
-proc `[]=`*[K, V](t: var BiTable[K, V], key: K, val: V) =
-  t.keyToVal[key] = val
-  t.valToKey[val] = key
-
 proc delByKey*[K, V](t: var BiTable[K, V], key: K) =
   if key in t.keyToVal:
     let val = t.keyToVal[key]
@@ -57,6 +59,15 @@ proc delByVal*[K, V](t: var BiTable[K, V], val: V) =
     let key = t.valToKey[val]
     t.valToKey.del(val)
     t.keyToVal.del(key)
+
+proc `[]`*[K, V](t: BiTable[K, V], key: K): V =
+  t.getValByKey(key)
+
+proc `[]=`*[K, V](t: var BiTable[K, V], key: K, val: V) =
+  t.delByKey(key)
+  t.delByVal(val)
+  t.keyToVal[key] = val
+  t.valToKey[val] = key
 
 proc addAll*[K, V](t: var BiTable[K, V], src: BiTable[K, V]) =
   for k, v in src.pairs():

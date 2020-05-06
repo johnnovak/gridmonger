@@ -10,6 +10,7 @@ import bitable
 import common
 import icons
 import level
+import links
 import rect
 import selection
 import utils
@@ -1639,11 +1640,14 @@ proc drawLinkMarkers(map: Map, level: Natural, ctx) =
       loc.row = dp.viewStartRow + viewRow
       loc.col = dp.viewStartCol + viewCol
 
-      if map.links.hasKey(loc) or map.links.hasVal(loc):
-        let
-          x = cellX(viewCol, dp)
-          y = cellY(viewRow, dp)
+      if (map.links.hasWithSrc(loc) and
+          map.links.getBySrc(loc).level != CopyBufferLevelIndex) or
 
+         (map.links.hasWithDest(loc) and
+          map.links.getByDest(loc).level != CopyBufferLevelIndex):
+
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
         drawLinkMarker(x, y, ctx)
 
 # }}}

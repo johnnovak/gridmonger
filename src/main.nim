@@ -816,54 +816,6 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   result = bbox
 
 # }}}
-# {{{ cutSelection()
-proc cutSelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
-  alias(ui, a.ui)
-  alias(map, a.doc.map)
-
-  let currLevel = ui.cursor.level
-
-  proc transformAndCollectLinks(origLinks: Links, transformedLinks: var Links,
-                                bbox: Rect[Natural]) =
-
-    # TODO use filterBySrcInRect
-    # TODO use filterByDestInRect
-    for src, dest in origLinks.pairs():
-      var src = src
-      var dest = dest
-
-      # Transform location so it's relative to the top-left corner of the
-      # buffer
-      if src.level == currLevel and bbox.contains(src.row, src.col):
-        src.level = CopyBufferLevelIndex
-        src.row -= bbox.r1
-        src.col -= bbox.c1
-
-      if dest.level == currLevel and bbox.contains(dest.row, dest.col):
-        dest.level = CopyBufferLevelIndex
-        dest.row -= bbox.r1
-        dest.col -= bbox.c1
-
-      transformedLinks.set(src, dest)
-
-
-  let bbox = copySelection(buf, a)
-
-  if bbox.isSome:
-    let
-      bbox = bbox.get
-      linksFrom = map.links.filterBySrcInRect(currLevel, bbox)
-      linksTo   = map.links.filterByDestInRect(currLevel, bbox)
-
-    buf.get.links = initLinks()
-    transformAndCollectLinks(linksFrom, buf.get.links, bbox)
-    transformAndCollectLinks(linksTo,   buf.get.links, bbox)
-
-    ui.cutToBuffer = true
-
-  result = bbox
-
-# }}}
 
 # {{{ Dialogs
 # {{{ Save/discard changes dialog
@@ -2556,15 +2508,21 @@ proc handleGlobalKeyEvents(a) =
           let src = cur
           if map.links.hasWithSrc(src):
             let dest = map.links.getBySrc(src)
-            moveCursorTo(dest, a)
-            result = true
+            if dest.level == CopyBufferLevelIndex:
+              result = false
+            else:
+              moveCursorTo(dest, a)
+              result = true
 
         proc jumpToSrc(a): bool =
           let dest = cur
           if map.links.hasWithDest(dest):
             let src = map.links.getByDest(dest)
-            moveCursorTo(src, a)
-            result = true
+            if src.level == CopyBufferLevelIndex:
+              result = false
+            else:
+              moveCursorTo(src, a)
+              result = true
 
         if floor in (LinkPitSources + {fTeleportSource}):
           if not jumpToDest(a):
@@ -2574,12 +2532,12 @@ proc handleGlobalKeyEvents(a) =
         elif floor in (LinkPitDestinations + {fTeleportDestination}):
           if not jumpToSrc(a):
             setStatusMessage(IconWarning,
-                             "{linkType} is not linked to a source", a)
+                             fmt"{linkType} is not linked to a source", a)
 
         elif floor in (LinkStairs + LinkDoors):
           if not jumpToDest(a):
             if not jumpToSrc(a):
-              setStatusMessage(IconWarning, "{linktype} is not linked", a)
+              setStatusMessage(IconWarning, fmt"{linktype} is not linked", a)
 
         else:
           setStatusMessage(IconWarning, "Not a linked cell", a)
@@ -2763,10 +2721,14 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyX):
         let selection = ui.selection.get
-        let bbox = cutSelection(ui.copyBuf, a)
+        # TODO !!! clear links with CopyBufferLevelIndex from map first!
+        # (because there might be an "unpasted" selection in the "cut buffer")
+        let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.eraseSelection(map, cur.level, selection, bbox, um)
+          actions.cut(map, cur, bbox, selection, um)
+          ui.cutToBuffer = true
+
           exitSelectMode(a)
           cur.row = bbox.r1
           cur.col = bbox.c1
@@ -2774,10 +2736,10 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyM, {mkCtrl}):
         let selection = ui.selection.get
-        let bbox = cutSelection(ui.nudgeBuf, a)
+        let bbox = copySelection(ui.nudgeBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.eraseSelection(map, cur.level, selection, bbox, um)
+          actions.cut(map, cur, bbox, selection, um)
           exitSelectMode(a)
 
           # Enter paste preview mode
@@ -2917,8 +2879,14 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
       elif ke.isKeyDown(keyEnter):
+        let newLocation = Location(
+          level: cur.level,
+          row: max(cur.row + dp.selStartRow, 0),
+          col: max(cur.col + dp.selStartCol, 0)
+        )
         actions.nudgeLevel(map, cur, dp.selStartRow, dp.selStartCol,
                            ui.nudgeBuf.get, um)
+        moveCursorTo(newLocation, a)
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
@@ -3245,7 +3213,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
-  let filename = "linktest.grm"
+  let filename = "link-test.grm"
 #  let filename = "pool-of-radiance-multi.grm"
   a.doc.map = readMap(filename)
   a.doc.filename = filename

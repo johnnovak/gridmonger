@@ -1,6 +1,9 @@
+import options
+
 import bitable
 import common
 import rect
+import selection
 
 export bitable
 
@@ -36,7 +39,8 @@ proc delBySrc*(l: var Links; src: Location) =
 proc delByDest*(l: var Links; dest: Location) =
   l.delByVal(dest)
 
-proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural]): Links =
+proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural],
+                        sel: Option[Selection] = Selection.none): Links =
   result = initBiTable[Location, Location]()
   var src: Location
   src.level = level
@@ -45,12 +49,13 @@ proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural]): Links =
     for c in rect.c1..<rect.c2:
       src.row = r
       src.col = c
-      if l.hasKey(src):
+      if l.hasKey(src) and (sel.isNone or (sel.isSome and sel.get[r,c])):
         let dest = l.getValByKey(src)
         result[src] = dest
 
 
-proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural]): Links =
+proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural],
+                         sel: Option[Selection] = Selection.none): Links =
   result = initBiTable[Location, Location]()
   var dest: Location
   dest.level = level
@@ -59,7 +64,7 @@ proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural]): Links =
     for c in rect.c1..<rect.c2:
       dest.row = r
       dest.col = c
-      if l.hasVal(dest):
+      if l.hasVal(dest) and (sel.isNone or (sel.isSome and sel.get[r,c])):
         let src = l.getKeyByVal(dest)
         result[src] = dest
 
