@@ -1175,16 +1175,15 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   proc okAction(dlg: var NewLevelDialogParams, a) =
     if validationError != "": return
 
-    # TODO should be undoable action
     let
       rows = parseInt(dlg.rows)
       cols = parseInt(dlg.cols)
       elevation = parseInt(dlg.elevation)
 
-      newLevel = newLevel(dlg.locationName, dlg.levelName,
-                          elevation, rows, cols)
+    actions.addNewLevel(a.doc.map, a.ui.cursor,
+                        dlg.locationName, dlg.levelName, elevation, rows, cols,
+                        a.doc.undoManager)
 
-    a.doc.map.addLevel(newLevel)
     a.ui.cursor.level = a.doc.map.levels.high
 
     setStatusMessage(IconFile, fmt"New {rows}x{cols} level created", a)

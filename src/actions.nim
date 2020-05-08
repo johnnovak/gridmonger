@@ -485,6 +485,36 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
 # }}}
 
+# {{{ addNewLevel*()
+proc addNewLevel*(map; loc: Location,
+                  locationName, levelName: string, elevation: int,
+                  rows, cols: Natural; um) =
+
+  let usd = UndoStateData(actionName: "New level", location: loc)
+
+  let action = proc (m: var Map): UndoStateData =
+    let newLevel = newLevel(locationName, levelName, elevation, rows, cols)
+    m.addLevel(newLevel)
+
+    var usd = usd
+    usd.location.level = m.levels.high
+    result = usd
+
+
+  let undoAction = proc (m: var Map): UndoStateData =
+    let level = m.levels.high
+    m.delLevel(level)
+
+    var linksToDelete = m.links.filterBySrcLevel(level)
+    linksToDelete.addAll(m.links.filterByDestLevel(level))
+
+    for src in linksToDelete.keys: m.links.delBySrc(src)
+    result = usd
+
+  um.storeUndoState(action, undoAction)
+  discard action(map)
+
+# }}}
 # {{{ resizeLevel*()
 proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                   align: Direction; um) =
@@ -587,7 +617,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
   let undoLevel = newLevelFrom(sb.level)
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel
+    m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for k in newFromLinks.keys: m.links.delByKey(k)
     for k in newtoLinks.keys:   m.links.delByKey(k)

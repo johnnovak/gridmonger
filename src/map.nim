@@ -63,7 +63,6 @@ proc addLevel*(m; l: Level) =
   m.refreshSortedLevelNames()
 
 proc delLevel*(m; levelIdx: Natural) =
-  # TODO update links
   m.levels.del(levelIdx)
   m.refreshSortedLevelNames()
 
