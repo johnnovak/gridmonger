@@ -287,4 +287,7 @@ proc resize*(l; newRows, newCols: Natural, align: Direction): Level =
   result.copyFrom(destRow, destCol, l, copyRect)
 
 
+proc isSpecialLevelIndex*(idx: Natural): bool =
+  idx >= CopyBufferLevelIndex
+
 # }}}

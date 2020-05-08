@@ -1641,10 +1641,10 @@ proc drawLinkMarkers(map: Map, level: Natural, ctx) =
       loc.col = dp.viewStartCol + viewCol
 
       if (map.links.hasWithSrc(loc) and
-          map.links.getBySrc(loc).level != CopyBufferLevelIndex) or
+          not isSpecialLevelIndex(map.links.getBySrc(loc).level)) or
 
          (map.links.hasWithDest(loc) and
-          map.links.getByDest(loc).level != CopyBufferLevelIndex):
+          not isSpecialLevelIndex(map.links.getByDest(loc).level)):
 
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)

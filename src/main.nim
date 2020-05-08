@@ -2464,7 +2464,8 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyP):
         if ui.copyBuf.isSome:
-          actions.paste(map, cur, ui.copyBuf.get, um)
+          actions.paste(map, cur, ui.copyBuf.get,
+                        linkSrcLevelIndex=CopyBufferLevelIndex, um)
           if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
           setStatusMessage(IconPaste, "Pasted buffer", a)
@@ -2508,7 +2509,7 @@ proc handleGlobalKeyEvents(a) =
           let src = cur
           if map.links.hasWithSrc(src):
             let dest = map.links.getBySrc(src)
-            if dest.level == CopyBufferLevelIndex:
+            if isSpecialLevelIndex(dest.level):
               result = false
             else:
               moveCursorTo(dest, a)
@@ -2518,7 +2519,7 @@ proc handleGlobalKeyEvents(a) =
           let dest = cur
           if map.links.hasWithDest(dest):
             let src = map.links.getByDest(dest)
-            if src.level == CopyBufferLevelIndex:
+            if isSpecialLevelIndex(src.level):
               result = false
             else:
               moveCursorTo(src, a)
@@ -2726,7 +2727,8 @@ proc handleGlobalKeyEvents(a) =
         let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.cut(map, cur, bbox, selection, um)
+          actions.cut(map, cur, bbox, selection,
+                      linkDestLevelIndex=CopyBufferLevelIndex, um)
           ui.cutToBuffer = true
 
           exitSelectMode(a)
@@ -2739,7 +2741,8 @@ proc handleGlobalKeyEvents(a) =
         let bbox = copySelection(ui.nudgeBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.cut(map, cur, bbox, selection, um)
+          actions.cut(map, cur, bbox, selection,
+                      linkDestLevelIndex=MoveBufferLevelIndex, um)
           exitSelectMode(a)
 
           # Enter paste preview mode
@@ -2832,7 +2835,8 @@ proc handleGlobalKeyEvents(a) =
       a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
       if ke.isKeyDown({keyEnter, keyP}):
-        actions.paste(map, cur, ui.copyBuf.get, um)
+        actions.paste(map, cur, ui.copyBuf.get,
+                      linkSrcLevelIndex=CopyBufferLevelIndex, um)
         if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
         ui.editMode = emNormal
@@ -2857,8 +2861,9 @@ proc handleGlobalKeyEvents(a) =
       a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
       if ke.isKeyDown({keyEnter, keyP}):
-        actions.paste(map, cur, ui.nudgeBuf.get, um,
-                      groupWithPrev=true, actionName="Move selection")
+        actions.paste(map, cur, ui.nudgeBuf.get,
+                      linkSrcLevelIndex=MoveBufferLevelIndex,
+                      um, groupWithPrev=true, actionName="Move selection")
 
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
@@ -3213,7 +3218,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
-  let filename = "link-test.grm"
+  let filename = "linktest.grm"
 #  let filename = "pool-of-radiance-multi.grm"
   a.doc.map = readMap(filename)
   a.doc.filename = filename

@@ -241,7 +241,9 @@ type
     selection*: Selection
 
 const
-  CopyBufferLevelIndex* = Natural.high   # internal, never written to disk
+  # internal IDs, never written to disk
+  CopyBufferLevelIndex* = 1_000_000
+  MoveBufferLevelIndex* = 1_000_001
 
 
 # Field constraints

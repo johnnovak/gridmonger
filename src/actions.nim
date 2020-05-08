@@ -176,8 +176,9 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
           if sel.isNeighbourCellEmpty(r,c, dirW): setWall(m, dirW)
 
 # }}}
-# {{{ cut()
-proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
+# {{{ cut*()
+proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
+          linkDestLevelIndex: Natural; um) =
 
   let level = loc.level
 
@@ -197,7 +198,7 @@ proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
       # buffer
       if src.level == level and
          bbox.contains(src.row, src.col) and selection[src.row, src.col]:
-        src.level = CopyBufferLevelIndex
+        src.level = linkDestLevelIndex
         src.row = src.row - bbox.r1
         src.col = src.col - bbox.c1
         addLink = true
@@ -205,7 +206,7 @@ proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
       if dest.level == level and
          bbox.contains(dest.row, dest.col) and selection[dest.row, dest.col]:
 
-        dest.level = CopyBufferLevelIndex
+        dest.level = linkDestLevelIndex
         dest.row = dest.row - bbox.r1
         dest.col = dest.col - bbox.c1
         addLink = true
@@ -234,9 +235,14 @@ proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection; um) =
           l.col = c
           m.eraseCell(l)
 
+    echo "AFTER CUT"
+    m.links.dump()
+    echo ""
+
 # }}}
 # {{{ paste*()
-proc paste*(map; pasteLoc: Location, sb: SelectionBuffer; um;
+proc paste*(map; pasteLoc: Location, sb: SelectionBuffer,
+            linkSrcLevelIndex: Natural; um;
             groupWithPrev: bool = false,
             actionName: string = "Pasted buffer") =
 
@@ -265,12 +271,20 @@ proc paste*(map; pasteLoc: Location, sb: SelectionBuffer; um;
         var loc: Location
         loc.level = pasteLoc.level
 
+        echo "PRE ERASE PASTE AREA"
+        m.links.dump()
+        echo ""
+
         # Erase links in the paste area
         for r in bbox.r1..<bbox.r2:
           for c in bbox.c1..<bbox.c2:
             loc.row = r
             loc.col = c
             m.eraseCellLinks(loc)
+
+        echo "POST ERASE PASTE AREA"
+        m.links.dump()
+        echo ""
 
         # Recreate links from the copy buffer
         var linkKeysToRemove = newSeq[Location]()
@@ -284,7 +298,7 @@ proc paste*(map; pasteLoc: Location, sb: SelectionBuffer; um;
             srcInside = true
             destInside = true
 
-          if src.level == CopyBufferLevelIndex:
+          if src.level == linkSrcLevelIndex:
             linkKeysToRemove.add(src)
             src.level = pasteLoc.level
             src.row += pasteLoc.row
@@ -292,7 +306,7 @@ proc paste*(map; pasteLoc: Location, sb: SelectionBuffer; um;
             srcInside = bbox.contains(src.row, src.col)
             addLink = true
 
-          if dest.level == CopyBufferLevelIndex:
+          if dest.level == linkSrcLevelIndex:
             linkKeysToRemove.add(src)
             dest.level = pasteLoc.level
             dest.row += pasteLoc.row
@@ -303,8 +317,20 @@ proc paste*(map; pasteLoc: Location, sb: SelectionBuffer; um;
           if addLink and srcInside and destInside:
             linksToAdd[src] = dest
 
+        echo "linkKeysToRemove"
+        echo linkKeysToRemove
+        echo ""
+
+        echo "linksToAdd"
+        linksToAdd.dump()
+        echo ""
+
         for s in linkKeysToRemove: m.links.delByKey(s)
         m.links.addAll(linksToAdd)
+
+        echo "AFTER PASTE"
+        m.links.dump()
+        echo ""
 
 # }}}
 # {{{ setWall*()
@@ -533,7 +559,7 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
 
 # }}}
 
-# {{{ setLink()
+# {{{ setLink*()
 proc setLink*(map; src, dest: Location; um) =
   let srcFloor = map.getFloor(src)
 
