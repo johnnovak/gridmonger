@@ -32,7 +32,7 @@ template fullLevelAction(map; loc: Location; um;
 
   let undoLevel = newLevelFrom(map.levels[loc.level])
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel
+    m.levels[loc.level] = newLevelFrom(undoLevel)
     result = usd
 
   um.storeUndoState(action, undoAction)
