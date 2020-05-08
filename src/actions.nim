@@ -515,6 +515,47 @@ proc addNewLevel*(map; loc: Location,
   discard action(map)
 
 # }}}
+# {{{ deleteLevel*()
+proc deleteLevel*(map; loc: Location, um) =
+
+  let usd = UndoStateData(actionName: "Delete level", location: loc)
+
+  let action = proc (m: var Map): UndoStateData =
+    m.delLevel(loc.level)
+
+    # TODO links
+#    var linksToDelete = m.links.filterBySrcLevel(level)
+#    linksToDelete.addAll(m.links.filterByDestLevel(level))
+
+    var usd = usd
+    usd.location.level = min(loc.level, m.levels.high)
+    result = usd
+
+
+  let undoLevel = newLevelFrom(map.levels[loc.level])
+
+  let undoAction = proc (m: var Map): UndoStateData =
+    let levelIdx = min(loc.level, m.levels.high)
+    echo "--------1"
+    let level = m.levels[levelIdx]
+    echo "--------2"
+    m.levels.add(level)
+    echo "--------3"
+    echo "*", m.levels.high
+
+    m.levels[levelIdx] = newLevelFrom(undoLevel)
+    echo "--------4"
+
+    m.refreshSortedLevelNames()
+
+    # TODO links
+    #for src in linksToDelete.keys: m.links.delBySrc(src)
+    result = usd
+
+  um.storeUndoState(action, undoAction)
+  discard action(map)
+
+# }}}
 # {{{ resizeLevel*()
 proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                   align: Direction; um) =

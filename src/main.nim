@@ -234,6 +234,7 @@ type AppShortcut = enum
   scDiscard,
 
 # TODO some shortcuts win/mac specific?
+# TODO introduce shortcus for everything
 let g_appShortcuts = {
 
   scNextTextField:    @[mkKeyShortcut(keyTab,           {})],
@@ -2583,6 +2584,11 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         openNewLevelDialog(a)
+
+      elif ke.isKeyDown(keyD, {mkCtrl}):
+        actions.deleteLevel(map, cur, um)
+        cur.level = min(cur.level, map.levels.high)
+        setStatusMessage(IconTrash, "Deleted level", a)
 
       elif ke.isKeyDown(keyN, {mkCtrl, mkAlt}):
         newMapAction(a)
