@@ -104,6 +104,28 @@ template singleCellAction(map; loc: Location; um;
 
 # }}}
 
+# {{{ setWall*()
+proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
+
+  singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
+    m.setWall(loc, dir, w)
+
+# }}}
+# {{{ setFloor*()
+proc setFloor*(map; loc: Location, f: Floor; um) =
+
+  singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
+    m.setFloor(loc, f)
+
+# }}}
+# {{{ setOrientedFloor*()
+proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
+
+  singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
+    m.setFloor(loc, f)
+    m.setFloorOrientation(loc, ot)
+
+# }}}
 # {{{ eraseCellWalls*()
 proc eraseCellWalls*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell walls", m):
@@ -116,6 +138,135 @@ proc eraseCell*(map; loc: Location; um) =
     m.eraseCell(loc)
 
 # }}}
+# {{{ excavate*()
+proc excavate*(map; loc: Location; um) =
+
+  singleCellAction(map, loc, um, "Excavate", m):
+    alias(l, m.levels[loc.level])
+    alias(c, loc.col)
+    alias(r, loc.row)
+
+    m.eraseCell(loc)
+    m.setFloor(loc, fEmpty)
+
+    if r == 0 or l.isFloorEmpty(r-1, c):
+      m.setWall(loc, dirN, wWall)
+    else:
+      m.setWall(loc, dirN, wNone)
+
+    if c == 0 or l.isFloorEmpty(r, c-1):
+      m.setWall(loc, dirW, wWall)
+    else:
+      m.setWall(loc, dirW, wNone)
+
+    if r == l.rows-1 or l.isFloorEmpty(r+1, c):
+      m.setWall(loc, dirS, wWall)
+    else:
+      m.setWall(loc, dirS, wNone)
+
+    if c == l.cols-1 or l.isFloorEmpty(r, c+1):
+      m.setWall(loc, dirE, wWall)
+    else:
+      m.setWall(loc, dirE, wNone)
+
+# }}}
+# {{{ toggleFloorOrientation*()
+proc toggleFloorOrientation*(map; loc: Location; um) =
+
+  singleCellAction(map, loc, um, "Toggle floor orientation", m):
+    let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
+    m.setFloorOrientation(loc, newOt)
+
+# }}}
+# {{{ setNote*()
+proc setNote*(map; loc: Location, n: Note; um) =
+
+  singleCellAction(map, loc, um, "Set note", m):
+    alias(l, m.levels[loc.level])
+    l.setNote(loc.row, loc.col, n)
+
+# }}}
+# {{{ eraseNote*()
+proc eraseNote*(map; loc: Location; um) =
+
+  singleCellAction(map, loc, um, "Erase note", m):
+    alias(l, m.levels[loc.level])
+    l.delNote(loc.row, loc.col)
+
+# }}}
+# {{{ setLink*()
+proc setLink*(map; src, dest: Location; um) =
+  let srcFloor = map.getFloor(src)
+
+  var destFloor: Floor
+  if   srcFloor in LinkPitSources:  destFloor = fCeilingPit
+  elif srcFloor == fTeleportSource: destFloor = fTeleportDestination
+  elif srcFloor == fDoorEnter:      destFloor = fDoorExit
+  elif srcFloor == fDoorExit:       destFloor = fDoorEnter
+  elif srcFloor in LinkStairs:
+    if map.levels[src.level].elevation < map.levels[dest.level].elevation:
+      destFloor = fStairsDown
+      # TODO could be made undoable, but probably not worth bothering with it
+      map.setFloor(src, fStairsUp)
+    else:
+      destFloor = fStairsUp
+      map.setFloor(src, fStairsDown)
+
+  let level = dest.level
+  let linkType = linkFloorToString(srcFloor)
+
+  let usd = UndoStateData(
+    actionName: fmt"Set link destination {EnDash} {linkType}",
+    location: Location(level: src.level, row: src.row, col: src.col)
+  )
+
+  # Do Action
+  let action = proc (m: var Map): UndoStateData =
+    # edge case: support for overwriting existing link
+    # (delete existing links originating from src)
+    m.links.delBySrc(src)
+
+    m.setFloor(dest, destFloor)
+    m.links.set(src, dest)
+    m.levels[level].reindexNotes()
+    result = usd
+
+  # Undo Action
+  let
+    r = dest.row
+    c = dest.col
+    rect = rectN(r, c, r+1, c+1)  # single cell
+
+  let undoLevel = newLevelFrom(map.levels[level], rect)
+
+  var oldLinks = initLinks()
+  if map.links.hasWithSrc(dest):  oldLinks.set(dest, map.links.getBySrc(dest))
+  if map.links.hasWithDest(dest): oldLinks.set(map.links.getByDest(dest), dest)
+  if map.links.hasWithSrc(src):   oldLinks.set(src, map.links.getBySrc(src))
+  if map.links.hasWithDest(src):  oldLinks.set(map.links.getByDest(src), src)
+
+  let undoAction = proc (m: var Map): UndoStateData =
+    m.levels[level].copyFrom(
+      destRow = rect.r1,
+      destCol = rect.c1,
+      src     = undoLevel,
+      srcRect = rectN(0, 0, 1, 1)  # single cell
+    )
+    m.levels[level].reindexNotes()
+
+    # Delete existing links in undo area
+    m.links.delBySrc(dest)
+    m.links.delByDest(dest)
+
+    m.links.addAll(oldLinks)
+
+    result = usd
+
+  um.storeUndoState(action, undoAction)
+  discard action(map)
+
+# }}}
+
 # {{{ eraseSelection*()
 proc eraseSelection*(map; level: Natural, sel: Selection,
                      bbox: Rect[Natural]; um) =
@@ -176,9 +327,9 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
           if sel.isNeighbourCellEmpty(r,c, dirW): setWall(m, dirW)
 
 # }}}
-# {{{ cut*()
-proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
-          linkDestLevelIndex: Natural; um) =
+# {{{ cutSelection*()
+proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
+                   linkDestLevelIndex: Natural; um) =
 
   let level = loc.level
 
@@ -240,11 +391,11 @@ proc cut*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
     echo ""
 
 # }}}
-# {{{ paste*()
-proc paste*(map; pasteLoc: Location, sb: SelectionBuffer,
-            linkSrcLevelIndex: Natural; um;
-            groupWithPrev: bool = false,
-            actionName: string = "Pasted buffer") =
+# {{{ pasteSelection*()
+proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
+                     linkSrcLevelIndex: Natural; um;
+                     groupWithPrev: bool = false,
+                     actionName: string = "Pasted buffer") =
 
   let rect = rectN(
     pasteLoc.row,
@@ -331,84 +482,6 @@ proc paste*(map; pasteLoc: Location, sb: SelectionBuffer,
         echo "AFTER PASTE"
         m.links.dump()
         echo ""
-
-# }}}
-# {{{ setWall*()
-proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
-
-  singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
-    m.setWall(loc, dir, w)
-
-# }}}
-# {{{ setFloor*()
-proc setFloor*(map; loc: Location, f: Floor; um) =
-
-  singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
-    m.setFloor(loc, f)
-
-# }}}
-# {{{ setOrientedFloor*()
-proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
-
-  singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
-    m.setFloor(loc, f)
-    m.setFloorOrientation(loc, ot)
-
-# }}}
-# {{{ excavate*()
-proc excavate*(map; loc: Location; um) =
-
-  singleCellAction(map, loc, um, "Excavate", m):
-    alias(l, m.levels[loc.level])
-    alias(c, loc.col)
-    alias(r, loc.row)
-
-    m.eraseCell(loc)
-    m.setFloor(loc, fEmpty)
-
-    if r == 0 or l.isFloorEmpty(r-1, c):
-      m.setWall(loc, dirN, wWall)
-    else:
-      m.setWall(loc, dirN, wNone)
-
-    if c == 0 or l.isFloorEmpty(r, c-1):
-      m.setWall(loc, dirW, wWall)
-    else:
-      m.setWall(loc, dirW, wNone)
-
-    if r == l.rows-1 or l.isFloorEmpty(r+1, c):
-      m.setWall(loc, dirS, wWall)
-    else:
-      m.setWall(loc, dirS, wNone)
-
-    if c == l.cols-1 or l.isFloorEmpty(r, c+1):
-      m.setWall(loc, dirE, wWall)
-    else:
-      m.setWall(loc, dirE, wNone)
-
-# }}}
-# {{{ toggleFloorOrientation*()
-proc toggleFloorOrientation*(map; loc: Location; um) =
-
-  singleCellAction(map, loc, um, "Toggle floor orientation", m):
-    let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
-    m.setFloorOrientation(loc, newOt)
-
-# }}}
-# {{{ setNote*()
-proc setNote*(map; loc: Location, n: Note; um) =
-
-  singleCellAction(map, loc, um, "Set note", m):
-    alias(l, m.levels[loc.level])
-    l.setNote(loc.row, loc.col, n)
-
-# }}}
-# {{{ eraseNote*()
-proc eraseNote*(map; loc: Location; um) =
-
-  singleCellAction(map, loc, um, "Erase note", m):
-    alias(l, m.levels[loc.level])
-    l.delNote(loc.row, loc.col)
 
 # }}}
 
@@ -527,7 +600,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   discard action(map)
 
 # }}}
-# {{{ setLevelProps()
+# {{{ setLevelProps*()
 proc setLevelProps*(map; loc: Location, locationName, levelName: string,
                     elevation: int; um) =
 
@@ -559,77 +632,5 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
 
 # }}}
 
-# {{{ setLink*()
-proc setLink*(map; src, dest: Location; um) =
-  let srcFloor = map.getFloor(src)
-
-  var destFloor: Floor
-  if   srcFloor in LinkPitSources:  destFloor = fCeilingPit
-  elif srcFloor == fTeleportSource: destFloor = fTeleportDestination
-  elif srcFloor == fDoorEnter:      destFloor = fDoorExit
-  elif srcFloor == fDoorExit:       destFloor = fDoorEnter
-  elif srcFloor in LinkStairs:
-    if map.levels[src.level].elevation < map.levels[dest.level].elevation:
-      destFloor = fStairsDown
-      # TODO could be made undoable, but probably not worth bothering with it
-      map.setFloor(src, fStairsUp)
-    else:
-      destFloor = fStairsUp
-      map.setFloor(src, fStairsDown)
-
-  let level = dest.level
-  let linkType = linkFloorToString(srcFloor)
-
-  let usd = UndoStateData(
-    actionName: fmt"Set link destination {EnDash} {linkType}",
-    location: Location(level: src.level, row: src.row, col: src.col)
-  )
-
-  # Do Action
-  let action = proc (m: var Map): UndoStateData =
-    # edge case: support for overwriting existing link
-    # (delete existing links originating from src)
-    m.links.delBySrc(src)
-
-    m.setFloor(dest, destFloor)
-    m.links.set(src, dest)
-    m.levels[level].reindexNotes()
-    result = usd
-
-  # Undo Action
-  let
-    r = dest.row
-    c = dest.col
-    rect = rectN(r, c, r+1, c+1)  # single cell
-
-  let undoLevel = newLevelFrom(map.levels[level], rect)
-
-  var oldLinks = initLinks()
-  if map.links.hasWithSrc(dest):  oldLinks.set(dest, map.links.getBySrc(dest))
-  if map.links.hasWithDest(dest): oldLinks.set(map.links.getByDest(dest), dest)
-  if map.links.hasWithSrc(src):   oldLinks.set(src, map.links.getBySrc(src))
-  if map.links.hasWithDest(src):  oldLinks.set(map.links.getByDest(src), src)
-
-  let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[level].copyFrom(
-      destRow = rect.r1,
-      destCol = rect.c1,
-      src     = undoLevel,
-      srcRect = rectN(0, 0, 1, 1)  # single cell
-    )
-    m.levels[level].reindexNotes()
-
-    # Delete existing links in undo area
-    m.links.delBySrc(dest)
-    m.links.delByDest(dest)
-
-    m.links.addAll(oldLinks)
-
-    result = usd
-
-  um.storeUndoState(action, undoAction)
-  discard action(map)
-
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -2464,8 +2464,8 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyP):
         if ui.copyBuf.isSome:
-          actions.paste(map, cur, ui.copyBuf.get,
-                        linkSrcLevelIndex=CopyBufferLevelIndex, um)
+          actions.pasteSelection(map, cur, ui.copyBuf.get,
+                                 linkSrcLevelIndex=CopyBufferLevelIndex, um)
           if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
           setStatusMessage(IconPaste, "Pasted buffer", a)
@@ -2727,8 +2727,8 @@ proc handleGlobalKeyEvents(a) =
         let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.cut(map, cur, bbox, selection,
-                      linkDestLevelIndex=CopyBufferLevelIndex, um)
+          actions.cutSelection(map, cur, bbox, selection,
+                               linkDestLevelIndex=CopyBufferLevelIndex, um)
           ui.cutToBuffer = true
 
           exitSelectMode(a)
@@ -2741,8 +2741,8 @@ proc handleGlobalKeyEvents(a) =
         let bbox = copySelection(ui.nudgeBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.cut(map, cur, bbox, selection,
-                      linkDestLevelIndex=MoveBufferLevelIndex, um)
+          actions.cutSelection(map, cur, bbox, selection,
+                               linkDestLevelIndex=MoveBufferLevelIndex, um)
           exitSelectMode(a)
 
           # Enter paste preview mode
@@ -2835,8 +2835,9 @@ proc handleGlobalKeyEvents(a) =
       a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
       if ke.isKeyDown({keyEnter, keyP}):
-        actions.paste(map, cur, ui.copyBuf.get,
-                      linkSrcLevelIndex=CopyBufferLevelIndex, um)
+        actions.pasteSelection(map, cur, ui.copyBuf.get,
+                               linkSrcLevelIndex=CopyBufferLevelIndex, um)
+
         if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
         ui.editMode = emNormal
@@ -2861,9 +2862,10 @@ proc handleGlobalKeyEvents(a) =
       a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
 
       if ke.isKeyDown({keyEnter, keyP}):
-        actions.paste(map, cur, ui.nudgeBuf.get,
-                      linkSrcLevelIndex=MoveBufferLevelIndex,
-                      um, groupWithPrev=true, actionName="Move selection")
+        actions.pasteSelection(map, cur, ui.nudgeBuf.get,
+                               linkSrcLevelIndex=MoveBufferLevelIndex,
+                               um, groupWithPrev=true,
+                               actionName="Move selection")
 
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
