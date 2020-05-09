@@ -386,10 +386,6 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
           l.col = c
           m.eraseCell(l)
 
-    echo "AFTER CUT"
-    m.links.dump()
-    echo ""
-
 # }}}
 # {{{ pasteSelection*()
 proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
@@ -422,10 +418,6 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
         var loc: Location
         loc.level = pasteLoc.level
 
-        echo "PRE ERASE PASTE AREA"
-        m.links.dump()
-        echo ""
-
         # Erase links in the paste area
         for r in bbox.r1..<bbox.r2:
           for c in bbox.c1..<bbox.c2:
@@ -433,9 +425,6 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
             loc.col = c
             m.eraseCellLinks(loc)
 
-        echo "POST ERASE PASTE AREA"
-        m.links.dump()
-        echo ""
 
         # Recreate links from the copy buffer
         var linkKeysToRemove = newSeq[Location]()
@@ -468,20 +457,8 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
           if addLink and srcInside and destInside:
             linksToAdd[src] = dest
 
-        echo "linkKeysToRemove"
-        echo linkKeysToRemove
-        echo ""
-
-        echo "linksToAdd"
-        linksToAdd.dump()
-        echo ""
-
         for s in linkKeysToRemove: m.links.delByKey(s)
         m.links.addAll(linksToAdd)
-
-        echo "AFTER PASTE"
-        m.links.dump()
-        echo ""
 
 # }}}
 
@@ -521,11 +498,33 @@ proc deleteLevel*(map; loc: Location, um) =
   let usd = UndoStateData(actionName: "Delete level", location: loc)
 
   let action = proc (m: var Map): UndoStateData =
+    let adjustLinks = loc.level < m.levels.high
+
+    # if the deleted level wasn't the last, moves the last level into
+    # the "hole" created by the delete
     m.delLevel(loc.level)
 
-    # TODO links
-#    var linksToDelete = m.links.filterBySrcLevel(level)
-#    linksToDelete.addAll(m.links.filterByDestLevel(level))
+    var linksToDelete = m.links.filterBySrcLevel(loc.level)
+    linksToDelete.addAll(m.links.filterByDestLevel(loc.level))
+
+    for src in linksToDelete.keys: m.links.delBySrc(src)
+
+    if adjustLinks:
+      let oldLevelIdx = m.levels.high+1
+      let newLevelIdx = loc.level
+
+      var linksToAdjust = m.links.filterBySrcLevel(oldLevelIdx)
+      linksToAdjust.addAll(m.links.filterByDestLevel(oldLevelIdx))
+
+      for src in linksToAdjust.keys: m.links.delBySrc(src)
+
+      for src, dest in linksToAdjust.pairs:
+        var src = src
+        var dest = dest
+        if src.level  == oldLevelIdx: src.level  = newLevelIdx
+        if dest.level == oldLevelIdx: dest.level = newLevelIdx
+        m.links.set(src, dest)
+
 
     var usd = usd
     usd.location.level = min(loc.level, m.levels.high)
@@ -536,15 +535,10 @@ proc deleteLevel*(map; loc: Location, um) =
 
   let undoAction = proc (m: var Map): UndoStateData =
     let levelIdx = min(loc.level, m.levels.high)
-    echo "--------1"
     let level = m.levels[levelIdx]
-    echo "--------2"
     m.levels.add(level)
-    echo "--------3"
-    echo "*", m.levels.high
 
     m.levels[levelIdx] = newLevelFrom(undoLevel)
-    echo "--------4"
 
     m.refreshSortedLevelNames()
 
@@ -580,55 +574,36 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
   let usd = UndoStateData(actionName: "Nudge level", location: loc)
 
-  let oldFromLinks = map.links.filterBySrcLevel(loc.level)
-  let oldToLinks   = map.links.filterByDestLevel(loc.level)
-
-  var newFromLinks = initLinks()
-  var newToLinks   = initLinks()
-
   let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
 
-  # TODO simplify, reduce duplication of logic? use cellAreaAction?
-  for src, dest in oldFromLinks.pairs:
-    var r = src.row.int + rowOffs
-    var c = src.col.int + colOffs
-    if levelRect.contains(r,c):
-      let newSrc = Location(level: src.level, row: r, col: c)
+  var oldLinks = map.links.filterBySrcLevel(loc.level)
+  oldLinks.addAll(map.links.filterByDestLevel(loc.level))
 
-      var newDest: Location
-      if dest.level == src.level:
-        r = dest.row.int + rowOffs
-        c = dest.col.int + colOffs
+  var newLinks = initLinks()
 
-        if levelRect.contains(r,c):
-          newDest = Location(level: dest.level, row: r, col: c)
-        else:
-          continue
+  for src, dest in oldLinks.pairs:
+    var src = src
+    var dest = dest
+
+    if src.level == loc.level:
+      var r = src.row.int + rowOffs
+      var c = src.col.int + colOffs
+      if levelRect.contains(r,c):
+        src.row = r
+        src.col = c
       else:
-        newDest = dest
+        continue
 
-      newFromLinks.set(newSrc, newDest)
-
-
-  for src, dest in oldToLinks.pairs:
-    var r = dest.row.int + rowOffs
-    var c = dest.col.int + colOffs
-    if levelRect.contains(r,c):
-      let newDest = Location(level: dest.level, row: r, col: c)
-
-      var newSrc: Location
-      if src.level == dest.level:
-        r = src.row.int + rowOffs
-        c = src.col.int + colOffs
-
-        if levelRect.contains(r,c):
-          newSrc = Location(level: src.level, row: r, col: c)
-        else:
-          continue
+    if dest.level == loc.level:
+      var r = dest.row.int + rowOffs
+      var c = dest.col.int + colOffs
+      if levelRect.contains(r,c):
+        dest.row = r
+        dest.col = c
       else:
-        newSrc = src
+        continue
 
-      newToLinks.set(newSrc, newDest)
+    newLinks.set(src, dest)
 
 
   # The level is cleared for the duration of the nudge operation and it is
@@ -644,11 +619,9 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     discard l.paste(rowOffs, colOffs, sb.level, sb.selection)
     m.levels[loc.level] = l
 
-    for k in oldFromLinks.keys: m.links.delByKey(k)
-    for k in oldToLinks.keys:   m.links.delByKey(k)
+    for src in oldLinks.keys: m.links.delBySrc(src)
 
-    m.links.addAll(newFromLinks)
-    m.links.addAll(newToLinks)
+    m.links.addAll(newLinks)
 
     var usd = usd
     usd.location.row = max(usd.location.row + rowOffs, 0)
@@ -660,11 +633,9 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
-    for k in newFromLinks.keys: m.links.delByKey(k)
-    for k in newtoLinks.keys:   m.links.delByKey(k)
+    for src in newLinks.keys: m.links.delBySrc(src)
 
-    m.links.addAll(oldFromLinks)
-    m.links.addAll(oldToLinks)
+    m.links.addAll(oldLinks)
     result = usd
 
   um.storeUndoState(action, undoAction)
