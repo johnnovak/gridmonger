@@ -71,8 +71,8 @@ proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural],
 
 proc filterByInRect*(l; level: Natural, rect: Rect[Natural],
                      sel: Option[Selection] = Selection.none): Links =
-  var links = l.filterBySrcInRect(level, rect, sel)
-  links.addAll(l.filterByDestInRect(level, rect, sel))
+  result = l.filterBySrcInRect(level, rect, sel)
+  result.addAll(l.filterByDestInRect(level, rect, sel))
 
 
 proc filterBySrcLevel*(l; level: Natural): Links =
@@ -88,8 +88,8 @@ proc filterByDestLevel*(l; level: Natural): Links =
       result[src] = dest
 
 proc filterByLevel*(l; level: Natural): Links =
-  var links = l.filterBySrcLevel(level)
-  links.addAll(l.filterByDestLevel(level))
+  result = l.filterBySrcLevel(level)
+  result.addAll(l.filterByDestLevel(level))
 
 
 # vim: et:ts=2:sw=2:fdm=marker
