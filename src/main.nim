@@ -1771,6 +1771,31 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 # }}}
 # }}}
 
+# {{{ undoAction()
+proc undoAction(a) =
+  alias(um, a.doc.undoManager)
+
+  if um.canUndo():
+    let undoStateData = um.undo(a.doc.map)
+    moveCursorTo(undoStateData.location, a)
+    setStatusMessage(IconUndo,
+                     fmt"Undid action: {undoStateData.actionName}", a)
+  else:
+    setStatusMessage(IconWarning, "Nothing to undo", a)
+
+# }}}
+# {{{ redoAction()
+proc redoAction(a) =
+  alias(um, a.doc.undoManager)
+
+  if um.canRedo():
+    let undoStateData = um.redo(a.doc.map)
+    moveCursorTo(undoStateData.location, a)
+    setStatusMessage(IconRedo,
+                     fmt"Redid action: {undoStateData.actionName}", a)
+  else:
+    setStatusMessage(IconWarning, "Nothing to redo", a)
+# }}}
 # {{{ newMapAction()
 proc newMapAction(a) =
   if a.doc.undoManager.isModified:
@@ -2440,23 +2465,11 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyU, repeat=true):
-        if um.canUndo():
-          let undoStateData = um.undo(map)
-          moveCursorTo(undoStateData.location, a)
-          setStatusMessage(IconUndo,
-                           fmt"Undid action: {undoStateData.actionName}", a)
-        else:
-          setStatusMessage(IconWarning, "Nothing to undo", a)
+        undoAction(a)
 
       elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
-        if um.canRedo():
-          let undoStateData = um.redo(map)
-          moveCursorTo(undoStateData.location, a)
-          setStatusMessage(IconRedo,
-                           fmt"Redid action: {undoStateData.actionName}", a)
-        else:
-          setStatusMessage(IconWarning, "Nothing to redo", a)
+        redoAction(a)
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
@@ -2587,7 +2600,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyD, {mkCtrl}):
         actions.deleteLevel(map, cur, um)
-        cur.level = min(cur.level, map.levels.high)
+        cur.level = max(min(cur.level, map.levels.high), 0)
         setStatusMessage(IconTrash, "Deleted level", a)
 
       elif ke.isKeyDown(keyN, {mkCtrl, mkAlt}):
@@ -2959,6 +2972,10 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isKeyDown(keyR,        {mkCtrl, mkAlt}):   reloadThemeAction(a)
     elif ke.isKeyDown(keyPageUp,   {mkCtrl, mkAlt}):   prevThemeAction(a)
     elif ke.isKeyDown(keyPageDown, {mkCtrl, mkAlt}):   nextThemeAction(a)
+
+    elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
+         ke.isKeyDown(keyU, repeat=true):
+      undoAction(a)
 
 # }}}
 

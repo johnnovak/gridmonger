@@ -18,8 +18,8 @@ proc dump*(l) =
   for src, dest in l.pairs:
     echo "src: ", src, ", dest: ", dest
 
-proc set*(l: var Links; src, dest: Location) =
-  l[src] = dest
+proc set*(vl; src, dest: Location) =
+  vl[src] = dest
 
 proc hasWithSrc*(l; src: Location): bool =
   l.hasKey(src)
@@ -33,11 +33,11 @@ proc getBySrc*(l; src: Location): Location =
 proc getByDest*(l; dest: Location): Location =
   l.getKeyByVal(dest)
 
-proc delBySrc*(l: var Links; src: Location) =
-  l.delByKey(src)
+proc delBySrc*(vl; src: Location) =
+  vl.delByKey(src)
 
-proc delByDest*(l: var Links; dest: Location) =
-  l.delByVal(dest)
+proc delByDest*(vl; dest: Location) =
+  vl.delByVal(dest)
 
 proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural],
                         sel: Option[Selection] = Selection.none): Links =
@@ -90,6 +90,19 @@ proc filterByDestLevel*(l; level: Natural): Links =
 proc filterByLevel*(l; level: Natural): Links =
   result = l.filterBySrcLevel(level)
   result.addAll(l.filterByDestLevel(level))
+
+
+proc remapLevelIndex*(vl; oldIndex, newIndex: Natural) =
+  var links = vl.filterByLevel(oldIndex)
+
+  for src in links.keys: vl.delBySrc(src)
+
+  for src, dest in links.pairs:
+    var src = src
+    var dest = dest
+    if src.level  == oldIndex: src.level  = newIndex
+    if dest.level == oldIndex: dest.level = newIndex
+    vl.set(src, dest)
 
 
 # vim: et:ts=2:sw=2:fdm=marker

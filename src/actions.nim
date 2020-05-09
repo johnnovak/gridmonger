@@ -491,6 +491,8 @@ proc deleteLevel*(map; loc: Location, um) =
 
   let usd = UndoStateData(actionName: "Delete level", location: loc)
 
+  let oldLinks = map.links.filterByLevel(loc.level)
+
   let action = proc (m: var Map): UndoStateData =
     let adjustLinks = loc.level < m.levels.high
 
@@ -498,43 +500,37 @@ proc deleteLevel*(map; loc: Location, um) =
     # the "hole" created by the delete
     m.delLevel(loc.level)
 
-    for src in m.links.filterByLevel(loc.level).keys:
+    for src in oldLinks.keys:
       m.links.delBySrc(src)
 
     if adjustLinks:
       let oldLevelIdx = m.levels.high+1
       let newLevelIdx = loc.level
-
-      var linksToAdjust = m.links.filterByLevel(oldLevelIdx)
-
-      for src in linksToAdjust.keys: m.links.delBySrc(src)
-
-      for src, dest in linksToAdjust.pairs:
-        var src = src
-        var dest = dest
-        if src.level  == oldLevelIdx: src.level  = newLevelIdx
-        if dest.level == oldLevelIdx: dest.level = newLevelIdx
-        m.links.set(src, dest)
-
+      m.links.remapLevelIndex(oldLevelIdx, newLevelIdx)
 
     var usd = usd
-    usd.location.level = min(loc.level, m.levels.high)
+    usd.location.level = max(min(loc.level, m.levels.high), 0)
     result = usd
 
 
   let undoLevel = newLevelFrom(map.levels[loc.level])
 
   let undoAction = proc (m: var Map): UndoStateData =
-    let levelIdx = min(loc.level, m.levels.high)
-    let level = m.levels[levelIdx]
-    m.levels.add(level)
+    let restoredLevel = newLevelFrom(undoLevel)
 
-    m.levels[levelIdx] = newLevelFrom(undoLevel)
+    if loc.level > m.levels.high:
+      m.levels.add(restoredLevel)
+    else:
+      # move to the end
+      let lastLevel = m.levels[loc.level]
+      m.levels.add(lastLevel)
+
+      m.levels[loc.level] = restoredLevel
+      m.links.remapLevelIndex(oldIndex = loc.level, newIndex = m.levels.high)
 
     m.refreshSortedLevelNames()
+    m.links.addAll(oldLinks)
 
-    # TODO links
-    #for src in linksToDelete.keys: m.links.delBySrc(src)
     result = usd
 
   um.storeUndoState(action, undoAction)
