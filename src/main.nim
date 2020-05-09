@@ -160,9 +160,11 @@ type
     editMapPropsDialog:   EditMapPropsDialogParams
 
     newLevelDialog:       NewLevelDialogParams
+    deleteLevelDialog:    DeleteLevelDialogParams
     editLevelPropsDialog: EditLevelPropsParams
-    editNoteDialog:       EditNoteDialogParams
     resizeLevelDialog:    ResizeLevelDialogParams
+
+    editNoteDialog:       EditNoteDialogParams
 
   SaveDiscardDialogParams = object
     isOpen:       bool
@@ -177,6 +179,9 @@ type
     isOpen:       bool
     name:         string
     activateFirstTextField: bool
+
+  DeleteLevelDialogParams = object
+    isOpen:       bool
 
   NewLevelDialogParams = object
     isOpen:       bool
@@ -1217,6 +1222,66 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+
+  koi.endDialog()
+
+# }}}
+# {{{ Delete level dialog
+proc openDeleteLevelDialog(a) =
+  alias(dlg, a.dialog.deleteLevelDialog)
+  dlg.isOpen = true
+
+
+proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
+  alias(map, a.doc.map)
+  alias(cur, a.ui.cursor)
+  alias(um, a.doc.undoManager)
+
+  let
+    dialogWidth = 350.0
+    dialogHeight = 136.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconTrash}  Delete level?")
+  clearStatusMessage(a)
+
+  let
+    h = 24.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 50.0
+
+  koi.label(x, y, dialogWidth, h, "Do you want to delete the current level?")
+
+  proc deleteAction(dlg: var DeleteLevelDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+    actions.deleteLevel(map, cur, um)
+    cur.level = max(min(cur.level, map.levels.high), 0)
+    setStatusMessage(IconTrash, "Deleted level", a)
+
+  proc cancelAction(dlg: var DeleteLevelDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 20
+  y = dialogHeight - h - buttonPad
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} Delete"):
+    deleteAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+  if koi.hasEvent():
+    let ke = koi.currEvent()
+    if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept):  deleteAction(dlg, a)
 
   koi.endDialog()
 
@@ -2599,9 +2664,7 @@ proc handleGlobalKeyEvents(a) =
         openNewLevelDialog(a)
 
       elif ke.isKeyDown(keyD, {mkCtrl}):
-        actions.deleteLevel(map, cur, um)
-        cur.level = max(min(cur.level, map.levels.high), 0)
-        setStatusMessage(IconTrash, "Deleted level", a)
+        openDeleteLevelDialog(a)
 
       elif ke.isKeyDown(keyN, {mkCtrl, mkAlt}):
         newMapAction(a)
@@ -3069,6 +3132,9 @@ proc renderUI() =
 
   elif dlg.newLevelDialog.isOpen:
     newLevelDialog(dlg.newLevelDialog, a)
+
+  elif dlg.deleteLevelDialog.isOpen:
+    deleteLevelDialog(dlg.deleteLevelDialog, a)
 
   elif dlg.editLevelPropsDialog.isOpen:
     editLevelPropsDialog(dlg.editLevelPropsDialog, a)
