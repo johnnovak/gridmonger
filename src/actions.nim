@@ -57,8 +57,7 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
     actionMap.levels[lvl].reindexNotes()
     result = usd
 
-  var oldLinks = map.links.filterBySrcInRect(lvl, rect)
-  oldLinks.addAll(map.links.filterByDestInRect(lvl, rect))
+  var oldLinks = map.links.filterByInRect(lvl, rect)
 
   let undoLevel = newLevelFrom(map.levels[lvl], rect)
 
@@ -78,10 +77,7 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
       rect.r1 + undoLevel.rows,
       rect.c1 + undoLevel.cols
     )
-    for src in m.links.filterBySrcInRect(lvl, delRect).keys:
-      m.links.delBySrc(src)
-
-    for src in m.links.filterByDestInRect(lvl, delRect).keys:
+    for src in m.links.filterByInRect(lvl, delRect).keys:
       m.links.delBySrc(src)
 
     m.links.addAll(oldLinks)
@@ -335,8 +331,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
   # TODO use cellAreaAction
 
-  var oldLinks = map.links.filterBySrcInRect(level, bbox, sel.some)
-  oldLinks.addAll(map.links.filterByDestInRect(level, bbox, sel.some))
+  var oldLinks = map.links.filterByInRect(level, bbox, sel.some)
 
   proc transformAndCollectLinks(origLinks: Links, linksBuf: var Links,
                                 selection: Selection, bbox: Rect[Natural]) =
@@ -482,10 +477,9 @@ proc addNewLevel*(map; loc: Location,
     let level = m.levels.high
     m.delLevel(level)
 
-    var linksToDelete = m.links.filterBySrcLevel(level)
-    linksToDelete.addAll(m.links.filterByDestLevel(level))
+    for src in m.links.filterByLevel(level).keys:
+      m.links.delBySrc(src)
 
-    for src in linksToDelete.keys: m.links.delBySrc(src)
     result = usd
 
   um.storeUndoState(action, undoAction)
@@ -504,17 +498,14 @@ proc deleteLevel*(map; loc: Location, um) =
     # the "hole" created by the delete
     m.delLevel(loc.level)
 
-    var linksToDelete = m.links.filterBySrcLevel(loc.level)
-    linksToDelete.addAll(m.links.filterByDestLevel(loc.level))
-
-    for src in linksToDelete.keys: m.links.delBySrc(src)
+    for src in m.links.filterByLevel(loc.level).keys:
+      m.links.delBySrc(src)
 
     if adjustLinks:
       let oldLevelIdx = m.levels.high+1
       let newLevelIdx = loc.level
 
-      var linksToAdjust = m.links.filterBySrcLevel(oldLevelIdx)
-      linksToAdjust.addAll(m.links.filterByDestLevel(oldLevelIdx))
+      var linksToAdjust = m.links.filterByLevel(oldLevelIdx)
 
       for src in linksToAdjust.keys: m.links.delBySrc(src)
 
@@ -576,9 +567,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
   let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
 
-  var oldLinks = map.links.filterBySrcLevel(loc.level)
-  oldLinks.addAll(map.links.filterByDestLevel(loc.level))
-
+  var oldLinks = map.links.filterByLevel(loc.level)
   var newLinks = initLinks()
 
   for src, dest in oldLinks.pairs:
