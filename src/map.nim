@@ -45,8 +45,6 @@ proc refreshSortedLevelNames*(m) =
       c = cmp(b.level.elevation, a.level.elevation)
       if c != 0: return c
 
-      # TODO ensure two levels with the same elevation & location name
-      # cannot have the same level name
       return cmp(a.level.levelName, b.level.levelName)
   )
   m.sortedLevelNames = newSeqOfCap[string](m.levels.len)

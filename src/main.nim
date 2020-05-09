@@ -513,6 +513,7 @@ proc loadTheme(index: Natural, a) =
     DialogWarningLabelStyle.fontSize = 14
     DialogWarningLabelStyle.color = rgb(245, 98, 141)  # TODO
     DialogWarningLabelStyle.align = haLeft
+    DialogWarningLabelStyle.multiLine = true
 
 
   block:
@@ -576,15 +577,6 @@ proc loadTheme(index: Natural, a) =
 
 # }}}
 
-# {{{ getPxRatio()
-# TODO move to koi?
-proc getPxRatio(a): float =
-  let
-    (winWidth, _) = a.win.size
-    (fbWidth, _) = a.win.framebufferSize
-  result = fbWidth / winWidth
-
-# }}}
 # {{{ Key handling
 # TODO change all into isShorcut* (if possible)
 func isKeyDown(ev: Event, keys: set[Key],
@@ -605,6 +597,16 @@ proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
     if ev.action in a:
       let sc = mkKeyShortcut(ev.key, ev.mods)
       result = sc in g_appShortcuts[shortcut]
+
+# }}}
+#
+# {{{ getPxRatio()
+# TODO move to koi?
+proc getPxRatio(a): float =
+  let
+    (winWidth, _) = a.win.size
+    (fbWidth, _) = a.win.framebufferSize
+  result = fbWidth / winWidth
 
 # }}}
 # {{{ moveCurrGridIcon()
@@ -824,6 +826,10 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 # }}}
 
 # {{{ Dialogs
+
+proc mkValidationError(msg: string): string =
+  fmt"{IconWarning}   {msg}"
+
 # {{{ Save/discard changes dialog
 proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   let
@@ -927,7 +933,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
   # Validation
   var validationError = ""
   if dlg.name == "":
-    validationError = fmt"{IconWarning}  Name is mandatory"
+    validationError = mkValidationError("Name is mandatory")
 
   y += 44
 
@@ -1019,7 +1025,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
   # Validation
   var validationError = ""
   if dlg.name == "":
-    validationError = fmt"{IconWarning}  Name is mandatory"
+    validationError = mkValidationError("Name is mandatory")
 
   y += 44
 
@@ -1089,9 +1095,11 @@ proc openNewLevelDialog(a) =
 
 
 proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
+  alias(map, a.doc.map)
+
   let
     dialogWidth = 410.0
-    dialogHeight = 334.0
+    dialogHeight = 358.0
 
   koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Level")
   clearStatusMessage(a)
@@ -1169,12 +1177,23 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   # Validation
   var validationError = ""
   if dlg.locationName == "":
-    validationError = fmt"{IconWarning}  Location name is mandatory"
+    validationError = mkValidationError("Location name is mandatory")
+  else:
+    for l in map.levels:
+      if l.locationName == dlg.locationName and
+         l.levelName == dlg.levelName and
+         $l.elevation == dlg.elevation:
 
-  y += 44
+        validationError = mkValidationError(
+          "A level already exists with the same location name, " &
+          "level name & elevation."
+        )
+        break
+
+  y += 20
 
   if validationError != "":
-    koi.label(x, y, dialogWidth, h, validationError,
+    koi.label(x, y, dialogWidth - 60, 60, validationError,
               style=DialogWarningLabelStyle)
 
 
@@ -1197,9 +1216,11 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
+
   proc cancelAction(dlg: var NewLevelDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
+
 
   x = dialogWidth - 2 * buttonWidth - buttonPad - 10
   y = dialogHeight - h - buttonPad
@@ -1357,7 +1378,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   # Validation
   var validationError = ""
   if dlg.locationName == "":
-    validationError = fmt"{IconWarning}  Location name is mandatory"
+    validationError = mkValidationError("Location name is mandatory")
 
   y += 44
 
@@ -1713,16 +1734,17 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   if dlg.kind in {nkComment, nkIndexed, nkCustomId}:
     if dlg.text == "":
-      validationErrors.add(fmt"{IconWarning}  Text is mandatory")
+      validationErrors.add(mkValidationError("Text is mandatory"))
   if dlg.kind == nkCustomId:
     if dlg.customId == "":
-      validationErrors.add(fmt"{IconWarning}  ID is mandatory")
+      validationErrors.add(mkValidationError("ID is mandatory"))
     else:
       for c in dlg.customId:
         if not isAlphaNumeric(c):
           validationErrors.add(
-            fmt"{IconWarning}  ID must contain only alphanumeric characters " &
-            "(a-z, A-Z, 0-9)"
+            mkValidationError(
+              "ID must contain only alphanumeric characters (a-z, A-Z, 0-9)"
+            )
           )
           break
 
