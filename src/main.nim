@@ -1280,9 +1280,10 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-    actions.deleteLevel(map, cur, um)
-    cur.level = max(min(cur.level, map.levels.high), 0)
+    var currSortedLevelIdx = getCurrSortedLevelIdx(a)
+    cur = actions.deleteLevel(map, cur, um)
     setStatusMessage(IconTrash, "Deleted level", a)
+
 
   proc cancelAction(dlg: var DeleteLevelDialogParams, a) =
     koi.closeDialog()
@@ -3330,7 +3331,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
-  let filename = "linktest.grm"
+  let filename = "eob1.grm"
 #  let filename = "pool-of-radiance-multi.grm"
   a.doc.map = readMap(filename)
   a.doc.filename = filename

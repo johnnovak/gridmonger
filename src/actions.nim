@@ -7,6 +7,7 @@ import links
 import map
 import rect
 import selection
+import tables
 import undomanager
 import utils
 
@@ -487,7 +488,7 @@ proc addNewLevel*(map; loc: Location,
 
 # }}}
 # {{{ deleteLevel*()
-proc deleteLevel*(map; loc: Location, um) =
+proc deleteLevel*(map; loc: Location, um): Location =
 
   let usd = UndoStateData(actionName: "Delete level", location: loc)
 
@@ -495,6 +496,8 @@ proc deleteLevel*(map; loc: Location, um) =
 
   let action = proc (m: var Map): UndoStateData =
     let adjustLinks = loc.level < m.levels.high
+
+    let currSortedLevelIdx = m.findSortedLevelIdxByLevelIdx(usd.location.level)
 
     # if the deleted level wasn't the last, moves the last level into
     # the "hole" created by the delete
@@ -509,7 +512,13 @@ proc deleteLevel*(map; loc: Location, um) =
       m.links.remapLevelIndex(oldLevelIdx, newLevelIdx)
 
     var usd = usd
-    usd.location.level = max(min(loc.level, m.levels.high), 0)
+    if m.levels.len == 0:
+      usd.location.level = 0
+    else:
+      usd.location.level = m.sortedLevelIdxToLevelIdx[
+        min(currSortedLevelIdx, m.levels.high)
+      ]
+
     result = usd
 
 
@@ -534,7 +543,7 @@ proc deleteLevel*(map; loc: Location, um) =
     result = usd
 
   um.storeUndoState(action, undoAction)
-  discard action(map)
+  action(map).location
 
 # }}}
 # {{{ resizeLevel*()
@@ -658,6 +667,5 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
   discard action(map)
 
 # }}}
-
 
 # vim: et:ts=2:sw=2:fdm=marker
