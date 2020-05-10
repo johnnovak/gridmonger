@@ -461,7 +461,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 # {{{ addNewLevel*()
 proc addNewLevel*(map; loc: Location,
                   locationName, levelName: string, elevation: int,
-                  rows, cols: Natural; um) =
+                  rows, cols: Natural; um): Location =
 
   let usd = UndoStateData(actionName: "New level", location: loc)
 
@@ -484,7 +484,7 @@ proc addNewLevel*(map; loc: Location,
     result = usd
 
   um.storeUndoState(action, undoAction)
-  discard action(map)
+  action(map).location
 
 # }}}
 # {{{ deleteLevel*()

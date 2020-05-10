@@ -1096,6 +1096,7 @@ proc openNewLevelDialog(a) =
 
 proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   alias(map, a.doc.map)
+  alias(cur, a.ui.cursor)
 
   let
     dialogWidth = 410.0
@@ -1205,11 +1206,11 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
       cols = parseInt(dlg.cols)
       elevation = parseInt(dlg.elevation)
 
-    actions.addNewLevel(a.doc.map, a.ui.cursor,
-                        dlg.locationName, dlg.levelName, elevation, rows, cols,
-                        a.doc.undoManager)
-
-    a.ui.cursor.level = a.doc.map.levels.high
+    cur = actions.addNewLevel(
+      a.doc.map, cur, dlg.locationName,
+      dlg.levelName, elevation, rows, cols,
+      a.doc.undoManager
+    )
 
     setStatusMessage(IconFile, fmt"New {rows}x{cols} level created", a)
 
