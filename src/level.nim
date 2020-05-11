@@ -245,7 +245,10 @@ proc guessFloorOrientation*(l; r,c: Natural): Orientation =
     Horiz
 
 
-proc resize*(l; newRows, newCols: Natural, align: Direction): Level =
+proc calcResizeParams*(
+  l; newRows, newCols: Natural, align: Direction
+ ): tuple[destRow, destCol: Natural, copyRect: Rect[Natural]] =
+
   var srcRect = rectI(0, 0, l.rows, l.cols)
 
   proc shiftHoriz(r: var Rect[int], d: int) =
@@ -281,10 +284,7 @@ proc resize*(l; newRows, newCols: Natural, align: Direction): Level =
   copyRect.r2 = copyRect.r1 + intRect.rows
   copyRect.c2 = copyRect.c1 + intRect.cols
 
-  result = newLevel(l.locationName, l.levelName, l.elevation,
-                    newRows, newCols)
-
-  result.copyFrom(destRow, destCol, l, copyRect)
+  result = (destRow.Natural, destCol.Natural, copyRect)
 
 
 proc isSpecialLevelIndex*(idx: Natural): bool =

@@ -105,4 +105,33 @@ proc remapLevelIndex*(vl; oldIndex, newIndex: Natural) =
     vl.set(src, dest)
 
 
+proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
+                        levelRect: Rect[int]): Links =
+  result = initLinks()
+
+  for src, dest in l.pairs:
+    var src = src
+    var dest = dest
+
+    if src.level == level:
+      var r = src.row.int + rowOffs
+      var c = src.col.int + colOffs
+      if levelRect.contains(r,c):
+        src.row = r
+        src.col = c
+      else:
+        continue
+
+    if dest.level == level:
+      var r = dest.row.int + rowOffs
+      var c = dest.col.int + colOffs
+      if levelRect.contains(r,c):
+        dest.row = r
+        dest.col = c
+      else:
+        continue
+
+    result.set(src, dest)
+
+
 # vim: et:ts=2:sw=2:fdm=marker

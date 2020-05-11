@@ -1187,7 +1187,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
         validationError = mkValidationError(
           "A level already exists with the same location name, " &
-          "level name & elevation."
+          "level name and elevation."
         )
         break
 
@@ -2991,14 +2991,10 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
       elif ke.isKeyDown(keyEnter):
-        let newLocation = Location(
-          level: cur.level,
-          row: max(cur.row + dp.selStartRow, 0),
-          col: max(cur.col + dp.selStartCol, 0)
-        )
-        actions.nudgeLevel(map, cur, dp.selStartRow, dp.selStartCol,
-                           ui.nudgeBuf.get, um)
-        moveCursorTo(newLocation, a)
+        let newCur = actions.nudgeLevel(map, cur,
+                                        dp.selStartRow, dp.selStartCol,
+                                        ui.nudgeBuf.get, um)
+        moveCursorTo(newCur, a)
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
@@ -3332,7 +3328,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 #  let filename = "notetest.grm"
 #  let filename = "pool-of-radiance-library.grm"
 #  let filename = "teleport-test.grm"
-  let filename = "eob1.grm"
+  let filename = "leveltest.grm"
+#  let filename = "eob1.grm"
 #  let filename = "pool-of-radiance-multi.grm"
   a.doc.map = readMap(filename)
   a.doc.filename = filename

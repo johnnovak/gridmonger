@@ -329,9 +329,6 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
                    linkDestLevelIndex: Natural; um) =
 
   let level = loc.level
-
-  # TODO use cellAreaAction
-
   var oldLinks = map.links.filterByInRect(level, bbox, sel.some)
 
   proc transformAndCollectLinks(origLinks: Links, linksBuf: var Links,
@@ -553,7 +550,14 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
   # TODO link support
   fullLevelAction(map, loc, um, "Resize level", m):
     alias(l, m.levels[loc.level])
-    l = l.resize(newRows, newCols, align)
+    let (destRow, destCol, copyRect) = l.calcResizeParams(newRows, newCols,
+                                                          align)
+
+    var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
+                            newRows, newCols)
+
+    newLevel.copyFrom(destRow, destCol, l, copyRect)
+    l = newLevel
 
 # }}}
 # {{{ cropLevel*()
@@ -566,39 +570,15 @@ proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
 # }}}
 # {{{ nudgeLevel*()
 proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
-                 sb: SelectionBuffer; um) =
+                 sb: SelectionBuffer; um): Location =
 
   let usd = UndoStateData(actionName: "Nudge level", location: loc)
 
   let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
 
-  var oldLinks = map.links.filterByLevel(loc.level)
-  var newLinks = initLinks()
-
-  for src, dest in oldLinks.pairs:
-    var src = src
-    var dest = dest
-
-    if src.level == loc.level:
-      var r = src.row.int + rowOffs
-      var c = src.col.int + colOffs
-      if levelRect.contains(r,c):
-        src.row = r
-        src.col = c
-      else:
-        continue
-
-    if dest.level == loc.level:
-      var r = dest.row.int + rowOffs
-      var c = dest.col.int + colOffs
-      if levelRect.contains(r,c):
-        dest.row = r
-        dest.col = c
-      else:
-        continue
-
-    newLinks.set(src, dest)
-
+  let oldLinks = map.links.filterByLevel(loc.level)
+  let newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
+                                            levelRect)
 
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
@@ -633,7 +613,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     result = usd
 
   um.storeUndoState(action, undoAction)
-  discard action(map)
+  action(map).location
 
 # }}}
 # {{{ setLevelProps*()
