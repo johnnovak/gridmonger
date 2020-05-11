@@ -23,17 +23,26 @@ using
 
 # {{{ fullLevelAction()
 template fullLevelAction(map; loc: Location; um;
-                         actName: string, actionMap, actionBody: untyped) =
+                         actName: string, oldLinks, newLinks: Links,
+                         actionMap, actionBody: untyped) =
 
   let usd = UndoStateData(actionName: actName, location: loc)
 
   let action = proc (actionMap: var Map): UndoStateData =
     actionBody
+
+    for src in oldLinks.keys: m.links.delBySrc(src)
+    m.links.addAll(newLinks)
     result = usd
 
+
   let undoLevel = newLevelFrom(map.levels[loc.level])
+
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = newLevelFrom(undoLevel)
+
+    for src in newLinks.keys: m.links.delBySrc(src)
+    m.links.addAll(oldLinks)
     result = usd
 
   um.storeUndoState(action, undoAction)
@@ -546,13 +555,21 @@ proc deleteLevel*(map; loc: Location, um): Location =
 # {{{ resizeLevel*()
 proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                   align: Direction; um) =
+  let
+    oldLinks = map.links.filterByLevel(loc.level)
 
-  # TODO link support
-  fullLevelAction(map, loc, um, "Resize level", m):
+    (destRow, destCol, copyRect) =
+      map.levels[loc.level].calcResizeParams(newRows, newCols, align)
+
+    levelRect = rectI(0, 0, newRows, newCols)
+    rowOffs = destRow.int - copyRect.r1
+    colOffs = destCol.int - copyRect.c1
+
+    newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
+                                          levelRect)
+
+  fullLevelAction(map, loc, um, "Resize level", oldLinks, newLinks, m):
     alias(l, m.levels[loc.level])
-    let (destRow, destCol, copyRect) = l.calcResizeParams(newRows, newCols,
-                                                          align)
-
     var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
                             newRows, newCols)
 
@@ -563,8 +580,11 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 # {{{ cropLevel*()
 proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
 
+  let oldLinks = map.links.filterByLevel(loc.level)
+  let newLinks = initLinks()
+
   # TODO link support
-  fullLevelAction(map, loc, um, "Crop level", m):
+  fullLevelAction(map, loc, um, "Crop level", oldLinks, newLinks, m):
     m.levels[loc.level] = newLevelFrom(m.levels[loc.level], rect)
 
 # }}}
@@ -594,7 +614,6 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     m.levels[loc.level] = l
 
     for src in oldLinks.keys: m.links.delBySrc(src)
-
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -608,8 +627,8 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for src in newLinks.keys: m.links.delBySrc(src)
-
     m.links.addAll(oldLinks)
+
     result = usd
 
   um.storeUndoState(action, undoAction)
