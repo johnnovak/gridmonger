@@ -1,21 +1,14 @@
-import common
 import options
 import parsecfg
 import strformat
-import strscans
-import strutils
 
 import nanovg
 
+import cfghelper
+import common
 import csdwindow
 import utils
 
-
-type ThemeParseError* = object of ValueError
-
-# TODO remove?
-#proc raiseThemeParseError(s: string) =
-#  raise newException(ThemeParseError, s)
 
 const
   UISection = "ui"
@@ -207,101 +200,6 @@ DefaultLevelStyle.notePaneIndexBgColor = @[gray(1.0, 0.2),
                                            gray(1.0, 0.2)]
 
 DefaultLevelStyle.linkMarkerColor      = gray(0.85)
-
-# }}}
-
-# {{{ missingValueError()
-proc missingValueError(section, key: string) =
-  let msg = fmt"Missing value in section='{section}', key='{key}'"
-  echo msg
-  # TODO
-#  raiseThemeParseError(msg)
-
-# }}}
-# {{{ invalidValueError
-proc invalidValueError(section, key, valueType, value: string) =
-  let msg = fmt"Invalid {valueType} value in section='{section}', key='{key}': {value}"
-  echo msg
-  # TODO
-#  raiseThemeParseError(msg)
-
-# }}}
-# {{{ getValue()
-proc getValue(cfg: Config, section, key: string): string =
-  result = cfg.getSectionValue(section, key)
-  if result == "":
-    missingValueError(section, key)
-
-# }}}
-# {{{ parseColor()
-proc parseColor(s: string): Option[Color] =
-  result = Color.none
-  block:
-    var r, g, b, a: int
-    if scanf(s, "gray($i)$.", g):
-      result = gray(g).some
-    elif scanf(s, "gray($i,$s$i)$.", g, a):
-      result = gray(g, a).some
-    elif scanf(s, "rgb($i,$s$i,$s$i)$.", r, g, b):
-      result = rgb(r, g, b).some
-    elif scanf(s, "rgba($i,$s$i,$s$i,$s$i)$.", r, g, b, a):
-      result = rgba(r, g, b, a).some
-
-  if result.isSome: return
-
-  block:
-    var r, g, b, a: float
-    if scanf(s, "gray($f)$.", g):
-      result = gray(g).some
-    elif scanf(s, "gray($f,$s$f)$.", g, a):
-      result = gray(g, a).some
-    elif scanf(s, "rgb($f,$s$f,$s$f)$.", r, g, b):
-      result = rgb(r, g, b).some
-    elif scanf(s, "rgba($f,$s$f,$s$f,$s$f)$.", r, g, b, a):
-      result = rgba(r, g, b, a).some
-
-# }}}
-
-# {{{ getString()
-proc getString(cfg: Config, section, key: string, s: var string) =
-  s = getValue(cfg, section, key)
-
-# }}}
-# {{{ getColor()
-proc getColor(cfg: Config, section, key: string, c: var Color) =
-  let v = getValue(cfg, section, key)
-  let col = parseColor(v)
-  if col.isNone:
-    invalidValueError(section, key, "color", v)
-  else:
-    c = col.get
-
-# }}}
-# {{{ getBool()
-proc getBool(cfg: Config, section, key: string, b: var bool) =
-  let v = getValue(cfg, section, key)
-  try:
-    b = parseBool(v)
-  except ValueError:
-    invalidValueError(section, key, "bool", v)
-
-# }}}
-# {{{ getFloat()
-proc getFloat(cfg: Config, section, key: string, f: var float) =
-  let v = getValue(cfg, section, key)
-  try:
-    f = parseFloat(v)
-  except ValueError:
-    invalidValueError(section, key, "float", v)
-
-# }}}
-# {{{ getEnum()
-proc getEnum[T: enum](cfg: Config, section, key: string, e: var T) =
-  let v = getValue(cfg, section, key)
-  try:
-    e = parseEnum[T](v)
-  except ValueError:
-    invalidValueError(section, key, "enum", v)
 
 # }}}
 

@@ -23,11 +23,14 @@ const
 
   WindowResizeEdgeWidth = 10.0
   WindowResizeCornerSize = 20.0
-  WindowMinWidth = 640
-  WindowMinHeight = 480
 
-  SmoothResize_RedrawHack = true
-  SmoothResize_NoVsyncHack = true
+  # TODO make this window param
+  WindowMinWidth* = 640
+  WindowMinHeight* = 480
+
+var
+  g_resizeRedrawHack = true
+  g_resizeNoVsyncHack = true
 
 #  {{{ CSDWindow
 type
@@ -104,14 +107,12 @@ proc newCSDWindow*(): CSDWindow =
   result = new CSDWindow
 
   var cfg = DefaultOpenglWindowConfig
-  cfg.size = (w: 800, h: 600)
   cfg.resizable = false
   cfg.visible = false
   cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
   cfg.debugContext = false  # TODO
   cfg.nMultiSamples = 4
   cfg.decorated = false
-  cfg.floating = false
 
   when defined(macosx):
     cfg.version = glv32
@@ -163,7 +164,7 @@ proc resizing*(win): bool =
 
 # {{{ restore()
 proc restore(win) =
-  if SmoothResize_NoVsyncHack:
+  if g_resizeNoVsyncHack:
     glfw.swapInterval(0)
 
   win.fastRedrawFrameCounter = 20
@@ -172,15 +173,15 @@ proc restore(win) =
   win.maximized = false
 
 # }}}
-# {{{ maximize()
-proc maximize(win) =
+# {{{ maximize*()
+proc maximize*(win) =
   # TODO This logic needs to be a bit more sophisticated to support
   # multiple monitors
   let (_, _, w, h) = getPrimaryMonitor().workArea
   (win.oldPosX, win.oldPosY) = win.w.pos
   (win.oldWidth, win.oldHeight) = win.w.size
 
-  if SmoothResize_NoVsyncHack:
+  if g_resizeNoVsyncHack:
     glfw.swapInterval(0)
 
   win.fastRedrawFrameCounter = 20
@@ -270,7 +271,7 @@ proc handleWindowDragEvents(win) =
         (win.posX0, win.posY0) = win.w.pos
         win.dragState = wdsMoving
 
-        if SmoothResize_NoVsyncHack:
+        if g_resizeNoVsyncHack:
           glfw.swapInterval(0)
 
     if not win.maximized:
@@ -306,7 +307,7 @@ proc handleWindowDragEvents(win) =
             # TODO maybe hide on OSX only?
 #            hideCursor()
 #
-            if SmoothResize_NoVsyncHack:
+            if g_resizeNoVsyncHack:
               glfw.swapInterval(0)
         else:
           showArrowCursor()
@@ -362,7 +363,7 @@ proc handleWindowDragEvents(win) =
     else:
       win.dragState = wdsNone
 
-      if SmoothResize_NoVsyncHack:
+      if g_resizeNoVsyncHack:
         glfw.swapInterval(1)
 
   of wdsResizing:
@@ -426,7 +427,7 @@ proc handleWindowDragEvents(win) =
       win.dragState = wdsNone
       showCursor()
 
-      if SmoothResize_NoVsyncHack:
+      if g_resizeNoVsyncHack:
         glfw.swapInterval(1)
 
 # }}}
@@ -489,7 +490,7 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 
   glfw.swapBuffers(win.w)  # TODO
 
-  if SmoothResize_NoVsyncHack:
+  if g_resizeNoVsyncHack:
     if win.fastRedrawFrameCounter > 0:
       dec(win.fastRedrawFrameCounter)
       if win.fastRedrawFrameCounter == 0:
@@ -498,7 +499,7 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 # }}}
 
 proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-  if SmoothResize_RedrawHack:
+  if g_resizeRedrawHack:
     csdRenderFrame(g_window, doHandleEvents=false)
   else:
     discard
@@ -510,6 +511,12 @@ proc `renderFrameCb=`*(win; p: RenderFrameProc) =
   g_window = win
   g_renderFrameProc = p
   win.w.framebufferSizeCb = framebufSizeCb
+
+proc setResizeRedrawHack*(enabled: bool) =
+  g_resizeRedrawHack = enabled
+
+proc setResizeNoVsyncHack*(enabled: bool) =
+  g_resizeNoVsyncHack = enabled
 
 
 # vim: et:ts=2:sw=2:fdm=marker

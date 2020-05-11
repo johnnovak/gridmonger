@@ -2,13 +2,11 @@ BUGS
   - nudge: move cursor by nudge amount
   - cut and the paste back doesn't yield the same results
   - cut shouldn't cut walls of bordering cells
-  - left edge of spinner symbols is cut off on high zoom levels on retina
-    screens
+  - left edge of spinner symbols is cut off on high zoom levels on retina screens
+  - note dialog textfield focus bug
 
 
 TODO
-  - delete level (undo support)
-  - new level (undo support)
   - koi: textarea widget
   - save last used config
   - save display params into file: cursor pos, level, theme, option settings
@@ -28,17 +26,19 @@ TODO
   - pin window support
   - logging
 
+
+LOW PRIORITY
   - proper multi-window handling in csdwindow
   - better csdwindow separation (e.g. titlebar)
   - don't allow drawing on title & status bars (koi scissor stacking)
   - attempt to fix nasty concurrent redraw bug when resizing csdwindow
   - attempt to fix resize csdwindow
-  - themes for all koi widgets
 
-FONT -
-  neuton
-  grenze
-
-
-FUTURE FEATURES
+FUTURE
   - floor colours
+
+
+FONTS
+  - neuton
+  - grenze
+

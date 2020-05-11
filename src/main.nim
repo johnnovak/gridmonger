@@ -15,6 +15,7 @@ import nanovg
 when not defined(DEBUG): import osdialog
 
 import actions
+import appconfig
 import common
 import csdwindow
 import drawlevel
@@ -69,6 +70,8 @@ type
   AppContext = ref object
     win:         CSDWindow
     vg:          NVGContext
+
+    config:      AppConfig
 
     doc:         Document
     opt:         Options
@@ -671,16 +674,19 @@ proc updateViewStartAndCursorPosition(a) =
   dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), l.cols)
 
+  # TODO clamp
   dp.viewStartRow = min(max(l.rows - dp.viewRows, 0), dp.viewStartRow)
   dp.viewStartCol = min(max(l.cols - dp.viewCols, 0), dp.viewStartCol)
 
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
   let viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
+  # TODO clamp
   cur.row = min(
     max(viewEndRow, dp.viewStartRow),
     cur.row
   )
+    # TODO clamp
   cur.col = min(
     max(viewEndCol, dp.viewStartCol),
     cur.col
@@ -701,6 +707,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural, a) =
     let viewCol = cur.col - dp.viewStartCol
     let viewColMax = dp.viewCols-1 - sm
     if viewCol > viewColMax:
+      # TODO clamp
       dp.viewStartCol = min(max(l.cols - dp.viewCols, 0),
                             dp.viewStartCol + (viewCol - viewColMax))
 
@@ -709,6 +716,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural, a) =
     let viewRow = cur.row - dp.viewStartRow
     let viewRowMax = dp.viewRows-1 - sm
     if viewRow > viewRowMax:
+      # TODO clamp
       dp.viewStartRow = min(max(l.rows - dp.viewRows, 0),
                             dp.viewStartRow + (viewRow - viewRowMax))
 
@@ -3218,6 +3226,10 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
 
 # }}}
 
+const
+  ConfigPath = getConfigDir() / "Gridmonger"
+  ConfigFile = ConfigPath / "gridmonger.ini"
+
 # {{{ Init & cleanup
 proc initDrawLevelParams(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -3229,6 +3241,7 @@ proc initDrawLevelParams(a) =
 
 
 proc loadImages(vg: NVGContext, a) =
+  # TODO data dir as constant
   let img = vg.createImage("data/old-paper.jpg", {ifRepeatX, ifRepeatY})
 
   # TODO use exceptions instead (in the nanovg wrapper)
@@ -3284,6 +3297,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a = new AppContext
   a.win = win
   a.vg = vg
+
+  a.config = loadAppConfig("data/gridmonger.ini")
+
   a.doc.undoManager = newUndoManager[Map, UndoStateData]()
 
   loadFonts(vg)
@@ -3303,7 +3319,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
 
   searchThemes(a)
-  var themeIndex = findThemeIndex("beholder", a)
+  var themeIndex = findThemeIndex(a.config.themeName, a)
   if themeIndex == -1: themeIndex = 0
   loadTheme(themeIndex, a)
 
@@ -3334,14 +3350,31 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.doc.map = readMap(filename)
   a.doc.filename = filename
 
+  # Init window
   a.win.renderFramePreCb = renderFramePre
   a.win.renderFrameCb = renderFrame
 
-  # TODO for development
-  a.win.size = (960, 1040)
-  a.win.pos = (960, 0)
-#  a.win.size = (700, 900)
-#  a.win.pos = (900, 0)
+  # Set window size & position
+  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
+
+  let width = a.config.width.clamp(WindowMinWidth, maxWidth)
+  let height = a.config.height.clamp(WindowMinHeight, maxHeight)
+
+  var xpos = a.config.xpos
+  if xpos < 0: xpos = (maxWidth - width) div 2
+
+  var ypos = a.config.ypos
+  if ypos < 0: ypos = (maxHeight - height) div 2 
+
+  a.win.size = (width, height)
+  a.win.pos = (xpos, ypos)
+
+  if a.config.maximized:
+    a.win.maximize()
+
+  setResizeRedrawHack(a.config.resizeRedrawHack)
+  setResizeNoVsyncHack(a.config.resizeNoVsyncHack)
+
   a.win.show()
 
 
