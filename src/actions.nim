@@ -561,12 +561,12 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     (destRow, destCol, copyRect) =
       map.levels[loc.level].calcResizeParams(newRows, newCols, align)
 
-    levelRect = rectI(0, 0, newRows, newCols)
+    newLevelRect = rectI(0, 0, newRows, newCols)
     rowOffs = destRow.int - copyRect.r1
     colOffs = destCol.int - copyRect.c1
 
     newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
-                                          levelRect)
+                                          newLevelRect)
 
   fullLevelAction(map, loc, um, "Resize level", oldLinks, newLinks, m):
     alias(l, m.levels[loc.level])
@@ -578,14 +578,21 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
 # }}}
 # {{{ cropLevel*()
-proc cropLevel*(map; loc: Location, rect: Rect[Natural]; um) =
+proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um) =
 
-  let oldLinks = map.links.filterByLevel(loc.level)
-  let newLinks = initLinks()
+  let
+    oldLinks = map.links.filterByLevel(loc.level)
 
-  # TODO link support
+    newLevelRect = rectI(0, 0, cropRect.rows, cropRect.cols)
+    rowOffs = -cropRect.r1
+    colOffs = -cropRect.c1
+
+    newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
+                                          newLevelRect)
+
+
   fullLevelAction(map, loc, um, "Crop level", oldLinks, newLinks, m):
-    m.levels[loc.level] = newLevelFrom(m.levels[loc.level], rect)
+    m.levels[loc.level] = newLevelFrom(m.levels[loc.level], cropRect)
 
 # }}}
 # {{{ nudgeLevel*()
