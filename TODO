@@ -7,8 +7,8 @@ BUGS
 
 
 TODO
+  - preferences
   - koi: textarea widget
-  - save last used config
   - save display params into file: cursor pos, level, theme, option settings
     (basically used should continue where he left off after reopening a map)
 

@@ -157,6 +157,8 @@ type
     levelDropdownStyle:   DropdownStyle
 
   Dialog = object
+    preferencesDialog:    PreferencesDialogParams
+
     saveDiscardDialog:    SaveDiscardDialogParams
 
     newMapDialog:         NewMapDialogParams
@@ -168,6 +170,16 @@ type
     resizeLevelDialog:    ResizeLevelDialogParams
 
     editNoteDialog:       EditNoteDialogParams
+
+  PreferencesDialogParams = object
+    isOpen:                 bool
+    showSplash:             bool
+    loadLastFile:           bool
+    autoSave:               bool
+    autoSaveFrequencySecs:  string
+    resizeRedrawHack:       bool
+    resizeNoVsyncHack:      bool
+    activateFirstTextField: bool
 
   SaveDiscardDialogParams = object
     isOpen:       bool
@@ -510,6 +522,34 @@ proc loadTheme(index: Natural, a) =
   alias(s, a.ui.style)
 
   a.win.setStyle(s.titleBarStyle)
+
+  block:
+    # TODO
+#    alias(s, s.buttonStyle)
+
+    var cs = koi.getDefaultCheckBoxStyle()
+
+#    cs.cornerRadius       = 5
+#    cs.strokeWidth        = 
+#    cs.strokeColor        = 
+#    cs.strokeColorHover   = 
+#    cs.strokeColorDown    = 
+#    cs.strokeColorActive  = 
+    cs.fillColor          = gray(0.6)
+    cs.fillColorHover     = gray(0.8)
+    cs.fillColorDown      = rgb(255, 190, 0)
+    cs.fillColorActive    = gray(0.6)
+    cs.iconColor          = gray(0.2)
+    cs.iconColorHover     = gray(0.2)
+    cs.iconColorDown      = gray(0.2)
+    cs.iconColorActive    = gray(0.2)
+    cs.iconFontSize       = 12.0
+#    cs.iconFontFace       = 
+    cs.iconActive         = IconCheck
+    cs.iconInactive       = NoIcon
+
+    koi.setDefaultCheckBoxStyle(cs)
+
 
   block:
     alias(s, s.buttonStyle)
@@ -871,6 +911,115 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 proc mkValidationError(msg: string): string =
   fmt"{IconWarning}   {msg}"
 
+# {{{ Preferences dialog
+proc openPreferencesDialog(a) =
+  alias(dlg, a.dialog.preferencesDialog)
+
+  dlg.showSplash = true # TODO
+  dlg.loadLastFile = true # TODO
+  dlg.autoSave = true # TODO
+  dlg.autoSaveFrequencySecs = "30"
+  dlg.resizeRedrawHack = getResizeRedrawHack()
+  dlg.resizeNoVsyncHack = getResizeNoVsyncHack()
+
+  dlg.isOpen = true
+
+
+proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
+  alias(map, a.doc.map)
+  alias(cur, a.ui.cursor)
+
+  let
+    dialogWidth = 370.0
+    dialogHeight = 345.0
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCog}  Preferences")
+  clearStatusMessage(a)
+
+  let
+    h = 24.0
+    cbw = 18.0
+    cbYOffs = 3.0
+    labelWidth = 235.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var
+    x = 30.0
+    y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Show splash screen at startup")
+  dlg.showSplash = koi.checkBox(x + labelWidth, y+cbYOffs, cbw, dlg.showSplash)
+
+  y += 30
+  koi.label(x, y, labelWidth, h, "Open last file at startup")
+  dlg.loadLastFile = koi.checkBox(x + labelWidth, y+cbYOffs, cbw, dlg.loadLastFile)
+
+  y += 48
+  koi.label(x, y, labelWidth, h, "Auto-save")
+  dlg.autoSave = koi.checkBox(x + labelWidth, y, cbw, dlg.autoSave)
+
+  y += 30
+  koi.label(x, y, labelWidth, h, "Auto-save frequency (seconds)")
+  dlg.autoSaveFrequencySecs = koi.textField(
+    x + labelWidth, y, w = 60.0, h,
+    dlg.autoSaveFrequencySecs,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: 30,
+      max: 3600
+    ).some
+  )
+
+  y += 48
+  koi.label(x, y, labelWidth, h, "Resize window redraw hack")
+  dlg.resizeRedrawHack = koi.checkBox(x + labelWidth, y+cbYOffs, cbw,
+                                      dlg.resizeRedrawHack)
+
+  y += 30
+  koi.label(x, y, labelWidth, h, "Resize window no vsync hack")
+  dlg.resizeNoVsyncHack = koi.checkBox(x + labelWidth, y+cbYOffs, cbw,
+                                      dlg.resizeNoVsyncHack)
+
+  y += 20
+
+
+  proc okAction(dlg: var PreferencesDialogParams, a) =
+    # TODO
+
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  proc cancelAction(dlg: var PreferencesDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+    okAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+  dlg.activateFirstTextField = false
+
+  if koi.hasEvent():
+    let ke = koi.currEvent()
+
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+
+  koi.endDialog()
+
+# }}}
 # {{{ Save/discard changes dialog
 proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
   let
@@ -2724,6 +2873,9 @@ proc handleGlobalKeyEvents(a) =
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
 
+      elif ke.isKeyDown(keyU, {mkCtrl, mkAlt}):
+        openPreferencesDialog(a)
+
       elif ke.isKeyDown(keyN, {mkCtrl}):
         openNewLevelDialog(a)
 
@@ -3181,7 +3333,10 @@ proc renderUI() =
   drawStatusBar(statusBarY, winWidth.float, a)
 
   # Dialogs
-  if dlg.saveDiscardDialog.isOpen:
+  if dlg.preferencesDialog.isOpen:
+    preferencesDialog(dlg.preferencesDialog, a)
+
+  elif dlg.saveDiscardDialog.isOpen:
     saveDiscardDialog(dlg.saveDiscardDialog, a)
 
   elif dlg.newMapDialog.isOpen:
@@ -3399,7 +3554,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   if xpos < 0: xpos = (maxWidth - width) div 2
 
   var ypos = cfg.ypos
-  if ypos < 0: ypos = (maxHeight - height) div 2 
+  if ypos < 0: ypos = (maxHeight - height) div 2
 
   a.win.size = (width, height)
   a.win.pos = (xpos, ypos)
