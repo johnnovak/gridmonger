@@ -144,7 +144,7 @@ proc newDrawLevelParams*(): DrawLevelParams =
 
 # }}}
 
-# {{{ zoomLevel*()
+# {{{ getZoomLevel*()
 proc getZoomLevel*(dp): Natural = dp.zoomLevel
 
 # }}}

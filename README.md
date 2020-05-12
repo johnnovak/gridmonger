@@ -6,6 +6,7 @@
 
 ## Dependencies
 
+* configparser
 * koi
 * nim-glfw
 * nim-nanovg

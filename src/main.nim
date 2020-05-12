@@ -275,6 +275,50 @@ const SpecialWalls = @[
 
 # }}}
 
+# {{{ Config handling
+const
+  ConfigPath = getConfigDir() / "Gridmonger"
+  ConfigFile = ConfigPath / "gridmonger.ini"
+
+proc saveConfig(a) =
+  alias(ui, a.ui)
+  alias(dp, a.ui.drawLevelParams)
+  alias(opt, a.opt)
+  alias(theme, a.theme)
+
+  let (xpos, ypos) = if a.win.maximized: a.win.oldPos else: a.win.pos
+  let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
+
+  let a = AppConfig(
+    showSplash: true,  # TODO
+    loadLastFile: true,  # TODO
+    lastFileName: "",  # TODO
+
+    maximized: a.win.maximized,
+    xpos: xpos,
+    ypos: ypos,
+    width: width,
+    height: height,
+    resizeRedrawHack: csdwindow.getResizeRedrawHack(),
+    resizeNoVsyncHack: csdwindow.getResizeNoVsyncHack(),
+
+    themeName: theme.themeNames[theme.currThemeIndex],
+    zoomLevel: dp.getZoomLevel(),
+    showCellCoords: dp.drawCellCoords,
+    showToolsPane: opt.showToolsPane,
+    showNotesPane: opt.showNotesPane,
+    drawTrail: opt.drawTrail,
+    wasdMode: opt.wasdMode,
+    walkMode: opt.walkMode,
+
+    autoSaveFrequencySecs: 120,  # TODO
+    autoSaveSlots: 2  # TODO
+  )
+
+  saveAppConfig(a, ConfigFile)
+
+# }}}
+
 # {{{ mapHasLevels()
 proc mapHasLevels(a): bool =
   a.doc.map.levels.len > 0
@@ -674,23 +718,14 @@ proc updateViewStartAndCursorPosition(a) =
   dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), l.cols)
 
-  # TODO clamp
-  dp.viewStartRow = min(max(l.rows - dp.viewRows, 0), dp.viewStartRow)
-  dp.viewStartCol = min(max(l.cols - dp.viewCols, 0), dp.viewStartCol)
+  dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow)
+  dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol)
 
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
   let viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
-  # TODO clamp
-  cur.row = min(
-    max(viewEndRow, dp.viewStartRow),
-    cur.row
-  )
-    # TODO clamp
-  cur.col = min(
-    max(viewEndCol, dp.viewStartCol),
-    cur.col
-  )
+  cur.row = viewEndRow.clamp(dp.viewStartRow, cur.row)
+  cur.col = viewEndCol.clamp(dp.viewStartCol, cur.col)
 
 # }}}
 # {{{ moveCursor()
@@ -707,18 +742,16 @@ proc moveCursor(dir: CardinalDir, steps: Natural, a) =
     let viewCol = cur.col - dp.viewStartCol
     let viewColMax = dp.viewCols-1 - sm
     if viewCol > viewColMax:
-      # TODO clamp
-      dp.viewStartCol = min(max(l.cols - dp.viewCols, 0),
-                            dp.viewStartCol + (viewCol - viewColMax))
+      dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol +
+                                                        (viewCol - viewColMax))
 
   of dirS:
     cur.row = min(cur.row + steps, l.rows-1)
     let viewRow = cur.row - dp.viewStartRow
     let viewRowMax = dp.viewRows-1 - sm
     if viewRow > viewRowMax:
-      # TODO clamp
-      dp.viewStartRow = min(max(l.rows - dp.viewRows, 0),
-                            dp.viewStartRow + (viewRow - viewRowMax))
+      dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow +
+                                                        (viewRow - viewRowMax))
 
   of dirW:
     cur.col = max(cur.col - steps, 0)
@@ -1289,7 +1322,6 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-    var currSortedLevelIdx = getCurrSortedLevelIdx(a)
     cur = actions.deleteLevel(map, cur, um)
     setStatusMessage(IconTrash, "Deleted level", a)
 
@@ -3222,13 +3254,10 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
           a.dialog.saveDiscardDialog.action = proc (a) = a.shouldClose = true
           koi.setFramesLeft()
         else:
+          saveConfig(a)
           a.shouldClose = true
 
 # }}}
-
-const
-  ConfigPath = getConfigDir() / "Gridmonger"
-  ConfigFile = ConfigPath / "gridmonger.ini"
 
 # {{{ Init & cleanup
 proc initDrawLevelParams(a) =
@@ -3294,11 +3323,12 @@ proc initGfx(): (CSDWindow, NVGContext) =
 proc initApp(win: CSDWindow, vg: NVGContext) =
   alias(a, g_app)
 
+  createDir(ConfigPath)
+  let cfg = loadAppConfig(ConfigFile)
+
   a = new AppContext
   a.win = win
   a.vg = vg
-
-  a.config = loadAppConfig("data/gridmonger.ini")
 
   a.doc.undoManager = newUndoManager[Map, UndoStateData]()
 
@@ -3319,7 +3349,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
 
   searchThemes(a)
-  var themeIndex = findThemeIndex(a.config.themeName, a)
+  var themeIndex = findThemeIndex(cfg.themeName, a)
   if themeIndex == -1: themeIndex = 0
   loadTheme(themeIndex, a)
 
@@ -3327,14 +3357,19 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.doc.map = newMap("Untitled Map")
 
   initDrawLevelParams(a)
-  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, DefaultZoomLevel)
+  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, cfg.zoomLevel)
   a.opt.scrollMargin = 3
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
-  a.ui.drawLevelParams.drawCellCoords = true
-  a.opt.showNotesPane = true
-  a.opt.showToolsPane = true
+  a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
+
+  a.opt.showNotesPane = cfg.showNotesPane
+  a.opt.showToolsPane = cfg.showToolsPane
+
+  a.opt.drawTrail = cfg.drawTrail
+  a.opt.walkMode = cfg.walkMode
+  a.opt.wasdMode = cfg.wasdMode
 
   setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
@@ -3357,23 +3392,23 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
 
-  let width = a.config.width.clamp(WindowMinWidth, maxWidth)
-  let height = a.config.height.clamp(WindowMinHeight, maxHeight)
+  let width = cfg.width.clamp(WindowMinWidth, maxWidth)
+  let height = cfg.height.clamp(WindowMinHeight, maxHeight)
 
-  var xpos = a.config.xpos
+  var xpos = cfg.xpos
   if xpos < 0: xpos = (maxWidth - width) div 2
 
-  var ypos = a.config.ypos
+  var ypos = cfg.ypos
   if ypos < 0: ypos = (maxHeight - height) div 2 
 
   a.win.size = (width, height)
   a.win.pos = (xpos, ypos)
 
-  if a.config.maximized:
+  if cfg.maximized:
     a.win.maximize()
 
-  setResizeRedrawHack(a.config.resizeRedrawHack)
-  setResizeNoVsyncHack(a.config.resizeNoVsyncHack)
+  setResizeRedrawHack(cfg.resizeRedrawHack)
+  setResizeNoVsyncHack(cfg.resizeNoVsyncHack)
 
   a.win.show()
 

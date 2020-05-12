@@ -8,7 +8,12 @@ import tables
 
 const
   EnDash* = "\u2013"
+
   TextVertAlignFactor* = 0.55
+
+  WindowMinWidth* = 640
+  WindowMinHeight* = 480
+
 
 type
   Orientation* = enum

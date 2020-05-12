@@ -24,10 +24,6 @@ const
   WindowResizeEdgeWidth = 10.0
   WindowResizeCornerSize = 20.0
 
-  # TODO make this window param
-  WindowMinWidth* = 640
-  WindowMinHeight* = 480
-
 var
   g_resizeRedrawHack = true
   g_resizeNoVsyncHack = true
@@ -157,8 +153,19 @@ proc shouldClose*(win): bool =
 proc `shouldClose=`*(win; state: bool) =
   win.w.shouldClose = state
 
-proc resizing*(win): bool =
-  win.dragState == wdsResizing
+proc maximized*(win): bool =
+  win.maximized
+
+# }}}
+
+# {{{ oldPos*()
+proc oldPos*(win): tuple[x, y: int32] =
+  (win.oldPosX, win.oldPosY)
+
+# }}}
+# {{{ oldSize*()
+proc oldSize*(win): tuple[w, h: int32] =
+  (win.oldWidth, win.oldHeight)
 
 # }}}
 
@@ -518,5 +525,10 @@ proc setResizeRedrawHack*(enabled: bool) =
 proc setResizeNoVsyncHack*(enabled: bool) =
   g_resizeNoVsyncHack = enabled
 
+proc getResizeRedrawHack*(): bool =
+  g_resizeRedrawHack
+
+proc getResizeNoVsyncHack*(): bool =
+  g_resizeNoVsyncHack
 
 # vim: et:ts=2:sw=2:fdm=marker
