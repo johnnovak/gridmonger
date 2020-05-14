@@ -52,12 +52,14 @@ type
 
 
   CSDWindowStyle* = ref object
-    backgroundColor*:   Color
-    buttonColor*:       Color
-    buttonColorHover*:  Color
-    buttonColorDown*:   Color
-    textColor*:         Color
-    modifiedFlagColor*: Color
+    backgroundColor*:    Color
+    bgColorUnfocused*:   Color
+    textColor*:          Color
+    textColorUnfocused*: Color
+    modifiedFlagColor*:  Color
+    buttonColor*:        Color
+    buttonColorHover*:   Color
+    buttonColorDown*:    Color
 
   WindowDragState = enum
     wdsNone, wdsMoving, wdsResizing
@@ -73,12 +75,14 @@ using win: CSDWindow
 # {{{ Default style
 var DefaultCSDWindowStyle = new CSDWindowStyle
 
-DefaultCSDWindowStyle.backgroundColor   = gray(0.09)
-DefaultCSDWindowStyle.buttonColor       = gray(1.0, 0.45)
-DefaultCSDWindowStyle.buttonColorHover  = gray(1.0, 0.7)
-DefaultCSDWindowStyle.buttonColorDown   = gray(1.0, 0.9)
-DefaultCSDWindowStyle.textColor         = gray(1.0, 0.7)
-DefaultCSDWindowStyle.modifiedFlagColor = gray(1.0, 0.45)
+DefaultCSDWindowStyle.backgroundColor    = gray(0.2)
+DefaultCSDWindowStyle.bgColorUnfocused   = gray(0.1)
+DefaultCSDWindowStyle.textColor          = gray(1.0, 0.7)
+DefaultCSDWindowStyle.textColorUnfocused = gray(1.0, 0.4)
+DefaultCSDWindowStyle.buttonColor        = gray(1.0, 0.45)
+DefaultCSDWindowStyle.buttonColorHover   = gray(1.0, 0.7)
+DefaultCSDWindowStyle.buttonColorDown    = gray(1.0, 0.9)
+DefaultCSDWindowStyle.modifiedFlagColor  = gray(1.0, 0.45)
 
 proc getDefaultCSDWindowStyle*(): CSDWindowStyle = DefaultCSDWindowStyle.deepCopy()
 
@@ -202,15 +206,13 @@ proc maximize*(win) =
 
 # }}}
 # {{{ renderTitleBar()
-
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   alias(s, win.style)
 
-  # TODO
   let (bgColor, textColor) = if win.w.focused:
-    (rgb(40, 40, 65), gray(1.0, 0.6))
+    (s.backgroundColor, s.textColor)
   else:
-    (rgb(25, 25, 25), gray(1.0, 0.4))
+    (s.bgColorUnfocused, s.textColorUnfocused)
 
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, TitleBarHeight)

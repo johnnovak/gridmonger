@@ -12,50 +12,59 @@ import utils
 
 const
   UISection = "ui"
-  UIButtonSection        = fmt"{UISection}.button"
+  LevelSection = "level"
+
+  UIGeneralSection       = fmt"{UISection}.general"
+  UIWidgetSection        = fmt"{UISection}.widget"
   UITextFieldSection     = fmt"{UISection}.textField"
   UIDialogSection        = fmt"{UISection}.dialog"
   UITitleBarSection      = fmt"{UISection}.titleBar"
   UIStatusBarSection     = fmt"{UISection}.statusBar"
   UILevelDropdownSection = fmt"{UISection}.levelDropdown"
 
-  LevelSection = "level"
-
-# {{{ UIButtonStyle
+# {{{ UIGeneralStyle
 type
-  UIButtonStyle* = ref object
+  UIGeneralStyle* = ref object
+    backgroundColor*: Color
+    backgroundImage*: string
+    highlightColor*:  Color
+
+var DefaultUIGeneralStyle = new UIGeneralStyle
+
+DefaultUIGeneralStyle.backgroundColor = gray(0.4)
+DefaultUIGeneralStyle.backgroundImage = ""
+DefaultUIGeneralStyle.highlightColor  = gray(0.4)
+
+# }}}
+# {{{ UIWidgetStyle
+type
+  UIWidgetStyle* = ref object
     bgColor*:           Color
     bgColorHover*:      Color
-    bgColorDown*:       Color
-    bgColorActive*:     Color
-    labelColor*:        Color
+    bgColorDisabled*:   Color
+    textColor*:         Color
+    textColorDisabled*: Color
 
-var DefaultUIButtonStyle = new UIButtonStyle
+var DefaultUIWidgetStyle = new UIWidgetStyle
 
-DefaultUIButtonStyle.bgColor       = gray(0.4)
-DefaultUIButtonStyle.bgColorHover  = gray(0.4)
-DefaultUIButtonStyle.bgColorDown   = gray(0.4)
-DefaultUIButtonStyle.bgColorActive = gray(0.4)
-DefaultUIButtonStyle.labelColor    = gray(0.4)
+DefaultUIWidgetStyle.bgColor           = gray(0.4)
+DefaultUIWidgetStyle.bgColorHover      = gray(0.4)
+DefaultUIWidgetStyle.bgColorDisabled   = gray(0.4)
+DefaultUIWidgetStyle.textColor         = gray(0.4)
+DefaultUIWidgetStyle.textColorDisabled = gray(0.4)
 
 # }}}
 # {{{ UITextFieldStyle
 type
   UITextFieldStyle* = ref object
-    bgColor*:           Color
-    bgColorHover*:      Color
     bgColorActive*:     Color
-    textColor*:         Color
     textColorActive*:   Color
     cursorColor*:       Color
     selectionColor*:    Color
 
 var DefaultUITextFieldStyle = new UITextFieldStyle
 
-DefaultUITextFieldStyle.bgColor         = gray(0.4)
-DefaultUITextFieldStyle.bgColorHover    = gray(0.4)
 DefaultUITextFieldStyle.bgColorActive   = gray(0.4)
-DefaultUITextFieldStyle.textColor       = gray(0.4)
 DefaultUITextFieldStyle.textColorActive = gray(0.4)
 DefaultUITextFieldStyle.cursorColor     = gray(0.4)
 DefaultUITextFieldStyle.selectionColor  = gray(0.4)
@@ -65,81 +74,81 @@ DefaultUITextFieldStyle.selectionColor  = gray(0.4)
 # {{{ UIDialogStyle
 type
   UIDialogStyle* = ref object
-    labelColor*:        Color
-    backgroundColor*:   Color
     titleBarBgColor*:   Color
     titleBarTextColor*: Color
+    backgroundColor*:   Color
+    textColor*:         Color
+    warningTextColor*:  Color
 
 var DefaultUIDialogStyle = new UIDialogStyle
 
-DefaultUIDialogStyle.labelColor        = gray(0.4)
-DefaultUIDialogStyle.backgroundColor   = gray(0.4)
 DefaultUIDialogStyle.titleBarBgColor   = gray(0.4)
 DefaultUIDialogStyle.titleBarTextColor = gray(0.4)
+DefaultUIDialogStyle.backgroundColor   = gray(0.4)
+DefaultUIDialogStyle.textColor         = gray(0.4)
+DefaultUIDialogStyle.warningTextColor  = gray(0.4)
 
 # }}}
-# {{{ LevelDropdownStyle
+# {{{ UIStatusBarStyle
 type
-  LevelDropdownStyle* = ref object
+  UIStatusBarStyle* = ref object
+    backgroundColor*:    Color
+    textColor*:          Color
+    commandBgColor*:     Color
+    commandColor*:       Color
+    coordsColor*:        Color
+
+var DefaultUIStatusBarStyle = new UIStatusBarStyle
+
+DefaultUIStatusBarStyle.backgroundColor = gray(0.2)
+DefaultUIStatusBarStyle.textColor       = gray(0.8)
+DefaultUIStatusBarStyle.commandBgColor  = gray(0.56)
+DefaultUIStatusBarStyle.commandColor    = gray(0.2)
+DefaultUIStatusBarStyle.coordsColor     = gray(0.6)
+
+# }}}
+# {{{ UILevelDropdownStyle
+type
+  UILevelDropdownStyle* = ref object
     buttonColor*:       Color
     buttonColorHover*:  Color
-    labelColor*:        Color
+    textColor*:         Color
     itemListColor*:     Color
     itemColor*:         Color
     itemColorHover*:    Color
     itemBgColorHover*:  Color
 
-var DefaultLevelDropdownStyle = new LevelDropdownStyle
+var DefaultUILevelDropdownStyle = new UILevelDropdownStyle
 
-DefaultLevelDropdownStyle.buttonColor      = gray(0.4)
-DefaultLevelDropdownStyle.buttonColorHover = gray(0.4)
-DefaultLevelDropdownStyle.labelColor       = gray(0.4)
-DefaultLevelDropdownStyle.itemListColor    = gray(0.4)
-DefaultLevelDropdownStyle.itemColor        = gray(0.4)
-DefaultLevelDropdownStyle.itemColorHover   = gray(0.4)
-DefaultLevelDropdownStyle.itemBgColorHover = gray(0.4)
-
-# }}}
-# {{{ StatusBarStyle
-type
-  StatusBarStyle* = ref object
-    backgroundColor*:  Color
-    coordsColor*:      Color
-    textColor*:        Color
-    commandBgColor*:   Color
-    commandColor*:     Color
-
-var DefaultStatusBarStyle = new StatusBarStyle
-
-DefaultStatusBarStyle.backgroundColor  = gray(0.2)
-DefaultStatusBarStyle.coordsColor      = gray(0.6)
-DefaultStatusBarStyle.textColor        = gray(0.8)
-DefaultStatusBarStyle.commandBgColor   = gray(0.56)
-DefaultStatusBarStyle.commandColor     = gray(0.2)
+DefaultUILevelDropdownStyle.buttonColor      = gray(0.4)
+DefaultUILevelDropdownStyle.buttonColorHover = gray(0.4)
+DefaultUILevelDropdownStyle.textColor        = gray(0.4)
+DefaultUILevelDropdownStyle.itemListColor    = gray(0.4)
+DefaultUILevelDropdownStyle.itemColor        = gray(0.4)
+DefaultUILevelDropdownStyle.itemColorHover   = gray(0.4)
+DefaultUILevelDropdownStyle.itemBgColorHover = gray(0.4)
 
 # }}}
 # {{{ UIStyle
 type
   UIStyle* = ref object
-    backgroundColor*:    Color
-    backgroundImage*:    string
-    buttonStyle*:        UIButtonStyle
-    textFieldStyle*:     UITextFieldStyle
-    dialogStyle*:        UIDialogStyle
-    titleBarStyle*:      CSDWindowStyle
-    levelDropdownStyle*: LevelDropdownStyle
-    statusBarStyle*:     StatusBarStyle
+    general*:       UIGeneralStyle
+    widget*:        UIWidgetStyle
+    textField*:     UITextFieldStyle
+    dialog*:        UIDialogStyle
+    titleBar*:      CSDWindowStyle
+    levelDropdown*: UILevelDropdownStyle
+    statusBar*:     UIStatusBarStyle
 
 var DefaultUIStyle = new UIStyle
 
-DefaultUIStyle.backgroundColor    = gray(0.4)
-DefaultUIStyle.backgroundImage    = ""
-DefaultUIStyle.buttonStyle        = DefaultUIButtonStyle
-DefaultUIStyle.textFieldStyle     = DefaultUITextFieldStyle
-DefaultUIStyle.dialogStyle        = DefaultUIDialogStyle
-DefaultUIStyle.titleBarStyle      = getDefaultCSDWindowStyle()
-DefaultUIStyle.levelDropdownStyle = DefaultLevelDropdownStyle
-DefaultUIStyle.statusBarStyle     = DefaultStatusBarStyle
+DefaultUIStyle.general       = DefaultUIGeneralStyle
+DefaultUIStyle.widget        = DefaultUIWidgetStyle
+DefaultUIStyle.textField     = DefaultUITextFieldStyle
+DefaultUIStyle.dialog        = DefaultUIDialogStyle
+DefaultUIStyle.titleBar      = getDefaultCSDWindowStyle()
+DefaultUIStyle.levelDropdown = DefaultUILevelDropdownStyle
+DefaultUIStyle.statusBar     = DefaultUIStatusBarStyle
 
 # }}}
 
@@ -208,71 +217,72 @@ proc parseUISection(c: Config): UIStyle =
   result = DefaultUIStyle.deepCopy()
 
   block:
-    alias(s, result)
-    let S = UISection
+    alias(s, result.general)
+    let S = UIGeneralSection
 
     c.getColor( S, "backgroundColor", s.backgroundColor)
     c.getString(S, "backgroundImage", s.backgroundImage)
+    c.getColor( S, "highlightColor",  s.highlightColor)
 
   block:
-    alias(s, result.buttonStyle)
-    let S = UIButtonSection
+    alias(s, result.widget)
+    let S = UIWidgetSection
 
-    c.getColor(S, "bgColor",       s.bgColor)
-    c.getColor(S, "bgColorHover",  s.bgColorHover)
-    c.getColor(S, "bgColorDown",   s.bgColorDown)
-    c.getColor(S, "bgColorActive", s.bgColorActive)
-    c.getColor(S, "labelColor",    s.labelColor)
+    c.getColor(S, "bgColor",           s.bgColor)
+    c.getColor(S, "bgColorHover",      s.bgColorHover)
+    c.getColor(S, "bgColorDisabled",   s.bgColorDisabled)
+    c.getColor(S, "textColor",         s.textColor)
+    c.getColor(S, "textColorDisabled", s.textColorDisabled)
 
   block:
-    alias(s, result.textFieldStyle)
+    alias(s, result.textField)
     let S = UITextFieldSection
 
-    c.getColor(S, "bgColor",         s.bgColor)
-    c.getColor(S, "bgColorHover",    s.bgColorHover)
     c.getColor(S, "bgColorActive",   s.bgColorActive)
-    c.getColor(S, "textColor",       s.textColor)
     c.getColor(S, "textColorActive", s.textColorActive)
     c.getColor(S, "cursorColor",     s.cursorColor)
     c.getColor(S, "selectionColor",  s.selectionColor)
 
   block:
-    alias(s, result.dialogStyle)
+    alias(s, result.dialog)
     let S = UIDialogSection
 
-    c.getColor(S, "labelColor",        s.labelColor)
-    c.getColor(S, "backgroundColor",   s.backgroundColor)
     c.getColor(S, "titleBarBgColor",   s.titleBarBgColor)
     c.getColor(S, "titleBarTextColor", s.titleBarTextColor)
+    c.getColor(S, "backgroundColor",   s.backgroundColor)
+    c.getColor(S, "textColor",         s.textColor)
+    c.getColor(S, "warningTextColor",  s.warningTextColor)
 
   block:
-    alias(s, result.titleBarStyle)
+    alias(s, result.titleBar)
     let S = UITitleBarSection
 
-    c.getColor(S, "backgroundColor",   s.backgroundColor)
-    c.getColor(S, "buttonColor",       s.buttonColor)
-    c.getColor(S, "buttonColorHover",  s.buttonColorHover)
-    c.getColor(S, "buttonColorDown",   s.buttonColorDown)
-    c.getColor(S, "textColor",         s.textColor)
-    c.getColor(S, "modifiedFlagColor", s.modifiedFlagColor)
+    c.getColor(S, "backgroundColor",    s.backgroundColor)
+    c.getColor(S, "bgColorUnfocused",   s.bgColorUnfocused)
+    c.getColor(S, "textColor",          s.textColor)
+    c.getColor(S, "textColorUnfocused", s.textColorUnfocused)
+    c.getColor(S, "buttonColor",        s.buttonColor)
+    c.getColor(S, "buttonColorHover",   s.buttonColorHover)
+    c.getColor(S, "buttonColorDown",    s.buttonColorDown)
+    c.getColor(S, "modifiedFlagColor",  s.modifiedFlagColor)
 
   block:
-    alias(s, result.statusBarStyle)
+    alias(s, result.statusBar)
     let S = UIStatusBarSection
 
     c.getColor(S, "backgroundColor",  s.backgroundColor)
-    c.getColor(S, "coordsColor",      s.coordsColor)
     c.getColor(S, "textColor",        s.textColor)
     c.getColor(S, "commandBgColor",   s.commandBgColor)
     c.getColor(S, "commandColor",     s.commandColor)
+    c.getColor(S, "coordsColor",      s.coordsColor)
 
   block:
-    alias(s, result.levelDropdownStyle)
+    alias(s, result.levelDropdown)
     let S = UILevelDropdownSection
 
     c.getColor(S, "buttonColor",      s.buttonColor)
     c.getColor(S, "buttonColorHover", s.buttonColorHover)
-    c.getColor(S, "labelColor",       s.labelColor)
+    c.getColor(S, "textColor",        s.textColor)
     c.getColor(S, "itemListColor",    s.itemListColor)
     c.getColor(S, "itemColor",        s.itemColor)
     c.getColor(S, "itemColorHover",   s.itemColorHover)

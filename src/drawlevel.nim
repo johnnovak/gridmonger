@@ -79,6 +79,8 @@ type
     selStartCol*:      int
 
     drawCellCoords*:   bool
+    cellCoordOpts*:    CoordinateOptions
+
     drawCursorGuides*: bool
 
     # internal
@@ -408,7 +410,7 @@ proc drawCellCoords(l: Level, ctx) =
     let
       xPos = cellX(c, dp) + dp.gridSize*0.5
       col = dp.viewStartCol + c
-      coord = $col
+      coord = formatColumnCoord(col, dp.cellCoordOpts, l.cols)
 
     setTextHighlight(col == dp.cursorCol)
 
@@ -419,9 +421,7 @@ proc drawCellCoords(l: Level, ctx) =
     let
       yPos = cellY(r, dp) + dp.gridSize*0.5
       row = dp.viewStartRow + r
-#      coord = $(l.rows - 1 - row)
-# TODO should be an option
-      coord = $row
+      coord = formatRowCoord(row, dp.cellCoordOpts, l.rows)
 
     setTextHighlight(row == dp.cursorRow)
 
@@ -1871,8 +1871,8 @@ proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
           ob[r,c] = {}
 
 # }}}
-# {{{ drawMap*()
-proc drawMap*(map: Map, level: Natural, ctx) =
+# {{{ drawLevel*()
+proc drawLevel*(map: Map, level: Natural, ctx) =
   alias(dp, ctx.dp)
   alias(ls, ctx.ls)
   alias(l, map.levels[level])

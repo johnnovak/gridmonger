@@ -40,23 +40,40 @@ const
 
 
 type
-  Links* = BiTable[Location, Location]
-
   Map* = ref object
-    name*:   string
-    levels*: seq[Level]
-    links*:  Links
+    name*:      string
+    levels*:    seq[Level]
+    links*:     Links
+    coordOpts*: CoordinateOptions
 
     sortedLevelNames*:         seq[string]
     sortedLevelIdxToLevelIdx*: Table[Natural, Natural]
 
 
+  Links* = BiTable[Location, Location]
+
+  CoordinateOptions* = object
+    origin*:                 CoordinateOrigin
+    rowStyle*, columnStyle*: CoordinateStyle
+    rowStart*, columnStart*: Natural
+
+  CoordinateOrigin* = enum
+    coNorthEast, coSouthEast
+
+  CoordinateStyle* = enum
+    csNumber, csLetter
+
+
   Level* = ref object
-    locationName*: string
-    levelName*:    string
-    elevation*:    int
-    cellGrid*:     CellGrid
-    notes*:        Table[Natural, Note]
+    locationName*:      string
+    levelName*:         string
+    elevation*:         int
+    overrideCoordOpts*: bool
+    coordOpts*:         CoordinateOptions
+
+    cellGrid*:          CellGrid
+    notes*:             Table[Natural, Note]
+
 
   LevelStyle* = ref object
     backgroundColor*:        Color
@@ -227,6 +244,46 @@ proc `<`*(a, b: Location): bool =
   else: return false
 
 
+proc toLetterCoord*(x: Natural): string =
+
+  proc toLetter(i: Natural): char = chr(ord('A') + i)
+
+  if x < 26:
+    result = $x.toLetter
+  elif x < 26*26:
+    result = (x div 26 - 1).toLetter & (x mod 26).toLetter
+  elif x < 26*26*26:
+    let d1 = x mod 26
+    var x = x div 26
+    let d2 = x mod 26
+    let d3 = x div 26 - 1
+    result = d3.toLetter & d2.toLetter & d1.toLetter
+  else:
+    result = ""
+
+
+proc formatColumnCoord*(col: Natural, co: CoordinateOptions,
+                        numCols: Natural): string =
+  var x = co.columnStart + col
+
+  case co.columnStyle
+  of csNumber: $x
+  of csLetter: toLetterCoord(x)
+
+
+proc formatRowCoord*(row: Natural, co: CoordinateOptions,
+                     numRows: Natural): string =
+  var x = co.rowStart + (
+    case co.origin
+      of coNorthEast: row
+      of coSouthEast: numRows-1 - row
+  )
+
+  case co.rowStyle
+  of csNumber: $x
+  of csLetter: toLetterCoord(x)
+
+
 type
   # (0,0) is the top-left cell of the selection
   Selection* = ref object
@@ -271,5 +328,6 @@ const
   NoteTextMaxLen* = 400
   NoteCustomIdMinLen* = 1
   NoteCustomIdMaxLen* = 2
+
 
 # vim: et:ts=2:sw=2:fdm=marker
