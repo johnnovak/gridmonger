@@ -490,6 +490,7 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
   # Window border
   vg.beginPath()
   vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
+  # TODO border color
   vg.strokeColor(gray(0.09))
   vg.strokeWidth(1.0)
   vg.stroke()

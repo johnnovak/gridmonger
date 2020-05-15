@@ -99,7 +99,6 @@ type
 
 
   UI = object
-    style:             UIStyle
     cursor:            Location
     cursorOrient:      CardinalDir
     editMode:          EditMode
@@ -137,7 +136,7 @@ type
     warningLabelStyle:     LabelStyle
 
 
-  EditMode* = enum
+  EditMode = enum
     emNormal,
     emExcavate,
     emDrawWall,
@@ -152,6 +151,7 @@ type
     emSetCellLink
 
   Theme = object
+    style:                ThemeStyle
     themeNames:           seq[string]
     currThemeIndex:       Natural
     nextThemeIndex:       Option[Natural]
@@ -423,7 +423,7 @@ proc setStatusMessage(msg: string, a) =
 # {{{ drawStatusBar()
 proc drawStatusBar(y: float, winWidth: float, a) =
   alias(vg, a.vg)
-  alias(s, a.ui.style.statusBar)
+  alias(s, a.theme.style.statusBar)
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
@@ -557,18 +557,17 @@ proc findThemeIndex(name: string, a): int =
 # {{{ loadTheme()
 proc loadTheme(index: Natural, a) =
   let name = a.theme.themeNames[index]
-  let (uiStyle, levelStyle) = loadTheme(fmt"{ThemesDir}/{name}.cfg")
-  a.ui.style = uiStyle
+  a.theme.style = loadTheme(fmt"{ThemesDir}/{name}.cfg")
 
-  a.doc.levelStyle = levelStyle
+  a.doc.levelStyle = a.theme.style.level
 
   a.theme.currThemeIndex = index
 
-  alias(s, a.ui.style)
+  alias(s, a.theme.style)
   alias(gs, s.general)
   alias(ws, s.widget)
 
-  a.win.setStyle(a.ui.style.titleBar)
+  a.win.setStyle(a.theme.style.titleBar)
 
   # Button
   var bs = koi.getDefaultButtonStyle()
@@ -650,9 +649,13 @@ proc loadTheme(index: Natural, a) =
   # Dialog style
   var ds = koi.getDefaultDialogStyle()
 
+  ds.backgroundColor   = s.dialog.backgroundColor
   ds.titleBarBgColor   = s.dialog.titleBarBgColor
   ds.titleBarTextColor = s.dialog.titleBarTextColor
-  ds.backgroundColor   = s.dialog.backgroundColor
+  ds.outerBorderColor  = s.dialog.outerBorderColor
+  ds.innerBorderColor  = s.dialog.innerBorderColor
+  ds.outerBorderWidth  = s.dialog.outerBorderWidth
+  ds.innerBorderWidth  = s.dialog.innerBorderWidth
 
   koi.setDefaultDialogStyle(ds)
 
@@ -693,9 +696,24 @@ proc loadTheme(index: Natural, a) =
     d.itemListFillColor        = lds.itemListColor
     d.itemColor                = lds.itemColor
     d.itemColorHover           = lds.itemColorHover
-    d.itemBackgroundColorHover = lds.itemBgColorHover
+    d.itemBackgroundColorHover = gs.highlightColor
     d.itemAlign                = haLeft
     d.itemListPadHoriz         = 10
+
+  # About button
+  block:
+    alias(abs, s.aboutButton)
+
+    let bs = koi.getDefaultButtonStyle()
+
+    bs.labelFontSize   = 20.0
+    bs.labelPadHoriz   = 0
+    bs.labelOnly       = true
+    bs.labelColor      = abs.color
+    bs.labelColorHover = abs.colorHover
+    bs.labelColorDown  = abs.colorActive
+
+    a.ui.aboutButtonStyle = bs
 
 # }}}
 
@@ -2083,7 +2101,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   y += 64
 
-  let NumIndexColors = ls.noteLevelIndexBgColor.len
+  let NumIndexColors = ls.noteIndexBgColor.len
   const IconsPerRow = 10
 
   case dlg.kind:
@@ -2091,11 +2109,11 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     koi.label(x, y, labelWidth, h, "Color")
     dlg.indexColor = koi.radioButtons(
       x + labelWidth, y, 28, 28,
-      labels = newSeq[string](ls.noteLevelIndexBgColor.len),
+      labels = newSeq[string](ls.noteIndexBgColor.len),
       dlg.indexColor,
       tooltips = @[],
       layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
+      drawProc=colorRadioButtonDrawProc(ls.noteIndexBgColor,
                                         ls.cursorColor).some
     )
 
@@ -2543,32 +2561,29 @@ proc renderLevel(a) =
             if yOver > 0:
               noteBoxY -= noteBoxH + 22
 
-            # TODO
-            vg.fillColor(rgba(20, 20, 28, 240))
+            vg.fillColor(a.theme.style.level.noteTooltipBgColor)
             vg.beginPath()
             vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
             vg.fill()
 
-            # TODO
-            vg.fillColor(rgb(252, 252, 255))
+            vg.fillColor(a.theme.style.level.noteTooltipTextColor)
             vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
-
 
 # }}}
 # {{{ renderToolsPane()
 # {{{ specialWallDrawProc()
 proc specialWallDrawProc(ls: LevelStyle,
+                         ts: ToolbarPaneStyle,
                          dp: DrawLevelParams): RadioButtonsDrawProc =
+
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
                hover, active, down, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
-    var col = if active: ls.cursorColor else: gray(1.0, 0.7)
-
-    if hover:
-      col = col.lerp(white(), 0.3)
-    if down:
-      col = col.lerp(black(), 0.3)
+    var col = if active:  ls.cursorColor
+              elif hover: ts.buttonBgColorHover
+              elif down:  ls.cursorColor
+              else:       ts.buttonBgColor
 
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
@@ -2633,6 +2648,7 @@ proc specialWallDrawProc(ls: LevelStyle,
 proc renderToolsPane(x, y, w, h: float, a) =
   alias(ui, a.ui)
   alias(ls, a.doc.levelStyle)
+  alias(ts, a.theme.style.toolbarPane)
 
   ui.currSpecialWall = koi.radioButtons(
     x = x,
@@ -2643,7 +2659,7 @@ proc renderToolsPane(x, y, w, h: float, a) =
     ui.currSpecialWall,
     tooltips = @[],
     layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
-    drawProc=specialWallDrawProc(ls, ui.toolbarDrawParams).some
+    drawProc=specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
   )
 
 # TODO
@@ -2657,7 +2673,7 @@ proc renderToolsPane(x, y, w, h: float, a) =
     ui.currFloorColor,
     tooltips = @[],
     layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
-    drawProc=colorRadioButtonDrawProc(ls.noteLevelIndexBgColor,
+    drawProc=colorRadioButtonDrawProc(ls.noteIndexBgColor,
                                       ls.cursorColor).some
   )
 ]#
@@ -2666,7 +2682,7 @@ proc renderToolsPane(x, y, w, h: float, a) =
 # {{{ drawNotesPane()
 proc drawNotesPane(x, y, w, h: float, a) =
   alias(vg, a.vg)
-  alias(ls, a.doc.levelStyle)
+  alias(s, a.theme.style.notesPane)
 
   let l = getCurrLevel(a)
   let cur = a.ui.cursor
@@ -2682,25 +2698,25 @@ proc drawNotesPane(x, y, w, h: float, a) =
     case note.kind
     of nkIndexed:
       drawIndexedNote(x, y-12, note.index, 36,
-                      bgColor=ls.notePaneIndexBgColor[note.indexColor],
-                      fgColor=ls.notePaneIndexColor, vg)
+                      bgColor=s.indexBgColor[note.indexColor],
+                      fgColor=s.indexColor, vg)
 
     of nkCustomId:
-      vg.fillColor(ls.notePaneTextColor)
+      vg.fillColor(s.textColor)
       vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+18, y-2, note.customId)
 
     of nkIcon:
-      vg.fillColor(ls.notePaneTextColor)
+      vg.fillColor(s.textColor)
       vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+20, y-3, NoteIcons[note.icon])
 
     of nkComment:
-      vg.fillColor(ls.notePaneTextColor)
+      vg.fillColor(s.textColor)
       vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+20, y-2, IconComment)
 
-    vg.fillColor(ls.notePaneTextColor)
+    vg.fillColor(s.textColor)
     vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
     vg.intersectScissor(x+40, y, w-40, h)
@@ -3480,10 +3496,10 @@ proc renderUI() =
   vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
 
   # TODO extend logic for other images
-  if ui.style.general.backgroundImage == "old-paper":
+  if a.theme.style.general.backgroundImage == "old-paper":
     vg.fillPaint(ui.oldPaperPattern)
   else:
-    vg.fillColor(ui.style.general.backgroundColor)
+    vg.fillColor(a.theme.style.general.backgroundColor)
   vg.fill()
 
   # About button
@@ -3699,19 +3715,6 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   loadFonts(vg)
   loadImages(vg, a)
-
-
-  let bs = koi.getDefaultButtonStyle()
-
-  bs.labelFontSize   = 20.0
-  bs.labelPadHoriz   = 0
-  bs.labelOnly       = true
-  bs.labelColor      = gray(1.0, 0.5)
-  bs.labelColorHover = gray(1.0, 0.7)
-  bs.labelColorDown  = gray(1.0, 0.9)
-
-  a.ui.aboutButtonStyle = bs
-
 
   searchThemes(a)
   var themeIndex = findThemeIndex(cfg.themeName, a)

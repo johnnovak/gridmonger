@@ -114,16 +114,16 @@ type
     pastePreviewColor*:      Color
     selectionColor*:         Color
 
-    noteLevelMarkerColor*:   Color
-    noteLevelCommentColor*:  Color
-    noteLevelIndexColor*:    Color
-    noteLevelIndexBgColor*:  seq[Color]
+    noteMarkerColor*:        Color
+    noteCommentColor*:       Color
+    noteIndexColor*:         Color
+    noteIndexBgColor*:       seq[Color]
 
-    notePaneTextColor*:      Color
-    notePaneIndexColor*:     Color
-    notePaneIndexBgColor*:   seq[Color]
+    noteTooltipBgColor*:     Color
+    noteTooltipTextColor*:   Color
 
     linkMarkerColor*:        Color
+
 
   LineWidth* = enum
     lwThin, lwNormal, lwThick

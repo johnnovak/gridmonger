@@ -811,8 +811,8 @@ proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural, ctx) =
   alias(vg, ctx.vg)
 
   drawIndexedNote(x, y, index, dp.gridSize,
-                  bgColor=ls.noteLevelIndexBgColor[colorIdx],
-                  fgColor=ls.noteLevelIndexColor, vg)
+                  bgColor=ls.noteIndexBgColor[colorIdx],
+                  fgColor=ls.noteIndexColor, vg)
 
 # }}}
 # {{{ drawCustomIdNote()
@@ -822,7 +822,7 @@ proc drawCustomIdNote(x, y: float, s: string, ctx) =
   alias(vg, ctx.vg)
 
   vg.setFont((dp.gridSize * 0.48).float)
-  vg.fillColor(ls.noteLevelMarkerColor)
+  vg.fillColor(ls.noteMarkerColor)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + dp.gridSize*0.52,
                   y + dp.gridSize*0.55, s)
@@ -1579,13 +1579,13 @@ proc drawNote(x, y: float, note: Note, ctx) =
   of nkCustomId: drawCustomIdNote(x, y, note.customId, ctx)
 
   of nkIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
-                          dp.gridSize, ls.noteLevelMarkerColor,
+                          dp.gridSize, ls.noteMarkerColor,
                           DefaultIconFontSizeFactor, vg)
 
   if note.kind != nkIndexed and note.text != "":
     let w = dp.gridSize*0.3
 
-    vg.fillColor(ls.noteLevelCommentColor)
+    vg.fillColor(ls.noteCommentColor)
     vg.beginPath()
     vg.moveTo(x + dp.gridSize - w, y)
     vg.lineTo(x + dp.gridSize + 1, y + w+1)
