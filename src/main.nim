@@ -1484,6 +1484,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
 proc openNewLevelDialog(a) =
   alias(dlg, a.dialog.newLevelDialog)
 
+  var co: CoordinateOptions
+
   if mapHasLevels(a):
     let l = getCurrLevel(a)
     dlg.locationName = l.locationName
@@ -1495,6 +1497,8 @@ proc openNewLevelDialog(a) =
     dlg.cols = $l.cols
     dlg.overrideCoordOpts = l.overrideCoordOpts
 
+    co = getCoordOptsForCurrLevel(a)
+
   else:
     dlg.locationName = "Untitled Location"
     dlg.levelName = ""
@@ -1503,12 +1507,13 @@ proc openNewLevelDialog(a) =
     dlg.cols = "16"
     dlg.overrideCoordOpts = false
 
-  let co = getCoordOptsForCurrLevel(a)
-  dlg.origin            = co.origin.ord
-  dlg.rowStyle          = co.rowStyle.ord
-  dlg.columnStyle       = co.columnStyle.ord
-  dlg.rowStart          = $co.rowStart
-  dlg.columnStart       = $co.columnStart
+    co = a.doc.map.coordOpts
+
+  dlg.origin      = co.origin.ord
+  dlg.rowStyle    = co.rowStyle.ord
+  dlg.columnStyle = co.columnStyle.ord
+  dlg.rowStart    = $co.rowStart
+  dlg.columnStart = $co.columnStart
 
   dlg.isOpen = true
   dlg.activeTab = 0
