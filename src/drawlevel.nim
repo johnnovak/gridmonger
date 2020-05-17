@@ -838,6 +838,12 @@ proc drawLabel(x, y: float, text: string, ctx) =
 
   vg.save()
 
+  let w = dp.gridSize * dp.viewCols
+  let h = dp.gridSize * dp.viewRows
+  vg.intersectScissor(dp.startX, dp.startY, w, h)
+
+  vg.beginPath()
+  vg.rect(dp.startX, dp.startY, w, h)
   vg.setFont((dp.gridSize * 0.48).float)
   vg.fillColor(ls.drawColor)
   vg.textAlign(haLeft, vaMiddle)
@@ -1604,8 +1610,7 @@ proc drawNote(x, y: float, note: Note, ctx) =
                           dp.gridSize, ls.noteMarkerColor,
                           DefaultIconFontSizeFactor, vg)
 
-  of nkLabel:
-    drawLabel(x, y, note.text, ctx)
+  of nkLabel:    discard
 
   if not (note.kind in {nkIndexed, nkLabel}) and note.text != "":
     let w = dp.gridSize*0.3
@@ -1627,13 +1632,33 @@ proc drawNotes(viewBuf: Level, ctx) =
     for viewCol in 0..<dp.viewCols:
       let bufRow = viewRow+1
       let bufCol = viewCol+1
-      if viewBuf.hasNote(bufRow, bufCol):
-        let
-          note = viewBuf.getNote(bufRow, bufCol)
-          x = cellX(viewCol, dp)
-          y = cellY(viewRow, dp)
 
-        drawNote(x, y, note, ctx)
+      if viewBuf.hasNote(bufRow, bufCol):
+        let note = viewBuf.getNote(bufRow, bufCol)
+
+        if note.kind != nkLabel:
+          let x = cellX(viewCol, dp)
+          let y = cellY(viewRow, dp)
+
+          drawNote(x, y, note, ctx)
+
+# }}}
+# {{{ drawLabels()
+proc drawLabels(viewBuf: Level, ctx) =
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let bufRow = viewRow+1
+      let bufCol = viewCol+1
+      if viewBuf.hasNote(bufRow, bufCol):
+        let note = viewBuf.getNote(bufRow, bufCol)
+
+        if note.kind == nkLabel:
+          let x = cellX(viewCol, dp)
+          let y = cellY(viewRow, dp)
+
+          drawLabel(x, y, note.text, ctx)
 
 # }}}
 # {{{ drawLinkMarker()
@@ -1943,6 +1968,7 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
 
   drawFloors(viewBuf, ctx)
   drawNotes(viewBuf, ctx)
+  drawLabels(viewBuf, ctx)
 
   if not drawSelectionBuffer:
     drawLinkMarkers(map, level, ctx)
