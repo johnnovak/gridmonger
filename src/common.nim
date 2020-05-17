@@ -196,7 +196,7 @@ type
     wWritingSW     = (71, "writing")
 
   NoteKind* = enum
-    nkComment, nkIndexed, nkCustomId, nkIcon
+    nkComment, nkIndexed, nkCustomId, nkIcon, nkLabel
 
   Note* = object
     text*: string
@@ -205,6 +205,7 @@ type
     of nkIndexed:  index*, indexColor*: Natural
     of nkCustomId: customId*: string
     of nkIcon:     icon*: Natural
+    of nkLabel:    discard
 
 
 const

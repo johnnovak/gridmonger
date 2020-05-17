@@ -124,6 +124,8 @@ proc readLevelNotes_V1(rr; l: Level) =
     of nkCustomId:
       note.customId = rr.readBStr()
 
+    of nkLabel: discard
+
     note.text = rr.readWStr()
     l.setNote(row, col, note)
 
@@ -347,6 +349,8 @@ proc writeLevelNotes(rw; l: Level) =
 
     of nkIcon:
       rw.write(note.icon.uint8)
+
+    of nkLabel: discard
 
     rw.writeWStr(note.text)
 

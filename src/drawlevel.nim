@@ -1,6 +1,7 @@
 import lenientops
 import math
 import options
+import strutils
 
 import glad/gl
 import koi
@@ -824,8 +825,29 @@ proc drawCustomIdNote(x, y: float, s: string, ctx) =
   vg.setFont((dp.gridSize * 0.48).float)
   vg.fillColor(ls.noteMarkerColor)
   vg.textAlign(haCenter, vaMiddle)
+
   discard vg.text(x + dp.gridSize*0.52,
                   y + dp.gridSize*0.55, s)
+
+# }}}
+# {{{ drawLabel()
+proc drawLabel(x, y: float, text: string, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  vg.save()
+
+  vg.setFont((dp.gridSize * 0.48).float)
+  vg.fillColor(ls.drawColor)
+  vg.textAlign(haLeft, vaMiddle)
+  vg.textLineHeight(1.2)
+
+  var text = text.replace("\\n", "\n")
+
+  vg.textBox(x + dp.gridSize*0.22, y + dp.gridSize*0.55, 10_000, text)
+
+  vg.restore()
 
 # }}}
 
@@ -1582,7 +1604,10 @@ proc drawNote(x, y: float, note: Note, ctx) =
                           dp.gridSize, ls.noteMarkerColor,
                           DefaultIconFontSizeFactor, vg)
 
-  if note.kind != nkIndexed and note.text != "":
+  of nkLabel:
+    drawLabel(x, y, note.text, ctx)
+
+  if not (note.kind in {nkIndexed, nkLabel}) and note.text != "":
     let w = dp.gridSize*0.3
 
     vg.fillColor(ls.noteCommentColor)

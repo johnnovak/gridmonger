@@ -4,9 +4,17 @@ BUGS
   - cut shouldn't cut walls of bordering cells
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - note dialog textfield focus bug
+  - no cursor jump when resizing & cropping
 
 
 TODO
+  - RLE compression
+  - one way doors
+  - remove text label
+  - clip text label to visible area
+  - colours for text labels
+  - floor colours
+
   - preferences
   - koi: textarea widget
   - save display params into file: cursor pos, level, theme, option settings
@@ -35,7 +43,9 @@ LOW PRIORITY
   - attempt to fix resize csdwindow
 
 FUTURE
-  - floor colours
+  - infinite maps
+  - regions
+  - legend / locations / notes window
 
 
 FONTS

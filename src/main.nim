@@ -172,6 +172,7 @@ type
     deleteLevelDialog:    DeleteLevelDialogParams
 
     editNoteDialog:       EditNoteDialogParams
+    editLabelDialog:      EditLabelDialogParams
 
 
   PreferencesDialogParams = object
@@ -286,6 +287,17 @@ type
     customId:     string
     icon:         Natural
     text:         string
+
+
+  EditLabelDialogParams = object
+    isOpen:       bool
+    activateFirstTextField: bool
+
+    editMode:     bool
+    row:          Natural
+    col:          Natural
+    text:         string
+
 
 
 var g_app: AppContext
@@ -1997,7 +2009,9 @@ proc openEditNoteDialog(a) =
   dlg.row = cur.row
   dlg.col = cur.col
 
-  if l.hasNote(cur.row, cur.col):
+  if l.hasNote(cur.row, cur.col) and
+     l.getNote(cur.row, cur.col).kind != nkLabel:
+
     let note = l.getNote(cur.row, cur.col)
     dlg.editMode = true
     dlg.kind = note.kind
@@ -2086,7 +2100,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   koi.label(x, y, labelWidth, h, "Marker")
   dlg.kind = NoteKind(
     koi.radioButtons(
-      x + labelWidth, y, 282, h+3,
+      x + labelWidth, y, 300, h+3,
       labels = @["None", "Number", "ID", "Icon"],
       ord(dlg.kind)
     )
@@ -2145,7 +2159,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       style = a.ui.iconRadioButtonsStyle
     )
 
-  of nkComment: discard
+  of nkComment, nkLabel: discard
 
   dlg.activateFirstTextField = false
 
@@ -2190,7 +2204,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     of nkCustomId: note.customId = dlg.customId
     of nkIndexed:  note.indexColor = dlg.indexColor
     of nkIcon:     note.icon = dlg.icon
-    of nkComment:  discard
+    of nkComment, nkLabel: discard
 
     actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
@@ -2233,15 +2247,15 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
     elif ke.isKeyDown(keyH, {mkCtrl}):
       if    dlg.kind > NoteKind.low: dec(dlg.kind)
-      else: dlg.kind = NoteKind.high
+      else: dlg.kind = nkIcon
 
     elif ke.isKeyDown(keyL, {mkCtrl}):
-      if    dlg.kind < NoteKind.high: inc(dlg.kind)
+      if    dlg.kind < nkIcon: inc(dlg.kind)
       else: dlg.kind = NoteKind.low
 
     elif ke.isKeyDown(keyH, repeat=true):
       case dlg.kind
-      of nkComment, nkCustomId: discard
+      of nkComment, nkCustomId, nkLabel: discard
       of nkIndexed:
         dlg.indexColor = floorMod(dlg.indexColor.int - 1, NumIndexColors).Natural
       of nkIcon:
@@ -2249,7 +2263,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
     elif ke.isKeyDown(keyL, repeat=true):
       case dlg.kind
-      of nkComment, nkCustomId: discard
+      of nkComment, nkCustomId, nkLabel: discard
       of nkIndexed:
         dlg.indexColor = floorMod(dlg.indexColor + 1, NumIndexColors).Natural
       of nkIcon:
@@ -2257,15 +2271,125 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
     elif ke.isKeyDown(keyK, repeat=true):
       case dlg.kind
-      of nkComment, nkIndexed, nkCustomId: discard
+      of nkComment, nkIndexed, nkCustomId, nkLabel: discard
       of nkIcon: dlg.icon = moveIcon(dlg.icon, dr= -1)
 
     elif ke.isKeyDown(keyJ, repeat=true):
       case dlg.kind
-      of nkComment, nkIndexed, nkCustomId: discard
+      of nkComment, nkIndexed, nkCustomId, nkLabel: discard
       of nkIcon: dlg.icon = moveIcon(dlg.icon, dr=1)
 
     elif ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+
+    koi.setFramesLeft()
+
+  koi.endDialog()
+
+# }}}
+# {{{ Edit label dialog
+proc openEditLabelDialog(a) =
+  alias(dlg, a.dialog.editLabelDialog)
+  alias(cur, a.ui.cursor)
+
+  let l = getCurrLevel(a)
+  dlg.row = cur.row
+  dlg.col = cur.col
+
+  if l.hasNote(cur.row, cur.col) and
+     l.getNote(cur.row, cur.col).kind == nkLabel:
+
+    let note = l.getNote(cur.row, cur.col)
+    dlg.editMode = true
+    dlg.text = note.text
+
+  else:
+    dlg.editMode = false
+    dlg.text = "Label text"
+
+  dlg.isOpen = true
+
+
+proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
+  alias(ls, a.doc.levelStyle)
+  let
+    dialogWidth = 500.0
+    dialogHeight = 370.0
+    title = (if dlg.editMode: "Edit" else: "Add") & " Label"
+
+  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCommentInv}  {title}")
+  clearStatusMessage(a)
+
+  let
+    h = 24.0
+    labelWidth = 80.0
+    buttonWidth = 80.0
+    buttonPad = 15.0
+
+  var x = 30.0
+  var y = 60.0
+
+  koi.label(x, y, labelWidth, h, "Text")
+  dlg.text = koi.textField(
+    x + labelWidth, y, w = 355, h, dlg.text,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: 0,
+      maxLen: NoteTextMaxLen
+    ).some
+  )
+
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if dlg.text == "":
+    validationError = "Text is mandatory"
+
+  y += 44
+
+  if validationError != "":
+    koi.label(x, y, dialogWidth, h, validationError,
+              style = a.ui.warningLabelStyle)
+    y += 24
+
+
+  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
+  y = dialogHeight - h - buttonPad
+
+  proc okAction(dlg: var EditLabelDialogParams, a) =
+    if validationError != "": return
+
+    var note = Note(kind: nkLabel, text: dlg.text)
+    actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
+
+    setStatusMessage(IconComment, "Set label", a)
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  proc cancelAction(dlg: var EditLabelDialogParams, a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+                disabled=validationError != ""):
+    okAction(dlg, a)
+
+  x += buttonWidth + 10
+  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+    cancelAction(dlg, a)
+
+
+  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+    let ke = koi.currEvent()
+
+    if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
@@ -2696,7 +2820,7 @@ proc drawNotesPane(x, y, w, h: float, a) =
      l.hasNote(cur.row, cur.col):
 
     let note = l.getNote(cur.row, cur.col)
-    if note.text == "": return
+    if note.text == "" or note.kind == nkLabel: return
 
     vg.save()
 
@@ -2720,6 +2844,8 @@ proc drawNotesPane(x, y, w, h: float, a) =
       vg.fillColor(s.textColor)
       vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+20, y-2, IconComment)
+
+    of nkLabel: discard
 
     vg.fillColor(s.textColor)
     vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
@@ -3103,6 +3229,9 @@ proc handleGlobalKeyEvents(a) =
         else:
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
+
+      elif ke.isKeyDown(keyT, {mkCtrl}):
+        openEditLabelDialog(a)
 
       elif ke.isKeyDown(keyU, {mkCtrl, mkAlt}):
         openPreferencesDialog(a)
@@ -3587,6 +3716,9 @@ proc renderUI() =
 
   elif dlg.editNoteDialog.isOpen:
     editNoteDialog(dlg.editNoteDialog, a)
+
+  elif dlg.editLabelDialog.isOpen:
+    editLabelDialog(dlg.editLabelDialog, a)
 
   elif dlg.resizeLevelDialog.isOpen:
     resizeLevelDialog(dlg.resizeLevelDialog, a)
