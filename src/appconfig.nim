@@ -8,16 +8,20 @@ import common
 
 type
   AppConfig* = object
+    # startup section
     showSplash*:            bool
     loadLastFile*:          bool
     lastFileName*:          string
 
+    # window section
     maximized*:             bool
     xpos*, ypos*:           int
     width*, height*:        int
     resizeRedrawHack*:      bool
     resizeNoVsyncHack*:     bool
 
+    # TODO UI state, use a common structure for appconfig and the DISP chunk
+    # ui section
     themeName*:             string
     zoomLevel*:             Natural
     showCellCoords*:        bool
@@ -27,6 +31,13 @@ type
     wasdMode*:              bool
     walkMode*:              bool
 
+    currLevel*:             Natural
+    cursorRow*:             Natural
+    cursorCol*:             Natural
+    viewStartRow*:          Natural
+    viewStartCol*:          Natural
+
+    # autosave section
     autoSaveFrequencySecs*: int
     autoSaveSlots*:         Natural
 
@@ -52,6 +63,12 @@ const DefaultAppConfig = AppConfig(
   drawTrail: false,
   wasdMode: false,
   walkMode: false,
+
+  currLevel: 0,
+  cursorRow: 0,
+  cursorCol: 0,
+  viewStartRow: 0,
+  viewStartCol: 0,
 
   autoSaveFrequencySecs: 180,
   autoSaveSlots: 3
@@ -83,6 +100,12 @@ const
   WasdModeKey = "wasdMode"
   WalkModeKey = "walkMode"
 
+  CurrLevelKey = "currLevel"
+  CursorRowKey = "cursorRow"
+  CursorColKey = "cursorCol"
+  ViewStartRowKey = "viewStartRow"
+  ViewStartColKey = "viewStartCol"
+
   AutoSaveSection = "autosave"
   FrequencySecsKey = "frequencySecs"
   SlotsKey = "slots"
@@ -113,6 +136,12 @@ proc loadAppConfig*(fname: string): AppConfig =
   cfg.getBool(  UISection, DrawTrailKey,           a.drawTrail)
   cfg.getBool(  UISection, WasdModeKey,            a.wasdMode)
   cfg.getBool(  UISection, WalkModeKey,            a.walkMode)
+
+  cfg.getInt(UISection, CurrLevelKey,              a.currLevel)
+  cfg.getInt(UISection, CursorRowKey,              a.cursorRow)
+  cfg.getInt(UISection, CursorColKey,              a.cursorCol)
+  cfg.getInt(UISection, ViewStartRowKey,           a.viewStartRow)
+  cfg.getInt(UISection, ViewStartColKey,           a.viewStartCol)
 
   cfg.getInt(AutoSaveSection, FrequencySecsKey,    a.autoSaveFrequencySecs)
   cfg.getInt(AutoSaveSection, SlotsKey,            a.autoSaveSlots)
@@ -153,6 +182,12 @@ proc toConfig(a: AppConfig): Config =
   cfg.setSectionKey(UISection, DrawTrailKey,             a.drawTrail.toOnOff)
   cfg.setSectionKey(UISection, WasdModeKey,              a.wasdMode.toOnOff)
   cfg.setSectionKey(UISection, WalkModeKey,              a.walkMode.toOnOff)
+
+  cfg.setSectionKey(UISection, CurrLevelKey,             $a.currLevel)
+  cfg.setSectionKey(UISection, CursorRowKey,             $a.cursorRow)
+  cfg.setSectionKey(UISection, CursorColKey,             $a.cursorCol)
+  cfg.setSectionKey(UISection, ViewStartRowKey,          $a.viewStartRow)
+  cfg.setSectionKey(UISection, ViewStartColKey,          $a.viewStartCol)
 
   cfg.setSectionKey(AutoSaveSection, FrequencySecsKey, $a.autoSaveFrequencySecs)
   cfg.setSectionKey(AutoSaveSection, SlotsKey,         $a.autoSaveSlots)

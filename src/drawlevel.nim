@@ -132,6 +132,9 @@ proc `[]`(b: OutlineBuf, r,c: Natural): OutlineCell =
 
 # }}}
 
+const
+  ViewBufBorder = 10
+
 using
   ls:  LevelStyle
   dp:  DrawLevelParams
@@ -283,7 +286,6 @@ proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer,
 # {{{ renderLineHatchPatterns()
 proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
                              strokeColor: Color) =
-  # TODO free images first if calling this multiple times
   for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
     var fb = vg.nvgluCreateFramebuffer(
       width  = spacing * pxRatio.int,
@@ -431,6 +433,55 @@ proc drawCellCoords(l: Level, ctx) =
 
 
 # }}}
+# {{{ drawCellOutlines()
+proc drawCellOutlines(l: Level, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  func isOutline(r,c: Natural): bool =
+    not (
+      isNeighbourCellEmpty(l, r,c, North)     and
+      isNeighbourCellEmpty(l, r,c, NorthEast) and
+      isNeighbourCellEmpty(l, r,c, East)      and
+      isNeighbourCellEmpty(l, r,c, SouthEast) and
+      isNeighbourCellEmpty(l, r,c, South)     and
+      isNeighbourCellEmpty(l, r,c, SouthWest) and
+      isNeighbourCellEmpty(l, r,c, West)      and
+      isNeighbourCellEmpty(l, r,c, NorthWest)
+    )
+
+  let sw = UltrathinStrokeWidth
+
+  vg.strokeWidth(sw)
+  vg.fillColor(ls.outlineColor)
+  vg.strokeColor(ls.outlineColor)
+  vg.beginPath()
+
+  for r in 0..<dp.viewRows:
+    for c in 0..<dp.viewCols:
+
+      if isOutline(dp.viewStartRow+r, dp.viewStartCol+c):
+        let x = snap(cellX(c, dp), sw)
+        let y = snap(cellY(r, dp), sw)
+
+        vg.rect(x, y, dp.gridSize, dp.gridSize)
+
+  vg.fill()
+  vg.stroke()
+
+# }}}
+# {{{ drawCellHighlight()
+proc drawCellHighlight(x, y: float, color: Color, ctx) =
+  let vg = ctx.vg
+  let dp = ctx.dp
+
+  vg.beginPath()
+  vg.fillColor(color)
+  vg.rect(x, y, dp.gridSize, dp.gridSize)
+  vg.fill()
+
+# }}}
 # {{{ drawCursor()
 proc drawCursor(ctx) =
   alias(ls, ctx.ls)
@@ -505,77 +556,6 @@ proc drawCursorGuides(ctx) =
   vg.rect(snap(dp.startX, sw), snap(y, sw), w, dp.gridSize)
   vg.fill()
   vg.stroke()
-
-# }}}
-# {{{ drawCellOutlines()
-proc drawCellOutlines(l: Level, ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  func isOutline(r,c: Natural): bool =
-    not (
-      isNeighbourCellEmpty(l, r,c, North)     and
-      isNeighbourCellEmpty(l, r,c, NorthEast) and
-      isNeighbourCellEmpty(l, r,c, East)      and
-      isNeighbourCellEmpty(l, r,c, SouthEast) and
-      isNeighbourCellEmpty(l, r,c, South)     and
-      isNeighbourCellEmpty(l, r,c, SouthWest) and
-      isNeighbourCellEmpty(l, r,c, West)      and
-      isNeighbourCellEmpty(l, r,c, NorthWest)
-    )
-
-  let sw = UltrathinStrokeWidth
-
-  vg.strokeWidth(sw)
-  vg.fillColor(ls.outlineColor)
-  vg.strokeColor(ls.outlineColor)
-  vg.beginPath()
-
-  for r in 0..<dp.viewRows:
-    for c in 0..<dp.viewCols:
-      if isOutline(dp.viewStartRow+r, dp.viewStartCol+c):
-        let x = snap(cellX(c, dp), sw)
-        let y = snap(cellY(r, dp), sw)
-
-        vg.rect(x, y, dp.gridSize, dp.gridSize)
-
-  vg.fill()
-  vg.stroke()
-
-# }}}
-# {{{ renderEdgeOutlines()
-proc renderEdgeOutlines(viewBuf: Level): OutlineBuf =
-  var ol = newOutlineBuf(viewBuf.rows, viewBuf.cols)
-  for r in 0..<viewBuf.rows:
-    for c in 0..<viewBuf.cols:
-      if viewBuf.getFloor(r,c) == fNone:
-        var cell: OutlineCell
-        if not isNeighbourCellEmpty(viewBuf, r,c, North): cell.incl(olN)
-        else:
-          if not isNeighbourCellEmpty(viewBuf, r,c, NorthWest): cell.incl(olNW)
-          if not isNeighbourCellEmpty(viewBuf, r,c, NorthEast): cell.incl(olNE)
-
-        if not isNeighbourCellEmpty(viewBuf, r,c, East):
-          cell.incl(olE)
-          cell.excl(olNE)
-        else:
-          if not isNeighbourCellEmpty(viewBuf, r,c, SouthEast): cell.incl(olSE)
-
-        if not isNeighbourCellEmpty(viewBuf, r,c, South):
-          cell.incl(olS)
-          cell.excl(olSE)
-        else:
-          if not isNeighbourCellEmpty(viewBuf, r,c, SouthWest): cell.incl(olSW)
-
-        if not isNeighbourCellEmpty(viewBuf, r,c, West):
-          cell.incl(olW)
-          cell.excl(olSW)
-          cell.excl(olNW)
-
-        ol[r,c] = cell
-
-    result = ol
 
 # }}}
 # {{{ drawEdgeOutlines()
@@ -676,31 +656,45 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf, ctx) =
 
 
   vg.beginPath()
-  var startRow, endRow, startCol, endCol: Natural
+
+  var
+    startBufRow = ViewBufBorder
+    startBufCol = ViewBufBorder
+    endBufRow   = ob.rows - ViewBufBorder-1
+    endBufCol   = ob.cols - ViewBufBorder-1
 
   if ls.outlineOverscan:
-    let viewEndRow = dp.viewStartRow + dp.viewRows - 1
-    startRow = if dp.viewStartRow == 0: 0 else: 1
-    endRow = if viewEndRow == l.rows-1: ob.rows-1 else: ob.rows-2
+    if dp.viewstartrow == 0: dec(startBufRow)
+    if dp.viewStartCol == 0: dec(startBufCol)
 
-    let viewEndCol = dp.viewStartCol + dp.viewCols - 1
-    startCol = if dp.viewStartCol == 0: 0 else: 1
-    endCol = if viewEndCol == l.cols-1: ob.cols-1 else: ob.cols-2
-  else:
-    startRow = 1
-    endRow = ob.rows-2
-    startCol = 1
-    endCol = ob.cols-2
+    let viewEndRow = dp.viewStartRow + dp.viewRows-1
+    if viewEndRow == l.rows-1: inc(endBufRow)
 
-  for r in startRow..endRow:
-    for c in startCol..endCol:
-      let cell = ob[r,c]
+    let viewEndCol = dp.viewStartCol + dp.viewCols-1
+    if viewEndCol == l.cols-1: inc(endBufCol)
+
+  for bufRow in startBufRow..endBufRow:
+    for bufCol in startBufCol..endBufCol:
+      let cell = ob[bufRow, bufCol]
       if not (cell == {}):
-        draw(r-1, c-1, cell)
+        let viewRow = bufRow - ViewBufBorder
+        let viewCol = bufCol - ViewBufBorder
+        draw(viewRow, viewCol, cell)
+
   vg.fill()
 
 # }}}
+# {{{ drawFloorBg()
+proc drawFloorBg(x, y: float, color: Color, ctx) =
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
+  vg.beginPath()
+  vg.fillColor(color)
+  vg.rect(x, y, dp.gridSize, dp.gridSize)
+  vg.fill()
+
+# }}}
 # {{{ drawGrid()
 proc drawGrid(x, y: float, color: Color, gridStyle: GridStyle; ctx) =
   alias(dp, ctx.dp)
@@ -766,17 +760,6 @@ proc drawGrid(x, y: float, color: Color, gridStyle: GridStyle; ctx) =
     vg.stroke()
 
 # }}}
-# {{{ drawFloorBg()
-proc drawFloorBg(x, y: float, color: Color, ctx) =
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  vg.beginPath()
-  vg.fillColor(color)
-  vg.rect(x, y, dp.gridSize, dp.gridSize)
-  vg.fill()
-
-# }}}
 # {{{ drawIcon()
 proc drawIcon(x, y, ox, oy: float, icon: string,
               gridSize: float, color: Color, fontSizeFactor: float,
@@ -830,6 +813,35 @@ proc drawCustomIdNote(x, y: float, s: string, ctx) =
                   y + dp.gridSize*0.55, s)
 
 # }}}
+# {{{ drawNote()
+proc drawNote(x, y: float, note: Note, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  case note.kind
+  of nkComment:  discard
+  of nkIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
+  of nkCustomId: drawCustomIdNote(x, y, note.customId, ctx)
+
+  of nkIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
+                          dp.gridSize, ls.noteMarkerColor,
+                          DefaultIconFontSizeFactor, vg)
+
+  of nkLabel:    discard
+
+  if not (note.kind in {nkIndexed, nkLabel}) and note.text != "":
+    let w = dp.gridSize*0.3
+
+    vg.fillColor(ls.noteCommentColor)
+    vg.beginPath()
+    vg.moveTo(x + dp.gridSize - w, y)
+    vg.lineTo(x + dp.gridSize + 1, y + w+1)
+    vg.lineTo(x + dp.gridSize + 1, y)
+    vg.closePath()
+    vg.fill()
+
+  # }}}
 # {{{ drawLabel()
 proc drawLabel(x, y: float, text: string, ctx) =
   alias(ls, ctx.ls)
@@ -849,6 +861,7 @@ proc drawLabel(x, y: float, text: string, ctx) =
   vg.textAlign(haLeft, vaMiddle)
   vg.textLineHeight(1.2)
 
+  # TODO remove when textbox widget is available
   var text = text.replace("\\n", "\n")
 
   vg.textBox(x + dp.gridSize*0.22, y + dp.gridSize*0.55, 10_000, text)
@@ -856,7 +869,83 @@ proc drawLabel(x, y: float, text: string, ctx) =
   vg.restore()
 
 # }}}
+# {{{ drawLinkMarker()
+proc drawLinkMarker(x, y: float, ctx) =
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+  alias(ls, ctx.ls)
 
+  let w = dp.gridSize*0.3
+
+  vg.fillColor(ls.linkMarkerColor)
+  vg.beginPath()
+  vg.moveTo(x,   y + dp.gridSize - w)
+  vg.lineTo(x,   y + dp.gridSize)
+  vg.lineTo(x+w, y + dp.gridSize)
+  vg.closePath()
+  vg.fill()
+
+# }}}
+# {{{ drawInnerShadows()
+proc drawInnerShadows(viewBuf: Level, ctx) =
+  alias(dp, ctx.dp)
+  alias(ls, ctx.ls)
+  alias(vg, ctx.vg)
+
+  vg.fillColor(ls.innerShadowColor)
+  vg.beginPath()
+
+  let shadowWidth = dp.gridSize * ls.innerShadowWidthFactor
+
+  for bufRow in ViewBufBorder..<viewBuf.rows - ViewBufBorder:
+    for bufCol in ViewBufBorder..<viewBuf.cols - ViewBufBorder:
+      let viewRow = bufRow - ViewBufBorder
+      let viewCol = bufCol - ViewBufBorder
+
+      if not isCursorActive(viewRow, viewCol, dp):
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
+
+        if viewBuf.getFloor(bufRow, bufCol) != fNone:
+          if isNeighbourCellEmpty(viewBuf, bufRow, bufCol, North):
+            vg.rect(x, y, dp.gridSize, shadowWidth)
+
+          if isNeighbourCellEmpty(viewBuf, bufRow, bufCol, West):
+            vg.rect(x, y, shadowWidth, dp.gridSize)
+
+  vg.fill()
+# }}}
+# {{{ drawOuterShadows()
+proc drawOuterShadows(viewBuf: Level, ctx) =
+  alias(dp, ctx.dp)
+  alias(ls, ctx.ls)
+  alias(vg, ctx.vg)
+
+  vg.fillColor(ls.outerShadowColor)
+  vg.beginPath()
+
+  let shadowWidth = dp.gridSize * ls.outerShadowWidthFactor
+
+  for bufRow in ViewBufBorder..<viewBuf.rows - ViewBufBorder:
+    for bufCol in ViewBufBorder..<viewBuf.cols - ViewBufBorder:
+      let viewRow = bufRow - ViewBufBorder
+      let viewCol = bufCol - ViewBufBorder
+
+      if not isCursorActive(viewRow, viewCol, dp):
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
+
+        if viewBuf.getFloor(bufRow, bufCol) == fNone:
+          if not isNeighbourCellEmpty(viewBuf, bufRow, bufCol, North):
+            vg.rect(x, y, dp.gridSize, shadowWidth)
+
+          if not isNeighbourCellEmpty(viewBuf, bufRow, bufCol, West):
+            vg.rect(x, y, shadowWidth, dp.gridSize)
+
+  vg.fill()
+# }}}
+
+# {{{ Draw floor types
 # {{{ drawTrail()
 proc drawTrail(x, y: float, ctx) =
   alias(ls, ctx.ls)
@@ -898,7 +987,7 @@ proc drawSecretDoor(x, y: float, isCursorActive: bool, ctx) =
 
   let
     icon = "S"
-    bgCol = if isCursorActive: ls.cursorColor else: ls.floorColor
+    bgCol = if isCursorActive: ls.cursorColor else: ls.floorColor[0] # TODO
     fontSizeFactor = DefaultIconFontSizeFactor
     gs = dp.gridSize
 
@@ -1068,7 +1157,9 @@ proc drawInvisibleBarrier(x, y: float, ctx) =
            fontSizeFactor=1.0, ctx.vg)
 
 # }}}
+# }}}
 
+# {{{ Draw wall types
 # {{{ drawSolidWallHoriz*()
 proc drawSolidWallHoriz*(x, y: float, ctx) =
   alias(ls, ctx.ls)
@@ -1241,7 +1332,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawArchwayHoriz*()
-proc drawArchwayHoriz*(x, y: float, ctx) =
+proc drawArchwayHoriz*(x, y: float; ctx; drawOpening: bool = true) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1270,13 +1361,14 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
   vg.stroke()
 
   # Door opening
-  vg.lineCap(lcjSquare)
-  vg.beginPath()
-  vg.moveTo(snap(x1, sw), snap(y1, sw))
-  vg.lineTo(snap(x1, sw), snap(y2, sw))
-  vg.moveTo(snap(x2, sw), snap(y1, sw))
-  vg.lineTo(snap(x2, sw), snap(y2, sw))
-  vg.stroke()
+  if drawOpening:
+    vg.lineCap(lcjSquare)
+    vg.beginPath()
+    vg.moveTo(snap(x1, sw), snap(y1, sw))
+    vg.lineTo(snap(x1, sw), snap(y2, sw))
+    vg.moveTo(snap(x2, sw), snap(y1, sw))
+    vg.lineTo(snap(x2, sw), snap(y2, sw))
+    vg.stroke()
 
   # Wall end
   vg.lineCap(lcjRound)
@@ -1284,6 +1376,62 @@ proc drawArchwayHoriz*(x, y: float, ctx) =
   vg.moveTo(snap(x2, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
+
+# }}}
+# {{{ drawOneWayDoorHoriz*()
+proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    wallLen = (dp.gridSize * 0.28).int
+    xs = x
+    y  = y
+    x1 = xs + wallLen + dp.thinOffs
+    xe = xs + dp.gridSize
+    x2 = xe - wallLen - dp.thinOffs
+
+  let sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ls.drawColor)
+
+  # Wall start
+  vg.lineCap(lcjSquare)
+  vg.beginPath()
+  vg.moveTo(snap(xs, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.stroke()
+
+  var ox, oy: float
+  var icon: string
+
+  ox = 0.021
+  if northEast:
+    icon = IconThinArrowUp
+    if ls.lineWidth == lwThin:
+      oy = -0.06
+    else:
+      oy = -0.1
+  else:
+    icon = IconThinArrowDown
+    oy = 0.045
+
+  drawIcon(x, y-dp.gridSize*0.5, ox, oy, icon,
+           dp.gridSize, ls.drawColor, fontSizeFactor=0.46, ctx.vg)
+
+  # Wall end
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
+
+proc drawOneWayDoorHorizNE*(x, y: float, ctx) =
+  drawOneWayDoorHoriz(x, y, northEast=true, ctx)
+
+proc drawOneWayDoorHorizSW*(x, y: float, ctx) =
+  drawOneWayDoorHoriz(x, y, northEast=false, ctx)
 
 # }}}
 # {{{ drawLeverHoriz*()
@@ -1343,7 +1491,7 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, ctx) =
   vg.strokeWidth(sw)
   vg.strokeColor(ls.drawColor)
 
-  vg.fillColor(ls.floorColor)
+  vg.fillColor(ls.floorColor[0])  # TODO
   vg.beginPath()
   vg.rect(x1, y, x2-x1, yn-y)
   vg.fill()
@@ -1433,7 +1581,7 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
     kl = boxLen.float
 
   vg.strokeWidth(sw)
-  vg.fillColor(ls.floorColor)
+  vg.fillColor(ls.floorColor[0])  # TODO
   vg.beginPath()
   vg.rect(kx, ky, kl, kl)
   vg.fill()
@@ -1483,6 +1631,7 @@ proc drawWritingHorizSW*(x, y: float, ctx) =
   drawWritingHoriz(x, y, northEast=false, ctx)
 
 # }}}
+# }}}
 
 # {{{ setVertTransform()
 proc setVertTransform(x, y: float, ctx) =
@@ -1494,14 +1643,48 @@ proc setVertTransform(x, y: float, ctx) =
   vg.rotate(degToRad(90.0))
 
 # }}}
+
+# {{{ drawBackgroundGrid()
+proc drawBackgroundGrid(viewBuf: Level, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let bufRow = viewRow + ViewBufBorder
+      let bufCol = viewCol + ViewBufBorder
+
+      if viewBuf.isFloorEmpty(bufRow, bufCol):
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
+        drawGrid(x, y, ls.gridColorBackground, ls.gridStyleBackground, ctx)
+
+# }}}
+# {{{ drawCellBackgroundsAndGrid()
+proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let bufRow = viewRow + ViewBufBorder
+      let bufCol = viewCol + ViewBufBorder
+
+      if not viewBuf.isFloorEmpty(bufRow, bufCol):
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
+        drawFloorBg(x, y, ls.floorColor[0], ctx)  # TODO
+        drawGrid(x, y, ls.gridColorFloor, ls.gridStyleFloor, ctx)
+
+# }}}
 # {{{ drawCellFloor()
 proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   let
-    bufRow = viewRow+1
-    bufCol = viewCol+1
+    bufRow = viewRow + ViewBufBorder
+    bufCol = viewCol + ViewBufBorder
     x = cellX(viewCol, dp)
     y = cellY(viewRow, dp)
 
@@ -1551,41 +1734,6 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   vg.restore()
 
 # }}}
-# {{{ drawBackgroundGrid()
-proc drawBackgroundGrid(viewBuf: Level, ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
-      let
-        bufRow = viewRow+1
-        bufCol = viewCol+1
-
-      if viewBuf.isFloorEmpty(bufRow, bufCol):
-        let x = cellX(viewCol, dp)
-        let y = cellY(viewRow, dp)
-        drawGrid(x, y, ls.gridColorBackground, ls.gridStyleBackground, ctx)
-
-# }}}
-# {{{ drawCellBackgroundsAndGrid()
-proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
-      let
-        bufRow = viewRow+1
-        bufCol = viewCol+1
-
-      if not viewBuf.isFloorEmpty(bufRow, bufCol):
-        let x = cellX(viewCol, dp)
-        let y = cellY(viewRow, dp)
-        drawFloorBg(x, y, ls.floorColor, ctx)
-        drawGrid(x, y, ls.gridColorFloor, ls.gridStyleFloor, ctx)
-
-# }}}
 # {{{ drawFloors()
 proc drawFloors(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
@@ -1595,62 +1743,16 @@ proc drawFloors(viewBuf: Level, ctx) =
       drawCellFloor(viewBuf, r,c, ctx)
 
 # }}}
-# {{{ drawNote()
-proc drawNote(x, y: float, note: Note, ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
 
-  case note.kind
-  of nkComment:  discard
-  of nkIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
-  of nkCustomId: drawCustomIdNote(x, y, note.customId, ctx)
-
-  of nkIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
-                          dp.gridSize, ls.noteMarkerColor,
-                          DefaultIconFontSizeFactor, vg)
-
-  of nkLabel:    discard
-
-  if not (note.kind in {nkIndexed, nkLabel}) and note.text != "":
-    let w = dp.gridSize*0.3
-
-    vg.fillColor(ls.noteCommentColor)
-    vg.beginPath()
-    vg.moveTo(x + dp.gridSize - w, y)
-    vg.lineTo(x + dp.gridSize + 1, y + w+1)
-    vg.lineTo(x + dp.gridSize + 1, y)
-    vg.closePath()
-    vg.fill()
-
-  # }}}
-# {{{ drawNotes()
-proc drawNotes(viewBuf: Level, ctx) =
-  alias(dp, ctx.dp)
-
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
-      let bufRow = viewRow+1
-      let bufCol = viewCol+1
-
-      if viewBuf.hasNote(bufRow, bufCol):
-        let note = viewBuf.getNote(bufRow, bufCol)
-
-        if note.kind != nkLabel:
-          let x = cellX(viewCol, dp)
-          let y = cellY(viewRow, dp)
-
-          drawNote(x, y, note, ctx)
-
-# }}}
 # {{{ drawLabels()
 proc drawLabels(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
 
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
-      let bufRow = viewRow+1
-      let bufCol = viewCol+1
+      let bufRow = viewRow + ViewBufBorder
+      let bufCol = viewCol + ViewBufBorder
+
       if viewBuf.hasNote(bufRow, bufCol):
         let note = viewBuf.getNote(bufRow, bufCol)
 
@@ -1661,23 +1763,6 @@ proc drawLabels(viewBuf: Level, ctx) =
           drawLabel(x, y, note.text, ctx)
 
 # }}}
-# {{{ drawLinkMarker()
-proc drawLinkMarker(x, y: float, ctx) =
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-  alias(ls, ctx.ls)
-
-  let w = dp.gridSize*0.3
-
-  vg.fillColor(ls.linkMarkerColor)
-  vg.beginPath()
-  vg.moveTo(x,   y + dp.gridSize - w)
-  vg.lineTo(x,   y + dp.gridSize)
-  vg.lineTo(x+w, y + dp.gridSize)
-  vg.closePath()
-  vg.fill()
-
-  # }}}
 # {{{ drawLinkMarkers()
 proc drawLinkMarkers(map: Map, level: Natural, ctx) =
   alias(dp, ctx.dp)
@@ -1699,6 +1784,25 @@ proc drawLinkMarkers(map: Map, level: Natural, ctx) =
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         drawLinkMarker(x, y, ctx)
+
+# }}}
+# {{{ drawNotes()
+proc drawNotes(viewBuf: Level, ctx) =
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let bufRow = viewRow + ViewBufBorder
+      let bufCol = viewCol + ViewBufBorder
+
+      if viewBuf.hasNote(bufRow, bufCol):
+        let note = viewBuf.getNote(bufRow, bufCol)
+
+        if note.kind != nkLabel:
+          let x = cellX(viewCol, dp)
+          let y = cellY(viewRow, dp)
+
+          drawNote(x, y, note, ctx)
 
 # }}}
 
@@ -1724,6 +1828,8 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wLockedDoor:    drawOriented(drawLockedDoorHoriz)
   of wArchway:       drawOriented(drawArchwayHoriz)
   of wSecretDoor:    drawOriented(drawSecretDoorHoriz)
+  of wOneWayDoorNE:  drawOriented(drawOneWayDoorHorizNE)
+  of wOneWayDoorSW:  drawOriented(drawOneWayDoorHorizSW)
   of wLeverNE:       drawOriented(drawLeverHorizNE)
   of wLeverSW:       drawOriented(drawLeverHorizSW)
   of wNicheNE:       drawOriented(drawNicheHorizNE)
@@ -1739,8 +1845,8 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
 proc drawCellWalls(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   alias(dp, ctx.dp)
 
-  let bufRow = viewRow+1
-  let bufCol = viewCol+1
+  let bufRow = viewRow + ViewBufBorder
+  let bufCol = viewCol + ViewBufBorder
 
   drawWall(
     cellX(viewCol, dp),
@@ -1781,17 +1887,6 @@ proc drawWalls(viewBuf: Level, ctx) =
 
 # }}}
 
-# {{{ drawCellHighlight()
-proc drawCellHighlight(x, y: float, color: Color, ctx) =
-  let vg = ctx.vg
-  let dp = ctx.dp
-
-  vg.beginPath()
-  vg.fillColor(color)
-  vg.rect(x, y, dp.gridSize, dp.gridSize)
-  vg.fill()
-
-# }}}
 # {{{ drawSelection()
 proc drawSelection(ctx) =
   let dp = ctx.dp
@@ -1839,71 +1934,52 @@ proc drawSelectionHighlight(ctx) =
         drawCellHighlight(x, y, ls.pastePreviewColor, ctx)
 
 # }}}
-# {{{ drawInnerShadows()
-proc drawInnerShadows(viewBuf: Level, ctx) =
-  alias(dp, ctx.dp)
-  alias(ls, ctx.ls)
-  alias(vg, ctx.vg)
 
-  vg.fillColor(ls.innerShadowColor)
-  vg.beginPath()
+# {{{ renderEdgeOutlines()
+proc renderEdgeOutlines(viewBuf: Level): OutlineBuf =
+  var ol = newOutlineBuf(viewBuf.rows, viewBuf.cols)
 
-  let shadowWidth = dp.gridSize * ls.innerShadowWidthFactor
+  # TODO do not use the whole border=10 for the outline calculation, border of
+  # 1 is enough
+  for r in 0..<viewBuf.rows:
+    for c in 0..<viewBuf.cols:
 
-  for bufRow in 1..<viewBuf.rows-1:
-    for bufCol in 1..<viewBuf.cols-1:
-      let viewRow = bufRow-1
-      let viewCol = bufCol-1
+      if viewBuf.getFloor(r,c) == fNone:
+        var cell: OutlineCell
 
-      if not isCursorActive(viewRow, viewCol, dp):
-        let x = cellX(viewCol, dp)
-        let y = cellY(viewRow, dp)
+        if not isNeighbourCellEmpty(viewBuf, r,c, North): cell.incl(olN)
+        else:
+          if not isNeighbourCellEmpty(viewBuf, r,c, NorthWest): cell.incl(olNW)
+          if not isNeighbourCellEmpty(viewBuf, r,c, NorthEast): cell.incl(olNE)
 
-        if viewBuf.getFloor(bufRow, bufCol) != fNone:
-          if isNeighbourCellEmpty(viewBuf, bufRow, bufCol, North):
-            vg.rect(x, y, dp.gridSize, shadowWidth)
+        if not isNeighbourCellEmpty(viewBuf, r,c, East):
+          cell.incl(olE)
+          cell.excl(olNE)
+        else:
+          if not isNeighbourCellEmpty(viewBuf, r,c, SouthEast): cell.incl(olSE)
 
-          if isNeighbourCellEmpty(viewBuf, bufRow, bufCol, West):
-            vg.rect(x, y, shadowWidth, dp.gridSize)
+        if not isNeighbourCellEmpty(viewBuf, r,c, South):
+          cell.incl(olS)
+          cell.excl(olSE)
+        else:
+          if not isNeighbourCellEmpty(viewBuf, r,c, SouthWest): cell.incl(olSW)
 
-  vg.fill()
+        if not isNeighbourCellEmpty(viewBuf, r,c, West):
+          cell.incl(olW)
+          cell.excl(olSW)
+          cell.excl(olNW)
+
+        ol[r,c] = cell
+
+    result = ol
+
 # }}}
-# {{{ drawOuterShadows()
-proc drawOuterShadows(viewBuf: Level, ctx) =
-  alias(dp, ctx.dp)
-  alias(ls, ctx.ls)
-  alias(vg, ctx.vg)
-
-  vg.fillColor(ls.outerShadowColor)
-  vg.beginPath()
-
-  let shadowWidth = dp.gridSize * ls.outerShadowWidthFactor
-
-  for bufRow in 1..<viewBuf.rows-1:
-    for bufCol in 1..<viewBuf.cols-1:
-      let viewRow = bufRow-1
-      let viewCol = bufCol-1
-
-      if not isCursorActive(viewRow, viewCol, dp):
-        let x = cellX(viewCol, dp)
-        let y = cellY(viewRow, dp)
-
-        if viewBuf.getFloor(bufRow, bufCol) == fNone:
-          if not isNeighbourCellEmpty(viewBuf, bufRow, bufCol, North):
-            vg.rect(x, y, dp.gridSize, shadowWidth)
-
-          if not isNeighbourCellEmpty(viewBuf, bufRow, bufCol, West):
-            vg.rect(x, y, shadowWidth, dp.gridSize)
-
-  vg.fill()
-# }}}
-
 # {{{ mergeSelectionAndOutlineBuffers()
 proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
                                      outlineBuf: Option[OutlineBuf], dp) =
   if dp.selectionBuffer.isSome:
-    let startRow = dp.selStartRow - dp.viewStartRow + 1
-    let startCol = dp.selStartCol - dp.viewStartCol + 1
+    let startRow = dp.selStartRow - dp.viewStartRow + ViewBufBorder
+    let startCol = dp.selStartCol - dp.viewStartCol + ViewBufBorder
     let copyBuf = dp.selectionBuffer.get.level
 
     discard viewBuf.paste(startRow, startCol,
@@ -1942,7 +2018,7 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
       dp.viewStartRow + dp.viewRows,
       dp.viewStartCol + dp.viewCols
     ),
-    border=1
+    border = ViewBufBorder
   )
 
   # outlineBuf has the same dimensions as viewBuf

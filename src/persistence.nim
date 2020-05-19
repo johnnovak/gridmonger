@@ -24,13 +24,24 @@ const
   FourCC_GRDM_lvl_prop = "prop"
   FourCC_GRDM_lvl_cell = "cell"
   FourCC_GRDM_lvl_note = "note"
-  FourCC_GRDM_them     = "them"
+  FourCC_GRDM_disp     = "disp"
 
 
 type MapReadError* = object of IOError
 
 proc raiseMapReadError(s: string) =
   raise newException(MapReadError, s)
+
+
+type
+  MapDisplayOptions* = object
+    currLevel*:       Natural
+    zoomLevel*:       Natural
+    cursorRow*:       Natural
+    cursorCol*:       Natural
+    viewStartRow*:    Natural
+    viewStartCol*:    Natural
+
 
 # {{{ Read
 # {{{ V1
@@ -66,6 +77,10 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
 
 using rr: RiffReader
 
+proc readDisplayOptions(rr): MapDisplayOptions =
+  discard
+
+
 proc readLinks(rr): BiTable[Location, Location] =
   var numLinks = rr.read(uint16).int
 
@@ -92,15 +107,19 @@ proc readLevelProperties_V1(rr): Level =
   result = newLevel(locationName, levelName, elevation, rows, cols)
 
 proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
-  var cells = newSeqOfCap[Cell](numCells)
+  var cells: seq[Cell]
+  newSeq[Cell](cells, numCells)
+
   for i in 0..<numCells:
     var c: Cell
     c.floor = rr.read(uint8).Floor
     c.floorOrientation = rr.read(uint8).Orientation
     c.wallN = rr.read(uint8).Wall
     c.wallW = rr.read(uint8).Wall
-    cells.add(c)
+    cells[i] = c
+
   result = cells
+
 
 
 proc readLevelNotes_V1(rr; l: Level) =
@@ -221,7 +240,7 @@ proc readMap*(filename: string): Map =
       mapCursor = Cursor.none
       linksCursor = Cursor.none
       levelListCursor = Cursor.none
-      themeCursor = Cursor.none
+      displayOptsCursor = Cursor.none
 
     # Find chunks
     while rr.hasNextChunk():
@@ -247,9 +266,9 @@ proc readMap*(filename: string): Map =
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
           linksCursor = rr.cursor.some
 
-        of FourCC_GRDM_them:
-          if themeCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_them)
-          themeCursor = rr.cursor.some
+        of FourCC_GRDM_disp:
+          if displayOptsCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_disp)
+          displayOptsCursor = rr.cursor.some
 
         else: discard   # skip unknown top level chunks
 
@@ -270,6 +289,10 @@ proc readMap*(filename: string): Map =
     rr.cursor = linksCursor.get
     m.links = readLinks(rr)
 
+    if displayOptsCursor.isSome:
+      rr.cursor = displayOptsCursor.get
+      discard readDisplayOptions(rr)
+
     result = m
 
   except MapReadError as e:
@@ -279,7 +302,8 @@ proc readMap*(filename: string): Map =
     echo getStackTrace(e)
     raise newException(MapReadError, fmt"Error reading map file: {e.msg}", e)
   finally:
-    rr.close()
+    if rr != nil:
+      rr.close()
 
 # }}}
 # }}}
@@ -287,6 +311,19 @@ proc readMap*(filename: string): Map =
 # {{{ Write
 
 using rw: RiffWriter
+
+proc writeDisplayOptions(rw; opts: MapDisplayOptions) =
+  rw.beginChunk(FourCC_GRDM_disp)
+
+  rw.write(opts.currLevel.uint16)
+  rw.write(opts.zoomLevel.uint8)
+  rw.write(opts.cursorRow.uint16)
+  rw.write(opts.cursorCol.uint16)
+  rw.write(opts.viewStartRow.uint16)
+  rw.write(opts.viewStartCol.uint16)
+
+  rw.endChunk()
+
 
 proc writeLinks(rw; links: BiTable[Location, Location]) =
   rw.beginChunk(FourCC_GRDM_lnks)
@@ -377,7 +414,7 @@ proc writeMap(rw; m: Map) =
   rw.endChunk()
 
 
-proc writeMap*(m: Map, filename: string) =
+proc writeMap*(m: Map, opts: MapDisplayOptions, filename: string) =
   var rw: RiffWriter
   try:
     rw = createRiffFile(filename, FourCC_GRDM)
@@ -385,7 +422,7 @@ proc writeMap*(m: Map, filename: string) =
     writeMap(rw, m)
     writeLevelList(rw, m.levels)
     writeLinks(rw, m.links)
-# TODO   writeTheme(rw)
+    writeDisplayOptions(rw, opts)
 
   except MapReadError as e:
     raise e

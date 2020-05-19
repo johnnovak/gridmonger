@@ -150,21 +150,21 @@ p {
   font-size: 32px;
 }
 .fs2 {
-  font-size: 32px;
-}
-.fs3 {
-  font-size: 28px;
-}
-.fs4 {
   font-size: 48px;
 }
-.fs5 {
+.fs3 {
   font-size: 32px;
 }
-.fs6 {
+.fs4 {
   font-size: 24px;
 }
-.fs7 {
+.fs5 {
   font-size: 20px;
+}
+.fs6 {
+  font-size: 32px;
+}
+.fs7 {
+  font-size: 28px;
 }
 

@@ -69,11 +69,14 @@ RIFF ('GRDM'            # Gridmonger map file
     UINT16  destinationRow     (max=numRows-1 of the given level)
     UINT16  destinationColumn  (max=numColumns-1 of the given level)
 
-TODO
 'disp'
-    BSTR    themeName          (min=1, max=255)
     UINT8   currLevel          (max=(number of levels) - 1)
     UINT8   zoomLevel          (min=1, max=20)
+    UINT16  cursorRow          (max=numRows-1 of the given level)
+    UINT16  cursorColumn       (max=numColumns-1 of the given level)
+
+    TODO:
+    BSTR    themeName          (min=1, max=255)
     UINT8   showCoords         (0 or 1)
     UINT8   gridStyle
 

@@ -156,8 +156,17 @@ var DefaultLevelStyle = new LevelStyle
 DefaultLevelStyle.backgroundColor      = gray(0.4)
 DefaultLevelStyle.drawColor            = gray(0.1)
 DefaultLevelStyle.lightDrawColor       = gray(0.6)
-DefaultLevelStyle.floorColor           = gray(0.9)
 DefaultLevelStyle.lineWidth            = lwNormal
+
+DefaultLevelStyle.floorColor           = @[gray(0.5),
+                                           gray(0.5),
+                                           gray(0.5),
+                                           gray(0.5),
+                                           gray(0.5),
+                                           gray(0.5),
+                                           gray(0.5),
+                                           gray(0.5),
+                                           gray(0.5)]
 
 DefaultLevelStyle.bgHatchEnabled       = true
 DefaultLevelStyle.bgHatchColor         = gray(0.0, 0.4)
@@ -360,8 +369,17 @@ proc parseTheme(c: Config): ThemeStyle =
     c.getColor(S, "backgroundColor",          s.backgroundColor)
     c.getColor(S, "drawColor",                s.drawColor)
     c.getColor(S, "lightDrawColor",           s.lightDrawColor)
-    c.getColor(S, "floorColor",               s.floorColor)
     getEnum[LineWidth](c, S, "lineWidth", s.lineWidth)
+
+    c.getColor(S, "floorColor1",              s.floorColor[0])
+    c.getColor(S, "floorColor2",              s.floorColor[1])
+    c.getColor(S, "floorColor3",              s.floorColor[2])
+    c.getColor(S, "floorColor4",              s.floorColor[3])
+    c.getColor(S, "floorColor5",              s.floorColor[4])
+    c.getColor(S, "floorColor6",              s.floorColor[5])
+    c.getColor(S, "floorColor7",              s.floorColor[6])
+    c.getColor(S, "floorColor8",              s.floorColor[7])
+    c.getColor(S, "floorColor9",              s.floorColor[8])
 
     c.getBool( S, "bgHatch",                  s.bgHatchEnabled)
     c.getColor(S, "bgHatchColor",             s.bgHatchColor)

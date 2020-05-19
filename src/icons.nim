@@ -32,7 +32,6 @@ const
   IconFullscreenExit* = "\ue98a"
   IconHand* = "\uf245"
   IconInfo* = "\uf05a"
-  IconKeyboard* = "\ue955"  #TODO remove
   IconMinus* = "\uea0b"
   IconMouse* = "\ue91d"
   IconNewFile* = "\uf15b"
@@ -44,6 +43,8 @@ const
   IconRedo* = "\uf064"
   IconRotate* = "\uf01e"
   IconSelection* = "\ue90b"
+  IconThinArrowUp* = "\ue91a"
+  IconThinArrowDown* = "\ue91e"
   IconTiles* = "\ue950"
   IconTrash* = "\uf1f8"
   IconUndo* = "\uf112"
@@ -55,7 +56,7 @@ const
   IconZoomIn* = "\uf00e"
   IconZoomOut* = "\uf010"
 
-  Iconbarrier* = "\ue918"
+  IconBarrier* = "\ue918"
   IconBed* = "\uf236"
   IconBomb* = "\uf1e2"
   IconBook* = "\ue923"

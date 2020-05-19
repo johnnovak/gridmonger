@@ -89,6 +89,9 @@ type
     undoManager:       UndoManager[Map, UndoStateData]
 
   Options = object
+    showSplash:        bool
+    loadLastFile:      bool
+
     scrollMargin:      Natural
     showNotesPane:     bool
     showToolsPane:     bool
@@ -338,6 +341,7 @@ const SpecialWalls = @[
   wLockedDoor,
   wArchway,
   wSecretDoor,
+  wOneWayDoorNE,
   wLeverSW,
   wNicheSW,
   wStatueSW,
@@ -354,6 +358,7 @@ const
 
 proc saveConfig(a) =
   alias(ui, a.ui)
+  alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
   alias(opt, a.opt)
   alias(theme, a.theme)
@@ -362,9 +367,9 @@ proc saveConfig(a) =
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
 
   let a = AppConfig(
-    showSplash: true,  # TODO
-    loadLastFile: true,  # TODO
-    lastFileName: "",  # TODO
+    showSplash: opt.showSplash,
+    loadLastFile: opt.loadLastFile,
+    lastFileName: a.doc.filename,
 
     maximized: a.win.maximized,
     xpos: xpos,
@@ -374,6 +379,7 @@ proc saveConfig(a) =
     resizeRedrawHack: csdwindow.getResizeRedrawHack(),
     resizeNoVsyncHack: csdwindow.getResizeNoVsyncHack(),
 
+    # TODO use common struct for DISP chunk & this
     themeName: theme.themeNames[theme.currThemeIndex],
     zoomLevel: dp.getZoomLevel(),
     showCellCoords: dp.drawCellCoords,
@@ -382,6 +388,12 @@ proc saveConfig(a) =
     drawTrail: opt.drawTrail,
     wasdMode: opt.wasdMode,
     walkMode: opt.walkMode,
+
+    currLevel: cur.level,
+    cursorRow: cur.row,
+    cursorCol: cur.col,
+    viewStartRow: dp.viewStartRow,
+    viewStartCol: dp.viewStartCol,
 
     autoSaveFrequencySecs: 120,  # TODO
     autoSaveSlots: 2  # TODO
@@ -505,31 +517,48 @@ proc drawStatusBar(y: float, winWidth: float, a) =
 
 # }}}
 
-# {{{ openMap()
+# {{{ loadMap()
 proc resetCursorAndViewStart(a)
 
+proc loadMap(filename: string, a) =
+  try:
+    a.doc.map = readMap(filename)
+    a.doc.filename = filename
+
+    initUndoManager(a.doc.undoManager)
+
+    resetCursorAndViewStart(a)
+    setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
+
+  except CatchableError as e:
+    # TODO log stracktrace?
+    setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
+
+# }}}
+# {{{ openMap()
 proc openMap(a) =
   when defined(DEBUG): discard
   else:
     let filename = fileDialog(fdOpenFile,
                               filters=GridmongerMapFileFilter)
     if filename != "":
-      try:
-        a.doc.map = readMap(filename)
-        a.doc.filename = filename
-
-        initUndoManager(a.doc.undoManager)
-
-        resetCursorAndViewStart(a)
-        setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
-
-      except CatchableError as e:
-        # TODO log stracktrace?
-        setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
+      loadMap(filename, a)
 # }}}
 # {{{ saveMapAction()
 proc saveMap(filename: string, a) =
-  writeMap(a.doc.map, filename)
+  alias(cur, a.ui.cursor)
+  alias(dp, a.ui.drawLevelParams)
+
+  let mapDisplayOpts = MapDisplayOptions(
+    currLevel       : cur.level,
+    zoomLevel       : dp.getZoomLevel(),
+    cursorRow       : cur.row,
+    cursorCol       : cur.col,
+    viewStartRow    : dp.viewStartRow,
+    viewStartCol    : dp.viewStartCol
+  )
+
+  writeMap(a.doc.map, mapDisplayOpts, filename)
   a.doc.undoManager.setLastSaveState()
   setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
 
@@ -1175,13 +1204,10 @@ proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
 
   y += 20
 
-
   proc okAction(dlg: var PreferencesDialogParams, a) =
-    # TODO
-
+    saveConfig(a)
     koi.closeDialog()
     dlg.isOpen = false
-
 
   proc cancelAction(dlg: var PreferencesDialogParams, a) =
     koi.closeDialog()
@@ -2045,10 +2071,8 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 
     var col = colors[buttonIdx]
 
-    if hover:
-      col = col.lerp(white(), 0.3)
-    if down:
-      col = col.lerp(black(), 0.3)
+    if hover or down:
+      col = col.lerp(white(), 0.15)
 
     const Pad = 5
     const SelPad = 3
@@ -2131,9 +2155,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
       labels = newSeq[string](ls.noteIndexBgColor.len),
       dlg.indexColor,
       tooltips = @[],
-      layout=RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc=colorRadioButtonDrawProc(ls.noteIndexBgColor,
-                                        ls.cursorColor).some
+      layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
+      drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor,
+                                          ls.cursorColor).some
     )
 
   of nkCustomId:
@@ -2716,8 +2740,8 @@ proc specialWallDrawProc(ls: LevelStyle,
 
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
-    let savedFloorColor = ls.floorColor
-    ls.floorColor = gray(0, 0)  # transparent
+    let savedFloorColor = ls.floorColor[0]
+    ls.floorColor[0] = gray(0, 0)  # transparent
 
     const Pad = 5
 
@@ -2753,6 +2777,9 @@ proc specialWallDrawProc(ls: LevelStyle,
     of wSecretDoor:
       drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ctx)
 
+    of wOneWayDoorNE:
+      drawAtZoomLevel(8):  drawOneWayDoorHorizNE(cx-4, cy+1, ctx)
+
     of wLeverSW:
       drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx)
 
@@ -2770,7 +2797,7 @@ proc specialWallDrawProc(ls: LevelStyle,
     else: discard
 
     # ...aaaaand restore it!
-    ls.floorColor = savedFloorColor
+    ls.floorColor[0] = savedFloorColor
 
 # }}}
 
@@ -2787,25 +2814,21 @@ proc renderToolsPane(x, y, w, h: float, a) =
     labels = newSeq[string](SpecialWalls.len),
     ui.currSpecialWall,
     tooltips = @[],
-    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
-    drawProc=specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
+    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
+    drawProc = specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
   )
 
-# TODO
-#[
   ui.currFloorColor = koi.radioButtons(
     x = x + 3,
-    y = y + 374,
+    y = y + 446,
     w = 30,
     h = 30,
-    labels = newSeq[string](4),
+    labels = newSeq[string](ls.floorColor.len),
     ui.currFloorColor,
     tooltips = @[],
-    layout=RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 8),
-    drawProc=colorRadioButtonDrawProc(ls.noteIndexBgColor,
-                                      ls.cursorColor).some
+    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 9),
+    drawProc = colorRadioButtonDrawProc(ls.floorColor, ls.cursorColor).some
   )
-]#
 
 # }}}
 # {{{ drawNotesPane()
@@ -3329,9 +3352,11 @@ proc handleGlobalKeyEvents(a) =
       proc handleMoveKey(dir: CardinalDir, a) =
         if map.canSetWall(cur, dir):
           var curSpecWall = SpecialWalls[ui.currSpecialWall]
-          if   curSpecWall == wLeverSw:
+          if   curSpecWall == wOneWayDoorNE:
+            if dir in {dirS, dirW}: curSpecWall = wOneWayDoorSW
+          elif curSpecWall == wLeverSW:
             if dir in {dirN, dirE}: curSpecWall = wLeverNE
-          elif curSpecWall == wNicheSw:
+          elif curSpecWall == wNicheSW:
             if dir in {dirN, dirE}: curSpecWall = wNicheNE
           elif curSpecWall == wStatueSw:
             if dir in {dirN, dirE}: curSpecWall = wStatueNE
@@ -3869,6 +3894,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
 
+  a.opt.showSplash = cfg.showSplash
+  a.opt.loadLastFile = cfg.loadLastFile
+
   a.opt.showNotesPane = cfg.showNotesPane
   a.opt.showToolsPane = cfg.showToolsPane
 
@@ -3876,20 +3904,19 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.opt.walkMode = cfg.walkMode
   a.opt.wasdMode = cfg.wasdMode
 
-  setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
+  if cfg.loadLastFile:
+    loadMap(cfg.lastFileName, a)
+  else:
+    setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-#  let filename = "EOB III - Crystal Tower L2 notes.grm"
-#  let filename = "EOB III - Crystal Tower L2.grm"
-# let filename = "drawtest.grm"
-#  let filename = "notetest.grm"
-#  let filename = "pool-of-radiance-library.grm"
-#  let filename = "teleport-test.grm"
-#  let filename = "leveltest.grm"
-  let filename = "uukrul.grm"
-#  let filename = "eob1.grm"
-#  let filename = "pool-of-radiance-multi.grm"
-  a.doc.map = readMap(filename)
-  a.doc.filename = filename
+  # TODO check values?
+  # TODO timestamp check to determine whether to read the DISP info from the
+  # conf or from the file
+  a.ui.cursor.level = cfg.currLevel
+  a.ui.cursor.row = cfg.cursorRow
+  a.ui.cursor.col = cfg.cursorCol
+  a.ui.drawLevelParams.viewStartRow = cfg.viewStartRow
+  a.ui.drawLevelParams.viewStartCol = cfg.viewStartCol
 
   # Init window
   a.win.renderFramePreCb = renderFramePre

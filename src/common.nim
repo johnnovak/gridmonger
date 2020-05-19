@@ -79,7 +79,7 @@ type
     backgroundColor*:        Color
     drawColor*:              Color
     lightDrawColor*:         Color
-    floorColor*:             Color
+    floorColor*:             seq[Color]
     lineWidth*:              LineWidth
 
     bgHatchEnabled*:         bool
@@ -177,14 +177,16 @@ type
     fInvisibleBarrier    = ( 80, "invisible barrier")
 
   Wall* = enum
-    wNone          = (0, "none"),
-    wWall          = (10, "wall"),
-    wIllusoryWall  = (11, "illusory wall"),
+    wNone          = (0, "none")
+    wWall          = (10, "wall")
+    wIllusoryWall  = (11, "illusory wall")
     wInvisibleWall = (12, "invisible wall")
-    wDoor          = (20, "door"),
-    wLockedDoor    = (21, "locked door"),
-    wArchway       = (22, "archway"),
-    wSecretDoor    = (23, "secret door"),
+    wDoor          = (20, "door")
+    wLockedDoor    = (21, "locked door")
+    wArchway       = (22, "archway")
+    wSecretDoor    = (23, "secret door")
+    wOneWayDoorNE  = (24, "one-way door")
+    wOneWayDoorSW  = (25, "one-way door")
     wLeverNE       = (30, "lever")
     wLeverSW       = (31, "lever")
     wNicheNE       = (40, "niche")
