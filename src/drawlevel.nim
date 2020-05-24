@@ -1798,19 +1798,22 @@ proc drawLinkMarkers(map: Map, level: Natural, ctx) =
 proc drawNotes(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
 
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
-      let bufRow = viewRow + ViewBufBorder
-      let bufCol = viewCol + ViewBufBorder
+  let rect = rectN(
+    ViewBufBorder,
+    ViewBufBorder,
+    viewBuf.rows - ViewBufBorder,
+    viewBuf.cols - ViewBufBorder
+  )
 
-      if viewBuf.hasNote(bufRow, bufCol):
-        let note = viewBuf.getNote(bufRow, bufCol)
+  for bufRow, bufCol, note in viewBuf.allNotes:
+    if note.kind != nkLabel and rect.contains(bufRow, bufCol):
+      let
+        viewRow = bufRow - ViewBufBorder
+        viewCol = bufCol - ViewBufBorder
+        x = cellX(viewCol, dp)
+        y = cellY(viewRow, dp)
 
-        if note.kind != nkLabel:
-          let x = cellX(viewCol, dp)
-          let y = cellY(viewRow, dp)
-
-          drawNote(x, y, note, ctx)
+      drawNote(x, y, note, ctx)
 
 # }}}
 
