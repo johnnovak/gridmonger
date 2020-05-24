@@ -824,6 +824,17 @@ proc updateLastCursorViewCoords(a) =
   a.ui.lastCursorViewY = dp.gridSize * (cur.row - dp.viewStartRow)
 
 # }}}
+# {{{ getDrawAreaWidth()
+proc getDrawAreaWidth(a): float =
+  koi.winWidth() - a.ui.levelLeftPad - a.ui.levelRightPad
+
+# }}}
+# {{{ getDrawAreaHeight()
+proc getDrawAreaHeight(a): float =
+  koi.winHeight() - TitleBarHeight - StatusBarHeight -
+                    a.ui.levelTopPad - a.ui.levelBottomPad
+
+# }}}
 # {{{ updateViewStartAndCursorPosition()
 proc updateViewStartAndCursorPosition(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -846,22 +857,18 @@ proc updateViewStartAndCursorPosition(a) =
   dp.startX = ui.levelLeftPad
   dp.startY = TitleBarHeight + ui.levelTopPad
 
-  var drawAreaHeight = koi.winHeight() - TitleBarHeight - StatusBarHeight -
-                       ui.levelTopPad - ui.levelBottomPad
+  ui.levelDrawAreaWidth = getDrawAreaWidth(a)
+  ui.levelDrawAreaHeight = getDrawAreaHeight(a)
 
   if a.opt.showNotesPane:
-   drawAreaHeight -= NotesPaneTopPad + NotesPaneHeight + NotesPaneBottomPad
-
-  var drawAreaWidth = koi.winWidth() - ui.levelLeftPad - ui.levelRightPad
+   ui.levelDrawAreaHeight -= NotesPaneTopPad + NotesPaneHeight +
+                             NotesPaneBottomPad
 
   if a.opt.showToolsPane:
-    drawAreaWidth -= ToolsPaneWidth
+    ui.levelDrawAreaWidth -= ToolsPaneWidth
 
-  ui.levelDrawAreaWidth = drawAreaWidth
-  ui.levelDrawAreaHeight = drawAreaHeight
-
-  dp.viewRows = min(dp.numDisplayableRows(drawAreaHeight), l.rows)
-  dp.viewCols = min(dp.numDisplayableCols(drawAreaWidth), l.cols)
+  dp.viewRows = min(dp.numDisplayableRows(ui.levelDrawAreaHeight), l.rows)
+  dp.viewCols = min(dp.numDisplayableCols(ui.levelDrawAreaWidth), l.cols)
 
   dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow)
   dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol)
@@ -873,6 +880,31 @@ proc updateViewStartAndCursorPosition(a) =
   cur.col = viewEndCol.clamp(dp.viewStartCol, cur.col)
 
   updateLastCursorViewCoords(a)
+
+# }}}
+# {{{ moveLevel()
+proc moveLevel(dir: CardinalDir, steps: Natural, a) =
+  alias(cur, a.ui.cursor)
+  alias(dp, a.ui.drawLevelParams)
+
+  let l = getCurrLevel(a)
+  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
+  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
+
+  var newViewStartCol = dp.viewStartCol
+  var newViewStartRow = dp.viewStartRow
+
+  case dir:
+  of dirE: newViewStartCol = min(dp.viewStartCol + steps, maxViewStartCol)
+  of dirW: newViewStartCol = max(dp.viewStartCol - steps, 0)
+  of dirS: newViewStartRow = min(dp.viewStartRow + steps, maxViewStartRow)
+  of dirN: newViewStartRow = max(dp.viewStartRow - steps, 0)
+
+  cur.row = cur.row + (newViewStartRow - dp.viewStartRow)
+  cur.col = cur.col + (newViewStartCol - dp.viewStartCol)
+
+  dp.viewStartRow = newViewStartRow
+  dp.viewStartCol = newViewStartCol
 
 # }}}
 # {{{ moveCursor()
@@ -3045,6 +3077,16 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.right, {mkCtrl}, repeat=true): moveCursor(dirE, j, a)
     elif ke.isKeyDown(k.up,    {mkCtrl}, repeat=true): moveCursor(dirN, j, a)
     elif ke.isKeyDown(k.down,  {mkCtrl}, repeat=true): moveCursor(dirS, j, a)
+
+    elif ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevel(dirW, 1, a)
+    elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevel(dirE, 1, a)
+    elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, 1, a)
+    elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, 1, a)
+
+    elif ke.isKeyDown(k.left,  {mkCtrl, mkShift}, repeat=true): moveLevel(dirW, j, a)
+    elif ke.isKeyDown(k.right, {mkCtrl, mkShift}, repeat=true): moveLevel(dirE, j, a)
+    elif ke.isKeyDown(k.up,    {mkCtrl, mkShift}, repeat=true): moveLevel(dirN, j, a)
+    elif ke.isKeyDown(k.down,  {mkCtrl, mkShift}, repeat=true): moveLevel(dirS, j, a)
 
     result = false
 

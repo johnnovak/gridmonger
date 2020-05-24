@@ -1,26 +1,21 @@
 BUGS
-  - nudge: move cursor by nudge amount
   - cut and the paste back doesn't yield the same results
   - cut shouldn't cut walls of bordering cells
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - note dialog textfield focus bug
   - no cursor jump when resizing & cropping
+  - adding a note to a cell containing a non-empty floor should set the floor
+    to empty first
 
 
 TODO
   - RLE compression
-  - one way doors
   - remove text label
-  - clip text label to visible area
   - colours for text labels
   - floor colours
 
-  - preferences
   - koi: textarea widget
-  - save display params into file: cursor pos, level, theme, option settings
-    (basically used should continue where he left off after reopening a map)
-
-  - coordinate modes (per map)
+  - rethink save display params into file
   - autosave
 
   - update all themes
