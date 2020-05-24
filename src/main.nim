@@ -35,7 +35,6 @@ import utils
 const
   ThemesDir = "themes"
 
-  DefaultZoomLevel = 9
   CursorJump = 5
 
   StatusBarHeight         = 26.0
@@ -1159,9 +1158,6 @@ proc openPreferencesDialog(a) =
 
 
 proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
-  alias(map, a.doc.map)
-  alias(cur, a.ui.cursor)
-
   let
     dialogWidth = 370.0
     dialogHeight = 345.0
@@ -2351,7 +2347,6 @@ proc openEditLabelDialog(a) =
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
-  alias(ls, a.doc.levelStyle)
   let
     dialogWidth = 500.0
     dialogHeight = 370.0
@@ -2676,7 +2671,6 @@ proc renderLevel(a) =
        ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
       dp.cursorOrient = ui.cursorOrient.some
 
-    let l = getCurrLevel(a)
     dp.selection = ui.selection
     dp.selectionRect = ui.selRect
 

@@ -133,7 +133,7 @@ proc `[]`(b: OutlineBuf, r,c: Natural): OutlineCell =
 # }}}
 
 const
-  ViewBufBorder = 10
+  ViewBufBorder = MaxLabelWidthInCells
 
 using
   ls:  LevelStyle
@@ -810,7 +810,7 @@ proc drawCustomIdNote(x, y: float, s: string, ctx) =
   vg.textAlign(haCenter, vaMiddle)
 
   discard vg.text(x + dp.gridSize*0.52,
-                  y + dp.gridSize*0.55, s)
+                  y + dp.gridSize * TextVertAlignFactor, s)
 
 # }}}
 # {{{ drawNote()
@@ -864,7 +864,12 @@ proc drawLabel(x, y: float, text: string, ctx) =
   # TODO remove when textbox widget is available
   var text = text.replace("\\n", "\n")
 
-  vg.textBox(x + dp.gridSize*0.22, y + dp.gridSize*0.55, 10_000, text)
+  vg.textBox(
+    x + dp.gridSize * 0.22,
+    y + dp.gridSize * TextVertAlignFactor,
+    MaxLabelWidthInCells * dp.gridSize,
+    text
+  )
 
   vg.restore()
 
@@ -1748,19 +1753,22 @@ proc drawFloors(viewBuf: Level, ctx) =
 proc drawLabels(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
 
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
-      let bufRow = viewRow + ViewBufBorder
-      let bufCol = viewCol + ViewBufBorder
+  let rect = rectN(
+    ViewBufBorder,
+    0,
+    viewBuf.rows - ViewBufBorder,
+    viewBuf.cols - ViewBufBorder
+  )
 
-      if viewBuf.hasNote(bufRow, bufCol):
-        let note = viewBuf.getNote(bufRow, bufCol)
+  for bufRow, bufCol, note in viewBuf.allNotes:
+    if note.kind == nkLabel and rect.contains(bufRow, bufCol):
+      let
+        viewRow = bufRow - ViewBufBorder
+        viewCol = bufCol - ViewBufBorder
+        x = cellX(viewCol, dp)
+        y = cellY(viewRow, dp)
 
-        if note.kind == nkLabel:
-          let x = cellX(viewCol, dp)
-          let y = cellY(viewRow, dp)
-
-          drawLabel(x, y, note.text, ctx)
+      drawLabel(x, y, note.text, ctx)
 
 # }}}
 # {{{ drawLinkMarkers()

@@ -70,7 +70,7 @@ iterator allNotes*(l): (Natural, Natural, Note) =
 
 proc delNotes(l; rect: Rect[Natural]) =
   var toDel: seq[(Natural, Natural)]
-  for r,c, _ in l.allNotes():
+  for r,c, _ in l.allNotes:
     if rect.contains(r,c):
       toDel.add((r,c))
   for (r,c) in toDel: l.delNote(r,c)
@@ -85,7 +85,7 @@ proc convertNoteToComment(l; r,c: Natural) =
 
 proc copyNotesFrom(l; destRow, destCol: Natural,
                    src: Level, srcRect: Rect[Natural]) =
-  for (r,c, note) in src.allNotes():
+  for (r,c, note) in src.allNotes:
     if srcRect.contains(r,c):
       l.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
 

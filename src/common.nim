@@ -11,6 +11,8 @@ const
 
   TextVertAlignFactor* = 0.55
 
+  MaxLabelWidthInCells* = 15
+
   WindowMinWidth* = 640
   WindowMinHeight* = 480
 
