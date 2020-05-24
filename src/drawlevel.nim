@@ -458,12 +458,14 @@ proc drawCellOutlines(l: Level, ctx) =
   vg.strokeColor(ls.outlineColor)
   vg.beginPath()
 
-  for r in 0..<dp.viewRows:
-    for c in 0..<dp.viewCols:
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let row = dp.viewStartRow + viewRow
+      let col = dp.viewStartCol + viewCol
 
-      if isOutline(dp.viewStartRow+r, dp.viewStartCol+c):
-        let x = snap(cellX(c, dp), sw)
-        let y = snap(cellY(r, dp), sw)
+      if l.isFloorEmpty(row, col) and isOutline(row, col):
+        let x = snap(cellX(viewCol, dp), sw)
+        let y = snap(cellY(viewRow, dp), sw)
 
         vg.rect(x, y, dp.gridSize, dp.gridSize)
 
@@ -1678,7 +1680,8 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
       if not viewBuf.isFloorEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        drawFloorBg(x, y, ls.floorColor[0], ctx)  # TODO
+        let floorColor = ls.floorColor[viewBuf.getFloorColor(bufRow, bufCol)]
+        drawFloorBg(x, y, floorColor, ctx)
         drawGrid(x, y, ls.gridColorFloor, ls.gridStyleFloor, ctx)
 
 # }}}

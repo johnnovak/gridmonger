@@ -118,17 +118,18 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 
 # }}}
 # {{{ setFloor*()
-proc setFloor*(map; loc: Location, f: Floor; um) =
+proc setFloor*(map; loc: Location, f: Floor, floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
-    m.setFloor(loc, f)
+    m.setFloor(loc, f, floorColor)
 
 # }}}
 # {{{ setOrientedFloor*()
-proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation; um) =
+proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
+                       floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
-    m.setFloor(loc, f)
+    m.setFloor(loc, f, floorColor)
     m.setFloorOrientation(loc, ot)
 
 # }}}
@@ -145,7 +146,7 @@ proc eraseCell*(map; loc: Location; um) =
 
 # }}}
 # {{{ excavate*()
-proc excavate*(map; loc: Location; um) =
+proc excavate*(map; loc: Location, floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, "Excavate", m):
     alias(l, m.levels[loc.level])
@@ -153,7 +154,7 @@ proc excavate*(map; loc: Location; um) =
     alias(r, loc.row)
 
     m.eraseCell(loc)
-    m.setFloor(loc, fEmpty)
+    m.setFloor(loc, fEmpty, floorColor)
 
     if r == 0 or l.isFloorEmpty(r-1, c):
       m.setWall(loc, dirN, wWall)
@@ -201,7 +202,7 @@ proc eraseNote*(map; loc: Location; um) =
 
 # }}}
 # {{{ setLink*()
-proc setLink*(map; src, dest: Location; um) =
+proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
   let srcFloor = map.getFloor(src)
 
   var destFloor: Floor
@@ -213,10 +214,10 @@ proc setLink*(map; src, dest: Location; um) =
     if map.levels[src.level].elevation < map.levels[dest.level].elevation:
       destFloor = fStairsDown
       # TODO could be made undoable, but probably not worth bothering with it
-      map.setFloor(src, fStairsUp)
+      map.setFloor(src, fStairsUp, floorColor)
     else:
       destFloor = fStairsUp
-      map.setFloor(src, fStairsDown)
+      map.setFloor(src, fStairsDown, floorColor)
 
   let level = dest.level
   let linkType = linkFloorToString(srcFloor)
@@ -232,7 +233,7 @@ proc setLink*(map; src, dest: Location; um) =
     # (delete existing links originating from src)
     m.links.delBySrc(src)
 
-    m.setFloor(dest, destFloor)
+    m.setFloor(dest, destFloor, floorColor)
     m.links.set(src, dest)
     m.levels[level].reindexNotes()
     result = usd
@@ -292,7 +293,7 @@ proc eraseSelection*(map; level: Natural, sel: Selection,
 # }}}
 # {{{ fillSelection*()
 proc fillSelection*(map; level: Natural, sel: Selection,
-                    bbox: Rect[Natural]; um) =
+                    bbox: Rect[Natural], floorColor: Natural; um) =
 
   cellAreaAction(map, level, bbox, um, groupWithPrev=false,
                  "Fill selection", m):
@@ -305,7 +306,7 @@ proc fillSelection*(map; level: Natural, sel: Selection,
           loc.row = r
           loc.col = c
           m.eraseCell(loc)
-          m.setFloor(loc, fEmpty)
+          m.setFloor(loc, fEmpty, floorColor)
 
 # }}}
 # {{{ surroundSelection*()

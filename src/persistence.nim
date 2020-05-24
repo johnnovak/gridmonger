@@ -104,7 +104,9 @@ proc readLevelProperties_V1(rr): Level =
     elevation = rr.read(int16).int
     rows = rr.read(uint16).Natural
     cols = rr.read(uint16).Natural
+
   result = newLevel(locationName, levelName, elevation, rows, cols)
+
 
 proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
   var cells: seq[Cell]
@@ -114,12 +116,12 @@ proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
     var c: Cell
     c.floor = rr.read(uint8).Floor
     c.floorOrientation = rr.read(uint8).Orientation
+    c.floorColor = rr.read(uint8).Natural
     c.wallN = rr.read(uint8).Wall
     c.wallW = rr.read(uint8).Wall
     cells[i] = c
 
   result = cells
-
 
 
 proc readLevelNotes_V1(rr; l: Level) =
@@ -361,6 +363,7 @@ proc writeLevelCells(rw; cells: seq[Cell]) =
   for c in cells:
     rw.write(c.floor.uint8)
     rw.write(c.floorOrientation.uint8)
+    rw.write(c.floorColor.uint8)
     rw.write(c.wallN.uint8)
     rw.write(c.wallW.uint8)
   rw.endChunk()

@@ -97,25 +97,31 @@ proc setFloor*(l; r,c: Natural, f: Floor) =
   l.convertNoteToComment(r,c)
   l.cellGrid.setFloor(r,c, f)
 
-proc getWall*(l; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
-  l.cellGrid.getWall(r,c, dir)
-
-proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall)  {.inline.} =
-  l.cellGrid.setWall(r,c, dir, w)
-
 proc getFloorOrientation*(l; r,c: Natural): Orientation {.inline.} =
   l.cellGrid.getFloorOrientation(r,c)
 
-proc setFloorOrientation*(l; r,c: Natural, ot: Orientation) =
+proc setFloorOrientation*(l; r,c: Natural, ot: Orientation) {.inline.} =
   l.cellGrid.setFloorOrientation(r,c, ot)
 
-proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool =
+proc getFloorColor*(l; r,c: Natural): Natural {.inline.} =
+  l.cellGrid.getFloorColor(r,c)
+
+proc setFloorColor*(l; r,c, col: Natural) {.inline.} =
+  l.cellGrid.setFloorColor(r,c, col)
+
+proc getWall*(l; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
+  l.cellGrid.getWall(r,c, dir)
+
+proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
+  l.cellGrid.setWall(r,c, dir, w)
+
+proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool {.inline.} =
   l.cellGrid.isNeighbourCellEmpty(r,c, dir)
 
 proc isFloorEmpty*(l; r,c: Natural): bool {.inline.} =
   l.cellGrid.isFloorEmpty(r,c)
 
-proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool =
+proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
   l.getFloor(r,c) != fNone or not l.isNeighbourCellEmpty(r,c, {dir})
 
 proc eraseOrphanedWalls*(l; r,c: Natural) =
@@ -154,6 +160,9 @@ proc paste*(l; destRow, destCol: int, src: Level,
         if sel[srcRow, srcCol]:
           let floor = src.getFloor(srcRow, srcCol)
           l.setFloor(r,c, floor)
+
+          let floorColor = src.getFloorColor(srcRow, srcCol)
+          l.setFloorColor(r,c, floorColor)
 
           let ot = src.getFloorOrientation(srcRow, srcCol)
           l.setFloorOrientation(r,c, ot)

@@ -2578,7 +2578,8 @@ proc setFloorAction(f: Floor, a) =
   alias(cur, a.ui.cursor)
 
   let ot = a.doc.map.guessFloorOrientation(cur)
-  actions.setOrientedFloor(a.doc.map, cur, f, ot, a.doc.undoManager)
+  actions.setOrientedFloor(a.doc.map, cur, f, ot, a.ui.currFloorColor,
+                           a.doc.undoManager)
   setStatusMessage(fmt"Set floor – {f}", a)
 
 # }}}
@@ -2602,7 +2603,9 @@ proc setOrCycleFloorAction(first, last: Floor, forward: bool, a) =
 # }}}
 # {{{ startExcavateAction()
 proc startExcavateAction(a) =
-  actions.excavate(a.doc.map, a.ui.cursor, a.doc.undoManager)
+  actions.excavate(a.doc.map, a.ui.cursor, a.ui.currFloorColor,
+                   a.doc.undoManager)
+
   setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll, "draw"], a)
 
 # }}}
@@ -2965,6 +2968,7 @@ proc handleGlobalKeyEvents(a) =
   alias(um, a.doc.undoManager)
   alias(dp, a.ui.drawLevelParams)
   alias(opt, a.opt)
+  alias(ls, a.doc.levelStyle)
 
   var l = getCurrLevel(a)
 
@@ -3016,7 +3020,7 @@ proc handleGlobalKeyEvents(a) =
 
   proc setTrailAtCursor(a) =
     if map.isFloorEmpty(cur):
-      actions.setFloor(map, cur, fTrail, um)
+      actions.setFloor(map, cur, fTrail, ui.currFloorColor, um)
 
   proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
     opt = not opt
@@ -3130,7 +3134,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emClearFloor
         setStatusMessage(IconEraser, "Clear floor",
                          @[IconArrowsAll, "clear"], a)
-        actions.setFloor(map, cur, fEmpty, um)
+        actions.setFloor(map, cur, fEmpty, ui.currFloorColor, um)
 
       elif ke.isKeyDown(keyO):
         actions.toggleFloorOrientation(map, cur, um)
@@ -3182,6 +3186,14 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyRightBracket, repeat=true):
         if ui.currSpecialWall < SpecialWalls.high: inc(ui.currSpecialWall)
         else: ui.currSpecialWall = 0
+
+      elif ke.isKeyDown(keyComma, repeat=true):
+        if ui.currFloorColor > 0: dec(ui.currFloorColor)
+        else: ui.currFloorColor = ls.floorColor.high
+
+      elif ke.isKeyDown(keyPeriod, repeat=true):
+        if ui.currFloorColor < ls.floorColor.high: inc(ui.currFloorColor)
+        else: ui.currFloorColor = 0
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyU, repeat=true):
@@ -3381,9 +3393,14 @@ proc handleGlobalKeyEvents(a) =
         discard handleMoveCursor(ke, moveKeys, a)
 
       if cur != prevCursor:
-        if   ui.editMode == emExcavate:   actions.excavate(map, cur, um)
-        elif ui.editMode == emEraseCell:  actions.eraseCell(map, cur, um)
-        elif ui.editMode == emClearFloor: actions.setFloor(map, cur, fEmpty, um)
+        if   ui.editMode == emExcavate:
+          actions.excavate(map, cur, ui.currFloorColor, um)
+
+        elif ui.editMode == emEraseCell:
+          actions.eraseCell(map, cur, um)
+
+        elif ui.editMode == emClearFloor:
+          actions.setFloor(map, cur, fEmpty, ui.currFloorColor, um)
 
       if not opt.wasdMode and ke.isKeyUp({keyD, keyE}):
         ui.editMode = emNormal
@@ -3512,7 +3529,8 @@ proc handleGlobalKeyEvents(a) =
         let selection = ui.selection.get
         let bbox = selection.boundingBox()
         if bbox.isSome:
-          actions.fillSelection(map, cur.level, selection, bbox.get, um)
+          actions.fillSelection(map, cur.level, selection, bbox.get,
+                                ui.currFloorColor, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Filled selection", a)
 
@@ -3660,7 +3678,8 @@ proc handleGlobalKeyEvents(a) =
         nextLevelAction(a)
 
       elif ke.isKeyDown(keyEnter):
-        actions.setLink(map, src=ui.linkSrcLocation, dest=cur, um)
+        actions.setLink(map, src=ui.linkSrcLocation, dest=cur,
+                        ui.currFloorColor, um)
         ui.editMode = emNormal
         let linkType = linkFloorToString(map.getFloor(cur))
         setStatusMessage(IconLink,

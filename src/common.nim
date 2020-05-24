@@ -153,6 +153,7 @@ type
   Cell* = object
     floor*:            Floor
     floorOrientation*: Orientation
+    floorColor*:       Natural
     wallN*, wallW*:    Wall
 
   Floor* = enum
