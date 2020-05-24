@@ -121,15 +121,15 @@ proc loadAppConfig*(fname: string): AppConfig =
   cfg.getString(StartupSection, LastFileNameKey,   a.lastFileName)
 
   cfg.getBool(WindowSection, MaximizedKey,         a.maximized)
-  cfg.getInt( WindowSection, XposKey,              a.xpos)
-  cfg.getInt( WindowSection, YposKey,              a.ypos)
-  cfg.getInt( WindowSection, WidthKey,             a.width)
-  cfg.getInt( WindowSection, HeightKey,            a.height)
+  cfg.getNatural( WindowSection, XposKey,          a.xpos)
+  cfg.getNatural( WindowSection, YposKey,          a.ypos)
+  cfg.getNatural( WindowSection, WidthKey,         a.width)
+  cfg.getNatural( WindowSection, HeightKey,        a.height)
   cfg.getBool(WindowSection, ResizeRedrawHackKey,  a.resizeRedrawHack)
   cfg.getBool(WindowSection, ResizeNoVsyncHackKey, a.resizeNoVsyncHack)
 
   cfg.getString(UISection, ThemeNameKey,           a.themeName)
-  cfg.getInt(   UISection, ZoomLevelKey,           a.zoomLevel)
+  cfg.getNatural(   UISection, ZoomLevelKey,       a.zoomLevel)
   cfg.getBool(  UISection, ShowCellCoordsKey,      a.showCellCoords)
   cfg.getBool(  UISection, ShowToolsPaneKey,       a.showToolsPane)
   cfg.getBool(  UISection, ShowNotesPaneKey,       a.showNotesPane)
@@ -137,14 +137,14 @@ proc loadAppConfig*(fname: string): AppConfig =
   cfg.getBool(  UISection, WasdModeKey,            a.wasdMode)
   cfg.getBool(  UISection, WalkModeKey,            a.walkMode)
 
-  cfg.getInt(UISection, CurrLevelKey,              a.currLevel)
-  cfg.getInt(UISection, CursorRowKey,              a.cursorRow)
-  cfg.getInt(UISection, CursorColKey,              a.cursorCol)
-  cfg.getInt(UISection, ViewStartRowKey,           a.viewStartRow)
-  cfg.getInt(UISection, ViewStartColKey,           a.viewStartCol)
+  cfg.getNatural(UISection, CurrLevelKey,           a.currLevel)
+  cfg.getNatural(UISection, CursorRowKey,           a.cursorRow)
+  cfg.getNatural(UISection, CursorColKey,           a.cursorCol)
+  cfg.getNatural(UISection, ViewStartRowKey,        a.viewStartRow)
+  cfg.getNatural(UISection, ViewStartColKey,        a.viewStartCol)
 
-  cfg.getInt(AutoSaveSection, FrequencySecsKey,    a.autoSaveFrequencySecs)
-  cfg.getInt(AutoSaveSection, SlotsKey,            a.autoSaveSlots)
+  cfg.getNatural(AutoSaveSection, FrequencySecsKey, a.autoSaveFrequencySecs)
+  cfg.getNatural(AutoSaveSection, SlotsKey,         a.autoSaveSlots)
 
   if a.width  < WindowMinWidth:  a.width  = DefaultAppConfig.width
   if a.height < WindowMinHeight: a.height = DefaultAppConfig.height

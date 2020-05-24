@@ -106,6 +106,9 @@ type
     cursorOrient:      CardinalDir
     editMode:          EditMode
 
+    lastCursorViewX:   float
+    lastCursorViewY:   float
+
     selection:         Option[Selection]
     selRect:           Option[SelectionRect]
     copyBuf:           Option[SelectionBuffer]
@@ -813,6 +816,15 @@ proc resetCursorAndViewStart(a) =
   a.ui.drawLevelParams.viewStartCol = 0
 
 # }}}
+# {{{ updateLastCursorViewCoords()
+proc updateLastCursorViewCoords(a) =
+  alias(dp, a.ui.drawLevelParams)
+  alias(cur, a.ui.cursor)
+
+  a.ui.lastCursorViewX = dp.gridSize * (cur.col - dp.viewStartCol)
+  a.ui.lastCursorViewY = dp.gridSize * (cur.row - dp.viewStartRow)
+
+# }}}
 # {{{ updateViewStartAndCursorPosition()
 proc updateViewStartAndCursorPosition(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -861,6 +873,8 @@ proc updateViewStartAndCursorPosition(a) =
   cur.row = viewEndRow.clamp(dp.viewStartRow, cur.row)
   cur.col = viewEndCol.clamp(dp.viewStartCol, cur.col)
 
+  updateLastCursorViewCoords(a)
+
 # }}}
 # {{{ moveCursor()
 proc moveCursor(dir: CardinalDir, steps: Natural, a) =
@@ -898,7 +912,6 @@ proc moveCursor(dir: CardinalDir, steps: Natural, a) =
     let viewRow = cur.row - dp.viewStartRow
     if viewRow < sm:
       dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
-
 
 # }}}
 # {{{ moveSelStart()
@@ -2510,14 +2523,27 @@ proc nextLevelAction(a) =
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
 
 # }}}
+# {{{ centerCursorAfterZoom()
+proc centerCursorAfterZoom(a) =
+  alias(cur, a.ui.cursor)
+  alias(dp, a.ui.drawLevelParams)
+
+  let viewCol = round(a.ui.lastCursorViewX / dp.gridSize).int
+  let viewRow = round(a.ui.lastCursorViewY / dp.gridSize).int
+  dp.viewStartCol = max(cur.col - viewCol, 0)
+  dp.viewStartRow = max(cur.row - viewRow, 0)
+
+# }}}
 # {{{ incZoomLevelAction()
 proc incZoomLevelAction(a) =
   incZoomLevel(a.doc.levelStyle, a.ui.drawLevelParams)
+  centerCursorAfterZoom(a)
 
 # }}}
 # {{{ decZoomLevelAction()
 proc decZoomLevelAction(a) =
   decZoomLevel(a.doc.levelStyle, a.ui.drawLevelParams)
+  centerCursorAfterZoom(a)
 
 # }}}
 # {{{ setFloorAction()
@@ -3912,11 +3938,14 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   # TODO check values?
   # TODO timestamp check to determine whether to read the DISP info from the
   # conf or from the file
+  a.ui.drawLevelParams.viewStartRow = cfg.viewStartRow
+  a.ui.drawLevelParams.viewStartCol = cfg.viewStartCol
+
   a.ui.cursor.level = cfg.currLevel
   a.ui.cursor.row = cfg.cursorRow
   a.ui.cursor.col = cfg.cursorCol
-  a.ui.drawLevelParams.viewStartRow = cfg.viewStartRow
-  a.ui.drawLevelParams.viewStartCol = cfg.viewStartCol
+
+  updateLastCursorViewCoords(a)
 
   # Init window
   a.win.renderFramePreCb = renderFramePre

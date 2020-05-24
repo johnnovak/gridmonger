@@ -79,6 +79,15 @@ proc getInt*(cfg: Config, section, key: string, i: var int) =
   except ValueError:
     invalidValueError(section, key, "int", v)
 
+proc getNatural*(cfg: Config, section, key: string, n: var int) =
+  var i: int
+  getInt(cfg, section, key, i)
+  if i >= 0:
+    n = i.Natural
+  else:
+    invalidValueError(section, key, "natural", $i)
+
+
 proc getEnum*[T: enum](cfg: Config, section, key: string, e: var T) =
   let v = getValue(cfg, section, key)
   try:
