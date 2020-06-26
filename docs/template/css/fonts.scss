@@ -1,0 +1,107 @@
+/* Alegreya */
+
+@font-face {
+  font-family: 'Alegreya';
+  src: url('../font/subset-Alegreya-Medium.woff2') format('woff2'),
+       url('../font/subset-Alegreya-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alegreya';
+  src: url('../font/subset-Alegreya-MediumItalic.woff2') format('woff2'),
+       url('../font/subset-Alegreya-MediumItalic.woff') format('woff');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alegreya';
+  src: url('../font/subset-Alegreya-Bold.woff2') format('woff2'),
+       url('../font/subset-Alegreya-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alegreya';
+  src: url('../font/subset-Alegreya-BoldItalic.woff2') format('woff2'),
+       url('../font/subset-Alegreya-BoldItalic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alegreya';
+  src: url('../font/subset-Alegreya-ExtraBold.woff2') format('woff2'),
+       url('../font/subset-Alegreya-ExtraBold.woff') format('woff');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Alegreya SC */
+
+@font-face {
+  font-family: 'Alegreya SC';
+  src: url('../font/subset-AlegreyaSC-Medium.woff2') format('woff2'),
+       url('../font/subset-AlegreyaSC-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alegreya SC';
+  src: url('../font/subset-AlegreyaSC-MediumItalic.woff2') format('woff2'),
+       url('../font/subset-AlegreyaSC-MediumItalic.woff') format('woff');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alegreya SC';
+  src: url('../font/subset-AlegreyaSC-Bold.woff2') format('woff2'),
+       url('../font/subset-AlegreyaSC-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alegreya SC';
+  src: url('../font/subset-AlegreyaSC-BoldItalic.woff2') format('woff2'),
+       url('../font/subset-AlegreyaSC-BoldItalic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Fertigo Pro */
+
+@font-face {
+  font-family: 'Fertigo Pro';
+  src: url('../font/subset-FertigoPro-Regular.woff2') format('woff2'),
+       url('../font/subset-FertigoPro-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* DejaVu Sans */
+
+@font-face {
+  font-family: 'DejaVu Sans';
+  src: url('../font/subset-DejaVuSans.woff2') format('woff2'),
+       url('../font/subset-DejaVuSans.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+

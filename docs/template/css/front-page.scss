@@ -1,0 +1,122 @@
+@use 'base' as *;
+
+header {
+  margin-top: 1%;
+
+  > h1 {
+    margin: 0;
+
+    > img {
+      display: block;
+      width: 100%;
+      max-width: 905px;
+      margin: 0 auto;
+
+      &.warrior-emblem {
+        margin-top: 1rem;
+      }
+    }
+  }
+
+  > nav {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 2em;
+
+    > ul {
+      padding: 0;
+      list-style: none;
+      text-align: center;
+
+      > li {
+        > a {
+          font-family: $smallcaps-font;
+          font-size: 22px;
+          font-weight: $medium;
+          text-decoration: none;
+          color: $fg-color;
+
+          &:hover {
+            opacity: 0.7;
+          }
+        }
+      }
+    }
+  }
+}
+
+section.body {
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+/*--------------------------------------------------------------------------*/
+@media (min-width: 400px) {
+  html { font-size: 18px }
+}
+@media (min-width: 500px) {
+  html { font-size: 19px }
+}
+@media (min-width: 600px) {
+  html { font-size: 20px }
+}
+
+/*--------------------------------------------------------------------------*/
+@media (min-width: 688px) {
+
+  html {
+    font-size: 21px;
+  }
+
+  header {
+    > h1 {
+      font-size: 64px;
+    }
+
+    > nav {
+      margin-bottom: 5em;
+
+      > ul {
+        > li {
+          display: inline;
+
+          > a {
+            font-size: 24px;
+            white-space: nowrap;
+          }
+
+          &:not(:last-child):after {
+            font-family: $ornaments1-font;
+            padding: 0 4px 0 8px;
+            opacity: 0.4;
+            content: '\03a9';
+          }
+        }
+      }
+    }
+  }
+
+  section.body {
+    > h2 { font-size: 34px }
+    > h3 { font-size: 24px }
+
+    kbd {
+      > kbd {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+@media (min-width: 800px) {
+
+  header {
+    > h1 { font-size: 64px }
+  }
+
+  section.body {
+    @include section-h2-ornament;
+  }
+}
+

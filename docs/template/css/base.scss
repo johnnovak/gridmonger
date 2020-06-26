@@ -1,0 +1,243 @@
+@use 'fonts';
+@use 'sass:color';
+
+$body-font:       'Alegreya', serif;
+$smallcaps-font:  'Alegreya SC', serif;
+$ornaments1-font: 'Fertigo Pro';
+$ornaments2-font: 'DejaVu Symbols';
+
+$bg-color:     #d8d0c5;
+$fg-color:     #4e4336;
+$accent-color: #b86622;
+
+$accent-color-dark: color.change(
+  mix($accent-color, black, 80%),
+  $saturation: 80%
+);
+
+$medium:     500;
+$bold:       700;
+$extra-bold: 800;
+
+
+html {
+  font: $medium 17px/1.5em $body-font;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background-color: $bg-color;
+  color: $fg-color;
+}
+
+section.body {
+  &:after {
+    display: block;
+    width: 100%;
+    margin: 0.7em 0 0.22em 0;
+    font-family: $ornaments1-font;
+    font-size: 3rem;
+    font-weight: normal;
+    text-align: center;
+    opacity: 0.2;
+  }
+
+  &.style1:after { content: '\2206'; }
+  &.style2:after { content: '\03a9'; }
+  &.style3:after { content: '\222b'; }
+  &.style4:after { content: '\221e'; }
+  &.style5:after { content: '\2211'; }
+  &.style6:after { content: '\2202'; }
+  &.style7:after { content: '\00ac'; }
+
+  &.big:after {
+    margin: 5rem auto 5rem auto;
+    font-size: 7.5rem;
+  }
+
+  h2 {
+    display: inline-block;
+    margin: 0.75em 0 0 1.25em;
+    padding: 0;
+    font-family: $smallcaps-font;
+    font-weight: $medium;
+    font-size: 30px;
+    text-indent: -1.25em;
+  }
+
+  h3 {
+    padding: 0;
+    font-weight: $bold;
+    font-size: 20px;
+  }
+
+  .header-link {
+    display: none;
+  }
+
+  h2, h3, h4 {
+    scroll-margin-top: 0.8em;
+
+    &:hover {
+      .header-link {
+        display: inline;
+      }
+    }
+  }
+
+  ul {
+    padding-left: 2.4em;
+    > li {
+      list-style-type: none;
+      text-indent: -1.5em;
+
+      &:before {
+        padding-right: 0.65em;
+        font-family: $ornaments1-font;
+        opacity: 0.6;
+        content: '\2211';
+      }
+    }
+
+    &.multiline {
+      > li {
+        margin-bottom: 0.3em;
+      }
+    }
+  }
+
+  figure {
+    margin: 2em auto;
+    text-align: center;
+
+    img {
+      width: 90%;
+    }
+    > figcaption {
+      font-size: 19px;
+      font-style: italic;
+      text-align: center;
+    }
+  }
+
+  p {
+    -webkit-hyphens: auto;
+    -webkit-hyphenate-limit-before: 3;
+    -webkit-hyphenate-limit-after: 3;
+    -webkit-hyphenate-limit-chars: 6 3 3;
+    -webkit-hyphenate-limit-lines: 2;
+    -webkit-hyphenate-limit-last: always;
+    -webkit-hyphenate-limit-zone: 8%;
+
+    -moz-hyphens: auto;
+    -moz-hyphenate-limit-chars: 6 3 3;
+    -moz-hyphenate-limit-lines: 2;
+    -moz-hyphenate-limit-last: always;
+    -moz-hyphenate-limit-zone: 8%;
+
+    -ms-hyphens: auto;
+    -ms-hyphenate-limit-chars: 6 3 3;
+    -ms-hyphenate-limit-lines: 2;
+    -ms-hyphenate-limit-last: always;
+    -ms-hyphenate-limit-zone: 8%;
+
+    hyphens: auto;
+    hyphenate-limit-chars: 6 3 3;
+    hyphenate-limit-lines: 2;
+    hyphenate-limit-last: always;
+    hyphenate-limit-zone: 8%;
+  }
+
+  em {
+    font-weight: $medium;
+  }
+
+  strong {
+    font-weight: $extra-bold;
+  }
+
+  .sc {
+    font-family: $smallcaps-font;
+    padding-right: 4px;
+  }
+
+  > div.thumbnails {
+    line-height: 0;
+
+    > a {
+      > img {
+        display: inline-block;
+        width: 23%;
+        padding-right: 2%;
+        padding-bottom: 2%;
+      }
+    }
+  }
+
+  span.circled-number {
+    line-height: 1em;
+    font-family: $ornaments2-font;
+    font-size: 0;
+
+    &:before {
+      position: relative;
+      font-size: 0.9rem;
+      opacity: 0.75;
+    }
+
+    &.num1:before  { content: '\2776' }
+    &.num2:before  { content: '\2777' }
+    &.num3:before  { content: '\2778' }
+    &.num4:before  { content: '\2779' }
+    &.num5:before  { content: '\277A' }
+    &.num6:before  { content: '\277B' }
+    &.num7:before  { content: '\277C' }
+    &.num8:before  { content: '\277D' }
+    &.num9:before  { content: '\277E' }
+    &.num10:before { content: '\277F' }
+  }
+}
+
+@mixin link {
+  display: inline;
+  font-family: $smallcaps-font;
+  text-decoration: none;
+  color: $accent-color;
+
+  &:hover {
+    text-decoration: underline;
+    color: $accent-color-dark;
+  }
+}
+
+@mixin section-h2-ornament {
+  position: relative;
+
+  h2 {
+    &:before {
+      position: absolute;
+      left: -10px;
+      font-family: $ornaments2-font;
+      font-size: 40px;
+      opacity: 0.3;
+      content: '\2619';
+    }
+  }
+}
+
+section.body,
+footer {
+  a {
+    @include link;
+  }
+}
+
+footer {
+  text-align: center;
+
+  p {
+    margin: 0 0 0.5em 0;
+  }
+}
+
