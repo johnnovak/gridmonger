@@ -2,12 +2,14 @@ import algorithm
 import math
 import options
 import strformat
+import strutils
 import sugar
 
 import riff
 
 import bitable
 import common
+import icons
 import level
 import map
 
@@ -75,6 +77,33 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
   raiseMapReadError(msg)
 
 
+proc checkStringLength(s: string, name: string, minLen, maxLen: int) =
+  if s.len < minLen or s.len > maxLen:
+    raiseMapReadError(
+      fmt"The length of {name} must be between {minLen} and " &
+      fmt"{maxLen} bytes, actual length: {s.len}, value: {s}"
+    )
+
+proc checkValueRange(v: SomeInteger, name: string,
+                     minVal, maxVal: SomeInteger) =
+  if v < minVal or v > maxVal:
+    raiseMapReadError(
+      fmt"The value of {name} must be between {minVal} and " &
+      fmt"{maxVal}, actual value: {v}"
+    )
+
+proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
+  var valid: bool
+  try:
+    let ev = $E(v)
+    valid = not ev.contains("invalid data")
+  except RangeError:
+    valid = false
+
+  if not valid:
+    raiseMapReadError(fmt"Invalid enum value for {name}: {v}")
+
+
 using rr: RiffReader
 
 proc readDisplayOptions(rr): MapDisplayOptions =
@@ -100,12 +129,27 @@ proc readLinks(rr): BiTable[Location, Location] =
 proc readLevelProperties_V1(rr): Level =
   let
     locationName = rr.readWStr()
-    levelName = rr.readWStr()
-    elevation = rr.read(int16).int
-    rows = rr.read(uint16).Natural
-    cols = rr.read(uint16).Natural
+    levelName    = rr.readWStr()
+    elevation    = rr.read(int16).int
+    numRows      = rr.read(uint16).Natural
+    numColumns   = rr.read(uint16).Natural
 
-  result = newLevel(locationName, levelName, elevation, rows, cols)
+  checkStringLength(locationName, "lvl.prop.locationName",
+                    LevelLocationNameMinLen, LevelLocationNameMaxLen)
+
+  checkStringLength(levelName, "lvl.prop.levelName",
+                    LevelNameMinLen, LevelNameMaxLen)
+
+  checkValueRange(elevation, "lvl.prop.elevation",
+                  LevelElevationMin, LevelElevationMax)
+
+  checkValueRange(numRows, "lvl.prop.numRows",
+                  LevelNumRowsMin, LevelNumRowsMax)
+
+  checkValueRange(numColumns, "lvl.prop.numColumns",
+                  LevelNumColumnsMin, LevelNumColumnsMax)
+
+  result = newLevel(locationName, levelName, elevation, numRows, numColumns)
 
 
 proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
@@ -113,41 +157,80 @@ proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
   newSeq[Cell](cells, numCells)
 
   for i in 0..<numCells:
-    var c: Cell
-    c.floor = rr.read(uint8).Floor
-    c.floorOrientation = rr.read(uint8).Orientation
-    c.floorColor = rr.read(uint8).Natural
-    c.wallN = rr.read(uint8).Wall
-    c.wallW = rr.read(uint8).Wall
-    cells[i] = c
+    let floor = rr.read(uint8)
+    checkEnum(floor, "lvl.cell.floor", Floor)
+
+    let floorOrientation = rr.read(uint8)
+    checkEnum(floorOrientation, "lvl.cell.floorOrientation", Orientation)
+
+    let floorColor = rr.read(uint8)
+    checkValueRange(floorColor, "lvl.cell.floorColor",
+                    CellFloorColorMin, CellFloorColorMax)
+
+    let wallN = rr.read(uint8)
+    checkEnum(wallN, "lvl.cell.wallN", Wall)
+
+    let wallW = rr.read(uint8)
+    checkEnum(wallW, "lvl.cell.wallW", Wall)
+
+    cells[i] = Cell(
+      floor: floor.Floor,
+      floorOrientation: floorOrientation.Orientation,
+      floorColor: floorColor.Natural,
+      wallN: wallN.Wall,
+      wallW: wallW.Wall
+    )
 
   result = cells
 
 
 proc readLevelNotes_V1(rr; l: Level) =
   let numNotes = rr.read(uint16).Natural
+  checkValueRange(numNotes, "lvl.note.numNotes", 0, NumNotesMax)
 
   for i in 0..<numNotes:
     let row = rr.read(uint16)
-    let col = rr.read(uint16)
+    checkValueRange(row, "lvl.note.row", 0, l.rows.uint16-1)
 
-    var note = Note(kind: NoteKind(rr.read(uint8)))
+    let col = rr.read(uint16)
+    checkValueRange(col, "lvl.note.col", 0, l.cols.uint16-1)
+
+    let kind = rr.read(uint8)
+    checkEnum(kind, "lvl.note.kind", NoteKind)
+
+    var note = Note(kind: NoteKind(kind))
 
     case note.kind
-    of nkComment:  discard
+    of nkComment:
+      discard
+
     of nkIndexed:
-      note.index = rr.read(uint16)
-      note.indexColor = rr.read(uint8)
+      let index = rr.read(uint16)
+      checkValueRange(index, "lvl.note.index", 0, NumNotesMax)
+      note.index = index
+
+      let indexColor = rr.read(uint8)
+      checkValueRange(indexColor, "lvl.note.color", 0, NoteColorMax)
+      note.indexColor = indexColor
 
     of nkIcon:
-      note.icon = rr.read(uint8)
+      let icon = rr.read(uint8)
+      checkValueRange(icon, "lvl.note.icon", 0, NoteIconMax)
+      note.icon = icon
 
     of nkCustomId:
-      note.customId = rr.readBStr()
+      let customId = rr.readBStr()
+      checkStringLength(customId, "lvl.note.customId",
+                        NoteCustomIdMinLen, NoteCustomIdMaxLen)
+      note.customId = customId
 
     of nkLabel: discard
 
-    note.text = rr.readWStr()
+    let text = rr.readWStr()
+    let textMinLen = if note.kind in {nkComment, nkLabel}: 1 else: 0
+    checkStringLength(text, "lvl.note.text", textMinLen, NoteTextMaxLen)
+
+    note.text = text
     l.setNote(row, col, note)
 
 
@@ -202,20 +285,26 @@ proc readLevel(rr): Level =
 
 
 proc readLevelList(rr): seq[Level] =
-  var ml = newSeq[Level]()
+  var levels = newSeq[Level]()
+
   while rr.hasNextChunk():
     let ci = rr.nextChunk()
+
     if ci.kind == ckGroup:
       case ci.formatTypeId
       of FourCC_GRDM_lvl:
+        if levels.len == NumLevelsMax:
+          raiseMapReadError("Map contains more than {MaxLevels} levels")
+
         rr.enterGroup()
-        ml.add(readLevel(rr))
+        levels.add(readLevel(rr))
         rr.exitGroup()
       else:
         invalidListChunkError(ci.formatTypeId, FourCC_GRDM_lvls)
     else:
       invalidChunkError(ci.id, FourCC_GRDM_lvls)
-  result = ml
+
+  result = levels
 
 
 proc readMap(rr): Map =
@@ -224,6 +313,8 @@ proc readMap(rr): Map =
     raiseMapReadError("Unsupported map file version: {h.version}")
 
   let name = rr.readBStr()
+  checkStringLength(name, "map.name", MapNameMinLen, MapNameMaxLen)
+
   result = newMap(name)
 
 
@@ -235,8 +326,10 @@ proc readMap*(filename: string): Map =
 
     let riffChunk = rr.currentChunk
     if riffChunk.formatTypeId != FourCC_GRDM:
-      raiseMapReadError("Not a Gridmonger map file, " &
-          fmt"RIFF formatTypeId: {fourCCToCharStr(riffChunk.formatTypeId)}")
+      raiseMapReadError(
+        fmt"Not a Gridmonger map file, " &
+        fmt"RIFF formatTypeId: {fourCCToCharStr(riffChunk.formatTypeId)}"
+      )
 
     var
       mapCursor = Cursor.none
@@ -272,7 +365,9 @@ proc readMap*(filename: string): Map =
           if displayOptsCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_disp)
           displayOptsCursor = rr.cursor.some
 
-        else: discard   # skip unknown top level chunks
+        else:
+          echo fmt"Skiping unknown top level chunk, " &
+               fmt"chunkId: {fourCCToCharStr(ci.id)}"
 
     # Check for mandatory chunks
     if mapCursor.isNone:       chunkNotFoundError(FourCC_GRDM_map)

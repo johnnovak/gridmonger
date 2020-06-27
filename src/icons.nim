@@ -1,4 +1,7 @@
 const
+  NoteIconMax* = 39
+
+const
   NoIcon* = ""
 
   IconArrowDown* = "\uea36"
@@ -128,13 +131,12 @@ const NoteIcons* = @[
   IconWoodenSign,
   IconHelmet,
   IconPower,
-
   IconSkull,
   IconBug,
   IconBomb,
   IconMine,
-  IconPaw,
 
+  IconPaw,
   IconBox,
   IconMedkit,
   IconHeart,
@@ -144,30 +146,30 @@ const NoteIcons* = @[
   IconEquip,
   IconShield,
   IconTrophy,
+
   IconFlag,
   IconMoney,
   IconDiamond,
-
   IconBed,
   IconMug,
   IconHome,
   IconFort,
   IconInstitution,
   IconGraduation,
-
   IconFloppy,
   IconMale,
+
   IconShip,
   IconTree1,
   IconTree2,
   IconYinYang,
-
-  # Placeholders
   IconCrossedAxes,
   IconFire,
   IconSun,
   IconTorch,
   IconTower
 ]
+
+assert NoteIcons.len == NoteIconMax+1
 
 # vim: et:ts=2:sw=2:fdm=marker

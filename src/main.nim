@@ -3389,6 +3389,7 @@ proc handleGlobalKeyEvents(a) =
 
       if opt.walkMode: handleMoveWalk(ke, a)
       else:
+        # TODO disallow cursor jump with ctrl
         let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
@@ -3549,7 +3550,7 @@ proc handleGlobalKeyEvents(a) =
         if bbox.isSome:
           actions.cropLevel(map, cur, bbox.get, um)
           exitSelectMode(a)
-          setStatusMessage(IconPencil, "Cropped map to selection", a)
+          setStatusMessage(IconPencil, "Cropped level to selection", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)

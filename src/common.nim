@@ -319,6 +319,7 @@ const
   MapNameMinLen* = 1
   MapNameMaxLen* = 100
 
+  NumLevelsMax* = 999
   LevelLocationNameMinLen* = 1
   LevelLocationNameMaxLen* = 100
   LevelNameMinLen* = 0
@@ -326,14 +327,25 @@ const
   LevelElevationMin* = -200
   LevelElevationMax* = 200
   LevelNumRowsMin* = 1
-  LevelNumRowsMax* = 5000
+  LevelNumRowsMax* = 6666
   LevelNumColumnsMin* = 1
-  LevelNumColumnsMax* = 5000
+  LevelNumColumnsMax* = 6666
 
-  NoteTextMinLen* = 1
+  CellFloorColorMin* = 0
+  CellFloorColorMax* = 8
+
+  NumNotesMax* = 10_000
   NoteTextMaxLen* = 400
   NoteCustomIdMinLen* = 1
   NoteCustomIdMaxLen* = 2
+  NoteColorMax* = 3
 
+  NumLinksMax* = 10_000
+
+  ThemeNameMin* = 1
+  ThemeNameMax* = 255
+
+  ZoomLevelMin* = 1
+  ZoomLevelMax* = 20
 
 # vim: et:ts=2:sw=2:fdm=marker

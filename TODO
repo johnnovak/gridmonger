@@ -9,6 +9,11 @@ BUGS
 
 
 TODO
+  - all move keys should work in dialogs, not just HJKL
+  - check that tabbing & switching tabs works correctly in all dialogs
+  - disable ctrl movement in wasd mode
+  - disable ctrl in excavate, erase & floor modes
+
   - RLE compression
   - remove text label
   - colours for text labels

@@ -7,7 +7,7 @@ RIFF ('GRDM'            # Gridmonger map file
         'ISFT'          # Software
     )
     'map '              # Map
-    LIST ('lvls'        # List of levels
+    LIST ('lvls'        # List of levels (min=0, max=999)
         LIST ('lvl '    # Level
             'prop'      # Level properties
             'cell'      # Level cells
@@ -30,26 +30,29 @@ RIFF ('GRDM'            # Gridmonger map file
     BSTR    locationName  (minLen=1, maxLen=100)
     BSTR    levelName     (minLen=0, maxLen=100)
     INT16   elevation     (min=-200, max=200)
-    UINT16  numRows       (min=1, max=5000)
-    UINT16  numColums     (max=1, max=5000)
+    UINT16  numRows       (min=1, max=6666)
+    UINT16  numColums     (max=1, max=6666)
 
 'cell'
     (numRows * numColums) records of:
 
     UINT8  floor
     UINT8  floorOrientation
+    UINT8  floorColor
     UINT8  wallNorth
     UINT8  wallWest
 
 'note'
     UINT16  numNotes      (max=10000)
+
+    numNotes records of:
     UINT16  row           (max=numRows-1 of the given level)
     UINT16  column        (max=numColumns-1 of the given level)
     UINT8   kind
 
     if kind == 0 (indexed)
-        UINT16  index
-        UINT8   color
+        UINT16  index     (max=10000)
+        UINT8   color     (max
 
     if kind == 1 (customId)
         BSTR    custom ID (minLen=1, maxLen=2, only alphanumeric)
