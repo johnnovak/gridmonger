@@ -324,8 +324,8 @@ proc drawBackground(ctx) =
   vg.fillColor(ls.backgroundColor)
 
   let
-    w = dp.gridSize * dp.viewCols
-    h = dp.gridSize * dp.viewRows
+    w = dp.gridSize * dp.viewCols + 1
+    h = dp.gridSize * dp.viewRows + 1
 
   vg.beginPath()
   vg.rect(dp.startX, dp.startY, w, h)
@@ -346,8 +346,8 @@ proc drawBackgroundHatch(ctx) =
   vg.strokeWidth(sw)
 
   let
-    w = dp.gridSize * dp.viewCols
-    h = dp.gridSize * dp.viewRows
+    w = dp.gridSize * dp.viewCols + 1
+    h = dp.gridSize * dp.viewRows + 1
     offs = max(w, h)
     lineSpacing = sw * ls.bgHatchSpacingFactor
 
@@ -1655,9 +1655,17 @@ proc setVertTransform(x, y: float, ctx) =
 proc drawBackgroundGrid(viewBuf: Level, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
 
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
+  let
+    w = dp.gridSize * dp.viewCols + 1
+    h = dp.gridSize * dp.viewRows + 1
+
+  vg.save()
+  vg.intersectScissor(dp.startX, dp.startY, w, h)
+
+  for viewRow in 0..dp.viewRows:
+    for viewCol in 0..dp.viewCols:
       let bufRow = viewRow + ViewBufBorder
       let bufCol = viewCol + ViewBufBorder
 
@@ -1665,6 +1673,8 @@ proc drawBackgroundGrid(viewBuf: Level, ctx) =
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         drawGrid(x, y, ls.gridColorBackground, ls.gridStyleBackground, ctx)
+
+  vg.restore()
 
 # }}}
 # {{{ drawCellBackgroundsAndGrid()
