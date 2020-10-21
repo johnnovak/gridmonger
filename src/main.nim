@@ -63,6 +63,22 @@ const
   MapFileExt = "grm"
   GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
 
+const
+  SpecialWalls = @[
+    wIllusoryWall,
+    wInvisibleWall,
+    wDoor,
+    wLockedDoor,
+    wArchway,
+    wSecretDoor,
+    wOneWayDoorNE,
+    wLeverSW,
+    wNicheSW,
+    wStatueSW,
+    wKeyhole,
+    wWritingSW
+  ]
+
 # }}}
 # {{{ AppContext
 type
@@ -312,6 +328,16 @@ using a: var AppContext
 # }}}
 # {{{ Keyboard shortcuts
 
+type MoveKeys = object
+  left, right, up, down: set[Key]
+
+const MoveKeysCursor = MoveKeys(
+  left  : {keyLeft,     keyH, keyKp4},
+  right : {keyRight,    keyL, keyKp6},
+  up    : {keyUp,       keyK, keyKp8},
+  down  : {Key.keyDown, keyJ, keyKp2, keyKp5}
+)
+
 type AppShortcut = enum
   scNextTextField,
   scAccept,
@@ -333,23 +359,6 @@ let g_appShortcuts = {
   scDiscard:          @[mkKeyShortcut(keyD,             {mkAlt})],
 
 }.toTable
-
-# }}}
-# {{{ Misc
-const SpecialWalls = @[
-  wIllusoryWall,
-  wInvisibleWall,
-  wDoor,
-  wLockedDoor,
-  wArchway,
-  wSecretDoor,
-  wOneWayDoorNE,
-  wLeverSW,
-  wNicheSW,
-  wStatueSW,
-  wKeyhole,
-  wWritingSW
-]
 
 # }}}
 
@@ -761,6 +770,9 @@ proc loadTheme(index: Natural, a) =
 # }}}
 
 # {{{ Key handling
+proc hasKeyEvent(): bool =
+  koi.hasEvent() and koi.currEvent().kind == ekKey
+
 # TODO change all into isShorcut* (if possible)
 func isKeyDown(ev: Event, keys: set[Key],
                mods: set[ModifierKey] = {}, repeat=false): bool =
@@ -790,20 +802,6 @@ proc getPxRatio(a): float =
     (winWidth, _) = a.win.size
     (fbWidth, _) = a.win.framebufferSize
   result = fbWidth / winWidth
-
-# }}}
-# {{{ moveCurrGridIcon()
-
-proc moveCurrGridIcon(numIcons, iconsPerRow: Natural, iconIdx: int,
-                      dc: int = 0, dr: int = 0): Natural =
-  assert numIcons mod iconsPerRow == 0
-
-  let numRows = ceil(numIcons.float / iconsPerRow).Natural
-  var row = iconIdx div iconsPerRow
-  var col = iconIdx mod iconsPerRow
-  col = floorMod(col+dc, iconsPerRow).Natural
-  row = floorMod(row+dr, numRows).Natural
-  result = row * iconsPerRow + col
 
 # }}}
 # {{{ resetCursorAndViewStart()
@@ -1045,39 +1043,38 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 # }}}
 
 # {{{ Dialogs
-# {{{ mkValidationError()
-proc mkValidationError(msg: string): string =
-  fmt"{IconWarning}   {msg}"
-
-# }}}
-#
 # {{{ coordinateFields()
 template coordinateFields(dlg, x, y, labelWidth, h: untyped) =
-  y += 44
+  const
+    PadYLarge = 44
+    PadYSmall = 32
+    ItemXPos = 180
+
+  y += PadYLarge
   koi.label(x, y, labelWidth, h, "Origin")
   dlg.origin = koi.radioButtons(
-    x + labelWidth, y, 180, h+3,
+    x + labelWidth, y, ItemXPos, h+3,
     labels = @["Northeast", "Southeast"],
     dlg.origin
   )
 
-  y += 44
+  y += PadYLarge
   koi.label(x, y, labelWidth, h, "Column style")
   dlg.columnStyle = koi.radioButtons(
-    x + labelWidth, y, 180, h+3,
+    x + labelWidth, y, ItemXPos, h+3,
     labels = @["Number", "Letter"],
     dlg.columnStyle
   )
 
-  y += 32
+  y += PadYSmall
   koi.label(x, y, labelWidth, h, "Row style")
   dlg.rowStyle = koi.radioButtons(
-    x + labelWidth, y, 180, h+3,
+    x + labelWidth, y, ItemXPos, h+3,
     labels = @["Number", "Letter"],
     dlg.rowStyle
   )
 
-  y += 44
+  y += PadYLarge
   koi.label(x, y, labelWidth, h, "Column offset")
   dlg.columnStart = koi.textField(
     x + labelWidth, y, w = 60.0, h,
@@ -1097,7 +1094,7 @@ template coordinateFields(dlg, x, y, labelWidth, h: untyped) =
     except ValueError:
       discard
 
-  y += 32
+  y += PadYSmall
   koi.label(x, y, labelWidth, h, "Row offset")
   dlg.rowStart = koi.textField(
     x + labelWidth, y, w = 60.0, h,
@@ -1117,9 +1114,12 @@ template coordinateFields(dlg, x, y, labelWidth, h: untyped) =
       discard
 
 # }}}
-
 # {{{ levelCommonFields()
 template levelCommonFields(dlg, x, t, labelWidth, h: untyped) =
+  const
+    PadYLarge = 44
+    PadYSmall = 32
+
   koi.label(x, y, labelWidth, h, "Location Name")
   dlg.locationName = koi.textField(
     x + labelWidth, y, w = 220.0, h,
@@ -1132,7 +1132,7 @@ template levelCommonFields(dlg, x, t, labelWidth, h: untyped) =
     ).some
   )
 
-  y += 32
+  y += PadYSmall
   koi.label(x, y, labelWidth, h, "Level Name")
   dlg.levelName = koi.textField(
     x + labelWidth, y, w = 220.0, h,
@@ -1144,7 +1144,7 @@ template levelCommonFields(dlg, x, t, labelWidth, h: untyped) =
     ).some
   )
 
-  y += 44
+  y += PadYLarge
   koi.label(x, y, labelWidth, h, "Elevation")
   dlg.elevation = koi.textField(
     x + labelWidth, y, w = 60.0, h,
@@ -1175,6 +1175,67 @@ template validateLevelFields(dlg, map, validationError: untyped) =
 
 # }}}
 
+# {{{ mkValidationError()
+proc mkValidationError(msg: string): string =
+  fmt"{IconWarning}   {msg}"
+
+# }}}
+# {{{ handleTabNavigation()
+proc handleTabNavigation(ke: Event,
+                         currTabIndex, maxTabIndex: Natural): Natural =
+  result = currTabIndex
+
+  if ke.isKeyDown(MoveKeysCursor.left, {mkCtrl}):
+    if    currTabIndex > 0: result = currTabIndex - 1
+    else: result = maxTabIndex
+
+  elif ke.isKeyDown(MoveKeysCursor.right, {mkCtrl}):
+    if    currTabIndex < maxTabIndex: result = currTabIndex + 1
+    else: result = 0
+
+  else:
+    let i = ord(ke.key) - ord(key1)
+    if ke.action == kaDown and ke.mods == {mkCtrl} and
+      i >= 0 and i <= maxTabIndex:
+      result = i
+
+# }}}
+# {{{ moveGridPositionWrapping()
+proc moveGridPositionWrapping(currIdx: int, dc: int = 0, dr: int = 0,
+                              numItems, itemsPerRow: Natural): Natural =
+  assert numItems mod itemsPerRow == 0
+
+  let numRows = ceil(numItems.float / itemsPerRow).Natural
+  var row = currIdx div itemsPerRow
+  var col = currIdx mod itemsPerRow
+  col = floorMod(col+dc, itemsPerRow).Natural
+  row = floorMod(row+dr, numRows).Natural
+  result = row * itemsPerRow + col
+
+# }}}
+# {{{ handleGridRadioButton()
+proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
+                           numButtons, buttonsPerRow: Natural): Natural =
+
+  proc move(dc: int = 0, dr: int = 0): Natural =
+    moveGridPositionWrapping(currButtonIdx, dc, dr, numButtons, buttonsPerRow)
+
+  result =
+    if   ke.isKeyDown(MoveKeysCursor.left,  repeat=true): move(dc = -1)
+    elif ke.isKeyDown(MoveKeysCursor.right, repeat=true): move(dc =  1)
+    elif ke.isKeyDown(MoveKeysCursor.up,    repeat=true): move(dr = -1)
+    elif ke.isKeyDown(MoveKeysCursor.down,  repeat=true): move(dr =  1)
+    else: currButtonIdx
+
+# }}}
+
+const
+  DlgItemHeight = 24.0
+  DlgButtonWidth = 80.0
+  DlgButtonPad = 15.0
+  DlgCheckBoxWidth = 18.0
+  DlgCheckBoxYOffs = 3.0
+
 # {{{ Preferences dialog
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
@@ -1190,40 +1251,38 @@ proc openPreferencesDialog(a) =
 
 
 proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
-  let
-    dialogWidth = 370.0
-    dialogHeight = 345.0
+  const
+    DlgWidth = 370.0
+    DlgHeight = 345.0
+    LabelWitdh = 235.0
+    PadYLarge = 48
+    PadYSmall = 30
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCog}  Preferences")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences")
   clearStatusMessage(a)
 
-  let
-    h = 24.0
-    cbw = 18.0
-    cbYOffs = 3.0
-    labelWidth = 235.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
+  var x = 30.0
+  var y = 60.0
 
-  var
-    x = 30.0
-    y = 60.0
+  koi.label(x, y, LabelWitdh, DlgItemHeight, "Show splash screen at startup")
+  dlg.showSplash = koi.checkBox(
+    x + LabelWitdh, y + DlgCheckBoxYOffs, DlgCheckBoxWidth, dlg.showSplash
+  )
 
-  koi.label(x, y, labelWidth, h, "Show splash screen at startup")
-  dlg.showSplash = koi.checkBox(x + labelWidth, y+cbYOffs, cbw, dlg.showSplash)
+  y += PadYSmall
+  koi.label(x, y, LabelWitdh, DlgItemHeight, "Open last file at startup")
+  dlg.loadLastFile = koi.checkBox(
+    x + LabelWitdh, y + DlgCheckBoxYOffs, DlgCheckBoxWidth, dlg.loadLastFile
+  )
 
-  y += 30
-  koi.label(x, y, labelWidth, h, "Open last file at startup")
-  dlg.loadLastFile = koi.checkBox(x + labelWidth, y+cbYOffs, cbw, dlg.loadLastFile)
+  y += PadYLarge
+  koi.label(x, y, LabelWitdh, DlgItemHeight, "Auto-save")
+  dlg.autoSave = koi.checkBox(x + LabelWitdh, y, DlgCheckBoxWidth, dlg.autoSave)
 
-  y += 48
-  koi.label(x, y, labelWidth, h, "Auto-save")
-  dlg.autoSave = koi.checkBox(x + labelWidth, y, cbw, dlg.autoSave)
-
-  y += 30
-  koi.label(x, y, labelWidth, h, "Auto-save frequency (seconds)")
+  y += PadYSmall
+  koi.label(x, y, LabelWitdh, DlgItemHeight, "Auto-save frequency (seconds)")
   dlg.autoSaveFrequencySecs = koi.textField(
-    x + labelWidth, y, w = 60.0, h,
+    x + LabelWitdh, y, w = 60.0, DlgItemHeight,
     dlg.autoSaveFrequencySecs,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
@@ -1233,15 +1292,19 @@ proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
     ).some
   )
 
-  y += 48
-  koi.label(x, y, labelWidth, h, "Resize window redraw hack")
-  dlg.resizeRedrawHack = koi.checkBox(x + labelWidth, y+cbYOffs, cbw,
-                                      dlg.resizeRedrawHack)
+  y += PadYLarge
+  koi.label(x, y, LabelWitdh, DlgItemHeight, "Resize window redraw hack")
+  dlg.resizeRedrawHack = koi.checkBox(
+    x + LabelWitdh, y + DlgCheckBoxYOffs,
+    DlgCheckBoxWidth, dlg.resizeRedrawHack
+  )
 
-  y += 30
-  koi.label(x, y, labelWidth, h, "Resize window no vsync hack")
-  dlg.resizeNoVsyncHack = koi.checkBox(x + labelWidth, y+cbYOffs, cbw,
-                                      dlg.resizeNoVsyncHack)
+  y += PadYSmall
+  koi.label(x, y, LabelWitdh, DlgItemHeight, "Resize window no vsync hack")
+  dlg.resizeNoVsyncHack = koi.checkBox(
+    x + LabelWitdh, y + DlgCheckBoxYOffs,
+    DlgCheckBoxWidth, dlg.resizeNoVsyncHack
+  )
 
   y += 20
 
@@ -1255,19 +1318,20 @@ proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK"):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
   dlg.activateFirstTextField = false
 
-  if koi.hasEvent():
+
+  if hasKeyEvent():
     let ke = koi.currEvent()
 
     if   ke.isShortcutDown(scNextTextField):
@@ -1281,26 +1345,22 @@ proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
 # }}}
 # {{{ Save/discard changes dialog
 proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
-  let
-    dialogWidth = 350.0
-    dialogHeight = 160.0
+  const
+    DlgWidth = 350.0
+    DlgHeight = 160.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconFloppy}  Save Changes?")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Changes?")
   clearStatusMessage(a)
 
-  let
-    h = 24.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
+  var x = 30.0
+  var y = 50.0
 
-  var
-    x = 30.0
-    y = 50.0
+  koi.label(x, y, DlgWidth, DlgItemHeight, "You have unsaved changes.")
 
-  koi.label(x, y, dialogWidth, h, "You have unsaved changes.")
-
-  y += 24
-  koi.label(x, y, dialogWidth, h, "Do you want to save your changes first?")
+  y += DlgItemHeight
+  koi.label(
+    x, y, DlgWidth, DlgItemHeight, "Do you want to save your changes first?"
+  )
 
   proc saveAction(dlg: var SaveDiscardDialogParams, a) =
     koi.closeDialog()
@@ -1317,22 +1377,24 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-  x = dialogWidth - 3 * buttonWidth - buttonPad - 20
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 3 * DlgButtonWidth - DlgButtonPad - 20
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} Save"):
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} Save"):
     saveAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconTrash} Discard"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconTrash} Discard"):
     discardAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  if koi.hasEvent():
+
+  if hasKeyEvent():
     let ke = koi.currEvent()
+
     if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
     elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
     elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
@@ -1357,26 +1419,22 @@ proc openNewMapDialog(a) =
 
 
 proc newMapDialog(dlg: var NewMapDialogParams, a) =
-  let
-    dialogWidth = 410.0
-    dialogHeight = 350.0
+  const
+    DlgWidth = 410.0
+    DlgHeight = 350.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Map")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Map")
   a.clearStatusMessage()
 
-  let
-    h = 24.0
-    labelWidth = 130.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
+  let LabelWitdh = 130.0
 
   var
     x = 30.0
     y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Name")
+  koi.label(x, y, LabelWitdh, DlgItemHeight, "Name")
   dlg.name = koi.textField(
-    x + labelWidth, y, w = 220.0, h,
+    x + LabelWitdh, y, w = 220.0, DlgItemHeight,
     dlg.name,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
@@ -1386,7 +1444,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     ).some
   )
 
-  coordinateFields(dlg, x, y, labelWidth, h)
+  coordinateFields(dlg, x, y, LabelWitdh, DlgItemHeight)
 
   dlg.activateFirstTextField = false
 
@@ -1398,7 +1456,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
   y += 44
 
   if validationError != "":
-    koi.label(x, y, dialogWidth, h, validationError,
+    koi.label(x, y, DlgWidth, DlgItemHeight, validationError,
               style = a.ui.warningLabelStyle)
 
 
@@ -1428,18 +1486,19 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  if koi.hasEvent():
+
+  if hasKeyEvent():
     let ke = koi.currEvent()
 
     if   ke.isShortcutDown(scNextTextField):
@@ -1467,26 +1526,20 @@ proc openMapPropsDialog(a) =
 
 
 proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
-  let
-    dialogWidth = 410.0
-    dialogHeight = 350.0
+  const
+    DlgWidth = 410.0
+    DlgHeight = 350.0
+    LabelWidth = 130.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  Edit Map Properties")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  Edit Map Properties")
   clearStatusMessage(a)
 
-  let
-    h = 24.0
-    labelWidth = 130.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
+  var x = 30.0
+  var y = 60.0
 
-  var
-    x = 30.0
-    y = 60.0
-
-  koi.label(x, y, labelWidth, h, "Name")
+  koi.label(x, y, LabelWidth, DlgItemHeight, "Name")
   dlg.name = koi.textField(
-    x + labelWidth, y, w = 220.0, h,
+    x + LabelWidth, y, w = 220.0, DlgItemHeight,
     dlg.name,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
@@ -1496,7 +1549,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
     ).some
   )
 
-  coordinateFields(dlg, x, y, labelWidth, h)
+  coordinateFields(dlg, x, y, LabelWidth, DlgItemHeight)
 
   dlg.activateFirstTextField = false
 
@@ -1508,7 +1561,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
   y += 44
 
   if validationError != "":
-    koi.label(x, y, dialogWidth, h, validationError,
+    koi.label(x, y, DlgWidth, DlgItemHeight, validationError,
               style = a.ui.warningLabelStyle)
 
 
@@ -1535,18 +1588,19 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  if koi.hasEvent():
+
+  if hasKeyEvent():
     let ke = koi.currEvent()
 
     if   ke.isShortcutDown(scNextTextField):
@@ -1602,42 +1656,35 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   alias(map, a.doc.map)
   alias(cur, a.ui.cursor)
 
-  let
-    dialogWidth = 430.0
-    dialogHeight = 436.0
+  const
+    DlgWidth = 430.0
+    DlgHeight = 436.0
+    tabWidth = 220.0
+    LabelWidth = 150.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconNewFile}  New Level")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level")
   clearStatusMessage(a)
 
-  let
-    h = 24.0
-    tabWidth = 220.0
-    labelWidth = 150.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
-    cbw = 18.0
-    cbYOffs = 3.0
+  var x = 30.0
+  var y = 50.0
 
-  var
-    x = 30.0
-    y = 50.0
+  let tabLabels = @["General", "Coordinates"]
 
   dlg.activeTab = koi.radioButtons(
-    (dialogWidth - tabWidth) / 2, y, tabWidth, h,
-    labels = @["General", "Coordinates"],
-    dlg.activeTab
+    (DlgWidth - tabWidth) / 2, y, tabWidth, DlgItemHeight,
+    tabLabels, dlg.activeTab
   )
 
   y += 54
 
   if dlg.activeTab == 0:  # General
 
-    levelCommonFields(dlg, x, y, labelWidth, h)
+    levelCommonFields(dlg, x, y, LabelWidth, DlgItemHeight)
 
     y += 44
-    koi.label(x, y, labelWidth, h, "Columns")
+    koi.label(x, y, LabelWidth, DlgItemHeight, "Columns")
     dlg.cols = koi.textField(
-      x + labelWidth, y, w = 60.0, h,
+      x + LabelWidth, y, w = 60.0, DlgItemHeight,
       dlg.cols,
       constraint = TextFieldConstraint(
         kind: tckInteger,
@@ -1647,9 +1694,9 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     )
 
     y += 32
-    koi.label(x, y, labelWidth, h, "Rows")
+    koi.label(x, y, LabelWidth, DlgItemHeight, "Rows")
     dlg.rows = koi.textField(
-      x + labelWidth, y, w = 60.0, h,
+      x + LabelWidth, y, w = 60.0, DlgItemHeight,
       dlg.rows,
       constraint = TextFieldConstraint(
         kind: tckInteger,
@@ -1660,12 +1707,14 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
   elif dlg.activeTab == 1:  # Coordinates
 
-    koi.label(x, y, labelWidth, h, "Override map settings")
-    dlg.overrideCoordOpts = koi.checkBox(x + labelWidth, y+cbYOffs, cbw,
-                                         dlg.overrideCoordOpts)
+    koi.label(x, y, LabelWidth, DlgItemHeight, "Override map settings")
+    dlg.overrideCoordOpts = koi.checkBox(
+      + LabelWidth, y + DlgCheckBoxYOffs,
+      DlgCheckBoxWidth, dlg.overrideCoordOpts
+    )
 
     if dlg.overrideCoordOpts:
-      coordinateFields(dlg, x, y, labelWidth, h)
+      coordinateFields(dlg, x, y, LabelWidth, DlgItemHeight)
 
 
   # Validation
@@ -1673,7 +1722,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   validateLevelFields(dlg, map, validationError)
 
   if validationError != "":
-    koi.label(x, dialogHeight - 115, dialogWidth - 60, 60, validationError,
+    koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
               style = a.ui.warningLabelStyle)
 
 
@@ -1711,21 +1760,24 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
   dlg.activateFirstTextField = false
 
-  if koi.hasEvent():
+
+  if hasKeyEvent():
     let ke = koi.currEvent()
+
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
@@ -1759,47 +1811,42 @@ proc openEditLevelPropsDialog(a) =
 proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   alias(map, a.doc.map)
 
-  let
-    dialogWidth = 430.0
-    dialogHeight = 436.0
+  const
+    DlgWidth = 430.0
+    DlgHeight = 436.0
+    tabWidth = 220.0
+    LabelWidth = 150.0
 
-  koi.beginDialog(dialogWidth, dialogHeight,
+  koi.beginDialog(DlgWidth, DlgHeight,
                   fmt"{IconNewFile}  Edit Level Properties")
   clearStatusMessage(a)
 
-  let
-    h = 24.0
-    tabWidth = 220.0
-    labelWidth = 150.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
-    cbw = 18.0
-    cbYOffs = 3.0
+  var x = 30.0
+  var y = 50.0
 
-  var
-    x = 30.0
-    y = 50.0
+  let tabLabels = @["General", "Coordinates"]
 
   dlg.activeTab = koi.radioButtons(
-    (dialogWidth - tabWidth) / 2, y, tabWidth, h,
-    labels = @["General", "Coordinates"],
-    dlg.activeTab
+    (DlgWidth - tabWidth) / 2, y, tabWidth, DlgItemHeight,
+    tabLabels, dlg.activeTab
   )
 
   y += 54
 
   if dlg.activeTab == 0:  # General
 
-    levelCommonFields(dlg, x, y, labelWidth, h)
+    levelCommonFields(dlg, x, y, LabelWidth, DlgItemHeight)
 
   elif dlg.activeTab == 1:  # Coordinates
 
-    koi.label(x, y, labelWidth, h, "Override map settings")
-    dlg.overrideCoordOpts = koi.checkBox(x + labelWidth, y+cbYOffs, cbw,
-                                         dlg.overrideCoordOpts)
+    koi.label(x, y, LabelWidth, DlgItemHeight, "Override map settings")
+    dlg.overrideCoordOpts = koi.checkBox(
+      x + LabelWidth, y + DlgCheckBoxYOffs,
+      DlgCheckBoxWidth, dlg.overrideCoordOpts
+    )
 
     if dlg.overrideCoordOpts:
-      coordinateFields(dlg, x, y, labelWidth, h)
+      coordinateFields(dlg, x, y, LabelWidth, DlgItemHeight)
 
 
   dlg.activateFirstTextField = false
@@ -1811,7 +1858,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   y += 44
 
   if validationError != "":
-    koi.label(x, dialogHeight - 115, dialogWidth - 60, 60, validationError,
+    koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
               style = a.ui.warningLabelStyle)
 
 
@@ -1844,19 +1891,23 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
     dlg.isOpen = false
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  if koi.hasEvent():
+
+  if hasKeyEvent():
     let ke = koi.currEvent()
+
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
+
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
@@ -1879,24 +1930,22 @@ proc openResizeLevelDialog(a) =
 
 proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
 
-  let dialogWidth = 270.0
-  let dialogHeight = 300.0
+  const
+    DlgWidth = 270.0
+    DlgHeight = 300.0
+    LabelWidth = 70.0
+    PadYSmall = 32
+    PadYLarge = 40
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCrop}  Resize Level")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCrop}  Resize Level")
   clearStatusMessage(a)
-
-  let
-    h = 24.0
-    labelWidth = 70.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
 
   var x = 30.0
   var y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Columns")
+  koi.label(x, y, LabelWidth, DlgItemHeight, "Columns")
   dlg.cols = koi.textField(
-    x + labelWidth, y, w = 60.0, h,
+    x + LabelWidth, y, w = 60.0, DlgItemHeight,
     dlg.cols,
     constraint = TextFieldConstraint(
       kind: tckInteger,
@@ -1905,10 +1954,10 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     ).some
   )
 
-  y += 32
-  koi.label(x, y, labelWidth, h, "Rows")
+  y += PadYSmall
+  koi.label(x, y, LabelWidth, DlgItemHeight, "Rows")
   dlg.rows = koi.textField(
-    x + labelWidth, y, w = 60.0, h,
+    x + LabelWidth, y, w = 60.0, DlgItemHeight,
     dlg.rows,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
@@ -1926,10 +1975,10 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     IconArrowDownLeft, IconArrowDown, IconArrowDownRight
   ]
 
-  y += 40
-  koi.label(x, y, labelWidth, h, "Anchor")
+  y += PadYLarge
+  koi.label(x, y, LabelWidth, DlgItemHeight, "Anchor")
   dlg.anchor = koi.radioButtons(
-    x + labelWidth, y, 35, 35,
+    x + LabelWidth, y, 35, 35,
     labels = AnchorIcons,
     ord(dlg.anchor),
     tooltips = @[],
@@ -1937,8 +1986,8 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     style = a.ui.iconRadioButtonsStyle
   ).ResizeAnchor
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
   dlg.activateFirstTextField = false
 
@@ -1971,31 +2020,22 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK"):
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK"):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  proc moveIcon(iconIDx: Natural, dc: int = 0, dr: int = 0): Natural =
-    moveCurrGridIcon(AnchorIcons.len, IconsPerRow, iconIdx, dc, dr)
 
-  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+  if hasKeyEvent():
     let ke = koi.currEvent()
-    if   ke.isKeyDown(keyH, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dc= -1).ResizeAnchor
 
-    elif ke.isKeyDown(keyL, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dc=1).ResizeAnchor
+    dlg.anchor = ResizeAnchor(
+      handleGridRadioButton(ke, ord(dlg.anchor), AnchorIcons.len, IconsPerRow)
+    )
 
-    elif ke.isKeyDown(keyK, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dr= -1).ResizeAnchor
-
-    elif ke.isKeyDown(keyJ, repeat=true):
-      dlg.anchor = moveIcon(ord(dlg.anchor), dr=1).ResizeAnchor
-
-    elif ke.isShortcutDown(scNextTextField):
+    if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
@@ -2017,23 +2057,17 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
   alias(cur, a.ui.cursor)
   alias(um, a.doc.undoManager)
 
-  let
-    dialogWidth = 350.0
-    dialogHeight = 136.0
+  const
+    DlgWidth = 350.0
+    DlgHeight = 136.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconTrash}  Delete level?")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconTrash}  Delete level?")
   clearStatusMessage(a)
 
-  let
-    h = 24.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
+  var x = 30.0
+  var y = 50.0
 
-  var
-    x = 30.0
-    y = 50.0
-
-  koi.label(x, y, dialogWidth, h, "Do you want to delete the current level?")
+  koi.label(x, y, DlgWidth, DlgItemHeight, "Do you want to delete the current level?")
 
   proc deleteAction(dlg: var DeleteLevelDialogParams, a) =
     koi.closeDialog()
@@ -2048,18 +2082,20 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 20
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 20
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} Delete"):
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} Delete"):
     deleteAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
-  if koi.hasEvent():
+
+  if hasKeyEvent():
     let ke = koi.currEvent()
+
     if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept):  deleteAction(dlg, a)
 
@@ -2145,36 +2181,33 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 
 proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   alias(ls, a.doc.levelStyle)
-  let
-    dialogWidth = 500.0
-    dialogHeight = 370.0
-    title = (if dlg.editMode: "Edit" else: "Add") & " Note"
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCommentInv}  {title}")
+  const
+    DlgWidth = 500.0
+    DlgHeight = 370.0
+    LabelWidth = 80.0
+
+  let title = (if dlg.editMode: "Edit" else: "Add") & " Note"
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}")
   clearStatusMessage(a)
-
-  let
-    h = 24.0
-    labelWidth = 80.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
 
   var x = 30.0
   var y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Marker")
+  koi.label(x, y, LabelWidth, DlgItemHeight, "Marker")
   dlg.kind = NoteKind(
     koi.radioButtons(
-      x + labelWidth, y, 300, h+3,
+      x + LabelWidth, y, 300, DlgItemHeight+3,
       labels = @["None", "Number", "ID", "Icon"],
       ord(dlg.kind)
     )
   )
 
   y += 40
-  koi.label(x, y, labelWidth, h, "Text")
+  koi.label(x, y, LabelWidth, DlgItemHeight, "Text")
   dlg.text = koi.textField(
-    x + labelWidth, y, w = 355, h, dlg.text,
+    x + LabelWidth, y, w = 355, DlgItemHeight, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
@@ -2190,9 +2223,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   case dlg.kind:
   of nkIndexed:
-    koi.label(x, y, labelWidth, h, "Color")
+    koi.label(x, y, LabelWidth, DlgItemHeight, "Color")
     dlg.indexColor = koi.radioButtons(
-      x + labelWidth, y, 28, 28,
+      x + LabelWidth, y, 28, 28,
       labels = newSeq[string](ls.noteIndexBgColor.len),
       dlg.indexColor,
       tooltips = @[],
@@ -2202,9 +2235,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     )
 
   of nkCustomId:
-    koi.label(x, y, labelWidth, h, "ID")
+    koi.label(x, y, LabelWidth, DlgItemHeight, "ID")
     dlg.customId = koi.textField(
-      x + labelWidth, y, w = 50.0, h,
+      x + LabelWidth, y, w = 50.0, DlgItemHeight,
       dlg.customId,
       constraint = TextFieldConstraint(
         kind: tckString,
@@ -2214,9 +2247,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     )
 
   of nkIcon:
-    koi.label(x, y, labelWidth, h, "Icon")
+    koi.label(x, y, LabelWidth, DlgItemHeight, "Icon")
     dlg.icon = koi.radioButtons(
-      x + labelWidth, y, 35, 35,
+      x + LabelWidth, y, 35, 35,
       labels = NoteIcons,
       dlg.icon,
       tooltips = @[],
@@ -2251,12 +2284,12 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
   y += 44
 
   for err in validationErrors:
-    koi.label(x, y, dialogWidth, h, err, style = a.ui.warningLabelStyle)
-    y += 24
+    koi.label(x, y, DlgWidth, DlgItemHeight, err, style = a.ui.warningLabelStyle)
+    y += DlgItemHeight
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
   proc okAction(dlg: var EditNoteDialogParams, a) =
     if validationErrors.len > 0: return
@@ -2283,68 +2316,34 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     dlg.isOpen = false
 
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationErrors.len > 0):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
 
-  proc moveIcon(iconIdx: Natural, dc: int = 0, dr: int = 0): Natural =
-    moveCurrGridIcon(NoteIcons.len, IconsPerRow, iconIdx, dc, dr)
-
-  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+  if hasKeyEvent():
     let ke = koi.currEvent()
 
-    if   ke.isKeyDown(key1, {mkCtrl}):
-      dlg.kind = nkComment
+    dlg.kind = NoteKind(
+      handleTabNavigation(ke, ord(dlg.kind), ord(nkIcon))
+    )
 
-    elif ke.isKeyDown(key2, {mkCtrl}):
-      dlg.kind = nkIndexed
+    case dlg.kind
+    of nkComment, nkCustomId, nkLabel: discard
+    of nkIndexed:
+      dlg.indexColor = handleGridRadioButton(
+        ke, dlg.indexColor, NumIndexColors, buttonsPerRow=NumIndexColors
+      )
+    of nkIcon:
+      dlg.icon = handleGridRadioButton(
+        ke, dlg.icon, NoteIcons.len, IconsPerRow
+      )
 
-    elif ke.isKeyDown(key3, {mkCtrl}):
-      dlg.kind = nkCustomId
-
-    elif ke.isKeyDown(key4, {mkCtrl}):
-      dlg.kind = nkIcon
-
-    elif ke.isKeyDown(keyH, {mkCtrl}):
-      if    dlg.kind > NoteKind.low: dec(dlg.kind)
-      else: dlg.kind = nkIcon
-
-    elif ke.isKeyDown(keyL, {mkCtrl}):
-      if    dlg.kind < nkIcon: inc(dlg.kind)
-      else: dlg.kind = NoteKind.low
-
-    elif ke.isKeyDown(keyH, repeat=true):
-      case dlg.kind
-      of nkComment, nkCustomId, nkLabel: discard
-      of nkIndexed:
-        dlg.indexColor = floorMod(dlg.indexColor.int - 1, NumIndexColors).Natural
-      of nkIcon:
-        dlg.icon = moveIcon(dlg.icon, dc= -1)
-
-    elif ke.isKeyDown(keyL, repeat=true):
-      case dlg.kind
-      of nkComment, nkCustomId, nkLabel: discard
-      of nkIndexed:
-        dlg.indexColor = floorMod(dlg.indexColor + 1, NumIndexColors).Natural
-      of nkIcon:
-        dlg.icon = moveIcon(dlg.icon, dc=1)
-
-    elif ke.isKeyDown(keyK, repeat=true):
-      case dlg.kind
-      of nkComment, nkIndexed, nkCustomId, nkLabel: discard
-      of nkIcon: dlg.icon = moveIcon(dlg.icon, dr= -1)
-
-    elif ke.isKeyDown(keyJ, repeat=true):
-      case dlg.kind
-      of nkComment, nkIndexed, nkCustomId, nkLabel: discard
-      of nkIcon: dlg.icon = moveIcon(dlg.icon, dr=1)
-
-    elif ke.isShortcutDown(scNextTextField):
+    if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
@@ -2379,26 +2378,22 @@ proc openEditLabelDialog(a) =
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
-  let
-    dialogWidth = 500.0
-    dialogHeight = 370.0
-    title = (if dlg.editMode: "Edit" else: "Add") & " Label"
+  const
+    DlgWidth = 500.0
+    DlgHeight = 370.0
+    LabelWidth = 80.0
 
-  koi.beginDialog(dialogWidth, dialogHeight, fmt"{IconCommentInv}  {title}")
+  let title = (if dlg.editMode: "Edit" else: "Add") & " Label"
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}")
   clearStatusMessage(a)
-
-  let
-    h = 24.0
-    labelWidth = 80.0
-    buttonWidth = 80.0
-    buttonPad = 15.0
 
   var x = 30.0
   var y = 60.0
 
-  koi.label(x, y, labelWidth, h, "Text")
+  koi.label(x, y, LabelWidth, DlgItemHeight, "Text")
   dlg.text = koi.textField(
-    x + labelWidth, y, w = 355, h, dlg.text,
+    x + LabelWidth, y, w = 355, DlgItemHeight, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
@@ -2417,13 +2412,13 @@ proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
   y += 44
 
   if validationError != "":
-    koi.label(x, y, dialogWidth, h, validationError,
+    koi.label(x, y, DlgWidth, DlgItemHeight, validationError,
               style = a.ui.warningLabelStyle)
-    y += 24
+    y += DlgItemHeight
 
 
-  x = dialogWidth - 2 * buttonWidth - buttonPad - 10
-  y = dialogHeight - h - buttonPad
+  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
+  y = DlgHeight - DlgItemHeight - DlgButtonPad
 
   proc okAction(dlg: var EditLabelDialogParams, a) =
     if validationError != "": return
@@ -2441,16 +2436,16 @@ proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
     dlg.isOpen = false
 
 
-  if koi.button(x, y, buttonWidth, h, fmt"{IconCheck} OK",
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += buttonWidth + 10
-  if koi.button(x, y, buttonWidth, h, fmt"{IconClose} Cancel"):
+  x += DlgButtonWidth + 10
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
 
-  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+  if hasKeyEvent():
     let ke = koi.currEvent()
 
     if ke.isShortcutDown(scNextTextField):
@@ -2973,20 +2968,10 @@ proc handleGlobalKeyEvents(a) =
   var l = getCurrLevel(a)
 
   type
-    MoveKeys = object
-      left, right, up, down: set[Key]
-
     WalkKeys = object
       forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
 
   const
-    MoveKeysCursor = MoveKeys(
-      left  : {keyLeft,     keyH, keyKp4},
-      right : {keyRight,    keyL, keyKp6},
-      up    : {keyUp,       keyK, keyKp8},
-      down  : {Key.keyDown, keyJ, keyKp2, keyKp5}
-    )
-
     MoveKeysWasd = MoveKeys(
       left  : MoveKeysCursor.left  + {keyA},
       right : MoveKeysCursor.right + {keyD},
@@ -3095,7 +3080,7 @@ proc handleGlobalKeyEvents(a) =
     result = false
 
 
-  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+  if hasKeyEvent():
     let ke = koi.currEvent()
 
     case ui.editMode:
@@ -3699,7 +3684,7 @@ proc handleGlobalKeyEvents(a) =
 # }}}
 # {{{ handleGlobalKeyEvents_NoLevels()
 proc handleGlobalKeyEvents_NoLevels(a) =
-  if koi.hasEvent() and koi.currEvent().kind == ekKey:
+  if hasKeyEvent():
     let ke = koi.currEvent()
 
     if   ke.isKeyDown(keyN,        {mkCtrl, mkAlt}):   newMapAction(a)
@@ -3744,7 +3729,7 @@ proc renderUI() =
   vg.fill()
 
   # About button
-  if button(x = winWidth - 55, y = 45, w = 20, h = 24, IconQuestion,
+  if button(x = winWidth - 55, y = 45, w = 20, h = DlgItemHeight, IconQuestion,
             style = ui.aboutButtonStyle):
     # TODO
     discard

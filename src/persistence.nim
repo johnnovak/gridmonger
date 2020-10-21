@@ -241,8 +241,12 @@ proc readLevel(rr): Level =
     dataCursor = Cursor.none
     noteCursor = Cursor.none
 
-  while rr.hasNextChunk():
-    let ci = rr.nextChunk()
+  if not rr.hasSubChunks():
+    raiseMapReadError(fmt"'{FourCC_GRDM_lvl}' group chunk is empty")
+
+  var ci = rr.enterGroup()
+
+  while true:
     if ci.kind == ckChunk:
       case ci.id
       of FourCC_GRDM_lvl_prop:
@@ -263,6 +267,10 @@ proc readLevel(rr): Level =
         invalidChunkError(ci.id, FourCC_GRDM_lvls)
     else:
       invalidChunkError(ci.id, groupChunkId.get)
+
+    if rr.hasNextChunk():
+      ci = rr.nextChunk()
+    else: break
 
   if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvl_prop)
   if dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvl_cell)
@@ -287,22 +295,26 @@ proc readLevel(rr): Level =
 proc readLevelList(rr): seq[Level] =
   var levels = newSeq[Level]()
 
-  while rr.hasNextChunk():
-    let ci = rr.nextChunk()
+  if rr.hasSubChunks():
+    var ci = rr.enterGroup()
 
-    if ci.kind == ckGroup:
-      case ci.formatTypeId
-      of FourCC_GRDM_lvl:
-        if levels.len == NumLevelsMax:
-          raiseMapReadError("Map contains more than {MaxLevels} levels")
+    while true:
+      if ci.kind == ckGroup:
+        case ci.formatTypeId
+        of FourCC_GRDM_lvl:
+          if levels.len == NumLevelsMax:
+            raiseMapReadError(fmt"Map contains more than {NumLevelsMax} levels")
 
-        rr.enterGroup()
-        levels.add(readLevel(rr))
-        rr.exitGroup()
+          levels.add(readLevel(rr))
+          rr.exitGroup()
+        else:
+          invalidListChunkError(ci.formatTypeId, FourCC_GRDM_lvls)
       else:
-        invalidListChunkError(ci.formatTypeId, FourCC_GRDM_lvls)
-    else:
-      invalidChunkError(ci.id, FourCC_GRDM_lvls)
+        invalidChunkError(ci.id, FourCC_GRDM_lvls)
+
+      if rr.hasNextChunk():
+        ci = rr.nextChunk()
+      else: break
 
   result = levels
 
@@ -310,7 +322,7 @@ proc readLevelList(rr): seq[Level] =
 proc readMap(rr): Map =
   let version = rr.read(uint16).Natural
   if version > CurrentMapVersion:
-    raiseMapReadError("Unsupported map file version: {h.version}")
+    raiseMapReadError(fmt"Unsupported map file version: {version}")
 
   let name = rr.readBStr()
   checkStringLength(name, "map.name", MapNameMinLen, MapNameMaxLen)
@@ -338,8 +350,12 @@ proc readMap*(filename: string): Map =
       displayOptsCursor = Cursor.none
 
     # Find chunks
-    while rr.hasNextChunk():
-      let ci = rr.nextChunk()
+    if not rr.hasSubchunks():
+      raiseMapReadError("RIFF chunk contains no subchunks")
+
+    var ci = rr.enterGroup()
+
+    while true:
       if ci.kind == ckGroup:
         case ci.formatTypeId
         of FourCC_INFO:
@@ -369,6 +385,10 @@ proc readMap*(filename: string): Map =
           echo fmt"Skiping unknown top level chunk, " &
                fmt"chunkId: {fourCCToCharStr(ci.id)}"
 
+      if rr.hasNextChunk():
+        ci = rr.nextChunk()
+      else: break
+
     # Check for mandatory chunks
     if mapCursor.isNone:       chunkNotFoundError(FourCC_GRDM_map)
     if levelListCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvls)
@@ -379,7 +399,6 @@ proc readMap*(filename: string): Map =
     let m = readMap(rr)
 
     rr.cursor = levelListCursor.get
-    rr.enterGroup()
     m.levels = readLevelList(rr)
     m.refreshSortedLevelNames()
 
