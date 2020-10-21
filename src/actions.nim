@@ -125,6 +125,13 @@ proc setFloor*(map; loc: Location, f: Floor, floorColor: Natural; um) =
     m.setFloorColor(loc, floorColor)
 
 # }}}
+# {{{ setFloorColor*()
+proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
+
+  singleCellAction(map, loc, um, fmt"Set floor color {EnDash} {floorColor}", m):
+    m.setFloorColor(loc, floorColor)
+
+# }}}
 # {{{ setOrientedFloor*()
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
                        floorColor: Natural; um) =

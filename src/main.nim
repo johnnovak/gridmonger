@@ -164,6 +164,7 @@ type
     emDrawWallSpecial,
     emEraseCell,
     emClearFloor,
+    emColorFloor,
     emSelect,
     emSelectRect
     emPastePreview,
@@ -3130,6 +3131,15 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconArrowsVert,
                            "Floor orientation set to vertical", a)
 
+      elif ke.isKeyDown(keyC):
+        ui.editMode = emColorFloor
+        setStatusMessage(IconEraser, "Set floor color",
+                         @[IconArrowsAll, "set color"], a)
+
+        let floor = map.getFloor(cur)
+        if floor != fNone:
+          actions.setFloorColor(map, cur, ui.currFloorColor, um)
+
       elif not opt.wasdMode and ke.isKeyDown(keyW):
         ui.editMode = emDrawWall
         startDrawWallsAction(a)
@@ -3366,8 +3376,8 @@ proc handleGlobalKeyEvents(a) =
         toggleOnOffOption(opt.drawTrail, IconShoePrints, "Draw trail", a)
 
     # }}}
-    # {{{ emExcavate, emEraseCell, emClearFloor
-    of emExcavate, emEraseCell, emClearFloor:
+    # {{{ emExcavate, emEraseCell, emClearFloor, emColorFloor
+    of emExcavate, emEraseCell, emClearFloor, emColorFloor:
       # This to prevent creating an undoable action for every turn in walk
       # mode
       let prevCursor = cur
@@ -3388,11 +3398,16 @@ proc handleGlobalKeyEvents(a) =
         elif ui.editMode == emClearFloor:
           actions.setFloor(map, cur, fEmpty, ui.currFloorColor, um)
 
+        elif ui.editMode == emColorFloor:
+          let floor = map.getFloor(cur)
+          if floor != fNone:
+            actions.setFloorColor(map, cur, ui.currFloorColor, um)
+
       if not opt.wasdMode and ke.isKeyUp({keyD, keyE}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      if ke.isKeyUp({keyF}):
+      if ke.isKeyUp({keyF, keyC}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
