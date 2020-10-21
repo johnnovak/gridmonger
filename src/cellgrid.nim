@@ -146,29 +146,11 @@ proc copyFrom*(g; destRow, destCol: Natural,
 
 
 proc isNeighbourCellEmpty*(g; r,c: Natural, dir: Direction): bool =
+  let (nr, nc) = step(r, c, dir)
 
-  if dir == North:
-    result = r == 0 or g.isFloorEmpty(r-1, c)
-
-  elif dir == NorthEast:
-    result = r == 0 or c == g.cols-1 or g.isFloorEmpty(r-1, c+1)
-
-  elif dir == East:
-    result = c == g.cols-1 or g.isFloorEmpty(r, c+1)
-
-  elif dir == SouthEast:
-    result = r == g.rows-1 or c == g.cols-1 or g.isFloorEmpty(r+1, c+1)
-
-  elif dir == South:
-    result = r == g.rows-1 or g.isFloorEmpty(r+1, c)
-
-  elif dir == SouthWest:
-    result = r == g.rows-1 or c == 0 or g.isFloorEmpty(r+1, c-1)
-
-  elif dir == West:
-    result = c == 0 or g.isFloorEmpty(r, c-1)
-
-  elif dir == NorthWest:
-    result = c == 0 or r == 0 or g.isFloorEmpty(r-1, c-1)
+  if nr < 0 or nc < 0 or nr >= g.rows or nc >= g.cols:
+    true
+  else:
+    g.isFloorEmpty(nr, nc)
 
 # vim: et:ts=2:sw=2:fdm=marker

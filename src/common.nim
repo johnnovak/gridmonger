@@ -225,13 +225,15 @@ const
                       {fTeleportDestination}
 
 
+# {{{ linkFloorToString*()
 proc linkFloorToString*(f: Floor): string =
   if   f in (LinkPitSources + LinkPitDestinations): return "pit"
   elif f in LinkStairs: return "stairs"
   elif f in LinkDoors: return "door"
   elif f in {fTeleportSource, fTeleportDestination}: return "teleport"
 
-
+# }}}
+# {{{ hash*(ml: Location)
 proc hash*(ml: Location): Hash =
   var h: Hash = 0
   h = h !& hash(ml.level)
@@ -239,6 +241,8 @@ proc hash*(ml: Location): Hash =
   h = h !& hash(ml.col)
   result = !$h
 
+# }}}
+# {{{ `<`*(a, b: Location)
 proc `<`*(a, b: Location): bool =
   if   a.level < b.level: return true
   elif a.level > b.level: return false
@@ -249,7 +253,8 @@ proc `<`*(a, b: Location): bool =
   elif a.col < b.col: return true
   else: return false
 
-
+# }}}
+# {{{ toLetterCoord*)
 proc toLetterCoord*(x: Natural): string =
 
   proc toLetter(i: Natural): char = chr(ord('A') + i)
@@ -267,7 +272,8 @@ proc toLetterCoord*(x: Natural): string =
   else:
     result = ""
 
-
+# }}}
+# {{{ formatColumnCoord*()
 proc formatColumnCoord*(col: Natural, co: CoordinateOptions,
                         numCols: Natural): string =
   var x = co.columnStart + col
@@ -276,7 +282,8 @@ proc formatColumnCoord*(col: Natural, co: CoordinateOptions,
   of csNumber: $x
   of csLetter: toLetterCoord(x)
 
-
+# }}}
+# {{{ formatRowCoord*()
 proc formatRowCoord*(row: Natural, co: CoordinateOptions,
                      numRows: Natural): string =
   var x = co.rowStart + (
@@ -289,6 +296,19 @@ proc formatRowCoord*(row: Natural, co: CoordinateOptions,
   of csNumber: $x
   of csLetter: toLetterCoord(x)
 
+# }}}
+# {{{ step*()
+proc step*(row, col: int, dir: Direction): (int, int) =
+  if   dir == North:     result = (row-1, col)
+  elif dir == NorthEast: result = (row-1, col+1)
+  elif dir == East:      result = (row,   col+1)
+  elif dir == SouthEast: result = (row+1, col+1)
+  elif dir == South:     result = (row+1, col)
+  elif dir == SouthWest: result = (row+1, col-1)
+  elif dir == West:      result = (row,   col-1)
+  elif dir == NorthWest: result = (row-1, col-1)
+
+# }}}
 
 type
   # (0,0) is the top-left cell of the selection

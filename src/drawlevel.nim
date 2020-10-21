@@ -921,6 +921,7 @@ proc drawInnerShadows(viewBuf: Level, ctx) =
             vg.rect(x, y, shadowWidth, dp.gridSize)
 
   vg.fill()
+
 # }}}
 # {{{ drawOuterShadows()
 proc drawOuterShadows(viewBuf: Level, ctx) =
@@ -950,6 +951,7 @@ proc drawOuterShadows(viewBuf: Level, ctx) =
             vg.rect(x, y, shadowWidth, dp.gridSize)
 
   vg.fill()
+
 # }}}
 
 # {{{ Draw floor types
@@ -1479,7 +1481,7 @@ proc drawLeverHorizSW*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawNicheHoriz*()
-proc drawNicheHoriz*(x, y: float, northEast: bool, ctx) =
+proc drawNicheHoriz*(x, y: float, northEast: bool, floorColor: Natural, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1499,9 +1501,11 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, ctx) =
   vg.strokeWidth(sw)
   vg.strokeColor(ls.drawColor)
 
-  vg.fillColor(ls.floorColor[0])  # TODO
   vg.beginPath()
   vg.rect(x1, y, x2-x1, yn-y)
+  vg.fillColor(ls.backgroundColor)
+  vg.fill()
+  vg.fillColor(ls.floorColor[floorColor])
   vg.fill()
 
   vg.lineCap(lcjRound)
@@ -1515,11 +1519,11 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, ctx) =
   vg.stroke()
 
 
-proc drawNicheHorizNE*(x, y: float, ctx) =
-  drawNicheHoriz(x, y, northEast=true, ctx)
+proc drawNicheHorizNE*(x, y: float, floorColor: Natural, ctx) =
+  drawNicheHoriz(x, y, northEast=true, floorColor, ctx)
 
-proc drawNicheHorizSW*(x, y: float, ctx) =
-  drawNicheHoriz(x, y, northEast=false, ctx)
+proc drawNicheHorizSW*(x, y: float, floorColor: Natural, ctx) =
+  drawNicheHoriz(x, y, northEast=false, floorColor, ctx)
 
 # }}}
 # {{{ drawStatueHoriz*()
@@ -1589,9 +1593,9 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
     kl = boxLen.float
 
   vg.strokeWidth(sw)
-  vg.fillColor(ls.floorColor[0])  # TODO
   vg.beginPath()
   vg.rect(kx, ky, kl, kl)
+  vg.fillColor(ls.floorColor[0])
   vg.fill()
   vg.stroke()
 
@@ -1708,7 +1712,7 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
     y = cellY(viewRow, dp)
 
   template drawOriented(drawProc: untyped) =
-    case viewBuf.getFloorOrientation(bufRow, bufCol):
+    case viewBuf.getFloorOrientation(bufRow, bufCol)
     of Horiz:
       drawProc(x, y + floor(dp.gridSize*0.5), ctx)
     of Vert:
@@ -1833,16 +1837,27 @@ proc drawNotes(viewBuf: Level, ctx) =
 # }}}
 
 # {{{ drawWall()
-proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
+proc drawWall(x, y: float, wall: Wall, ot: Orientation,
+              viewBuf: Level, bufRow, bufCol: Natural, ctx) =
+
   let vg = ctx.vg
 
   template drawOriented(drawProc: untyped) =
-    case ot:
+    case ot
     of Horiz:
       drawProc(x, y, ctx)
     of Vert:
       setVertTransform(x, y, ctx)
       drawProc(0, 0, ctx)
+      vg.resetTransform()
+
+  template drawOrientedWithFloorColor(drawProc: untyped, floorColor: Natural) =
+    case ot
+    of Horiz:
+      drawProc(x, y, floorColor, ctx)
+    of Vert:
+      setVertTransform(x, y, ctx)
+      drawProc(0, 0, floorColor, ctx)
       vg.resetTransform()
 
   case wall
@@ -1858,13 +1873,23 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation, ctx) =
   of wOneWayDoorSW:  drawOriented(drawOneWayDoorHorizSW)
   of wLeverNE:       drawOriented(drawLeverHorizNE)
   of wLeverSW:       drawOriented(drawLeverHorizSW)
-  of wNicheNE:       drawOriented(drawNicheHorizNE)
-  of wNicheSW:       drawOriented(drawNicheHorizSW)
   of wStatueNE:      drawOriented(drawStatueHorizNE)
   of wStatueSW:      drawOriented(drawStatueHorizSW)
-  of wKeyhole:       drawOriented(drawKeyholeHoriz)
   of wWritingNE:     drawOriented(drawWritingHorizNE)
   of wWritingSW:     drawOriented(drawWritingHorizSW)
+  of wKeyhole:       drawOriented(drawKeyholeHoriz)
+
+  of wNicheNE:
+    let floorColor = case ot
+    of Horiz: viewBuf.getFloorColor(bufRow, bufCol)
+    of Vert:  viewBuf.getFloorColor(bufRow, bufCol-1)
+    drawOrientedWithFloorColor(drawNicheHorizNE, floorColor)
+
+  of wNicheSW:
+    let floorColor = case ot
+    of Horiz: viewBuf.getFloorColor(bufRow-1, bufCol)
+    of Vert:  viewBuf.getFloorColor(bufRow,   bufCol)
+    drawOrientedWithFloorColor(drawNicheHorizSW, floorColor)
 
 # }}}
 # {{{ drawCellWalls()
@@ -1877,13 +1902,15 @@ proc drawCellWalls(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   drawWall(
     cellX(viewCol, dp),
     cellY(viewRow, dp),
-    viewBuf.getWall(bufRow, bufCol, dirN), Horiz, ctx
+    viewBuf.getWall(bufRow, bufCol, dirN), Horiz,
+    viewBuf, bufRow, bufCol, ctx
   )
 
   drawWall(
     cellX(viewCol, dp),
     cellY(viewRow, dp),
-    viewBuf.getWall(bufRow, bufCol, dirW), Vert, ctx
+    viewBuf.getWall(bufRow, bufCol, dirW), Vert,
+    viewBuf, bufRow, bufCol, ctx
   )
 
   let viewEndRow = dp.viewRows-1
@@ -1891,7 +1918,8 @@ proc drawCellWalls(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
     drawWall(
       cellX(viewCol, dp),
       cellY(viewRow+1, dp),
-      viewBuf.getWall(bufRow, bufCol, dirS), Horiz, ctx
+      viewBuf.getWall(bufRow, bufCol, dirS), Horiz,
+      viewBuf, bufRow+1, bufCol, ctx
     )
 
   let viewEndCol = dp.viewCols-1
@@ -1899,7 +1927,8 @@ proc drawCellWalls(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
     drawWall(
       cellX(viewCol+1, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(bufRow, bufCol, dirE), Vert, ctx
+      viewBuf.getWall(bufRow, bufCol, dirE), Vert,
+      viewBuf, bufRow, bufCol+1, ctx
     )
 
 # }}}

@@ -10,6 +10,10 @@ TODO
   - disable ctrl movement in wasd mode
   - disable ctrl in excavate, erase & floor modes
   - reduce dialog code duplication (in progress)
+  - shadow corner joints are not drawn (light theme)
+  - shadow right on the map edges is not drawn (light theme)
+  - hatching should not be visible in colored cells
+  - hatching should not be visible in niches (oldpaper-bright theme)
 
   - RLE compression
   - remove text label

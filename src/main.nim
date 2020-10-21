@@ -2834,7 +2834,7 @@ proc specialWallDrawProc(ls: LevelStyle,
     of wLeverSW:
       drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx)
 
-    of wNicheSW:           drawNicheHorizSW(cx, cy, ctx)
+    of wNicheSW:           drawNicheHorizSW(cx, cy, floorColor=0, ctx)
 
     of wStatueSW:
       drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ctx)
