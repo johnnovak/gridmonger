@@ -981,7 +981,8 @@ proc drawTrail(x, y: float, ctx) =
 
 # }}}
 # {{{ drawSecretDoor()
-proc drawSecretDoor(x, y: float, isCursorActive: bool, ctx) =
+proc drawSecretDoor(x, y: float, isCursorActive: bool,
+                    floorColor: Natural, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
 
@@ -994,7 +995,7 @@ proc drawSecretDoor(x, y: float, isCursorActive: bool, ctx) =
 
   let
     icon = "S"
-    bgCol = if isCursorActive: ls.cursorColor else: ls.floorColor[0] # TODO
+    bgCol = if isCursorActive: ls.cursorColor else: ls.floorColor[floorColor]
     fontSizeFactor = DefaultIconFontSizeFactor
     gs = dp.gridSize
 
@@ -1729,11 +1730,12 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
   of fDoor:                drawOriented(drawDoorHoriz)
   of fLockedDoor:          drawOriented(drawLockedDoorHoriz)
   of fArchway:             drawOriented(drawArchwayHoriz)
-
-  of fSecretDoor:          drawSecretDoor(x, y,
-                                          isCursorActive(viewRow, viewCol, dp),
-                                          ctx)
-
+  of fSecretDoor:          drawSecretDoor(
+                             x, y,
+                             isCursorActive(viewRow, viewCol, dp),
+                             viewBuf.getFloorColor(bufRow, bufCol),
+                             ctx
+                           )
   of fPressurePlate:       draw(drawPressurePlate)
   of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
   of fClosedPit:           draw(drawClosedPit)
