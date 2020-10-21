@@ -770,6 +770,7 @@ proc loadTheme(index: Natural, a) =
 # }}}
 
 # {{{ Key handling
+# TODO move into koi?
 proc hasKeyEvent(): bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
 
@@ -1230,11 +1231,22 @@ proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
 # }}}
 
 const
-  DlgItemHeight = 24.0
-  DlgButtonWidth = 80.0
-  DlgButtonPad = 15.0
+  DlgItemHeight    = 24.0
+  DlgButtonWidth   = 80.0
+  DlgButtonPad     = 10.0
   DlgCheckBoxWidth = 18.0
   DlgCheckBoxYOffs = 3.0
+
+proc dialogButtonsStartPos(dlgWidth, dlgHeight: float,
+                           numButtons: Natural): (float, float) =
+  const BorderPad = 15.0
+
+  let x = dlgWidth - numButtons * DlgButtonWidth - BorderPad -
+          (numButtons-1) * DlgButtonPad
+
+  let y = dlgHeight - DlgItemHeight - BorderPad
+
+  result = (x, y)
 
 # {{{ Preferences dialog
 proc openPreferencesDialog(a) =
@@ -1317,14 +1329,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK"):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -1377,17 +1387,16 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-  x = DlgWidth - 3 * DlgButtonWidth - DlgButtonPad - 20
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} Save"):
     saveAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconTrash} Discard"):
     discardAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -1428,9 +1437,8 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
 
   let LabelWitdh = 130.0
 
-  var
-    x = 30.0
-    y = 60.0
+  var x = 30.0
+  var y = 60.0
 
   koi.label(x, y, LabelWitdh, DlgItemHeight, "Name")
   dlg.name = koi.textField(
@@ -1486,14 +1494,13 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -1588,14 +1595,13 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -1659,7 +1665,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   const
     DlgWidth = 430.0
     DlgHeight = 436.0
-    tabWidth = 220.0
+    TabWidth = 220.0
     LabelWidth = 150.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level")
@@ -1671,7 +1677,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
   let tabLabels = @["General", "Coordinates"]
 
   dlg.activeTab = koi.radioButtons(
-    (DlgWidth - tabWidth) / 2, y, tabWidth, DlgItemHeight,
+    (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab
   )
 
@@ -1709,7 +1715,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
 
     koi.label(x, y, LabelWidth, DlgItemHeight, "Override map settings")
     dlg.overrideCoordOpts = koi.checkBox(
-      + LabelWidth, y + DlgCheckBoxYOffs,
+      x + LabelWidth, y + DlgCheckBoxYOffs,
       DlgCheckBoxWidth, dlg.overrideCoordOpts
     )
 
@@ -1760,14 +1766,13 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -1814,7 +1819,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   const
     DlgWidth = 430.0
     DlgHeight = 436.0
-    tabWidth = 220.0
+    TabWidth = 220.0
     LabelWidth = 150.0
 
   koi.beginDialog(DlgWidth, DlgHeight,
@@ -1827,7 +1832,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
   let tabLabels = @["General", "Coordinates"]
 
   dlg.activeTab = koi.radioButtons(
-    (DlgWidth - tabWidth) / 2, y, tabWidth, DlgItemHeight,
+    (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab
   )
 
@@ -1891,14 +1896,13 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
     dlg.isOpen = false
 
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -1986,8 +1990,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     style = a.ui.iconRadioButtonsStyle
   ).ResizeAnchor
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   dlg.activateFirstTextField = false
 
@@ -2023,7 +2026,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK"):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -2082,13 +2085,12 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
     dlg.isOpen = false
 
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 20
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} Delete"):
     deleteAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -2288,8 +2290,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     y += DlgItemHeight
 
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   proc okAction(dlg: var EditNoteDialogParams, a) =
     if validationErrors.len > 0: return
@@ -2320,7 +2321,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
                 disabled=validationErrors.len > 0):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
@@ -2417,8 +2418,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
     y += DlgItemHeight
 
 
-  x = DlgWidth - 2 * DlgButtonWidth - DlgButtonPad - 10
-  y = DlgHeight - DlgItemHeight - DlgButtonPad
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   proc okAction(dlg: var EditLabelDialogParams, a) =
     if validationError != "": return
@@ -2440,7 +2440,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
                 disabled=validationError != ""):
     okAction(dlg, a)
 
-  x += DlgButtonWidth + 10
+  x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel"):
     cancelAction(dlg, a)
 
