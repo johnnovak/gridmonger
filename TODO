@@ -4,8 +4,6 @@ BUGS
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - note dialog textfield focus bug
   - no cursor jump when resizing & cropping
-  - adding a note to a cell containing a non-empty floor should set the floor
-    to empty first
 
 
 TODO

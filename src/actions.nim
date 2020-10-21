@@ -121,7 +121,8 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 proc setFloor*(map; loc: Location, f: Floor, floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
-    m.setFloor(loc, f, floorColor)
+    m.setFloor(loc, f)
+    m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ setOrientedFloor*()
@@ -129,8 +130,9 @@ proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
                        floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
-    m.setFloor(loc, f, floorColor)
+    m.setFloor(loc, f)
     m.setFloorOrientation(loc, ot)
+    m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ eraseCellWalls*()
@@ -154,7 +156,8 @@ proc excavate*(map; loc: Location, floorColor: Natural; um) =
     alias(r, loc.row)
 
     m.eraseCell(loc)
-    m.setFloor(loc, fEmpty, floorColor)
+    m.setFloor(loc, fEmpty)
+    m.setFloorColor(loc, floorColor)
 
     if r == 0 or l.isFloorEmpty(r-1, c):
       m.setWall(loc, dirN, wWall)
@@ -190,7 +193,9 @@ proc setNote*(map; loc: Location, n: Note; um) =
 
   singleCellAction(map, loc, um, "Set note", m):
     alias(l, m.levels[loc.level])
-    l.setNote(loc.row, loc.col, n)
+    if n.kind != nkComment:
+      m.setFloor(loc, fEmpty)
+      l.setNote(loc.row, loc.col, n)
 
 # }}}
 # {{{ eraseNote*()
@@ -214,10 +219,12 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     if map.levels[src.level].elevation < map.levels[dest.level].elevation:
       destFloor = fStairsDown
       # TODO could be made undoable, but probably not worth bothering with it
-      map.setFloor(src, fStairsUp, floorColor)
+      map.setFloor(src, fStairsUp)
     else:
       destFloor = fStairsUp
-      map.setFloor(src, fStairsDown, floorColor)
+      map.setFloor(src, fStairsDown)
+
+    map.setFloorColor(src, floorColor)
 
   let level = dest.level
   let linkType = linkFloorToString(srcFloor)
@@ -233,7 +240,9 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     # (delete existing links originating from src)
     m.links.delBySrc(src)
 
-    m.setFloor(dest, destFloor, floorColor)
+    m.setFloor(dest, destFloor)
+    m.setFloorColor(dest, floorColor)
+
     m.links.set(src, dest)
     m.levels[level].reindexNotes()
     result = usd
@@ -306,7 +315,8 @@ proc fillSelection*(map; level: Natural, sel: Selection,
           loc.row = r
           loc.col = c
           m.eraseCell(loc)
-          m.setFloor(loc, fEmpty, floorColor)
+          m.setFloor(loc, fEmpty)
+          m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ surroundSelection*()

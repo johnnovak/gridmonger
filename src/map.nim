@@ -75,9 +75,8 @@ proc getFloor*(m; loc: Location): Floor {.inline.} =
 proc isFloorEmpty*(m; loc: Location): bool {.inline.} =
   m.levels[loc.level].isFloorEmpty(loc.row, loc.col)
 
-proc setFloor*(m; loc: Location, f: Floor, floorColor: Natural) =
+proc setFloor*(m; loc: Location, f: Floor) =
   m.levels[loc.level].setFloor(loc.row, loc.col, f)
-  m.levels[loc.level].setFloorColor(loc.row, loc.col, floorColor)
   m.eraseCellLinks(loc)
 
 proc getFloorOrientation*(m; loc: Location): Orientation {.inline.} =
@@ -88,6 +87,13 @@ proc setFloorOrientation*(m; loc: Location, ot: Orientation) =
 
 proc guessFloorOrientation*(m; loc: Location): Orientation =
   m.levels[loc.level].guessFloorOrientation(loc.row, loc.col)
+
+proc getFloorColor*(m; loc: Location): Natural {.inline.} =
+  m.levels[loc.level].getFloorColor(loc.row, loc.col)
+
+proc setFloorColor*(m; loc: Location,
+                    floorColor: Natural) {.inline.} =
+  m.levels[loc.level].setFloorColor(loc.row, loc.col, floorColor)
 
 
 proc getWall*(m; loc: Location, dir: CardinalDir): Wall {.inline.} =
