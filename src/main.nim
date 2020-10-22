@@ -803,8 +803,10 @@ proc switchTheme(themeIndex: Natural, a) =
   let bgImageName = a.theme.style.general.backgroundImage
   if bgImageName != "":
     a.ui.backgroundImage = loadImage(bgImageName, a).some
+    a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
   else:
     a.ui.backgroundImage = Paint.none
+    a.ui.drawLevelParams.backgroundImage = Paint.none
 
   a.doc.levelStyle = a.theme.style.level
 
