@@ -34,6 +34,8 @@ import utils
 # {{{ Constants
 const
   ThemesDir = "themes"
+  DataDir = "data"
+  ThemeExt = "cfg"
 
   CursorJump = 5
 
@@ -150,7 +152,7 @@ type
     levelDrawAreaWidth:  float
     levelDrawAreaHeight: float
 
-    oldPaperPattern:   Paint
+    backgroundImage:   Option[Paint]
 
     aboutButtonStyle:      ButtonStyle
     iconRadioButtonsStyle: RadioButtonsStyle
@@ -415,6 +417,16 @@ proc saveConfig(a) =
 
 # }}}
 
+# {{{ getPxRatio()
+# TODO move to koi?
+proc getPxRatio(a): float =
+  let
+    (winWidth, _) = a.win.size
+    (fbWidth, _) = a.win.framebufferSize
+  result = fbWidth / winWidth
+
+# }}}
+
 # {{{ mapHasLevels()
 proc mapHasLevels(a): bool =
   a.doc.map.levels.len > 0
@@ -591,9 +603,10 @@ proc saveMapAction(a) =
   else: saveMapAsAction(a)
 
 # }}}
+
 # {{{ searchThemes()
 proc searchThemes(a) =
-  for path in walkFiles(fmt"{ThemesDir}/*.cfg"):
+  for path in walkFiles(joinPath(ThemesDir, fmt"*.{ThemeExt}")):
     let (_, name, _) = splitFile(path)
     a.theme.themeNames.add(name)
   sort(a.theme.themeNames)
@@ -610,17 +623,15 @@ proc findThemeIndex(name: string, a): int =
 # {{{ loadTheme()
 proc loadTheme(index: Natural, a) =
   let name = a.theme.themeNames[index]
-  a.theme.style = loadTheme(fmt"{ThemesDir}/{name}.cfg")
+  let path = joinPath(ThemesDir, addFileExt(name, ThemeExt))
+  a.theme.style = loadTheme(path)
 
-  a.doc.levelStyle = a.theme.style.level
-
-  a.theme.currThemeIndex = index
-
+# }}}
+# {{{ updateWidgetStyles()
+proc updateWidgetStyles(a) =
   alias(s, a.theme.style)
   alias(gs, s.general)
   alias(ws, s.widget)
-
-  a.win.setStyle(a.theme.style.titleBar)
 
   # Button
   var bs = koi.getDefaultButtonStyle()
@@ -769,6 +780,42 @@ proc loadTheme(index: Natural, a) =
     a.ui.aboutButtonStyle = bs
 
 # }}}
+# {{{ loadImage()
+proc loadImage(fname: string, a): Paint =
+  alias(vg, a.vg)
+
+  let path = joinPath(DataDir, fname)
+  let img = vg.createImage(path, {ifRepeatX, ifRepeatY})
+
+  if img == NoImage:
+    # TODO log error instead of quitting
+    quit fmt"Could not load image: {path}"
+
+  let (w, h) = vg.imageSize(img)
+  result = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
+
+# }}}
+# {{{ switchTheme()
+proc switchTheme(themeIndex: Natural, a) =
+  loadTheme(themeIndex, a)
+  updateWidgetStyles(a)
+
+  let bgImageName = a.theme.style.general.backgroundImage
+  if bgImageName != "":
+    a.ui.backgroundImage = loadImage(bgImageName, a).some
+  else:
+    a.ui.backgroundImage = Paint.none
+
+  a.doc.levelStyle = a.theme.style.level
+
+  a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
+                                           getPxRatio(a))
+
+  a.win.setStyle(a.theme.style.titleBar)
+
+  a.theme.currThemeIndex = themeIndex
+
+# }}}
 
 # {{{ Key handling
 # TODO move into koi?
@@ -797,15 +844,6 @@ proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
 
 # }}}
 
-# {{{ getPxRatio()
-# TODO move to koi?
-proc getPxRatio(a): float =
-  let
-    (winWidth, _) = a.win.size
-    (fbWidth, _) = a.win.framebufferSize
-  result = fbWidth / winWidth
-
-# }}}
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
   a.ui.cursor.level = 0
@@ -3736,11 +3774,11 @@ proc renderUI() =
   # TODO shouldn't calculate visible window area manually
   vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
 
-  # TODO extend logic for other images
-  if a.theme.style.general.backgroundImage == "old-paper":
-    vg.fillPaint(ui.oldPaperPattern)
+  if ui.backgroundImage.isSome:
+    vg.fillPaint(ui.backgroundImage.get)
   else:
     vg.fillColor(a.theme.style.general.backgroundColor)
+
   vg.fill()
 
   # About button
@@ -3837,9 +3875,7 @@ proc renderFramePre(win: CSDWindow) =
   if a.theme.nextThemeIndex.isSome:
     let themeIndex = a.theme.nextThemeIndex.get
     a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
-    loadTheme(themeIndex, a)
-    a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
-                                             getPxRatio(a))
+    switchTheme(themeIndex, a)
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
 
@@ -3890,42 +3926,26 @@ proc initDrawLevelParams(a) =
   dp = newDrawLevelParams()
   dp.drawCellCoords   = true
   dp.drawCursorGuides = false
-  dp.initDrawLevelParams(a.doc.levelStyle, a.vg, getPxRatio(a))
-
-  # TODO
-  dp.backgroundPattern = if a.theme.style.general.backgroundImage == "old-paper":
-    a.ui.oldPaperPattern.some
-  else:
-    Paint.none
-
-
-proc loadImages(vg: NVGContext, a) =
-  # TODO data dir as constant
-  let img = vg.createImage("data/old-paper.jpg", {ifRepeatX, ifRepeatY})
-
-  # TODO use exceptions instead (in the nanovg wrapper)
-  if img == NoImage:
-    quit "Could not load old paper image.\n"
-
-  let (w, h) = vg.imageSize(img)
-  a.ui.oldPaperPattern = vg.imagePattern(0, 0, w.float, h.float, angle=0,
-                                         img, alpha=1.0)
 
 
 proc loadFonts(vg: NVGContext) =
-  let regularFont = vg.createFont("sans", "data/Roboto-Regular.ttf")
+  let regularFont = vg.createFont("sans",
+                                  joinPath(DataDir, "Roboto-Regular.ttf"))
   if regularFont == NoFont:
     quit "Could not add regular font.\n"
 
-  let boldFont = vg.createFont("sans-bold", "data/Roboto-Bold.ttf")
+  let boldFont = vg.createFont("sans-bold",
+                               joinPath(DataDir, "Roboto-Bold.ttf"))
   if boldFont == NoFont:
     quit "Could not add bold font.\n"
 
-  let blackFont = vg.createFont("sans-black", "data/Roboto-Black.ttf")
+  let blackFont = vg.createFont("sans-black",
+                                joinPath(DataDir, "Roboto-Black.ttf"))
   if blackFont == NoFont:
     quit "Could not add black font.\n"
 
-  let iconFont = vg.createFont("icon", "data/GridmongerIcons.ttf")
+  let iconFont = vg.createFont("icon",
+                               joinPath(DataDir, "GridmongerIcons.ttf"))
   if iconFont == NoFont:
     quit "Could not load icon font.\n"
 
@@ -3956,44 +3976,37 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   createDir(ConfigPath)
   let cfg = loadAppConfig(ConfigFile)
 
+  loadFonts(vg)
+
   a = new AppContext
   a.win = win
   a.vg = vg
 
   a.doc.undoManager = newUndoManager[Map, UndoStateData]()
 
-  loadFonts(vg)
-  loadImages(vg, a)
+  a.ui.drawLevelParams = newDrawLevelParams()
 
   searchThemes(a)
   var themeIndex = findThemeIndex(cfg.themeName, a)
   if themeIndex == -1: themeIndex = 0
-  loadTheme(themeIndex, a)
+  switchTheme(themeIndex, a)
 
-  # TODO proper init
-  a.doc.map = newMap("Untitled Map")
-
-  initDrawLevelParams(a)
-  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, cfg.zoomLevel)
   a.opt.scrollMargin = 3
-
-  a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
-
-  a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
-
   a.opt.showSplash = cfg.showSplash
   a.opt.loadLastFile = cfg.loadLastFile
-
   a.opt.showNotesPane = cfg.showNotesPane
   a.opt.showToolsPane = cfg.showToolsPane
-
   a.opt.drawTrail = cfg.drawTrail
   a.opt.walkMode = cfg.walkMode
   a.opt.wasdMode = cfg.wasdMode
 
+  a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
+  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, cfg.zoomLevel)
+
   if cfg.loadLastFile:
     loadMap(cfg.lastFileName, a)
   else:
+    a.doc.map = newMap("Untitled Map")
     setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
   # TODO check values?
@@ -4007,6 +4020,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.ui.cursor.col = cfg.cursorCol
 
   updateLastCursorViewCoords(a)
+
+  a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
   # Init window
   a.win.renderFramePreCb = renderFramePre

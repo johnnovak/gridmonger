@@ -66,7 +66,7 @@ type
     viewRows*:     Natural
     viewCols*:     Natural
 
-    backgroundPattern*: Option[Paint]
+    backgroundImage*: Option[Paint]
 
     # The current selection; it has the same dimensions as the map
     selection*:        Option[Selection]
@@ -1510,8 +1510,8 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, floorColor: Natural, ctx) =
   vg.beginPath()
   vg.rect(x1, y, x2-x1, yn-y)
 
-  if dp.backgroundPattern.isSome:
-    vg.fillPaint(dp.backgroundPattern.get)
+  if dp.backgroundImage.isSome:
+    vg.fillPaint(dp.backgroundImage.get)
   else:
     vg.fillColor(ls.backgroundColor)
 
