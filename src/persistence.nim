@@ -97,7 +97,7 @@ proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
   try:
     let ev = $E(v)
     valid = not ev.contains("invalid data")
-  except RangeError:
+  except RangeDefect:
     valid = false
 
   if not valid:

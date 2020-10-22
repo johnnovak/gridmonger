@@ -3794,7 +3794,6 @@ proc renderUI() =
 
     drawModeAndOptionIndicators(a)
 
-
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
   drawStatusBar(statusBarY, winWidth.float, a)
@@ -3892,6 +3891,12 @@ proc initDrawLevelParams(a) =
   dp.drawCellCoords   = true
   dp.drawCursorGuides = false
   dp.initDrawLevelParams(a.doc.levelStyle, a.vg, getPxRatio(a))
+
+  # TODO
+  dp.backgroundPattern = if a.theme.style.general.backgroundImage == "old-paper":
+    a.ui.oldPaperPattern.some
+  else:
+    Paint.none
 
 
 proc loadImages(vg: NVGContext, a) =

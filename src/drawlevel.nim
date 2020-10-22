@@ -66,6 +66,8 @@ type
     viewRows*:     Natural
     viewCols*:     Natural
 
+    backgroundPattern*: Option[Paint]
+
     # The current selection; it has the same dimensions as the map
     selection*:        Option[Selection]
 
@@ -690,10 +692,14 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf, ctx) =
 proc drawFloorBg(x, y: float, color: Color, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
+  alias(ls, ctx.ls)
 
   vg.beginPath()
-  vg.fillColor(color)
   vg.rect(x, y, dp.gridSize, dp.gridSize)
+
+  vg.fillColor(ls.backgroundColor)
+  vg.fill()
+  vg.fillColor(color)
   vg.fill()
 
 # }}}
@@ -1503,7 +1509,12 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, floorColor: Natural, ctx) =
 
   vg.beginPath()
   vg.rect(x1, y, x2-x1, yn-y)
-  vg.fillColor(ls.backgroundColor)
+
+  if dp.backgroundPattern.isSome:
+    vg.fillPaint(dp.backgroundPattern.get)
+  else:
+    vg.fillColor(ls.backgroundColor)
+
   vg.fill()
   vg.fillColor(ls.floorColor[floorColor])
   vg.fill()

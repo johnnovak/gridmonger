@@ -7,18 +7,12 @@ import strutils
 import nanovg
 
 
-proc missingValueError(section, key: string) =
-  let msg = fmt"Missing value in section='{section}', key='{key}'"
-  echo msg
-
 proc invalidValueError(section, key, valueType, value: string) =
   let msg = fmt"Invalid {valueType} value in section='{section}', key='{key}': {value}"
   echo msg
 
 proc getValue*(cfg: Config, section, key: string): string =
-  result = cfg.getSectionValue(section, key)
-  if result == "":
-    missingValueError(section, key)
+  cfg.getSectionValue(section, key)
 
 proc parseColor*(s: string): Option[Color] =
   result = Color.none
@@ -52,32 +46,36 @@ proc getString*(cfg: Config, section, key: string, s: var string) =
 
 proc getColor*(cfg: Config, section, key: string, c: var Color) =
   let v = getValue(cfg, section, key)
-  let col = parseColor(v)
-  if col.isNone:
-    invalidValueError(section, key, "color", v)
-  else:
-    c = col.get
+  if v != "":
+    let col = parseColor(v)
+    if col.isNone:
+      invalidValueError(section, key, "color", v)
+    else:
+      c = col.get
 
 proc getBool*(cfg: Config, section, key: string, b: var bool) =
   let v = getValue(cfg, section, key)
-  try:
-    b = parseBool(v)
-  except ValueError:
-    invalidValueError(section, key, "bool", v)
+  if v != "":
+    try:
+      b = parseBool(v)
+    except ValueError:
+      invalidValueError(section, key, "bool", v)
 
 proc getFloat*(cfg: Config, section, key: string, f: var float) =
   let v = getValue(cfg, section, key)
-  try:
-    f = parseFloat(v)
-  except ValueError:
-    invalidValueError(section, key, "float", v)
+  if v != "":
+    try:
+      f = parseFloat(v)
+    except ValueError:
+      invalidValueError(section, key, "float", v)
 
 proc getInt*(cfg: Config, section, key: string, i: var int) =
   let v = getValue(cfg, section, key)
-  try:
-    i = parseInt(v)
-  except ValueError:
-    invalidValueError(section, key, "int", v)
+  if v != "":
+    try:
+      i = parseInt(v)
+    except ValueError:
+      invalidValueError(section, key, "int", v)
 
 proc getNatural*(cfg: Config, section, key: string, n: var int) =
   var i: int
@@ -90,8 +88,9 @@ proc getNatural*(cfg: Config, section, key: string, n: var int) =
 
 proc getEnum*[T: enum](cfg: Config, section, key: string, e: var T) =
   let v = getValue(cfg, section, key)
-  try:
-    e = parseEnum[T](v)
-  except ValueError:
-    invalidValueError(section, key, "enum", v)
+  if v != "":
+    try:
+      e = parseEnum[T](v)
+    except ValueError:
+      invalidValueError(section, key, "enum", v)
 
