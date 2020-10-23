@@ -72,8 +72,8 @@ proc eraseCellLinks*(m; loc: Location) =
 proc getFloor*(m; loc: Location): Floor {.inline.} =
   m.levels[loc.level].getFloor(loc.row, loc.col)
 
-proc isFloorEmpty*(m; loc: Location): bool {.inline.} =
-  m.levels[loc.level].isFloorEmpty(loc.row, loc.col)
+proc isEmpty*(m; loc: Location): bool {.inline.} =
+  m.levels[loc.level].isEmpty(loc.row, loc.col)
 
 proc setFloor*(m; loc: Location, f: Floor) =
   m.levels[loc.level].setFloor(loc.row, loc.col, f)

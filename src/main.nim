@@ -1036,7 +1036,8 @@ proc setSelectModeActionMessage(a) =
   setStatusMessage(IconSelection, "Mark selection",
                    @["Ctrl+E", "erase", "Ctrl+F", "fill",
                      "Ctrl+S", "surround", "Ctrl+R", "crop",
-                     "Ctrl+M", "move (cut+paste)"], a)
+                     "Ctrl+M", "move (cut+paste)",
+                     "Ctrl+C", "set color"], a)
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
@@ -2832,7 +2833,10 @@ proc specialWallDrawProc(ls: LevelStyle,
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
     let savedFloorColor = ls.floorColor[0]
-    ls.floorColor[0] = gray(0, 0)  # transparent
+    let savedBackgroundImage = dp.backgroundImage
+
+    ls.floorColor[0] = lerp(ls.backgroundColor, col, col.a).withAlpha(1.0)
+    dp.backgroundImage = Paint.none
 
     const Pad = 5
 
@@ -2889,6 +2893,7 @@ proc specialWallDrawProc(ls: LevelStyle,
 
     # ...aaaaand restore it!
     ls.floorColor[0] = savedFloorColor
+    dp.backgroundImage = savedBackgroundImage
 
 # }}}
 
@@ -3045,7 +3050,7 @@ proc handleGlobalKeyEvents(a) =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
 
   proc setTrailAtCursor(a) =
-    if map.isFloorEmpty(cur):
+    if map.isEmpty(cur):
       actions.setFloor(map, cur, fTrail, ui.currFloorColor, um)
 
   proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
@@ -3173,7 +3178,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyC):
         ui.editMode = emColorFloor
-        setStatusMessage(IconEraser, "Set floor color",
+        setStatusMessage(IconEraser, "Set color",
                          @[IconArrowsAll, "set color"], a)
 
         let floor = map.getFloor(cur)
@@ -3350,13 +3355,13 @@ proc handleGlobalKeyEvents(a) =
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyN):
-        if map.isFloorEmpty(cur):
+        if map.isEmpty(cur):
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
           openEditNoteDialog(a)
 
       elif ke.isKeyDown(keyN, {mkShift}):
-        if map.isFloorEmpty(cur):
+        if map.isEmpty(cur):
           setStatusMessage(IconWarning, "No note to delete in cell", a)
         else:
           actions.eraseNote(map, cur, um)
@@ -3581,6 +3586,15 @@ proc handleGlobalKeyEvents(a) =
         if bbox.isSome:
           actions.surroundSelectionWithWalls(map, cur.level, selection,
                                              bbox.get, um)
+          exitSelectMode(a)
+          setStatusMessage(IconPencil, "Surrounded selection with walls", a)
+
+      elif ke.isKeyDown(Key.keyC, {mkCtrl}):
+        let selection = ui.selection.get
+        let bbox = selection.boundingBox()
+        if bbox.isSome:
+          actions.setSelectionFloorColor(map, cur.level, selection,
+                                         bbox.get, ui.currFloorColor, um)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Surrounded selection with walls", a)
 

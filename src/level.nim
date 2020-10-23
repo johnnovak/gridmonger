@@ -115,11 +115,14 @@ proc getWall*(l; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
 proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
   l.cellGrid.setWall(r,c, dir, w)
 
+proc getNeighbourCell*(l; r,c: Natural, dir: Direction): Option[Cell] {.inline.} =
+  l.cellGrid.getNeighbourCell(r,c, dir)
+
 proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool {.inline.} =
   l.cellGrid.isNeighbourCellEmpty(r,c, dir)
 
-proc isFloorEmpty*(l; r,c: Natural): bool {.inline.} =
-  l.cellGrid.isFloorEmpty(r,c)
+proc isEmpty*(l; r,c: Natural): bool {.inline.} =
+  l.cellGrid.isEmpty(r,c)
 
 proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
   l.getFloor(r,c) != fNone or not l.isNeighbourCellEmpty(r,c, {dir})
@@ -129,7 +132,7 @@ proc eraseOrphanedWalls*(l; r,c: Natural) =
     if l.isNeighbourCellEmpty(r,c, {dir}):
       l.setWall(r,c, dir, wNone)
 
-  if l.isFloorEmpty(r,c):
+  if l.isEmpty(r,c):
     cleanWall(dirN)
     cleanWall(dirW)
     cleanWall(dirS)
@@ -171,7 +174,7 @@ proc paste*(l; destRow, destCol: int, src: Level,
             let w = src.getWall(srcRow, srcCol, dir)
             l.setWall(r,c, dir, w)
 
-          if floor.isFloorEmpty:
+          if floor.isEmpty:
             l.eraseOrphanedWalls(r,c)
           else:
             copyWall(dirN)

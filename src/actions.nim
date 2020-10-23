@@ -166,22 +166,22 @@ proc excavate*(map; loc: Location, floorColor: Natural; um) =
     m.setFloor(loc, fEmpty)
     m.setFloorColor(loc, floorColor)
 
-    if r == 0 or l.isFloorEmpty(r-1, c):
+    if r == 0 or l.isEmpty(r-1, c):
       m.setWall(loc, dirN, wWall)
     else:
       m.setWall(loc, dirN, wNone)
 
-    if c == 0 or l.isFloorEmpty(r, c-1):
+    if c == 0 or l.isEmpty(r, c-1):
       m.setWall(loc, dirW, wWall)
     else:
       m.setWall(loc, dirW, wNone)
 
-    if r == l.rows-1 or l.isFloorEmpty(r+1, c):
+    if r == l.rows-1 or l.isEmpty(r+1, c):
       m.setWall(loc, dirS, wWall)
     else:
       m.setWall(loc, dirS, wNone)
 
-    if c == l.cols-1 or l.isFloorEmpty(r, c+1):
+    if c == l.cols-1 or l.isEmpty(r, c+1):
       m.setWall(loc, dirE, wWall)
     else:
       m.setWall(loc, dirE, wNone)
@@ -202,7 +202,8 @@ proc setNote*(map; loc: Location, n: Note; um) =
     alias(l, m.levels[loc.level])
     if n.kind != nkComment:
       m.setFloor(loc, fEmpty)
-      l.setNote(loc.row, loc.col, n)
+
+    l.setNote(loc.row, loc.col, n)
 
 # }}}
 # {{{ eraseNote*()
@@ -349,6 +350,24 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
           if sel.isNeighbourCellEmpty(r,c, dirE): setWall(m, dirE)
           if sel.isNeighbourCellEmpty(r,c, dirS): setWall(m, dirS)
           if sel.isNeighbourCellEmpty(r,c, dirW): setWall(m, dirW)
+
+# }}}
+# {{{ setSelectionFloorColor*()
+proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
+                             bbox: Rect[Natural], floorColor: Natural; um) =
+
+  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+                 "Set floor color of selection", m):
+    var loc: Location
+    loc.level = level
+
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
+        if sel[r,c]:
+          loc.row = r
+          loc.col = c
+          if m.getFloor(loc) != fNone:
+            m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ cutSelection*()

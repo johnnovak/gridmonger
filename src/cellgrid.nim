@@ -1,3 +1,5 @@
+import options
+
 import common
 import rect
 
@@ -79,11 +81,14 @@ proc setFloorColor*(g; r,c, col: Natural) {.inline.} =
 
 const EmptyFloors = {fNone, fTrail}
 
-proc isFloorEmpty*(f: Floor): bool {.inline.} =
+proc isEmpty*(f: Floor): bool {.inline.} =
   f in EmptyFloors
 
-proc isFloorEmpty*(g; r,c: Natural): bool {.inline.} =
-  g.getFloor(r,c).isFloorEmpty
+proc isEmpty*(c: Cell): bool {.inline.} =
+  c.floor.isEmpty
+
+proc isEmpty*(g; r,c: Natural): bool {.inline.} =
+  g[r,c].isEmpty
 
 
 proc fill*(g; rect: Rect[Natural], cell: Cell) =
@@ -145,12 +150,14 @@ proc copyFrom*(g; destRow, destCol: Natural,
     g[destRow+r, destCol+cols].wallW = src[srcRow+r, srcCol+cols].wallW
 
 
-proc isNeighbourCellEmpty*(g; r,c: Natural, dir: Direction): bool =
-  let (nr, nc) = step(r, c, dir)
+proc getNeighbourCell*(g; r,c: Natural, dir: Direction): Option[Cell] =
+  let (nr, nc) = step(r,c, dir)
+  if nr < 0 or nc < 0 or nr >= g.rows or nc >= g.cols: Cell.none
+  else: g[nr,nc].some
 
-  if nr < 0 or nc < 0 or nr >= g.rows or nc >= g.cols:
-    true
-  else:
-    g.isFloorEmpty(nr, nc)
+proc isNeighbourCellEmpty*(g; r,c: Natural, dir: Direction): bool =
+  let c = getNeighbourCell(g, r,c, dir)
+  if c.isNone: true
+  else: c.get.isEmpty
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -8,6 +8,7 @@ import koi
 import nanovg
 
 import bitable
+import cellgrid
 import common
 import icons
 import level
@@ -317,6 +318,40 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
 
 # }}}
 
+# {{{ setLevelClippingRect()
+proc setLevelClippingRect(l: Level, ctx) =
+  alias(dp, ctx.dp)
+  alias(ls, ctx.ls)
+  alias(vg, ctx.vg)
+
+  let clipOffs = if dp.lineWidth == lwNormal: 1 else: 0
+
+  var
+    x = dp.startX-clipOffs
+    y = dp.startY-clipOffs
+    w = dp.gridSize * dp.viewCols + 1 + clipOffs
+    h = dp.gridSize * dp.viewRows + 1 + clipOffs
+
+  if ls.outlineOverscan:
+    let
+      gs = dp.gridSize
+      viewEndRow = dp.viewStartRow + dp.viewRows-1
+      viewEndCol = dp.viewStartCol + dp.viewCols-1
+
+    if dp.viewStartRow == 0:
+      y -= gs
+      h += gs
+
+    if dp.viewStartCol == 0:
+      x -= gs
+      w += gs
+
+    if viewEndRow == l.rows-1: h += gs
+    if viewEndCol == l.cols-1: w += gs
+
+  vg.intersectScissor(x, y, w, h)
+
+# }}}
 # {{{ drawBackground()
 proc drawBackground(ctx) =
   alias(ls, ctx.ls)
@@ -465,7 +500,7 @@ proc drawCellOutlines(l: Level, ctx) =
       let row = dp.viewStartRow + viewRow
       let col = dp.viewStartCol + viewCol
 
-      if l.isFloorEmpty(row, col) and isOutline(row, col):
+      if l.isEmpty(row, col) and isOutline(row, col):
         let x = snap(cellX(viewCol, dp), sw)
         let y = snap(cellY(viewRow, dp), sw)
 
@@ -920,11 +955,20 @@ proc drawInnerShadows(viewBuf: Level, ctx) =
         let y = cellY(viewRow, dp)
 
         if viewBuf.getFloor(bufRow, bufCol) != fNone:
-          if isNeighbourCellEmpty(viewBuf, bufRow, bufCol, North):
-            vg.rect(x, y, dp.gridSize, shadowWidth)
+          let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
+          let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
+          let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
 
-          if isNeighbourCellEmpty(viewBuf, bufRow, bufCol, West):
-            vg.rect(x, y, shadowWidth, dp.gridSize)
+          if emptyN:
+            let offs = if not emptyW and not emptyNW: shadowWidth else: 0
+            vg.rect(x+offs, y, dp.gridSize-offs, shadowWidth)
+
+          if emptyW:
+            let offs = if not emptyN and not emptyNW: shadowWidth else: 0
+            vg.rect(x, y+offs, shadowWidth, dp.gridSize-offs)
+
+          if not emptyN and not emptyW and emptyNW:
+            vg.rect(x, y, shadowWidth, shadowWidth)
 
   vg.fill()
 
@@ -950,11 +994,20 @@ proc drawOuterShadows(viewBuf: Level, ctx) =
         let y = cellY(viewRow, dp)
 
         if viewBuf.getFloor(bufRow, bufCol) == fNone:
-          if not isNeighbourCellEmpty(viewBuf, bufRow, bufCol, North):
-            vg.rect(x, y, dp.gridSize, shadowWidth)
+          let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
+          let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
+          let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
 
-          if not isNeighbourCellEmpty(viewBuf, bufRow, bufCol, West):
-            vg.rect(x, y, shadowWidth, dp.gridSize)
+          if not emptyN:
+            let offs = if emptyW and emptyNW: shadowWidth else: 0
+            vg.rect(x+offs, y, dp.gridSize-offs, shadowWidth)
+
+          if not emptyW:
+            let offs = if emptyN and emptyNW: shadowWidth else: 0
+            vg.rect(x, y+offs, shadowWidth, dp.gridSize-offs)
+
+          if emptyN and emptyW and not emptyNW:
+            vg.rect(x, y, shadowWidth, shadowWidth)
 
   vg.fill()
 
@@ -1003,14 +1056,20 @@ proc drawSecretDoor(x, y: float, isCursorActive: bool,
 
   let
     icon = "S"
-    bgCol = if isCursorActive: ls.cursorColor else: ls.floorColor[floorColor]
     fontSizeFactor = DefaultIconFontSizeFactor
     gs = dp.gridSize
 
-  drawIcon(x-2, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x+2, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y-2, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y+2, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  let fc = ls.floorColor[floorColor]
+  var bgCol = lerp(ls.backgroundColor, fc, fc.a).withAlpha(1.0)
+  if isCursorActive:
+    bgCol = lerp(bgCol, ls.cursorColor, ls.cursorColor.a).withAlpha(1.0)
+
+  let o = if dp.zoomLevel > 11: 3 else: 2
+
+  drawIcon(x-o, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x+o, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y-o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y+o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
 
   drawIcon(x, y, 0, 0, icon, gs, ls.drawColor, fontSizeFactor, vg)
 
@@ -1606,7 +1665,12 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
   vg.strokeWidth(sw)
   vg.beginPath()
   vg.rect(kx, ky, kl, kl)
-  vg.fillColor(ls.floorColor[0])
+
+  if dp.backgroundImage.isSome:
+    vg.fillPaint(dp.backgroundImage.get)
+  else:
+    vg.fillColor(ls.floorColor[0])
+
   vg.fill()
   vg.stroke()
 
@@ -1685,7 +1749,7 @@ proc drawBackgroundGrid(viewBuf: Level, ctx) =
       let bufRow = viewRow + ViewBufBorder
       let bufCol = viewCol + ViewBufBorder
 
-      if viewBuf.isFloorEmpty(bufRow, bufCol):
+      if viewBuf.isEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         drawGrid(x, y, ls.gridColorBackground, ls.gridStyleBackground, ctx)
@@ -1703,7 +1767,7 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
       let bufRow = viewRow + ViewBufBorder
       let bufCol = viewCol + ViewBufBorder
 
-      if not viewBuf.isFloorEmpty(bufRow, bufCol):
+      if not viewBuf.isEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         let floorColor = ls.floorColor[viewBuf.getFloorColor(bufRow, bufCol)]
@@ -2067,15 +2131,8 @@ proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
 proc drawLevel*(map: Map, level: Natural, ctx) =
   alias(dp, ctx.dp)
   alias(ls, ctx.ls)
+  alias(vg, ctx.vg)
   alias(l, map.levels[level])
-
-  assert dp.viewStartRow + dp.viewRows <= l.rows
-  assert dp.viewStartCol + dp.viewCols <= l.cols
-
-  if ls.bgHatchEnabled:
-    drawBackgroundHatch(ctx)
-  else:
-    drawBackground(ctx)
 
   let viewBuf = newLevelFrom(l,
     rectN(
@@ -2086,6 +2143,21 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
     ),
     border = ViewBufBorder
   )
+
+  assert dp.viewStartRow + dp.viewRows <= l.rows
+  assert dp.viewStartCol + dp.viewCols <= l.cols
+
+  vg.save()
+
+  if dp.drawCellCoords:
+    drawCellCoords(l, ctx)
+
+  setLevelClippingRect(l, ctx)
+
+  if ls.bgHatchEnabled:
+    drawBackgroundHatch(ctx)
+  else:
+    drawBackground(ctx)
 
   # outlineBuf has the same dimensions as viewBuf
   let outlineBuf = if ls.outlineStyle >= osSquareEdges:
@@ -2133,8 +2205,7 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
   if dp.drawCursorGuides:
     drawCursorGuides(ctx)
 
-  if dp.drawCellCoords:
-    drawCellCoords(l, ctx)
+  vg.restore()
 
 # }}}
 
