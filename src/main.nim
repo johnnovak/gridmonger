@@ -3890,8 +3890,14 @@ proc renderFramePre(win: CSDWindow) =
 
   if a.theme.nextThemeIndex.isSome:
     let themeIndex = a.theme.nextThemeIndex.get
-    a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
-    switchTheme(themeIndex, a)
+    try:
+      switchTheme(themeIndex, a)
+      a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
+    except CatchableError as e:
+      let name = a.theme.themeNames[themeIndex]
+      setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
+      a.theme.nextThemeIndex = Natural.none
+
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
 

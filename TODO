@@ -4,10 +4,13 @@ BUGS
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - note dialog textfield focus bug
   - no cursor jump when resizing & cropping
+  - fix cursor pos after undo crop level
+  - coord offset (and maybe other opts) doesn't get saved/loaded
 
 
 TODO
   - disable ctrl movement in wasd mode
+  - text color based on bg color luminance
   - disable ctrl in excavate, erase & floor modes
   - shadow corner joints are not drawn (light theme)
   - shadow right on the map edges is not drawn (light theme)
@@ -15,6 +18,10 @@ TODO
   - hatching should not be visible in niches (oldpaper-bright theme)
   - set floor color of selection
   - clip draw area (do not let special walls to hang out)
+  - show current color / tool in statusbar when toolbar is not visible
+  - colours in two columns (to support 1366x768)
+  - 10 colours (1st color must be the default)
+  - regions
 
   - RLE compression
   - remove text label
@@ -26,6 +33,9 @@ TODO
   - autosave
 
   - update all themes
+
+  - create OS X package
+  - linux package?
 
   - about dialog
   - splash screen
@@ -46,7 +56,6 @@ LOW PRIORITY
 
 FUTURE
   - infinite maps
-  - regions
   - legend / locations / notes window
 
 
