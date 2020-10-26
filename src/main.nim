@@ -3942,14 +3942,6 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
 # }}}
 
 # {{{ Init & cleanup
-proc initDrawLevelParams(a) =
-  alias(dp, a.ui.drawLevelParams)
-
-  dp = newDrawLevelParams()
-  dp.drawCellCoords   = true
-  dp.drawCursorGuides = false
-
-
 proc loadFonts(vg: NVGContext) =
   let regularFont = vg.createFont("sans",
                                   joinPath(DataDir, "Roboto-Regular.ttf"))
@@ -4024,6 +4016,11 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, cfg.zoomLevel)
+
+  # TODO
+  a.ui.drawLevelParams.drawRegionBorders = true
+  a.ui.drawLevelParams.regionRows = 16
+  a.ui.drawLevelParams.regionCols = 16
 
   if cfg.loadLastFile:
     loadMap(cfg.lastFileName, a)

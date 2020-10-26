@@ -126,6 +126,9 @@ type
 
     linkMarkerColor*:        Color
 
+    regionBorderColor*:      Color
+    regionBorderEmptyColor*: Color
+
 
   LineWidth* = enum
     lwThin, lwNormal, lwThick

@@ -19,6 +19,7 @@ import utils
 
 
 const
+
   MinZoomLevel = 1
   MaxZoomLevel = 20
   MinGridSize  = 13.0
@@ -30,6 +31,7 @@ const
   MaxLineHatchSize = 8
 
   DefaultIconFontSizeFactor = 0.53
+
 
 # Naming conventions
 # ------------------
@@ -86,6 +88,11 @@ type
     cellCoordOpts*:    CoordinateOptions
 
     drawCursorGuides*: bool
+
+    # Regions
+    drawRegionBorders*: bool
+    regionRows*:        Natural
+    regionCols*:        Natural
 
     # internal
     zoomLevel:          Natural
@@ -245,6 +252,14 @@ proc isCursorActive(viewRow, viewCol: Natural, dp): bool =
   dp.viewStartRow + viewRow == dp.cursorRow and
   dp.viewStartCol + viewCol == dp.cursorCol
 
+proc setVertTransform(x, y: float, ctx) =
+  let dp = ctx.dp
+  let vg = ctx.vg
+
+  # We need to use some fudge factor here because of the grid snapping...
+  vg.translate(x + dp.vertTransformXOffs, y)
+  vg.rotate(degToRad(90.0))
+
 # }}}
 
 # {{{ renderHatchPatternImage()
@@ -325,12 +340,13 @@ proc setLevelClippingRect(l: Level, ctx) =
   alias(vg, ctx.vg)
 
   let clipOffs = if dp.lineWidth == lwNormal: 1 else: 0
+  let regionOffs = if dp.drawRegionBorders: 1 else: 0
 
   var
-    x = dp.startX-clipOffs
+    x = dp.startX-clipOffs - regionOffs
     y = dp.startY-clipOffs
-    w = dp.gridSize * dp.viewCols + 1 + clipOffs
-    h = dp.gridSize * dp.viewRows + 1 + clipOffs
+    w = dp.gridSize * dp.viewCols + 1 + clipOffs + regionOffs
+    h = dp.gridSize * dp.viewRows + 1 + clipOffs + regionOffs
 
   if ls.outlineOverscan:
     let
@@ -1236,20 +1252,24 @@ proc drawInvisibleBarrier(x, y: float, ctx) =
 
 # {{{ Draw wall types
 # {{{ drawSolidWallHoriz*()
-proc drawSolidWallHoriz*(x, y: float, ctx) =
+proc drawSolidWallHoriz*(x, y: float; ctx; regionBorder: bool = false) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
+  let sw = if regionBorder: dp.normalStrokeWidth + 1
+           else: dp.normalStrokeWidth
   let
-    sw = dp.normalStrokeWidth
     xs = snap(x, sw)
     xe = snap(x + dp.gridSize, sw)
     y = snap(y, sw)
 
   vg.lineCap(lcjRound)
   vg.beginPath()
-  vg.strokeColor(ls.drawColor)
+
+  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
+
+  vg.strokeColor(color)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -1257,7 +1277,7 @@ proc drawSolidWallHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawIllusoryWallHoriz*()
-proc drawIllusoryWallHoriz*(x, y: float, ctx) =
+proc drawIllusoryWallHoriz*(x, y: float; ctx; regionBorder: bool = false) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1285,7 +1305,7 @@ proc drawIllusoryWallHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawInvisibleWallHoriz*()
-proc drawInvisibleWallHoriz*(x, y: float, ctx) =
+proc drawInvisibleWallHoriz*(x, y: float; ctx; regionBorder: bool = false) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1313,7 +1333,7 @@ proc drawInvisibleWallHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawDoorHoriz*()
-proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
+proc drawDoorHoriz*(x, y: float; ctx; regionBorder: bool = false, fill: bool = false) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1331,10 +1351,14 @@ proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = dp.normalStrokeWidth
+
+  var sw = if regionBorder: dp.normalStrokeWidth + 1
+           else: dp.normalStrokeWidth
+
+  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
+
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.drawColor)
-  vg.fillColor(ls.drawColor)
+  vg.strokeColor(color)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1343,10 +1367,20 @@ proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
   vg.lineTo(snap(x1+1, sw), snap(y, sw))
   vg.stroke()
 
+  # Wall end
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
   # Door
   sw = dp.thinStrokeWidth
   vg.strokeWidth(sw)
+  vg.strokeColor(ls.drawColor)
+  vg.fillColor(ls.drawColor)
+
   vg.beginPath()
+
   if fill:
     if dp.lineWidth == lwThin:
       vg.rect(x1+1, y1-o, x2-x1, y2-y1+2+o)
@@ -1357,22 +1391,14 @@ proc drawDoorHoriz*(x, y: float, ctx; fill: bool = false) =
     vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
     vg.stroke()
 
-  # Wall end
-  sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
-
 # }}}
 # {{{ drawLockedDoorHoriz*()
-proc drawLockedDoorHoriz*(x, y: float, ctx) =
-  drawDoorHoriz(x, y, ctx, fill=true)
+proc drawLockedDoorHoriz*(x, y: float; ctx; regionBorder: bool = false) =
+  drawDoorHoriz(x, y, ctx, regionBorder, fill=true)
 
 # }}}
 # {{{ drawSecretDoorHoriz*()
-proc drawSecretDoorHoriz*(x, y: float, ctx) =
+proc drawSecretDoorHoriz*(x, y: float; ctx; regionBorder: bool = false) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1385,9 +1411,12 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
     xe = xs + dp.gridSize
     x2 = xe - wallLen - dp.thinOffs
 
-  let sw = dp.normalStrokeWidth
+  let sw = if regionBorder: dp.normalStrokeWidth + 1
+           else: dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.drawColor)
+
+  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
+  vg.strokeColor(color)
 
   # Wall start
   vg.lineCap(lcjSquare)
@@ -1407,7 +1436,7 @@ proc drawSecretDoorHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawArchwayHoriz*()
-proc drawArchwayHoriz*(x, y: float; ctx; drawOpening: bool = true) =
+proc drawArchwayHoriz*(x, y: float; ctx; regionBorder: bool = false, drawOpening: bool = true) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1424,9 +1453,13 @@ proc drawArchwayHoriz*(x, y: float; ctx; drawOpening: bool = true) =
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  let sw = dp.normalStrokeWidth
+  var sw = if regionBorder: dp.normalStrokeWidth + 1
+           else: dp.normalStrokeWidth
+
+  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
+
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.drawColor)
+  vg.strokeColor(color)
 
   # Wall start
   vg.lineCap(lcjRound)
@@ -1435,7 +1468,18 @@ proc drawArchwayHoriz*(x, y: float; ctx; drawOpening: bool = true) =
   vg.lineTo(snap(x1, sw), snap(y, sw))
   vg.stroke()
 
+  # Wall end
+  vg.lineCap(lcjRound)
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
+
   # Door opening
+  sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ls.drawColor)
+
   if drawOpening:
     vg.lineCap(lcjSquare)
     vg.beginPath()
@@ -1445,16 +1489,9 @@ proc drawArchwayHoriz*(x, y: float; ctx; drawOpening: bool = true) =
     vg.lineTo(snap(x2, sw), snap(y2, sw))
     vg.stroke()
 
-  # Wall end
-  vg.lineCap(lcjRound)
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
-
 # }}}
 # {{{ drawOneWayDoorHoriz*()
-proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, ctx) =
+proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, regionBorder: bool, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1467,9 +1504,13 @@ proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, ctx) =
     xe = xs + dp.gridSize
     x2 = xe - wallLen - dp.thinOffs
 
-  let sw = dp.normalStrokeWidth
+  let sw = if regionBorder: dp.normalStrokeWidth + 1
+           else: dp.normalStrokeWidth
+
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.drawColor)
+
+  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
+  vg.strokeColor(color)
 
   # Wall start
   vg.lineCap(lcjSquare)
@@ -1478,9 +1519,15 @@ proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, ctx) =
   vg.lineTo(snap(x1, sw), snap(y, sw))
   vg.stroke()
 
+  # Wall end
+  vg.beginPath()
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
+  vg.stroke()
   var ox, oy: float
   var icon: string
 
+  # Arrow
   ox = 0.021
   if northEast:
     icon = IconThinArrowUp
@@ -1495,27 +1542,21 @@ proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, ctx) =
   drawIcon(x, y-dp.gridSize*0.5, ox, oy, icon,
            dp.gridSize, ls.drawColor, fontSizeFactor=0.46, ctx.vg)
 
-  # Wall end
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
 
+proc drawOneWayDoorHorizNE*(x, y: float; ctx; regionBorder: bool = false) =
+  drawOneWayDoorHoriz(x, y, northEast=true, regionBorder, ctx)
 
-proc drawOneWayDoorHorizNE*(x, y: float, ctx) =
-  drawOneWayDoorHoriz(x, y, northEast=true, ctx)
-
-proc drawOneWayDoorHorizSW*(x, y: float, ctx) =
-  drawOneWayDoorHoriz(x, y, northEast=false, ctx)
+proc drawOneWayDoorHorizSW*(x, y: float; ctx; regionBorder: bool = false) =
+  drawOneWayDoorHoriz(x, y, northEast=false, regionBorder, ctx)
 
 # }}}
 # {{{ drawLeverHoriz*()
-proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
+proc drawLeverHoriz*(x, y: float, regionBorder: bool, northEast: bool, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawSolidWallHoriz(x, y, ctx)
+  drawSolidWallHoriz(x, y, ctx, regionBorder)
 
   # Draw lever
   let
@@ -1538,15 +1579,15 @@ proc drawLeverHoriz*(x, y: float, northEast: bool, ctx) =
   vg.fill()
 
 
-proc drawLeverHorizNE*(x, y: float, ctx) =
-  drawLeverHoriz(x, y, northEast=true, ctx)
+proc drawLeverHorizNE*(x, y: float; ctx; regionBorder: bool = false) =
+  drawLeverHoriz(x, y, regionBorder, northEast=true, ctx)
 
-proc drawLeverHorizSW*(x, y: float, ctx) =
-  drawLeverHoriz(x, y, northEast=false, ctx)
+proc drawLeverHorizSW*(x, y: float; ctx; regionBorder: bool = false) =
+  drawLeverHoriz(x, y, regionBorder, northEast=false, ctx)
 
 # }}}
 # {{{ drawNicheHoriz*()
-proc drawNicheHoriz*(x, y: float, northEast: bool, floorColor: Natural, ctx) =
+proc drawNicheHoriz*(x, y: float, regionBorder: bool, northEast: bool, floorColor: Natural, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1562,10 +1603,15 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, floorColor: Natural, ctx) =
     x2 = xe - wallLen - dp.thinOffs
     yn = if northEast: y-nicheDepth else: y+nicheDepth
 
-  let sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.strokeColor(ls.drawColor)
+  var sw = if regionBorder: dp.normalStrokeWidth + 1
+           else: dp.normalStrokeWidth
 
+  vg.strokeWidth(sw)
+
+  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
+  vg.strokeColor(color)
+
+  # Background
   vg.beginPath()
   vg.rect(x1, y, x2-x1, yn-y)
 
@@ -1578,31 +1624,46 @@ proc drawNicheHoriz*(x, y: float, northEast: bool, floorColor: Natural, ctx) =
   vg.fillColor(ls.floorColor[floorColor])
   vg.fill()
 
-  vg.lineCap(lcjRound)
+  # Wall
+  vg.lineCap(lcjSquare)
+
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
   vg.lineTo(snap(x1, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(yn, sw))
-  vg.lineTo(snap(x2, sw), snap(yn, sw))
-  vg.lineTo(snap(x2, sw), snap(y, sw))
+
+  vg.moveTo(snap(x2, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
+  # Niche
+  sw = dp.normalStrokeWidth
 
-proc drawNicheHorizNE*(x, y: float, floorColor: Natural, ctx) =
-  drawNicheHoriz(x, y, northEast=true, floorColor, ctx)
+  vg.strokeWidth(sw)
+  vg.strokeColor(ls.drawColor)
+  vg.lineCap(lcjRound)
 
-proc drawNicheHorizSW*(x, y: float, floorColor: Natural, ctx) =
-  drawNicheHoriz(x, y, northEast=false, floorColor, ctx)
+  vg.beginPath()
+  vg.moveTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x1, sw), snap(yn, sw))
+  vg.lineTo(snap(x2, sw), snap(yn, sw))
+  vg.lineTo(snap(x2, sw), snap(y, sw))
+  vg.stroke()
+
+
+proc drawNicheHorizNE*(x, y: float, floorColor: Natural; ctx; regionBorder: bool = false) =
+  drawNicheHoriz(x, y, regionBorder, northEast=true, floorColor, ctx)
+
+proc drawNicheHorizSW*(x, y: float, floorColor: Natural; ctx; regionBorder: bool = false) =
+  drawNicheHoriz(x, y, regionBorder, northEast=false, floorColor, ctx)
 
 # }}}
 # {{{ drawStatueHoriz*()
-proc drawStatueHoriz*(x, y: float, northEast: bool, ctx) =
+proc drawStatueHoriz*(x, y: float, regionBorder: bool, northEast: bool, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawSolidWallHoriz(x, y, ctx)
+  drawSolidWallHoriz(x, y, ctx, regionBorder)
 
   # Statue
   let sw = dp.normalStrokeWidth
@@ -1624,15 +1685,15 @@ proc drawStatueHoriz*(x, y: float, northEast: bool, ctx) =
   vg.fill()
 
 
-proc drawStatueHorizNE*(x, y: float, ctx) =
-  drawStatueHoriz(x, y, northEast=true, ctx)
+proc drawStatueHorizNE*(x, y: float; ctx; regionBorder: bool = false) =
+  drawStatueHoriz(x, y, regionBorder, northEast=true, ctx)
 
-proc drawStatueHorizSW*(x, y: float, ctx) =
-  drawStatueHoriz(x, y, northEast=false, ctx)
+proc drawStatueHorizSW*(x, y: float; ctx; regionBorder: bool = false) =
+  drawStatueHoriz(x, y, regionBorder, northEast=false, ctx)
 
 # }}}
 # {{{ drawKeyholeHoriz*()
-proc drawKeyholeHoriz*(x, y: float, ctx) =
+proc drawKeyholeHoriz*(x, y: float; ctx; regionBorder: bool = false) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1699,38 +1760,97 @@ proc drawKeyholeHoriz*(x, y: float, ctx) =
 
 # }}}
 # {{{ drawWritingHoriz*()
-proc drawWritingHoriz*(x, y: float, northEast: bool, ctx) =
+proc drawWritingHoriz*(x, y: float, regionBorder: bool, northEast: bool, ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawSolidWallHoriz(x, y, ctx)
+  drawSolidWallHoriz(x, y, ctx, regionBorder)
 
   let oy = if northEast: -0.33 else: -0.72
 
   drawIcon(x, y, 0, oy, IconWriting,
                         dp.gridSize, ls.drawColor, fontSizeFactor=0.7, vg)
 
-proc drawWritingHorizNE*(x, y: float, ctx) =
-  drawWritingHoriz(x, y, northEast=true, ctx)
+proc drawWritingHorizNE*(x, y: float; ctx; regionBorder: bool = false) =
+  drawWritingHoriz(x, y, regionBorder, northEast=true, ctx)
 
-proc drawWritingHorizSW*(x, y: float, ctx) =
-  drawWritingHoriz(x, y, northEast=false, ctx)
-
-# }}}
-# }}}
-
-# {{{ setVertTransform()
-proc setVertTransform(x, y: float, ctx) =
-  let dp = ctx.dp
-  let vg = ctx.vg
-
-  # We need to use some fudge factor here because of the grid snapping...
-  vg.translate(x + dp.vertTransformXOffs, y)
-  vg.rotate(degToRad(90.0))
+proc drawWritingHorizSW*(x, y: float; ctx; regionBorder: bool = false) =
+  drawWritingHoriz(x, y, regionBorder, northEast=false, ctx)
 
 # }}}
 
+# {{{ drawEmptyRegionBorderWallHoriz*()
+proc drawEmptyRegionBorderWallHoriz*(x, y: float; ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    sw = dp.normalStrokeWidth + 1
+    xs = snap(x, sw)
+    xe = snap(x + dp.gridSize, sw)
+    y = snap(y, sw)
+
+  vg.lineCap(lcjSquare)
+  vg.beginPath()
+
+  vg.strokeColor(ls.regionBorderEmptyColor)
+  vg.strokeWidth(sw)
+  vg.moveTo(xs, y)
+  vg.lineTo(xe, y)
+  vg.stroke()
+
+# }}}
+# {{{ drawEmptyRegionBorderWallVert*()
+proc drawEmptyRegionBorderWallVert*(x, y: float; ctx) =
+  alias(vg, ctx.vg)
+
+  setVertTransform(x, y, ctx)
+  drawEmptyRegionBorderWallHoriz(0, 0, ctx)
+  vg.resetTransform()
+
+# }}}
+# {{{ drawRegionBorderEdgeHoriz*()
+proc drawRegionBorderEdgeHoriz*(x, y: float, color: Color, west: bool; ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  const EdgeLen = 10
+
+  let sw = dp.normalStrokeWidth + 1
+  let y = snap(y, sw)
+
+  var xs, xe: float
+  if west:
+    xs = snap(x, sw)
+    xe = xs + EdgeLen
+  else:
+    xs = snap(x + dp.gridSize, sw)
+    xe = xs - EdgeLen
+
+  vg.lineCap(lcjSquare)
+  vg.beginPath()
+
+  vg.strokeColor(color)
+  vg.strokeWidth(sw)
+  vg.moveTo(xs, y)
+  vg.lineTo(xe, y)
+  vg.stroke()
+
+# }}}
+# {{{ drawRegionBorderEdgeVert*()
+proc drawRegionBorderEdgeVert*(x, y: float, color: Color, north: bool; ctx) =
+  alias(vg, ctx.vg)
+
+  setVertTransform(x, y, ctx)
+  drawRegionBorderEdgeHoriz(0, 0, color, north, ctx)
+  vg.resetTransform()
+
+# }}}
+# }}}
+#
 # {{{ drawBackgroundGrid()
 proc drawBackgroundGrid(viewBuf: Level, ctx) =
   alias(ls, ctx.ls)
@@ -1776,7 +1896,7 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level, ctx) =
 
 # }}}
 # {{{ drawCellFloor()
-proc drawCellFloor(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
+proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int, ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1913,26 +2033,27 @@ proc drawNotes(viewBuf: Level, ctx) =
 
 # {{{ drawWall()
 proc drawWall(x, y: float, wall: Wall, ot: Orientation,
-              viewBuf: Level, bufRow, bufCol: Natural, ctx) =
+              viewBuf: Level, bufRow, bufCol: Natural,
+              regionBorder: bool, ctx) =
 
   let vg = ctx.vg
 
   template drawOriented(drawProc: untyped) =
     case ot
     of Horiz:
-      drawProc(x, y, ctx)
+      drawProc(x, y, ctx, regionBorder)
     of Vert:
       setVertTransform(x, y, ctx)
-      drawProc(0, 0, ctx)
+      drawProc(0, 0, ctx, regionBorder)
       vg.resetTransform()
 
   template drawOrientedWithFloorColor(drawProc: untyped, floorColor: Natural) =
     case ot
     of Horiz:
-      drawProc(x, y, floorColor, ctx)
+      drawProc(x, y, floorColor, ctx, regionBorder)
     of Vert:
       setVertTransform(x, y, ctx)
-      drawProc(0, 0, floorColor, ctx)
+      drawProc(0, 0, floorColor, ctx, regionBorder)
       vg.resetTransform()
 
   case wall
@@ -1967,53 +2088,187 @@ proc drawWall(x, y: float, wall: Wall, ot: Orientation,
     drawOrientedWithFloorColor(drawNicheHorizSW, floorColor)
 
 # }}}
-# {{{ drawCellWalls()
-proc drawCellWalls(viewBuf: Level, viewRow, viewCol: Natural, ctx) =
+# {{{ drawCellWallsNorth()
+proc drawCellWallsNorth(viewBuf: Level, viewRow: Natural,
+                        regionBorder: bool; ctx) =
   alias(dp, ctx.dp)
 
   let bufRow = viewRow + ViewBufBorder
-  let bufCol = viewCol + ViewBufBorder
 
-  drawWall(
-    cellX(viewCol, dp),
-    cellY(viewRow, dp),
-    viewBuf.getWall(bufRow, bufCol, dirN), Horiz,
-    viewBuf, bufRow, bufCol, ctx
-  )
+  for viewCol in 0..<dp.viewCols:
+    let bufCol = viewCol + ViewBufBorder
 
-  drawWall(
-    cellX(viewCol, dp),
-    cellY(viewRow, dp),
-    viewBuf.getWall(bufRow, bufCol, dirW), Vert,
-    viewBuf, bufRow, bufCol, ctx
-  )
-
-  let viewEndRow = dp.viewRows-1
-  if viewRow == viewEndRow:
     drawWall(
       cellX(viewCol, dp),
-      cellY(viewRow+1, dp),
-      viewBuf.getWall(bufRow, bufCol, dirS), Horiz,
-      viewBuf, bufRow+1, bufCol, ctx
+      cellY(viewRow, dp),
+      viewBuf.getWall(bufRow, bufCol, dirN), Horiz,
+      viewBuf, bufRow, bufCol, regionBorder,
+      ctx
     )
 
-  let viewEndCol = dp.viewCols-1
-  if viewCol == viewEndCol:
+# }}}
+# {{{ drawCellWallsWest()
+proc drawCellWallsWest(viewBuf: Level, viewCol: Natural,
+                       regionBorder: bool; ctx) =
+  alias(dp, ctx.dp)
+
+  let bufCol = viewCol + ViewBufBorder
+
+  for viewRow in 0..<dp.viewRows:
+    let bufRow = viewRow + ViewBufBorder
+
     drawWall(
-      cellX(viewCol+1, dp),
+      cellX(viewCol, dp),
       cellY(viewRow, dp),
-      viewBuf.getWall(bufRow, bufCol, dirE), Vert,
-      viewBuf, bufRow, bufCol+1, ctx
+      viewBuf.getWall(bufRow, bufCol, dirW), Vert,
+      viewBuf, bufRow, bufCol, regionBorder,
+      ctx
     )
+
+# }}}
+# {{{ drawEmptyRegionBorderNorth()
+proc drawEmptyRegionBorderNorth(viewBuf: Level, viewRow: Natural; ctx) =
+  alias(dp, ctx.dp)
+
+  let bufRow = viewRow + ViewBufBorder
+
+  for viewCol in 0..<dp.viewCols:
+    let bufCol = viewCol + ViewBufBorder
+
+    if viewBuf.getWall(bufRow, bufCol, dirN) == wNone:
+      drawEmptyRegionBorderWallHoriz(
+        cellX(viewCol, dp),
+        cellY(viewRow, dp),
+        ctx
+      )
+
+# }}}
+# {{{ drawEmptyRegionBorderWest()
+proc drawEmptyRegionBorderWest(viewBuf: Level, viewCol: Natural; ctx) =
+  alias(dp, ctx.dp)
+
+  let bufCol = viewCol + ViewBufBorder
+
+  for viewRow in 0..<dp.viewRows:
+    let bufRow = viewRow + ViewBufBorder
+
+    if viewBuf.getWall(bufRow, bufCol, dirW) == wNone:
+      drawEmptyRegionBorderWallVert(
+        cellX(viewCol, dp),
+        cellY(viewRow, dp),
+        ctx
+      )
 
 # }}}
 # {{{ drawWalls()
 proc drawWalls(viewBuf: Level, ctx) =
   alias(dp, ctx.dp)
 
-  for r in 0..<dp.viewRows:
-    for c in 0..<dp.viewCols:
-      drawCellWalls(viewBuf, r,c, ctx)
+  for viewRow in 0..dp.viewRows:
+    let row = dp.viewStartRow + viewRow
+    let regionBorder = dp.drawRegionBorders and row mod dp.regionRows == 0
+    if not regionBorder:
+      drawCellWallsNorth(viewBuf, viewRow, regionBorder=false, ctx)
+
+  for viewCol in 0..dp.viewCols:
+    let col = dp.viewStartCol + viewCol
+    let regionBorder = dp.drawRegionBorders and col mod dp.regionCols == 0
+    if not regionBorder:
+      drawCellWallsWest(viewBuf, viewCol, regionBorder=false, ctx)
+
+# }}}
+
+# {{{ drawRegionBorderRows()
+template drawRegionBorderRows(l: Level; viewBuf: Level; ctx;
+                              viewRow, body: untyped) =
+  alias(dp, ctx.dp)
+
+  let rr = dp.regionRows
+  var startViewRow = (dp.viewStartRow div rr) * rr - dp.viewStartRow
+  if startViewRow < 0:
+    startViewRow += rr
+
+  for viewRow in countup(startViewRow, dp.viewRows, step=rr):
+    let row = dp.viewStartRow + viewRow
+    if row > 0 and row < l.rows:
+      body
+
+# }}}
+# {{{ drawRegionBorderCols()
+template drawRegionBorderCols(l: Level; viewBuf: Level; ctx;
+                              viewCol, body: untyped) =
+  alias(dp, ctx.dp)
+
+  let rc = dp.regionCols
+  var startViewCol = (dp.viewStartCol div rc) * rc - dp.viewStartCol
+  if startViewCol < 0:
+    startViewCol += rc
+
+  for viewCol in countup(startViewCol, dp.viewCols, step=rc):
+    let col = dp.viewStartCol + viewCol
+    if col > 0 and col < l.cols:
+      body
+
+# }}}
+# {{{ drawRegionBorders()
+proc drawRegionBorders(l: Level, viewBuf: Level, ctx) =
+  alias(dp, ctx.dp)
+
+  drawRegionBorderRows(l, viewBuf, ctx, viewRow):
+    drawCellWallsNorth(viewBuf, viewRow, regionBorder=true, ctx)
+    drawEmptyRegionBorderNorth(viewBuf, viewRow, ctx)
+
+  drawRegionBorderCols(l, viewBuf, ctx, viewCol):
+    drawCellWallsWest(viewBuf, viewCol, regionBorder=true, ctx)
+    drawEmptyRegionBorderWest(viewBuf, viewCol, ctx)
+
+# }}}
+# {{{ drawRegionBorderEdges()
+proc drawRegionBorderEdges(l: Level, viewBuf: Level, ctx) =
+  alias(dp, ctx.dp)
+  alias(ls, ctx.ls)
+
+  drawRegionBorderRows(l, viewBuf, ctx, viewRow):
+    let y = cellY(viewRow, dp)
+    let bufRow = viewRow + ViewBufBorder
+    let firstBufCol = ViewBufBorder
+    let lastBufCol = ViewBufBorder + dp.viewCols-1
+
+    var color = if viewBuf.getWall(bufRow, firstBufCol, dirN) == wNone:
+      ls.regionBorderEmptyColor
+    else:
+      ls.regionBorderColor
+
+    drawRegionBorderEdgeHoriz(cellX(-1, dp), y, color, west=false, ctx)
+
+    color = if viewBuf.getWall(viewRow, lastBufCol, dirN) == wNone:
+      ls.regionBorderEmptyColor
+    else:
+      ls.regionBorderColor
+
+    drawRegionBorderEdgeHoriz(cellX(dp.viewCols, dp), y, color, west=true, ctx)
+
+
+  drawRegionBorderCols(l, viewBuf, ctx, viewCol):
+    let x = cellX(viewCol, dp)
+    let bufCol = viewCol + ViewBufBorder
+    let firstBufRow = ViewBufBorder
+    let lastBufRow = ViewBufBorder + dp.viewRows-1
+
+    var color = if viewBuf.getWall(firstBufRow, bufCol, dirW) == wNone:
+      ls.regionBorderEmptyColor
+    else:
+      ls.regionBorderColor
+
+    drawRegionBorderEdgeVert(x, cellY(-1, dp), color, north=false, ctx)
+
+    color = if viewBuf.getWall(lastBufRow, bufCol, dirW) == wNone:
+      ls.regionBorderEmptyColor
+    else:
+      ls.regionBorderColor
+
+    drawRegionBorderEdgeVert(x, cellY(dp.viewRows, dp), color, north=true,
+                             ctx)
 
 # }}}
 
@@ -2149,9 +2404,6 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
 
   vg.save()
 
-  if dp.drawCellCoords:
-    drawCellCoords(l, ctx)
-
   setLevelClippingRect(l, ctx)
 
   if ls.bgHatchEnabled:
@@ -2187,7 +2439,6 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
   if not drawSelectionBuffer:
     drawLinkMarkers(map, level, ctx)
 
-  # TODO finish shadow implementation (draw corners)
   if ls.innerShadowEnabled:
     drawInnerShadows(viewBuf, ctx)
 
@@ -2195,6 +2446,9 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
     drawOuterShadows(viewBuf, ctx)
 
   drawWalls(viewBuf, ctx)
+
+  if dp.drawRegionBorders:
+    drawRegionBorders(l, viewBuf, ctx)
 
   if dp.selection.isSome:
     drawSelection(ctx)
@@ -2205,7 +2459,15 @@ proc drawLevel*(map: Map, level: Natural, ctx) =
   if dp.drawCursorGuides:
     drawCursorGuides(ctx)
 
+  setLevelClippingRect(l, ctx)
+
   vg.restore()
+
+  if dp.drawCellCoords:
+    drawCellCoords(l, ctx)
+
+  if dp.drawRegionBorders:
+    drawRegionBorderEdges(l, viewBuf, ctx)
 
 # }}}
 

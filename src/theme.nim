@@ -213,6 +213,9 @@ DefaultLevelStyle.noteTooltipTextColor = gray(0.95)
 
 DefaultLevelStyle.linkMarkerColor      = gray(0.85)
 
+DefaultLevelStyle.regionBorderColor      = gray(0.25)
+DefaultLevelStyle.regionBorderEmptyColor = gray(0.25)
+
 # }}}
 # {{{ NotesPaneStyle
 type
@@ -425,6 +428,9 @@ proc parseTheme(c: Config): ThemeStyle =
     c.getColor(S, "noteTooltipTextColor",     s.noteTooltipTextColor)
 
     c.getColor(S, "linkMarkerColor",          s.linkMarkerColor)
+
+    c.getColor(S, "regionBorderColor",        s.regionBorderColor)
+    c.getColor(S, "regionBorderEmptyColor",   s.regionBorderEmptyColor)
 
   block:
     alias(s, result.notesPane)
