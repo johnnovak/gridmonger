@@ -4,6 +4,7 @@ import bitable
 import common
 import rect
 import selection
+import utils
 
 export bitable
 

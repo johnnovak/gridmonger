@@ -12,10 +12,44 @@ import common
 import icons
 import level
 import map
+import utils
 
 
 # TODO use app version instead?
 const CurrentMapVersion = 1
+
+const
+  MapNameMinLen* = 1
+  MapNameMaxLen* = 100
+
+  NumLevelsMax* = 999
+  LevelLocationNameMinLen* = 1
+  LevelLocationNameMaxLen* = 100
+  LevelNameMinLen* = 0
+  LevelNameMaxLen* = 100
+  LevelElevationMin* = -200
+  LevelElevationMax* = 200
+  LevelNumRowsMin* = 1
+  LevelNumRowsMax* = 6666
+  LevelNumColumnsMin* = 1
+  LevelNumColumnsMax* = 6666
+
+  CellFloorColorMin* = 0
+  CellFloorColorMax* = 8
+
+  NumNotesMax* = 10_000
+  NoteTextMaxLen* = 400
+  NoteCustomIdMinLen* = 1
+  NoteCustomIdMaxLen* = 2
+  NoteColorMax* = 3
+
+  NumLinksMax* = 10_000
+
+  ThemeNameMin* = 1
+  ThemeNameMax* = 255
+
+  ZoomLevelMin* = 1
+  ZoomLevelMax* = 20
 
 const
   FourCC_GRDM          = "GRMM"

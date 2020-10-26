@@ -1,8 +1,8 @@
 import lenientops
 
-import icons
 import glad/gl
 import glfw
+import icons
 import koi
 import nanovg
 

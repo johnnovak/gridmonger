@@ -1,9 +1,9 @@
+import tables
+
 import nanovg
 
 import bitable
-import hashes
 import rect
-import tables
 
 
 const
@@ -228,91 +228,6 @@ const
                       {fTeleportDestination}
 
 
-# {{{ linkFloorToString*()
-proc linkFloorToString*(f: Floor): string =
-  if   f in (LinkPitSources + LinkPitDestinations): return "pit"
-  elif f in LinkStairs: return "stairs"
-  elif f in LinkDoors: return "door"
-  elif f in {fTeleportSource, fTeleportDestination}: return "teleport"
-
-# }}}
-# {{{ hash*(ml: Location)
-proc hash*(ml: Location): Hash =
-  var h: Hash = 0
-  h = h !& hash(ml.level)
-  h = h !& hash(ml.row)
-  h = h !& hash(ml.col)
-  result = !$h
-
-# }}}
-# {{{ `<`*(a, b: Location)
-proc `<`*(a, b: Location): bool =
-  if   a.level < b.level: return true
-  elif a.level > b.level: return false
-
-  elif a.row < b.row: return true
-  elif a.row > b.row: return false
-
-  elif a.col < b.col: return true
-  else: return false
-
-# }}}
-# {{{ toLetterCoord*)
-proc toLetterCoord*(x: Natural): string =
-
-  proc toLetter(i: Natural): char = chr(ord('A') + i)
-
-  if x < 26:
-    result = $x.toLetter
-  elif x < 26*26:
-    result = (x div 26 - 1).toLetter & (x mod 26).toLetter
-  elif x < 26*26*26:
-    let d1 = x mod 26
-    var x = x div 26
-    let d2 = x mod 26
-    let d3 = x div 26 - 1
-    result = d3.toLetter & d2.toLetter & d1.toLetter
-  else:
-    result = ""
-
-# }}}
-# {{{ formatColumnCoord*()
-proc formatColumnCoord*(col: Natural, co: CoordinateOptions,
-                        numCols: Natural): string =
-  var x = co.columnStart + col
-
-  case co.columnStyle
-  of csNumber: $x
-  of csLetter: toLetterCoord(x)
-
-# }}}
-# {{{ formatRowCoord*()
-proc formatRowCoord*(row: Natural, co: CoordinateOptions,
-                     numRows: Natural): string =
-  var x = co.rowStart + (
-    case co.origin
-      of coNorthEast: row
-      of coSouthEast: numRows-1 - row
-  )
-
-  case co.rowStyle
-  of csNumber: $x
-  of csLetter: toLetterCoord(x)
-
-# }}}
-# {{{ step*()
-proc step*(row, col: int, dir: Direction): (int, int) =
-  if   dir == North:     result = (row-1, col)
-  elif dir == NorthEast: result = (row-1, col+1)
-  elif dir == East:      result = (row,   col+1)
-  elif dir == SouthEast: result = (row+1, col+1)
-  elif dir == South:     result = (row+1, col)
-  elif dir == SouthWest: result = (row+1, col-1)
-  elif dir == West:      result = (row,   col-1)
-  elif dir == NorthWest: result = (row-1, col-1)
-
-# }}}
-
 type
   # (0,0) is the top-left cell of the selection
   Selection* = ref object
@@ -336,39 +251,5 @@ const
   CopyBufferLevelIndex* = 1_000_000
   MoveBufferLevelIndex* = 1_000_001
 
-
-# Field constraints
-const
-  MapNameMinLen* = 1
-  MapNameMaxLen* = 100
-
-  NumLevelsMax* = 999
-  LevelLocationNameMinLen* = 1
-  LevelLocationNameMaxLen* = 100
-  LevelNameMinLen* = 0
-  LevelNameMaxLen* = 100
-  LevelElevationMin* = -200
-  LevelElevationMax* = 200
-  LevelNumRowsMin* = 1
-  LevelNumRowsMax* = 6666
-  LevelNumColumnsMin* = 1
-  LevelNumColumnsMax* = 6666
-
-  CellFloorColorMin* = 0
-  CellFloorColorMax* = 8
-
-  NumNotesMax* = 10_000
-  NoteTextMaxLen* = 400
-  NoteCustomIdMinLen* = 1
-  NoteCustomIdMaxLen* = 2
-  NoteColorMax* = 3
-
-  NumLinksMax* = 10_000
-
-  ThemeNameMin* = 1
-  ThemeNameMax* = 255
-
-  ZoomLevelMin* = 1
-  ZoomLevelMax* = 20
 
 # vim: et:ts=2:sw=2:fdm=marker
