@@ -8,8 +8,9 @@ import selection
 export bitable
 
 
-using l: Links
-using vl: var Links
+using
+  l: Links
+  vl: var Links
 
 proc initLinks*(): Links =
   result = initBiTable[Location, Location]()

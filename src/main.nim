@@ -456,20 +456,20 @@ proc clearStatusMessage(a) =
 
 # }}}
 # {{{ setStatusMessage()
-proc setStatusMessage(icon, msg: string, commands: seq[string], a) =
+proc setStatusMessage(icon, msg: string, commands: seq[string]; a) =
   a.ui.statusIcon = icon
   a.ui.statusMessage = msg
   a.ui.statusCommands = commands
 
-proc setStatusMessage(icon, msg: string, a) =
+proc setStatusMessage(icon, msg: string; a) =
   setStatusMessage(icon, msg, commands = @[], a)
 
-proc setStatusMessage(msg: string, a) =
+proc setStatusMessage(msg: string; a) =
   setStatusMessage(NoIcon, msg, commands = @[], a)
 
 # }}}
 # {{{ drawStatusBar()
-proc drawStatusBar(y: float, winWidth: float, a) =
+proc drawStatusBar(y: float, winWidth: float; a) =
   alias(vg, a.vg)
   alias(s, a.theme.style.statusBar)
 
@@ -544,7 +544,7 @@ proc drawStatusBar(y: float, winWidth: float, a) =
 # {{{ loadMap()
 proc resetCursorAndViewStart(a)
 
-proc loadMap(filename: string, a) =
+proc loadMap(filename: string; a) =
   try:
     a.doc.map = readMap(filename)
     a.doc.filename = filename
@@ -569,7 +569,7 @@ proc openMap(a) =
       loadMap(filename, a)
 # }}}
 # {{{ saveMapAction()
-proc saveMap(filename: string, a) =
+proc saveMap(filename: string; a) =
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
@@ -613,7 +613,7 @@ proc searchThemes(a) =
 
 # }}}
 # {{{ findThemeIndex()
-proc findThemeIndex(name: string, a): int =
+proc findThemeIndex(name: string; a): int =
   for i, n in a.theme.themeNames:
     if n == name:
       return i
@@ -621,7 +621,7 @@ proc findThemeIndex(name: string, a): int =
 
 # }}}
 # {{{ loadTheme()
-proc loadTheme(index: Natural, a) =
+proc loadTheme(index: Natural; a) =
   let name = a.theme.themeNames[index]
   let path = joinPath(ThemesDir, addFileExt(name, ThemeExt))
   a.theme.style = loadTheme(path)
@@ -781,7 +781,7 @@ proc updateWidgetStyles(a) =
 
 # }}}
 # {{{ loadImage()
-proc loadImage(fname: string, a): Paint =
+proc loadImage(fname: string; a): Paint =
   alias(vg, a.vg)
 
   let path = joinPath(DataDir, fname)
@@ -796,7 +796,7 @@ proc loadImage(fname: string, a): Paint =
 
 # }}}
 # {{{ switchTheme()
-proc switchTheme(themeIndex: Natural, a) =
+proc switchTheme(themeIndex: Natural; a) =
   loadTheme(themeIndex, a)
   updateWidgetStyles(a)
 
@@ -923,7 +923,7 @@ proc updateViewStartAndCursorPosition(a) =
 
 # }}}
 # {{{ moveLevel()
-proc moveLevel(dir: CardinalDir, steps: Natural, a) =
+proc moveLevel(dir: CardinalDir, steps: Natural; a) =
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
@@ -948,7 +948,7 @@ proc moveLevel(dir: CardinalDir, steps: Natural, a) =
 
 # }}}
 # {{{ moveCursor()
-proc moveCursor(dir: CardinalDir, steps: Natural, a) =
+proc moveCursor(dir: CardinalDir, steps: Natural; a) =
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
@@ -986,7 +986,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural, a) =
 
 # }}}
 # {{{ moveSelStart()
-proc moveSelStart(dir: CardinalDir, a) =
+proc moveSelStart(dir: CardinalDir; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let cols = a.ui.nudgeBuf.get.level.cols
@@ -1008,7 +1008,7 @@ proc moveSelStart(dir: CardinalDir, a) =
 
 # }}}
 # {{{ moveCursorTo()
-proc moveCursorTo(loc: Location, a) =
+proc moveCursorTo(loc: Location; a) =
   alias(cur, a.ui.cursor)
 
   cur.level = loc.level
@@ -1304,7 +1304,7 @@ proc openPreferencesDialog(a) =
   dlg.isOpen = true
 
 
-proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
+proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
     DlgWidth = 370.0
     DlgHeight = 345.0
@@ -1362,12 +1362,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
 
   y += 20
 
-  proc okAction(dlg: var PreferencesDialogParams, a) =
+  proc okAction(dlg: var PreferencesDialogParams; a) =
     saveConfig(a)
     koi.closeDialog()
     dlg.isOpen = false
 
-  proc cancelAction(dlg: var PreferencesDialogParams, a) =
+  proc cancelAction(dlg: var PreferencesDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1396,7 +1396,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams, a) =
 
 # }}}
 # {{{ Save/discard changes dialog
-proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
+proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
   const
     DlgWidth = 350.0
     DlgHeight = 160.0
@@ -1414,18 +1414,18 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams, a) =
     x, y, DlgWidth, DlgItemHeight, "Do you want to save your changes first?"
   )
 
-  proc saveAction(dlg: var SaveDiscardDialogParams, a) =
+  proc saveAction(dlg: var SaveDiscardDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
     saveMapAction(a)
     dlg.action(a)
 
-  proc discardAction(dlg: var SaveDiscardDialogParams, a) =
+  proc discardAction(dlg: var SaveDiscardDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
     dlg.action(a)
 
-  proc cancelAction(dlg: var SaveDiscardDialogParams, a) =
+  proc cancelAction(dlg: var SaveDiscardDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1469,7 +1469,7 @@ proc openNewMapDialog(a) =
   dlg.isOpen = true
 
 
-proc newMapDialog(dlg: var NewMapDialogParams, a) =
+proc newMapDialog(dlg: var NewMapDialogParams; a) =
   const
     DlgWidth = 410.0
     DlgHeight = 350.0
@@ -1510,7 +1510,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
               style = a.ui.warningLabelStyle)
 
 
-  proc okAction(dlg: var NewMapDialogParams, a) =
+  proc okAction(dlg: var NewMapDialogParams; a) =
     if validationError != "": return
 
     a.doc.filename = ""
@@ -1531,7 +1531,7 @@ proc newMapDialog(dlg: var NewMapDialogParams, a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-  proc cancelAction(dlg: var NewMapDialogParams, a) =
+  proc cancelAction(dlg: var NewMapDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1574,7 +1574,7 @@ proc openMapPropsDialog(a) =
   dlg.isOpen = true
 
 
-proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
+proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   const
     DlgWidth = 410.0
     DlgHeight = 350.0
@@ -1614,7 +1614,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
               style = a.ui.warningLabelStyle)
 
 
-  proc okAction(dlg: var EditMapPropsDialogParams, a) =
+  proc okAction(dlg: var EditMapPropsDialogParams; a) =
     if validationError != "": return
 
     a.doc.map.name = dlg.name
@@ -1632,7 +1632,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams, a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var EditMapPropsDialogParams, a) =
+  proc cancelAction(dlg: var EditMapPropsDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1700,7 +1700,7 @@ proc openNewLevelDialog(a) =
   dlg.activeTab = 0
 
 
-proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
+proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   alias(map, a.doc.map)
   alias(cur, a.ui.cursor)
 
@@ -1774,7 +1774,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
               style = a.ui.warningLabelStyle)
 
 
-  proc okAction(dlg: var NewLevelDialogParams, a) =
+  proc okAction(dlg: var NewLevelDialogParams; a) =
     if validationError != "": return
 
     let
@@ -1803,7 +1803,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams, a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var NewLevelDialogParams, a) =
+  proc cancelAction(dlg: var NewLevelDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1855,7 +1855,7 @@ proc openEditLevelPropsDialog(a) =
   dlg.isOpen = true
 
 
-proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
+proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   alias(map, a.doc.map)
 
   const
@@ -1909,7 +1909,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
               style = a.ui.warningLabelStyle)
 
 
-  proc okAction(dlg: var EditLevelPropsParams, a) =
+  proc okAction(dlg: var EditLevelPropsParams; a) =
     if validationError != "": return
 
     let elevation = parseInt(dlg.elevation)
@@ -1933,7 +1933,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams, a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var EditLevelPropsParams, a) =
+  proc cancelAction(dlg: var EditLevelPropsParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -1974,7 +1974,7 @@ proc openResizeLevelDialog(a) =
   dlg.isOpen = true
 
 
-proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
+proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   const
     DlgWidth = 270.0
@@ -2037,7 +2037,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
   dlg.activateFirstTextField = false
 
 
-  proc okAction(dlg: var ResizeLevelDialogParams, a) =
+  proc okAction(dlg: var ResizeLevelDialogParams; a) =
     # TODO number error checking
     let newRows = parseInt(dlg.rows)
     let newCols = parseInt(dlg.cols)
@@ -2061,7 +2061,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams, a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var ResizeLevelDialogParams, a) =
+  proc cancelAction(dlg: var ResizeLevelDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -2097,7 +2097,7 @@ proc openDeleteLevelDialog(a) =
   dlg.isOpen = true
 
 
-proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
+proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   alias(map, a.doc.map)
   alias(cur, a.ui.cursor)
   alias(um, a.doc.undoManager)
@@ -2114,7 +2114,7 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
 
   koi.label(x, y, DlgWidth, DlgItemHeight, "Do you want to delete the current level?")
 
-  proc deleteAction(dlg: var DeleteLevelDialogParams, a) =
+  proc deleteAction(dlg: var DeleteLevelDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -2122,7 +2122,7 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams, a) =
     setStatusMessage(IconTrash, "Deleted level", a)
 
 
-  proc cancelAction(dlg: var DeleteLevelDialogParams, a) =
+  proc cancelAction(dlg: var DeleteLevelDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -2223,7 +2223,7 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
     vg.fill()
 
 
-proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
+proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   alias(ls, a.doc.levelStyle)
 
   const
@@ -2334,7 +2334,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
-  proc okAction(dlg: var EditNoteDialogParams, a) =
+  proc okAction(dlg: var EditNoteDialogParams; a) =
     if validationErrors.len > 0: return
 
     var note = Note(
@@ -2354,7 +2354,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams, a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var EditNoteDialogParams, a) =
+  proc cancelAction(dlg: var EditNoteDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -2420,7 +2420,7 @@ proc openEditLabelDialog(a) =
   dlg.isOpen = true
 
 
-proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
+proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   const
     DlgWidth = 500.0
     DlgHeight = 370.0
@@ -2462,7 +2462,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
-  proc okAction(dlg: var EditLabelDialogParams, a) =
+  proc okAction(dlg: var EditLabelDialogParams; a) =
     if validationError != "": return
 
     var note = Note(kind: nkLabel, text: dlg.text)
@@ -2473,7 +2473,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams, a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var EditLabelDialogParams, a) =
+  proc cancelAction(dlg: var EditLabelDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -2611,7 +2611,7 @@ proc decZoomLevelAction(a) =
 
 # }}}
 # {{{ setFloorAction()
-proc setFloorAction(f: Floor, a) =
+proc setFloorAction(f: Floor; a) =
   alias(cur, a.ui.cursor)
 
   let ot = a.doc.map.guessFloorOrientation(cur)
@@ -2621,7 +2621,7 @@ proc setFloorAction(f: Floor, a) =
 
 # }}}
 # {{{ setOrCycleFloorAction()
-proc setOrCycleFloorAction(first, last: Floor, forward: bool, a) =
+proc setOrCycleFloorAction(first, last: Floor, forward: bool; a) =
   assert first <= last
 
   var floor = a.doc.map.getFloor(a.ui.cursor)
@@ -2862,32 +2862,32 @@ proc specialWallDrawProc(ls: LevelStyle,
 
     case SpecialWalls[buttonIdx]
     of wNone:              discard
-    of wWall:              drawSolidWallHoriz(cx, cy, ctx)
-    of wIllusoryWall:      drawIllusoryWallHoriz(cx+2, cy, ctx)
-    of wInvisibleWall:     drawInvisibleWallHoriz(cx-2, cy, ctx)
-    of wDoor:              drawDoorHoriz(cx, cy, ctx)
-    of wLockedDoor:        drawLockedDoorHoriz(cx, cy, ctx)
-    of wArchway:           drawArchwayHoriz(cx, cy, ctx)
+    of wWall:              drawSolidWallHoriz(cx, cy, ctx=ctx)
+    of wIllusoryWall:      drawIllusoryWallHoriz(cx+2, cy, ctx=ctx)
+    of wInvisibleWall:     drawInvisibleWallHoriz(cx-2, cy, ctx=ctx)
+    of wDoor:              drawDoorHoriz(cx, cy, ctx=ctx)
+    of wLockedDoor:        drawLockedDoorHoriz(cx, cy, ctx=ctx)
+    of wArchway:           drawArchwayHoriz(cx, cy, ctx=ctx)
 
     of wSecretDoor:
-      drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ctx)
+      drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ctx=ctx)
 
     of wOneWayDoorNE:
-      drawAtZoomLevel(8):  drawOneWayDoorHorizNE(cx-4, cy+1, ctx)
+      drawAtZoomLevel(8):  drawOneWayDoorHorizNE(cx-4, cy+1, ctx=ctx)
 
     of wLeverSW:
-      drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx)
+      drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx=ctx)
 
-    of wNicheSW:           drawNicheHorizSW(cx, cy, floorColor=0, ctx)
+    of wNicheSW:           drawNicheHorizSW(cx, cy, floorColor=0, ctx=ctx)
 
     of wStatueSW:
-      drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ctx)
+      drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ctx=ctx)
 
     of wKeyhole:
-      drawAtZoomLevel(6):  drawKeyholeHoriz(cx-2, cy, ctx)
+      drawAtZoomLevel(6):  drawKeyholeHoriz(cx-2, cy, ctx=ctx)
 
     of wWritingSW:
-      drawAtZoomLevel(12): drawWritingHorizSW(cx-6, cy+4, ctx)
+      drawAtZoomLevel(12): drawWritingHorizSW(cx-6, cy+4, ctx=ctx)
 
     else: discard
 
@@ -2897,7 +2897,7 @@ proc specialWallDrawProc(ls: LevelStyle,
 
 # }}}
 
-proc renderToolsPane(x, y, w, h: float, a) =
+proc renderToolsPane(x, y, w, h: float; a) =
   alias(ui, a.ui)
   alias(ls, a.doc.levelStyle)
   alias(ts, a.theme.style.toolbarPane)
@@ -2928,7 +2928,7 @@ proc renderToolsPane(x, y, w, h: float, a) =
 
 # }}}
 # {{{ drawNotesPane()
-proc drawNotesPane(x, y, w, h: float, a) =
+proc drawNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(s, a.theme.style.notesPane)
 
@@ -3459,7 +3459,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emDrawWall
     of emDrawWall:
-      proc handleMoveKey(dir: CardinalDir, a) =
+      proc handleMoveKey(dir: CardinalDir; a) =
         if map.canSetWall(cur, dir):
           let w = if map.getWall(cur, dir) == wWall: wNone
                   else: wWall
@@ -3474,7 +3474,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emDrawWallSpecial
     of emDrawWallSpecial:
-      proc handleMoveKey(dir: CardinalDir, a) =
+      proc handleMoveKey(dir: CardinalDir; a) =
         if map.canSetWall(cur, dir):
           var curSpecWall = SpecialWalls[ui.currSpecialWall]
           if   curSpecWall == wOneWayDoorNE:
