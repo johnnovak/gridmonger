@@ -5,23 +5,19 @@ BUGS
   - note dialog textfield focus bug
   - no cursor jump when resizing & cropping
   - fix cursor pos after undo crop level
-  - coord offset (and maybe other opts) doesn't get saved/loaded
 
 
 TODO
   - disable ctrl movement in wasd mode
   - text color based on bg color luminance
   - disable ctrl in excavate, erase & floor modes
-  - shadow corner joints are not drawn (light theme)
-  - shadow right on the map edges is not drawn (light theme)
-  - hatching should not be visible in colored cells
-  - hatching should not be visible in niches (oldpaper-bright theme)
-  - set floor color of selection
-  - clip draw area (do not let special walls to hang out)
   - show current color / tool in statusbar when toolbar is not visible
   - colours in two columns (to support 1366x768)
   - 10 colours (1st color must be the default)
-  - regions
+  - region gfx improvements
+  - undo state should get invalidated when changing map/level properties
+  - edit level props: leaving name unchanged shouldn't generate an error
+  - map properties (coord offset etc) don't get saved/loaded
 
   - RLE compression
   - remove text label
