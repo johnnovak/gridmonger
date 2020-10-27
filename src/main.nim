@@ -2793,6 +2793,8 @@ proc renderLevel(a) =
   alias(opt, a.opt)
   alias(vg, a.vg)
 
+  let l = getCurrLevel(a)
+
   let i = instantiationInfo(fullPaths=true)
   let id = koi.generateId(i.filename, i.line, "gridmonger-level")
 
@@ -2849,6 +2851,7 @@ proc renderLevel(a) =
     dp.cursorRow = ui.cursor.row
     dp.cursorCol = ui.cursor.col
     dp.cellCoordOpts = getCoordOptsForCurrLevel(a)
+    dp.regionOpts = l.regionOpts
 
     dp.cursorOrient = CardinalDir.none
     if opt.walkMode and
@@ -2880,8 +2883,6 @@ proc renderLevel(a) =
 
       if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
          mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
-
-        let l = getCurrLevel(a)
 
         if l.hasNote(mouseRow, mouseCol):
           let note = l.getNote(mouseRow, mouseCol)
@@ -4128,11 +4129,6 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, cfg.zoomLevel)
-
-  # TODO
-  a.ui.drawLevelParams.drawRegionBorders = true
-  a.ui.drawLevelParams.regionRows = 16
-  a.ui.drawLevelParams.regionCols = 16
 
   if cfg.loadLastFile and cfg.lastFileName != "":
     if not loadMap(cfg.lastFileName, a):

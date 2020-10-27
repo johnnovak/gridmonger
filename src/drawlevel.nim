@@ -86,13 +86,9 @@ type
 
     drawCellCoords*:   bool
     cellCoordOpts*:    CoordinateOptions
+    regionOpts*:       RegionOptions
 
     drawCursorGuides*: bool
-
-    # Regions
-    drawRegionBorders*: bool
-    regionRows*:        Natural
-    regionCols*:        Natural
 
     # internal
     zoomLevel:          Natural
@@ -340,7 +336,7 @@ proc setLevelClippingRect(l: Level; ctx) =
   alias(vg, ctx.vg)
 
   let clipOffs = if dp.lineWidth == lwNormal: 1 else: 0
-  let regionOffs = if dp.drawRegionBorders: 1 else: 0
+  let regionOffs = if dp.regionOpts.enableRegions: 1 else: 0
 
   var
     x = dp.startX-clipOffs - regionOffs
@@ -2166,16 +2162,17 @@ proc drawEmptyRegionBorderWest(viewBuf: Level, viewCol: Natural; ctx) =
 # {{{ drawWalls()
 proc drawWalls(viewBuf: Level; ctx) =
   alias(dp, ctx.dp)
+  alias(ro, dp.regionOpts)
 
   for viewRow in 0..dp.viewRows:
     let row = dp.viewStartRow + viewRow
-    let regionBorder = dp.drawRegionBorders and row mod dp.regionRows == 0
+    let regionBorder = ro.enableRegions and row mod ro.regionRows == 0
     if not regionBorder:
       drawCellWallsNorth(viewBuf, viewRow, regionBorder=false, ctx)
 
   for viewCol in 0..dp.viewCols:
     let col = dp.viewStartCol + viewCol
-    let regionBorder = dp.drawRegionBorders and col mod dp.regionCols == 0
+    let regionBorder = ro.enableRegions and col mod ro.regionColumns == 0
     if not regionBorder:
       drawCellWallsWest(viewBuf, viewCol, regionBorder=false, ctx)
 
@@ -2186,7 +2183,7 @@ template drawRegionBorderRows(l: Level; viewBuf: Level; ctx;
                               viewRow, body: untyped) =
   alias(dp, ctx.dp)
 
-  let rr = dp.regionRows
+  let rr = dp.regionOpts.regionRows
   var startViewRow = (dp.viewStartRow div rr) * rr - dp.viewStartRow
   if startViewRow < 0:
     startViewRow += rr
@@ -2202,7 +2199,7 @@ template drawRegionBorderCols(l: Level; viewBuf: Level; ctx;
                               viewCol, body: untyped) =
   alias(dp, ctx.dp)
 
-  let rc = dp.regionCols
+  let rc = dp.regionOpts.regionColumns
   var startViewCol = (dp.viewStartCol div rc) * rc - dp.viewStartCol
   if startViewCol < 0:
     startViewCol += rc
@@ -2450,7 +2447,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   drawWalls(viewBuf, ctx)
 
-  if dp.drawRegionBorders:
+  if dp.regionOpts.enableRegions:
     drawRegionBorders(l, viewBuf, ctx)
 
   if dp.selection.isSome:
@@ -2469,7 +2466,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   if dp.drawCellCoords:
     drawCellCoords(l, ctx)
 
-  if dp.drawRegionBorders:
+  if dp.regionOpts.enableRegions:
     drawRegionBorderEdges(l, viewBuf, ctx)
 
 # }}}
