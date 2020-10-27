@@ -231,6 +231,11 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural],
                       rect.rows + border*2, rect.cols + border*2)
   dest.copyFrom(destRow, destCol, src, srcRect)
 
+  dest.overrideCoordOpts = src.overrideCoordOpts
+  dest.coordOpts = src.coordOpts
+  dest.regionOpts = src.regionOpts
+  dest.regionNames = src.regionNames
+
   result = dest
 
 

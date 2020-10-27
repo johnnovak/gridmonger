@@ -681,7 +681,9 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 # }}}
 # {{{ setLevelProps*()
 proc setLevelProps*(map; loc: Location, locationName, levelName: string,
-                    elevation: int; um) =
+                    elevation: int, overrideCoordOpts: bool,
+                    coordOpts: CoordinateOptions, regionOpts: RegionOptions;
+                    um) =
 
   let usd = UndoStateData(actionName: "Edit level properties", location: loc)
 
@@ -690,20 +692,54 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
     l.locationName = locationName
     l.levelName = levelName
     l.elevation = elevation
+    l.overrideCoordOpts = overrideCoordOpts
+    l.coordOpts = coordOpts
+    l.regionOpts = regionOpts
     m.refreshSortedLevelNames()
     result = usd
 
   alias(l, map.levels[loc.level])
-  let oldLocationName = l.locationName
-  let oldLevelName = l.levelName
-  let oldElevation = l.elevation
+  let
+    oldLocationName = l.locationName
+    oldLevelName = l.levelName
+    oldElevation = l.elevation
+    oldOverrideCoordOpts = l.overrideCoordOpts
+    oldCoordOpts = l.coordOpts
+    oldRegionOpts = l.regionOpts
 
   var undoAction = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
     l.locationName = oldLocationName
     l.levelName = oldLevelName
     l.elevation = oldElevation
+    l.overrideCoordOpts = oldOverrideCoordOpts
+    l.coordOpts = oldCoordOpts
+    l.regionOpts = oldRegionOpts
     m.refreshSortedLevelNames()
+    result = usd
+
+  um.storeUndoState(action, undoAction)
+  discard action(map)
+
+# }}}
+# {{{ setMapProps*()
+proc setMapProps*(map; loc: Location, name: string,
+                  coordOpts: CoordinateOptions; um) =
+
+  let usd = UndoStateData(actionName: "Edit map properties", location: loc)
+
+  let action = proc (m: var Map): UndoStateData =
+    m.name = name
+    m.coordOpts = coordOpts
+    result = usd
+
+  let
+    oldName = map.name
+    oldCoordOpts = map.coordOpts
+
+  var undoAction = proc (m: var Map): UndoStateData =
+    m.name = name
+    m.coordOpts = oldCoordOpts
     result = usd
 
   um.storeUndoState(action, undoAction)

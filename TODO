@@ -5,6 +5,8 @@ BUGS
   - note dialog textfield focus bug
   - no cursor jump when resizing & cropping
   - fix cursor pos after undo crop level
+    restored
+  - new map -> new level -> undo: redo doesn't work
 
 
 TODO
@@ -15,8 +17,6 @@ TODO
   - colours in two columns (to support 1366x768)
   - 10 colours (1st color must be the default)
   - region gfx improvements
-  - undo state should get invalidated when changing map/level properties
-  - edit level props: leaving name unchanged shouldn't generate an error
   - map properties (coord offset etc) don't get saved/loaded
 
   - RLE compression

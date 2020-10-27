@@ -43,10 +43,10 @@ const
 
 type
   Map* = ref object
-    name*:      string
-    levels*:    seq[Level]
-    links*:     Links
-    coordOpts*: CoordinateOptions
+    name*:        string
+    levels*:      seq[Level]
+    links*:       Links
+    coordOpts*:   CoordinateOptions
 
     sortedLevelNames*:         seq[string]
     sortedLevelIdxToLevelIdx*: Table[Natural, Natural]
@@ -66,15 +66,22 @@ type
     csNumber, csLetter
 
 
+  RegionOptions* = object
+    enableRegions*: bool
+    regionColumns*: Natural
+    regionRows*:    Natural
+
+
   Level* = ref object
     locationName*:      string
     levelName*:         string
     elevation*:         int
-    overrideCoordOpts*: bool
-    coordOpts*:         CoordinateOptions
-
     cellGrid*:          CellGrid
     notes*:             Table[Natural, Note]
+    overrideCoordOpts*: bool
+    coordOpts*:         CoordinateOptions
+    regionOpts*:        RegionOptions
+    regionNames*:       seq[string]
 
 
   LevelStyle* = ref object
