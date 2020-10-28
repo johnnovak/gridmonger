@@ -72,8 +72,8 @@ proc formatRowCoord*(row: Natural, co: CoordinateOptions,
                      numRows: Natural): string =
   var x = co.rowStart + (
     case co.origin
-      of coNorthEast: row
-      of coSouthEast: numRows-1 - row
+      of coNorthWest: row
+      of coSouthWest: numRows-1 - row
   )
 
   case co.rowStyle

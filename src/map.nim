@@ -16,8 +16,17 @@ proc newMap*(name: string): Map =
   m.levels = @[]
   m.links = initLinks()
 
+  m.coordOpts = CoordinateOptions(
+    origin:      coNorthWest,
+    rowStyle:    csNumber,
+    columnStyle: csNumber,
+    rowStart:    1,
+    columnStart: 1
+  )
+
   m.sortedLevelNames = @[]
   m.sortedLevelIdxToLevelIdx = initTable[Natural, Natural]()
+
   result = m
 
 

@@ -631,40 +631,34 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
       y2 = y + gs
 
     proc drawRoundedEdges() =
-      vg.beginPath()
       if olN in cell: vg.rect(x1, y1, gs, w)
       if olE in cell: vg.rect(x2-w, y1, w, gs)
       if olS in cell: vg.rect(x1, y2-w, gs, w)
       if olW in cell: vg.rect(x1, y1, w, gs)
-      vg.fill()
 
       if olNW in cell:
-        vg.beginPath()
+        vg.moveTo(x1, y1)
         vg.arc(x1, y1, w, 0, PI*0.5, pwCW)
         vg.lineTo(x1, y1)
         vg.closePath()
-        vg.fill()
 
       if olNE in cell:
-        vg.beginPath()
+        vg.moveTo(x2, y1)
         vg.arc(x2, y1, w, PI*0.5, PI, pwCW)
         vg.lineTo(x2, y1)
         vg.closePath()
-        vg.fill()
 
       if olSE in cell:
-        vg.beginPath()
+        vg.moveTo(x2, y2)
         vg.arc(x2, y2, w, PI, PI*1.5, pwCW)
         vg.lineTo(x2, y2)
         vg.closePath()
-        vg.fill()
 
       if olSW in cell:
-        vg.beginPath()
+        vg.moveTo(x1, y2)
         vg.arc(x1, y2, w, PI*1.5, 0, pwCW)
         vg.lineTo(x1, y2)
         vg.closePath()
-        vg.fill()
 
 
     proc drawSquareEdges() =

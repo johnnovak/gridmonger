@@ -14,15 +14,31 @@ using l: Level
 proc newLevel*(locationName, levelName: string, elevation: int,
                rows, cols: Natural): Level =
 
-  result = new Level
-  result.locationName = locationName
-  result.levelName = levelName
-  result.elevation = elevation
+  var l = new Level
+  l.locationName = locationName
+  l.levelName = levelName
+  l.elevation = elevation
 
-  result.regionNames = @[]
+  l.overrideCoordOpts = false
+  l.coordOpts = CoordinateOptions(
+    origin:      coNorthWest,
+    rowStyle:    csNumber,
+    columnStyle: csNumber,
+    rowStart:    1,
+    columnStart: 1
+  )
 
-  result.cellGrid = newCellGrid(rows, cols)
-  result.notes = initTable[Natural, Note]()
+  l.regionOpts = RegionOptions(
+    enableRegions: false,
+    regionColumns: 2,
+    regionRows:    2
+  )
+  l.regionNames = @[]
+
+  l.cellGrid = newCellGrid(rows, cols)
+  l.notes = initTable[Natural, Note]()
+
+  result = l
 
 # }}}
 # {{{ rows*()

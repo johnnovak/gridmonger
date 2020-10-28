@@ -1118,7 +1118,7 @@ template coordinateFields() =
   koi.label(x, y, LabelWidth, h, "Origin")
   dlg.origin = koi.radioButtons(
     x + LabelWidth, y, ItemXPos, h+3,
-    labels = @["Northeast", "Southeast"],
+    labels = @["Northwest", "Southwest"],
     dlg.origin
   )
 
@@ -1786,7 +1786,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   var x = 30.0
   var y = 50.0
 
-  let tabLabels = @["General", "Coordinates", "Regions", "Comments"]
+  let tabLabels = @["General", "Coordinates", "Regions"]
 
   dlg.activeTab = koi.radioButtons(
     (DlgWidth - TabWidth) / 2, y, TabWidth, h,

@@ -36,9 +36,9 @@ const
   LevelNumColumnsMax* = 6666
 
   RegionNameMaxLen* = 100
-  RegionColumnsMin* = 0 # TODO 2
+  RegionColumnsMin* = 2
   RegionColumnsMax* = LevelNumColumnsMax
-  RegionRowsMin* = 0 # TODO 2
+  RegionRowsMin* = 2
   RegionRowsMax* = LevelNumRowsMax
 
   CellFloorColorMin* = 0

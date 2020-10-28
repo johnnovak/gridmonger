@@ -60,7 +60,7 @@ type
     rowStart*, columnStart*: Natural
 
   CoordinateOrigin* = enum
-    coNorthEast, coSouthEast
+    coNorthWest, coSouthWest
 
   CoordinateStyle* = enum
     csNumber, csLetter
