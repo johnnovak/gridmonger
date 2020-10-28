@@ -1352,14 +1352,12 @@ proc drawDoorHoriz*(x, y: float, regionBorder: bool = false,
   vg.strokeColor(color)
 
   # Wall start
-  vg.lineCap(lcjRound)
+  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
   vg.lineTo(snap(x1+1, sw), snap(y, sw))
-  vg.stroke()
 
   # Wall end
-  vg.beginPath()
   vg.moveTo(snap(x2, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
@@ -1414,16 +1412,14 @@ proc drawSecretDoorHoriz*(x, y: float, regionBorder: bool = false; ctx) =
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
   vg.lineTo(snap(x1, sw), snap(y, sw))
+
+  # Wall end
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
   drawIcon(x, y-dp.gridSize*0.5, 0.02, -0.02, "S", dp.gridSize, ls.drawColor,
            fontSizeFactor=0.43, ctx.vg)
-
-  # Wall end
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
 
 # }}}
 # {{{ drawArchwayHoriz*()
@@ -1454,15 +1450,13 @@ proc drawArchwayHoriz*(x, y: float, regionBorder: bool = false,
   vg.strokeColor(color)
 
   # Wall start
-  vg.lineCap(lcjRound)
+  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
   vg.lineTo(snap(x1, sw), snap(y, sw))
-  vg.stroke()
 
   # Wall end
   vg.lineCap(lcjRound)
-  vg.beginPath()
   vg.moveTo(snap(x2, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
@@ -1509,13 +1503,12 @@ proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, regionBorder: bool; ctx)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
   vg.lineTo(snap(x1, sw), snap(y, sw))
-  vg.stroke()
 
   # Wall end
-  vg.beginPath()
   vg.moveTo(snap(x2, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
+
   var ox, oy: float
   var icon: string
 
@@ -1704,11 +1697,16 @@ proc drawKeyholeHoriz*(x, y: float, regionBorder: bool = false; ctx) =
   vg.strokeColor(ls.drawColor)
 
   # Wall start
-  vg.lineCap(lcjRound)
+  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
   vg.lineTo(snap(x1, sw), snap(y, sw))
+
+  # Wall end
+  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
+
 
   # Keyhole border
   sw = dp.thinStrokeWidth
@@ -1743,14 +1741,6 @@ proc drawKeyholeHoriz*(x, y: float, regionBorder: bool = false; ctx) =
     vg.beginPath()
     vg.rect(kx+i, ky+i, h, h)
     vg.fill()
-
-  # Wall end
-  sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.beginPath()
-  vg.moveTo(snap(x2, sw), snap(y, sw))
-  vg.lineTo(snap(xe, sw), snap(y, sw))
-  vg.stroke()
 
 # }}}
 # {{{ drawWritingHoriz*()
