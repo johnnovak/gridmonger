@@ -556,7 +556,7 @@ proc resetCursorAndViewStart(a)
 
 proc loadMap(filename: string; a): bool =
   try:
-    a.doc.map = readMap(filename)
+    a.doc.map = readMapFile(filename)
     a.doc.filename = filename
 
     initUndoManager(a.doc.undoManager)
@@ -593,7 +593,7 @@ proc saveMap(filename: string; a) =
     viewStartCol    : dp.viewStartCol
   )
 
-  writeMap(a.doc.map, mapDisplayOpts, filename)
+  writeMapFile(a.doc.map, mapDisplayOpts, filename)
   a.doc.undoManager.setLastSaveState()
   setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
 
@@ -3888,6 +3888,12 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
 # }}}
 
+# {{{ saveConfigAndExit()
+proc saveConfigAndExit(a) =
+  saveConfig(a)
+  a.shouldClose = true
+
+# }}}
 # {{{ renderUI()
 proc renderUI() =
   alias(a, g_app)
@@ -4039,18 +4045,17 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
   if win.shouldClose:
     win.shouldClose = false
     when defined(NO_QUIT_DIALOG):
-      a.shouldClose = true
+      saveConfigAndExit(a)
     else:
       # TODO can we get rid of the isDialogOpen check somehow? (and then
       # remove from the koi API)
       if not koi.isDialogOpen():
         if a.doc.undoManager.isModified:
           a.dialog.saveDiscardDialog.isOpen = true
-          a.dialog.saveDiscardDialog.action = proc (a) = a.shouldClose = true
+          a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
           koi.setFramesLeft()
         else:
-          saveConfig(a)
-          a.shouldClose = true
+          saveConfigAndExit(a)
 
 # }}}
 

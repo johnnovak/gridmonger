@@ -738,7 +738,7 @@ proc setMapProps*(map; loc: Location, name: string,
     oldCoordOpts = map.coordOpts
 
   var undoAction = proc (m: var Map): UndoStateData =
-    m.name = name
+    m.name = oldName
     m.coordOpts = oldCoordOpts
     result = usd
 

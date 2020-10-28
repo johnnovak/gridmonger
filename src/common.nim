@@ -76,12 +76,15 @@ type
     locationName*:      string
     levelName*:         string
     elevation*:         int
-    cellGrid*:          CellGrid
-    notes*:             Table[Natural, Note]
+
     overrideCoordOpts*: bool
     coordOpts*:         CoordinateOptions
+
     regionOpts*:        RegionOptions
     regionNames*:       seq[string]
+
+    cellGrid*:          CellGrid
+    notes*:             Table[Natural, Note]
 
 
   LevelStyle* = ref object

@@ -6,10 +6,15 @@ RIFF ('GRDM'            # Gridmonger map file
         'ICRD'          # Creation Date
         'ISFT'          # Software
     )
-    'map '              # Map
+    LIST ('map '        # Map
+        'prop'          # Map properties
+        'coor'          # Global coordinate options
+    )
     LIST ('lvls'        # List of levels (min=0, max=999)
         LIST ('lvl '    # Level
             'prop'      # Level properties
+            'coor'      # Coordinate options
+            'regn'      # Regions
             'cell'      # Level cells
             'note'      # Notes
         )
@@ -22,16 +27,34 @@ RIFF ('GRDM'            # Gridmonger map file
 )
 
 
-'map '
-    UINT16  format version
+'prop' (Map)
+    UINT16  version
     BSTR    name          (minLen=1, maxLen=100)
 
-'prop'
+
+'coor'
+    UINT8   origin        (0 = northeast, 1 = southeast)
+    UINT8   rowStyle      (0 = number, 1 = letter)
+    UINT8   columnStyle   (0 = number, 1 = letter)
+    INT16   rowStart
+    INT16   columnStart
+
+
+'prop' (Level)
     BSTR    locationName  (minLen=1, maxLen=100)
     BSTR    levelName     (minLen=0, maxLen=100)
     INT16   elevation     (min=-200, max=200)
     UINT16  numRows       (min=1, max=6666)
     UINT16  numColums     (max=1, max=6666)
+    UINT8   overrideCoordOpts   (0=off, 1=on)
+
+
+'regn'
+    UINT16  numRegions
+
+    numRegion times:
+    BSTR    regionName    (minLen=1, maxLen=100)
+
 
 'cell'
     (numRows * numColums) records of:
@@ -59,6 +82,7 @@ RIFF ('GRDM'            # Gridmonger map file
 
     WSTR    text          (minLen=1, maxLen=400)
 
+
 'lnks'
     UINT16  numLinks           (max=10000)
 
@@ -71,6 +95,7 @@ RIFF ('GRDM'            # Gridmonger map file
     UINT16  destinationLevel   (max=(number of levels) - 1)
     UINT16  destinationRow     (max=numRows-1 of the given level)
     UINT16  destinationColumn  (max=numColumns-1 of the given level)
+
 
 'disp'
     UINT8   currLevel          (max=(number of levels) - 1)

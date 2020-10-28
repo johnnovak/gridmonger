@@ -18,6 +18,7 @@ import utils
 # TODO use app version instead?
 const CurrentMapVersion = 1
 
+# {{{ Field constraints
 const
   MapNameMinLen* = 1
   MapNameMaxLen* = 100
@@ -51,16 +52,20 @@ const
   ZoomLevelMin* = 1
   ZoomLevelMax* = 20
 
+# }}}
+
 const
-  FourCC_GRDM          = "GRMM"
-  FourCC_GRDM_map      = "map "
-  FourCC_GRDM_lnks     = "lnks"
-  FourCC_GRDM_lvls     = "lvls"
-  FourCC_GRDM_lvl      = "lvl "
-  FourCC_GRDM_lvl_prop = "prop"
-  FourCC_GRDM_lvl_cell = "cell"
-  FourCC_GRDM_lvl_note = "note"
-  FourCC_GRDM_disp     = "disp"
+  FourCC_GRDM      = "GRMM"
+  FourCC_GRDM_cell = "cell"
+  FourCC_GRDM_coor = "coor"
+  FourCC_GRDM_disp = "disp"
+  FourCC_GRDM_lnks = "lnks"
+  FourCC_GRDM_lvl  = "lvl "
+  FourCC_GRDM_lvls = "lvls"
+  FourCC_GRDM_map  = "map "
+  FourCC_GRDM_note = "note"
+  FourCC_GRDM_prop = "prop"
+  FourCC_GRDM_regn = "regn"
 
 
 type MapReadError* = object of IOError
@@ -80,37 +85,45 @@ type
 
 
 # {{{ Read
-# {{{ V1
-
-# TODO move into nim-riff
+# TODO move utils into nim-riff?
+# {{{ appendInGroupChunkMsg()
 proc appendInGroupChunkMsg(msg: string, groupChunkId: Option[string]): string =
   if groupChunkId.isSome:
     msg & fmt" inside a '{groupChunkId.get}' group chunk"
   else: msg
 
+# }}}
+# {{{ chunkOnlyOnceError()
 proc chunkOnlyOnceError(chunkId: string,
                         groupChunkId: Option[string] = string.none) =
   var msg = fmt"'{chunkId}' chunk can only appear once"
   msg = appendInGroupChunkMsg(msg, groupChunkId)
   raiseMapReadError(msg)
 
+# }}}
+# {{{ chunkNotFoundError()
 proc chunkNotFoundError(chunkId: string,
                         groupChunkId: Option[string] = string.none) =
   var msg = fmt"Mandatory '{chunkId}' chunk not found"
   msg = appendInGroupChunkMsg(msg, groupChunkId)
   raiseMapReadError(msg)
 
+# }}}
+# {{{ invalidChunkError()
 proc invalidChunkError(chunkId, groupChunkId: string) =
   var msg = fmt"'{chunkId}' chunk is not allowed"
   msg = appendInGroupChunkMsg(msg, groupChunkId.some)
   raiseMapReadError(msg)
 
+# }}}
+# {{{ invalidListChunkError()
 proc invalidListChunkError(formatTypeId, groupChunkId: string) =
   var msg = fmt"'LIST' chunk with format type '{formatTypeId}' is not allowed"
   msg = appendInGroupChunkMsg(msg, groupChunkId.some)
   raiseMapReadError(msg)
 
-
+# }}}
+# {{{ checkStringLength()
 proc checkStringLength(s: string, name: string, minLen, maxLen: int) =
   if s.len < minLen or s.len > maxLen:
     raiseMapReadError(
@@ -118,6 +131,8 @@ proc checkStringLength(s: string, name: string, minLen, maxLen: int) =
       fmt"{maxLen} bytes, actual length: {s.len}, value: {s}"
     )
 
+# }}}
+# {{{ checkValueRange()
 proc checkValueRange(v: SomeInteger, name: string,
                      minVal, maxVal: SomeInteger) =
   if v < minVal or v > maxVal:
@@ -126,6 +141,8 @@ proc checkValueRange(v: SomeInteger, name: string,
       fmt"{maxVal}, actual value: {v}"
     )
 
+# }}}
+# {{{ checkEnum()
 proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
   var valid: bool
   try:
@@ -137,13 +154,18 @@ proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
   if not valid:
     raiseMapReadError(fmt"Invalid enum value for {name}: {v}")
 
+# }}}
 
 using rr: RiffReader
 
+# {{{ readDisplayOptions()
 proc readDisplayOptions(rr): MapDisplayOptions =
+  # TODO
   discard
 
 
+# }}}
+# {{{ readLinks()
 proc readLinks(rr): BiTable[Location, Location] =
   var numLinks = rr.read(uint16).int
 
@@ -159,7 +181,8 @@ proc readLinks(rr): BiTable[Location, Location] =
     result[src] = dest
     dec(numLinks)
 
-
+# }}}
+# {{{ readLevelProperties_V1()
 proc readLevelProperties_V1(rr): Level =
   let
     locationName = rr.readWStr()
@@ -185,7 +208,8 @@ proc readLevelProperties_V1(rr): Level =
 
   result = newLevel(locationName, levelName, elevation, numRows, numColumns)
 
-
+# }}}
+# {{{ readLevelData_V1()
 proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
   var cells: seq[Cell]
   newSeq[Cell](cells, numCells)
@@ -217,7 +241,8 @@ proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
 
   result = cells
 
-
+# }}}
+# {{{ readLevelNotes_V1()
 proc readLevelNotes_V1(rr; l: Level) =
   let numNotes = rr.read(uint16).Natural
   checkValueRange(numNotes, "lvl.note.numNotes", 0, NumNotesMax)
@@ -267,7 +292,8 @@ proc readLevelNotes_V1(rr; l: Level) =
     note.text = text
     l.setNote(row, col, note)
 
-
+# }}}
+# {{{ readLevel()
 proc readLevel(rr): Level =
   let groupChunkId = FourCC_GRDM_lvls.some
   var
@@ -283,19 +309,19 @@ proc readLevel(rr): Level =
   while true:
     if ci.kind == ckChunk:
       case ci.id
-      of FourCC_GRDM_lvl_prop:
+      of FourCC_GRDM_prop:
         if propCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_lvl_prop, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRDM_prop, groupChunkId)
         propCursor = rr.cursor.some
 
-      of FourCC_GRDM_lvl_cell:
+      of FourCC_GRDM_cell:
         if dataCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_lvl_cell, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRDM_cell, groupChunkId)
         dataCursor = rr.cursor.some
 
-      of FourCC_GRDM_lvl_note:
+      of FourCC_GRDM_note:
         if noteCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_lvl_note, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRDM_note, groupChunkId)
         noteCursor = rr.cursor.some
       else:
         invalidChunkError(ci.id, FourCC_GRDM_lvls)
@@ -306,8 +332,8 @@ proc readLevel(rr): Level =
       ci = rr.nextChunk()
     else: break
 
-  if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvl_prop)
-  if dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvl_cell)
+  if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_prop)
+  if dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_cell)
 
   rr.cursor = propCursor.get
   var level = readLevelProperties_V1(rr)
@@ -325,7 +351,8 @@ proc readLevel(rr): Level =
 
   result = level
 
-
+# }}}
+# {{{ readLevelList()
 proc readLevelList(rr): seq[Level] =
   var levels = newSeq[Level]()
 
@@ -352,7 +379,8 @@ proc readLevelList(rr): seq[Level] =
 
   result = levels
 
-
+# }}}
+# {{{ readMap()
 proc readMap(rr): Map =
   let version = rr.read(uint16).Natural
   if version > CurrentMapVersion:
@@ -363,9 +391,10 @@ proc readMap(rr): Map =
 
   result = newMap(name)
 
-
+# }}}
+# # {{{ readMapFile()
 # TODO return more than just a single map
-proc readMap*(filename: string): Map =
+proc readMapFile*(filename: string): Map =
   var rr: RiffReader
   try:
     rr = openRiffFile(filename)
@@ -452,8 +481,7 @@ proc readMap*(filename: string): Map =
     echo getStackTrace(e)
     raise newException(MapReadError, fmt"Error reading map file: {e.msg}", e)
   finally:
-    if rr != nil:
-      rr.close()
+    if rr != nil: rr.close()
 
 # }}}
 # }}}
@@ -462,6 +490,7 @@ proc readMap*(filename: string): Map =
 
 using rw: RiffWriter
 
+# {{{ writeDisplayOptions()
 proc writeDisplayOptions(rw; opts: MapDisplayOptions) =
   rw.beginChunk(FourCC_GRDM_disp)
 
@@ -474,7 +503,8 @@ proc writeDisplayOptions(rw; opts: MapDisplayOptions) =
 
   rw.endChunk()
 
-
+# }}}
+# {{{ writeLinks()
 proc writeLinks(rw; links: BiTable[Location, Location]) =
   rw.beginChunk(FourCC_GRDM_lnks)
   rw.write(links.len.uint16)
@@ -496,29 +526,69 @@ proc writeLinks(rw; links: BiTable[Location, Location]) =
 
   rw.endChunk()
 
+# }}}
+# {{{ writeCoordinateOptions()
+proc writeCoordinateOptions(rw; co: CoordinateOptions) =
+  rw.beginChunk(FourCC_GRDM_coor)
 
+  rw.write(co.origin.uint8)
+  rw.write(co.rowStyle.uint8)
+  rw.write(co.columnStyle.uint8)
+  rw.write(co.rowStart.int16)
+  rw.write(co.columnStart.int16)
+
+  rw.endChunk()
+
+# }}}
+# {{{ writeRegions()
+proc writeRegions(rw; l: Level) =
+  rw.beginChunk(FourCC_GRDM_regn)
+
+  rw.write(l.regionOpts.enableRegions.uint8)
+  rw.write(l.regionOpts.regionColumns.uint16)
+  rw.write(l.regionOpts.regionRows.uint16)
+
+  rw.write(l.regionNames.len.uint16)
+  for name in l.regionNames:
+    rw.writeBStr(name)
+
+  rw.endChunk()
+
+# }}}
+# # {{{ writeLevelProperties()
 proc writeLevelProperties(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_lvl_prop)
+  rw.beginChunk(FourCC_GRDM_prop)
+
   rw.writeWStr(l.locationName)
   rw.writeWStr(l.levelName)
   rw.write(l.elevation.int16)
+
   rw.write(l.rows.uint16)
   rw.write(l.cols.uint16)
+
+  rw.write(l.overrideCoordOpts.uint8)
+
   rw.endChunk()
 
+# }}}
+# {{{ writeLevelCells()
 proc writeLevelCells(rw; cells: seq[Cell]) =
-  rw.beginChunk(FourCC_GRDM_lvl_cell)
+  rw.beginChunk(FourCC_GRDM_cell)
+
   for c in cells:
     rw.write(c.floor.uint8)
     rw.write(c.floorOrientation.uint8)
     rw.write(c.floorColor.uint8)
     rw.write(c.wallN.uint8)
     rw.write(c.wallW.uint8)
+
   rw.endChunk()
 
-
+# }}}
+# {{{ writeLevelNotes()
 proc writeLevelNotes(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_lvl_note)
+  rw.beginChunk(FourCC_GRDM_note)
+
   rw.write(l.numNotes.uint16)
 
   for (row, col, note) in l.allNotes:
@@ -544,28 +614,51 @@ proc writeLevelNotes(rw; l: Level) =
 
   rw.endChunk()
 
-
+# }}}
+# {{{ writeLevel()
 proc writeLevel(rw; l: Level) =
   rw.beginListChunk(FourCC_GRDM_lvl)
+
   rw.writeLevelProperties(l)
+  rw.writeCoordinateOptions(l.coordOpts)
+  rw.writeRegions(l)
   rw.writeLevelCells(l.cellGrid.cells)
   rw.writeLevelNotes(l)
+
   rw.endChunk()
 
+# }}}
+# {{{ writeLevelList()
 proc writeLevelList(rw; levels: seq[Level]) =
   rw.beginListChunk(FourCC_GRDM_lvls)
-  for l in levels:
-    writeLevel(rw, l)
+
+  for l in levels: rw.writeLevel(l)
+
   rw.endChunk()
 
-proc writeMap(rw; m: Map) =
-  rw.beginChunk(FourCC_GRDM_map)
+# }}}
+# {{{ writeMapProperties()
+proc writeMapProperties(rw; m: Map) =
+  rw.beginChunk(FourCC_GRDM_prop)
+
   rw.write(CurrentMapVersion.uint16)
   rw.writeBStr(m.name)
+
   rw.endChunk()
 
+# }}}
+# {{{ writeMap()
+proc writeMap(rw; m: Map) =
+  rw.beginListChunk(FourCC_GRDM_map)
 
-proc writeMap*(m: Map, opts: MapDisplayOptions, filename: string) =
+  rw.writeMapProperties(m)
+  rw.writeCoordinateOptions(m.coordOpts)
+
+  rw.endChunk()
+
+# }}}
+# {{{ writeMapFile()
+proc writeMapFile*(m: Map, opts: MapDisplayOptions, filename: string) =
   var rw: RiffWriter
   try:
     rw = createRiffFile(filename, FourCC_GRDM)
@@ -580,8 +673,9 @@ proc writeMap*(m: Map, opts: MapDisplayOptions, filename: string) =
   except CatchableError as e:
     raise newException(MapReadError, fmt"Error writing map file: {e.msg}", e)
   finally:
-    rw.close()
+    if rw != nil: rw.close()
 
+# }}}
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
