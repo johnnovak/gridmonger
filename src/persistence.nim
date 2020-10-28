@@ -35,6 +35,12 @@ const
   LevelNumColumnsMin* = 1
   LevelNumColumnsMax* = 6666
 
+  RegionNameMaxLen* = 100
+  RegionColumnsMin* = 0 # TODO 2
+  RegionColumnsMax* = LevelNumColumnsMax
+  RegionRowsMin* = 0 # TODO 2
+  RegionRowsMax* = LevelNumRowsMax
+
   CellFloorColorMin* = 0
   CellFloorColorMax* = 8
 
@@ -158,59 +164,62 @@ proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
 
 using rr: RiffReader
 
-# {{{ readDisplayOptions()
-proc readDisplayOptions(rr): MapDisplayOptions =
+# {{{ readLocation()
+proc readLocation(rr): Location =
+  result.level = rr.read(uint16).int
+  result.row = rr.read(uint16)
+  result.col = rr.read(uint16)
+
+# }}}
+# {{{ readDisplayOptions_v1()
+proc readDisplayOptions_v1(rr): MapDisplayOptions =
   # TODO
   discard
 
 
 # }}}
-# {{{ readLinks()
-proc readLinks(rr): BiTable[Location, Location] =
+# {{{ readLinks_v1()
+proc readLinks_v1(rr): BiTable[Location, Location] =
   var numLinks = rr.read(uint16).int
-
-  proc readLocation(): Location =
-    result.level = rr.read(uint16).int
-    result.row = rr.read(uint16).Natural
-    result.col = rr.read(uint16).Natural
 
   result = initBiTable[Location, Location](nextPowerOfTwo(numLinks))
   while numLinks > 0:
-    let src = readLocation()
-    let dest = readLocation()
+    let src = readLocation(rr)
+    let dest = readLocation(rr)
     result[src] = dest
     dec(numLinks)
 
 # }}}
-# {{{ readLevelProperties_V1()
-proc readLevelProperties_V1(rr): Level =
-  let
-    locationName = rr.readWStr()
-    levelName    = rr.readWStr()
-    elevation    = rr.read(int16).int
-    numRows      = rr.read(uint16).Natural
-    numColumns   = rr.read(uint16).Natural
-
+# {{{ readLevelProperties_v1()
+proc readLevelProperties_v1(rr): Level =
+  let locationName = rr.readWStr()
   checkStringLength(locationName, "lvl.prop.locationName",
                     LevelLocationNameMinLen, LevelLocationNameMaxLen)
 
+  let levelName = rr.readWStr()
   checkStringLength(levelName, "lvl.prop.levelName",
                     LevelNameMinLen, LevelNameMaxLen)
 
+  let elevation = rr.read(int16).int
   checkValueRange(elevation, "lvl.prop.elevation",
                   LevelElevationMin, LevelElevationMax)
 
+  let numRows = rr.read(uint16)
   checkValueRange(numRows, "lvl.prop.numRows",
                   LevelNumRowsMin, LevelNumRowsMax)
 
+  let numColumns = rr.read(uint16)
   checkValueRange(numColumns, "lvl.prop.numColumns",
                   LevelNumColumnsMin, LevelNumColumnsMax)
 
+  let overrideCoordOpts = rr.read(uint8).bool
+
   result = newLevel(locationName, levelName, elevation, numRows, numColumns)
+  result.overrideCoordOpts = overrideCoordOpts
 
 # }}}
-# {{{ readLevelData_V1()
-proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
+# {{{ readLevelData_v1()
+proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
   var cells: seq[Cell]
   newSeq[Cell](cells, numCells)
 
@@ -234,7 +243,7 @@ proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
     cells[i] = Cell(
       floor: floor.Floor,
       floorOrientation: floorOrientation.Orientation,
-      floorColor: floorColor.Natural,
+      floorColor: floorColor,
       wallN: wallN.Wall,
       wallW: wallW.Wall
     )
@@ -242,8 +251,8 @@ proc readLevelData_V1(rr; numCells: Natural): seq[Cell] =
   result = cells
 
 # }}}
-# {{{ readLevelNotes_V1()
-proc readLevelNotes_V1(rr; l: Level) =
+# {{{ readLevelNotes_v1()
+proc readLevelNotes_v1(rr; l: Level) =
   let numNotes = rr.read(uint16).Natural
   checkValueRange(numNotes, "lvl.note.numNotes", 0, NumNotesMax)
 
@@ -293,12 +302,66 @@ proc readLevelNotes_V1(rr; l: Level) =
     l.setNote(row, col, note)
 
 # }}}
-# {{{ readLevel()
-proc readLevel(rr): Level =
+# {{{ readCoordinateOptions_v1*()
+proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
+  let origin = rr.read(uint8)
+  checkEnum(origin, fmt"${parentChunk}.coor.origin", CoordinateOrigin)
+
+  let rowStyle = rr.read(uint8)
+  checkEnum(rowStyle, fmt"${parentChunk}.coor.rowStyle", CoordinateStyle)
+
+  let columnStyle = rr.read(uint8)
+  checkEnum(columnStyle, fmt"${parentChunk}.coor.columnStyle", CoordinateStyle)
+
+  let rowStart = rr.read(int16)
+  let columnStart = rr.read(int16)
+
+  result = CoordinateOptions(
+    origin:      origin.CoordinateOrigin,
+    rowStyle:    rowStyle.CoordinateStyle,
+    columnStyle: columnStyle.CoordinateStyle,
+    rowStart:    rowStart,
+    columnStart: columnStart
+  )
+
+# }}}
+# {{{ readRegions_v1*()
+proc readRegions_v1(rr): (RegionOptions, seq[string]) =
+  let enableRegions = rr.read(uint8).bool
+
+  let regionColumns = rr.read(uint16)
+  checkValueRange(regionColumns, "lvl.regn.regionColumns",
+                  RegionColumnsMin, RegionColumnsMax)
+
+  let regionRows = rr.read(uint16)
+  checkValueRange(regionRows, "lvl.regn.regionRows",
+                  RegionRowsMin, RegionRowsMax)
+
+  let regionOpts = RegionOptions(
+    enableRegions: enableRegions,
+    regionColumns: regionColumns,
+    regionRows:    regionRows
+  )
+
+  let numRegions = rr.read(uint16).Natural
+
+  var regionNames: seq[string] = @[]
+  for i in 0..<numRegions:
+    let name = rr.readBStr()
+    checkStringLength(name, "lvl.regn.regionName", 0, RegionNameMaxLen)
+    regionNames.add(name)
+
+  result = (regionOpts, regionNames)
+
+# }}}
+# {{{ readLevel_v1()
+proc readLevel_v1(rr): Level =
   let groupChunkId = FourCC_GRDM_lvls.some
   var
     propCursor = Cursor.none
-    dataCursor = Cursor.none
+    coorCursor = Cursor.none
+    regnCursor = Cursor.none
+    cellCursor = Cursor.none
     noteCursor = Cursor.none
 
   if not rr.hasSubChunks():
@@ -314,18 +377,30 @@ proc readLevel(rr): Level =
           chunkOnlyOnceError(FourCC_GRDM_prop, groupChunkId)
         propCursor = rr.cursor.some
 
+      of FourCC_GRDM_coor:
+        if coorCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_coor, groupChunkId)
+        coorCursor = rr.cursor.some
+
+      of FourCC_GRDM_regn:
+        if regnCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_regn, groupChunkId)
+        regnCursor = rr.cursor.some
+
       of FourCC_GRDM_cell:
-        if dataCursor.isSome:
+        if cellCursor.isSome:
           chunkOnlyOnceError(FourCC_GRDM_cell, groupChunkId)
-        dataCursor = rr.cursor.some
+        cellCursor = rr.cursor.some
 
       of FourCC_GRDM_note:
         if noteCursor.isSome:
           chunkOnlyOnceError(FourCC_GRDM_note, groupChunkId)
         noteCursor = rr.cursor.some
+
       else:
         invalidChunkError(ci.id, FourCC_GRDM_lvls)
-    else:
+
+    else: # group chunk
       invalidChunkError(ci.id, groupChunkId.get)
 
     if rr.hasNextChunk():
@@ -333,27 +408,35 @@ proc readLevel(rr): Level =
     else: break
 
   if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_prop)
-  if dataCursor.isNone: chunkNotFoundError(FourCC_GRDM_cell)
+  if coorCursor.isNone: chunkNotFoundError(FourCC_GRDM_coor)
+  if regnCursor.isNone: chunkNotFoundError(FourCC_GRDM_regn)
+  if cellCursor.isNone: chunkNotFoundError(FourCC_GRDM_cell)
 
   rr.cursor = propCursor.get
-  var level = readLevelProperties_V1(rr)
+  var level = readLevelProperties_v1(rr)
 
-  rr.cursor = dataCursor.get
+  rr.cursor = coorCursor.get
+  level.coordOpts = readCoordinateOptions_v1(rr, groupChunkId.get)
 
-  # because of the South & East borders
+  rr.cursor = regnCursor.get
+  (level.regionOpts, level.regionNames) = readRegions_v1(rr)
+
+  rr.cursor = cellCursor.get
+
+  # +1 needed because of the south & east borders
   let numCells = (level.rows+1) * (level.cols+1)
 
-  level.cellGrid.cells = readLevelData_V1(rr, numCells)
+  level.cellGrid.cells = readLevelData_v1(rr, numCells)
 
   if noteCursor.isSome:
     rr.cursor = noteCursor.get
-    readLevelNotes_V1(rr, level)
+    readLevelNotes_v1(rr, level)
 
   result = level
 
 # }}}
-# {{{ readLevelList()
-proc readLevelList(rr): seq[Level] =
+# {{{ readLevelList_v1()
+proc readLevelList_v1(rr): seq[Level] =
   var levels = newSeq[Level]()
 
   if rr.hasSubChunks():
@@ -366,11 +449,12 @@ proc readLevelList(rr): seq[Level] =
           if levels.len == NumLevelsMax:
             raiseMapReadError(fmt"Map contains more than {NumLevelsMax} levels")
 
-          levels.add(readLevel(rr))
+          levels.add(readLevel_v1(rr))
           rr.exitGroup()
         else:
           invalidListChunkError(ci.formatTypeId, FourCC_GRDM_lvls)
-      else:
+
+      else: # not group chunk
         invalidChunkError(ci.id, FourCC_GRDM_lvls)
 
       if rr.hasNextChunk():
@@ -380,20 +464,68 @@ proc readLevelList(rr): seq[Level] =
   result = levels
 
 # }}}
-# {{{ readMap()
-proc readMap(rr): Map =
-  let version = rr.read(uint16).Natural
+# {{{ readMapProperties_v1()
+proc readMapProperties_v1(rr): Map =
+  # TODO is inside Map the best place for this? or introduce a header chunk?
+  let version = rr.read(uint16)
   if version > CurrentMapVersion:
     raiseMapReadError(fmt"Unsupported map file version: {version}")
 
   let name = rr.readBStr()
-  checkStringLength(name, "map.name", MapNameMinLen, MapNameMaxLen)
+  checkStringLength(name, "map.prop.name", MapNameMinLen, MapNameMaxLen)
 
   result = newMap(name)
 
 # }}}
-# # {{{ readMapFile()
-# TODO return more than just a single map
+# {{{ readMap_v1()
+proc readMap_v1(rr): Map =
+  let groupChunkId = FourCC_GRDM_map.some
+  var
+    propCursor = Cursor.none
+    coorCursor = Cursor.none
+
+  if not rr.hasSubChunks():
+    raiseMapReadError(fmt"'{FourCC_GRDM_map}' group chunk is empty")
+
+  var ci = rr.enterGroup()
+
+  while true:
+    if ci.kind == ckChunk:
+      case ci.id
+      of FourCC_GRDM_prop:
+        if propCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_prop, groupChunkId)
+        propCursor = rr.cursor.some
+
+      of FourCC_GRDM_coor:
+        if coorCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_coor, groupChunkId)
+        coorCursor = rr.cursor.some
+
+      else:
+        invalidChunkError(ci.id, FourCC_GRDM_lvls)
+
+    else: # group chunk
+      invalidChunkError(ci.id, groupChunkId.get)
+
+    if rr.hasNextChunk():
+      ci = rr.nextChunk()
+    else: break
+
+  if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_prop)
+  if coorCursor.isNone: chunkNotFoundError(FourCC_GRDM_coor)
+
+  rr.cursor = propCursor.get
+  var map = readMapProperties_v1(rr)
+
+  rr.cursor = coorCursor.get
+  map.coordOpts = readCoordinateOptions_v1(rr, groupChunkId.get)
+
+  result = map
+
+# }}}
+# # {{{ readMapFile*()
+# TODO return display related info and info chunk data as well
 proc readMapFile*(filename: string): Map =
   var rr: RiffReader
   try:
@@ -424,6 +556,10 @@ proc readMapFile*(filename: string): Map =
         of FourCC_INFO:
           discard  # TODO
 
+        of FourCC_GRDM_map:
+          if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_map)
+          mapCursor = rr.cursor.some
+
         of FourCC_GRDM_lvls:
           if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lvls)
           levelListCursor = rr.cursor.some
@@ -432,9 +568,6 @@ proc readMapFile*(filename: string): Map =
 
       elif ci.kind == ckChunk:
         case ci.id
-        of FourCC_GRDM_map:
-          if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_map)
-          mapCursor = rr.cursor.some
 
         of FourCC_GRDM_lnks:
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
@@ -459,18 +592,18 @@ proc readMapFile*(filename: string): Map =
 
     # Load chunks
     rr.cursor = mapCursor.get
-    let m = readMap(rr)
+    let m = readMap_v1(rr)
 
     rr.cursor = levelListCursor.get
-    m.levels = readLevelList(rr)
+    m.levels = readLevelList_v1(rr)
     m.refreshSortedLevelNames()
 
     rr.cursor = linksCursor.get
-    m.links = readLinks(rr)
+    m.links = readLinks_v1(rr)
 
     if displayOptsCursor.isSome:
       rr.cursor = displayOptsCursor.get
-      discard readDisplayOptions(rr)
+      discard readDisplayOptions_v1(rr)
 
     result = m
 
@@ -490,8 +623,8 @@ proc readMapFile*(filename: string): Map =
 
 using rw: RiffWriter
 
-# {{{ writeDisplayOptions()
-proc writeDisplayOptions(rw; opts: MapDisplayOptions) =
+# {{{ writeDisplayOptions_v1()
+proc writeDisplayOptions_v1(rw; opts: MapDisplayOptions) =
   rw.beginChunk(FourCC_GRDM_disp)
 
   rw.write(opts.currLevel.uint16)
@@ -504,8 +637,8 @@ proc writeDisplayOptions(rw; opts: MapDisplayOptions) =
   rw.endChunk()
 
 # }}}
-# {{{ writeLinks()
-proc writeLinks(rw; links: BiTable[Location, Location]) =
+# {{{ writeLinks_v1()
+proc writeLinks_v1(rw; links: BiTable[Location, Location]) =
   rw.beginChunk(FourCC_GRDM_lnks)
   rw.write(links.len.uint16)
 
@@ -527,8 +660,8 @@ proc writeLinks(rw; links: BiTable[Location, Location]) =
   rw.endChunk()
 
 # }}}
-# {{{ writeCoordinateOptions()
-proc writeCoordinateOptions(rw; co: CoordinateOptions) =
+# {{{ writeCoordinateOptions_v1()
+proc writeCoordinateOptions_v1(rw; co: CoordinateOptions) =
   rw.beginChunk(FourCC_GRDM_coor)
 
   rw.write(co.origin.uint8)
@@ -540,8 +673,8 @@ proc writeCoordinateOptions(rw; co: CoordinateOptions) =
   rw.endChunk()
 
 # }}}
-# {{{ writeRegions()
-proc writeRegions(rw; l: Level) =
+# {{{ writeRegions_v1()
+proc writeRegions_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_regn)
 
   rw.write(l.regionOpts.enableRegions.uint8)
@@ -555,8 +688,8 @@ proc writeRegions(rw; l: Level) =
   rw.endChunk()
 
 # }}}
-# # {{{ writeLevelProperties()
-proc writeLevelProperties(rw; l: Level) =
+# # {{{ writeLevelProperties_v1()
+proc writeLevelProperties_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_prop)
 
   rw.writeWStr(l.locationName)
@@ -571,8 +704,8 @@ proc writeLevelProperties(rw; l: Level) =
   rw.endChunk()
 
 # }}}
-# {{{ writeLevelCells()
-proc writeLevelCells(rw; cells: seq[Cell]) =
+# {{{ writeLevelCells_v1()
+proc writeLevelCells_v1(rw; cells: seq[Cell]) =
   rw.beginChunk(FourCC_GRDM_cell)
 
   for c in cells:
@@ -585,8 +718,8 @@ proc writeLevelCells(rw; cells: seq[Cell]) =
   rw.endChunk()
 
 # }}}
-# {{{ writeLevelNotes()
-proc writeLevelNotes(rw; l: Level) =
+# {{{ writeLevelNotes_v1()
+proc writeLevelNotes_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_note)
 
   rw.write(l.numNotes.uint16)
@@ -615,30 +748,31 @@ proc writeLevelNotes(rw; l: Level) =
   rw.endChunk()
 
 # }}}
-# {{{ writeLevel()
-proc writeLevel(rw; l: Level) =
+# {{{ writeLevel_v1()
+proc writeLevel_v1(rw; l: Level) =
   rw.beginListChunk(FourCC_GRDM_lvl)
 
-  rw.writeLevelProperties(l)
-  rw.writeCoordinateOptions(l.coordOpts)
-  rw.writeRegions(l)
-  rw.writeLevelCells(l.cellGrid.cells)
-  rw.writeLevelNotes(l)
+  writeLevelProperties_v1(rw, l)
+  writeCoordinateOptions_v1(rw, l.coordOpts)
+  writeRegions_v1(rw, l)
+  writeLevelCells_v1(rw, l.cellGrid.cells)
+  writeLevelNotes_v1(rw, l)
 
   rw.endChunk()
 
 # }}}
-# {{{ writeLevelList()
-proc writeLevelList(rw; levels: seq[Level]) =
+# {{{ writeLevelList_v1()
+proc writeLevelList_v1(rw; levels: seq[Level]) =
   rw.beginListChunk(FourCC_GRDM_lvls)
 
-  for l in levels: rw.writeLevel(l)
+  for l in levels:
+    writeLevel_v1(rw, l)
 
   rw.endChunk()
 
 # }}}
-# {{{ writeMapProperties()
-proc writeMapProperties(rw; m: Map) =
+# {{{ writeMapProperties_v1()
+proc writeMapProperties_v1(rw; m: Map) =
   rw.beginChunk(FourCC_GRDM_prop)
 
   rw.write(CurrentMapVersion.uint16)
@@ -647,26 +781,26 @@ proc writeMapProperties(rw; m: Map) =
   rw.endChunk()
 
 # }}}
-# {{{ writeMap()
-proc writeMap(rw; m: Map) =
+# {{{ writeMap_v1()
+proc writeMap_v1(rw; m: Map) =
   rw.beginListChunk(FourCC_GRDM_map)
 
-  rw.writeMapProperties(m)
-  rw.writeCoordinateOptions(m.coordOpts)
+  writeMapProperties_v1(rw, m)
+  writeCoordinateOptions_v1(rw, m.coordOpts)
 
   rw.endChunk()
 
 # }}}
-# {{{ writeMapFile()
+# {{{ writeMapFile*()
 proc writeMapFile*(m: Map, opts: MapDisplayOptions, filename: string) =
   var rw: RiffWriter
   try:
     rw = createRiffFile(filename, FourCC_GRDM)
 
-    writeMap(rw, m)
-    writeLevelList(rw, m.levels)
-    writeLinks(rw, m.links)
-    writeDisplayOptions(rw, opts)
+    writeMap_v1(rw, m)
+    writeLevelList_v1(rw, m.levels)
+    writeLinks_v1(rw, m.links)
+    writeDisplayOptions_v1(rw, opts)
 
   except MapReadError as e:
     raise e

@@ -10,6 +10,7 @@ import selection
 
 using l: Level
 
+# {{{ newLevel*()
 proc newLevel*(locationName, levelName: string, elevation: int,
                rows, cols: Natural): Level =
 
@@ -17,14 +18,25 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   result.locationName = locationName
   result.levelName = levelName
   result.elevation = elevation
+
+  result.regionNames = @[]
+
   result.cellGrid = newCellGrid(rows, cols)
   result.notes = initTable[Natural, Note]()
 
+# }}}
+# {{{ rows*()
+proc rows*(l): Natural {.inline.} =
+  l.cellGrid.rows
 
-proc rows*(l): Natural {.inline.} = l.cellGrid.rows
-proc cols*(l): Natural {.inline.} = l.cellGrid.cols
+# }}}
+# {{{ cols*()
+proc cols*(l): Natural {.inline.} =
+  l.cellGrid.cols
 
+# }}}
 
+# {{{ locationKey()
 template locationKey(m; r,c: Natural): Natural =
   let h = m.rows
   let w = m.cols
@@ -32,26 +44,39 @@ template locationKey(m; r,c: Natural): Natural =
   assert c < w
   r*w + c
 
+# }}}
+
+# {{{ numNotes*()
 proc numNotes*(l): Natural =
   l.notes.len
 
+# }}}
+# {{{ hasNote*()
 proc hasNote*(l; r,c: Natural): bool {.inline.} =
   let key = locationKey(l, r,c)
   l.notes.hasKey(key)
 
+# }}}
+# {{{ getNote*()
 proc getNote*(l; r,c: Natural): Note =
   let key = locationKey(l, r,c)
   l.notes[key]
 
+# }}}
+# {{{ setNote*()
 proc setNote*(l; r,c: Natural, note: Note) =
   let key = locationKey(l, r,c)
   l.notes[key] = note
 
+# }}}
+# {{{ delNote*()
 proc delNote*(l; r,c: Natural) =
   let key = locationKey(l, r,c)
   if l.notes.hasKey(key):
     l.notes.del(key)
 
+# }}}
+# {{{ reindexNotes*()
 proc reindexNotes*(l) =
   var keys: seq[int] = @[]
   for k, n in l.notes.pairs():
@@ -61,6 +86,8 @@ proc reindexNotes*(l) =
   for i, k in keys.pairs():
     l.notes[k].index = i+1
 
+# }}}
+# {{{ allNotes*()
 iterator allNotes*(l): (Natural, Natural, Note) =
   for k, note in l.notes.pairs:
     let
@@ -68,6 +95,8 @@ iterator allNotes*(l): (Natural, Natural, Note) =
       col = k mod l.cols
     yield (row.Natural, col.Natural, note)
 
+# }}}
+# {{{ delNotes()
 proc delNotes(l; rect: Rect[Natural]) =
   var toDel: seq[(Natural, Natural)]
   for r,c, _ in l.allNotes:
@@ -75,6 +104,8 @@ proc delNotes(l; rect: Rect[Natural]) =
       toDel.add((r,c))
   for (r,c) in toDel: l.delNote(r,c)
 
+# }}}
+# {{{ convertNoteToComment()
 proc convertNoteToComment(l; r,c: Natural) =
   if l.hasNote(r,c):
     let note = l.getNote(r,c)
@@ -83,50 +114,80 @@ proc convertNoteToComment(l; r,c: Natural) =
       let commentNote = Note(kind: nkComment, text: note.text)
       l.setNote(r,c, commentNote)
 
+# }}}
+# {{{ copyNotesFrom()
 proc copyNotesFrom(l; destRow, destCol: Natural,
                    src: Level, srcRect: Rect[Natural]) =
   for (r,c, note) in src.allNotes:
     if srcRect.contains(r,c):
       l.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
 
+# }}}
 
+# {{{ getFloor*()
 proc getFloor*(l; r,c: Natural): Floor {.inline.} =
   l.cellGrid.getFloor(r,c)
 
+# }}}
+# {{{ setFloor*()
 proc setFloor*(l; r,c: Natural, f: Floor) =
   l.convertNoteToComment(r,c)
   l.cellGrid.setFloor(r,c, f)
 
+# }}}
+# {{{ getFloorOrientation*()
 proc getFloorOrientation*(l; r,c: Natural): Orientation {.inline.} =
   l.cellGrid.getFloorOrientation(r,c)
 
+# }}}
+# {{{ setFloorOrientation*()
 proc setFloorOrientation*(l; r,c: Natural, ot: Orientation) {.inline.} =
   l.cellGrid.setFloorOrientation(r,c, ot)
 
+# }}}
+# {{{ getFloorColor*()
 proc getFloorColor*(l; r,c: Natural): Natural {.inline.} =
   l.cellGrid.getFloorColor(r,c)
 
+# }}}
+# {{{ setFloorColor*()
 proc setFloorColor*(l; r,c, col: Natural) {.inline.} =
   l.cellGrid.setFloorColor(r,c, col)
 
+# }}}
+# {{{ getWall*()
 proc getWall*(l; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
   l.cellGrid.getWall(r,c, dir)
 
+# }}}
+# {{{ setWall*()
 proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
   l.cellGrid.setWall(r,c, dir, w)
 
-proc getNeighbourCell*(l; r,c: Natural, dir: Direction): Option[Cell] {.inline.} =
+# }}}
+# {{{ getNeighbourCell*()
+proc getNeighbourCell*(l; r,c: Natural,
+                       dir: Direction): Option[Cell] {.inline.} =
   l.cellGrid.getNeighbourCell(r,c, dir)
 
+# }}}
+# {{{ isNeighbourCellEmpty*()
 proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool {.inline.} =
   l.cellGrid.isNeighbourCellEmpty(r,c, dir)
 
+# }}}
+# {{{ isEmpty*()
 proc isEmpty*(l; r,c: Natural): bool {.inline.} =
   l.cellGrid.isEmpty(r,c)
 
+# }}}
+# {{{ canSetWall*()
 proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
   l.getFloor(r,c) != fNone or not l.isNeighbourCellEmpty(r,c, {dir})
 
+# }}}
+
+# {{{ eraseOrphanedWalls*()
 proc eraseOrphanedWalls*(l; r,c: Natural) =
   template cleanWall(dir: CardinalDir) =
     if l.isNeighbourCellEmpty(r,c, {dir}):
@@ -138,7 +199,82 @@ proc eraseOrphanedWalls*(l; r,c: Natural) =
     cleanWall(dirS)
     cleanWall(dirE)
 
+# }}}
+# {{{ eraseCellWalls*()
+proc eraseCellWalls*(l; r,c: Natural) =
+  l.setWall(r,c, dirN, wNone)
+  l.setWall(r,c, dirW,  wNone)
+  l.setWall(r,c, dirS, wNone)
+  l.setWall(r,c, dirE,  wNone)
 
+# }}}
+# {{{ eraseCell*()
+proc eraseCell*(l; r,c: Natural) =
+  l.eraseCellWalls(r,c)
+  l.setFloor(r,c, fNone)
+  l.delNote(r,c)
+
+# }}}
+
+# {{{ guessFloorOrientation*()
+proc guessFloorOrientation*(l; r,c: Natural): Orientation =
+  if l.getWall(r,c, dirN) != wNone and
+     l.getWall(r,c, dirS) != wNone:
+    Vert
+  else:
+    Horiz
+
+# }}}
+# {{{ calcResizeParams*()
+proc calcResizeParams*(
+  l; newRows, newCols: Natural, align: Direction
+ ): tuple[destRow, destCol: Natural, copyRect: Rect[Natural]] =
+
+  var srcRect = rectI(0, 0, l.rows, l.cols)
+
+  proc shiftHoriz(r: var Rect[int], d: int) =
+    r.c1 += d
+    r.c2 += d
+
+  proc shiftVert(r: var Rect[int], d: int) =
+    r.r1 += d
+    r.r2 += d
+
+  if dirE in align:
+    srcRect.shiftHoriz(newCols - l.cols)
+  elif {dirE, dirW} * align == {}:
+    srcRect.shiftHoriz((newCols - l.cols) div 2)
+
+  if dirS in align:
+    srcRect.shiftVert(newRows - l.rows)
+  elif {dirS, dirN} * align == {}:
+    srcRect.shiftVert((newRows - l.rows) div 2)
+
+  let destRect = rectI(0, 0, newRows, newCols)
+  var intRect = srcRect.intersect(destRect).get
+
+  var copyRect: Rect[Natural]
+  var destRow = 0
+  if srcRect.r1 < 0: copyRect.r1 = -srcRect.r1
+  else: destRow = srcRect.r1
+
+  var destCol = 0
+  if srcRect.c1 < 0: copyRect.c1 = -srcRect.c1
+  else: destCol = srcRect.c1
+
+  copyRect.r2 = copyRect.r1 + intRect.rows
+  copyRect.c2 = copyRect.c1 + intRect.cols
+
+  result = (destRow.Natural, destCol.Natural, copyRect)
+
+# }}}
+# {{{ isSpecialLevelIndex*()
+proc isSpecialLevelIndex*(idx: Natural): bool =
+  idx >= CopyBufferLevelIndex
+
+# }}}
+
+# {{{ paste*()
 proc paste*(l; destRow, destCol: int, src: Level,
             sel: Selection): Option[Rect[Natural]] =
 
@@ -186,7 +322,9 @@ proc paste*(l; destRow, destCol: int, src: Level,
           if src.hasNote(srcRow, srcCol):
             l.setNote(r,c, src.getNote(srcRow, srcCol))
 
+# }}}
 
+# {{{ copyFrom*(()
 proc copyFrom*(l; destRow, destCol: Natural,
                src: Level, srcRect: Rect[Natural]) =
 
@@ -197,7 +335,8 @@ proc copyFrom*(l; destRow, destCol: Natural,
 
   l.copyNotesFrom(destRow, destCol, src, srcRect)
 
-
+# }}}
+# {{{ newLevelFrom*()
 proc newLevelFrom*(src: Level, rect: Rect[Natural],
                    border: Natural = 0): Level =
   assert rect.r1 < src.rows
@@ -238,73 +377,12 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural],
 
   result = dest
 
-
+# }}}
+# {{{ newLevelFrom*()
 proc newLevelFrom*(l): Level =
   newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
 
-
-proc eraseCellWalls*(l; r,c: Natural) =
-  l.setWall(r,c, dirN, wNone)
-  l.setWall(r,c, dirW,  wNone)
-  l.setWall(r,c, dirS, wNone)
-  l.setWall(r,c, dirE,  wNone)
-
-proc eraseCell*(l; r,c: Natural) =
-  l.eraseCellWalls(r,c)
-  l.setFloor(r,c, fNone)
-  l.delNote(r,c)
-
-proc guessFloorOrientation*(l; r,c: Natural): Orientation =
-  if l.getWall(r,c, dirN) != wNone and
-     l.getWall(r,c, dirS) != wNone:
-    Vert
-  else:
-    Horiz
-
-
-proc calcResizeParams*(
-  l; newRows, newCols: Natural, align: Direction
- ): tuple[destRow, destCol: Natural, copyRect: Rect[Natural]] =
-
-  var srcRect = rectI(0, 0, l.rows, l.cols)
-
-  proc shiftHoriz(r: var Rect[int], d: int) =
-    r.c1 += d
-    r.c2 += d
-
-  proc shiftVert(r: var Rect[int], d: int) =
-    r.r1 += d
-    r.r2 += d
-
-  if dirE in align:
-    srcRect.shiftHoriz(newCols - l.cols)
-  elif {dirE, dirW} * align == {}:
-    srcRect.shiftHoriz((newCols - l.cols) div 2)
-
-  if dirS in align:
-    srcRect.shiftVert(newRows - l.rows)
-  elif {dirS, dirN} * align == {}:
-    srcRect.shiftVert((newRows - l.rows) div 2)
-
-  let destRect = rectI(0, 0, newRows, newCols)
-  var intRect = srcRect.intersect(destRect).get
-
-  var copyRect: Rect[Natural]
-  var destRow = 0
-  if srcRect.r1 < 0: copyRect.r1 = -srcRect.r1
-  else: destRow = srcRect.r1
-
-  var destCol = 0
-  if srcRect.c1 < 0: copyRect.c1 = -srcRect.c1
-  else: destCol = srcRect.c1
-
-  copyRect.r2 = copyRect.r1 + intRect.rows
-  copyRect.c2 = copyRect.c1 + intRect.cols
-
-  result = (destRow.Natural, destCol.Natural, copyRect)
-
-
-proc isSpecialLevelIndex*(idx: Natural): bool =
-  idx >= CopyBufferLevelIndex
-
 # }}}
+
+
+# vim: et:ts=2:sw=2:fdm=marker

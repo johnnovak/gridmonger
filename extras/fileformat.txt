@@ -33,9 +33,9 @@ RIFF ('GRDM'            # Gridmonger map file
 
 
 'coor'
-    UINT8   origin        (0 = northeast, 1 = southeast)
-    UINT8   rowStyle      (0 = number, 1 = letter)
-    UINT8   columnStyle   (0 = number, 1 = letter)
+    UINT8   origin        (0=northeast, 1=southeast)
+    UINT8   rowStyle      (0=number, 1=letter)
+    UINT8   columnStyle   (0=number, 1=letter)
     INT16   rowStart
     INT16   columnStart
 
@@ -45,11 +45,14 @@ RIFF ('GRDM'            # Gridmonger map file
     BSTR    levelName     (minLen=0, maxLen=100)
     INT16   elevation     (min=-200, max=200)
     UINT16  numRows       (min=1, max=6666)
-    UINT16  numColums     (max=1, max=6666)
-    UINT8   overrideCoordOpts   (0=off, 1=on)
+    UINT16  numColums     (min=1, max=6666)
+    UINT8   overrideCoordOpts   (0=off, >0=on)
 
 
 'regn'
+    UINT8   enableRegions (0=off, >0=on)
+    UINT16  regionColumns (min=2, max=6666)
+    UINT16  regionRows    (min=2, max=6666)
     UINT16  numRegions
 
     numRegion times:

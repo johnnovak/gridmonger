@@ -1786,7 +1786,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   var x = 30.0
   var y = 50.0
 
-  let tabLabels = @["General", "Coordinates", "Regions"]
+  let tabLabels = @["General", "Coordinates", "Regions", "Comments"]
 
   dlg.activeTab = koi.radioButtons(
     (DlgWidth - TabWidth) / 2, y, TabWidth, h,

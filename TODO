@@ -18,6 +18,9 @@ TODO
   - 10 colours (1st color must be the default)
   - region gfx improvements
   - map properties (coord offset etc) don't get saved/loaded
+  - map/level comments
+  - metadata (author, game, etc)
+  - save display related info into map?
 
   - RLE compression
   - remove text label
