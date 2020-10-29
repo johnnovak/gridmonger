@@ -337,10 +337,13 @@ proc readRegions_v1(rr): (RegionOptions, seq[string]) =
   checkValueRange(regionRows, "lvl.regn.regionRows",
                   RegionRowsMin, RegionRowsMax)
 
+  let perRegionCoords = rr.read(uint8).bool
+
   let regionOpts = RegionOptions(
-    enableRegions: enableRegions,
-    regionColumns: regionColumns,
-    regionRows:    regionRows
+    enableRegions:   enableRegions,
+    regionColumns:   regionColumns,
+    regionRows:      regionRows,
+    perRegionCoords: perRegionCoords
   )
 
   let numRegions = rr.read(uint16).Natural
@@ -680,6 +683,7 @@ proc writeRegions_v1(rw; l: Level) =
   rw.write(l.regionOpts.enableRegions.uint8)
   rw.write(l.regionOpts.regionColumns.uint16)
   rw.write(l.regionOpts.regionRows.uint16)
+  rw.write(l.regionOpts.perRegionCoords.uint8)
 
   rw.write(l.regionNames.len.uint16)
   for name in l.regionNames:

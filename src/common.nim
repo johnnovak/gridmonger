@@ -67,9 +67,10 @@ type
 
 
   RegionOptions* = object
-    enableRegions*: bool
-    regionColumns*: Natural
-    regionRows*:    Natural
+    enableRegions*:   bool
+    regionColumns*:   Natural
+    regionRows*:      Natural
+    perRegionCoords*: bool
 
 
   Level* = ref object

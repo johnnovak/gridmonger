@@ -267,6 +267,7 @@ type
     enableRegions: bool
     regionColumns: string
     regionRows:    string
+    perRegionCoords: bool
 
 
   EditLevelPropsParams = object
@@ -291,6 +292,7 @@ type
     enableRegions: bool
     regionColumns: string
     regionRows:    string
+    perRegionCoords: bool
 
 
   ResizeLevelDialogParams = object
@@ -500,8 +502,8 @@ proc drawStatusBar(y: float, winWidth: float; a) =
     let
       l = getCurrLevel(a)
       coordOpts = getCoordOptsForCurrLevel(a)
-      row = formatRowCoord(a.ui.cursor.row, coordOpts, l.rows)
-      col = formatColumnCoord(a.ui.cursor.col, coordOpts, l.cols)
+      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
+      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
       cursorPos = fmt"({col}, {row})"
       tw = vg.textWidth(cursorPos)
 
@@ -1180,17 +1182,18 @@ template coordinateFields() =
 # }}}
 # {{{ regionFields()
 template regionFields() =
-  koi.label(x, y, LabelWidth, h, "Enable regions")
+  let labelWidth = 160.0
+  koi.label(x, y, labelWidth, h, "Enable regions")
   dlg.enableRegions = koi.checkBox(
-    x + LabelWidth, y + DlgCheckBoxYOffs,
+    x + labelWidth, y + DlgCheckBoxYOffs,
     DlgCheckBoxWidth, dlg.enableRegions
   )
 
   if dlg.enableRegions:
     y += PadYLarge
-    koi.label(x, y, LabelWidth, h, "Region columns")
+    koi.label(x, y, labelWidth, h, "Region columns")
     dlg.regionColumns = koi.textField(
-      x + LabelWidth, y, w = 60.0, h,
+      x + labelWidth, y, w = 60.0, h,
       dlg.regionColumns,
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
@@ -1201,15 +1204,22 @@ template regionFields() =
     )
 
     y += PadYSmall
-    koi.label(x, y, LabelWidth, h, "Region rows")
+    koi.label(x, y, labelWidth, h, "Region rows")
     dlg.regionRows = koi.textField(
-      x + LabelWidth, y, w = 60.0, h,
+      x + labelWidth, y, w = 60.0, h,
       dlg.regionRows,
       constraint = TextFieldConstraint(
         kind: tckInteger,
         min: 2,
         max: LevelNumColumnsMax
       ).some
+    )
+
+    y += PadYLarge
+    koi.label(x, y, labelWidth, h, "Per-region coordinates")
+    dlg.perRegionCoords = koi.checkBox(
+      x + labelWidth, y + DlgCheckBoxYOffs,
+      DlgCheckBoxWidth, dlg.perRegionCoords
     )
 
 # }}}
@@ -1758,9 +1768,10 @@ proc openNewLevelDialog(a) =
   dlg.rowStart    = $co.rowStart
   dlg.columnStart = $co.columnStart
 
-  dlg.enableRegions = false
-  dlg.regionColumns = "16"
-  dlg.regionRows = "16"
+  dlg.enableRegions   = false
+  dlg.regionColumns   = "16"
+  dlg.regionRows      = "16"
+  dlg.perRegionCoords = true
 
   dlg.isOpen = true
   dlg.activeTab = 0
@@ -1856,25 +1867,27 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
       cols = parseInt(dlg.cols)
       elevation = parseInt(dlg.elevation)
 
+    let coordOpts = CoordinateOptions(
+      origin      : CoordinateOrigin(dlg.origin),
+      rowStyle    : CoordinateStyle(dlg.rowStyle),
+      columnStyle : CoordinateStyle(dlg.columnStyle),
+      rowStart    : parseInt(dlg.rowStart),
+      columnStart : parseInt(dlg.columnStart)
+    )
+
+    let regionOpts = RegionOptions(
+      enableRegions   : dlg.enableRegions,
+      regionColumns   : parseInt(dlg.regionColumns),
+      regionRows      : parseInt(dlg.regionRows),
+      perRegionCoords : dlg.perRegionCoords
+    )
+
     cur = actions.addNewLevel(
       a.doc.map, cur, dlg.locationName,
       dlg.levelName, elevation, rows, cols,
+      dlg.overrideCoordOpts, coordOpts, regionOpts,
       a.doc.undoManager
     )
-
-    let l = getCurrLevel(a)
-    alias(co, l.coordOpts)
-    l.overrideCoordOpts = dlg.overrideCoordOpts
-    co.origin           = CoordinateOrigin(dlg.origin)
-    co.rowStyle         = CoordinateStyle(dlg.rowStyle)
-    co.columnStyle      = CoordinateStyle(dlg.columnStyle)
-    co.rowStart         = parseInt(dlg.rowStart)
-    co.columnStart      = parseInt(dlg.columnStart)
-
-    alias(ro, l.regionOpts)
-    ro.enableRegions = dlg.enableRegions
-    ro.regionColumns = parseInt(dlg.regionColumns)
-    ro.regionRows    = parseInt(dlg.regionRows)
 
     setStatusMessage(IconFile, fmt"New {rows}x{cols} level created", a)
 
@@ -1935,6 +1948,7 @@ proc openEditLevelPropsDialog(a) =
   dlg.enableRegions = ro.enableRegions
   dlg.regionColumns = $ro.regionColumns
   dlg.regionRows = $ro.regionRows
+  dlg.perRegionCoords = ro.perRegionCoords
 
   dlg.isOpen = true
 
@@ -2021,9 +2035,10 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
     )
 
     let regionOpts = RegionOptions(
-      enableRegions : dlg.enableRegions,
-      regionRows    : parseInt(dlg.regionRows),
-      regionColumns : parseInt(dlg.regionColumns)
+      enableRegions   : dlg.enableRegions,
+      regionRows      : parseInt(dlg.regionRows),
+      regionColumns   : parseInt(dlg.regionColumns),
+      perRegionCoords : dlg.perRegionCoords
     )
 
     actions.setLevelProps(a.doc.map, a.ui.cursor,
@@ -3388,7 +3403,10 @@ proc handleGlobalKeyEvents(a) =
         sel.fill(true)
         ui.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
         map.levels[cur.level] = newLevel(
-          l.locationName, l.levelName, l.elevation, l.rows, l.cols
+          l.locationName, l.levelName, l.elevation,
+          l.rows, l.cols,
+          l.overrideCoordOpts, l.coordOpts,
+          l.regionOpts, l.regionNames
         )
 
         dp.selStartRow = 0

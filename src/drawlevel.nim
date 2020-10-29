@@ -135,7 +135,6 @@ proc `[]`(b: OutlineBuf, r,c: Natural): OutlineCell =
   assert c < b.cols
   result = b.cells[r*b.cols + c]
 
-
 # }}}
 
 const
@@ -229,7 +228,7 @@ proc gridSize*(dp): float = dp.gridSize
 
 # }}}
 
-# {{{ utils
+# {{{ Utils
 
 # This is needed for drawing crisp lines
 func snap(f: float, strokeWidth: float): float =
@@ -462,7 +461,7 @@ proc drawCellCoords(l: Level; ctx) =
     let
       xPos = cellX(c, dp) + dp.gridSize*0.5
       col = dp.viewStartCol + c
-      coord = formatColumnCoord(col, dp.cellCoordOpts, l.cols)
+      coord = formatColumnCoord(col, l.cols, dp.cellCoordOpts, dp.regionOpts)
 
     setTextHighlight(col == dp.cursorCol)
 
@@ -473,7 +472,7 @@ proc drawCellCoords(l: Level; ctx) =
     let
       yPos = cellY(r, dp) + dp.gridSize*0.5
       row = dp.viewStartRow + r
-      coord = formatRowCoord(row, dp.cellCoordOpts, l.rows)
+      coord = formatRowCoord(row, l.rows, dp.cellCoordOpts, dp.regionOpts)
 
     setTextHighlight(row == dp.cursorRow)
 
@@ -2144,19 +2143,23 @@ proc drawEmptyRegionBorderWest(viewBuf: Level, viewCol: Natural; ctx) =
 
 # }}}
 # {{{ drawWalls()
-proc drawWalls(viewBuf: Level; ctx) =
+proc drawWalls(l: Level, viewBuf: Level; ctx) =
   alias(dp, ctx.dp)
   alias(ro, dp.regionOpts)
 
   for viewRow in 0..dp.viewRows:
     let row = dp.viewStartRow + viewRow
-    let regionBorder = ro.enableRegions and row mod ro.regionRows == 0
+    let regionBorder = ro.enableRegions and
+                       row > 0 and row < l.rows and 
+                       row mod ro.regionRows == 0
     if not regionBorder:
       drawCellWallsNorth(viewBuf, viewRow, regionBorder=false, ctx)
 
   for viewCol in 0..dp.viewCols:
     let col = dp.viewStartCol + viewCol
-    let regionBorder = ro.enableRegions and col mod ro.regionColumns == 0
+    let regionBorder = ro.enableRegions and
+                       col > 0 and col < l.cols and
+                       col mod ro.regionColumns == 0
     if not regionBorder:
       drawCellWallsWest(viewBuf, viewCol, regionBorder=false, ctx)
 
@@ -2169,6 +2172,10 @@ template drawRegionBorderRows(l: Level; viewBuf: Level; ctx;
 
   let rr = dp.regionOpts.regionRows
   var startViewRow = (dp.viewStartRow div rr) * rr - dp.viewStartRow
+
+  if dp.cellCoordOpts.origin == coSouthWest:
+    startViewRow += l.rows mod rr
+
   if startViewRow < 0:
     startViewRow += rr
 
@@ -2184,6 +2191,7 @@ template drawRegionBorderCols(l: Level; viewBuf: Level; ctx;
   alias(dp, ctx.dp)
 
   let rc = dp.regionOpts.regionColumns
+
   var startViewCol = (dp.viewStartCol div rc) * rc - dp.viewStartCol
   if startViewCol < 0:
     startViewCol += rc
@@ -2429,7 +2437,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   if ls.outerShadowEnabled:
     drawOuterShadows(viewBuf, ctx)
 
-  drawWalls(viewBuf, ctx)
+  drawWalls(l, viewBuf, ctx)
 
   if dp.regionOpts.enableRegions:
     drawRegionBorders(l, viewBuf, ctx)

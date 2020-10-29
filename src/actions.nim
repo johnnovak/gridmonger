@@ -45,6 +45,7 @@ template fullLevelAction(map; loc: Location; um;
     m.links.addAll(oldLinks)
     result = usd
 
+
   um.storeUndoState(action, undoAction)
   discard action(map)
 
@@ -72,7 +73,7 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
   let undoLevel = newLevelFrom(map.levels[lvl], rect)
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[lvl].copyFrom(
+    m.levels[lvl].copyCellsAndNotesFrom(
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
@@ -270,7 +271,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
   if map.links.hasWithDest(src):  oldLinks.set(map.links.getByDest(src), src)
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[level].copyFrom(
+    m.levels[level].copyCellsAndNotesFrom(
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
@@ -329,7 +330,7 @@ proc fillSelection*(map; level: Natural, sel: Selection,
 # }}}
 # {{{ surroundSelection*()
 proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
-                                 bbox: Rect[Natural], um) =
+                                 bbox: Rect[Natural]; um) =
 
   cellAreaAction(map, level, bbox, um, groupWithPrev=false,
                  "Surround selection with walls", m):
@@ -502,14 +503,16 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 # }}}
 
 # {{{ addNewLevel*()
-proc addNewLevel*(map; loc: Location,
-                  locationName, levelName: string, elevation: int,
-                  rows, cols: Natural; um): Location =
+proc addNewLevel*(map; loc: Location, locationName, levelName: string,
+                  elevation: int, rows, cols: Natural,
+                  overrideCoordOpts: bool, coordOpts: CoordinateOptions,
+                  regionOpts: RegionOptions; um): Location =
 
   let usd = UndoStateData(actionName: "New level", location: loc)
 
   let action = proc (m: var Map): UndoStateData =
-    let newLevel = newLevel(locationName, levelName, elevation, rows, cols)
+    let newLevel = newLevel(locationName, levelName, elevation, rows, cols,
+                            overrideCoordOpts, coordOpts, regionOpts)
     m.addLevel(newLevel)
 
     var usd = usd
@@ -531,7 +534,7 @@ proc addNewLevel*(map; loc: Location,
 
 # }}}
 # {{{ deleteLevel*()
-proc deleteLevel*(map; loc: Location, um): Location =
+proc deleteLevel*(map; loc: Location; um): Location =
 
   let usd = UndoStateData(actionName: "Delete level", location: loc)
 
@@ -607,10 +610,16 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
   fullLevelAction(map, loc, um, "Resize level", oldLinks, newLinks, m):
     alias(l, m.levels[loc.level])
-    var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
-                            newRows, newCols)
 
-    newLevel.copyFrom(destRow, destCol, l, copyRect)
+    # TODO region names needs to be updated when resizing the level
+    # (search for newRegionNames and update all occurences)
+    let newRegionNames = l.regionNames
+
+    var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
+                            newRows, newCols, l.overrideCoordOpts, l.coordOpts,
+                            l.regionOpts, newRegionNames)
+
+    newLevel.copyCellsAndNotesFrom(destRow, destCol, l, copyRect)
     l = newLevel
 
 # }}}
@@ -652,7 +661,11 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.levelName,
       sb.level.elevation,
       sb.level.rows,
-      sb.level.cols
+      sb.level.cols,
+      sb.level.overrideCoordOpts,
+      sb.level.coordOpts,
+      sb.level.regionOpts,
+      sb.level.regionNames
     )
     discard l.paste(rowOffs, colOffs, sb.level, sb.selection)
     m.levels[loc.level] = l
@@ -664,7 +677,6 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     usd.location.row = max(usd.location.row + rowOffs, 0)
     usd.location.col = max(usd.location.col + colOffs, 0)
     result = usd
-
 
   let undoLevel = newLevelFrom(sb.level)
   let undoAction = proc (m: var Map): UndoStateData =

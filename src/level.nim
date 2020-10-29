@@ -11,29 +11,38 @@ import selection
 using l: Level
 
 # {{{ newLevel*()
+const DefaultCoordOpts = CoordinateOptions(
+  origin:      coNorthWest,
+  rowStyle:    csNumber,
+  columnStyle: csNumber,
+  rowStart:    1,
+  columnStart: 1
+)
+
+const DefaultRegionOpts = RegionOptions(
+  enableRegions:   false,
+  regionColumns:   2,
+  regionRows:      2,
+  perRegionCoords: true
+)
+
 proc newLevel*(locationName, levelName: string, elevation: int,
-               rows, cols: Natural): Level =
+               rows, cols: Natural,
+               overrideCoordOpts: bool = false,
+               coordOpts: CoordinateOptions = DefaultCoordOpts,
+               regionOpts: RegionOptions = DefaultRegionOpts,
+               regionNames: seq[string]=  @[]): Level =
 
   var l = new Level
   l.locationName = locationName
   l.levelName = levelName
   l.elevation = elevation
 
-  l.overrideCoordOpts = false
-  l.coordOpts = CoordinateOptions(
-    origin:      coNorthWest,
-    rowStyle:    csNumber,
-    columnStyle: csNumber,
-    rowStart:    1,
-    columnStart: 1
-  )
+  l.overrideCoordOpts = overrideCoordOpts
+  l.coordOpts = coordOpts
 
-  l.regionOpts = RegionOptions(
-    enableRegions: false,
-    regionColumns: 2,
-    regionRows:    2
-  )
-  l.regionNames = @[]
+  l.regionOpts = regionOpts
+  l.regionNames = regionNames
 
   l.cellGrid = newCellGrid(rows, cols)
   l.notes = initTable[Natural, Note]()
@@ -340,8 +349,8 @@ proc paste*(l; destRow, destCol: int, src: Level,
 
 # }}}
 
-# {{{ copyFrom*(()
-proc copyFrom*(l; destRow, destCol: Natural,
+# {{{ copyCellsAndNotesFrom*(()
+proc copyCellsAndNotesFrom*(l; destRow, destCol: Natural,
                src: Level, srcRect: Rect[Natural]) =
 
   l.cellGrid.copyFrom(destRow, destCol, src.cellGrid, srcRect)
@@ -354,7 +363,7 @@ proc copyFrom*(l; destRow, destCol: Natural,
 # }}}
 # {{{ newLevelFrom*()
 proc newLevelFrom*(src: Level, rect: Rect[Natural],
-                   border: Natural = 0): Level =
+                   border: Natural=0): Level =
   assert rect.r1 < src.rows
   assert rect.c1 < src.cols
   assert rect.r2 <= src.rows
@@ -382,14 +391,17 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural],
   inc(srcRect.r2, border)
   inc(srcRect.c2, border)
 
-  var dest = newLevel(src.locationName, src.levelName, src.elevation,
-                      rect.rows + border*2, rect.cols + border*2)
-  dest.copyFrom(destRow, destCol, src, srcRect)
+  # TODO region names needs to be updated when resizing the level
+  # (search for newRegionNames and update all occurences)
+  let newRegionNames = src.regionNames
 
-  dest.overrideCoordOpts = src.overrideCoordOpts
-  dest.coordOpts = src.coordOpts
-  dest.regionOpts = src.regionOpts
-  dest.regionNames = src.regionNames
+  var dest = newLevel(src.locationName, src.levelName, src.elevation,
+                      rows = rect.rows + border*2,
+                      cols = rect.cols + border*2,
+                      src.overrideCoordOpts, src.coordOpts,
+                      src.regionOpts, newRegionNames)
+
+  dest.copyCellsAndNotesFrom(destRow, destCol, src, srcRect)
 
   result = dest
 

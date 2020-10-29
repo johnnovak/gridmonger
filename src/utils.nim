@@ -41,26 +41,31 @@ proc `<`*(a, b: Location): bool =
 # {{{ toLetterCoord*)
 proc toLetterCoord*(x: Natural): string =
 
+  const N = 26  # number of letters in alphabet
+
   proc toLetter(i: Natural): char = chr(ord('A') + i)
 
-  if x < 26:
+  if x < N:
     result = $x.toLetter
-  elif x < 26*26:
-    result = (x div 26 - 1).toLetter & (x mod 26).toLetter
-  elif x < 26*26*26:
-    let d1 = x mod 26
-    var x = x div 26
-    let d2 = x mod 26
-    let d3 = x div 26 - 1
+  elif x < N*N:
+    result = (x div N - 1).toLetter & (x mod N).toLetter
+  elif x < N*N*N:
+    let d1 = x mod N
+    var x = x div N
+    let d2 = x mod N
+    let d3 = x div N - 1
     result = d3.toLetter & d2.toLetter & d1.toLetter
   else:
     result = ""
 
 # }}}
 # {{{ formatColumnCoord*()
-proc formatColumnCoord*(col: Natural, co: CoordinateOptions,
-                        numCols: Natural): string =
-  var x = co.columnStart + col
+proc formatColumnCoord*(col: Natural, numCols: Natural,
+                        co: CoordinateOptions, ro: RegionOptions): string =
+
+  let x = co.columnStart + (if ro.enableRegions and ro.perRegionCoords:
+                              col mod ro.regionColumns
+                            else: col)
 
   case co.columnStyle
   of csNumber: $x
@@ -68,13 +73,16 @@ proc formatColumnCoord*(col: Natural, co: CoordinateOptions,
 
 # }}}
 # {{{ formatRowCoord*()
-proc formatRowCoord*(row: Natural, co: CoordinateOptions,
-                     numRows: Natural): string =
-  var x = co.rowStart + (
-    case co.origin
-      of coNorthWest: row
-      of coSouthWest: numRows-1 - row
-  )
+proc formatRowCoord*(row: Natural, numRows: Natural,
+                     co: CoordinateOptions, ro: RegionOptions): string =
+
+  var x = case co.origin
+    of coNorthWest: row
+    of coSouthWest: numRows-1 - row
+
+  x = co.rowStart + (if ro.enableRegions and ro.perRegionCoords:
+                       x mod ro.regionRows
+                     else: x)
 
   case co.rowStyle
   of csNumber: $x

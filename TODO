@@ -7,17 +7,20 @@ BUGS
   - fix cursor pos after undo crop level
     restored
   - new map -> new level -> undo: redo doesn't work
+  - row/col offset (letter) -> enter negative or invalid value -> exception
 
 
 TODO
+  - region gfx improvements
+  - region names
+  - region name reassignment when resizing a level
   - disable ctrl movement in wasd mode
   - text color based on bg color luminance
   - disable ctrl in excavate, erase & floor modes
   - show current color / tool in statusbar when toolbar is not visible
+  - two-column toolbars for small window sizes
   - colours in two columns (to support 1366x768)
   - 10 colours (1st color must be the default)
-  - region gfx improvements
-  - map properties (coord offset etc) don't get saved/loaded
   - map/level comments
   - metadata (author, game, etc)
   - save display related info into map?
@@ -25,9 +28,9 @@ TODO
   - RLE compression
   - remove text label
   - colours for text labels
-  - floor colours
 
   - koi: textarea widget
+  - koi: implement drawlists, redraw only when there's a diff
   - rethink save display params into file
   - autosave
 
@@ -41,9 +44,10 @@ TODO
   - clean up icons
   - come up with final marker icon set
 
-  - no crashes when attempting to load invalid files (log errors)
   - pin window support
-  - logging
+  - align left/right half of the screen buttons
+  - upgrade to custom glfw branch with custom resize icons
+  - logging (e.g. file loading)
 
 
 LOW PRIORITY
