@@ -99,7 +99,6 @@ type
     normalStrokeWidth:  float
 
     lineWidth:          LineWidth
-    thinOffs:           float
     vertTransformXOffs: float
 
     lineHatchPatterns:  LineHatchPatterns
@@ -172,20 +171,12 @@ proc setZoomLevel*(dp; ls; zl: Natural) =
   if dp.lineWidth == lwThin:
     dp.thinStrokeWidth = 1.0
     dp.normalStrokeWidth = 1.0
-    dp.thinOffs = 1.0
     dp.vertTransformXOffs = 1.0
 
   elif zl < 3 or dp.lineWidth == lwNormal:
     dp.thinStrokeWidth = 2.0
     dp.normalStrokeWidth = 2.0
-    dp.thinOffs = 1.0
     dp.vertTransformXOffs = 0.0
-
-  else:
-    dp.thinStrokeWidth = 2.0
-    dp.normalStrokeWidth = 3.0
-    dp.thinOffs = 0.0
-    dp.vertTransformXOffs = 1.0
 
   dp.cellCoordsFontSize = if   zl <= 2:   9.0
                           elif zl <= 3:  10.0
@@ -1038,7 +1029,7 @@ proc drawTrail(x, y: float; ctx) =
     x1 = snap(x + offs - sw2, sw)
     y1 = snap(y + offs - sw2, sw)
 
-  let a = dp.gridSize - 2*offs + sw + 1 - dp.thinOffs
+  let a = dp.gridSize - 2*offs + sw
 
   vg.fillColor(ls.lightDrawColor)
   vg.beginPath()
@@ -1087,7 +1078,7 @@ proc drawPressurePlate(x, y: float; ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    a = dp.gridSize - 2*offs
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
@@ -1107,7 +1098,7 @@ proc drawHiddenPressurePlate(x, y: float; ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    a = dp.gridSize - 2*offs
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
@@ -1137,7 +1128,7 @@ proc drawOpenPitWithColor(x, y: float, color: Color; ctx) =
     x1 = snap(x + offs - sw2, sw)
     y1 = snap(y + offs - sw2, sw)
 
-  let a = dp.gridSize - 2*offs + sw + 1 - dp.thinOffs
+  let a = dp.gridSize - 2*offs + sw
 
   vg.fillColor(color)
   vg.beginPath()
@@ -1162,7 +1153,7 @@ proc drawClosedPitWithColor(x, y: float, color: Color; ctx) =
 
   let
     offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs + 1 - dp.thinOffs
+    a = dp.gridSize - 2*offs
     sw = dp.thinStrokeWidth
     x1 = snap(x + offs, sw)
     y1 = snap(y + offs, sw)
@@ -1240,26 +1231,35 @@ proc drawInvisibleBarrier(x, y: float; ctx) =
 # }}}
 
 # {{{ Draw wall types
+# {{{ setWallStyle()
+template setWallStyle(): untyped =
+  let (sw, color, lineCap, xoffs) = if regionBorder:
+    (dp.normalStrokeWidth + 1, ls.regionBorderColor, lcjSquare, 1)
+  else:
+    (dp.normalStrokeWidth, ls.drawColor, lcjRound, 0)
+
+  vg.strokeWidth(sw)
+  vg.strokeColor(color)
+  vg.lineCap(linecap)
+
+  (sw, xoffs)
+
+# }}}
+#
 # {{{ drawSolidWallHoriz*()
 proc drawSolidWallHoriz*(x, y: float, regionBorder: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let sw = if regionBorder: dp.normalStrokeWidth + 1
-           else: dp.normalStrokeWidth
+  let (sw, _) = setWallStyle()
+
   let
     xs = snap(x, sw)
     xe = snap(x + dp.gridSize, sw)
     y = snap(y, sw)
 
-  vg.lineCap(lcjRound)
   vg.beginPath()
-
-  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
-
-  vg.strokeColor(color)
-  vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
   vg.stroke()
@@ -1329,35 +1329,25 @@ proc drawDoorHoriz*(x, y: float, regionBorder: bool = false,
   alias(vg, ctx.vg)
 
   let
-    o = dp.thinOffs
     wallLen = (dp.gridSize * 0.25).int
-    doorWidthOffs = -o # (if dp.zoomLevel < 4 or ls.thinLines: -1.0 else: 0)
-    doorWidth = round(dp.gridSize * 0.1) + doorWidthOffs
+    doorWidth = round(dp.gridSize * 0.1) - 1
     xs = x
     y  = y
     x1 = xs + wallLen
     xe = xs + dp.gridSize
-    x2 = xe - wallLen - o
+    x2 = xe - wallLen - 1
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-
-  var sw = if regionBorder: dp.normalStrokeWidth + 1
-           else: dp.normalStrokeWidth
-
-  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
-
-  vg.strokeWidth(sw)
-  vg.strokeColor(color)
+  var (sw, xoffs) = setWallStyle()
 
   # Wall start
-  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1+1, sw), snap(y, sw))
+  vg.lineTo(snap(x1+1-xoffs, sw), snap(y, sw))
 
   # Wall end
-  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.moveTo(snap(x2+xoffs, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
@@ -1366,17 +1356,18 @@ proc drawDoorHoriz*(x, y: float, regionBorder: bool = false,
   vg.strokeWidth(sw)
   vg.strokeColor(ls.drawColor)
   vg.fillColor(ls.drawColor)
+  vg.lineCap(lcjSquare)
 
   vg.beginPath()
 
   if fill:
     if dp.lineWidth == lwThin:
-      vg.rect(x1+1, y1-o, x2-x1, y2-y1+2+o)
+      vg.rect(x1+1, y1-1, x2-x1, y2-y1+2+1)
     else:
-      vg.rect(snap(x1, sw), snap(y1-o-1, sw), x2-x1+1, y2-y1+3+o)
+      vg.rect(snap(x1, sw), snap(y1-2, sw), x2-x1+1, y2-y1+4)
     vg.fill()
   else:
-    vg.rect(snap(x1+1, sw), snap(y1-o, sw), x2-x1-1, y2-y1+1+o)
+    vg.rect(snap(x1+1, sw), snap(y1-1, sw), x2-x1-1, y2-y1+2)
     vg.stroke()
 
 # }}}
@@ -1395,25 +1386,19 @@ proc drawSecretDoorHoriz*(x, y: float, regionBorder: bool = false; ctx) =
     wallLen = (dp.gridSize * 0.25).int
     xs = x
     y  = y
-    x1 = xs + wallLen + dp.thinOffs
+    x1 = xs + wallLen + 1
     xe = xs + dp.gridSize
-    x2 = xe - wallLen - dp.thinOffs
+    x2 = xe - wallLen - 1
 
-  let sw = if regionBorder: dp.normalStrokeWidth + 1
-           else: dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-
-  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
-  vg.strokeColor(color)
+  var (sw, xoffs) = setWallStyle()
 
   # Wall start
-  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x1+xoffs, sw), snap(y, sw))
 
   # Wall end
-  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.moveTo(snap(x2+xoffs, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
@@ -1434,29 +1419,21 @@ proc drawArchwayHoriz*(x, y: float, regionBorder: bool = false,
     doorWidth = round(dp.gridSize * 0.075)
     xs = x
     y  = y
-    x1 = xs + wallLen + dp.thinOffs
+    x1 = xs + wallLen + 1
     xe = xs + dp.gridSize
-    x2 = xe - wallLen - dp.thinOffs
+    x2 = xe - wallLen - 1
     y1 = y - doorWidth
     y2 = y + doorWidth
 
-  var sw = if regionBorder: dp.normalStrokeWidth + 1
-           else: dp.normalStrokeWidth
-
-  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
-
-  vg.strokeWidth(sw)
-  vg.strokeColor(color)
+  var (sw, xoffs) = setWallStyle()
 
   # Wall start
-  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x1-xoffs, sw), snap(y, sw))
 
   # Wall end
-  vg.lineCap(lcjRound)
-  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.moveTo(snap(x2+xoffs, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
@@ -1464,6 +1441,7 @@ proc drawArchwayHoriz*(x, y: float, regionBorder: bool = false,
   sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(ls.drawColor)
+  vg.lineCap(lcjSquare)
 
   if drawOpening:
     vg.lineCap(lcjSquare)
@@ -1485,26 +1463,19 @@ proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, regionBorder: bool; ctx)
     wallLen = (dp.gridSize * 0.28).int
     xs = x
     y  = y
-    x1 = xs + wallLen + dp.thinOffs
+    x1 = xs + wallLen + 1
     xe = xs + dp.gridSize
-    x2 = xe - wallLen - dp.thinOffs
+    x2 = xe - wallLen - 1
 
-  let sw = if regionBorder: dp.normalStrokeWidth + 1
-           else: dp.normalStrokeWidth
-
-  vg.strokeWidth(sw)
-
-  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
-  vg.strokeColor(color)
+  var (sw, xoffs) = setWallStyle()
 
   # Wall start
-  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x1+xoffs, sw), snap(y, sw))
 
   # Wall end
-  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.moveTo(snap(x2+xoffs, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
@@ -1540,8 +1511,6 @@ proc drawLeverHoriz*(x, y: float, regionBorder: bool, northEast: bool; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawSolidWallHoriz(x, y, regionBorder, ctx)
-
   # Draw lever
   let
     lw = floor(dp.gridSize*0.2)
@@ -1561,6 +1530,8 @@ proc drawLeverHoriz*(x, y: float, regionBorder: bool, northEast: bool; ctx) =
   vg.beginPath()
   vg.rect(lx, ly, lw, lw)
   vg.fill()
+
+  drawSolidWallHoriz(x, y, regionBorder, ctx)
 
 
 proc drawLeverHorizNE*(x, y: float, regionBorder: bool = false; ctx) =
@@ -1582,18 +1553,10 @@ proc drawNicheHoriz*(x, y: float, regionBorder: bool, northEast: bool, floorColo
     nicheDepth = round(dp.gridSize * 0.15)
     xs = x
     y  = y
-    x1 = xs + wallLen + dp.thinOffs
+    x1 = xs + wallLen + 1
     xe = xs + dp.gridSize
-    x2 = xe - wallLen - dp.thinOffs
+    x2 = xe - wallLen - 1
     yn = if northEast: y-nicheDepth else: y+nicheDepth
-
-  var sw = if regionBorder: dp.normalStrokeWidth + 1
-           else: dp.normalStrokeWidth
-
-  vg.strokeWidth(sw)
-
-  let color = if regionBorder: ls.regionBorderColor else: ls.drawColor
-  vg.strokeColor(color)
 
   # Background
   vg.beginPath()
@@ -1609,13 +1572,15 @@ proc drawNicheHoriz*(x, y: float, regionBorder: bool, northEast: bool, floorColo
   vg.fill()
 
   # Wall
-  vg.lineCap(lcjSquare)
+  var (sw, xoffs) = setWallStyle()
+
+  let o = if dp.lineWidth == lwThin: 1 else: 0
 
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
-  vg.lineTo(snap(x1, sw), snap(y, sw))
+  vg.lineTo(snap(x1-xoffs+o, sw), snap(y, sw))
 
-  vg.moveTo(snap(x2, sw), snap(y, sw))
+  vg.moveTo(snap(x2+xoffs, sw), snap(y, sw))
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
@@ -1649,8 +1614,6 @@ proc drawStatueHoriz*(x, y: float, regionBorder: bool, northEast: bool; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawSolidWallHoriz(x, y, regionBorder, ctx)
-
   # Statue
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
@@ -1669,6 +1632,8 @@ proc drawStatueHoriz*(x, y: float, regionBorder: bool, northEast: bool; ctx) =
   vg.beginPath()
   vg.arc(cx, cy, dp.gridSize*0.27, a1, a2, pwCW)
   vg.fill()
+
+  drawSolidWallHoriz(x, y, regionBorder, ctx)
 
 
 proc drawStatueHorizNE*(x, y: float, regionBorder: bool = false; ctx) =
@@ -1691,12 +1656,9 @@ proc drawKeyholeHoriz*(x, y: float, regionBorder: bool = false; ctx) =
     x2 = x1 + boxLen
     xe = x + dp.gridSize
 
-  var sw = dp.normalStrokeWidth
-  vg.strokeWidth(sw)
-  vg.strokeColor(ls.drawColor)
+  var (sw, _) = setWallStyle()
 
   # Wall start
-  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.moveTo(snap(xs, sw), snap(y, sw))
   vg.lineTo(snap(x1, sw), snap(y, sw))
@@ -1706,7 +1668,6 @@ proc drawKeyholeHoriz*(x, y: float, regionBorder: bool = false; ctx) =
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
-
   # Keyhole border
   sw = dp.thinStrokeWidth
   let
@@ -1715,6 +1676,8 @@ proc drawKeyholeHoriz*(x, y: float, regionBorder: bool = false; ctx) =
     kl = boxLen.float
 
   vg.strokeWidth(sw)
+  vg.strokeColor(ls.drawColor)
+  vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.rect(kx, ky, kl, kl)
 
@@ -1809,7 +1772,7 @@ proc drawRegionBorderEdgeHoriz*(x, y: float, color: Color, west: bool; ctx) =
     xs = snap(x, sw)
     xe = xs + EdgeLen
   else:
-    xs = snap(x + dp.gridSize, sw)
+    xs = snap(x + dp.gridSize-1, sw)
     xe = xs - EdgeLen
 
   vg.lineCap(lcjSquare)

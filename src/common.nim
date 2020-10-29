@@ -142,7 +142,7 @@ type
 
 
   LineWidth* = enum
-    lwThin, lwNormal, lwThick
+    lwThin, lwNormal
 
   GridStyle* = enum
     gsNone, gsSolid, gsLoose, gsCross

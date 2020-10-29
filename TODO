@@ -11,7 +11,6 @@ BUGS
 
 
 TODO
-  - region gfx improvements
   - region names
   - region name reassignment when resizing a level
   - disable ctrl movement in wasd mode
