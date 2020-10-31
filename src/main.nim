@@ -2801,6 +2801,53 @@ proc drawEmptyMap(a) =
   vg.save()
 
 # }}}
+# {{{ drawNoteTooltip()
+proc drawNoteTooltip(note: Note, a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+  alias(dp, a.ui.drawLevelParams)
+
+  if note.text != "":
+    const PadX = 10
+    const PadY = 8
+
+    var
+      noteBoxX = koi.mx() + 16
+      noteBoxY = koi.my() + 20
+      noteBoxW = 250.0
+
+    vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.5)
+
+    let
+      bounds = vg.textBoxBounds(noteBoxX + PadX,
+                                noteBoxY + PadY,
+                                noteBoxW - PadX*2, note.text)
+      noteTextH = bounds.y2 - bounds.y1
+      noteTextW = bounds.x2 - bounds.x1
+      noteBoxH = noteTextH + PadY*2
+
+    noteBoxW = noteTextW + PadX*2
+
+    let
+      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
+      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
+
+    if xOver > 0:
+      noteBoxX -= xOver
+
+    if yOver > 0:
+      noteBoxY -= noteBoxH + 22
+
+    vg.fillColor(a.theme.style.level.noteTooltipBgColor)
+    vg.beginPath()
+    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
+    vg.fill()
+
+    vg.fillColor(a.theme.style.level.noteTooltipTextColor)
+    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
+
+# }}}
 # {{{ renderLevel()
 proc renderLevel(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -2901,46 +2948,8 @@ proc renderLevel(a) =
 
         if l.hasNote(mouseRow, mouseCol):
           let note = l.getNote(mouseRow, mouseCol)
-
-          if note.text != "":
-            const PadX = 10
-            const PadY = 8
-
-            var
-              noteBoxX = koi.mx() + 16
-              noteBoxY = koi.my() + 20
-              noteBoxW = 250.0
-
-            vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-            vg.textLineHeight(1.5)
-
-            let
-              bounds = vg.textBoxBounds(noteBoxX + PadX,
-                                        noteBoxY + PadY,
-                                        noteBoxW - PadX*2, note.text)
-              noteTextH = bounds.y2 - bounds.y1
-              noteTextW = bounds.x2 - bounds.x1
-              noteBoxH = noteTextH + PadY*2
-
-            noteBoxW = noteTextW + PadX*2
-
-            let
-              xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
-              yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
-
-            if xOver > 0:
-              noteBoxX -= xOver
-
-            if yOver > 0:
-              noteBoxY -= noteBoxH + 22
-
-            vg.fillColor(a.theme.style.level.noteTooltipBgColor)
-            vg.beginPath()
-            vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
-            vg.fill()
-
-            vg.fillColor(a.theme.style.level.noteTooltipTextColor)
-            vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
+          if note.kind != nkLabel:
+            drawNoteTooltip(note, a)
 
 # }}}
 # {{{ renderToolsPane()
