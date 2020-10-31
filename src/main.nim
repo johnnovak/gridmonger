@@ -2848,12 +2848,77 @@ proc drawNoteTooltip(note: Note, a) =
     vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
 
 # }}}
+# {{{ getLocationAtMouse()
+proc getLocationAtMouse(a): Option[Location] =
+  alias(dp, a.ui.drawLevelParams)
+
+  let
+    mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
+    mouseViewCol = ((koi.mx() - dp.startX) / dp.gridSize).int
+
+    mouseRow = dp.viewStartRow + mouseViewRow
+    mouseCol = dp.viewStartCol + mouseViewCol
+
+  if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
+     mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
+
+    result = Location(
+      level: a.ui.cursor.level,
+      row: mouseRow,
+      col: mouseCol
+    ).some
+  else:
+    result = Location.none
+
+# }}}
+# {{{ handleLevelMouseEvents()
+proc handleLevelMouseEvents(a) =
+  alias(ui, a.ui)
+  alias(opt, a.opt)
+
+  if opt.wasdMode:
+    if ui.editMode == emNormal:
+      if koi.mbLeftDown():
+        ui.editMode = emExcavate
+        startExcavateAction(a)
+
+      elif koi.mbRightDown():
+        ui.editMode = emDrawWall
+        startDrawWallsAction(a)
+
+      elif koi.mbMiddleDown():
+        ui.editMode = emEraseCell
+        startEraseCellsAction(a)
+
+    elif ui.editMode == emExcavate:
+      if not koi.mbLeftDown():
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+
+    elif ui.editMode == emDrawWall:
+      if not koi.mbRightDown():
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+
+    elif ui.editMode == emEraseCell:
+      if not koi.mbMiddleDown():
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+
+  else:   # not WASD mode
+    if koi.mbLeftDown():
+      let loc= getLocationAtMouse(a)
+      if loc.isSome:
+        a.ui.cursor = loc.get
+
+
+
+# }}}
 # {{{ renderLevel()
 proc renderLevel(a) =
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
   alias(opt, a.opt)
-  alias(vg, a.vg)
 
   let l = getCurrLevel(a)
 
@@ -2875,38 +2940,8 @@ proc renderLevel(a) =
        (koi.mbLeftDown() or koi.mbRightDown() or koi.mbMiddleDown()):
       koi.setActive(id)
 
-  # We're only handling the mouse events inside the level "widget" because
-  # all keyboard events are global.
-  if koi.isHot(id):
-    if isActive(id):
-      if opt.wasdMode:
-        if ui.editMode == emNormal:
-          if koi.mbLeftDown():
-            ui.editMode = emExcavate
-            startExcavateAction(a)
-
-          elif koi.mbRightDown():
-            ui.editMode = emDrawWall
-            startDrawWallsAction(a)
-
-          elif koi.mbMiddleDown():
-            ui.editMode = emEraseCell
-            startEraseCellsAction(a)
-
-        elif ui.editMode == emExcavate:
-          if not koi.mbLeftDown():
-            ui.editMode = emNormal
-            clearStatusMessage(a)
-
-        elif ui.editMode == emDrawWall:
-          if not koi.mbRightDown():
-            ui.editMode = emNormal
-            clearStatusMessage(a)
-
-        elif ui.editMode == emEraseCell:
-          if not koi.mbMiddleDown():
-            ui.editMode = emNormal
-            clearStatusMessage(a)
+  if koi.isHot(id) and isActive(id):
+    handleLevelMouseEvents(a)
 
   # Draw level
   if dp.viewRows > 0 and dp.viewCols > 0:
@@ -2934,20 +2969,16 @@ proc renderLevel(a) =
       DrawLevelContext(ls: a.doc.levelStyle, dp: dp, vg: a.vg)
     )
 
+  # Draw note tooltip
   if koi.isHot(id):
     if not (opt.wasdMode and isActive(id)):
-      let
-        mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
-        mouseViewCol = ((koi.mx() - dp.startX) / dp.gridSize).int
 
-        mouseRow = dp.viewStartRow + mouseViewRow
-        mouseCol = dp.viewStartCol + mouseViewCol
+      let locOpt = getLocationAtMouse(a)
+      if locOpt.isSome:
+        let loc = locOpt.get
 
-      if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
-         mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
-
-        if l.hasNote(mouseRow, mouseCol):
-          let note = l.getNote(mouseRow, mouseCol)
+        if l.hasNote(loc.row, loc.col):
+          let note = l.getNote(loc.row, loc.col)
           if note.kind != nkLabel:
             drawNoteTooltip(note, a)
 
@@ -3139,6 +3170,7 @@ proc drawModeAndOptionIndicators(a) =
 # }}}
 
 # {{{ handleGlobalKeyEvents()
+# TODO separate into level events and global events
 proc handleGlobalKeyEvents(a) =
   alias(ui, a.ui)
   alias(map, a.doc.map)
