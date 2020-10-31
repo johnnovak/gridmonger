@@ -25,8 +25,9 @@ const
   WindowResizeCornerSize = 20.0
 
 var
-  g_resizeRedrawHack = true
-  g_resizeNoVsyncHack = true
+  # TODO are these even needed? they're not loaded from the config
+  g_resizeRedrawHack = off
+  g_resizeNoVsyncHack = off
 
 #  {{{ CSDWindow
 type
@@ -302,9 +303,9 @@ proc handleWindowDragEvents(win) =
 
         if d > wrdNone:
           case d
-          of wrdW, wrdE: showHorizResizeCursor()
-          of wrdN, wrdS: showVertResizeCursor()
-          else: showHandCursor()
+          of wrdW, wrdE: setCursorShape(csHorizResize)
+          of wrdN, wrdS: setCursorShape(csVertResize)
+          else: setCursorShape(csHand)
 
           if koi.mbLeftDown():
             win.mx0 = mx
@@ -319,9 +320,9 @@ proc handleWindowDragEvents(win) =
             if g_resizeNoVsyncHack:
               glfw.swapInterval(0)
         else:
-          showArrowCursor()
+          setCursorShape(csArrow)
       else:
-        showArrowCursor()
+        setCursorShape(csArrow)
 
   of wdsMoving:
     if koi.mbLeftDown():
@@ -479,10 +480,10 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 
   #####################################
 
-  g_renderFrameProc(win, doHandleEvents=true)
-
   if doHandleEvents:
     handleWindowDragEvents(win)
+
+  g_renderFrameProc(win, doHandleEvents=true)
 
   #####################################
   (winWidth, winHeight) = win.size

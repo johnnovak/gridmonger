@@ -4196,8 +4196,11 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   if cfg.maximized:
     a.win.maximize()
 
-  setResizeRedrawHack(cfg.resizeRedrawHack)
-  setResizeNoVsyncHack(cfg.resizeNoVsyncHack)
+  # TODO they're not loaded
+  #setResizeRedrawHack(cfg.resizeRedrawHack)
+  #setResizeNoVsyncHack(cfg.resizeNoVsyncHack)
+  setResizeRedrawHack(off)
+  setResizeNoVsyncHack(on)
 
   a.win.show()
 
