@@ -1,11 +1,16 @@
 import hashes
+import times
 
 import common
 
-
-# {{{ alias()
+# {{{ alias*()
 template alias*(newName: untyped, call: untyped) =
   template newName(): untyped = call
+
+# }}}
+# {{{ durationToFloatMillis*()
+proc durationToFloatMillis*(d: Duration): float64 =
+  inNanoseconds(d).float64 * 1e-6
 
 # }}}
 

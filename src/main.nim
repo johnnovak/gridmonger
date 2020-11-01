@@ -4,6 +4,7 @@ import math
 import options
 import os
 import sequtils
+import std/monotimes
 import strformat
 import strutils
 import tables
@@ -558,13 +559,17 @@ proc resetCursorAndViewStart(a)
 
 proc loadMap(filename: string; a): bool =
   try:
+    let t0 = getMonoTime()
     a.doc.map = readMapFile(filename)
+    let dt = getMonoTime() - t0
+
     a.doc.filename = filename
 
     initUndoManager(a.doc.undoManager)
 
     resetCursorAndViewStart(a)
-    setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded", a)
+    setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded in " &
+                                 fmt"{durationToFloatMillis(dt):.4f} ms", a)
     result = true
 
   except CatchableError as e:
