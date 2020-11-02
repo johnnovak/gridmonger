@@ -4248,7 +4248,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.opt.wasdMode = cfg.wasdMode
 
   a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
-  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, cfg.zoomLevel)
+  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle,
+                                    clamp(cfg.zoomLevel, MinZoomLevel, MaxZoomLevel))
 
   if cfg.loadLastFile and cfg.lastFileName != "":
     if not loadMap(cfg.lastFileName, a):

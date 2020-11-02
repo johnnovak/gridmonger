@@ -19,11 +19,10 @@ import utils
 
 
 const
-
-  MinZoomLevel = 1
-  MaxZoomLevel = 20
-  MinGridSize  = 13.0
-  ZoomStep     = 2.0
+  MinZoomLevel* = 1
+  MaxZoomLevel* = 20
+  MinGridSize   = 13.0
+  ZoomStep      = 2.0
 
   UltrathinStrokeWidth = 1.0
 
