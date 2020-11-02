@@ -1,3 +1,4 @@
+import logging except Level
 import options
 import parsecfg
 import strformat
@@ -9,7 +10,7 @@ import nanovg
 
 proc invalidValueError(section, key, valueType, value: string) =
   let msg = fmt"Invalid {valueType} value in section='{section}', key='{key}': {value}"
-  echo msg
+  error(msg)
 
 proc getValue*(cfg: Config, section, key: string): string =
   cfg.getSectionValue(section, key)

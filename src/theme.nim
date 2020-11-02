@@ -1,6 +1,5 @@
 import options
 import parsecfg
-import strformat
 
 import nanovg
 
@@ -454,7 +453,6 @@ proc parseTheme(c: Config): ThemeStyle =
 
 # {{{ loadTheme*()
 proc loadTheme*(filename: string): ThemeStyle =
-  echo fmt"Loading theme '{filename}'..."
   var cfg = loadConfig(filename)
   result = parseTheme(cfg)
 

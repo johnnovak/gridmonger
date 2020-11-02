@@ -14,6 +14,7 @@ TODO
   - region names
   - region name reassignment when resizing a level
   - disable ctrl movement in wasd mode
+  - pick color under cursor
   - text color based on bg color luminance
   - disable ctrl in excavate, erase & floor modes
   - show current color / tool in statusbar when toolbar is not visible
@@ -23,6 +24,13 @@ TODO
   - map/level comments
   - metadata (author, game, etc)
   - save display related info into map?
+  - onion skin?
+
+  - mouse: hand tool, scroll wheel zoom
+  - toggle grid?
+  - paint selection with mouse?
+  - fill selection?
+  - wand selection?
 
   - RLE compression
   - remove text label

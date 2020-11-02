@@ -1,5 +1,6 @@
 import algorithm
 import lenientops
+import logging except Level
 import math
 import options
 import os
@@ -8,6 +9,7 @@ import std/monotimes
 import strformat
 import strutils
 import tables
+import times
 
 import glad/gl
 import glfw
@@ -32,12 +34,36 @@ import undomanager
 import utils
 
 
-# {{{ Constants
 const
-  ThemesDir = "themes"
+  BuildGitHash = staticExec("git rev-parse --short HEAD").strip
+
+# {{{ Paths
+const
+# TODO
+#  BuildOS = if defined(windows): staticExec("ver")
+#            else: staticExec("uname -v")
+
+#  BuildDateTime = if defined(windows): staticExec("date /T") & staticExec("time /T")
+#                  else: staticExec("date")
+
+  LogFile = "gridmonger.log"
+
   DataDir = "data"
+
+  ConfigDir = getConfigDir() / "Gridmonger"
+  ConfigFile = ConfigDir / "gridmonger.ini"
+
+  ThemesDir = "themes"
+  ImagesDir = "images"
+  ThemeImagesDir = ThemesDir / ImagesDir
+  UserThemesDir = ConfigDir / ThemesDir
+  UserThemeImagesDir = UserThemesDir / ImagesDir
+
   ThemeExt = "cfg"
 
+# }}}
+# {{{ Constants
+const
   CursorJump = 5
 
   StatusBarHeight         = 26.0
@@ -379,10 +405,6 @@ let g_appShortcuts = {
 # }}}
 
 # {{{ Config handling
-const
-  ConfigPath = getConfigDir() / "Gridmonger"
-  ConfigFile = ConfigPath / "gridmonger.ini"
-
 proc saveConfig(a) =
   alias(ui, a.ui)
   alias(cur, a.ui.cursor)
@@ -569,7 +591,7 @@ proc loadMap(filename: string; a): bool =
 
     resetCursorAndViewStart(a)
     setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded in " &
-                                 fmt"{durationToFloatMillis(dt):.4f} ms", a)
+                                 fmt"{durationToFloatMillis(dt):.2f} ms", a)
     result = true
 
   except CatchableError as e:
@@ -624,7 +646,7 @@ proc saveMapAction(a) =
 
 # {{{ searchThemes()
 proc searchThemes(a) =
-  for path in walkFiles(joinPath(ThemesDir, fmt"*.{ThemeExt}")):
+  for path in walkFiles(ThemesDir / fmt"*.{ThemeExt}"):
     let (_, name, _) = splitFile(path)
     a.theme.themeNames.add(name)
   sort(a.theme.themeNames)
@@ -641,7 +663,7 @@ proc findThemeIndex(name: string; a): int =
 # {{{ loadTheme()
 proc loadTheme(index: Natural; a) =
   let name = a.theme.themeNames[index]
-  let path = joinPath(ThemesDir, addFileExt(name, ThemeExt))
+  let path = ThemesDir / addFileExt(name, ThemeExt)
   a.theme.style = loadTheme(path)
 
 # }}}
@@ -800,18 +822,16 @@ proc updateWidgetStyles(a) =
 
 # }}}
 # {{{ loadImage()
-proc loadImage(fname: string; a): Paint =
+proc loadImage(path: string; a): Option[Paint] =
   alias(vg, a.vg)
-
-  let path = joinPath(DataDir, fname)
   let img = vg.createImage(path, {ifRepeatX, ifRepeatY})
 
   if img == NoImage:
-    # TODO log error instead of quitting
-    quit fmt"Could not load image: {path}"
+    return Paint.none
 
   let (w, h) = vg.imageSize(img)
-  result = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
+  let paint = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
+  result = paint.some
 
 # }}}
 # {{{ switchTheme()
@@ -821,7 +841,18 @@ proc switchTheme(themeIndex: Natural; a) =
 
   let bgImageName = a.theme.style.general.backgroundImage
   if bgImageName != "":
-    a.ui.backgroundImage = loadImage(bgImageName, a).some
+    var imgPath = ThemeImagesDir / bgImageName
+    var image = loadImage(imgPath, a)
+    if image.isNone:
+      info(fmt"Couldn't load background image '{imgPath}'. " &
+           "Attempting to load it from the user themes images directory now.")
+
+      imgPath = UserThemeImagesDir / bgImageName
+      image = loadImage(imgPath, a)
+      if image.isNone:
+        error(fmt"Couldn't load background image '{imgPath}'")
+
+    a.ui.backgroundImage = image
     a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
   else:
     a.ui.backgroundImage = Paint.none
@@ -4125,25 +4156,29 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
 
 # {{{ Init & cleanup
 proc loadFonts(vg: NVGContext) =
-  let regularFont = vg.createFont("sans",
-                                  joinPath(DataDir, "Roboto-Regular.ttf"))
+  template quitWithFontLoadError() =
+    error(fmt"Could not load font '{fontPath}'")
+    quit(QuitFailure)
+
+  var fontPath = DataDir / "Roboto-Regular.ttf"
+  let regularFont = vg.createFont("sans", fontPath)
   if regularFont == NoFont:
-    quit "Could not add regular font.\n"
+    quitWithFontLoadError()
 
-  let boldFont = vg.createFont("sans-bold",
-                               joinPath(DataDir, "Roboto-Bold.ttf"))
+  fontPath = DataDir / "Roboto-Bold.ttf"
+  let boldFont = vg.createFont("sans-bold", fontPath)
   if boldFont == NoFont:
-    quit "Could not add bold font.\n"
+    quitWithFontLoadError()
 
-  let blackFont = vg.createFont("sans-black",
-                                joinPath(DataDir, "Roboto-Black.ttf"))
+  fontPath = DataDir / "Roboto-Black.ttf"
+  let blackFont = vg.createFont("sans-black", fontPath)
   if blackFont == NoFont:
-    quit "Could not add black font.\n"
+    quitWithFontLoadError()
 
-  let iconFont = vg.createFont("icon",
-                               joinPath(DataDir, "GridmongerIcons.ttf"))
+  fontPath = DataDir / "GridmongerIcons.ttf"
+  let iconFont = vg.createFont("icon", fontPath)
   if iconFont == NoFont:
-    quit "Could not load icon font.\n"
+    quitWithFontLoadError()
 
   discard addFallbackFont(vg, boldFont, iconFont)
   discard addFallbackFont(vg, blackFont, iconFont)
@@ -4155,11 +4190,25 @@ proc initGfx(): (CSDWindow, NVGContext) =
   let win = newCSDWindow()
 
   if not gladLoadGL(getProcAddress):
-    quit "Error initialising OpenGL"
+    error("Error initialising OpenGL")
+    quit(QuitFailure)
+
+  let version = cast[cstring](glGetString(GL_VERSION))
+  let vendor = cast[cstring](glGetString(GL_VENDOR))
+  let renderer = cast[cstring](glGetString(GL_RENDERER))
+
+  let msg = fmt"""
+GPU info
+  Vendor:   {vendor}
+  Renderer: {renderer}
+  Version:  {version}"""
+
+  info(msg)
 
   let vg = nvgInit(getProcAddress, {nifStencilStrokes, nifAntialias})
   if vg == nil:
-    quit "Error creating NanoVG context"
+    error("Error creating NanoVG context")
+    quit(QuitFailure)
 
   koi.init(vg)
 
@@ -4169,7 +4218,9 @@ proc initGfx(): (CSDWindow, NVGContext) =
 proc initApp(win: CSDWindow, vg: NVGContext) =
   alias(a, g_app)
 
-  createDir(ConfigPath)
+  createDir(ConfigDir)
+  createDir(UserThemesDir)
+
   let cfg = loadAppConfig(ConfigFile)
 
   loadFonts(vg)
@@ -4250,6 +4301,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.win.show()
 
+  info("App init completed")
+
 
 proc cleanup() =
   koi.deinit()
@@ -4259,17 +4312,34 @@ proc cleanup() =
 # }}}
 # {{{ main()
 proc main() =
-  let (win, vg) = initGfx()
-  initApp(win, vg)
+  discard tryRemoveFile(LogFile)
+  var fileLog = newFileLogger(LogFile, fmtStr="[$time] [$levelname] - ")
+  addHandler(fileLog)
 
-  while not g_app.shouldClose:
-    if koi.shouldRenderNextFrame():
-      glfw.pollEvents()
-    else:
-      glfw.waitEvents()
-    csdRenderFrame(g_app.win)
+  # TODO
+#  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), compiled on {BuildOS} at {BuildDateTime}")
+  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash})")
+  info(fmt"ConfigFile = {ConfigFile}")
+  info(fmt"UserThemesDir = {UserThemesDir}")
 
-  cleanup()
+  try:
+    let (win, vg) = initGfx()
+    initApp(win, vg)
+
+    while not g_app.shouldClose:
+      if koi.shouldRenderNextFrame():
+        glfw.pollEvents()
+      else:
+        glfw.waitEvents()
+      csdRenderFrame(g_app.win)
+
+    cleanup()
+
+  except Exception as e:
+    fatal("A fatal error has occured, the application will now exit: \n" &
+          e.msg & "\n\n" & getStackTrace(e))
+
+    quit(QuitFailure)
 
 # }}}
 

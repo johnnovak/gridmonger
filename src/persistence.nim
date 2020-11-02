@@ -1,5 +1,6 @@
 import algorithm
 import math
+import logging except Level
 import options
 import strformat
 import strutils
@@ -623,8 +624,7 @@ proc readMapFile*(filename: string): Map =
     if rr != nil: rr.close()
 
     let dt = getMonoTime() - t0
-    # TODO log this
-    echo "Map loaded in {nanosToFloatMillis(dt.ticks):.4f} ms"
+    info(fmt"Map loaded in {durationToFloatMillis(dt):.4f} ms")
 
 # }}}
 # }}}
