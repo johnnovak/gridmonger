@@ -132,21 +132,22 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
 
 # }}}
 # {{{ checkStringLength()
-proc checkStringLength(s: string, name: string, minLen, maxLen: int) =
-  if s.len < minLen or s.len > maxLen:
+proc checkStringLength(s: string, name: string,
+                       min: Natural = 0, max: Natural = 0) =
+  if s.len < min or s.len > max:
     raiseMapReadError(
-      fmt"The length of {name} must be between {minLen} and " &
-      fmt"{maxLen} bytes, actual length: {s.len}, value: {s}"
+      fmt"The length of {name} must be between {min} and " &
+      fmt"{max} bytes, actual length: {s.len}, value: {s}"
     )
 
 # }}}
 # {{{ checkValueRange()
 proc checkValueRange(v: SomeInteger, name: string,
-                     minVal, maxVal: SomeInteger) =
-  if v < minVal or v > maxVal:
+                     min: SomeInteger = 0, max: SomeInteger = 0) =
+  if v < min or v > max:
     raiseMapReadError(
-      fmt"The value of {name} must be between {minVal} and " &
-      fmt"{maxVal}, actual value: {v}"
+      fmt"The value of {name} must be between {min} and " &
+      fmt"{max}, actual value: {v}"
     )
 
 # }}}
@@ -181,13 +182,24 @@ proc readDisplayOptions_v1(rr): MapDisplayOptions =
 
 # }}}
 # {{{ readLinks_v1()
-proc readLinks_v1(rr): BiTable[Location, Location] =
+proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
   var numLinks = rr.read(uint16).int
+  checkValueRange(numLinks, "links.numLinks", max=NumLinksMax)
+
+  let LevelsMax = levels.len-1
 
   result = initBiTable[Location, Location](nextPowerOfTwo(numLinks))
   while numLinks > 0:
     let src = readLocation(rr)
+    checkValueRange(src.level, "lnks.srcLevel", max=LevelsMax)
+    checkValueRange(src.row, "lnks.srcRow", max=levels[src.level].rows-1)
+    checkValueRange(src.col, "lnks.srcColumh", max=levels[src.level].cols-1)
+
     let dest = readLocation(rr)
+    checkValueRange(dest.level, "lnks.destLevel", max=LevelsMax)
+    checkValueRange(dest.row, "lnks.destRow", max=levels[dest.level].cols-1)
+    checkValueRange(dest.col, "lnks.destColumh", max=levels[dest.level].cols-1)
+
     result[src] = dest
     dec(numLinks)
 
@@ -256,14 +268,14 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
 # {{{ readLevelNotes_v1()
 proc readLevelNotes_v1(rr; l: Level) =
   let numNotes = rr.read(uint16).Natural
-  checkValueRange(numNotes, "lvl.note.numNotes", 0, NumNotesMax)
+  checkValueRange(numNotes, "lvl.note.numNotes", max=NumNotesMax)
 
   for i in 0..<numNotes:
     let row = rr.read(uint16)
-    checkValueRange(row, "lvl.note.row", 0, l.rows.uint16-1)
+    checkValueRange(row, "lvl.note.row", max=l.rows.uint16-1)
 
     let col = rr.read(uint16)
-    checkValueRange(col, "lvl.note.col", 0, l.cols.uint16-1)
+    checkValueRange(col, "lvl.note.col", max=l.cols.uint16-1)
 
     let kind = rr.read(uint8)
     checkEnum(kind, "lvl.note.kind", NoteKind)
@@ -276,16 +288,16 @@ proc readLevelNotes_v1(rr; l: Level) =
 
     of nkIndexed:
       let index = rr.read(uint16)
-      checkValueRange(index, "lvl.note.index", 0, NumNotesMax)
+      checkValueRange(index, "lvl.note.index", max=NumNotesMax-1)
       note.index = index
 
       let indexColor = rr.read(uint8)
-      checkValueRange(indexColor, "lvl.note.color", 0, NoteColorMax)
+      checkValueRange(indexColor, "lvl.note.indexColor", max=NoteColorMax)
       note.indexColor = indexColor
 
     of nkIcon:
       let icon = rr.read(uint8)
-      checkValueRange(icon, "lvl.note.icon", 0, NoteIconMax)
+      checkValueRange(icon, "lvl.note.icon", max=NoteIconMax)
       note.icon = icon
 
     of nkCustomId:
@@ -294,7 +306,10 @@ proc readLevelNotes_v1(rr; l: Level) =
                         NoteCustomIdMinLen, NoteCustomIdMaxLen)
       note.customId = customId
 
-    of nkLabel: discard
+    of nkLabel:
+      let labelColor = rr.read(uint8)
+      checkValueRange(labelColor, "lvl.note.labelColor", max=NoteColorMax)
+      note.labelColor = labelColor
 
     let text = rr.readWStr()
     let textMinLen = if note.kind in {nkComment, nkLabel}: 1 else: 0
@@ -353,7 +368,7 @@ proc readRegions_v1(rr): (RegionOptions, seq[string]) =
   var regionNames: seq[string] = @[]
   for i in 0..<numRegions:
     let name = rr.readBStr()
-    checkStringLength(name, "lvl.regn.regionName", 0, RegionNameMaxLen)
+    checkStringLength(name, "lvl.regn.regionName", max=RegionNameMaxLen)
     regionNames.add(name)
 
   result = (regionOpts, regionNames)
@@ -606,7 +621,7 @@ proc readMapFile*(filename: string): Map =
     m.refreshSortedLevelNames()
 
     rr.cursor = linksCursor.get
-    m.links = readLinks_v1(rr)
+    m.links = readLinks_v1(rr, m.levels)
 
     if displayOptsCursor.isSome:
       rr.cursor = displayOptsCursor.get
@@ -752,7 +767,8 @@ proc writeLevelNotes_v1(rw; l: Level) =
     of nkIcon:
       rw.write(note.icon.uint8)
 
-    of nkLabel: discard
+    of nkLabel:
+      rw.write(note.labelColor.uint8)
 
     rw.writeWStr(note.text)
 

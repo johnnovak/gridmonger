@@ -360,6 +360,7 @@ type
     row:          Natural
     col:          Natural
     text:         string
+    color:        Natural
 
 
 
@@ -732,6 +733,20 @@ proc updateWidgetStyles(a) =
   tfs.selectionColor      = s.textField.selectionColor
 
   koi.setDefaultTextFieldStyle(tfs)
+
+  # Text area
+  var tas = koi.getDefaultTextAreaStyle()
+
+  tas.bgFillColor         = ws.bgColor
+  tas.bgFillColorHover    = ws.bgColorHover
+  tas.bgFillColorActive   = s.textField.bgColorActive
+  tas.textColor           = ws.textColor
+  tas.textColorHover      = ws.textColor
+  tas.textColorActive     = s.textField.textColorActive
+  tas.cursorColor         = gs.highlightColor
+  tas.selectionColor      = s.textField.selectionColor
+
+  koi.setDefaultTextAreaStyle(tas)
 
   # Check box
   var cbs = koi.getDefaultCheckBoxStyle()
@@ -1386,6 +1401,47 @@ proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
     elif ke.isKeyDown(MoveKeysCursor.up,    repeat=true): move(dr = -1)
     elif ke.isKeyDown(MoveKeysCursor.down,  repeat=true): move(dr =  1)
     else: currButtonIdx
+
+# }}}
+# {{{ colorRadioButtonDrawProc()
+proc colorRadioButtonDrawProc(colors: seq[Color],
+                              cursorColor: Color): RadioButtonsDrawProc =
+
+  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
+               hover, active, down, first, last: bool,
+               x, y, w, h: float, style: RadioButtonsStyle) =
+
+    var col = colors[buttonIdx]
+
+    if hover or down:
+      col = col.lerp(white(), 0.15)
+
+    const Pad = 5
+    const SelPad = 3
+
+    var cx, cy, cw, ch: float
+    if active:
+      vg.beginPath()
+      vg.strokeColor(cursorColor)
+      vg.strokeWidth(2)
+      vg.rect(x, y, w-Pad, h-Pad)
+      vg.stroke()
+
+      cx = x+SelPad
+      cy = y+SelPad
+      cw = w-Pad-SelPad*2
+      ch = h-Pad-SelPad*2
+
+    else:
+      cx = x
+      cy = y
+      cw = w-Pad
+      ch = h-Pad
+
+    vg.beginPath()
+    vg.fillColor(col)
+    vg.rect(cx, cy, cw, ch)
+    vg.fill()
 
 # }}}
 
@@ -2336,58 +2392,18 @@ proc openEditNoteDialog(a) =
 
   else:
     dlg.editMode = false
-    dlg.customId = "A"
-    dlg.text = "Note text"
+    dlg.customId = ""
+    dlg.text = ""
 
   dlg.isOpen = true
-
-
-proc colorRadioButtonDrawProc(colors: seq[Color],
-                              cursorColor: Color): RadioButtonsDrawProc =
-
-  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               hover, active, down, first, last: bool,
-               x, y, w, h: float, style: RadioButtonsStyle) =
-
-    var col = colors[buttonIdx]
-
-    if hover or down:
-      col = col.lerp(white(), 0.15)
-
-    const Pad = 5
-    const SelPad = 3
-
-    var cx, cy, cw, ch: float
-    if active:
-      vg.beginPath()
-      vg.strokeColor(cursorColor)
-      vg.strokeWidth(2)
-      vg.rect(x, y, w-Pad, h-Pad)
-      vg.stroke()
-
-      cx = x+SelPad
-      cy = y+SelPad
-      cw = w-Pad-SelPad*2
-      ch = h-Pad-SelPad*2
-
-    else:
-      cx = x
-      cy = y
-      cw = w-Pad
-      ch = h-Pad
-
-    vg.beginPath()
-    vg.fillColor(col)
-    vg.rect(cx, cy, cw, ch)
-    vg.fill()
 
 
 proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   alias(ls, a.doc.levelStyle)
 
   const
-    DlgWidth = 500.0
-    DlgHeight = 370.0
+    DlgWidth = 492.0
+    DlgHeight = 410.0
     LabelWidth = 80.0
 
   let h = DlgItemHeight
@@ -2411,17 +2427,16 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   y += 40
   koi.label(x, y, LabelWidth, h, "Text")
-  dlg.text = koi.textField(
-    x + LabelWidth, y, w = 355, h, dlg.text,
+  dlg.text = koi.textArea(
+    x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
-    constraint = TextFieldConstraint(
-      kind: tckString,
+    constraint = TextAreaConstraint(
       minLen: 0,
       maxLen: NoteTextMaxLen
     ).some
   )
 
-  y += 64
+  y += 108
 
   let NumIndexColors = ls.noteIndexBgColor.len
   const IconsPerRow = 10
@@ -2573,18 +2588,22 @@ proc openEditLabelDialog(a) =
     let note = l.getNote(cur.row, cur.col)
     dlg.editMode = true
     dlg.text = note.text
+    dlg.color = note.labelColor
 
   else:
     dlg.editMode = false
-    dlg.text = "Label text"
+    dlg.text = ""
+    dlg.color = 0
 
   dlg.isOpen = true
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
+  alias(ls, a.doc.levelStyle)
+
   const
-    DlgWidth = 500.0
-    DlgHeight = 370.0
+    DlgWidth = 492.0
+    DlgHeight = 270.0
     LabelWidth = 80.0
 
   let h = DlgItemHeight
@@ -2598,14 +2617,28 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   var y = 60.0
 
   koi.label(x, y, LabelWidth, h, "Text")
-  dlg.text = koi.textField(
-    x + LabelWidth, y, w = 355, h, dlg.text,
+  dlg.text = koi.textArea(
+    x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
-    constraint = TextFieldConstraint(
-      kind: tckString,
+    constraint = TextAreaConstraint(
       minLen: 0,
       maxLen: NoteTextMaxLen
     ).some
+  )
+
+  y += 108
+
+  let NumIndexColors = ls.noteIndexBgColor.len
+
+  koi.label(x, y, LabelWidth, h, "Color")
+  dlg.color = koi.radioButtons(
+    x + LabelWidth, y, 28, 28,
+    labels = newSeq[string](ls.noteIndexBgColor.len), # TODO
+    dlg.color,
+    tooltips = @[],
+    layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
+    drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor, # TODO
+                                        ls.cursorColor).some
   )
 
   dlg.activateFirstTextField = false
@@ -2613,7 +2646,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   # Validation
   var validationError = ""
   if dlg.text == "":
-    validationError = "Text is mandatory"
+    validationError = mkValidationError("Text is mandatory")
 
   y += 44
 
@@ -2628,7 +2661,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   proc okAction(dlg: var EditLabelDialogParams; a) =
     if validationError != "": return
 
-    var note = Note(kind: nkLabel, text: dlg.text)
+    var note = Note(kind: nkLabel, text: dlg.text, labelColor: dlg.color)
     actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
     setStatusMessage(IconComment, "Set label", a)
@@ -2652,6 +2685,10 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+
+    dlg.color = handleGridRadioButton(
+      ke, dlg.color, NumIndexColors, buttonsPerRow=NumIndexColors  # TODO
+    )
 
     if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
