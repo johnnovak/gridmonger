@@ -35,7 +35,7 @@ type
     modified*: bool
     style*:    CSDWindowStyle
 
-    w: Window  # the wrapper GLFW window
+    w*: Window  # the wrapper GLFW window
 
     buttonStyle:         ButtonStyle
     title:               string
@@ -86,10 +86,7 @@ DefaultCSDWindowStyle.buttonColorDown    = gray(1.0, 0.9)
 DefaultCSDWindowStyle.modifiedFlagColor  = gray(1.0, 0.45)
 
 proc getDefaultCSDWindowStyle*(): CSDWindowStyle = DefaultCSDWindowStyle.deepCopy()
-
-# }}}
-
-# {{{ setStyle()
+# }}} # {{{ setStyle()
 proc setStyle*(win; s: CSDWindowStyle) = 
   win.style = s
 
@@ -131,8 +128,9 @@ proc title*(win): string =
   win.title
 
 proc `title=`*(win; title: string) =
-  win.title = title
-  win.w.title = title
+  if win.title != title:
+    win.title = title
+    win.w.title = title
 
 proc pos*(win): tuple[x, y: int32] =
   win.w.pos
@@ -524,10 +522,10 @@ proc `renderFrameCb=`*(win; p: RenderFrameProc) =
   win.w.framebufferSizeCb = framebufSizeCb
 
 proc setResizeRedrawHack*(enabled: bool) =
-  g_resizeRedrawHack = enabled
+  g_resizeRedrawHack = on
 
 proc setResizeNoVsyncHack*(enabled: bool) =
-  g_resizeNoVsyncHack = enabled
+  g_resizeNoVsyncHack = on
 
 proc getResizeRedrawHack*(): bool =
   g_resizeRedrawHack

@@ -4300,9 +4300,14 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.ui.drawLevelParams.viewStartRow = cfg.viewStartRow
   a.ui.drawLevelParams.viewStartCol = cfg.viewStartCol
 
-  a.ui.cursor.level = cfg.currLevel
-  a.ui.cursor.row = cfg.cursorRow
-  a.ui.cursor.col = cfg.cursorCol
+  if cfg.currLevel > a.doc.map.levels.high:
+    a.ui.cursor.level = 0
+    a.ui.cursor.row = 0
+    a.ui.cursor.col = 0
+  else:
+    a.ui.cursor.level = cfg.currLevel
+    a.ui.cursor.row = cfg.cursorRow
+    a.ui.cursor.col = cfg.cursorCol
 
   updateLastCursorViewCoords(a)
 

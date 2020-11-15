@@ -32,6 +32,18 @@ TODO
   - fill selection?
   - wand selection?
 
+  - center map to screen
+  - full screen borderless
+  - export map as PNG
+  - map selector dialog
+
+  - more themes:
+      emerald-theme.psd
+      slate-theme.psd
+      overworld1.psd
+      overworld4.psd
+      golden-boxes themes
+
   - RLE compression
   - remove text label
   - colours for text labels
