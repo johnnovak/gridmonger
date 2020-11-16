@@ -227,7 +227,7 @@ type
     of nkIndexed:  index*, indexColor*: Natural
     of nkCustomId: customId*: string
     of nkIcon:     icon*: Natural
-    of nkLabel:    discard
+    of nkLabel:    labelColor*: Natural
 
 
 const

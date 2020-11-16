@@ -135,7 +135,6 @@ const NoteIcons* = @[
   IconBug,
   IconBomb,
   IconMine,
-
   IconPaw,
   IconBox,
   IconMedkit,

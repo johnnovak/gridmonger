@@ -1,113 +1,122 @@
-RIFF ('GRDM'            # Gridmonger map file
+RIFF ('GRDM'          # Gridmonger map file
     LIST ('INFO'
-        'INAM'          # Name
-        'IART'          # Artist
-        'ICMT'          # Comments
-        'ICRD'          # Creation Date
-        'ISFT'          # Software
+        'INAM'        # Name
+        'IART'        # Artist
+        'ICMT'        # Comments
+        'ICRD'        # Creation Date
+        'ISFT'        # Software
     )
-    LIST ('map '        # Map
-        'prop'          # Map properties
-        'coor'          # Global coordinate options
+    LIST ('map '      # Map
+        'prop'        # Map properties
+        'coor'        # Global coordinate options
     )
-    LIST ('lvls'        # List of levels (min=0, max=999)
-        LIST ('lvl '    # Level
-            'prop'      # Level properties
-            'coor'      # Coordinate options
-            'regn'      # Regions
-            'cell'      # Level cells
-            'note'      # Notes
+    LIST ('lvls'      # List of levels (min=0, max=999)
+        LIST ('lvl '  # Level
+            'prop'    # Level properties
+            'coor'    # Coordinate options
+            'regn'    # Regions
+            'cell'    # Level cells
+            'note'    # Notes
         )
         ...
     )
-    'lnks'              # Map links
+    'lnks'            # Map links
 
     TODO
-    'disp'              # Display related info
+    'disp'            # Display related info
 )
 
 
 'prop' (Map)
     UINT16  version
-    BSTR    name          (minLen=1, maxLen=100)
+    BSTR    name            (minLen=1, maxLen=100)
 
 
 'coor'
-    UINT8   origin        (0=northeast, 1=southeast)
-    UINT8   rowStyle      (0=number, 1=letter)
-    UINT8   columnStyle   (0=number, 1=letter)
+    UINT8   origin          (0=northeast, 1=southeast)
+    UINT8   rowStyle        (0=number, 1=letter)
+    UINT8   columnStyle     (0=number, 1=letter)
     INT16   rowStart
     INT16   columnStart
 
 
 'prop' (Level)
-    BSTR    locationName  (minLen=1, maxLen=100)
-    BSTR    levelName     (minLen=0, maxLen=100)
-    INT16   elevation     (min=-200, max=200)
-    UINT16  numRows       (min=1, max=6666)
-    UINT16  numColums     (min=1, max=6666)
-    UINT8   overrideCoordOpts   (0=off, >0=on)
+    BSTR    locationName    (minLen=1, maxLen=100)
+    BSTR    levelName       (minLen=0, maxLen=100)
+    INT16   elevation       (min=-200, max=200)
+    UINT16  numRows         (min=1, max=6666)
+    UINT16  numColums       (min=1, max=6666)
+    UINT8   overrideCoordOpts  (0=off, >0=on)
 
 
 'regn'
-    UINT8   enableRegions (0=off, >0=on)
-    UINT16  regionColumns (min=2, max=6666)
-    UINT16  regionRows    (min=2, max=6666)
+    UINT8   enableRegions   (0=off, >0=on)
+    UINT16  regionColumns   (min=2, max=6666)
+    UINT16  regionRows      (min=2, max=6666)
     UINT16  numRegions
 
     numRegion times:
-    BSTR    regionName    (minLen=1, maxLen=100)
+    BSTR    regionName      (minLen=1, maxLen=100)
 
 
 'cell'
     (numRows * numColums) records of:
 
-    UINT8  floor
-    UINT8  floorOrientation
-    UINT8  floorColor
-    UINT8  wallNorth
-    UINT8  wallWest
+    UINT8   floor
+    UINT8   floorOrientation
+    UINT8   floorColor
+    UINT8   wallNorth
+    UINT8   wallWest
+
 
 'note'
-    UINT16  numNotes      (max=10000)
+    UINT16  numNotes        (max=10000)
 
     numNotes records of:
-    UINT16  row           (max=numRows-1 of the given level)
-    UINT16  column        (max=numColumns-1 of the given level)
+    UINT16  row             (max=numRows-1    of the given level)
+    UINT16  column          (max=numColumns-1 of the given level)
     UINT8   kind
 
-    if kind == 0 (indexed)
-        UINT16  index     (max=10000)
-        UINT8   color     (max
+    if kind == 0 (comment)
 
-    if kind == 1 (customId)
-        BSTR    custom ID (minLen=1, maxLen=2, only alphanumeric)
+    if kind == 1 (indexed)
+        UINT16  index       (max=9999)
+        UINT8   indexColor  (max=3)
 
-    WSTR    text          (minLen=1, maxLen=400)
+    if kind == 2 (icon)
+        UINT8   icon        (max=39)
+
+    if kind == 3 (customId)
+        BSTR    custom ID   (minLen=1, maxLen=2, only alphanumeric)
+
+    if kind == 4 (label)
+        UINT8   labelColor  (max=3)
+
+    WSTR    text            (minLen=1, maxLen=400)
 
 
 'lnks'
-    UINT16  numLinks           (max=10000)
+    UINT16  numLinks        (max=10000)
 
     numLinks records of:
 
-    UINT16  sourceLevel        (max=(number of levels) - 1)
-    UINT16  sourceRow          (max=numRows-1 of the given level)
-    UINT16  sourceColumn       (max=numColumns-1 of the given level)
+    UINT16  srcLevel        (max=numLevels-1)
+    UINT16  srcRow          (max=numRows-1    of the given level)
+    UINT16  srcColumn       (max=numColumns-1 of the given level)
 
-    UINT16  destinationLevel   (max=(number of levels) - 1)
-    UINT16  destinationRow     (max=numRows-1 of the given level)
-    UINT16  destinationColumn  (max=numColumns-1 of the given level)
+    UINT16  destLevel       (max=numLevel-1)
+    UINT16  destRow         (max=numRows-1    of the given level)
+    UINT16  destColumn      (max=numColumns-1 of the given level)
 
 
 'disp'
-    UINT8   currLevel          (max=(number of levels) - 1)
-    UINT8   zoomLevel          (min=1, max=20)
-    UINT16  cursorRow          (max=numRows-1 of the given level)
-    UINT16  cursorColumn       (max=numColumns-1 of the given level)
+    UINT8   currLevel       (max=numLevels-1)
+    UINT8   zoomLevel       (min=1, max=20)
+    UINT16  cursorRow       (max=numRows-1    of the given level)
+    UINT16  cursorColumn    (max=numColumns-1 of the given level)
 
     TODO:
-    BSTR    themeName          (min=1, max=255)
-    UINT8   showCoords         (0 or 1)
+    BSTR    themeName       (minLen=1, maxLen=255)
+    UINT8   showCoords      (0 or 1)
     UINT8   gridStyle
 
