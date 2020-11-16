@@ -14,6 +14,7 @@ import times
 import glad/gl
 import glfw
 import koi
+import koi/undomanager
 import nanovg
 when not defined(DEBUG): import osdialog
 
@@ -30,7 +31,6 @@ import persistence
 import rect
 import selection
 import theme
-import undomanager
 import utils
 
 
@@ -1169,7 +1169,7 @@ template coordinateFields() =
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Origin")
-  dlg.origin = koi.radioButtons(
+  koi.radioButtons(
     x + LabelWidth, y, ItemXPos, h+3,
     labels = @["Northwest", "Southwest"],
     dlg.origin
@@ -1177,7 +1177,7 @@ template coordinateFields() =
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Column style")
-  dlg.columnStyle = koi.radioButtons(
+  koi.radioButtons(
     x + LabelWidth, y, ItemXPos, h+3,
     labels = @["Number", "Letter"],
     dlg.columnStyle
@@ -1185,7 +1185,7 @@ template coordinateFields() =
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Row style")
-  dlg.rowStyle = koi.radioButtons(
+  koi.radioButtons(
     x + LabelWidth, y, ItemXPos, h+3,
     labels = @["Number", "Letter"],
     dlg.rowStyle
@@ -1193,7 +1193,7 @@ template coordinateFields() =
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Column offset")
-  dlg.columnStart = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.columnStart,
     activate = dlg.activateFirstTextField,
@@ -1213,7 +1213,7 @@ template coordinateFields() =
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Row offset")
-  dlg.rowStart = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.rowStart,
     constraint = TextFieldConstraint(
@@ -1235,7 +1235,7 @@ template coordinateFields() =
 template regionFields() =
   let labelWidth = 160.0
   koi.label(x, y, labelWidth, h, "Enable regions")
-  dlg.enableRegions = koi.checkBox(
+  koi.checkBox(
     x + labelWidth, y + DlgCheckBoxYOffs,
     DlgCheckBoxWidth, dlg.enableRegions
   )
@@ -1243,7 +1243,7 @@ template regionFields() =
   if dlg.enableRegions:
     y += PadYLarge
     koi.label(x, y, labelWidth, h, "Region columns")
-    dlg.regionColumns = koi.textField(
+    koi.textField(
       x + labelWidth, y, w = 60.0, h,
       dlg.regionColumns,
       activate = dlg.activateFirstTextField,
@@ -1256,7 +1256,7 @@ template regionFields() =
 
     y += PadYSmall
     koi.label(x, y, labelWidth, h, "Region rows")
-    dlg.regionRows = koi.textField(
+    koi.textField(
       x + labelWidth, y, w = 60.0, h,
       dlg.regionRows,
       constraint = TextFieldConstraint(
@@ -1268,7 +1268,7 @@ template regionFields() =
 
     y += PadYLarge
     koi.label(x, y, labelWidth, h, "Per-region coordinates")
-    dlg.perRegionCoords = koi.checkBox(
+    koi.checkBox(
       x + labelWidth, y + DlgCheckBoxYOffs,
       DlgCheckBoxWidth, dlg.perRegionCoords
     )
@@ -1283,7 +1283,7 @@ template levelCommonFields() =
   let h = DlgItemHeight
 
   koi.label(x, y, LabelWidth, h, "Location Name")
-  dlg.locationName = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 220.0, h,
     dlg.locationName,
     activate = dlg.activateFirstTextField,
@@ -1296,7 +1296,7 @@ template levelCommonFields() =
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Level Name")
-  dlg.levelName = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 220.0, h,
     dlg.levelName,
     constraint = TextFieldConstraint(
@@ -1308,7 +1308,7 @@ template levelCommonFields() =
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Elevation")
-  dlg.elevation = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.elevation,
     constraint = TextFieldConstraint(
@@ -1476,23 +1476,23 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   var y = 60.0
 
   koi.label(x, y, LabelWidth, h, "Show splash screen at startup")
-  dlg.showSplash = koi.checkBox(
+  koi.checkBox(
     x + LabelWidth, y + DlgCheckBoxYOffs, DlgCheckBoxWidth, dlg.showSplash
   )
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Open last file at startup")
-  dlg.loadLastFile = koi.checkBox(
+  koi.checkBox(
     x + LabelWidth, y + DlgCheckBoxYOffs, DlgCheckBoxWidth, dlg.loadLastFile
   )
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Auto-save")
-  dlg.autoSave = koi.checkBox(x + LabelWidth, y, DlgCheckBoxWidth, dlg.autoSave)
+  koi.checkBox(x + LabelWidth, y, DlgCheckBoxWidth, dlg.autoSave)
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Auto-save frequency (seconds)")
-  dlg.autoSaveFrequencySecs = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.autoSaveFrequencySecs,
     activate = dlg.activateFirstTextField,
@@ -1505,14 +1505,14 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Resize window redraw hack")
-  dlg.resizeRedrawHack = koi.checkBox(
+  koi.checkBox(
     x + LabelWidth, y + DlgCheckBoxYOffs,
     DlgCheckBoxWidth, dlg.resizeRedrawHack
   )
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Resize window no vsync hack")
-  dlg.resizeNoVsyncHack = koi.checkBox(
+  koi.checkBox(
     x + LabelWidth, y + DlgCheckBoxYOffs,
     DlgCheckBoxWidth, dlg.resizeNoVsyncHack
   )
@@ -1643,7 +1643,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   var y = 60.0
 
   koi.label(x, y, LabelWidth, h, "Name")
-  dlg.name = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 220.0, h,
     dlg.name,
     activate = dlg.activateFirstTextField,
@@ -1749,7 +1749,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   var y = 60.0
 
   koi.label(x, y, LabelWidth, h, "Name")
-  dlg.name = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 220.0, h,
     dlg.name,
     activate = dlg.activateFirstTextField,
@@ -1891,7 +1891,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   let tabLabels = @["General", "Coordinates", "Regions"]
 
-  dlg.activeTab = koi.radioButtons(
+  koi.radioButtons(
     (DlgWidth - TabWidth) / 2, y, TabWidth, h,
     tabLabels, dlg.activeTab
   )
@@ -1904,7 +1904,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
     y += PadYLarge
     koi.label(x, y, LabelWidth, h, "Columns")
-    dlg.cols = koi.textField(
+    koi.textField(
       x + LabelWidth, y, w = 60.0, h,
       dlg.cols,
       constraint = TextFieldConstraint(
@@ -1916,7 +1916,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
     y += PadYSmall
     koi.label(x, y, LabelWidth, h, "Rows")
-    dlg.rows = koi.textField(
+    koi.textField(
       x + LabelWidth, y, w = 60.0, h,
       dlg.rows,
       constraint = TextFieldConstraint(
@@ -1929,7 +1929,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   elif dlg.activeTab == 1:  # Coordinates
 
     koi.label(x, y, LabelWidth, h, "Override map settings")
-    dlg.overrideCoordOpts = koi.checkBox(
+    koi.checkBox(
       x + LabelWidth, y + DlgCheckBoxYOffs,
       DlgCheckBoxWidth, dlg.overrideCoordOpts
     )
@@ -2067,7 +2067,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   let tabLabels = @["General", "Coordinates", "Regions"]
 
-  dlg.activeTab = koi.radioButtons(
+  koi.radioButtons(
     (DlgWidth - TabWidth) / 2, y, TabWidth, h,
     tabLabels, dlg.activeTab
   )
@@ -2081,7 +2081,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   elif dlg.activeTab == 1:  # Coordinates
 
     koi.label(x, y, LabelWidth, h, "Override map settings")
-    dlg.overrideCoordOpts = koi.checkBox(
+    koi.checkBox(
       x + LabelWidth, y + DlgCheckBoxYOffs,
       DlgCheckBoxWidth, dlg.overrideCoordOpts
     )
@@ -2203,7 +2203,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   var y = 60.0
 
   koi.label(x, y, LabelWidth, h, "Columns")
-  dlg.cols = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.cols,
     constraint = TextFieldConstraint(
@@ -2215,7 +2215,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Rows")
-  dlg.rows = koi.textField(
+  koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.rows,
     activate = dlg.activateFirstTextField,
@@ -2236,14 +2236,14 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Anchor")
-  dlg.anchor = koi.radioButtons(
+  koi.radioButtons(
     x + LabelWidth, y, 35, 35,
     labels = AnchorIcons,
-    ord(dlg.anchor),
+    dlg.anchor,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: IconsPerRow),
     style = a.ui.iconRadioButtonsStyle
-  ).ResizeAnchor
+  )
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -2417,17 +2417,15 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   var y = 60.0
 
   koi.label(x, y, LabelWidth, h, "Marker")
-  dlg.kind = NoteKind(
-    koi.radioButtons(
-      x + LabelWidth, y, 300, h+3,
-      labels = @["None", "Number", "ID", "Icon"],
-      ord(dlg.kind)
-    )
+  koi.radioButtons(
+    x + LabelWidth, y, 300, h+3,
+    labels = @["None", "Number", "ID", "Icon"],
+    dlg.kind
   )
 
   y += 40
   koi.label(x, y, LabelWidth, h, "Text")
-  dlg.text = koi.textArea(
+  koi.textArea(
     x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
@@ -2444,7 +2442,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   case dlg.kind:
   of nkIndexed:
     koi.label(x, y, LabelWidth, h, "Color")
-    dlg.indexColor = koi.radioButtons(
+    koi.radioButtons(
       x + LabelWidth, y, 28, 28,
       labels = newSeq[string](ls.noteIndexBgColor.len),
       dlg.indexColor,
@@ -2456,7 +2454,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   of nkCustomId:
     koi.label(x, y, LabelWidth, h, "ID")
-    dlg.customId = koi.textField(
+    koi.textField(
       x + LabelWidth, y, w = 50.0, h,
       dlg.customId,
       constraint = TextFieldConstraint(
@@ -2468,7 +2466,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   of nkIcon:
     koi.label(x, y, LabelWidth, h, "Icon")
-    dlg.icon = koi.radioButtons(
+    koi.radioButtons(
       x + LabelWidth, y, 35, 35,
       labels = NoteIcons,
       dlg.icon,
@@ -2617,7 +2615,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   var y = 60.0
 
   koi.label(x, y, LabelWidth, h, "Text")
-  dlg.text = koi.textArea(
+  koi.textArea(
     x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
@@ -2631,7 +2629,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   let NumIndexColors = ls.noteIndexBgColor.len
 
   koi.label(x, y, LabelWidth, h, "Color")
-  dlg.color = koi.radioButtons(
+  koi.radioButtons(
     x + LabelWidth, y, 28, 28,
     labels = newSeq[string](ls.noteIndexBgColor.len), # TODO
     dlg.color,
@@ -3143,7 +3141,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
   alias(ls, a.doc.levelStyle)
   alias(ts, a.theme.style.toolbarPane)
 
-  ui.currSpecialWall = koi.radioButtons(
+  koi.radioButtons(
     x = x,
     y = y,
     w = 36,
@@ -3155,7 +3153,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     drawProc = specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
   )
 
-  ui.currFloorColor = koi.radioButtons(
+  koi.radioButtons(
     x = x + 3,
     y = y + 446,
     w = 30,
@@ -4058,19 +4056,19 @@ proc renderUI() =
     drawEmptyMap(a)
   else:
     let levelItems = a.doc.map.sortedLevelNames
-    let levelSelectedItem = getCurrSortedLevelIdx(a)
+    var sortedLevelIdx = getCurrSortedLevelIdx(a)
 
     vg.fontSize(a.theme.levelDropdownStyle.labelFontSize)
-    let levelDropdownWidth = vg.textWidth(levelItems[levelSelectedItem]) +
+    let levelDropdownWidth = vg.textWidth(levelItems[sortedLevelIdx]) +
                              a.theme.levelDropdownStyle.labelPadHoriz * 2 + 8
 
-    let sortedLevelIdx = koi.dropdown(
+    koi.dropdown(
       x = (winWidth - levelDropdownWidth)*0.5,
       y = 45,
       w = levelDropdownWidth,
       h = 24.0,   # TODO calc y
       levelItems,
-      levelSelectedItem,
+      sortedLevelIdx,
       tooltip = "",
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
       style = a.theme.levelDropdownStyle

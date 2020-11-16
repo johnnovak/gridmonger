@@ -1,6 +1,8 @@
 import options
 import strformat
 
+import koi/undomanager
+
 import common
 import level
 import links
@@ -8,7 +10,6 @@ import map
 import rect
 import selection
 import tables
-import undomanager
 import utils
 
 

@@ -44,8 +44,17 @@ TODO
       overworld4.psd
       golden-boxes themes
 
+  - theme editor
+  - allow negative coordinates
+  - change level size: add preserve coordinates option
+  - region parameters (only name for now)
+  - set coordinate origin action
+  - infinite levels
+  - align levels to each other based on coords
+  - action for aligning two levels
+
   - RLE compression
-  - remove text label
+  - remove tool for text labels
   - colours for text labels
 
   - koi: textarea widget
