@@ -11,6 +11,9 @@ BUGS
 
 
 TODO
+  - display dialog on crash with instruction to file a bug report (print log
+    file location and backup file location)
+  - attempt to save map on crash
   - region names
   - region name reassignment when resizing a level
   - disable ctrl movement in wasd mode
