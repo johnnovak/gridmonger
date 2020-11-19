@@ -535,7 +535,7 @@ proc drawStatusBar(y: float, winWidth: float; a) =
     vg.textAlign(haLeft, vaMiddle)
     discard vg.text(winWidth - tw - 7, ty, cursorPos)
 
-#    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
+    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
 
   # Display icon & message
   const
@@ -891,9 +891,14 @@ proc hasKeyEvent(): bool =
 
 # TODO change all into isShorcut* (if possible)
 func isKeyDown(ev: Event, keys: set[Key],
-               mods: set[ModifierKey] = {}, repeat=false): bool =
+               mods: set[ModifierKey] = {},
+               repeat=false): bool =
+
+  # ignore numlock & capslock
+  let eventMods = ev.mods - {mkNumLock, mkCapsLock}
   let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  ev.action in a and ev.key in keys and ev.mods == mods
+  ev.action in a and ev.key in keys and eventmods == mods
+
 
 func isKeyDown(ev: Event, key: Key,
                mods: set[ModifierKey] = {}, repeat=false): bool =
@@ -3094,7 +3099,7 @@ proc specialWallDrawProc(ls: LevelStyle,
       vg.save()
       # A bit messy... but so is life! =8)
       dp.setZoomLevel(ls, zl)
-#      vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
+      vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
       body
       dp.setZoomLevel(ls, 4)
       vg.restore()
@@ -3208,7 +3213,7 @@ proc drawNotesPane(x, y, w, h: float; a) =
     vg.fillColor(s.textColor)
     vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
-#    vg.intersectScissor(x+40, y, w-40, h)
+    vg.intersectScissor(x+40, y, w-40, h)
     vg.textBox(x+40, y, w-40, note.text)
 
     vg.restore()
@@ -3340,7 +3345,6 @@ proc handleGlobalKeyEvents(a) =
 
 
   proc handleMoveCursor(ke: Event, k: MoveKeys; a): bool =
-    echo "handleMoveCursor"
     const j = CursorJump
     result = true
 
