@@ -535,7 +535,7 @@ proc drawStatusBar(y: float, winWidth: float; a) =
     vg.textAlign(haLeft, vaMiddle)
     discard vg.text(winWidth - tw - 7, ty, cursorPos)
 
-    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
+#    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
 
   # Display icon & message
   const
@@ -2299,7 +2299,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
-    koi.setFramesLeft()
+    koi.renderNextFrame()
 
   koi.endDialog()
 
@@ -2566,7 +2566,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
-    koi.setFramesLeft()
+    koi.renderNextFrame()
 
   koi.endDialog()
 
@@ -2694,7 +2694,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
-    koi.setFramesLeft()
+    koi.renderNextFrame()
 
   koi.endDialog()
 
@@ -2749,7 +2749,7 @@ proc openMapAction(a) =
 # {{{ reloadThemeAction()
 proc reloadThemeAction(a) =
   a.theme.nextThemeIndex = a.theme.currThemeIndex.some
-  koi.setFramesLeft()
+  koi.renderNextFrame()
 
 # }}}
 # {{{ prevThemeAction()
@@ -2757,7 +2757,7 @@ proc prevThemeAction(a) =
   var i = a.theme.currThemeIndex
   if i == 0: i = a.theme.themeNames.high else: dec(i)
   a.theme.nextThemeIndex = i.some
-  koi.setFramesLeft()
+  koi.renderNextFrame()
 
 # }}}
 # {{{ nextThemeAction()
@@ -2766,7 +2766,7 @@ proc nextThemeAction(a) =
   inc(i)
   if i > a.theme.themeNames.high: i = 0
   a.theme.nextThemeIndex = i.some
-  koi.setFramesLeft()
+  koi.renderNextFrame()
 
 # }}}
 # {{{ prevLevelAction()
@@ -3094,7 +3094,7 @@ proc specialWallDrawProc(ls: LevelStyle,
       vg.save()
       # A bit messy... but so is life! =8)
       dp.setZoomLevel(ls, zl)
-      vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
+#      vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
       body
       dp.setZoomLevel(ls, 4)
       vg.restore()
@@ -3208,7 +3208,7 @@ proc drawNotesPane(x, y, w, h: float; a) =
     vg.fillColor(s.textColor)
     vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.4)
-    vg.intersectScissor(x+40, y, w-40, h)
+#    vg.intersectScissor(x+40, y, w-40, h)
     vg.textBox(x+40, y, w-40, note.text)
 
     vg.restore()
@@ -3340,6 +3340,7 @@ proc handleGlobalKeyEvents(a) =
 
 
   proc handleMoveCursor(ke: Event, k: MoveKeys; a): bool =
+    echo "handleMoveCursor"
     const j = CursorJump
     result = true
 
@@ -3485,7 +3486,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
-        koi.setFramesLeft()
+        koi.renderNextFrame()
 
       elif ke.isKeyDown(keyP):
         if ui.copyBuf.isSome:
@@ -4183,7 +4184,7 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
         if a.doc.undoManager.isModified:
           a.dialog.saveDiscardDialog.isOpen = true
           a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
-          koi.setFramesLeft()
+          koi.renderNextFrame()
         else:
           saveConfigAndExit(a)
 
