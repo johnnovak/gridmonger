@@ -2304,8 +2304,6 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
-    koi.renderNextFrame()
-
   koi.endDialog()
 
 # }}}
@@ -2571,8 +2569,6 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
-    koi.renderNextFrame()
-
   koi.endDialog()
 
 # }}}
@@ -2699,8 +2695,6 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
 
-    koi.renderNextFrame()
-
   koi.endDialog()
 
 # }}}
@@ -2754,7 +2748,6 @@ proc openMapAction(a) =
 # {{{ reloadThemeAction()
 proc reloadThemeAction(a) =
   a.theme.nextThemeIndex = a.theme.currThemeIndex.some
-  koi.renderNextFrame()
 
 # }}}
 # {{{ prevThemeAction()
@@ -2762,7 +2755,6 @@ proc prevThemeAction(a) =
   var i = a.theme.currThemeIndex
   if i == 0: i = a.theme.themeNames.high else: dec(i)
   a.theme.nextThemeIndex = i.some
-  koi.renderNextFrame()
 
 # }}}
 # {{{ nextThemeAction()
@@ -2771,7 +2763,6 @@ proc nextThemeAction(a) =
   inc(i)
   if i > a.theme.themeNames.high: i = 0
   a.theme.nextThemeIndex = i.some
-  koi.renderNextFrame()
 
 # }}}
 # {{{ prevLevelAction()
@@ -3490,7 +3481,6 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
-        koi.renderNextFrame()
 
       elif ke.isKeyDown(keyP):
         if ui.copyBuf.isSome:
@@ -4188,7 +4178,6 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
         if a.doc.undoManager.isModified:
           a.dialog.saveDiscardDialog.isOpen = true
           a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
-          koi.renderNextFrame()
         else:
           saveConfigAndExit(a)
 
