@@ -207,7 +207,7 @@ type
     currThemeIndex:       Natural
     nextThemeIndex:       Option[Natural]
     themeReloaded:        bool
-    levelDropdownStyle:   DropdownStyle
+    levelDropDownStyle:   DropDownStyle
 
   Dialog = object
     preferencesDialog:    PreferencesDialogParams
@@ -793,12 +793,12 @@ proc updateWidgetStyles(a) =
   wls.multiLine = true
   a.ui.warningLabelStyle = wls
 
-  # Level dropdown
+  # Level dropDown
   block:
-    alias(d, a.theme.levelDropdownStyle)
-    alias(lds, s.levelDropdown)
+    alias(d, a.theme.levelDropDownStyle)
+    alias(lds, s.levelDropDown)
 
-    d = koi.getDefaultDropdownStyle()
+    d = koi.getDefaultDropDownStyle()
 
     d.buttonFillColor          = lds.buttonColor
     d.buttonFillColorHover     = lds.buttonColorHover
@@ -4053,20 +4053,20 @@ proc renderUI() =
     let levelItems = a.doc.map.sortedLevelNames
     var sortedLevelIdx = getCurrSortedLevelIdx(a)
 
-    vg.fontSize(a.theme.levelDropdownStyle.labelFontSize)
-    let levelDropdownWidth = vg.textWidth(levelItems[sortedLevelIdx]) +
-                             a.theme.levelDropdownStyle.labelPadHoriz * 2 + 8
+    vg.fontSize(a.theme.levelDropDownStyle.labelFontSize)
+    let levelDropDownWidth = vg.textWidth(levelItems[sortedLevelIdx]) +
+                             a.theme.levelDropDownStyle.labelPadHoriz * 2 + 8
 
-    koi.dropdown(
-      x = (winWidth - levelDropdownWidth)*0.5,
+    koi.dropDown(
+      x = (winWidth - levelDropDownWidth)*0.5,
       y = 45,
-      w = levelDropdownWidth,
+      w = levelDropDownWidth,
       h = 24.0,   # TODO calc y
       levelItems,
       sortedLevelIdx,
       tooltip = "",
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-      style = a.theme.levelDropdownStyle
+      style = a.theme.levelDropDownStyle
     )
     ui.cursor.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
 
