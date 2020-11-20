@@ -69,12 +69,12 @@ proc setFloorOrientation*(g; r,c: Natural, ot: Orientation) {.inline.} =
   g[r,c].floorOrientation = ot
 
 
-proc getFloorColor*(g; r,c: Natural): Natural {.inline.} =
+proc getFloorColor*(g; r,c: Natural): byte {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorColor
 
-proc setFloorColor*(g; r,c, col: Natural) {.inline.} =
+proc setFloorColor*(g; r,c: Natural, col: byte) {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorColor = col

@@ -171,12 +171,12 @@ proc setFloorOrientation*(l; r,c: Natural, ot: Orientation) {.inline.} =
 
 # }}}
 # {{{ getFloorColor*()
-proc getFloorColor*(l; r,c: Natural): Natural {.inline.} =
+proc getFloorColor*(l; r,c: Natural): byte {.inline.} =
   l.cellGrid.getFloorColor(r,c)
 
 # }}}
 # {{{ setFloorColor*()
-proc setFloorColor*(l; r,c, col: Natural) {.inline.} =
+proc setFloorColor*(l; r,c: Natural, col: byte) {.inline.} =
   l.cellGrid.setFloorColor(r,c, col)
 
 # }}}

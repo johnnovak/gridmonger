@@ -170,7 +170,7 @@ type
   Cell* = object
     floor*:            Floor
     floorOrientation*: Orientation
-    floorColor*:       Natural
+    floorColor*:       byte
     wallN*, wallW*:    Wall
 
   Floor* = enum
@@ -264,6 +264,5 @@ const
   # internal IDs, never written to disk
   CopyBufferLevelIndex* = 1_000_000
   MoveBufferLevelIndex* = 1_000_001
-
 
 # vim: et:ts=2:sw=2:fdm=marker

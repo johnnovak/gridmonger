@@ -120,7 +120,7 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 
 # }}}
 # {{{ setFloor*()
-proc setFloor*(map; loc: Location, f: Floor, floorColor: Natural; um) =
+proc setFloor*(map; loc: Location, f: Floor, floorColor: byte; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
     m.setFloor(loc, f)
@@ -128,7 +128,7 @@ proc setFloor*(map; loc: Location, f: Floor, floorColor: Natural; um) =
 
 # }}}
 # {{{ setFloorColor*()
-proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
+proc setFloorColor*(map; loc: Location, floorColor: byte; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor color {EnDash} {floorColor}", m):
     m.setFloorColor(loc, floorColor)
@@ -136,7 +136,7 @@ proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
 # }}}
 # {{{ setOrientedFloor*()
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
-                       floorColor: Natural; um) =
+                       floorColor: byte; um) =
 
   singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
     m.setFloor(loc, f)
@@ -157,7 +157,7 @@ proc eraseCell*(map; loc: Location; um) =
 
 # }}}
 # {{{ excavate*()
-proc excavate*(map; loc: Location, floorColor: Natural; um) =
+proc excavate*(map; loc: Location, floorColor: byte; um) =
 
   singleCellAction(map, loc, um, "Excavate", m):
     alias(l, m.levels[loc.level])
@@ -217,7 +217,7 @@ proc eraseNote*(map; loc: Location; um) =
 
 # }}}
 # {{{ setLink*()
-proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
+proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   let srcFloor = map.getFloor(src)
 
   var destFloor: Floor
@@ -312,7 +312,7 @@ proc eraseSelection*(map; level: Natural, sel: Selection,
 # }}}
 # {{{ fillSelection*()
 proc fillSelection*(map; level: Natural, sel: Selection,
-                    bbox: Rect[Natural], floorColor: Natural; um) =
+                    bbox: Rect[Natural], floorColor: byte; um) =
 
   cellAreaAction(map, level, bbox, um, groupWithPrev=false,
                  "Fill selection", m):
@@ -356,7 +356,7 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
 # }}}
 # {{{ setSelectionFloorColor*()
 proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
-                             bbox: Rect[Natural], floorColor: Natural; um) =
+                             bbox: Rect[Natural], floorColor: byte; um) =
 
   cellAreaAction(map, level, bbox, um, groupWithPrev=false,
                  "Set floor color of selection", m):

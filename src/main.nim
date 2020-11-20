@@ -164,7 +164,7 @@ type
     statusCommands:    seq[string]
 
     currSpecialWall:   Natural
-    currFloorColor:    Natural
+    currFloorColor:    byte
 
     levelTopPad:       float
     levelRightPad:     float
@@ -3474,10 +3474,10 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyComma, repeat=true):
         if ui.currFloorColor > 0: dec(ui.currFloorColor)
-        else: ui.currFloorColor = ls.floorColor.high
+        else: ui.currFloorColor = ls.floorColor.high.byte
 
       elif ke.isKeyDown(keyPeriod, repeat=true):
-        if ui.currFloorColor < ls.floorColor.high: inc(ui.currFloorColor)
+        if ui.currFloorColor < ls.floorColor.high.byte: inc(ui.currFloorColor)
         else: ui.currFloorColor = 0
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
