@@ -3003,7 +3003,7 @@ proc renderLevel(a) =
   # Hit testing
   if koi.isHit(x, y, w, h):
     koi.setHot(id)
-    if koi.noActiveItem() and
+    if koi.hasNoActiveItem() and
        (koi.mbLeftDown() or koi.mbRightDown() or koi.mbMiddleDown()):
       koi.setActive(id)
 
@@ -3744,8 +3744,8 @@ proc handleGlobalKeyEvents(a) =
       if koi.ctrlDown(): setSelectModeActionMessage(a)
       else:              setSelectModeSelectMessage(a)
 
-      if   koi.keyDown(keyD): ui.selection.get[cur.row, cur.col] = true
-      elif koi.keyDown(keyE): ui.selection.get[cur.row, cur.col] = false
+      if   koi.isKeyDown(keyD): ui.selection.get[cur.row, cur.col] = true
+      elif koi.isKeyDown(keyE): ui.selection.get[cur.row, cur.col] = false
 
       if   ke.isKeyDown(keyA): ui.selection.get.fill(true)
       elif ke.isKeyDown(keyU): ui.selection.get.fill(false)
@@ -4172,8 +4172,6 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
     when defined(NO_QUIT_DIALOG):
       saveConfigAndExit(a)
     else:
-      # TODO can we get rid of the isDialogOpen check somehow? (and then
-      # remove from the koi API)
       if not koi.isDialogOpen():
         if a.doc.undoManager.isModified:
           a.dialog.saveDiscardDialog.isOpen = true

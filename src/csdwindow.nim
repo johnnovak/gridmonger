@@ -270,7 +270,7 @@ proc handleWindowDragEvents(win) =
 
   case win.dragState
   of wdsNone:
-    if koi.noActiveItem() and koi.mbLeftDown():
+    if koi.hasNoActiveItem() and koi.mbLeftDown():
       if my < TitleBarHeight and
          mx > TitleBarPinButtonTotalWidth and
          mx < winWidth - TitleBarWindowButtonsTotalWidth:
@@ -283,7 +283,7 @@ proc handleWindowDragEvents(win) =
           glfw.swapInterval(0)
 
     if not win.maximized:
-      if not koi.hasHotItem() and koi.noActiveItem():
+      if not koi.hasHotItem() and koi.hasNoActiveItem():
         let ew = WindowResizeEdgeWidth
         let cs = WindowResizeCornerSize
         let d =
