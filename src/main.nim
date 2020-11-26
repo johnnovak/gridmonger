@@ -14,6 +14,7 @@ import times
 import glad/gl
 import glfw
 import koi
+import koi/rect
 import koi/undomanager
 import nanovg
 when not defined(DEBUG): import osdialog
@@ -28,7 +29,6 @@ import level
 import links
 import map
 import persistence
-import rect
 import selection
 import theme
 import utils

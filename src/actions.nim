@@ -1,13 +1,13 @@
 import options
 import strformat
 
+import koi/rect
 import koi/undomanager
 
 import common
 import level
 import links
 import map
-import rect
 import selection
 import tables
 import utils

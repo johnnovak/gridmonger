@@ -1,9 +1,9 @@
 import tables
 
+import koi/rect
 import nanovg
 
 import bitable
-import rect
 
 
 const
