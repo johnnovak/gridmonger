@@ -824,7 +824,7 @@ proc updateWidgetStyles(a) =
     d.item.align               = haLeft
     d.item.color               = lds.itemColor
     d.item.colorHover          = lds.itemColorHover
-    d.itemListPadHoriz         = 10
+    d.itemListPadHoriz         = 10.0
     d.itemListFillColor        = lds.itemListColor
     d.itemBackgroundColorHover = gs.highlightColor
 
@@ -4064,12 +4064,15 @@ proc renderUI() =
     var sortedLevelIdx = getCurrSortedLevelIdx(a)
 
     vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
-    let levelDropDownWidth = vg.textWidth(levelItems[sortedLevelIdx]) +
-                             a.theme.levelDropDownStyle.label.padHoriz*2 + 8
+
+    let levelDropDownWidth = round(
+      vg.textWidth(levelItems[sortedLevelIdx]) +
+      a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
+    )
 
     koi.dropDown(
-      x = (winWidth - levelDropDownWidth)*0.5,
-      y = 45,
+      x = round((winWidth - levelDropDownWidth) * 0.5),
+      y = 45.0,
       w = levelDropDownWidth,
       h = 24.0,   # TODO calc y
       levelItems,
