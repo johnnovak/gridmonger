@@ -5,6 +5,7 @@ import glfw
 import icons
 import koi
 import nanovg
+import with
 
 import common
 import utils
@@ -76,28 +77,31 @@ using win: CSDWindow
 # {{{ Default style
 var DefaultCSDWindowStyle = new CSDWindowStyle
 
-DefaultCSDWindowStyle.backgroundColor    = gray(0.2)
-DefaultCSDWindowStyle.bgColorUnfocused   = gray(0.1)
-DefaultCSDWindowStyle.textColor          = gray(1.0, 0.7)
-DefaultCSDWindowStyle.textColorUnfocused = gray(1.0, 0.4)
-DefaultCSDWindowStyle.buttonColor        = gray(1.0, 0.45)
-DefaultCSDWindowStyle.buttonColorHover   = gray(1.0, 0.7)
-DefaultCSDWindowStyle.buttonColorDown    = gray(1.0, 0.9)
-DefaultCSDWindowStyle.modifiedFlagColor  = gray(1.0, 0.45)
+with DefaultCSDWindowStyle:
+  backgroundColor    = gray(0.2)
+  bgColorUnfocused   = gray(0.1)
+  textColor          = gray(1.0, 0.7)
+  textColorUnfocused = gray(1.0, 0.4)
+  buttonColor        = gray(1.0, 0.45)
+  buttonColorHover   = gray(1.0, 0.7)
+  buttonColorDown    = gray(1.0, 0.9)
+  modifiedFlagColor  = gray(1.0, 0.45)
 
 proc getDefaultCSDWindowStyle*(): CSDWindowStyle = DefaultCSDWindowStyle.deepCopy()
-# }}} # {{{ setStyle()
+
+# }}}
+# # {{{ setStyle()
 proc setStyle*(win; s: CSDWindowStyle) = 
   win.style = s
 
   alias(bs, win.buttonStyle)
   bs = koi.getDefaultButtonStyle()
 
-  bs.labelPadHoriz   = 0
-  bs.labelOnly       = true
-  bs.labelColor      = s.buttonColor
-  bs.labelColorHover = s.buttonColorHover
-  bs.labelColorDown  = s.buttonColorDown
+  bs.labelOnly        = true
+  bs.label.padHoriz   = 0
+  bs.label.color      = s.buttonColor
+  bs.label.colorHover = s.buttonColorHover
+  bs.label.colorDown  = s.buttonColorDown
 
 # }}}
 # {{{ newCSDWindow*()

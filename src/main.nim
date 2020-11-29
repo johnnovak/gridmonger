@@ -677,14 +677,17 @@ proc updateWidgetStyles(a) =
   # Button
   var bs = koi.getDefaultButtonStyle()
 
-  bs.buttonFillColor         = ws.bgColor
-  bs.buttonFillColorHover    = ws.bgColorHover
-  bs.buttonFillColorDown     = gs.highlightColor
-  bs.buttonFillColorDisabled = ws.bgColorDisabled
-  bs.labelColor              = ws.textColor
-  bs.labelColorHover         = ws.textColor
-  bs.labelColorDown          = ws.textColor
-  bs.labelColorDisabled      = ws.textColorDisabled
+  bs.fillColor         = ws.bgColor
+  bs.fillColorHover    = ws.bgColorHover
+  bs.fillColorDown     = gs.highlightColor
+  bs.fillColorDisabled = ws.bgColorDisabled
+
+  bs.label.color            = ws.textColor
+  bs.label.colorHover       = ws.textColor
+  bs.label.colorDown        = ws.textColor
+  bs.label.colorActive      = ws.textColor
+  bs.label.colorActiveHover = ws.textColor
+  bs.label.colorDisabled    = ws.textColorDisabled
 
   koi.setDefaultButtonStyle(bs)
 
@@ -695,10 +698,13 @@ proc updateWidgetStyles(a) =
   rs.buttonFillColorHover    = ws.bgColorHover
   rs.buttonFillColorDown     = gs.highlightColor
   rs.buttonFillColorActive   = gs.highlightColor
-  rs.labelColor              = ws.textColor
-  rs.labelColorHover         = ws.textColor
-  rs.labelColorActive        = ws.textColor
-  rs.labelColorDown          = ws.textColor
+
+  rs.label.color            = ws.textColor
+  rs.label.colorHover       = ws.textColor
+  rs.label.colorDown        = ws.textColor
+  rs.label.colorActive      = ws.textColor
+  rs.label.colorActiveHover = ws.textColor
+  rs.label.colorDown        = ws.textColor
 
   koi.setDefaultRadioButtonsStyle(rs)
 
@@ -710,13 +716,15 @@ proc updateWidgetStyles(a) =
   girs.buttonFillColorHover  = ws.bgColorHover
   girs.buttonFillColorDown   = gs.highlightColor
   girs.buttonFillColorActive = gs.highlightColor
-  girs.labelFontSize         = 18
-  girs.labelColor            = ws.textColor
-  girs.labelColorHover       = ws.textColor
-  girs.labelColorDown        = ws.textColor
-  girs.labelColorActive      = ws.textColor
-  girs.labelPadHoriz         = 0
-  girs.labelPadHoriz         = 0
+
+  girs.label.fontSize         = 18
+  girs.label.color            = ws.textColor
+  girs.label.colorHover       = ws.textColor
+  girs.label.colorDown        = ws.textColor
+  girs.label.colorActive      = ws.textColor
+  girs.label.colorActiveHover = ws.textColor
+  girs.label.padHoriz         = 0
+  girs.label.padHoriz         = 0
 
   a.ui.iconRadioButtonsStyle = girs
 
@@ -751,17 +759,18 @@ proc updateWidgetStyles(a) =
   # Check box
   var cbs = koi.getDefaultCheckBoxStyle()
 
-  cbs.fillColor          = ws.bgColor
-  cbs.fillColorHover     = ws.bgColorHover
-  cbs.fillColorDown      = gs.highlightColor
-  cbs.fillColorActive    = gs.highlightColor
-  cbs.iconColor          = ws.textColor
-  cbs.iconColorHover     = ws.textColor
-  cbs.iconColorDown      = ws.textColor
-  cbs.iconColorActive    = ws.textColor
-  cbs.iconFontSize       = 12
-  cbs.iconActive         = IconCheck
-  cbs.iconInactive       = NoIcon
+  cbs.fillColor             = ws.bgColor
+  cbs.fillColorHover        = ws.bgColorHover
+  cbs.fillColorDown         = gs.highlightColor
+  cbs.fillColorActive       = gs.highlightColor
+  cbs.icon.fontSize         = 12
+  cbs.icon.color            = ws.textColor
+  cbs.icon.colorHover       = ws.textColor
+  cbs.icon.colorDown        = ws.textColor
+  cbs.icon.colorActive      = ws.textColor
+  cbs.icon.colorActiveHover = ws.textColor
+  cbs.iconActive            = IconCheck
+  cbs.iconInactive          = NoIcon
 
   koi.setDefaultCheckBoxStyle(cbs)
 
@@ -803,22 +812,20 @@ proc updateWidgetStyles(a) =
     d.buttonFillColor          = lds.buttonColor
     d.buttonFillColorHover     = lds.buttonColorHover
     d.buttonFillColorDown      = lds.buttonColor
-    d.buttonFillColorActive    = lds.buttonColor
     d.buttonFillColorDisabled  = lds.buttonColor
-    d.labelFontSize            = 15.0
-    d.labelColor               = lds.textColor
-    d.labelColorHover          = lds.textColor
-    d.labelColorDown           = lds.textColor
-    d.labelColorActive         = lds.textColor
-    d.labelColorDisabled       = lds.textColor
-    d.labelAlign               = haCenter
-    d.itemAlign                = haCenter
-    d.itemListFillColor        = lds.itemListColor
-    d.itemColor                = lds.itemColor
-    d.itemColorHover           = lds.itemColorHover
-    d.itemBackgroundColorHover = gs.highlightColor
-    d.itemAlign                = haLeft
+    d.label.fontSize           = 15.0
+    d.label.color              = lds.textColor
+    d.label.colorHover         = lds.textColor
+    d.label.colorDown          = lds.textColor
+    d.label.colorActive        = lds.textColor
+    d.label.colorDisabled      = lds.textColor
+    d.label.align              = haCenter
+    d.item.align               = haLeft
+    d.item.color               = lds.itemColor
+    d.item.colorHover          = lds.itemColorHover
     d.itemListPadHoriz         = 10
+    d.itemListFillColor        = lds.itemListColor
+    d.itemBackgroundColorHover = gs.highlightColor
 
   # About button
   block:
@@ -826,12 +833,12 @@ proc updateWidgetStyles(a) =
 
     let bs = koi.getDefaultButtonStyle()
 
-    bs.labelFontSize   = 20.0
-    bs.labelPadHoriz   = 0
-    bs.labelOnly       = true
-    bs.labelColor      = abs.color
-    bs.labelColorHover = abs.colorHover
-    bs.labelColorDown  = abs.colorActive
+    bs.labelOnly        = true
+    bs.label.fontSize   = 20.0
+    bs.label.padHoriz   = 0
+    bs.label.color      = abs.color
+    bs.label.colorHover = abs.colorHover
+    bs.label.colorDown  = abs.colorActive
 
     a.ui.aboutButtonStyle = bs
 
@@ -1413,19 +1420,19 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
 
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               hover, active, down, first, last: bool,
+               state: WidgetState, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
     var col = colors[buttonIdx]
 
-    if hover or down:
+    if state in {wsHover, wsDown, wsActiveHover}:
       col = col.lerp(white(), 0.15)
 
     const Pad = 5
     const SelPad = 3
 
     var cx, cy, cw, ch: float
-    if active:
+    if state in {wsActive, wsActiveHover}:
       vg.beginPath()
       vg.strokeColor(cursorColor)
       vg.strokeWidth(2)
@@ -3057,13 +3064,15 @@ proc specialWallDrawProc(ls: LevelStyle,
                          dp: DrawLevelParams): RadioButtonsDrawProc =
 
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               hover, active, down, first, last: bool,
+               state: WidgetState, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
-    var col = if active:  ls.cursorColor
-              elif hover: ts.buttonBgColorHover
-              elif down:  ls.cursorColor
-              else:       ts.buttonBgColor
+    var col = case state
+              of wsActive:      ls.cursorColor
+              of wsHover:       ts.buttonBgColorHover
+              of wsActiveHover: ls.cursorColor
+              of wsDown:        ls.cursorColor
+              else:             ts.buttonBgColor
 
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
@@ -4053,9 +4062,9 @@ proc renderUI() =
     let levelItems = a.doc.map.sortedLevelNames
     var sortedLevelIdx = getCurrSortedLevelIdx(a)
 
-    vg.fontSize(a.theme.levelDropDownStyle.labelFontSize)
+    vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
     let levelDropDownWidth = vg.textWidth(levelItems[sortedLevelIdx]) +
-                             a.theme.levelDropDownStyle.labelPadHoriz * 2 + 8
+                             a.theme.levelDropDownStyle.label.padHoriz*2 + 8
 
     koi.dropDown(
       x = (winWidth - levelDropDownWidth)*0.5,
