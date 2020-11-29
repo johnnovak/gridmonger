@@ -694,10 +694,11 @@ proc updateWidgetStyles(a) =
   # Radio button
   var rs = koi.getDefaultRadioButtonsStyle()
 
-  rs.buttonFillColor         = ws.bgColor
-  rs.buttonFillColorHover    = ws.bgColorHover
-  rs.buttonFillColorDown     = gs.highlightColor
-  rs.buttonFillColorActive   = gs.highlightColor
+  rs.buttonFillColor            = ws.bgColor
+  rs.buttonFillColorHover       = ws.bgColorHover
+  rs.buttonFillColorDown        = gs.highlightColor
+  rs.buttonFillColorActive      = gs.highlightColor
+  rs.buttonFillColorActiveHover = gs.highlightColor
 
   rs.label.color            = ws.textColor
   rs.label.colorHover       = ws.textColor
@@ -1432,7 +1433,7 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
     const SelPad = 3
 
     var cx, cy, cw, ch: float
-    if state in {wsActive, wsActiveHover}:
+    if state in {wsDown, wsActive, wsActiveHover}:
       vg.beginPath()
       vg.strokeColor(cursorColor)
       vg.strokeWidth(2)
