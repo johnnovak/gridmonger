@@ -747,7 +747,7 @@ proc updateWidgetStyles(a) =
   var tas = koi.getDefaultTextAreaStyle()
 
   tas.bgFillColor         = ws.bgColor
-  tas.bgFillColorHover    = ws.bgColorHover
+  tas.bgFillColorHover    = lerp(ws.bgColor, ws.bgColorHover, 0.5)
   tas.bgFillColorActive   = s.textField.bgColorActive
   tas.textColor           = ws.textColor
   tas.textColorHover      = ws.textColor
@@ -4250,7 +4250,7 @@ GPU info
     error("Error creating NanoVG context")
     quit(QuitFailure)
 
-  koi.init(vg)
+  koi.init(vg, getProcAddress)
 
   result = (win, vg)
 

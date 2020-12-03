@@ -145,16 +145,25 @@ type
 
 
   LineWidth* = enum
-    lwThin, lwNormal
+    lwThin   = (0, "Thin"),
+    lwNormal = (1, "Normal")
 
   GridStyle* = enum
-    gsNone, gsSolid, gsLoose, gsCross
+    gsNone   = (0, "None"),
+    gsSolid  = (1, "Solid"),
+    gsLoose  = (2, "Loose"),
+    gsCross  = (3, "Cross")
 
   OutlineStyle* = enum
-    osNone, osCell, osSquareEdges, osRoundedEdges, osRoundedEdgesFilled
+    osNone                = (0, "None"),
+    osCell                = (1, "Cell"),
+    osSquareEdges         = (2, "Square Edges"),
+    osRoundedEdges        = (3, "Rounded Edges"),
+    osRoundedEdgesFilled  = (4, "Filled Rounded Edges")
 
   OutlineFillStyle* = enum
-    ofsSolid, ofsHatched
+    ofsSolid    = (0, "Solid")
+    ofsHatched  = (1, "Hatched")
 
   CellGrid* = ref object
     cols*:  Natural

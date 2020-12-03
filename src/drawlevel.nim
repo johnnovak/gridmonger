@@ -247,63 +247,41 @@ proc setVertTransform(x, y: float, ctx) =
 
 # }}}
 
-# {{{ renderHatchPatternImage()
-proc renderHatchPatternImage(vg: NVGContext, fb: NVGLUFramebuffer,
-                             pxRatio: float, strokeColor: Color,
-                             spacing: float) =
-  let
-    (fboWidth, fboHeight) = vg.imageSize(fb.image)
-    winWidth = floor(fboWidth.float / pxRatio)
-    winHeight = floor(fboHeight.float / pxRatio)
-
-  nvgluBindFramebuffer(fb)
-
-  glViewport(0, 0, fboWidth.GLsizei, fboHeight.GLsizei)
-  glClearColor(0, 0, 0, 0)
-  glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
-
-  vg.beginFrame(winWidth, winHeight, pxRatio)
-
-  var sw = 1.0
-  if pxRatio == 1.0:
-    if spacing <= 4:
-      vg.shapeAntiAlias(false)
-    else:
-      sw = 0.8
-
-  vg.strokeColor(strokeColor)
-  vg.strokeWidth(sw)
-
-  vg.beginPath()
-  for i in 0..10:
-    vg.moveTo(-2, i*spacing + 2)
-    vg.lineTo(i*spacing + 2, -2)
-  vg.stroke()
-
-  vg.endFrame()
-  vg.shapeAntiAlias(true)
-
-  nvgluBindFramebuffer(nil)
-
-# }}}
 # {{{ renderLineHatchPatterns()
 proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
                              strokeColor: Color) =
+
   for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
-    var fb = vg.nvgluCreateFramebuffer(
+
+    var image = vg.renderToImage(
       width  = spacing * pxRatio.int,
       height = spacing * pxRatio.int,
-      {ifRepeatX, ifRepeatY}
+      pxRatio, {ifRepeatX, ifRepeatY}
+    ):
+      var sw = 1.0
+      if pxRatio == 1.0:
+        if spacing <= 4:
+          vg.shapeAntiAlias(false)
+        else:
+          sw = 0.8
+
+      vg.strokeColor(strokeColor)
+      vg.strokeWidth(sw)
+
+      vg.beginPath()
+      for i in 0..10:
+        vg.moveTo(-2, i*spacing + 2.0)
+        vg.lineTo(i*spacing + 2.0, -2)
+      vg.stroke()
+
+      vg.endFrame()
+      vg.shapeAntiAlias(true)
+
+
+    dp.lineHatchPatterns[spacing] = vg.imagePattern(
+      ox=0, oy=0, ex=spacing.float, ey=spacing.float, angle=0,
+      image, alpha=1.0
     )
-    renderHatchPatternImage(vg, fb, pxRatio, strokeColor, spacing.float)
-
-    dp.lineHatchPatterns[spacing] = vg.imagePattern(0, 0,
-                                                    spacing.float,
-                                                    spacing.float,
-                                                    0, fb.image, 1.0)
-
-    fb.image = NoImage  # prevent deleting the image when deleting the FB
-    nvgluDeleteFramebuffer(fb)
 
 # }}}
 # {{{ initDrawLevelParams
