@@ -256,7 +256,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
     var image = vg.renderToImage(
       width  = spacing * pxRatio.int,
       height = spacing * pxRatio.int,
-      pxRatio, {ifRepeatX, ifRepeatY}
+      {ifRepeatX, ifRepeatY}
     ):
       var sw = 1.0
       if pxRatio == 1.0:
@@ -274,7 +274,6 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
         vg.lineTo(i*spacing + 2.0, -2)
       vg.stroke()
 
-      vg.endFrame()
       vg.shapeAntiAlias(true)
 
 

@@ -123,6 +123,8 @@ type
     theme:       Theme
     dialog:      Dialog
 
+    themeEditor: ThemeEditor
+
     shouldClose: bool
 
 
@@ -362,6 +364,29 @@ type
     text:         string
     color:        Natural
 
+
+  ThemeEditor = object
+    sectionUserInterface:        bool
+    sectionUserInterfaceGeneral: bool
+    sectionWidget:               bool
+    sectionTextField:            bool
+    sectionDialog:               bool
+    sectionTitleBar:             bool
+    sectionStatusBar:            bool
+    sectionLeveldropDown:        bool
+    sectionAboutButton:          bool
+
+    sectionLevel:                bool
+    sectionLevelGeneral:         bool
+    sectionOutline:              bool
+    sectionShadow:               bool
+    sectionBackgroundHatch:      bool
+    sectionFloorColors:          bool
+    sectionNotes:                bool
+
+    sectionPanes:                bool
+    sectionNotesPane:            bool
+    sectionToolbarPane:          bool
 
 
 var g_app: AppContext
@@ -4020,6 +4045,342 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
          ke.isKeyDown(keyU, repeat=true):
       undoAction(a)
+
+# }}}
+
+# {{{ Theme editor
+
+var PropsSliderStyle = getDefaultSliderStyle()
+PropsSliderStyle.trackCornerRadius = 8.0
+PropsSliderStyle.valueCornerRadius = 6.0
+
+
+proc themeScrollView(a; x, y, w, h: float) =
+  alias(te, a.themeEditor)
+  alias(ts, a.theme.style)
+
+  # w = 314
+  koi.beginScrollView(x, y, w, h)
+
+  if koi.sectionHeader("User Interface", te.sectionUserInterface):
+
+    if koi.subSectionHeader("General", te.sectionUserInterfaceGeneral):
+      koi.label("Background")
+      koi.color(ts.general.backgroundColor)
+
+      koi.label("Highlight")
+      koi.color(ts.general.highlightColor)
+
+    if koi.subSectionHeader("Widget", te.sectionWidget):
+      koi.label("Background")
+      koi.color(ts.widget.bgColor)
+
+      koi.label("Background Hover")
+      koi.color(ts.widget.bgColorHover)
+
+      koi.label("Background Disabled")
+      koi.color(ts.widget.bgColorDisabled)
+
+      koi.label("Text")
+      koi.color(ts.widget.textColor)
+
+      koi.label("Text Disabled")
+      koi.color(ts.widget.textColorDisabled)
+
+    if koi.subSectionHeader("Text Field", te.sectionTextField):
+      koi.label("Background Active")
+      koi.color(ts.textField.bgColorActive)
+
+      koi.label("Text Active")
+      koi.color(ts.textField.textColorActive)
+
+      koi.label("Cursor")
+      koi.color(ts.textField.cursorColor)
+
+      koi.label("Selection")
+      koi.color(ts.textField.selectionColor)
+
+    if koi.subSectionHeader("Dialog", te.sectionDialog):
+      koi.label("Title Bar Background")
+      koi.color(ts.dialog.titleBarBgColor)
+
+      koi.label("Title Bar Text")
+      koi.color(ts.dialog.titleBarTextColor)
+
+      koi.label("Background")
+      koi.color(ts.dialog.backgroundColor)
+
+      koi.label("Text")
+      koi.color(ts.dialog.textColor)
+
+      koi.label("Warning Text")
+      koi.color(ts.dialog.warningTextColor)
+
+    if koi.subSectionHeader("Title Bar", te.sectionTitleBar):
+      koi.label("Background")
+      koi.color(ts.titleBar.backgroundColor)
+
+      koi.label("Background Unfocused")
+      koi.color(ts.titleBar.bgColorUnfocused)
+
+      koi.label("Text")
+      koi.color(ts.titleBar.textColor)
+
+      koi.label("Text Unfocused")
+      koi.color(ts.titleBar.textColorUnfocused)
+
+      koi.label("Modified Flag")
+      koi.color(ts.titleBar.modifiedFlagColor)
+
+      koi.label("Button")
+      koi.color(ts.titleBar.buttonColor)
+
+      koi.label("Button Hover")
+      koi.color(ts.titleBar.buttonColorHover)
+
+      koi.label("Button Down")
+      koi.color(ts.titleBar.buttonColorDown)
+
+    if koi.subSectionHeader("Status Bar", te.sectionStatusBar):
+      koi.label("Background")
+      koi.color(ts.statusBar.backgroundColor)
+
+      koi.label("Text")
+      koi.color(ts.statusBar.textColor)
+
+      koi.label("Command Background")
+      koi.color(ts.statusBar.commandBgColor)
+
+      koi.label("Command")
+      koi.color(ts.statusBar.commandColor)
+
+      koi.label("Coordinates")
+      koi.color(ts.statusBar.coordsColor)
+
+    if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
+      koi.label("Button")
+      koi.color(ts.leveldropDown.buttonColor)
+
+      koi.label("Button Hover")
+      koi.color(ts.leveldropDown.buttonColorHover)
+
+      koi.label("Text")
+      koi.color(ts.leveldropDown.textColor)
+
+      koi.label("Item List")
+      koi.color(ts.leveldropDown.itemListColor)
+
+      koi.label("Item")
+      koi.color(ts.leveldropDown.itemColor)
+
+      koi.label("Item Hover")
+      koi.color(ts.leveldropDown.itemColorHover)
+
+    if koi.subSectionHeader("About Button", te.sectionAboutButton):
+      koi.label("Color")
+      koi.color(ts.aboutButton.color)
+
+      koi.label("Hover")
+      koi.color(ts.aboutButton.colorHover)
+
+      koi.label("Active")
+      koi.color(ts.aboutButton.colorActive)
+
+
+  if koi.sectionHeader("Level", te.sectionLevel):
+    if koi.subSectionHeader("General", te.sectionLevelGeneral):
+      group:
+        koi.label("Background")
+        koi.color(ts.level.backgroundColor)
+
+        koi.label("Draw")
+        koi.color(ts.level.drawColor)
+
+        koi.label("Draw Light")
+        koi.color(ts.level.lightDrawColor)
+
+        koi.label("Line Width")
+        koi.dropDown(LineWidth, ts.level.lineWidth)
+
+      group:
+        koi.label("Coordinates")
+        koi.color(ts.level.coordsColor)
+
+        koi.label("Coordinates Highlight")
+        koi.color(ts.level.coordsHighlightColor)
+
+        koi.label("Cursor")
+        koi.color(ts.level.cursorColor)
+
+        koi.label("Cursor Guides")
+        koi.color(ts.level.cursorGuideColor)
+
+      group:
+        koi.label("Grid Style Background")
+        koi.dropDown(GridStyle, ts.level.gridStyleBackground)
+
+        koi.label("Grid Background")
+        koi.color(ts.level.gridColorBackground)
+
+        koi.label("Grid Style Floor")
+        koi.dropDown(GridStyle, ts.level.gridStyleFloor)
+
+        koi.label("Grid Floor")
+        koi.color(ts.level.gridColorFloor)
+
+      group:
+        koi.label("Selection")
+        koi.color(ts.level.selectionColor)
+
+        koi.label("Paste Preview")
+        koi.color(ts.level.pastePreviewColor)
+
+      group:
+        koi.label("Link Marker")
+        koi.color(ts.level.linkMarkerColor)
+
+    if koi.subSectionHeader("Background Hatch", te.sectionBackgroundHatch):
+      koi.label("Background Hatch?")
+      koi.checkBox(ts.level.bgHatchEnabled)
+
+      koi.label("Hatch")
+      koi.color(ts.level.bgHatchColor)
+
+      koi.label("Hatch Stroke Width")
+      koi.horizSlider(startVal=0, endVal=10, ts.level.bgHatchStrokeWidth,
+                      style=PropsSliderStyle)
+
+      koi.label("Hatch Spacing")
+      koi.horizSlider(startVal=0, endVal=10, ts.level.bgHatchSpacingFactor,
+                      style=PropsSliderStyle)
+
+    if koi.subSectionHeader("Outline", te.sectionOutline):
+      koi.label("Outline Style")
+      koi.dropDown(OutlineStyle, ts.level.outlineStyle)
+
+      koi.label("Outline Fill Style")
+      koi.dropDown(OutlineFillStyle, ts.level.outlineFillStyle)
+
+      koi.label("Outline Overscan")
+      koi.checkBox(ts.level.outlineOverscan)
+
+      koi.label("Outline")
+      koi.color(ts.level.outlineColor)
+
+      koi.label("Outline Width")
+      koi.horizSlider(startVal=0, endVal=10, ts.level.outlineWidthFactor,
+                      style=PropsSliderStyle)
+
+    if koi.subSectionHeader("Shadow", te.sectionShadow):
+      group:
+        koi.label("Inner Shadow?")
+        koi.checkBox(ts.level.innerShadowEnabled)
+
+        koi.label("Inner Shadow")
+        koi.color(ts.level.innerShadowColor)
+
+        koi.label("Inner Shadow Width")
+        koi.horizSlider(startVal=0, endVal=10, ts.level.innerShadowWidthFactor,
+                        style=PropsSliderStyle)
+
+      group:
+        koi.label("Outer Shadow?")
+        koi.checkBox(ts.level.outerShadowEnabled)
+
+        koi.label("Outer Shadow")
+        koi.color(ts.level.outerShadowColor)
+
+        koi.label("Outer Shadow Width")
+        koi.horizSlider(startVal=0, endVal=10, ts.level.outerShadowWidthFactor,
+                        style=PropsSliderStyle)
+
+    if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
+      koi.label("Floor 1")
+      koi.color(ts.level.floorColor[0])
+
+      koi.label("Floor 2")
+      koi.color(ts.level.floorColor[1])
+
+      koi.label("Floor 3")
+      koi.color(ts.level.floorColor[2])
+
+      koi.label("Floor 4")
+      koi.color(ts.level.floorColor[3])
+
+      koi.label("Floor 5")
+      koi.color(ts.level.floorColor[4])
+
+      koi.label("Floor 6")
+      koi.color(ts.level.floorColor[5])
+
+      koi.label("Floor 7")
+      koi.color(ts.level.floorColor[6])
+
+      koi.label("Floor 8")
+      koi.color(ts.level.floorColor[7])
+
+      koi.label("Floor 9")
+      koi.color(ts.level.floorColor[8])
+
+    if koi.subSectionHeader("Notes", te.sectionNotes):
+      group:
+        koi.label("Marker")
+        koi.color(ts.level.noteMarkerColor)
+
+        koi.label("Comment")
+        koi.color(ts.level.noteCommentColor)
+
+      group:
+        koi.label("Index")
+        koi.color(ts.level.noteIndexColor)
+
+        koi.label("Index Background 1")
+        koi.color(ts.level.noteIndexBgColor[0])
+
+        koi.label("Index Background 2")
+        koi.color(ts.level.noteIndexBgColor[1])
+
+        koi.label("Index Background 3")
+        koi.color(ts.level.noteIndexBgColor[2])
+
+        koi.label("Index Background 4")
+        koi.color(ts.level.noteIndexBgColor[3])
+
+      group:
+        koi.label("Tooltip Background")
+        koi.color(ts.level.noteTooltipBgColor)
+
+        koi.label("Tooltip Text")
+        koi.color(ts.level.noteTooltipTextColor)
+
+  if koi.sectionHeader("Panes", te.sectionPanes):
+    if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
+      koi.label("Text")
+      koi.color(ts.notesPane.textColor)
+
+      koi.label("Index")
+      koi.color(ts.notesPane.indexColor)
+
+      koi.label("Index Background 1")
+      koi.color(ts.notesPane.indexBgColor[0])
+
+      koi.label("Index Background 2")
+      koi.color(ts.notesPane.indexBgColor[1])
+
+      koi.label("Index Background 3")
+      koi.color(ts.notesPane.indexBgColor[2])
+
+      koi.label("Index Background 4")
+      koi.color(ts.notesPane.indexBgColor[3])
+
+    if koi.subSectionHeader("Toolbar Pane", te.sectionToolbarPane):
+      koi.label("Button Background")
+      koi.color(ts.toolbarPane.buttonBgColor)
+
+      koi.label("Button Background Hover")
+      koi.color(ts.toolbarPane.buttonBgColorHover)
+
+  koi.endScrollView()
 
 # }}}
 

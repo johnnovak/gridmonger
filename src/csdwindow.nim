@@ -475,7 +475,7 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
           GL_STENCIL_BUFFER_BIT)
 
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
-  koi.beginFrame(winWidth.float, winHeight.float)
+  koi.beginFrame()
 
   # Title bar
   renderTitleBar(win, vg, winWidth.float)
