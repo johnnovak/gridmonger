@@ -217,34 +217,40 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   else:
     (s.bgColorUnfocused, s.textColorUnfocused)
 
-  vg.beginPath()
-  vg.rect(0, 0, winWidth.float, TitleBarHeight)
-  vg.fillColor(bgColor)
-  vg.fill()
-
-  vg.setFont(TitleBarFontSize)
-  vg.fillColor(textColor)
-  vg.textAlign(haLeft, vaMiddle)
-
   let
     bw = TitleBarButtonWidth
     bh = TitleBarFontSize + 4
     by = (TitleBarHeight - bh) / 2
     ty = TitleBarHeight * TextVertAlignFactor
 
+  koi.addDrawLayer(layerWindowDecoration, vg):
+    vg.beginPath()
+    vg.rect(0, 0, winWidth.float, TitleBarHeight)
+    vg.fillColor(bgColor)
+    vg.fill()
+
+    vg.setFont(TitleBarFontSize)
+    vg.fillColor(textColor)
+    vg.textAlign(haLeft, vaMiddle)
+
+    # Window title & modified flag
+    let tx = vg.text(TitleBarTitlePosX, ty, win.title)
+
+    if win.modified:
+      vg.fillColor(s.modifiedFlagColor)
+      discard vg.text(tx+10, ty, IconAsterisk)
+
+
   alias(bs, win.buttonStyle)
+
+  # TODO hacky, shouldn't set the current layer from the outside
+  let oldCurrLayer = koi.currentLayer()
+  koi.setCurrentLayer(layerWindowDecoration)
 
   # Pin window button
   if koi.button(TitleBarPinButtonsLeftPad, by, bw, bh, IconPin, style=bs):
     # TODO
     discard
-
-  # Window title & modified flag
-  let tx = vg.text(TitleBarTitlePosX, ty, win.title)
-
-  if win.modified:
-    vg.fillColor(s.modifiedFlagColor)
-    discard vg.text(tx+10, ty, IconAsterisk)
 
   # Minimise/maximise/close window buttons
   let x = winWidth - TitleBarWindowButtonsTotalWidth
@@ -263,6 +269,8 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
 
   if koi.button(x + bw*2, by, bw, bh, IconWindowClose, style=bs):
     win.w.shouldClose = true
+
+  koi.setCurrentLayer(oldCurrLayer)
 
 # }}}
 # {{{ handleWindowDragEvents()
@@ -458,44 +466,28 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 
   g_renderFramePreProc(win)
 
-  #####################################
-
-  var
+  let
     (winWidth, winHeight) = win.size
     (fbWidth, fbHeight) = win.framebufferSize
-    pxRatio = fbWidth / winWidth
 
-  # Update and render
-  glViewport(0, 0, fbWidth, fbHeight)
-
-  glClearColor(0.4, 0.4, 0.4, 1.0)
-
-  glClear(GL_COLOR_BUFFER_BIT or
-          GL_DEPTH_BUFFER_BIT or
-          GL_STENCIL_BUFFER_BIT)
-
-  koi.beginFrame(winWidth.float, winHeight.float, pxRatio)
-
-  # Title bar
-  renderTitleBar(win, vg, winWidth.float)
-
-  #####################################
+  koi.beginFrame(winWidth, winHeight, fbWidth, fbHeight)
 
   if doHandleEvents:
     handleWindowDragEvents(win)
 
   g_renderFrameProc(win, doHandleEvents=true)
 
-  #####################################
-  (winWidth, winHeight) = win.size
+  # Title bar
+  renderTitleBar(win, vg, winWidth.float)
 
   # Window border
-  vg.beginPath()
-  vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
-  # TODO border color
-  vg.strokeColor(gray(0.09))
-  vg.strokeWidth(1.0)
-  vg.stroke()
+  koi.addDrawLayer(layerWindowDecoration, vg):
+    vg.beginPath()
+    vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
+    # TODO border color
+    vg.strokeColor(gray(0.09))
+    vg.strokeWidth(1.0)
+    vg.stroke()
 
   koi.endFrame()
 

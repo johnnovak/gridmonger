@@ -35,7 +35,7 @@ import utils
 
 
 let showThemeEditor = true
-let themeEditorWidth = 314.0
+let themeEditorWidth = 316.0
 
 const
   BuildGitHash = staticExec("git rev-parse --short HEAD").strip
@@ -963,13 +963,13 @@ proc updateLastCursorViewCoords(a) =
 # {{{ drawAreaWidth()
 proc drawAreaWidth(a): float =
   if showThemeEditor: koi.winWidth() - themeEditorWidth
-  else: themeEditorWidth
+  else: koi.winWidth()
 
 # }}}
 # {{{ drawAreaHeight()
 proc drawAreaHeight(a): float =
   # TODO
-  koi.winHeight() - TitleBarHeight - StatusBarHeight
+  koi.winHeight() - TitleBarHeight
 
 # }}}
 # {{{ updateViewStartAndCursorPosition()
@@ -998,7 +998,8 @@ proc updateViewStartAndCursorPosition(a) =
                                              a.ui.levelRightPad
 
   ui.levelDrawAreaHeight = drawAreaHeight(a) - a.ui.levelTopPad -
-                                               a.ui.levelBottomPad
+                                               a.ui.levelBottomPad -
+                                               StatusBarHeight
 
   if a.opt.showNotesPane:
    ui.levelDrawAreaHeight -= NotesPaneTopPad + NotesPaneHeight +
@@ -1192,6 +1193,9 @@ const
   DlgButtonPad     = 10.0
   DlgCheckBoxWidth = 18.0
   DlgCheckBoxYOffs = 3.0
+
+proc calcDialogX(a; dlgWidth: float): float =
+  drawAreaWidth(a)*0.5 - dlgWidth*0.5
 
 # {{{ coordinateFields()
 template coordinateFields() =
@@ -1504,7 +1508,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -1595,7 +1601,9 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Changes?")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Changes?",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -1668,7 +1676,9 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     DlgWidth = 410.0
     DlgHeight = 350.0
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Map")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Map",
+                  x = calcDialogX(a, DlgWidth).some)
+
   a.clearStatusMessage()
 
   let LabelWidth = 130.0
@@ -1777,7 +1787,9 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  Edit Map Properties")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  Edit Map Properties",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -1918,7 +1930,9 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -2094,7 +2108,9 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight,
-                  fmt"{IconNewFile}  Edit Level Properties")
+                  fmt"{IconNewFile}  Edit Level Properties",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -2221,7 +2237,6 @@ proc openResizeLevelDialog(a) =
 
 
 proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
-
   const
     DlgWidth = 270.0
     DlgHeight = 300.0
@@ -2231,7 +2246,9 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCrop}  Resize Level")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCrop}  Resize Level",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -2354,7 +2371,9 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconTrash}  Delete level?")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconTrash}  Delete level?",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -2443,7 +2462,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   let title = (if dlg.editMode: "Edit" else: "Add") & " Note"
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -2639,7 +2660,9 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   let title = (if dlg.editMode: "Edit" else: "Add") & " Label"
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}")
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}",
+                  x = calcDialogX(a, DlgWidth).some)
+
   clearStatusMessage(a)
 
   var x = 30.0
@@ -2887,15 +2910,11 @@ proc drawEmptyMap(a) =
   alias(vg, a.vg)
   alias(ls, a.doc.levelStyle)
 
-  vg.save()
-
   vg.fontSize(22)
   vg.fillColor(ls.drawColor)
   vg.textAlign(haCenter, vaMiddle)
-  var y = koi.winHeight() * 0.5
-  discard vg.text(koi.winWidth() * 0.5, y, "Empty map")
-
-  vg.save()
+  var y = drawAreaHeight(a) * 0.5
+  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
 
 # }}}
 # {{{ drawNoteTooltip()
@@ -4244,11 +4263,11 @@ proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
       koi.color(ts.level.bgHatchColor)
 
       koi.label("Hatch Stroke Width")
-      koi.horizSlider(startVal=0, endVal=10, ts.level.bgHatchStrokeWidth,
+      koi.horizSlider(startVal=0.5, endVal=10, ts.level.bgHatchStrokeWidth,
                       style=PropsSliderStyle)
 
       koi.label("Hatch Spacing")
-      koi.horizSlider(startVal=0, endVal=10, ts.level.bgHatchSpacingFactor,
+      koi.horizSlider(startVal=1.0, endVal=10, ts.level.bgHatchSpacingFactor,
                       style=PropsSliderStyle)
 
     if koi.subSectionHeader("Outline", te.sectionOutline):
@@ -4265,7 +4284,7 @@ proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
       koi.color(ts.level.outlineColor)
 
       koi.label("Outline Width")
-      koi.horizSlider(startVal=0, endVal=10, ts.level.outlineWidthFactor,
+      koi.horizSlider(startVal=0, endVal=1.0, ts.level.outlineWidthFactor,
                       style=PropsSliderStyle)
 
     if koi.subSectionHeader("Shadow", te.sectionShadow):
@@ -4277,7 +4296,7 @@ proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
         koi.color(ts.level.innerShadowColor)
 
         koi.label("Inner Shadow Width")
-        koi.horizSlider(startVal=0, endVal=10, ts.level.innerShadowWidthFactor,
+        koi.horizSlider(startVal=0, endVal=1.0, ts.level.innerShadowWidthFactor,
                         style=PropsSliderStyle)
 
       group:
@@ -4288,7 +4307,7 @@ proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
         koi.color(ts.level.outerShadowColor)
 
         koi.label("Outer Shadow Width")
-        koi.horizSlider(startVal=0, endVal=10, ts.level.outerShadowWidthFactor,
+        koi.horizSlider(startVal=0, endVal=1.0, ts.level.outerShadowWidthFactor,
                         style=PropsSliderStyle)
 
     if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
@@ -4500,12 +4519,24 @@ proc renderUI() =
 
   # Theme editor
   if showThemeEditor:
-    renderThemeEditorPropsPanel(a,
-      x=uiWidth,
-      y=TitleBarHeight,
-      w=themeEditorWidth,
-      h=drawAreaHeight(a)
-    )
+    let
+      x = uiWidth
+      y = TitleBarHeight
+      w = themeEditorWidth
+      h = drawAreaHeight(a)
+
+    vg.beginPath()
+    vg.rect(x, y, w, h)
+    vg.fillColor(gray(0.3))
+    vg.fill()
+
+    vg.beginPath()
+    vg.moveTo(x+0.5, y)
+    vg.lineTo(x+0.5, y+h)
+    vg.strokeColor(gray(0.1))
+    vg.stroke()
+
+    renderThemeEditorPropsPanel(a, x+1, y, w-2, h)
 
 # }}}
 # {{{ renderFramePre()
