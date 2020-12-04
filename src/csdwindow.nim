@@ -474,8 +474,7 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
           GL_DEPTH_BUFFER_BIT or
           GL_STENCIL_BUFFER_BIT)
 
-  vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
-  koi.beginFrame()
+  koi.beginFrame(winWidth.float, winHeight.float, pxRatio)
 
   # Title bar
   renderTitleBar(win, vg, winWidth.float)
@@ -499,7 +498,6 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
   vg.stroke()
 
   koi.endFrame()
-  vg.endFrame()
 
   glfw.swapBuffers(win.w)  # TODO
 

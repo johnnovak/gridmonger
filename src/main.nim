@@ -34,6 +34,9 @@ import theme
 import utils
 
 
+let showThemeEditor = true
+let themeEditorWidth = 314.0
+
 const
   BuildGitHash = staticExec("git rev-parse --short HEAD").strip
 
@@ -478,34 +481,24 @@ proc saveConfig(a) =
 
 # }}}
 
-# {{{ getPxRatio()
-# TODO move to koi?
-proc getPxRatio(a): float =
-  let
-    (winWidth, _) = a.win.size
-    (fbWidth, _) = a.win.framebufferSize
-  result = fbWidth / winWidth
-
-# }}}
-
 # {{{ mapHasLevels()
 proc mapHasLevels(a): bool =
   a.doc.map.levels.len > 0
 
 # }}}
-# {{{ getCurrSortedLevelIdx()
-proc getCurrSortedLevelIdx(a): Natural =
+# {{{ currSortedLevelIdx()
+proc currSortedLevelIdx(a): Natural =
   a.doc.map.findSortedLevelIdxByLevelIdx(a.ui.cursor.level)
 
 # }}}
-# {{{ getCurrLevel()
-proc getCurrLevel(a): Level =
+# {{{ currLevel()
+proc currLevel(a): Level =
   a.doc.map.levels[a.ui.cursor.level]
 
 # }}}
-# {{{ getCoordOptsForCurrLevel()
-proc getCoordOptsForCurrLevel(a): CoordinateOptions =
-  let l = getCurrLevel(a)
+# {{{ coordOptsForCurrLevel()
+proc coordOptsForCurrLevel(a): CoordinateOptions =
+  let l = currLevel(a)
   if l.overrideCoordOpts: l.coordOpts else: a.doc.map.coordOpts
 
 # }}}
@@ -549,8 +542,8 @@ proc drawStatusBar(y: float, winWidth: float; a) =
 
   if mapHasLevels(a):
     let
-      l = getCurrLevel(a)
-      coordOpts = getCoordOptsForCurrLevel(a)
+      l = currLevel(a)
+      coordOpts = coordOptsForCurrLevel(a)
       row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
       col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
       cursorPos = fmt"({col}, {row})"
@@ -909,7 +902,7 @@ proc switchTheme(themeIndex: Natural; a) =
   a.doc.levelStyle = a.theme.style.level
 
   a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
-                                           getPxRatio(a))
+                                           koi.getPxRatio())
 
   a.win.setStyle(a.theme.style.titleBar)
 
@@ -967,15 +960,16 @@ proc updateLastCursorViewCoords(a) =
   a.ui.lastCursorViewY = dp.gridSize * (cur.row - dp.viewStartRow)
 
 # }}}
-# {{{ getDrawAreaWidth()
-proc getDrawAreaWidth(a): float =
-  koi.winWidth() - a.ui.levelLeftPad - a.ui.levelRightPad
+# {{{ drawAreaWidth()
+proc drawAreaWidth(a): float =
+  if showThemeEditor: koi.winWidth() - themeEditorWidth
+  else: themeEditorWidth
 
 # }}}
-# {{{ getDrawAreaHeight()
-proc getDrawAreaHeight(a): float =
-  koi.winHeight() - TitleBarHeight - StatusBarHeight -
-                    a.ui.levelTopPad - a.ui.levelBottomPad
+# {{{ drawAreaHeight()
+proc drawAreaHeight(a): float =
+  # TODO
+  koi.winHeight() - TitleBarHeight - StatusBarHeight
 
 # }}}
 # {{{ updateViewStartAndCursorPosition()
@@ -984,7 +978,7 @@ proc updateViewStartAndCursorPosition(a) =
   alias(ui, a.ui)
   alias(cur, a.ui.cursor)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
 
   if dp.drawCellCoords:
     a.ui.levelTopPad    = LevelTopPad_Coords
@@ -1000,8 +994,11 @@ proc updateViewStartAndCursorPosition(a) =
   dp.startX = ui.levelLeftPad
   dp.startY = TitleBarHeight + ui.levelTopPad
 
-  ui.levelDrawAreaWidth = getDrawAreaWidth(a)
-  ui.levelDrawAreaHeight = getDrawAreaHeight(a)
+  ui.levelDrawAreaWidth = drawAreaWidth(a) - a.ui.levelLeftPad -
+                                             a.ui.levelRightPad
+
+  ui.levelDrawAreaHeight = drawAreaHeight(a) - a.ui.levelTopPad -
+                                               a.ui.levelBottomPad
 
   if a.opt.showNotesPane:
    ui.levelDrawAreaHeight -= NotesPaneTopPad + NotesPaneHeight +
@@ -1030,7 +1027,7 @@ proc moveLevel(dir: CardinalDir, steps: Natural; a) =
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
 
@@ -1055,7 +1052,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural; a) =
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   let sm = a.opt.scrollMargin
 
   case dir:
@@ -1144,7 +1141,7 @@ proc setSelectModeActionMessage(a) =
 # }}}
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
 
   a.ui.editMode = emSelect
   a.ui.selection = some(newSelection(l.rows, l.cols))
@@ -1178,7 +1175,7 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 
     buf = some(SelectionBuffer(
       selection: newSelectionFrom(sel, bbox),
-      level: newLevelFrom(getCurrLevel(a), bbox)
+      level: newLevelFrom(currLevel(a), bbox)
     ))
     eraseOrphanedWalls(buf.get)
 
@@ -1870,7 +1867,7 @@ proc openNewLevelDialog(a) =
   var co: CoordinateOptions
 
   if mapHasLevels(a):
-    let l = getCurrLevel(a)
+    let l = currLevel(a)
     dlg.locationName = l.locationName
     dlg.levelName = ""
     dlg.elevation = if   l.elevation > 0: $(l.elevation + 1)
@@ -1880,7 +1877,7 @@ proc openNewLevelDialog(a) =
     dlg.cols = $l.cols
     dlg.overrideCoordOpts = l.overrideCoordOpts
 
-    co = getCoordOptsForCurrLevel(a)
+    co = coordOptsForCurrLevel(a)
 
   else:
     dlg.locationName = "Untitled Location"
@@ -2061,12 +2058,12 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 proc openEditLevelPropsDialog(a) =
   alias(dlg, a.dialog.editLevelPropsDialog)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   dlg.locationName = l.locationName
   dlg.levelName = l.levelName
   dlg.elevation = $l.elevation
 
-  let co = getCoordOptsForCurrLevel(a)
+  let co = coordOptsForCurrLevel(a)
   dlg.overrideCoordOpts = l.overrideCoordOpts
   dlg.origin            = co.origin.ord
   dlg.rowStyle          = co.rowStyle.ord
@@ -2137,7 +2134,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   # Validation
   var validationError = ""
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   if dlg.locationName != l.locationName or
      dlg.levelName != l.levelName or
      dlg.elevation != $l.elevation:
@@ -2216,7 +2213,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 proc openResizeLevelDialog(a) =
   alias(dlg, a.dialog.resizeLevelDialog)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   dlg.rows = $l.rows
   dlg.cols = $l.cols
   dlg.anchor = raCenter
@@ -2403,7 +2400,7 @@ proc openEditNoteDialog(a) =
   alias(dlg, a.dialog.editNoteDialog)
   alias(cur, a.ui.cursor)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   dlg.row = cur.row
   dlg.col = cur.col
 
@@ -2610,7 +2607,7 @@ proc openEditLabelDialog(a) =
   alias(dlg, a.dialog.editLabelDialog)
   alias(cur, a.ui.cursor)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   dlg.row = cur.row
   dlg.col = cur.col
 
@@ -2801,7 +2798,7 @@ proc nextThemeAction(a) =
 # {{{ prevLevelAction()
 proc prevLevelAction(a) =
   alias(cur, a.ui.cursor)
-  var si = getCurrSortedLevelIdx(a)
+  var si = currSortedLevelIdx(a)
   if si > 0:
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
 
@@ -2809,7 +2806,7 @@ proc prevLevelAction(a) =
 # {{{ nextLevelAction()
 proc nextLevelAction(a) =
   alias(cur, a.ui.cursor)
-  var si = getCurrSortedLevelIdx(a)
+  var si = currSortedLevelIdx(a)
   if si < a.doc.map.levels.len-1:
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
 
@@ -2948,8 +2945,8 @@ proc drawNoteTooltip(note: Note, a) =
     vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
 
 # }}}
-# {{{ getLocationAtMouse()
-proc getLocationAtMouse(a): Option[Location] =
+# {{{ locationAtMouse()
+proc locationAtMouse(a): Option[Location] =
   alias(dp, a.ui.drawLevelParams)
 
   let
@@ -3007,7 +3004,7 @@ proc handleLevelMouseEvents(a) =
 
   else:   # not WASD mode
     if koi.mbLeftDown():
-      let loc= getLocationAtMouse(a)
+      let loc= locationAtMouse(a)
       if loc.isSome:
         a.ui.cursor = loc.get
 
@@ -3020,7 +3017,7 @@ proc renderLevel(a) =
   alias(ui, a.ui)
   alias(opt, a.opt)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
 
   let i = instantiationInfo(fullPaths=true)
   let id = koi.generateId(i.filename, i.line, "gridmonger-level")
@@ -3047,7 +3044,7 @@ proc renderLevel(a) =
   if dp.viewRows > 0 and dp.viewCols > 0:
     dp.cursorRow = ui.cursor.row
     dp.cursorCol = ui.cursor.col
-    dp.cellCoordOpts = getCoordOptsForCurrLevel(a)
+    dp.cellCoordOpts = coordOptsForCurrLevel(a)
     dp.regionOpts = l.regionOpts
 
     dp.cursorOrient = CardinalDir.none
@@ -3073,7 +3070,7 @@ proc renderLevel(a) =
   if koi.isHot(id):
     if not (opt.wasdMode and isActive(id)):
 
-      let locOpt = getLocationAtMouse(a)
+      let locOpt = locationAtMouse(a)
       if locOpt.isSome:
         let loc = locOpt.get
 
@@ -3202,7 +3199,7 @@ proc drawNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(s, a.theme.style.notesPane)
 
-  let l = getCurrLevel(a)
+  let l = currLevel(a)
   let cur = a.ui.cursor
 
   if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
@@ -3282,7 +3279,7 @@ proc handleGlobalKeyEvents(a) =
   alias(opt, a.opt)
   alias(ls, a.doc.levelStyle)
 
-  var l = getCurrLevel(a)
+  var l = currLevel(a)
 
   type
     WalkKeys = object
@@ -4055,7 +4052,7 @@ PropsSliderStyle.trackCornerRadius = 8.0
 PropsSliderStyle.valueCornerRadius = 6.0
 
 
-proc themeScrollView(a; x, y, w, h: float) =
+proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
   alias(te, a.themeEditor)
   alias(ts, a.theme.style)
 
@@ -4397,13 +4394,13 @@ proc renderUI() =
   alias(vg, a.vg)
   alias(dlg, a.dialog)
 
-  let winWidth = koi.winWidth()
   let winHeight = koi.winHeight()
+  let uiWidth = drawAreaWidth(a)
 
   # Clear background
   vg.beginPath()
-  # TODO shouldn't calculate visible window area manually
-  vg.rect(0, TitleBarHeight, winWidth.float, winHeight.float - TitleBarHeight)
+  # TODO shouldn't have to calculate visible window area manually
+  vg.rect(0, TitleBarHeight, uiWidth, winHeight - TitleBarHeight)
 
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
@@ -4413,7 +4410,7 @@ proc renderUI() =
   vg.fill()
 
   # About button
-  if button(x = winWidth - 55, y = 45, w = 20, h = DlgItemHeight, IconQuestion,
+  if button(x = uiWidth - 55, y = 45, w = 20, h = DlgItemHeight, IconQuestion,
             style = ui.aboutButtonStyle):
     # TODO
     discard
@@ -4422,7 +4419,7 @@ proc renderUI() =
     drawEmptyMap(a)
   else:
     let levelItems = a.doc.map.sortedLevelNames
-    var sortedLevelIdx = getCurrSortedLevelIdx(a)
+    var sortedLevelIdx = currSortedLevelIdx(a)
 
     vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
 
@@ -4432,7 +4429,7 @@ proc renderUI() =
     )
 
     koi.dropDown(
-      x = round((winWidth - levelDropDownWidth) * 0.5),
+      x = round((uiWidth - levelDropDownWidth) * 0.5),
       y = 45.0,
       w = levelDropDownWidth,
       h = 24.0,   # TODO calc y
@@ -4450,14 +4447,14 @@ proc renderUI() =
       drawNotesPane(
         x = NotesPaneLeftPad,
         y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
-        w = winWidth - NotesPaneLeftPad - NotesPaneRightPad,
+        w = uiWidth - NotesPaneLeftPad - NotesPaneRightPad,
         h = NotesPaneHeight,
         a
       )
 
     if a.opt.showToolsPane:
       renderToolsPane(
-        x = winWidth - ToolsPaneWidth,
+        x = uiWidth - ToolsPaneWidth,
         y = ToolsPaneTopPad,
         w = ToolsPaneWidth,
         h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
@@ -4468,7 +4465,7 @@ proc renderUI() =
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
-  drawStatusBar(statusBarY, winWidth.float, a)
+  drawStatusBar(statusBarY, uiWidth.float, a)
 
   # Dialogs
   if dlg.preferencesDialog.isOpen:
@@ -4500,6 +4497,15 @@ proc renderUI() =
 
   elif dlg.resizeLevelDialog.isOpen:
     resizeLevelDialog(dlg.resizeLevelDialog, a)
+
+  # Theme editor
+  if showThemeEditor:
+    renderThemeEditorPropsPanel(a,
+      x=uiWidth,
+      y=TitleBarHeight,
+      w=themeEditorWidth,
+      h=drawAreaHeight(a)
+    )
 
 # }}}
 # {{{ renderFramePre()

@@ -256,6 +256,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
     var image = vg.renderToImage(
       width  = spacing * pxRatio.int,
       height = spacing * pxRatio.int,
+      getPxRatio(),
       {ifRepeatX, ifRepeatY}
     ):
       var sw = 1.0
