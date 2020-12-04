@@ -1,8 +1,7 @@
 import options
 
-import koi/rect
-
 import common
+import rect
 import utils
 
 

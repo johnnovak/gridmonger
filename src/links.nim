@@ -1,9 +1,8 @@
 import options
 
-import koi/rect
-
 import bitable
 import common
+import rect
 import selection
 import utils
 

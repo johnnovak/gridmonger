@@ -2,10 +2,9 @@ import algorithm
 import options
 import tables
 
-import koi/rect
-
 import common
 import cellgrid
+import rect
 import selection
 
 

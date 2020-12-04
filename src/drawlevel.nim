@@ -5,7 +5,6 @@ import strutils
 
 import glad/gl
 import koi
-import koi/rect
 import nanovg
 
 import bitable
@@ -14,6 +13,7 @@ import common
 import icons
 import level
 import links
+import rect
 import selection
 import utils
 
