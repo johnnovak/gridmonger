@@ -239,8 +239,6 @@ type
     loadLastFile:           bool
     autoSave:               bool
     autoSaveFrequencySecs:  string
-    resizeRedrawHack:       bool
-    resizeNoVsyncHack:      bool
 
 
   SaveDiscardDialogParams = object
@@ -454,8 +452,6 @@ proc saveConfig(a) =
     ypos: ypos,
     width: width,
     height: height,
-    resizeRedrawHack: csdwindow.getResizeRedrawHack(),
-    resizeNoVsyncHack: csdwindow.getResizeNoVsyncHack(),
 
     # TODO use common struct for DISP chunk & this
     themeName: theme.themeNames[theme.currThemeIndex],
@@ -1450,6 +1446,9 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
                state: WidgetState, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
+    let sw = 2.0
+    let (x, y, w, h) = snapToGrid(x, y, w, h, sw)
+
     var col = colors[buttonIdx]
 
     if state in {wsHover, wsDown, wsActiveHover}:
@@ -1462,7 +1461,7 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
     if state in {wsDown, wsActive, wsActiveHover}:
       vg.beginPath()
       vg.strokeColor(cursorColor)
-      vg.strokeWidth(2)
+      vg.strokeWidth(sw)
       vg.rect(x, y, w-Pad, h-Pad)
       vg.stroke()
 
@@ -1492,8 +1491,6 @@ proc openPreferencesDialog(a) =
   dlg.loadLastFile = true # TODO
   dlg.autoSave = true # TODO
   dlg.autoSaveFrequencySecs = "30"
-  dlg.resizeRedrawHack = getResizeRedrawHack()
-  dlg.resizeNoVsyncHack = getResizeNoVsyncHack()
 
   dlg.isOpen = true
 
@@ -1542,20 +1539,6 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       min: 30,
       max: 3600
     ).some
-  )
-
-  y += PadYLarge
-  koi.label(x, y, LabelWidth, h, "Resize window redraw hack")
-  koi.checkBox(
-    x + LabelWidth, y + DlgCheckBoxYOffs,
-    DlgCheckBoxWidth, dlg.resizeRedrawHack
-  )
-
-  y += PadYSmall
-  koi.label(x, y, LabelWidth, h, "Resize window no vsync hack")
-  koi.checkBox(
-    x + LabelWidth, y + DlgCheckBoxYOffs,
-    DlgCheckBoxWidth, dlg.resizeNoVsyncHack
   )
 
   y += 20
@@ -4073,14 +4056,14 @@ var PropsSliderStyle = getDefaultSliderStyle()
 PropsSliderStyle.trackCornerRadius = 8.0
 PropsSliderStyle.valueCornerRadius = 6.0
 
-
-proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
+# {{{ renderThemeEditorProps()
+proc renderThemeEditorProps(a; x, y, w, h: float) =
   alias(te, a.themeEditor)
   alias(ts, a.theme.style)
 
-  # w = 314
   koi.beginScrollView(x, y, w, h)
 
+  # {{{ User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
     if koi.subSectionHeader("General", te.sectionUserInterfaceGeneral):
@@ -4205,7 +4188,8 @@ proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
       koi.label("Active")
       koi.color(ts.aboutButton.colorActive)
 
-
+  # }}}
+  # {{{ Level section
   if koi.sectionHeader("Level", te.sectionLevel):
     if koi.subSectionHeader("General", te.sectionLevelGeneral):
       group:
@@ -4372,6 +4356,8 @@ proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
         koi.label("Tooltip Text")
         koi.color(ts.level.noteTooltipTextColor)
 
+  # }}}
+  # {{{ Panes section
   if koi.sectionHeader("Panes", te.sectionPanes):
     if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
       koi.label("Text")
@@ -4399,7 +4385,97 @@ proc renderThemeEditorPropsPanel(a; x, y, w, h: float) =
       koi.label("Button Background Hover")
       koi.color(ts.toolbarPane.buttonBgColorHover)
 
+  # }}}
+
   koi.endScrollView()
+
+# }}}
+# {{{ renderThemeEditorPane()
+
+proc renderThemeEditorPane(a; x, y, w, h: float) =
+  alias(vg, a.vg)
+
+  let topSectionHeight = 130
+  let propsHeight = h - topSectionHeight
+
+  # Background
+  vg.beginPath()
+  vg.rect(x, y, w, h)
+  vg.fillColor(gray(0.3))
+  vg.fill()
+
+  # Left separator line
+  vg.beginPath()
+  vg.moveTo(x+0.5, y)
+  vg.lineTo(x+0.5, y+h)
+  vg.strokeColor(gray(0.1))
+  vg.stroke()
+
+  let
+    bw = 66.0
+    bp = 7.0
+    wh = 22.0
+
+  var cx = x
+  var cy = y
+
+  # Theme pane title
+  const TitleHeight = 34
+
+  vg.beginPath()
+  vg.rect(x+1, y, w, h=TitleHeight)
+  vg.fillColor(gray(0.25))
+  vg.fill()
+
+  let titleStyle = getDefaultLabelStyle()
+  titleStyle.align = haCenter
+
+  cy += 6.0
+  koi.label(cx, cy, w, wh, fmt"T  H  E  M  E       E  D  I  T  O  R",
+            style=titleStyle)
+
+  # Theme name & action buttons
+  vg.beginPath()
+  vg.rect(x+1, y+TitleHeight, w, h=96)
+  vg.fillColor(gray(0.36))
+  vg.fill()
+
+  cx = x+15
+  cy += 45.0
+  koi.label(cx, cy, w, wh, fmt"Theme")
+
+  cx += 60.0
+  koi.textField(
+    cx, cy, w=225.0, wh,
+    a.theme.themeNames[a.theme.currThemeIndex],
+    disabled=true
+  )
+
+  cx = x+15
+  cy += 40.0
+
+  let buttonsDisabled = koi.isDialogOpen()
+
+  discard koi.button(cx, cy, w=bw, h=wh, "New", disabled=buttonsDisabled)
+  cx += bw + bp
+
+  discard koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled)
+  cx += bw + bp
+
+  discard koi.button(cx, cy, w=bw, h=wh, "Props", disabled=buttonsDisabled)
+  cx += bw + bp
+
+  discard koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=buttonsDisabled)
+
+  # Scroll view with properties
+  let fc = koi.focusCaptured()
+  koi.setFocusCaptured(false)
+
+  renderThemeEditorProps(a, x+1, y+topSectionHeight, w-2, h=propsHeight)
+
+  koi.setFocusCaptured(fc)
+
+# }}}
 
 # }}}
 
@@ -4528,18 +4604,7 @@ proc renderUI() =
       w = ThemePaneWidth
       h = drawAreaHeight(a)
 
-    vg.beginPath()
-    vg.rect(x, y, w, h)
-    vg.fillColor(gray(0.3))
-    vg.fill()
-
-    vg.beginPath()
-    vg.moveTo(x+0.5, y)
-    vg.lineTo(x+0.5, y+h)
-    vg.strokeColor(gray(0.1))
-    vg.stroke()
-
-    renderThemeEditorPropsPanel(a, x+1, y, w-2, h)
+    renderThemeEditorPane(a, x, y, w, h)
 
 # }}}
 # {{{ renderFramePre()
@@ -4739,12 +4804,6 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   if cfg.maximized:
     a.win.maximize()
-
-  # TODO they're not loaded
-  #setResizeRedrawHack(cfg.resizeRedrawHack)
-  #setResizeNoVsyncHack(cfg.resizeNoVsyncHack)
-  setResizeRedrawHack(off)
-  setResizeNoVsyncHack(on)
 
   a.win.show()
 

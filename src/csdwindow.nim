@@ -25,11 +25,6 @@ const
   WindowResizeEdgeWidth = 10.0
   WindowResizeCornerSize = 20.0
 
-var
-  # TODO are these even needed? they're not loaded from the config
-  g_resizeRedrawHack = off
-  g_resizeNoVsyncHack = off
-
 #  {{{ CSDWindow
 type
   CSDWindow* = ref object
@@ -178,9 +173,6 @@ proc oldSize*(win): tuple[w, h: int32] =
 
 # {{{ restore()
 proc restore(win) =
-  if g_resizeNoVsyncHack:
-    glfw.swapInterval(0)
-
   win.fastRedrawFrameCounter = 20
   win.w.pos = (win.oldPosX, win.oldPosY)
   win.w.size = (win.oldWidth, win.oldHeight)
@@ -194,9 +186,6 @@ proc maximize*(win) =
   let (_, _, w, h) = getPrimaryMonitor().workArea
   (win.oldPosX, win.oldPosY) = win.w.pos
   (win.oldWidth, win.oldHeight) = win.w.size
-
-  if g_resizeNoVsyncHack:
-    glfw.swapInterval(0)
 
   win.fastRedrawFrameCounter = 20
   win.maximized = true
@@ -291,9 +280,6 @@ proc handleWindowDragEvents(win) =
         (win.posX0, win.posY0) = win.w.pos
         win.dragState = wdsMoving
 
-        if g_resizeNoVsyncHack:
-          glfw.swapInterval(0)
-
     if not win.maximized:
       if not koi.hasHotItem() and koi.hasNoActiveItem():
         let ew = WindowResizeEdgeWidth
@@ -326,9 +312,6 @@ proc handleWindowDragEvents(win) =
             win.dragState = wdsResizing
             # TODO maybe hide on OSX only?
 #            hideCursor()
-#
-            if g_resizeNoVsyncHack:
-              glfw.swapInterval(0)
         else:
           setCursorShape(csArrow)
       else:
@@ -382,9 +365,6 @@ proc handleWindowDragEvents(win) =
           (win.posX0, win.posY0) = win.w.pos
     else:
       win.dragState = wdsNone
-
-      if g_resizeNoVsyncHack:
-        glfw.swapInterval(1)
 
   of wdsResizing:
     # TODO add support for resizing on edges
@@ -447,9 +427,6 @@ proc handleWindowDragEvents(win) =
       win.dragState = wdsNone
       showCursor()
 
-      if g_resizeNoVsyncHack:
-        glfw.swapInterval(1)
-
 # }}}
 
 
@@ -493,19 +470,7 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 
   glfw.swapBuffers(win.w)  # TODO
 
-  if g_resizeNoVsyncHack:
-    if win.fastRedrawFrameCounter > 0:
-      dec(win.fastRedrawFrameCounter)
-      if win.fastRedrawFrameCounter == 0:
-        glfw.swapInterval(1)
-
 # }}}
-
-proc framebufSizeCb(win: Window, size: tuple[w, h: int32]) =
-  if g_resizeRedrawHack:
-    csdRenderFrame(g_window, doHandleEvents=false)
-  else:
-    discard
 
 proc `renderFramePreCb=`*(win; p: RenderFramePreProc) =
   g_renderFramePreProc = p
@@ -513,18 +478,5 @@ proc `renderFramePreCb=`*(win; p: RenderFramePreProc) =
 proc `renderFrameCb=`*(win; p: RenderFrameProc) =
   g_window = win
   g_renderFrameProc = p
-  win.w.framebufferSizeCb = framebufSizeCb
-
-proc setResizeRedrawHack*(enabled: bool) =
-  g_resizeRedrawHack = on
-
-proc setResizeNoVsyncHack*(enabled: bool) =
-  g_resizeNoVsyncHack = on
-
-proc getResizeRedrawHack*(): bool =
-  g_resizeRedrawHack
-
-proc getResizeNoVsyncHack*(): bool =
-  g_resizeNoVsyncHack
 
 # vim: et:ts=2:sw=2:fdm=marker

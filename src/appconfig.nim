@@ -16,8 +16,6 @@ type
     maximized*:             bool
     xpos*, ypos*:           int
     width*, height*:        int
-    resizeRedrawHack*:      bool
-    resizeNoVsyncHack*:     bool
 
     # TODO UI state, use a common structure for appconfig and the DISP chunk
     # ui section
@@ -51,8 +49,6 @@ const DefaultAppConfig = AppConfig(
   ypos:   -1,
   width:  700,
   height: 800,
-  resizeRedrawHack:  false,
-  resizeNoVsyncHack: false,
 
   themeName: "default",
   zoomLevel: 9,
@@ -86,8 +82,6 @@ const
   YposKey = "ypos"
   WidthKey = "width"
   HeightKey = "height"
-  ResizeRedrawHackKey = "resizeRedrawHack"
-  ResizeNoVsyncHackKey = "resizeNoVsyncHack"
 
   UISection = "ui"
   ThemeNameKey = "themeName"
@@ -124,8 +118,6 @@ proc loadAppConfig*(fname: string): AppConfig =
   cfg.getNatural( WindowSection, YposKey,          a.ypos)
   cfg.getNatural( WindowSection, WidthKey,         a.width)
   cfg.getNatural( WindowSection, HeightKey,        a.height)
-  cfg.getBool(WindowSection, ResizeRedrawHackKey,  a.resizeRedrawHack)
-  cfg.getBool(WindowSection, ResizeNoVsyncHackKey, a.resizeNoVsyncHack)
 
   cfg.getString(UISection, ThemeNameKey,           a.themeName)
   cfg.getNatural(   UISection, ZoomLevelKey,       a.zoomLevel)
@@ -170,8 +162,6 @@ proc toConfig(a: AppConfig): Config =
   cfg.setSectionKey(WindowSection, YposKey,              $a.ypos)
   cfg.setSectionKey(WindowSection, WidthKey,             $a.width)
   cfg.setSectionKey(WindowSection, HeightKey,            $a.height)
-  cfg.setSectionKey(WindowSection, ResizeRedrawHackKey,  a.resizeRedrawHack.toOnOff)
-  cfg.setSectionKey(WindowSection, ResizeNoVsyncHackKey, a.resizeNoVsyncHack.toOnOff)
 
   cfg.setSectionKey(UISection, ThemeNameKey,             a.themeName)
   cfg.setSectionKey(UISection, ZoomLevelKey,             $a.zoomLevel)
