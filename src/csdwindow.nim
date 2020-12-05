@@ -430,14 +430,14 @@ proc handleWindowDragEvents(win) =
 
 
 type RenderFramePreProc = proc (win: CSDWindow)
-type RenderFrameProc = proc (win: CSDWindow, doHandleEvents: bool)
+type RenderFrameProc = proc (win: CSDWindow)
 
 var g_window: CSDWindow
 var g_renderFramePreProc: RenderFramePreProc
 var g_renderFrameProc: RenderFrameProc
 
 # {{{ csdRenderFrame*()
-proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
+proc csdRenderFrame*(win: CSDWindow) =
   let vg = koi.nvgContext()
 
   g_renderFramePreProc(win)
@@ -448,10 +448,9 @@ proc csdRenderFrame*(win: CSDWindow, doHandleEvents: bool = true) =
 
   koi.beginFrame(winWidth, winHeight, fbWidth, fbHeight)
 
-  if doHandleEvents:
-    handleWindowDragEvents(win)
+  handleWindowDragEvents(win)
 
-  g_renderFrameProc(win, doHandleEvents=true)
+  g_renderFrameProc(win)
 
   # Title bar
   renderTitleBar(win, vg, winWidth.float)

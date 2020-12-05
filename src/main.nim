@@ -4691,7 +4691,7 @@ proc renderFramePre(win: CSDWindow) =
 
 # }}}
 # {{{ renderFrame()
-proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
+proc renderFrame(win: CSDWindow) =
   alias(a, g_app)
 
   if a.theme.nextThemeIndex.isSome:
@@ -4702,9 +4702,8 @@ proc renderFrame(win: CSDWindow, doHandleEvents: bool = true) =
       setStatusMessage(fmt"Switched to '{themeName}' theme", a)
     a.theme.nextThemeIndex = Natural.none
 
-  if doHandleEvents:
-    if mapHasLevels(a): handleGlobalKeyEvents(a)
-    else:               handleGlobalKeyEvents_NoLevels(a)
+  if mapHasLevels(a): handleGlobalKeyEvents(a)
+  else:               handleGlobalKeyEvents_NoLevels(a)
 
   renderUI()
 
