@@ -1,6 +1,5 @@
 import lenientops
 
-import glad/gl
 import glfw
 import icons
 import koi
