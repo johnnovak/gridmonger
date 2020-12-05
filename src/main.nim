@@ -34,9 +34,6 @@ import theme
 import utils
 
 
-let showThemeEditor = true
-let themeEditorWidth = 316.0
-
 const
   BuildGitHash = staticExec("git rev-parse --short HEAD").strip
 
@@ -91,6 +88,8 @@ const
   ToolsPaneTopPad         = 91.0
   ToolsPaneBottomPad      = 30.0
 
+  ThemePaneWidth          = 316.0
+
 const
   MapFileExt = "grm"
   GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
@@ -144,6 +143,7 @@ type
     scrollMargin:      Natural
     showNotesPane:     bool
     showToolsPane:     bool
+    showThemePane:     bool
 
     drawTrail:         bool
     walkMode:          bool
@@ -962,7 +962,7 @@ proc updateLastCursorViewCoords(a) =
 # }}}
 # {{{ drawAreaWidth()
 proc drawAreaWidth(a): float =
-  if showThemeEditor: koi.winWidth() - themeEditorWidth
+  if a.opt.showThemePane: koi.winWidth() - ThemePaneWidth
   else: koi.winWidth()
 
 # }}}
@@ -3709,6 +3709,9 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyT):
         toggleOnOffOption(opt.drawTrail, IconShoePrints, "Draw trail", a)
 
+      elif ke.isKeyDown(keyF12):
+        toggleShowOption(opt.showThemePane, NoIcon, "Theme editor pane", a)
+
     # }}}
     # {{{ emExcavate, emEraseCell, emClearFloor, emColorFloor
     of emExcavate, emEraseCell, emClearFloor, emColorFloor:
@@ -4517,12 +4520,12 @@ proc renderUI() =
   elif dlg.resizeLevelDialog.isOpen:
     resizeLevelDialog(dlg.resizeLevelDialog, a)
 
-  # Theme editor
-  if showThemeEditor:
+  # Theme editor pane
+  if a.opt.showThemePane:
     let
       x = uiWidth
       y = TitleBarHeight
-      w = themeEditorWidth
+      w = ThemePaneWidth
       h = drawAreaHeight(a)
 
     vg.beginPath()
