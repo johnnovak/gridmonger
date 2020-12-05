@@ -442,9 +442,8 @@ proc csdRenderFrame*(win: CSDWindow) =
 
   g_renderFramePreProc(win)
 
-  let
-    (winWidth, winHeight) = win.size
-    (fbWidth, fbHeight) = win.framebufferSize
+  let (winWidth, winHeight) = win.size
+  let (fbWidth, fbHeight) = win.framebufferSize
 
   koi.beginFrame(winWidth, winHeight, fbWidth, fbHeight)
 

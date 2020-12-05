@@ -4702,10 +4702,13 @@ proc renderFrame(win: CSDWindow) =
       setStatusMessage(fmt"Switched to '{themeName}' theme", a)
     a.theme.nextThemeIndex = Natural.none
 
+  # The widgets are handled first...
+  renderUI()
+
+  # ...then the global shortcuts, so widget-specific shorcuts can take
+  # precedence.
   if mapHasLevels(a): handleGlobalKeyEvents(a)
   else:               handleGlobalKeyEvents_NoLevels(a)
-
-  renderUI()
 
   if win.shouldClose:
     win.shouldClose = false
