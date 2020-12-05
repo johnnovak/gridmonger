@@ -7,6 +7,7 @@ import cfghelper
 import common
 import csdwindow
 import utils
+import with
 
 
 const
@@ -31,9 +32,10 @@ type
 
 var DefaultGeneralStyle = new GeneralStyle
 
-DefaultGeneralStyle.backgroundColor = gray(0.4)
-DefaultGeneralStyle.backgroundImage = ""
-DefaultGeneralStyle.highlightColor  = gray(0.4)
+with DefaultGeneralStyle:
+  backgroundColor = gray(0.4)
+  backgroundImage = ""
+  highlightColor  = gray(0.4)
 
 # }}}
 # {{{ WidgetStyle
@@ -47,11 +49,12 @@ type
 
 var DefaultWidgetStyle = new WidgetStyle
 
-DefaultWidgetStyle.bgColor           = gray(0.4)
-DefaultWidgetStyle.bgColorHover      = gray(0.4)
-DefaultWidgetStyle.bgColorDisabled   = gray(0.4)
-DefaultWidgetStyle.textColor         = gray(0.4)
-DefaultWidgetStyle.textColorDisabled = gray(0.4)
+with DefaultWidgetStyle:
+  bgColor           = gray(0.4)
+  bgColorHover      = gray(0.4)
+  bgColorDisabled   = gray(0.4)
+  textColor         = gray(0.4)
+  textColorDisabled = gray(0.4)
 
 # }}}
 # {{{ TextFieldStyle
@@ -64,10 +67,11 @@ type
 
 var DefaultTextFieldStyle = new TextFieldStyle
 
-DefaultTextFieldStyle.bgColorActive   = gray(0.4)
-DefaultTextFieldStyle.textColorActive = gray(0.4)
-DefaultTextFieldStyle.cursorColor     = gray(0.4)
-DefaultTextFieldStyle.selectionColor  = gray(0.4)
+with DefaultTextFieldStyle:
+  bgColorActive   = gray(0.4)
+  textColorActive = gray(0.4)
+  cursorColor     = gray(0.4)
+  selectionColor  = gray(0.4)
 
 
 # }}}
@@ -86,15 +90,16 @@ type
 
 var DefaultDialogStyle = new DialogStyle
 
-DefaultDialogStyle.titleBarBgColor   = gray(0.4)
-DefaultDialogStyle.titleBarTextColor = gray(0.4)
-DefaultDialogStyle.backgroundColor   = gray(0.4)
-DefaultDialogStyle.textColor         = gray(0.4)
-DefaultDialogStyle.warningTextColor  = gray(0.4)
-DefaultDialogStyle.outerBorderColor  = gray(0.4)
-DefaultDialogStyle.innerBorderColor  = gray(0.4)
-DefaultDialogStyle.outerBorderWidth  = 0.0
-DefaultDialogStyle.innerBorderWidth  = 0.0
+with DefaultDialogStyle:
+  titleBarBgColor   = gray(0.4)
+  titleBarTextColor = gray(0.4)
+  backgroundColor   = gray(0.4)
+  textColor         = gray(0.4)
+  warningTextColor  = gray(0.4)
+  outerBorderColor  = gray(0.4)
+  innerBorderColor  = gray(0.4)
+  outerBorderWidth  = 0.0
+  innerBorderWidth  = 0.0
 
 # }}}
 # {{{ StatusBarStyle
@@ -108,11 +113,12 @@ type
 
 var DefaultStatusBarStyle = new StatusBarStyle
 
-DefaultStatusBarStyle.backgroundColor = gray(0.2)
-DefaultStatusBarStyle.textColor       = gray(0.8)
-DefaultStatusBarStyle.commandBgColor  = gray(0.56)
-DefaultStatusBarStyle.commandColor    = gray(0.2)
-DefaultStatusBarStyle.coordsColor     = gray(0.6)
+with DefaultStatusBarStyle:
+  backgroundColor = gray(0.2)
+  textColor       = gray(0.8)
+  commandBgColor  = gray(0.56)
+  commandColor    = gray(0.2)
+  coordsColor     = gray(0.6)
 
 # }}}
 # {{{ LevelDropdownStyle
@@ -127,12 +133,13 @@ type
 
 var DefaultLevelDropdownStyle = new LevelDropdownStyle
 
-DefaultLevelDropdownStyle.buttonColor      = gray(0.4)
-DefaultLevelDropdownStyle.buttonColorHover = gray(0.4)
-DefaultLevelDropdownStyle.textColor        = gray(0.4)
-DefaultLevelDropdownStyle.itemListColor    = gray(0.4)
-DefaultLevelDropdownStyle.itemColor        = gray(0.4)
-DefaultLevelDropdownStyle.itemColorHover   = gray(0.4)
+with DefaultLevelDropdownStyle:
+  buttonColor      = gray(0.4)
+  buttonColorHover = gray(0.4)
+  textColor        = gray(0.4)
+  itemListColor    = gray(0.4)
+  itemColor        = gray(0.4)
+  itemColorHover   = gray(0.4)
 
 # }}}
 # {{{ AboutButtonStyle
@@ -144,76 +151,78 @@ type
 
 var DefaultAboutButtonStyle = new AboutButtonStyle
 
-DefaultAboutButtonStyle.color       = gray(0.4)
-DefaultAboutButtonStyle.colorHover  = gray(0.4)
-DefaultAboutButtonStyle.colorActive = gray(0.4)
+with DefaultAboutButtonStyle:
+  color       = gray(0.4)
+  colorHover  = gray(0.4)
+  colorActive = gray(0.4)
 
 # }}}
 # {{{ DefaultLevelStyle
 var DefaultLevelStyle = new LevelStyle
 
-DefaultLevelStyle.backgroundColor      = gray(0.4)
-DefaultLevelStyle.drawColor            = gray(0.1)
-DefaultLevelStyle.lightDrawColor       = gray(0.6)
-DefaultLevelStyle.lineWidth            = lwNormal
+with DefaultLevelStyle:
+  backgroundColor      = gray(0.4)
+  drawColor            = gray(0.1)
+  lightDrawColor       = gray(0.6)
+  lineWidth            = lwNormal
 
-DefaultLevelStyle.floorColor           = @[gray(0.5),
-                                           gray(0.5),
-                                           gray(0.5),
-                                           gray(0.5),
-                                           gray(0.5),
-                                           gray(0.5),
-                                           gray(0.5),
-                                           gray(0.5),
-                                           gray(0.5)]
+  floorColor           = @[gray(0.5),
+                           gray(0.5),
+                           gray(0.5),
+                           gray(0.5),
+                           gray(0.5),
+                           gray(0.5),
+                           gray(0.5),
+                           gray(0.5),
+                           gray(0.5)]
 
-DefaultLevelStyle.bgHatchEnabled       = true
-DefaultLevelStyle.bgHatchColor         = gray(0.0, 0.4)
-DefaultLevelStyle.bgHatchStrokeWidth   = 1.0
-DefaultLevelStyle.bgHatchSpacingFactor = 2.0
+  bgHatchEnabled       = true
+  bgHatchColor         = gray(0.0, 0.4)
+  bgHatchStrokeWidth   = 1.0
+  bgHatchSpacingFactor = 2.0
 
-DefaultLevelStyle.coordsColor          = gray(0.9)
-DefaultLevelStyle.coordsHighlightColor = rgb(1.0, 0.75, 0.0)
+  coordsColor          = gray(0.9)
+  coordsHighlightColor = rgb(1.0, 0.75, 0.0)
 
-DefaultLevelStyle.cursorColor          = rgb(1.0, 0.65, 0.0)
-DefaultLevelStyle.cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
+  cursorColor          = rgb(1.0, 0.65, 0.0)
+  cursorGuideColor     = rgba(1.0, 0.65, 0.0, 0.2)
 
-DefaultLevelStyle.gridStyleBackground  = gsSolid
-DefaultLevelStyle.gridStyleFloor       = gsSolid
-DefaultLevelStyle.gridColorBackground  = gray(0.0, 0.2)
-DefaultLevelStyle.gridColorFloor       = gray(0.0, 0.22)
+  gridStyleBackground  = gsSolid
+  gridStyleFloor       = gsSolid
+  gridColorBackground  = gray(0.0, 0.2)
+  gridColorFloor       = gray(0.0, 0.22)
 
-DefaultLevelStyle.outlineStyle         = osCell
-DefaultLevelStyle.outlineFillStyle     = ofsSolid
-DefaultLevelStyle.outlineOverscan      = false
-DefaultLevelStyle.outlineColor         = gray(0.25)
-DefaultLevelStyle.outlineWidthFactor   = 0.5
+  outlineStyle         = osCell
+  outlineFillStyle     = ofsSolid
+  outlineOverscan      = false
+  outlineColor         = gray(0.25)
+  outlineWidthFactor   = 0.5
 
-DefaultLevelStyle.innerShadowEnabled     = false
-DefaultLevelStyle.innerShadowColor       = gray(0.0, 0.1)
-DefaultLevelStyle.innerShadowWidthFactor = 0.125
-DefaultLevelStyle.outerShadowEnabled     = false
-DefaultLevelStyle.outerShadowColor       = gray(0.0, 0.1)
-DefaultLevelStyle.outerShadowWidthFactor = 0.125
+  innerShadowEnabled     = false
+  innerShadowColor       = gray(0.0, 0.1)
+  innerShadowWidthFactor = 0.125
+  outerShadowEnabled     = false
+  outerShadowColor       = gray(0.0, 0.1)
+  outerShadowWidthFactor = 0.125
 
-DefaultLevelStyle.selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
-DefaultLevelStyle.pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
+  selectionColor       = rgba(1.0, 0.5, 0.5, 0.4)
+  pastePreviewColor    = rgba(0.2, 0.6, 1.0, 0.4)
 
-DefaultLevelStyle.noteMarkerColor  = gray(0.85)
-DefaultLevelStyle.noteCommentColor = rgba(1.0, 0.2, 0.0, 0.8)
-DefaultLevelStyle.noteIndexColor   = gray(0.85)
-DefaultLevelStyle.noteIndexBgColor = @[gray(0.0, 0.2),
-                                       gray(0.0, 0.2),
-                                       gray(0.0, 0.2),
-                                       gray(0.0, 0.2)]
+  noteMarkerColor  = gray(0.85)
+  noteCommentColor = rgba(1.0, 0.2, 0.0, 0.8)
+  noteIndexColor   = gray(0.85)
+  noteIndexBgColor = @[gray(0.0, 0.2),
+                       gray(0.0, 0.2),
+                       gray(0.0, 0.2),
+                       gray(0.0, 0.2)]
 
-DefaultLevelStyle.noteTooltipBgColor   = gray(0.05)
-DefaultLevelStyle.noteTooltipTextColor = gray(0.95)
+  noteTooltipBgColor   = gray(0.05)
+  noteTooltipTextColor = gray(0.95)
 
-DefaultLevelStyle.linkMarkerColor      = gray(0.85)
+  linkMarkerColor      = gray(0.85)
 
-DefaultLevelStyle.regionBorderColor      = gray(0.25)
-DefaultLevelStyle.regionBorderEmptyColor = gray(0.25)
+  regionBorderColor      = gray(0.25)
+  regionBorderEmptyColor = gray(0.25)
 
 # }}}
 # {{{ NotesPaneStyle
@@ -225,12 +234,13 @@ type
 
 var DefaultNotesPaneStyle = new NotesPaneStyle
 
-DefaultNotesPaneStyle.textColor    = gray(0.1)
-DefaultNotesPaneStyle.indexColor   = gray(0.1)
-DefaultNotesPaneStyle.indexBgColor = @[gray(1.0, 0.2),
-                                       gray(1.0, 0.2),
-                                       gray(1.0, 0.2),
-                                       gray(1.0, 0.2)]
+with DefaultNotesPaneStyle:
+  textColor    = gray(0.1)
+  indexColor   = gray(0.1)
+  indexBgColor = @[gray(1.0, 0.2),
+                   gray(1.0, 0.2),
+                   gray(1.0, 0.2),
+                   gray(1.0, 0.2)]
 
 # }}}
 # {{{ ToolbarPaneStyle
@@ -241,8 +251,9 @@ type
 
 var DefaultToolbarPaneStyle = new ToolbarPaneStyle
 
-DefaultToolbarPaneStyle.buttonBgColor       = gray(0.4)
-DefaultToolbarPaneStyle.buttonBgColorHover  = gray(0.4)
+with DefaultToolbarPaneStyle:
+  buttonBgColor       = gray(0.4)
+  buttonBgColorHover  = gray(0.4)
 
 # }}}
 
@@ -263,17 +274,18 @@ type
 
 var DefaultThemeStyle = new ThemeStyle
 
-DefaultThemeStyle.general       = DefaultGeneralStyle
-DefaultThemeStyle.widget        = DefaultWidgetStyle
-DefaultThemeStyle.textField     = DefaultTextFieldStyle
-DefaultThemeStyle.dialog        = DefaultDialogStyle
-DefaultThemeStyle.titleBar      = getDefaultCSDWindowStyle()
-DefaultThemeStyle.statusBar     = DefaultStatusBarStyle
-DefaultThemeStyle.levelDropdown = DefaultLevelDropdownStyle
-DefaultThemeStyle.aboutButton   = DefaultAboutButtonStyle
-DefaultThemeStyle.level         = DefaultLevelStyle
-DefaultThemeStyle.notesPane     = DefaultNotesPaneStyle
-DefaultThemeStyle.toolbarPane   = DefaultToolbarPaneStyle
+with DefaultThemeStyle:
+  general       = DefaultGeneralStyle
+  widget        = DefaultWidgetStyle
+  textField     = DefaultTextFieldStyle
+  dialog        = DefaultDialogStyle
+  titleBar      = getDefaultCSDWindowStyle()
+  statusBar     = DefaultStatusBarStyle
+  levelDropdown = DefaultLevelDropdownStyle
+  aboutButton   = DefaultAboutButtonStyle
+  level         = DefaultLevelStyle
+  notesPane     = DefaultNotesPaneStyle
+  toolbarPane   = DefaultToolbarPaneStyle
 
 # }}}
 
