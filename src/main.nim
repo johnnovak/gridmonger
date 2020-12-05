@@ -4522,12 +4522,14 @@ proc renderThemeEditorPane(a; x, y, w, h: float) =
   discard koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=buttonsDisabled)
 
   # Scroll view with properties
-  let fc = koi.focusCaptured()
-  koi.setFocusCaptured(false)
+
+  # TODO this focus capture hackery won't work...
+#  let fc = koi.focusCaptured()
+#  koi.setFocusCaptured(false)
 
   renderThemeEditorProps(a, x+1, y+topSectionHeight, w-2, h=propsHeight)
 
-  koi.setFocusCaptured(fc)
+#  koi.setFocusCaptured(fc)
 
   # TODO ultimately we'll do most of switchTheme here (extract etc)
   # but at the end of the frame and lazily somehow (only if something has 

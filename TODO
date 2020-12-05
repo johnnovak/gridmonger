@@ -4,41 +4,67 @@ BUGS
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - note dialog textfield focus bug
   - no cursor jump when resizing & cropping
-  - fix cursor pos after undo crop level
-    restored
+  - fix cursor pos after undo crop level restored
   - new map -> new level -> undo: redo doesn't work
   - row/col offset (letter) -> enter negative or invalid value -> exception
 
 
 TODO
+
+v0.9
+  - autosave
   - display dialog on crash with instruction to file a bug report (print log
     file location and backup file location)
   - attempt to save map on crash
-  - region names
-  - region name reassignment when resizing a level
+
   - disable ctrl movement in wasd mode
-  - pick color under cursor
-  - text color based on bg color luminance
   - disable ctrl in excavate, erase & floor modes
-  - show current color / tool in statusbar when toolbar is not visible
+  - center map to screen
+
+  - remove tool for text labels
+  - region parameters (only name for now)
+  - region name reassignment when resizing a level
+
+  - pick color under cursor
+
   - two-column toolbars for small window sizes
   - colours in two columns (to support 1366x768)
   - 10 colours (1st color must be the default)
+
   - map/level comments
   - metadata (author, game, etc)
   - save display related info into map?
-  - onion skin?
 
-  - mouse: hand tool, scroll wheel zoom
+  - update all themes
+
+  - about dialog
+  - splash screen
+
   - toggle grid?
-  - paint selection with mouse?
-  - fill selection?
-  - wand selection?
 
-  - center map to screen
-  - full screen borderless
+
+v1
+  - clean up icons
+  - come up with final marker icon set
+
+
+v2
+  - pin window support
+  - align left/right half of the screen buttons
+  - upgrade to custom glfw branch with custom resize icons
+
+  - show current color / tool in statusbar when toolbar is not visible
+  - onion skin?
+  - wand selection?
+  - fill selection?
+  - paint selection with mouse?
+  - mouse: hand tool, scroll wheel zoom
+
   - export map as PNG
+  - full screen borderless
   - map selector dialog
+
+  - create OS X package
 
   - more themes:
       emerald-theme.psd
@@ -50,47 +76,28 @@ TODO
   - theme editor
   - allow negative coordinates
   - change level size: add preserve coordinates option
-  - region parameters (only name for now)
+
   - set coordinate origin action
   - infinite levels
   - align levels to each other based on coords
   - action for aligning two levels
 
   - RLE compression
-  - remove tool for text labels
   - colours for text labels
 
-  - koi: textarea widget
-  - koi: implement drawlists, redraw only when there's a diff
   - rethink save display params into file
-  - autosave
 
-  - update all themes
-
-  - create OS X package
   - linux package?
 
-  - about dialog
-  - splash screen
-  - clean up icons
-  - come up with final marker icon set
-
-  - pin window support
-  - align left/right half of the screen buttons
-  - upgrade to custom glfw branch with custom resize icons
   - logging (e.g. file loading)
+
+  - legend / locations / notes window
 
 
 LOW PRIORITY
   - proper multi-window handling in csdwindow
   - better csdwindow separation (e.g. titlebar)
   - don't allow drawing on title & status bars (koi scissor stacking)
-  - attempt to fix nasty concurrent redraw bug when resizing csdwindow
-  - attempt to fix resize csdwindow
-
-FUTURE
-  - infinite maps
-  - legend / locations / notes window
 
 
 FONTS
