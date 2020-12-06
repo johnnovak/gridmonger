@@ -923,7 +923,6 @@ proc switchTheme(themeIndex: Natural; a) =
 # }}}
 
 # {{{ Key handling
-# TODO move into koi?
 proc hasKeyEvent(): bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
 
@@ -1605,12 +1604,16 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -1674,10 +1677,14 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
     elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
     elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -1782,12 +1789,16 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -1890,12 +1901,16 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -2091,6 +2106,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
@@ -2099,6 +2115,9 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -2252,6 +2271,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
@@ -2260,6 +2280,9 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -2383,6 +2406,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     dlg.anchor = ResizeAnchor(
       handleGridRadioButton(ke, ord(dlg.anchor), AnchorIcons.len, IconsPerRow)
@@ -2393,6 +2417,9 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -2452,9 +2479,13 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept):  deleteAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -2649,6 +2680,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     dlg.kind = NoteKind(
       handleTabNavigation(ke, ord(dlg.kind), ord(nkIcon))
@@ -2670,6 +2702,9 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -2790,6 +2825,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    var eventHandled = true
 
     dlg.color = handleGridRadioButton(
       ke, dlg.color, NumIndexColors, buttonsPerRow=NumIndexColors  # TODO
@@ -2800,6 +2836,9 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled() 
 
   koi.endDialog()
 
@@ -3468,6 +3507,7 @@ proc handleGlobalKeyEvents(a) =
 
   if hasKeyEvent():
     let ke = koi.currEvent()
+    # TODO eventHandled is not set here, but it's not actually needed (yet)
 
     case ui.editMode:
     # {{{ emNormal
@@ -4462,6 +4502,8 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 # }}}
 # {{{ renderThemeEditorPane()
 
+var g_themeEditorPropsFocusCaptured: bool
+
 proc renderThemeEditorPane(a; x, y, w, h: float) =
   alias(vg, a.vg)
 
@@ -4539,13 +4581,14 @@ proc renderThemeEditorPane(a; x, y, w, h: float) =
 
   # Scroll view with properties
 
-  # TODO this focus capture hackery won't work...
-#  let fc = koi.focusCaptured()
-#  koi.setFocusCaptured(false)
+  # XXX hack to enable theme editing while a dialog is open
+  let fc = koi.focusCaptured()
+  koi.setFocusCaptured(g_themeEditorPropsFocusCaptured)
 
   renderThemeEditorProps(a, x+1, y+topSectionHeight, w-2, h=propsHeight)
 
-#  koi.setFocusCaptured(fc)
+  g_themeEditorPropsFocusCaptured = koi.focusCaptured()
+  koi.setFocusCaptured(fc)
 
   # TODO ultimately we'll do most of switchTheme here (extract etc)
   # but at the end of the frame and lazily somehow (only if something has 
@@ -4643,6 +4686,19 @@ proc renderUI() =
   let statusBarY = winHeight - StatusBarHeight
   drawStatusBar(statusBarY, uiWidth.float, a)
 
+  # Theme editor pane
+  # XXX hack, we need to render the theme editor before the dialogs, so
+  # that keyboard shortcuts in the the theme editor take precedence (e.g.
+  # when pressing ESC to close the colorpicker, the dialog should not close)
+  if a.opt.showThemePane:
+    let
+      x = uiWidth
+      y = TitleBarHeight
+      w = ThemePaneWidth
+      h = drawAreaHeight(a)
+
+    renderThemeEditorPane(a, x, y, w, h)
+
   # Dialogs
   if dlg.preferencesDialog.isOpen:
     preferencesDialog(dlg.preferencesDialog, a)
@@ -4673,16 +4729,6 @@ proc renderUI() =
 
   elif dlg.resizeLevelDialog.isOpen:
     resizeLevelDialog(dlg.resizeLevelDialog, a)
-
-  # Theme editor pane
-  if a.opt.showThemePane:
-    let
-      x = uiWidth
-      y = TitleBarHeight
-      w = ThemePaneWidth
-      h = drawAreaHeight(a)
-
-    renderThemeEditorPane(a, x, y, w, h)
 
 # }}}
 # {{{ renderFramePre()

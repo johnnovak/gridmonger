@@ -13,22 +13,19 @@ import with
 proc sectionClassName(sectionName: string): string =
   sectionName.capitalizeAscii() & "Style"
 
-proc makePublicProperty(name: string, typ: NimNode): NimNode =
-  nnkIdentDefs.newTree(
-    nnkPostfix.newTree(
-      newIdentNode("*"),
-      newIdentNode(name)
-    ),
-    typ,
-    newEmptyNode()
+proc mkPublicName(name: string): NimNode =
+  nnkPostfix.newTree(
+    newIdentNode("*"), newIdentNode(name)
   )
 
-proc makeRefObjectTypeDef(name: string, recList: NimNode): NimNode =
+proc mkProperty(name: string, typ: NimNode): NimNode =
+  nnkIdentDefs.newTree(
+    mkPublicName(name), typ, newEmptyNode()
+  )
+
+proc mkRefObjectTypeDef(name: string, recList: NimNode): NimNode =
   nnkTypeDef.newTree(
-    nnkPostfix.newTree(
-      newIdentNode("*"),
-      newIdentNode(name),
-    ),
+    mkPublicName(name),
     newEmptyNode(),
 
     nnkRefTy.newTree(
@@ -45,10 +42,13 @@ proc makeSectionTypeDef(sectionName: string,
   var recList = nnkRecList.newTree
   for (propName, propType) in props:
     recList.add(
-      makePublicProperty(propName, propType)
+      mkProperty(propName, propType)
     )
 
-  result = makeRefObjectTypeDef(sectionClassName(sectionName), recList)
+  result = mkRefObjectTypeDef(
+    sectionClassName(sectionName),
+    recList
+  )
 
 
 macro defineTheme(arg: untyped): untyped =
@@ -138,11 +138,11 @@ macro defineTheme(arg: untyped): untyped =
     )
 
     themeStyleRecList.add(
-      makePublicProperty(sectioNName, newIdentNode(sectionClassName(sectionName)))
+      mkProperty(sectioNName, newIdentNode(sectionClassName(sectionName)))
     )
 
   typeSection.add(
-    makeRefObjectTypeDef("ThemeStyle", themeStyleRecList)
+    mkRefObjectTypeDef("ThemeStyle", themeStyleRecList)
   )
 
   let config = newIdentNode("config")
