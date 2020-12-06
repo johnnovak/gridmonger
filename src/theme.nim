@@ -147,19 +147,15 @@ macro defineTheme(arg: untyped): untyped =
 
   let config = newIdentNode("config")
 
-  let res = quote do:
+  quote do:
     `typeSection`
 
     proc parseTheme(`config`: Config): ThemeStyle =
       result = new ThemeStyle
       `parseThemeBody`
 
-  echo res.repr
-  res
-
 
 include themedef
-
 
 const
   HatchStrokeWidthMin = 0.5
