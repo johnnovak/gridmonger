@@ -440,6 +440,12 @@ let g_appShortcuts = {
 
 # }}}
 
+# {{{ logError()
+proc logError(e: ref Exception) =
+  error("Error message: " & e.msg & "\n\nStrack trace:\n" & getStackTrace(e))
+
+# }}}
+
 # {{{ Config handling
 proc saveConfig(a) =
   alias(ui, a.ui)
@@ -604,6 +610,8 @@ proc drawStatusBar(y: float, winWidth: float; a) =
 proc resetCursorAndViewStart(a)
 
 proc loadMap(filename: string; a): bool =
+  info(fmt"Loading map '{filename}'...")
+
   try:
     let t0 = getMonoTime()
     a.doc.map = readMapFile(filename)
@@ -614,12 +622,16 @@ proc loadMap(filename: string; a): bool =
     initUndoManager(a.doc.undoManager)
 
     resetCursorAndViewStart(a)
-    setStatusMessage(IconFloppy, fmt"Map '{filename}' loaded in " &
-                                 fmt"{durationToFloatMillis(dt):.2f} ms", a)
+
+    let message = fmt"Map '{filename}' loaded in " &
+                  fmt"{durationToFloatMillis(dt):.2f} ms"
+
+    info(message)
+    setStatusMessage(IconFloppy, message, a)
     result = true
 
   except CatchableError as e:
-    # TODO log stracktrace?
+    logError(e)
     setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
 
 # }}}
@@ -656,10 +668,12 @@ proc saveMapAsAction(a) =
     if filename != "":
       try:
         filename = addFileExt(filename, MapFileExt)
+        info(fmt"Saving map to '{filename}'")
+
         saveMap(filename, a)
         a.doc.filename = filename
       except CatchableError as e:
-        # TODO log stracktrace?
+        logError(e)
         setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
 
 proc saveMapAction(a) =
@@ -688,6 +702,8 @@ proc findThemeIndex(name: string; a): int =
 proc loadTheme(index: Natural; a) =
   let name = a.theme.themeNames[index]
   let path = ThemesDir / addFileExt(name, ThemeExt)
+  info(fmt"Loading theme '{name}' from '{path}'")
+
   a.theme.style = loadTheme(path)
 
 # }}}
@@ -900,7 +916,7 @@ proc switchTheme(themeIndex: Natural; a) =
   a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
                                            koi.getPxRatio())
 
-  a.win.setStyle(a.theme.style.titleBar)
+  a.win.setStyle(a.theme.style.window)
 
   a.theme.currThemeIndex = themeIndex
 
@@ -2534,7 +2550,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
       dlg.indexColor,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor,
+      drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq,
                                           ls.cursorColor).some
     )
 
@@ -2725,7 +2741,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor, # TODO
+    drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq, # TODO
                                         ls.cursorColor).some,
     style = a.ui.radioButtonStyle
   )
@@ -3246,7 +3262,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     ui.currFloorColor,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 9),
-    drawProc = colorRadioButtonDrawProc(ls.floorColor, ls.cursorColor).some
+    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq, ls.cursorColor).some
   )
 
 # }}}
@@ -4172,30 +4188,30 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
       koi.label("Warning Text")
       koi.color(ts.dialog.warningTextColor)
 
-    if koi.subSectionHeader("Title Bar", te.sectionTitleBar):
+    if koi.subSectionHeader("Window", te.sectionTitleBar):
       koi.label("Background")
-      koi.color(ts.titleBar.backgroundColor)
+      koi.color(ts.window.backgroundColor)
 
       koi.label("Background Unfocused")
-      koi.color(ts.titleBar.bgColorUnfocused)
+      koi.color(ts.window.bgColorUnfocused)
 
       koi.label("Text")
-      koi.color(ts.titleBar.textColor)
+      koi.color(ts.window.textColor)
 
       koi.label("Text Unfocused")
-      koi.color(ts.titleBar.textColorUnfocused)
+      koi.color(ts.window.textColorUnfocused)
 
       koi.label("Modified Flag")
-      koi.color(ts.titleBar.modifiedFlagColor)
+      koi.color(ts.window.modifiedFlagColor)
 
       koi.label("Button")
-      koi.color(ts.titleBar.buttonColor)
+      koi.color(ts.window.buttonColor)
 
       koi.label("Button Hover")
-      koi.color(ts.titleBar.buttonColorHover)
+      koi.color(ts.window.buttonColorHover)
 
       koi.label("Button Down")
-      koi.color(ts.titleBar.buttonColorDown)
+      koi.color(ts.window.buttonColorDown)
 
     if koi.subSectionHeader("Status Bar", te.sectionStatusBar):
       koi.label("Background")
@@ -4298,7 +4314,7 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
     if koi.subSectionHeader("Background Hatch", te.sectionBackgroundHatch):
       koi.label("Background Hatch?")
-      koi.checkBox(ts.level.bgHatchEnabled)
+      koi.checkBox(ts.level.bgHatch)
 
       koi.label("Hatch")
       koi.color(ts.level.bgHatchColor)
@@ -4331,7 +4347,7 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
     if koi.subSectionHeader("Shadow", te.sectionShadow):
       group:
         koi.label("Inner Shadow?")
-        koi.checkBox(ts.level.innerShadowEnabled)
+        koi.checkBox(ts.level.innerShadow)
 
         koi.label("Inner Shadow")
         koi.color(ts.level.innerShadowColor)
@@ -4342,7 +4358,7 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
       group:
         koi.label("Outer Shadow?")
-        koi.checkBox(ts.level.outerShadowEnabled)
+        koi.checkBox(ts.level.outerShadow)
 
         koi.label("Outer Shadow")
         koi.color(ts.level.outerShadowColor)
@@ -4678,7 +4694,9 @@ proc renderFramePre(win: CSDWindow) =
     try:
       switchTheme(themeIndex, a)
       a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
+
     except CatchableError as e:
+      logError(e)
       let name = a.theme.themeNames[themeIndex]
       setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
       a.theme.nextThemeIndex = Natural.none
@@ -4875,15 +4893,19 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
 
 proc cleanup() =
+  info("Exiting app...")
+
   koi.deinit()
   nvgDeinit(g_app.vg)
   glfw.terminate()
+
+  info("Cleanup successful, bye!")
 
 # }}}
 # {{{ main()
 proc main() =
   discard tryRemoveFile(LogFile)
-  var fileLog = newFileLogger(LogFile, fmtStr="[$time] [$levelname] - ")
+  var fileLog = newFileLogger(LogFile, fmtStr="[$levelname] $date $time - ", bufSize=0)
   addHandler(fileLog)
 
   # TODO

@@ -1,11 +1,9 @@
 import algorithm
 import math
-import logging except Level
 import options
 import strformat
 import strutils
 import sugar
-import std/monotimes
 
 import riff
 
@@ -547,8 +545,6 @@ proc readMap_v1(rr): Map =
 # # {{{ readMapFile*()
 # TODO return display related info and info chunk data as well
 proc readMapFile*(filename: string): Map =
-  let t0 = getMonoTime()
-
   var rr: RiffReader
   try:
     rr = openRiffFile(filename)
@@ -637,9 +633,6 @@ proc readMapFile*(filename: string): Map =
     raise newException(MapReadError, fmt"Error reading map file: {e.msg}", e)
   finally:
     if rr != nil: rr.close()
-
-    let dt = getMonoTime() - t0
-    info(fmt"Map loaded in {durationToFloatMillis(dt):.4f} ms")
 
 # }}}
 # }}}

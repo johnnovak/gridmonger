@@ -90,60 +90,6 @@ type
     cellGrid*:          CellGrid
     notes*:             Table[Natural, Note]
 
-
-  LevelStyle* = ref object
-    backgroundColor*:        Color
-    drawColor*:              Color
-    lightDrawColor*:         Color
-    floorColor*:             seq[Color]
-    lineWidth*:              LineWidth
-
-    bgHatchEnabled*:         bool
-    bgHatchColor*:           Color
-    bgHatchStrokeWidth*:     float
-    bgHatchSpacingFactor*:   float
-
-    coordsColor*:            Color
-    coordsHighlightColor*:   Color
-
-    cursorColor*:            Color
-    cursorGuideColor*:       Color
-
-    gridStyleBackground*:    GridStyle
-    gridStyleFloor*:         GridStyle
-    gridColorBackground*:    Color
-    gridColorFloor*:         Color
-
-    outlineStyle*:           OutlineStyle
-    outlineFillStyle*:       OutlineFillStyle
-    outlineOverscan*:        bool
-    outlineColor*:           Color
-    outlineWidthFactor*:     float
-
-    innerShadowEnabled*:     bool
-    innerShadowColor*:       Color
-    innerShadowWidthFactor*: float
-    outerShadowEnabled*:     bool
-    outerShadowColor*:       Color
-    outerShadowWidthFactor*: float
-
-    pastePreviewColor*:      Color
-    selectionColor*:         Color
-
-    noteMarkerColor*:        Color
-    noteCommentColor*:       Color
-    noteIndexColor*:         Color
-    noteIndexBgColor*:       seq[Color]
-
-    noteTooltipBgColor*:     Color
-    noteTooltipTextColor*:   Color
-
-    linkMarkerColor*:        Color
-
-    regionBorderColor*:      Color
-    regionBorderEmptyColor*: Color
-
-
   LineWidth* = enum
     lwThin   = (0, "Thin"),
     lwNormal = (1, "Normal")

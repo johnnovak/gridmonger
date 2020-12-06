@@ -15,6 +15,7 @@ import level
 import links
 import rect
 import selection
+import theme
 import utils
 
 
@@ -2338,7 +2339,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   setLevelClippingRect(l, ctx)
 
-  if ls.bgHatchEnabled:
+  if ls.bgHatch:
     drawBackgroundHatch(ctx)
   else:
     drawBackground(ctx)
@@ -2371,10 +2372,10 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   if not drawSelectionBuffer:
     drawLinkMarkers(map, level, ctx)
 
-  if ls.innerShadowEnabled:
+  if ls.innerShadow:
     drawInnerShadows(viewBuf, ctx)
 
-  if ls.outerShadowEnabled:
+  if ls.outerShadow:
     drawOuterShadows(viewBuf, ctx)
 
   drawWalls(l, viewBuf, ctx)

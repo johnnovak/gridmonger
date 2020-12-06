@@ -8,6 +8,7 @@ import with
 
 import common
 import utils
+import theme
 
 
 const
@@ -28,7 +29,7 @@ const
 type
   CSDWindow* = ref object
     modified*: bool
-    style*:    CSDWindowStyle
+    style*:    WindowStyle
 
     w*: Window  # the wrapper GLFW window
 
@@ -46,17 +47,6 @@ type
 
     fastRedrawFrameCounter: int
 
-
-  CSDWindowStyle* = ref object
-    backgroundColor*:    Color
-    bgColorUnfocused*:   Color
-    textColor*:          Color
-    textColorUnfocused*: Color
-    modifiedFlagColor*:  Color
-    buttonColor*:        Color
-    buttonColorHover*:   Color
-    buttonColorDown*:    Color
-
   WindowDragState = enum
     wdsNone, wdsMoving, wdsResizing
 
@@ -69,7 +59,8 @@ using win: CSDWindow
 # }}}
 
 # {{{ Default style
-var DefaultCSDWindowStyle = new CSDWindowStyle
+# TODO will be removed
+var DefaultCSDWindowStyle = new WindowStyle
 
 with DefaultCSDWindowStyle:
   backgroundColor    = gray(0.2)
@@ -81,11 +72,11 @@ with DefaultCSDWindowStyle:
   buttonColorDown    = gray(1.0, 0.9)
   modifiedFlagColor  = gray(1.0, 0.45)
 
-proc getDefaultCSDWindowStyle*(): CSDWindowStyle = DefaultCSDWindowStyle.deepCopy()
+proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
 
 # }}}
 # # {{{ setStyle()
-proc setStyle*(win; s: CSDWindowStyle) = 
+proc setStyle*(win; s: WindowStyle) = 
   win.style = s
 
   alias(bs, win.buttonStyle)
