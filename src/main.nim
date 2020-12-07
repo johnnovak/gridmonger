@@ -723,6 +723,7 @@ proc updateWidgetStyles(a) =
   a.ui.buttonStyle = koi.getDefaultButtonStyle()
 
   with a.ui.buttonStyle:
+    cornerRadius      = gs.cornerRadius
     fillColor         = ws.bgColor
     fillColorHover    = ws.bgColorHover
     fillColorDown     = gs.highlightColor
@@ -739,6 +740,7 @@ proc updateWidgetStyles(a) =
   a.ui.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
 
   with a.ui.radioButtonStyle:
+    buttonCornerRadius         = gs.cornerRadius
     buttonFillColor            = ws.bgColor
     buttonFillColorHover       = ws.bgColorHover
     buttonFillColorDown        = gs.highlightColor
@@ -756,14 +758,15 @@ proc updateWidgetStyles(a) =
   a.ui.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
 
   with a.ui.iconRadioButtonsStyle:
-    buttonPadHoriz        = 4
-    buttonPadVert         = 4
-    buttonFillColor       = ws.bgColor
-    buttonFillColorHover  = ws.bgColorHover
-    buttonFillColorDown   = gs.highlightColor
-    buttonFillColorActive = gs.highlightColor
+    buttonPadHoriz             = 4.0
+    buttonPadVert              = 4.0
+    buttonFillColor            = ws.bgColor
+    buttonFillColorHover       = ws.bgColorHover
+    buttonFillColorDown        = gs.highlightColor
+    buttonFillColorActive      = gs.highlightColor
+    buttonFillColorActiveHover = gs.highlightColor
 
-    label.fontSize         = 18
+    label.fontSize         = 18.0
     label.color            = ws.textColor
     label.colorHover       = ws.textColor
     label.colorDown        = ws.textColor
@@ -776,37 +779,40 @@ proc updateWidgetStyles(a) =
   a.ui.textFieldStyle = koi.getDefaultTextFieldStyle()
 
   with a.ui.textFieldStyle:
+    bgCornerRadius      = gs.cornerRadius
     bgFillColor         = ws.bgColor
     bgFillColorHover    = ws.bgColorHover
     bgFillColorActive   = s.textField.bgColorActive
     textColor           = ws.textColor
     textColorHover      = ws.textColor
     textColorActive     = s.textField.textColorActive
-    cursorColor         = gs.highlightColor
+    cursorColor         = s.textField.cursorColor
     selectionColor      = s.textField.selectionColor
 
   # Text area
   a.ui.textAreaStyle = koi.getDefaultTextAreaStyle()
 
   with a.ui.textAreaStyle:
+    bgCornerRadius      = gs.cornerRadius
     bgFillColor         = ws.bgColor
     bgFillColorHover    = lerp(ws.bgColor, ws.bgColorHover, 0.5)
     bgFillColorActive   = s.textField.bgColorActive
     textColor           = ws.textColor
     textColorHover      = ws.textColor
     textColorActive     = s.textField.textColorActive
-    cursorColor         = gs.highlightColor
+    cursorColor         = s.textField.cursorColor
     selectionColor      = s.textField.selectionColor
 
   # Check box
   a.ui.checkBoxStyle = koi.getDefaultCheckBoxStyle()
 
   with a.ui.checkBoxStyle:
+    cornerRadius          = gs.cornerRadius
     fillColor             = ws.bgColor
     fillColorHover        = ws.bgColorHover
     fillColorDown         = gs.highlightColor
     fillColorActive       = gs.highlightColor
-    icon.fontSize         = 12
+    icon.fontSize         = 12.0
     icon.color            = ws.textColor
     icon.colorHover       = ws.textColor
     icon.colorDown        = ws.textColor
@@ -819,6 +825,7 @@ proc updateWidgetStyles(a) =
   a.ui.dialogStyle = koi.getDefaultDialogStyle()
 
   with a.ui.dialogStyle:
+    cornerRadius      = s.dialog.cornerRadius
     backgroundColor   = s.dialog.backgroundColor
     titleBarBgColor   = s.dialog.titleBarBgColor
     titleBarTextColor = s.dialog.titleBarTextColor
@@ -848,6 +855,7 @@ proc updateWidgetStyles(a) =
   a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
 
   with a.theme.levelDropDownStyle:
+    buttonCornerRadius       = gs.cornerRadius
     buttonFillColor          = lds.buttonColor
     buttonFillColorHover     = lds.buttonColorHover
     buttonFillColorDown      = lds.buttonColor
@@ -862,6 +870,7 @@ proc updateWidgetStyles(a) =
     item.align               = haLeft
     item.color               = lds.itemColor
     item.colorHover          = lds.itemColorHover
+    itemListCornerRadius     = gs.cornerRadius
     itemListPadHoriz         = 10.0
     itemListFillColor        = lds.itemListColor
     itemBackgroundColorHover = gs.highlightColor
@@ -4205,6 +4214,10 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
     if koi.subSectionHeader("General", te.sectionUserInterfaceGeneral):
+      koi.label("Corner Radius")
+      koi.horizSlider(startVal=0, endVal=12, ts.general.cornerRadius,
+                      style=ThemeEditorSliderStyle)
+
       koi.label("Background")
       koi.color(ts.general.backgroundColor)
 
@@ -4241,6 +4254,10 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.color(ts.textField.selectionColor)
 
     if koi.subSectionHeader("Dialog", te.sectionDialog):
+      koi.label("Corner Radius")
+      koi.horizSlider(startVal=0, endVal=20, ts.dialog.cornerRadius,
+                      style=ThemeEditorSliderStyle)
+
       koi.label("Title Bar Background")
       koi.color(ts.dialog.titleBarBgColor)
 

@@ -1,5 +1,6 @@
 defineTheme:
   general:
+    cornerRadius:       float
     backgroundColor:    Color
     backgroundImage:    string
     highlightColor:     Color
@@ -18,6 +19,7 @@ defineTheme:
     selectionColor:     Color
 
   dialog:
+    cornerRadius:       float
     titleBarBgColor:    Color
     titleBarTextColor:  Color
     backgroundColor:    Color

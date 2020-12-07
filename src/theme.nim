@@ -187,52 +187,37 @@ include themedef
 
 
 const
-  DialogBorderWidthMin = 0.0
-  DialogBorderWidthMax = 30.0
+  WidgetCornerRadiusLimits = (0.0, 12.0)
+  DialogCornerRadiusLimits = (0.0, 20.0)
+  DialogBorderWidthLimits  = (0.0, 30.0)
+  HatchStrokeWidthLimits   = (0.5, 10.0)
+  HatchSpacingLimits       = (1.0, 10.0)
+  OutlineWidthLimits       = (0.0, 1.0)
+  ShadowWidthLimits        = (0.0, 1.0)
 
-  HatchStrokeWidthMin = 0.5
-  HatchStrokeWidthMax = 10.0
-
-  HatchSpacingMin = 1.0
-  HatchSpacingMax = 10.0
-
-  OutlineWidthMin = 0.0
-  OutlineWidthMax = 1.0
-
-  InnerShadowWidthMin = 0.0
-  InnerShadowWidthMax = 1.0
-
-  OuterShadowWidthMin = 0.0
-  OuterShadowWidthMax = 1.0
+proc limit(v: var float, limits: (float, float)) =
+  let (minVal, maxVal) = limits
+  v = v.clamp(minVal, maxVal)
 
 
 proc loadTheme*(filename: string): ThemeStyle =
   var cfg = loadConfig(filename)
   result = parseTheme(cfg)
 
-  with result.dialog:
-    outerBorderWidth = outerBorderWidth.clamp(DialogBorderWidthMin,
-                                              DialogBorderWidthMax)
+  with result.general:
+    limit(cornerRadius, WidgetCornerRadiusLimits)
 
-    innerBorderWidth = innerBorderWidth.clamp(DialogBorderWidthMin,
-                                              DialogBorderWidthMax)
+  with result.dialog:
+    limit(cornerRadius, DialogCornerRadiusLimits)
+    limit(outerBorderWidth, DialogBorderWidthLimits)
+    limit(innerBorderWidth, DialogBorderWidthLimits)
 
   with result.level:
-    bgHatchStrokeWidth = bgHatchStrokeWidth.clamp(HatchStrokeWidthMin,
-                                                  HatchStrokeWidthMax)
-
-    bgHatchSpacingFactor = bgHatchSpacingFactor.clamp(HatchSpacingMin,
-                                                      HatchSpacingMax)
-
-    outlineWidthFactor = outlineWidthFactor.clamp(OutlineWidthMin,
-                                                  OutlineWidthMax)
-
-    innerShadowWidthFactor = innerShadowWidthFactor.clamp(InnerShadowWidthMin,
-                                                          InnerShadowWidthMax)
-
-    outerShadowWidthFactor = outerShadowWidthFactor.clamp(OuterShadowWidthMin,
-                                                          OuterShadowWidthMax)
-
+    limit(bgHatchStrokeWidth, HatchStrokeWidthLimits)
+    limit(bgHatchSpacingFactor, HatchSpacingLimits)
+    limit(outlineWidthFactor, OutlineWidthLimits)
+    limit(innerShadowWidthFactor, ShadowWidthLimits)
+    limit(outerShadowWidthFactor, ShadowWidthLimits)
 
 proc saveTheme*(theme: ThemeStyle, filename: string) =
 
