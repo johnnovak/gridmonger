@@ -56,11 +56,9 @@ proc getColor*(cfg: Config, section, key: string, c: var Color) =
 
 proc getBool*(cfg: Config, section, key: string, b: var bool) =
   let v = getValue(cfg, section, key)
-  echo section, ":", key, " = ", v
   if v != "":
     try:
       b = parseBool(v)
-      echo "value: ", b
     except ValueError:
       invalidValueError(section, key, "bool", v)
 

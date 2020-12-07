@@ -1,5 +1,7 @@
+import math
 import options
 import parsecfg
+import strformat
 
 import nanovg
 
@@ -8,6 +10,16 @@ import cfghelper
 import macros
 import strutils
 import with
+
+
+proc `$`(c: Color): string =
+  let
+    r = round(c.r * 255).int
+    g = round(c.g * 255).int
+    b = round(c.b * 255).int
+    a = round(c.a * 255).int
+
+  fmt"rgba({r}, {g}, {b}, {a})"
 
 
 proc sectionClassName(sectionName: string): string =
@@ -57,6 +69,7 @@ macro defineTheme(arg: untyped): untyped =
   var typeSection = nnkTypeSection.newTree
   var themeStyleRecList = nnkRecList.newTree
   var parseThemeBody = nnkStmtList.newTree
+  var writeThemeBody = nnkStmtList.newTree
 
   for section in arg:
     section.expectKind nnkCall
@@ -117,9 +130,15 @@ macro defineTheme(arg: untyped): untyped =
           parseThemeBody.add quote do:
             config.`getter`(`sectionName`, `propName`, result.`sectionNameSym`.`propNameSym`)
 
+          writeThemeBody.add quote do:
+            result.setSectionKey(`sectionName`, `propName`, $theme.`sectionNameSym`.`propNameSym`)
+
         else: # enum
           parseThemeBody.add quote do:
             getEnum[`propType`](config, `sectionName`, `propName`, result.`sectionNameSym`.`propNameSym`)
+
+          writeThemeBody.add quote do:
+            result.setSectionKey(`sectionName`, `propName`, $theme.`sectionNameSym`.`propNameSym`)
 
       elif propType.kind == nnkBracketExpr:
         let propType = propParamsStmt[0]
@@ -130,8 +149,12 @@ macro defineTheme(arg: untyped): untyped =
         for i in 1..numColors:
           let propNameN = propName & $i
           let index = newIntLitNode(i-1)
+          let theme = newIdentNode("theme")
           parseThemeBody.add quote do:
             config.getColor(`sectionName`, `propNameN`, result.`sectionNameSym`.`propNameSym`[`index`])
+
+          writeThemeBody.add quote do:
+            result.setSectionKey(`sectionName`, `propNameN`, $`theme`.`sectionNameSym`.`propNameSym`[`index`])
 
     typeSection.add(
       makeSectionTypeDef(sectionName, propsToAdd)
@@ -146,6 +169,7 @@ macro defineTheme(arg: untyped): untyped =
   )
 
   let config = newIdentNode("config")
+  let theme = newIdentNode("theme")
 
   quote do:
     `typeSection`
@@ -154,8 +178,13 @@ macro defineTheme(arg: untyped): untyped =
       result = new ThemeStyle
       `parseThemeBody`
 
+    proc writeTheme(`theme`: ThemeStyle): Config =
+      result = newConfig()
+      `writeThemeBody`
+
 
 include themedef
+
 
 const
   HatchStrokeWidthMin = 0.5
@@ -193,4 +222,10 @@ proc loadTheme*(filename: string): ThemeStyle =
 
     outerShadowWidthFactor = outerShadowWidthFactor.clamp(OuterShadowWidthMin,
                                                           OuterShadowWidthMax)
+
+
+proc saveTheme*(theme: ThemeStyle, filename: string) =
+
+  let config = writeTheme(theme)
+  config.writeConfig(filename)
 

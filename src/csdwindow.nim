@@ -22,7 +22,7 @@ const
   TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*3 +
                                     TitleBarWindowButtonsRightPad
 
-  WindowResizeEdgeWidth = 10.0
+  WindowResizeEdgeWidth = 7.0
   WindowResizeCornerSize = 20.0
 
 #  {{{ CSDWindow
@@ -45,7 +45,8 @@ type
     oldPosX, oldPosY:    int
     oldWidth, oldHeight: int32
 
-    fastRedrawFrameCounter: int
+    oldFocusCaptured, focusCaptured: bool
+
 
   WindowDragState = enum
     wdsNone, wdsMoving, wdsResizing
@@ -163,7 +164,6 @@ proc oldSize*(win): tuple[w, h: int32] =
 
 # {{{ restore()
 proc restore(win) =
-  win.fastRedrawFrameCounter = 20
   win.w.pos = (win.oldPosX, win.oldPosY)
   win.w.size = (win.oldWidth, win.oldHeight)
   win.maximized = false
@@ -177,7 +177,6 @@ proc maximize*(win) =
   (win.oldPosX, win.oldPosY) = win.w.pos
   (win.oldWidth, win.oldHeight) = win.w.size
 
-  win.fastRedrawFrameCounter = 20
   win.maximized = true
   win.maximizing = true
 

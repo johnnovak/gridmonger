@@ -3047,6 +3047,8 @@ proc drawNoteTooltip(note: Note, a) =
     if yOver > 0:
       noteBoxY -= noteBoxH + 22
 
+    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
+
     vg.fillColor(a.theme.style.level.noteTooltipBgColor)
     vg.beginPath()
     vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
@@ -4162,16 +4164,36 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
 # {{{ Theme editor
 
-var PropsSliderStyle = getDefaultSliderStyle()
-PropsSliderStyle.trackCornerRadius = 8.0
-PropsSliderStyle.valueCornerRadius = 6.0
+var ThemeEditorScrollViewStyle = getDefaultScrollViewStyle()
+
+with ThemeEditorScrollViewStyle:
+  vertScrollBarWidth = 14.0
+
+  with scrollBarStyle:
+    thumbPad = 4.0
+
+
+var ThemeEditorSliderStyle = getDefaultSliderStyle()
+
+with ThemeEditorSliderStyle:
+  trackCornerRadius = 8.0
+  valueCornerRadius = 6.0
+
+
+var ThemeEditorAutoLayoutParams = DefaultAutoLayoutParams
+
+with ThemeEditorAutoLayoutParams:
+  rightPad = 1.0
+
 
 # {{{ renderThemeEditorProps()
 proc renderThemeEditorProps(a; x, y, w, h: float) =
   alias(te, a.themeEditor)
   alias(ts, a.theme.style)
 
-  koi.beginScrollView(x, y, w, h)
+  koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)
+
+  setAutoLayoutParams(ThemeEditorAutoLayoutParams)
 
   # {{{ User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
@@ -4361,11 +4383,11 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
       koi.label("Hatch Stroke Width")
       koi.horizSlider(startVal=0.5, endVal=10, ts.level.bgHatchStrokeWidth,
-                      style=PropsSliderStyle)
+                      style=ThemeEditorSliderStyle)
 
       koi.label("Hatch Spacing")
       koi.horizSlider(startVal=1.0, endVal=10, ts.level.bgHatchSpacingFactor,
-                      style=PropsSliderStyle)
+                      style=ThemeEditorSliderStyle)
 
     if koi.subSectionHeader("Outline", te.sectionOutline):
       koi.label("Outline Style")
@@ -4382,7 +4404,7 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
       koi.label("Outline Width")
       koi.horizSlider(startVal=0, endVal=1.0, ts.level.outlineWidthFactor,
-                      style=PropsSliderStyle)
+                      style=ThemeEditorSliderStyle)
 
     if koi.subSectionHeader("Shadow", te.sectionShadow):
       group:
@@ -4394,7 +4416,7 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
         koi.label("Inner Shadow Width")
         koi.horizSlider(startVal=0, endVal=1.0, ts.level.innerShadowWidthFactor,
-                        style=PropsSliderStyle)
+                        style=ThemeEditorSliderStyle)
 
       group:
         koi.label("Outer Shadow?")
@@ -4405,7 +4427,7 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
         koi.label("Outer Shadow Width")
         koi.horizSlider(startVal=0, endVal=1.0, ts.level.outerShadowWidthFactor,
-                        style=PropsSliderStyle)
+                        style=ThemeEditorSliderStyle)
 
     if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
       koi.label("Floor 1")
@@ -4568,16 +4590,21 @@ proc renderThemeEditorPane(a; x, y, w, h: float) =
 
   let buttonsDisabled = koi.isDialogOpen()
 
-  discard koi.button(cx, cy, w=bw, h=wh, "New", disabled=buttonsDisabled)
-  cx += bw + bp
+  if koi.button(cx, cy, w=bw, h=wh, "New", disabled=buttonsDisabled):
+    discard
 
-  discard koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled)
   cx += bw + bp
+  if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
+    saveTheme(a.theme.style, "theme-out.ini")
+    discard
 
-  discard koi.button(cx, cy, w=bw, h=wh, "Props", disabled=buttonsDisabled)
   cx += bw + bp
+  if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=buttonsDisabled):
+    discard
 
-  discard koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=buttonsDisabled)
+  cx += bw + bp
+  if koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=buttonsDisabled):
+    discard
 
   # Scroll view with properties
 
@@ -4731,24 +4758,50 @@ proc renderUI() =
     resizeLevelDialog(dlg.resizeLevelDialog, a)
 
 # }}}
+# {{{ loadPendingTheme()
+proc loadPendingTheme(a; themeIndex: Natural) =
+  try:
+    switchTheme(themeIndex, a)
+    a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
+
+  except CatchableError as e:
+    logError(e)
+    let name = a.theme.themeNames[themeIndex]
+    setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
+    a.theme.nextThemeIndex = Natural.none
+
+  # nextThemeIndex will be reset at the start of the current frame after
+  # displaying the status message
+
+# }}}
+# {{{ displayThemeLoadedMessage()
+proc displayThemeLoadedMessage(a) =
+  let themeName = a.theme.themeNames[a.theme.currThemeIndex]
+  if a.theme.themeReloaded:
+    setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+  else:
+    setStatusMessage(fmt"Switched to '{themeName}' theme", a)
+
+# }}}
+# {{{ handleWindowClose()
+proc handleWindowClose(a) =
+  when defined(NO_QUIT_DIALOG):
+    saveConfigAndExit(a)
+  else:
+    if not koi.isDialogOpen():
+      if a.doc.undoManager.isModified:
+        a.dialog.saveDiscardDialog.isOpen = true
+        a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
+      else:
+        saveConfigAndExit(a)
+
+# }}}
 # {{{ renderFramePre()
 proc renderFramePre(win: CSDWindow) =
   alias(a, g_app)
 
   if a.theme.nextThemeIndex.isSome:
-    let themeIndex = a.theme.nextThemeIndex.get
-    try:
-      switchTheme(themeIndex, a)
-      a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
-
-    except CatchableError as e:
-      logError(e)
-      let name = a.theme.themeNames[themeIndex]
-      setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
-      a.theme.nextThemeIndex = Natural.none
-
-    # nextThemeIndex will be reset at the start of the current frame after
-    # displaying the status message
+    loadPendingTheme(a, a.theme.nextThemeIndex.get)
 
   a.win.title = a.doc.map.name
   a.win.modified = a.doc.undoManager.isModified
@@ -4759,32 +4812,25 @@ proc renderFrame(win: CSDWindow) =
   alias(a, g_app)
 
   if a.theme.nextThemeIndex.isSome:
-    let themeName = a.theme.themeNames[a.theme.currThemeIndex]
-    if a.theme.themeReloaded:
-      setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
-    else:
-      setStatusMessage(fmt"Switched to '{themeName}' theme", a)
+    displayThemeLoadedMessage(a)
     a.theme.nextThemeIndex = Natural.none
 
-  # The widgets are handled first...
-  renderUI()
+  # XXX HACK: If the theme pane is shown, widgets are handled first, then then
+  # the global shortcuts, so widget-specific shorcuts can take precedence
+  var uiRendered = false
+  if a.opt.showThemePane:
+    renderUI()
+    uiRendered = true
 
-  # ...then the global shortcuts, so widget-specific shorcuts can take
-  # precedence.
   if mapHasLevels(a): handleGlobalKeyEvents(a)
   else:               handleGlobalKeyEvents_NoLevels(a)
 
+  if not a.opt.showThemePane or not uiRendered:
+    renderUI()
+
   if win.shouldClose:
     win.shouldClose = false
-    when defined(NO_QUIT_DIALOG):
-      saveConfigAndExit(a)
-    else:
-      if not koi.isDialogOpen():
-        if a.doc.undoManager.isModified:
-          a.dialog.saveDiscardDialog.isOpen = true
-          a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
-        else:
-          saveConfigAndExit(a)
+    handleWindowClose(a)
 
 # }}}
 
