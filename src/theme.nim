@@ -187,6 +187,9 @@ include themedef
 
 
 const
+  DialogBorderWidthMin = 0.0
+  DialogBorderWidthMax = 30.0
+
   HatchStrokeWidthMin = 0.5
   HatchStrokeWidthMax = 10.0
 
@@ -206,6 +209,13 @@ const
 proc loadTheme*(filename: string): ThemeStyle =
   var cfg = loadConfig(filename)
   result = parseTheme(cfg)
+
+  with result.dialog:
+    outerBorderWidth = outerBorderWidth.clamp(DialogBorderWidthMin,
+                                              DialogBorderWidthMax)
+
+    innerBorderWidth = innerBorderWidth.clamp(DialogBorderWidthMin,
+                                              DialogBorderWidthMax)
 
   with result.level:
     bgHatchStrokeWidth = bgHatchStrokeWidth.clamp(HatchStrokeWidthMin,

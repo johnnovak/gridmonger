@@ -698,10 +698,16 @@ proc findThemeIndex(name: string; a): int =
   return -1
 
 # }}}
+# {{{ themePath()
+proc themePath(index: Natural; a): string =
+  let name = a.theme.themeNames[index]
+  ThemesDir / addFileExt(name, ThemeExt)
+
+# }}}
 # {{{ loadTheme()
 proc loadTheme(index: Natural; a) =
   let name = a.theme.themeNames[index]
-  let path = ThemesDir / addFileExt(name, ThemeExt)
+  let path = themePath(index, a)
   info(fmt"Loading theme '{name}' from '{path}'")
 
   a.theme.style = loadTheme(path)
@@ -1205,7 +1211,7 @@ const
   DlgCheckBoxWidth = 18.0
   DlgCheckBoxYOffs = 3.0
 
-proc calcDialogX(a; dlgWidth: float): float =
+proc calcDialogX(dlgWidth: float; a): float =
   drawAreaWidth(a)*0.5 - dlgWidth*0.5
 
 # {{{ coordinateFields()
@@ -1535,7 +1541,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -1627,7 +1633,7 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Changes?",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -1711,7 +1717,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     DlgHeight = 350.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Map",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   a.clearStatusMessage()
 
@@ -1827,7 +1833,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  Edit Map Properties",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -1975,7 +1981,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2163,7 +2169,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   koi.beginDialog(DlgWidth, DlgHeight,
                   fmt"{IconNewFile}  Edit Level Properties",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2309,7 +2315,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCrop}  Resize Level",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2442,7 +2448,7 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconTrash}  Delete level?",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2540,7 +2546,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   let title = (if dlg.editMode: "Edit" else: "Add") & " Note"
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2747,7 +2753,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   let title = (if dlg.editMode: "Edit" else: "Add") & " Label"
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}",
-                  x = calcDialogX(a, DlgWidth).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -4187,7 +4193,7 @@ with ThemeEditorAutoLayoutParams:
 
 
 # {{{ renderThemeEditorProps()
-proc renderThemeEditorProps(a; x, y, w, h: float) =
+proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
   alias(ts, a.theme.style)
 
@@ -4249,6 +4255,20 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
       koi.label("Warning Text")
       koi.color(ts.dialog.warningTextColor)
+
+      koi.label("Outer Border")
+      koi.color(ts.dialog.outerBorderColor)
+
+      koi.label("Outer Border Width")
+      koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.outerBorderWidth,
+                      style=ThemeEditorSliderStyle)
+
+      koi.label("Inner Border")
+      koi.color(ts.dialog.innerBorderColor)
+
+      koi.label("Inner Border Width")
+      koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.innerBorderWidth,
+                      style=ThemeEditorSliderStyle)
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
       koi.label("Background")
@@ -4526,7 +4546,7 @@ proc renderThemeEditorProps(a; x, y, w, h: float) =
 
 var g_themeEditorPropsFocusCaptured: bool
 
-proc renderThemeEditorPane(a; x, y, w, h: float) =
+proc renderThemeEditorPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
 
   let topSectionHeight = 130
@@ -4595,7 +4615,7 @@ proc renderThemeEditorPane(a; x, y, w, h: float) =
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
-    saveTheme(a.theme.style, "theme-out.ini")
+    saveTheme(a.theme.style, themePath(a.theme.currThemeIndex, a))
     discard
 
   cx += bw + bp
@@ -4612,7 +4632,7 @@ proc renderThemeEditorPane(a; x, y, w, h: float) =
   let fc = koi.focusCaptured()
   koi.setFocusCaptured(g_themeEditorPropsFocusCaptured)
 
-  renderThemeEditorProps(a, x+1, y+topSectionHeight, w-2, h=propsHeight)
+  renderThemeEditorProps(x+1, y+topSectionHeight, w-2, h=propsHeight, a)
 
   g_themeEditorPropsFocusCaptured = koi.focusCaptured()
   koi.setFocusCaptured(fc)
@@ -4724,7 +4744,7 @@ proc renderUI() =
       w = ThemePaneWidth
       h = drawAreaHeight(a)
 
-    renderThemeEditorPane(a, x, y, w, h)
+    renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
   if dlg.preferencesDialog.isOpen:
@@ -4759,7 +4779,7 @@ proc renderUI() =
 
 # }}}
 # {{{ loadPendingTheme()
-proc loadPendingTheme(a; themeIndex: Natural) =
+proc loadPendingTheme(themeIndex: Natural, a) =
   try:
     switchTheme(themeIndex, a)
     a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
@@ -4801,7 +4821,7 @@ proc renderFramePre(win: CSDWindow) =
   alias(a, g_app)
 
   if a.theme.nextThemeIndex.isSome:
-    loadPendingTheme(a, a.theme.nextThemeIndex.get)
+    loadPendingTheme(a.theme.nextThemeIndex.get, a)
 
   a.win.title = a.doc.map.name
   a.win.modified = a.doc.undoManager.isModified
