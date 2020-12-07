@@ -4996,7 +4996,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   # Init window
   a.win.renderFramePreCb = renderFramePre
-  a.win.renderFrameCb = renderFrame
+  a.win.renderFrameCb = main.renderFrame
 
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
@@ -5052,7 +5052,8 @@ proc main() =
         glfw.pollEvents()
       else:
         glfw.waitEvents()
-      csdRenderFrame(g_app.win)
+
+      csdwindow.renderFrame(g_app.win)
 
     cleanup()
 

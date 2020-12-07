@@ -251,6 +251,7 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   koi.setCurrentLayer(oldCurrLayer)
 
 # }}}
+
 # {{{ handleWindowDragEvents()
 proc handleWindowDragEvents(win) =
   let
@@ -418,7 +419,6 @@ proc handleWindowDragEvents(win) =
 
 # }}}
 
-
 type RenderFramePreProc = proc (win: CSDWindow)
 type RenderFrameProc = proc (win: CSDWindow)
 
@@ -426,23 +426,25 @@ var g_window: CSDWindow
 var g_renderFramePreProc: RenderFramePreProc
 var g_renderFrameProc: RenderFrameProc
 
-# {{{ csdRenderFrame*()
-proc csdRenderFrame*(win: CSDWindow) =
+# {{{ renderFrame*()
+proc renderFrame*(win: CSDWindow) =
   let vg = koi.nvgContext()
 
+  # For pre-rendering stuff into FBOs before the main frame starts
   g_renderFramePreProc(win)
 
   let (winWidth, winHeight) = win.size
   let (fbWidth, fbHeight) = win.framebufferSize
 
+  # Main frame drawing starts
   koi.beginFrame(winWidth, winHeight, fbWidth, fbHeight)
 
+  # Render title bar must precede the window drag event handler because of
+  # the overlapping button/resize handle areas
+  renderTitleBar(win, vg, winWidth.float)
   handleWindowDragEvents(win)
 
   g_renderFrameProc(win)
-
-  # Title bar
-  renderTitleBar(win, vg, winWidth.float)
 
   # Window border
   koi.addDrawLayer(layerWindowDecoration, vg):
@@ -453,6 +455,7 @@ proc csdRenderFrame*(win: CSDWindow) =
     vg.strokeWidth(1.0)
     vg.stroke()
 
+  # Main frame drawing ends
   koi.endFrame()
 
   glfw.swapBuffers(win.w)  # TODO
