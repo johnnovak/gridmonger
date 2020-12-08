@@ -13,7 +13,7 @@ import theme
 
 const
   TitleBarFontSize = 14.0
-  TitleBarHeight* = 26.0    # TODO
+  TitleBarHeight* = 26.0
   TitleBarTitlePosX = 50.0
   TitleBarButtonWidth = 23.0
   TitleBarPinButtonsLeftPad = 4.0
