@@ -30,6 +30,12 @@ defineTheme:
     outerBorderWidth:   float
     innerBorderWidth:   float
 
+    shadow:             bool
+    shadowXOffset:      float
+    shadowYOffset:      float
+    shadowFeather:      float
+    shadowColor:        Color
+
   window:
     backgroundColor:    Color
     bgColorUnfocused:   Color

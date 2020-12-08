@@ -829,10 +829,18 @@ proc updateWidgetStyles(a) =
     backgroundColor   = s.dialog.backgroundColor
     titleBarBgColor   = s.dialog.titleBarBgColor
     titleBarTextColor = s.dialog.titleBarTextColor
+
     outerBorderColor  = s.dialog.outerBorderColor
     innerBorderColor  = s.dialog.innerBorderColor
     outerBorderWidth  = s.dialog.outerBorderWidth
     innerBorderWidth  = s.dialog.innerBorderWidth
+
+    with shadow:
+      enabled         = s.dialog.shadow
+      xOffset         = s.dialog.shadowXOffset
+      yOffset         = s.dialog.shadowYOffset
+      feather         = s.dialog.shadowFeather
+      color           = s.dialog.shadowColor
 
   # Label
   a.ui.labelStyle = koi.getDefaultLabelStyle()
@@ -4254,38 +4262,59 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.color(ts.textField.selectionColor)
 
     if koi.subSectionHeader("Dialog", te.sectionDialog):
-      koi.label("Corner Radius")
-      koi.horizSlider(startVal=0, endVal=20, ts.dialog.cornerRadius,
-                      style=ThemeEditorSliderStyle)
+      group:
+        koi.label("Corner Radius")
+        koi.horizSlider(startVal=0, endVal=20, ts.dialog.cornerRadius,
+                        style=ThemeEditorSliderStyle)
 
-      koi.label("Title Bar Background")
-      koi.color(ts.dialog.titleBarBgColor)
+        koi.label("Title Bar Background")
+        koi.color(ts.dialog.titleBarBgColor)
 
-      koi.label("Title Bar Text")
-      koi.color(ts.dialog.titleBarTextColor)
+        koi.label("Title Bar Text")
+        koi.color(ts.dialog.titleBarTextColor)
 
-      koi.label("Background")
-      koi.color(ts.dialog.backgroundColor)
+        koi.label("Background")
+        koi.color(ts.dialog.backgroundColor)
 
-      koi.label("Text")
-      koi.color(ts.dialog.textColor)
+        koi.label("Text")
+        koi.color(ts.dialog.textColor)
 
-      koi.label("Warning Text")
-      koi.color(ts.dialog.warningTextColor)
+        koi.label("Warning Text")
+        koi.color(ts.dialog.warningTextColor)
 
-      koi.label("Outer Border")
-      koi.color(ts.dialog.outerBorderColor)
+      group:
+        koi.label("Outer Border")
+        koi.color(ts.dialog.outerBorderColor)
 
-      koi.label("Outer Border Width")
-      koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.outerBorderWidth,
-                      style=ThemeEditorSliderStyle)
+        koi.label("Outer Border Width")
+        koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.outerBorderWidth,
+                        style=ThemeEditorSliderStyle)
 
-      koi.label("Inner Border")
-      koi.color(ts.dialog.innerBorderColor)
+        koi.label("Inner Border")
+        koi.color(ts.dialog.innerBorderColor)
 
-      koi.label("Inner Border Width")
-      koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.innerBorderWidth,
-                      style=ThemeEditorSliderStyle)
+        koi.label("Inner Border Width")
+        koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.innerBorderWidth,
+                        style=ThemeEditorSliderStyle)
+
+      group:
+        koi.label("Shadow?")
+        koi.checkBox(ts.dialog.shadow)
+
+        koi.label("Shadow X Offset")
+        koi.horizSlider(startVal=0.0, endVal=10, ts.dialog.shadowXOffset,
+                        style=ThemeEditorSliderStyle)
+
+        koi.label("Shadow Y Offset")
+        koi.horizSlider(startVal=0.0, endVal=10, ts.dialog.shadowYOffset,
+                        style=ThemeEditorSliderStyle)
+
+        koi.label("Shadow Feather")
+        koi.horizSlider(startVal=0.0, endVal=50, ts.dialog.shadowFeather,
+                        style=ThemeEditorSliderStyle)
+
+        koi.label("Shadow Color")
+        koi.color(ts.dialog.shadowColor)
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
       koi.label("Background")
@@ -4996,7 +5025,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   # Init window
   a.win.renderFramePreCb = renderFramePre
-  a.win.renderFrameCb = renderFrame
+  a.win.renderFrameCb = main.renderFrame
 
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
@@ -5052,7 +5081,8 @@ proc main() =
         glfw.pollEvents()
       else:
         glfw.waitEvents()
-      csdRenderFrame(g_app.win)
+
+      csdwindow.renderFrame(g_app.win)
 
     cleanup()
 
