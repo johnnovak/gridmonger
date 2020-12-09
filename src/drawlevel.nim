@@ -2372,10 +2372,10 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   if not drawSelectionBuffer:
     drawLinkMarkers(map, level, ctx)
 
-  if ls.innerShadow:
+  if ls.innerShadowWidthFactor > 0:
     drawInnerShadows(viewBuf, ctx)
 
-  if ls.outerShadow:
+  if ls.outerShadowWidthFactor > 0:
     drawOuterShadows(viewBuf, ctx)
 
   drawWalls(l, viewBuf, ctx)

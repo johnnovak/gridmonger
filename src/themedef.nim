@@ -10,6 +10,7 @@ defineTheme:
     bgColorHover:       Color
     bgColorDisabled:    Color
     textColor:          Color
+    textColorActive:    Color
     textColorDisabled:  Color
 
   textField:
@@ -95,10 +96,8 @@ defineTheme:
     outlineColor:           Color
     outlineWidthFactor:     float
 
-    innerShadow:            bool
     innerShadowColor:       Color
     innerShadowWidthFactor: float
-    outerShadow:            bool
     outerShadowColor:       Color
     outerShadowWidthFactor: float
 

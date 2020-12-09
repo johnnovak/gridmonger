@@ -216,28 +216,29 @@ type
     emSetCellLink
 
   Theme = object
-    style:                ThemeStyle
-    themeNames:           seq[string]
-    currThemeIndex:       Natural
-    nextThemeIndex:       Option[Natural]
-    themeReloaded:        bool
-    levelDropDownStyle:   DropDownStyle
+    style:                  ThemeStyle
+    themeNames:             seq[string]
+    currThemeIndex:         Natural
+    nextThemeIndex:         Option[Natural]
+    themeReloaded:          bool
+    levelDropDownStyle:     DropDownStyle
+    reinitDrawLevelParams:  bool
 
   Dialog = object
-    preferencesDialog:    PreferencesDialogParams
+    preferencesDialog:      PreferencesDialogParams
 
-    saveDiscardDialog:    SaveDiscardDialogParams
+    saveDiscardDialog:      SaveDiscardDialogParams
 
-    newMapDialog:         NewMapDialogParams
-    editMapPropsDialog:   EditMapPropsDialogParams
+    newMapDialog:           NewMapDialogParams
+    editMapPropsDialog:     EditMapPropsDialogParams
 
-    newLevelDialog:       NewLevelDialogParams
-    editLevelPropsDialog: EditLevelPropsParams
-    resizeLevelDialog:    ResizeLevelDialogParams
-    deleteLevelDialog:    DeleteLevelDialogParams
+    newLevelDialog:         NewLevelDialogParams
+    editLevelPropsDialog:   EditLevelPropsParams
+    resizeLevelDialog:      ResizeLevelDialogParams
+    deleteLevelDialog:      DeleteLevelDialogParams
 
-    editNoteDialog:       EditNoteDialogParams
-    editLabelDialog:      EditLabelDialogParams
+    editNoteDialog:         EditNoteDialogParams
+    editLabelDialog:        EditLabelDialogParams
 
 
   PreferencesDialogParams = object
@@ -377,7 +378,6 @@ type
 
   ThemeEditor = object
     sectionUserInterface:        bool
-    sectionUserInterfaceGeneral: bool
     sectionWidget:               bool
     sectionTextField:            bool
     sectionDialog:               bool
@@ -388,6 +388,7 @@ type
 
     sectionLevel:                bool
     sectionLevelGeneral:         bool
+    sectionGrid:                 bool
     sectionOutline:              bool
     sectionShadow:               bool
     sectionBackgroundHatch:      bool
@@ -731,9 +732,9 @@ proc updateWidgetStyles(a) =
 
     label.color            = ws.textColor
     label.colorHover       = ws.textColor
-    label.colorDown        = ws.textColor
-    label.colorActive      = ws.textColor
-    label.colorActiveHover = ws.textColor
+    label.colorDown        = ws.textColorActive
+    label.colorActive      = ws.textColorActive
+    label.colorActiveHover = ws.textColorActive
     label.colorDisabled    = ws.textColorDisabled
 
   # Radio button
@@ -749,10 +750,9 @@ proc updateWidgetStyles(a) =
 
     label.color            = ws.textColor
     label.colorHover       = ws.textColor
-    label.colorDown        = ws.textColor
-    label.colorActive      = ws.textColor
-    label.colorActiveHover = ws.textColor
-    label.colorDown        = ws.textColor
+    label.colorDown        = ws.textColorActive
+    label.colorActive      = ws.textColorActive
+    label.colorActiveHover = ws.textColorActive
 
   # Icon radio button
   a.ui.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
@@ -769,9 +769,9 @@ proc updateWidgetStyles(a) =
     label.fontSize         = 18.0
     label.color            = ws.textColor
     label.colorHover       = ws.textColor
-    label.colorDown        = ws.textColor
-    label.colorActive      = ws.textColor
-    label.colorActiveHover = ws.textColor
+    label.colorDown        = ws.textColorActive
+    label.colorActive      = ws.textColorActive
+    label.colorActiveHover = ws.textColorActive
     label.padHoriz         = 0
     label.padHoriz         = 0
 
@@ -815,9 +815,9 @@ proc updateWidgetStyles(a) =
     icon.fontSize         = 12.0
     icon.color            = ws.textColor
     icon.colorHover       = ws.textColor
-    icon.colorDown        = ws.textColor
-    icon.colorActive      = ws.textColor
-    icon.colorActiveHover = ws.textColor
+    icon.colorDown        = ws.textColorActive
+    icon.colorActive      = ws.textColorActive
+    icon.colorActiveHover = ws.textColorActive
     iconActive            = IconCheck
     iconInactive          = NoIcon
 
@@ -4221,45 +4221,34 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   # {{{ User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
-    if koi.subSectionHeader("General", te.sectionUserInterfaceGeneral):
-      koi.label("Corner Radius")
-      koi.horizSlider(startVal=0, endVal=12, ts.general.cornerRadius,
-                      style=ThemeEditorSliderStyle)
-
+    if koi.subSectionHeader("Window", te.sectionTitleBar):
       koi.label("Background")
       koi.color(ts.general.backgroundColor)
 
-      koi.label("Highlight")
-      koi.color(ts.general.highlightColor)
+      koi.label("Title Background")
+      koi.color(ts.window.backgroundColor)
 
-    if koi.subSectionHeader("Widget", te.sectionWidget):
-      koi.label("Background")
-      koi.color(ts.widget.bgColor)
+      koi.label("Title Background Inactive")
+      koi.color(ts.window.bgColorUnfocused)
 
-      koi.label("Background Hover")
-      koi.color(ts.widget.bgColorHover)
+      koi.label("Title")
+      koi.color(ts.window.textColor)
 
-      koi.label("Background Disabled")
-      koi.color(ts.widget.bgColorDisabled)
+      koi.label("Title Inactive")
+      koi.color(ts.window.textColorUnfocused)
 
-      koi.label("Text")
-      koi.color(ts.widget.textColor)
+      koi.label("Modified Flag")
+      koi.color(ts.window.modifiedFlagColor)
 
-      koi.label("Text Disabled")
-      koi.color(ts.widget.textColorDisabled)
+      koi.label("Button")
+      koi.color(ts.window.buttonColor)
 
-    if koi.subSectionHeader("Text Field", te.sectionTextField):
-      koi.label("Background Active")
-      koi.color(ts.textField.bgColorActive)
+      koi.label("Button Hover")
+      koi.color(ts.window.buttonColorHover)
 
-      koi.label("Text Active")
-      koi.color(ts.textField.textColorActive)
+      koi.label("Button Down")
+      koi.color(ts.window.buttonColorDown)
 
-      koi.label("Cursor")
-      koi.color(ts.textField.cursorColor)
-
-      koi.label("Selection")
-      koi.color(ts.textField.selectionColor)
 
     if koi.subSectionHeader("Dialog", te.sectionDialog):
       group:
@@ -4267,19 +4256,19 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.horizSlider(startVal=0, endVal=20, ts.dialog.cornerRadius,
                         style=ThemeEditorSliderStyle)
 
-        koi.label("Title Bar Background")
+        koi.label("Title Background")
         koi.color(ts.dialog.titleBarBgColor)
 
-        koi.label("Title Bar Text")
+        koi.label("Title")
         koi.color(ts.dialog.titleBarTextColor)
 
         koi.label("Background")
         koi.color(ts.dialog.backgroundColor)
 
-        koi.label("Text")
+        koi.label("Label") # TODO
         koi.color(ts.dialog.textColor)
 
-        koi.label("Warning Text")
+        koi.label("Warning")
         koi.color(ts.dialog.warningTextColor)
 
       group:
@@ -4316,30 +4305,47 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.label("Shadow Color")
         koi.color(ts.dialog.shadowColor)
 
-    if koi.subSectionHeader("Window", te.sectionTitleBar):
+
+    if koi.subSectionHeader("Widget", te.sectionWidget):
+      koi.label("Corner Radius")
+      koi.horizSlider(startVal=0, endVal=12, ts.general.cornerRadius,
+                      style=ThemeEditorSliderStyle)
+
       koi.label("Background")
-      koi.color(ts.window.backgroundColor)
+      koi.color(ts.widget.bgColor)
 
-      koi.label("Background Unfocused")
-      koi.color(ts.window.bgColorUnfocused)
+      koi.label("Background Hover")
+      koi.color(ts.widget.bgColorHover)
 
-      koi.label("Text")
-      koi.color(ts.window.textColor)
+      koi.label("Background Active") # TODO
+      koi.color(ts.general.highlightColor)
 
-      koi.label("Text Unfocused")
-      koi.color(ts.window.textColorUnfocused)
+      koi.label("Background Disabled")
+      koi.color(ts.widget.bgColorDisabled)
 
-      koi.label("Modified Flag")
-      koi.color(ts.window.modifiedFlagColor)
+      koi.label("Foreground") # TODO
+      koi.color(ts.widget.textColor)
 
-      koi.label("Button")
-      koi.color(ts.window.buttonColor)
+      koi.label("Foreground Active") # TODO
+      koi.color(ts.widget.textColorActive)
 
-      koi.label("Button Hover")
-      koi.color(ts.window.buttonColorHover)
+      koi.label("Foreground Disabled") # TODO
+      koi.color(ts.widget.textColorDisabled)
 
-      koi.label("Button Down")
-      koi.color(ts.window.buttonColorDown)
+
+    if koi.subSectionHeader("Text Field", te.sectionTextField):
+      koi.label("Edit Background") # TODO
+      koi.color(ts.textField.bgColorActive)
+
+      koi.label("Edit Text") # TODO
+      koi.color(ts.textField.textColorActive)
+
+      koi.label("Cursor")
+      koi.color(ts.textField.cursorColor)
+
+      koi.label("Selection")
+      koi.color(ts.textField.selectionColor)
+
 
     if koi.subSectionHeader("Status Bar", te.sectionStatusBar):
       koi.label("Background")
@@ -4357,24 +4363,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label("Coordinates")
       koi.color(ts.statusBar.coordsColor)
 
-    if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
-      koi.label("Button")
-      koi.color(ts.leveldropDown.buttonColor)
-
-      koi.label("Button Hover")
-      koi.color(ts.leveldropDown.buttonColorHover)
-
-      koi.label("Text")
-      koi.color(ts.leveldropDown.textColor)
-
-      koi.label("Item List")
-      koi.color(ts.leveldropDown.itemListColor)
-
-      koi.label("Item")
-      koi.color(ts.leveldropDown.itemColor)
-
-      koi.label("Item Hover")
-      koi.color(ts.leveldropDown.itemColorHover)
 
     if koi.subSectionHeader("About Button", te.sectionAboutButton):
       koi.label("Color")
@@ -4383,7 +4371,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label("Hover")
       koi.color(ts.aboutButton.colorHover)
 
-      koi.label("Active")
+      koi.label("Down")
       koi.color(ts.aboutButton.colorActive)
 
   # }}}
@@ -4394,10 +4382,10 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.label("Background")
         koi.color(ts.level.backgroundColor)
 
-        koi.label("Draw")
+        koi.label("Foreground") # TODO
         koi.color(ts.level.drawColor)
 
-        koi.label("Draw Light")
+        koi.label("Foreground Light") # TODO
         koi.color(ts.level.lightDrawColor)
 
         koi.label("Line Width")
@@ -4415,19 +4403,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
         koi.label("Cursor Guides")
         koi.color(ts.level.cursorGuideColor)
-
-      group:
-        koi.label("Grid Style Background")
-        koi.dropDown(GridStyle, ts.level.gridStyleBackground)
-
-        koi.label("Grid Background")
-        koi.color(ts.level.gridColorBackground)
-
-        koi.label("Grid Style Floor")
-        koi.dropDown(GridStyle, ts.level.gridStyleFloor)
-
-        koi.label("Grid Floor")
-        koi.color(ts.level.gridColorFloor)
 
       group:
         koi.label("Selection")
@@ -4455,14 +4430,29 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.horizSlider(startVal=1.0, endVal=10, ts.level.bgHatchSpacingFactor,
                       style=ThemeEditorSliderStyle)
 
+
+    if koi.subSectionHeader("Grid", te.sectionOutline):
+      koi.label("Background Grid Style")
+      koi.dropDown(GridStyle, ts.level.gridStyleBackground)
+
+      koi.label("Background Grid")
+      koi.color(ts.level.gridColorBackground)
+
+      koi.label("Floor Grid Style")
+      koi.dropDown(GridStyle, ts.level.gridStyleFloor)
+
+      koi.label("Floor grid")
+      koi.color(ts.level.gridColorFloor)
+
+
     if koi.subSectionHeader("Outline", te.sectionOutline):
-      koi.label("Outline Style")
+      koi.label("Style")
       koi.dropDown(OutlineStyle, ts.level.outlineStyle)
 
-      koi.label("Outline Fill Style")
+      koi.label("Fill Style")
       koi.dropDown(OutlineFillStyle, ts.level.outlineFillStyle)
 
-      koi.label("Outline Overscan")
+      koi.label("Overscan")
       koi.checkBox(ts.level.outlineOverscan)
 
       koi.label("Outline")
@@ -4473,27 +4463,20 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
                       style=ThemeEditorSliderStyle)
 
     if koi.subSectionHeader("Shadow", te.sectionShadow):
-      group:
-        koi.label("Inner Shadow?")
-        koi.checkBox(ts.level.innerShadow)
+      koi.label("Inner Shadow")
+      koi.color(ts.level.innerShadowColor)
 
-        koi.label("Inner Shadow")
-        koi.color(ts.level.innerShadowColor)
+      koi.label("Inner Shadow Width")
+      koi.horizSlider(startVal=0, endVal=1.0, ts.level.innerShadowWidthFactor,
+                      style=ThemeEditorSliderStyle)
 
-        koi.label("Inner Shadow Width")
-        koi.horizSlider(startVal=0, endVal=1.0, ts.level.innerShadowWidthFactor,
-                        style=ThemeEditorSliderStyle)
+      koi.label("Outer Shadow")
+      koi.color(ts.level.outerShadowColor)
 
-      group:
-        koi.label("Outer Shadow?")
-        koi.checkBox(ts.level.outerShadow)
+      koi.label("Outer Shadow Width")
+      koi.horizSlider(startVal=0, endVal=1.0, ts.level.outerShadowWidthFactor,
+                      style=ThemeEditorSliderStyle)
 
-        koi.label("Outer Shadow")
-        koi.color(ts.level.outerShadowColor)
-
-        koi.label("Outer Shadow Width")
-        koi.horizSlider(startVal=0, endVal=1.0, ts.level.outerShadowWidthFactor,
-                        style=ThemeEditorSliderStyle)
 
     if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
       koi.label("Floor 1")
@@ -4523,6 +4506,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label("Floor 9")
       koi.color(ts.level.floorColor[8])
 
+
     if koi.subSectionHeader("Notes", te.sectionNotes):
       group:
         koi.label("Marker")
@@ -4532,9 +4516,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.color(ts.level.noteCommentColor)
 
       group:
-        koi.label("Index")
-        koi.color(ts.level.noteIndexColor)
-
         koi.label("Index Background 1")
         koi.color(ts.level.noteIndexBgColor[0])
 
@@ -4547,12 +4528,36 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.label("Index Background 4")
         koi.color(ts.level.noteIndexBgColor[3])
 
+        koi.label("Index")
+        koi.color(ts.level.noteIndexColor)
+
       group:
         koi.label("Tooltip Background")
         koi.color(ts.level.noteTooltipBgColor)
 
-        koi.label("Tooltip Text")
+        koi.label("Tooltip")
         koi.color(ts.level.noteTooltipTextColor)
+
+
+    if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
+      koi.label("Button")
+      koi.color(ts.leveldropDown.buttonColor)
+
+      koi.label("Button Hover")
+      koi.color(ts.leveldropDown.buttonColorHover)
+
+      koi.label("Label") # TODO
+      koi.color(ts.leveldropDown.textColor)
+
+      koi.label("Item List Background")
+      koi.color(ts.leveldropDown.itemListColor)
+
+      koi.label("Item")
+      koi.color(ts.leveldropDown.itemColor)
+
+      koi.label("Item Hover")
+      koi.color(ts.leveldropDown.itemColorHover)
+
 
   # }}}
   # {{{ Panes section
@@ -4560,9 +4565,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
       koi.label("Text")
       koi.color(ts.notesPane.textColor)
-
-      koi.label("Index")
-      koi.color(ts.notesPane.indexColor)
 
       koi.label("Index Background 1")
       koi.color(ts.notesPane.indexBgColor[0])
@@ -4576,11 +4578,14 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label("Index Background 4")
       koi.color(ts.notesPane.indexBgColor[3])
 
+      koi.label("Index")
+      koi.color(ts.notesPane.indexColor)
+
     if koi.subSectionHeader("Toolbar Pane", te.sectionToolbarPane):
-      koi.label("Button Background")
+      koi.label("Button ")
       koi.color(ts.toolbarPane.buttonBgColor)
 
-      koi.label("Button Background Hover")
+      koi.label("Button Hover")
       koi.color(ts.toolbarPane.buttonBgColorHover)
 
   # }}}
@@ -4688,6 +4693,10 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   # changed), because sometimes we need to precalc stuff when the style
   # changes
   updateWidgetStyles(a)
+
+  a.theme.reinitDrawLevelParams = true
+
+  a.win.setStyle(a.theme.style.window)
 
 # }}}
 
@@ -4871,6 +4880,11 @@ proc renderFramePre(win: CSDWindow) =
 
   a.win.title = a.doc.map.name
   a.win.modified = a.doc.undoManager.isModified
+
+  if a.theme.reinitDrawLevelParams:
+    a.theme.reinitDrawLevelParams = false
+    a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
+                                             koi.getPxRatio())
 
 # }}}
 # {{{ renderFrame()

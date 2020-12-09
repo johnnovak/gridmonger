@@ -430,13 +430,15 @@ var g_renderFrameProc: RenderFrameProc
 proc renderFrame*(win: CSDWindow) =
   let vg = koi.nvgContext()
 
+  if win.w.iconified: return
+
   # For pre-rendering stuff into FBOs before the main frame starts
   g_renderFramePreProc(win)
 
+  # Main frame drawing starts
   let (winWidth, winHeight) = win.size
   let (fbWidth, fbHeight) = win.framebufferSize
 
-  # Main frame drawing starts
   koi.beginFrame(winWidth, winHeight, fbWidth, fbHeight)
 
   # Render title bar must precede the window drag event handler because of
