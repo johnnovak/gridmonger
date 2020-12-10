@@ -1284,7 +1284,7 @@ template coordinateFields() =
     try:
       let i = parseInt(dlg.columnStart)
       koi.label(x + LabelWidth + 75, y, LabelWidth, h,
-                min(i, LevelNumColumnsMax).toLetterCoord, style=a.ui.labelStyle)
+                i.clamp(0, LevelNumColumnsMax).toLetterCoord, style=a.ui.labelStyle)
     except ValueError:
       discard
 
@@ -1304,7 +1304,7 @@ template coordinateFields() =
     try:
       let i = parseInt(dlg.rowStart)
       koi.label(x + LabelWidth + 75, y, LabelWidth, h,
-                min(i, LevelNumRowsMax).toLetterCoord, style=a.ui.labelStyle)
+                i.clamp(0, LevelNumRowsMax).toLetterCoord, style=a.ui.labelStyle)
     except ValueError:
       discard
 
