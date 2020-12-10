@@ -4944,6 +4944,16 @@ proc loadFonts(vg: NVGContext) =
   discard addFallbackFont(vg, blackFont, iconFont)
 
 
+proc setDefaultWidgetStyles(a) =
+  var s = koi.getDefaultCheckBoxStyle()
+
+  s.icon.fontSize         = 12.0
+  s.iconActive            = IconCheck
+  s.iconInactive          = NoIcon
+
+  koi.setDefaultCheckboxStyle(s)
+
+
 # TODO clean up
 proc initGfx(): (CSDWindow, NVGContext) =
   glfw.initialize()
@@ -4965,7 +4975,11 @@ GPU info
 
   info(msg)
 
-  let vg = nvgInit(getProcAddress, {nifStencilStrokes, nifAntialias})
+  if not nvgInit(getProcAddress):
+    error("Error initialising NanoVG")
+    quit(QuitFailure)
+
+  let vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
   if vg == nil:
     error("Error creating NanoVG context")
     quit(QuitFailure)
@@ -4988,6 +5002,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a = new AppContext
   a.win = win
   a.vg = vg
+
+  setDefaultWidgetStyles(a)
 
   a.doc.undoManager = newUndoManager[Map, UndoStateData]()
 
@@ -5068,7 +5084,7 @@ proc cleanup() =
   info("Exiting app...")
 
   koi.deinit()
-  nvgDeinit(g_app.vg)
+  nvgDeleteContext(g_app.vg)
   glfw.terminate()
 
   info("Cleanup successful, bye!")
