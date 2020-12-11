@@ -2091,7 +2091,7 @@ proc drawWalls(l: Level, viewBuf: Level; ctx) =
   for viewRow in 0..dp.viewRows:
     let row = dp.viewStartRow + viewRow
     let regionBorder = ro.enableRegions and
-                       row > 0 and row < l.rows and 
+                       row > 0 and row < l.rows and
                        row mod ro.regionRows == 0
     if not regionBorder:
       drawCellWallsNorth(viewBuf, viewRow, regionBorder=false, ctx)

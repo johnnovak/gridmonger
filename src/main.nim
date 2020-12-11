@@ -968,11 +968,10 @@ func isKeyUp(ev: Event, keys: set[Key]): bool =
   ev.action == kaUp and ev.key in keys
 
 proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
-  if ev.kind == ekKey:
-    let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-    if ev.action in a:
-      let sc = mkKeyShortcut(ev.key, ev.mods)
-      result = sc in g_appShortcuts[shortcut]
+  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
+  if ev.kind == ekKey and ev.action in a:
+    let sc = mkKeyShortcut(ev.key, ev.mods)
+    result = sc in g_appShortcuts[shortcut]
 
 # }}}
 
@@ -1636,7 +1635,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -1707,7 +1706,7 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
     elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -1821,7 +1820,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -1933,7 +1932,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -2140,7 +2139,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -2305,7 +2304,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -2390,7 +2389,6 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
 
   proc okAction(dlg: var ResizeLevelDialogParams; a) =
-    # TODO number error checking
     let newRows = parseInt(dlg.rows)
     let newCols = parseInt(dlg.cols)
 
@@ -2405,8 +2403,9 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     of raBottom:      South
     of raBottomRight: SouthEast
 
-    actions.resizeLevel(a.doc.map, a.ui.cursor, newRows, newCols, align,
-                        a.doc.undoManager)
+    let newCur = actions.resizeLevel(a.doc.map, a.ui.cursor, newRows, newCols,
+                                     align, a.doc.undoManager)
+    moveCursorTo(newCur, a)
 
     setStatusMessage(IconCrop, "Level resized", a)
     koi.closeDialog()
@@ -2442,7 +2441,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -2508,7 +2507,7 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
     elif ke.isShortcutDown(scAccept):  deleteAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -2727,7 +2726,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -2861,7 +2860,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
-    if eventHandled: setEventHandled() 
+    if eventHandled: setEventHandled()
 
   koi.endDialog()
 
@@ -4012,7 +4011,8 @@ proc handleGlobalKeyEvents(a) =
         let sel = ui.selection.get
         let bbox = sel.boundingBox()
         if bbox.isSome:
-          actions.cropLevel(map, cur, bbox.get, um)
+          let newCur = actions.cropLevel(map, cur, bbox.get, um)
+          moveCursorTo(newCur, a)
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped level to selection", a)
 
@@ -4689,7 +4689,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   koi.setFocusCaptured(fc)
 
   # TODO ultimately we'll do most of switchTheme here (extract etc)
-  # but at the end of the frame and lazily somehow (only if something has 
+  # but at the end of the frame and lazily somehow (only if something has
   # changed), because sometimes we need to precalc stuff when the style
   # changes
   updateWidgetStyles(a)

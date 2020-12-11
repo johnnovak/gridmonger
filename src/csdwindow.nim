@@ -77,7 +77,7 @@ proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
 
 # }}}
 # # {{{ setStyle()
-proc setStyle*(win; s: WindowStyle) = 
+proc setStyle*(win; s: WindowStyle) =
   win.style = s
 
   alias(bs, win.buttonStyle)
