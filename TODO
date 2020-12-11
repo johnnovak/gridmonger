@@ -1,8 +1,6 @@
 BUGS
   - cut and the paste back doesn't yield the same results
   - cut shouldn't cut walls of bordering cells
-  - new map -> new level -> move cursor -> draw new cell -> undo to beginning
-    -> crash
 
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
 

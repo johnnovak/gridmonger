@@ -2873,9 +2873,9 @@ proc undoAction(a) =
 
   if um.canUndo():
     let undoStateData = um.undo(a.doc.map)
-    moveCursorTo(undoStateData.location, a)
-    setStatusMessage(IconUndo,
-                     fmt"Undid action: {undoStateData.actionName}", a)
+    if mapHasLevels(a):
+      moveCursorTo(undoStateData.location, a)
+    setStatusMessage(IconUndo, fmt"Undid action: {undoStateData.actionName}", a)
   else:
     setStatusMessage(IconWarning, "Nothing to undo", a)
 
