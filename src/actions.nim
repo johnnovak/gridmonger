@@ -630,8 +630,8 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     m.links.addAll(newLinks)
 
     var usd = usd
-    usd.location.col += colOffs
-    usd.location.row += rowOffs
+    usd.location.col = (usd.location.col.int + colOffs).Natural
+    usd.location.row = (usd.location.row.int + rowOffs).Natural
     result = usd
 
 
@@ -670,6 +670,10 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
+
+    var usd = usd
+    usd.location.col = (usd.location.col.int + colOffs).Natural
+    usd.location.row = (usd.location.row.int + rowOffs).Natural
     result = usd
 
 
@@ -681,6 +685,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
     result = usd
+
 
   um.storeUndoState(action, undoAction)
   action(map).location
