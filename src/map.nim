@@ -76,7 +76,7 @@ proc delLevel*(m; levelIdx: Natural) =
 
 proc eraseCellLinks*(m; loc: Location) =
   m.links.delBySrc(loc)
-  m.links.delByDest(loc) 
+  m.links.delByDest(loc)
 
 proc getFloor*(m; loc: Location): Floor {.inline.} =
   m.levels[loc.level].getFloor(loc.row, loc.col)

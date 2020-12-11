@@ -612,16 +612,6 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
                                           newLevelRect)
 
-  #  let l = currLevel(a)
-  #  var newLoc = a.ui.cursor
-#
-#    if dirE in align:
-#      newLoc.col += newCols - l.cols
-
-#    if dirS in align:
-#      newLoc.row += newRows - l.rows
-#
-
   let action = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
 
@@ -638,6 +628,10 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
+
+    var usd = usd
+    usd.location.col += colOffs
+    usd.location.row += rowOffs
     result = usd
 
 
@@ -649,6 +643,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
     result = usd
+
 
   um.storeUndoState(action, undoAction)
   action(map).location

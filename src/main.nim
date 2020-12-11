@@ -2342,6 +2342,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.cols,
+    activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckInteger,
       min: LevelNumColumnsMin,
@@ -2355,7 +2356,6 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   koi.textField(
     x + LabelWidth, y, w = 60.0, h,
     dlg.rows,
-    activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckInteger,
       min: LevelNumRowsMin,
