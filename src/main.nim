@@ -4183,6 +4183,10 @@ proc handleGlobalKeyEvents_NoLevels(a) =
          ke.isKeyDown(keyU, repeat=true):
       undoAction(a)
 
+    elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
+         ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
+      redoAction(a)
+
 # }}}
 
 # {{{ Theme editor
