@@ -1456,7 +1456,7 @@ proc handleTabNavigation(ke: Event,
 
   else:
     let i = ord(ke.key) - ord(key1)
-    if ke.action == kaDown and ke.mods == {mkCtrl} and
+    if ke.action == kaDown and mkCtrl in ke.mods and
       i >= 0 and i <= maxTabIndex:
       result = i
 
