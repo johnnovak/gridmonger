@@ -3024,7 +3024,7 @@ proc drawEmptyMap(a) =
   alias(vg, a.vg)
   alias(ls, a.doc.levelStyle)
 
-  vg.fontSize(22)
+  vg.setFont(size=22)
   vg.fillColor(ls.drawColor)
   vg.textAlign(haCenter, vaMiddle)
   var y = drawAreaHeight(a) * 0.5
@@ -4979,14 +4979,8 @@ GPU info
 
   info(msg)
 
-  if not nvgInit(getProcAddress):
-    error("Error initialising NanoVG")
-    quit(QuitFailure)
-
+  nvgInit(getProcAddress)
   let vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
-  if vg == nil:
-    error("Error creating NanoVG context")
-    quit(QuitFailure)
 
   koi.init(vg, getProcAddress)
 
