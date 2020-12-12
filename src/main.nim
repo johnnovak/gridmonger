@@ -4946,29 +4946,10 @@ proc renderFrameSplash(a) =
 
 # {{{ Init & cleanup
 proc loadFonts(vg: NVGContext) =
-  template quitWithFontLoadError() =
-    error(fmt"Could not load font '{fontPath}'")
-    quit(QuitFailure)
-
-  var fontPath = DataDir / "Roboto-Regular.ttf"
-  let regularFont = vg.createFont("sans", fontPath)
-  if regularFont == NoFont:
-    quitWithFontLoadError()
-
-  fontPath = DataDir / "Roboto-Bold.ttf"
-  let boldFont = vg.createFont("sans-bold", fontPath)
-  if boldFont == NoFont:
-    quitWithFontLoadError()
-
-  fontPath = DataDir / "Roboto-Black.ttf"
-  let blackFont = vg.createFont("sans-black", fontPath)
-  if blackFont == NoFont:
-    quitWithFontLoadError()
-
-  fontPath = DataDir / "GridmongerIcons.ttf"
-  let iconFont = vg.createFont("icon", fontPath)
-  if iconFont == NoFont:
-    quitWithFontLoadError()
+  discard vg.createFont("sans", DataDir / "Roboto-Regular.ttf")
+  let boldFont = vg.createFont("sans-bold", DataDir / "Roboto-Bold.ttf")
+  let blackFont = vg.createFont("sans-black", DataDir / "Roboto-Black.ttf")
+  let iconFont = vg.createFont("icon", DataDir / "GridmongerIcons.ttf")
 
   discard addFallbackFont(vg, boldFont, iconFont)
   discard addFallbackFont(vg, blackFont, iconFont)
@@ -4977,9 +4958,9 @@ proc loadFonts(vg: NVGContext) =
 proc setDefaultWidgetStyles(a) =
   var s = koi.getDefaultCheckBoxStyle()
 
-  s.icon.fontSize         = 12.0
-  s.iconActive            = IconCheck
-  s.iconInactive          = NoIcon
+  s.icon.fontSize = 12.0
+  s.iconActive    = IconCheck
+  s.iconInactive  = NoIcon
 
   koi.setDefaultCheckboxStyle(s)
 
@@ -5010,26 +4991,6 @@ GPU info
   koi.init(vg, getProcAddress)
 
   result = (win, vg)
-
-
-proc initSplash(): Splash =
-  var cfg = DefaultOpenglWindowConfig
-  # TODO set proper size
-  cfg.size = (1000, 1000)
-  cfg.title = ""
-  cfg.resizable = false
-  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
-  cfg.nMultiSamples = 4
-  cfg.transparentFramebuffer = true
-  cfg.decorated = false
-
-  when not defined(windows):
-    cfg.version = glv32
-    cfg.forwardCompat = true
-    cfg.profile = opCoreProfile
-
-  result.win = newWindow(cfg)
-  result.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
 
 
 proc initApp(win: CSDWindow, vg: NVGContext) =
@@ -5121,6 +5082,28 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.win.show()
 
   info("App init completed")
+
+
+proc initSplash(): Splash =
+  var cfg = DefaultOpenglWindowConfig
+  # TODO set proper size
+  cfg.size = (1000, 1000)
+  cfg.title = ""
+  cfg.resizable = false
+  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
+  cfg.nMultiSamples = 4
+  cfg.transparentFramebuffer = true
+  cfg.decorated = false
+
+  when not defined(windows):
+    cfg.version = glv32
+    cfg.forwardCompat = true
+    cfg.profile = opCoreProfile
+
+  result.win = newWindow(cfg)
+  result.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
+
+#  loadSplashImages(vg)
 
 
 proc cleanup() =
