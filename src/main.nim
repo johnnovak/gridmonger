@@ -900,14 +900,15 @@ proc updateWidgetStyles(a) =
 # {{{ loadImage()
 proc loadImage(path: string; a): Option[Paint] =
   alias(vg, a.vg)
-  let img = vg.createImage(path, {ifRepeatX, ifRepeatY})
+  try:
+    let img = vg.createImage(path, {ifRepeatX, ifRepeatY})
 
-  if img == NoImage:
-    return Paint.none
+    let (w, h) = vg.imageSize(img)
+    let paint = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
+    result = paint.some
 
-  let (w, h) = vg.imageSize(img)
-  let paint = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
-  result = paint.some
+  except NVGError:
+    result = Paint.none
 
 # }}}
 # {{{ switchTheme()
