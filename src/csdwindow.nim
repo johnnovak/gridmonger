@@ -31,7 +31,7 @@ type
     modified*: bool
     style*:    WindowStyle
 
-    w*: Window  # the wrapper GLFW window
+    w: Window  # the wrapper GLFW window
 
     buttonStyle:         ButtonStyle
     title:               string
@@ -113,6 +113,8 @@ proc newCSDWindow*(): CSDWindow =
 # }}}
 # {{{ GLFW Window adapters
 # Just for the functions that actually get used in the app
+
+proc glfwWin*(win): Window = win.w
 
 proc title*(win): string =
   win.title
@@ -427,9 +429,7 @@ var g_renderFramePreProc: RenderFramePreProc
 var g_renderFrameProc: RenderFrameProc
 
 # {{{ renderFrame*()
-proc renderFrame*(win: CSDWindow) =
-  let vg = koi.nvgContext()
-
+proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   if win.w.iconified: return
 
   # For pre-rendering stuff into FBOs before the main frame starts
@@ -459,8 +459,6 @@ proc renderFrame*(win: CSDWindow) =
 
   # Main frame drawing ends
   koi.endFrame()
-
-  glfw.swapBuffers(win.w)  # TODO
 
 # }}}
 

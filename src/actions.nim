@@ -22,35 +22,6 @@ using
   m:   var Map
   um:  var UndoManager[Map, UndoStateData]
 
-# {{{ fullLevelAction()
-template fullLevelAction(map; loc: Location; um;
-                         actName: string, oldLinks, newLinks: Links,
-                         actionMap, actionBody: untyped) =
-
-  let usd = UndoStateData(actionName: actName, location: loc)
-
-  let action = proc (actionMap: var Map): UndoStateData =
-    actionBody
-
-    for src in oldLinks.keys: m.links.delBySrc(src)
-    m.links.addAll(newLinks)
-    result = usd
-
-
-  let undoLevel = newLevelFrom(map.levels[loc.level])
-
-  let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = newLevelFrom(undoLevel)
-
-    for src in newLinks.keys: m.links.delBySrc(src)
-    m.links.addAll(oldLinks)
-    result = usd
-
-
-  um.storeUndoState(action, undoAction)
-  discard action(map)
-
-# }}}
 # {{{ cellAreaAction()
 template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
                         groupWithPrev: bool,

@@ -113,7 +113,7 @@ macro defineTheme(arg: untyped): untyped =
         assert propParams[0] == newIdentNode("|")
         propType = propParams[1]
         # TODO
-        let propDefaultValue = propParams[2]
+#        let propDefaultValue = propParams[2]
 
         propsToAdd.add((propName, propType))
 

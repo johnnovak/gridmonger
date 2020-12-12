@@ -127,6 +127,7 @@ type
     dialog:      Dialog
 
     themeEditor: ThemeEditor
+    splash:      Splash
 
     shouldClose: bool
 
@@ -398,6 +399,11 @@ type
     sectionPanes:                bool
     sectionNotesPane:            bool
     sectionToolbarPane:          bool
+
+
+  Splash = object
+    win: Window
+    vg:  NVGContext
 
 
 var g_app: AppContext
@@ -4714,8 +4720,7 @@ proc saveConfigAndExit(a) =
 
 # }}}
 # {{{ renderUI()
-proc renderUI() =
-  alias(a, g_app)
+proc renderUI(a) =
   alias(ui, a.ui)
   alias(vg, a.vg)
   alias(dlg, a.dialog)
@@ -4877,9 +4882,7 @@ proc handleWindowClose(a) =
 
 # }}}
 # {{{ renderFramePre()
-proc renderFramePre(win: CSDWindow) =
-  alias(a, g_app)
-
+proc renderFramePre(a) =
   if a.theme.nextThemeIndex.isSome:
     loadPendingTheme(a.theme.nextThemeIndex.get, a)
 
@@ -4893,9 +4896,7 @@ proc renderFramePre(win: CSDWindow) =
 
 # }}}
 # {{{ renderFrame()
-proc renderFrame(win: CSDWindow) =
-  alias(a, g_app)
-
+proc renderFrame(a) =
   if a.theme.nextThemeIndex.isSome:
     displayThemeLoadedMessage(a)
     a.theme.nextThemeIndex = Natural.none
@@ -4904,18 +4905,42 @@ proc renderFrame(win: CSDWindow) =
   # the global shortcuts, so widget-specific shorcuts can take precedence
   var uiRendered = false
   if a.opt.showThemePane:
-    renderUI()
+    renderUI(a)
     uiRendered = true
 
   if mapHasLevels(a): handleGlobalKeyEvents(a)
   else:               handleGlobalKeyEvents_NoLevels(a)
 
   if not a.opt.showThemePane or not uiRendered:
-    renderUI()
+    renderUI(a)
 
-  if win.shouldClose:
-    win.shouldClose = false
+  if a.win.shouldClose:
+    a.win.shouldClose = false
     handleWindowClose(a)
+
+# }}}
+# {{{ renderFrameSplash()
+proc renderFrameSplash(a) =
+  alias(win, a.splash.win)
+  alias(vg, a.splash.vg)
+
+  let
+    (winWidth, winHeight) = win.size
+    (fbWidth, fbHeight) = win.framebufferSize
+    pxRatio = fbWidth / winWidth
+
+  glViewport(0, 0, fbWidth, fbHeight)
+
+  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+
+  vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
+
+  vg.beginPath()
+  vg.circle(200, 200, 100)
+  vg.fillColor(red())
+  vg.fill()
+
+  vg.endFrame()
 
 # }}}
 
@@ -4959,8 +4984,7 @@ proc setDefaultWidgetStyles(a) =
   koi.setDefaultCheckboxStyle(s)
 
 
-# TODO clean up
-proc initGfx(): (CSDWindow, NVGContext) =
+proc initGfx(a): (CSDWindow, NVGContext) =
   glfw.initialize()
   let win = newCSDWindow()
 
@@ -4986,6 +5010,26 @@ GPU info
   koi.init(vg, getProcAddress)
 
   result = (win, vg)
+
+
+proc initSplash(): Splash =
+  var cfg = DefaultOpenglWindowConfig
+  # TODO set proper size
+  cfg.size = (1000, 1000)
+  cfg.title = ""
+  cfg.resizable = false
+  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
+  cfg.nMultiSamples = 4
+  cfg.transparentFramebuffer = true
+  cfg.decorated = false
+
+  when not defined(windows):
+    cfg.version = glv32
+    cfg.forwardCompat = true
+    cfg.profile = opCoreProfile
+
+  result.win = newWindow(cfg)
+  result.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
 
 
 proc initApp(win: CSDWindow, vg: NVGContext) =
@@ -5053,8 +5097,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
   # Init window
-  a.win.renderFramePreCb = renderFramePre
-  a.win.renderFrameCb = main.renderFrame
+  a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(a)
+  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(a)
 
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
@@ -5083,7 +5127,13 @@ proc cleanup() =
   info("Exiting app...")
 
   koi.deinit()
+
   nvgDeleteContext(g_app.vg)
+  nvgDeleteContext(g_app.splash.vg)
+
+  g_app.win.glfwWin.destroy()
+  g_app.splash.win.destroy()
+
   glfw.terminate()
 
   info("Cleanup successful, bye!")
@@ -5102,16 +5152,30 @@ proc main() =
   info(fmt"UserThemesDir = {UserThemesDir}")
 
   try:
-    let (win, vg) = initGfx()
+    let (win, vg) = initGfx(g_app)
     initApp(win, vg)
+    g_app.splash = initSplash()
 
     while not g_app.shouldClose:
+      # Render app
+      glfw.makeContextCurrent(g_app.win.glfwWin)
+      csdwindow.renderFrame(g_app.win, g_app.vg)
+      glFlush()
+
+      # Render splash
+      glfw.makeContextCurrent(g_app.splash.win)
+      renderFrameSplash(g_app)
+      glFlush()
+
+      # Swap buffers
+      glfw.swapBuffers(g_app.win.glfwWin)
+      glfw.swapBuffers(g_app.splash.win)
+
+      # Poll/wait for events
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
         glfw.waitEvents()
-
-      csdwindow.renderFrame(g_app.win)
 
     cleanup()
 

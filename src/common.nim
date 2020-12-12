@@ -1,7 +1,5 @@
 import tables
 
-import nanovg
-
 import bitable
 import rect
 
