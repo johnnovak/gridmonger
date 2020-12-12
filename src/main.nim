@@ -402,8 +402,26 @@ type
 
 
   Splash = object
-    win: Window
-    vg:  NVGContext
+    win:              Window
+    vg:               NVGContext
+
+    logo:             ImageData
+    logoOutline:      ImageData
+    logoShadow:       ImageData
+
+    logoImage:        Image
+    logoOutlineImage: Image
+    logoShadowImage:  Image
+
+    logoPaint:        Paint
+    logoOutlinePaint: Paint
+    logoShadowPaint:  Paint
+
+    logoColor:        Color
+    logoOutlineColor: Color
+    logoShadowColor:  Color
+
+    updateImages:     bool
 
 
 var g_app: AppContext
@@ -3410,6 +3428,29 @@ proc drawModeAndOptionIndicators(a) =
 
 # }}}
 
+# {{{ showSplash()
+proc showSplash(a) =
+  alias(s, g_app.splash)
+
+  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
+  let w = (maxWidth * 0.6).int32
+  let h = (w/s.logo.width * s.logo.height).int32
+
+  s.win.size = (w, h)
+  s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
+  s.win.show()
+
+# }}}
+# {{{ closeSplash()
+proc closeSplash(a) =
+  alias(s, g_app.splash)
+  s.win.destroy()
+  nvgDeleteContext(s.vg)
+  s.win = nil
+  s.vg = nil
+
+# }}}
+
 # {{{ handleGlobalKeyEvents()
 # TODO separate into level events and global events
 proc handleGlobalKeyEvents(a) =
@@ -4895,6 +4936,17 @@ proc renderFramePre(a) =
                                              koi.getPxRatio())
 
 # }}}
+
+proc shouldCloseSplash(w: Window): bool =
+  w.isKeyDown(keyEscape) or
+  w.isKeyDown(keySpace) or
+  w.isKeyDown(keyEnter) or
+  w.isKeyDown(keyKpEnter) or
+  w.mouseButtonDown(mbLeft) or
+  w.mouseButtonDown(mbRight) or
+  w.mouseButtonDown(mbMiddle)
+
+
 # {{{ renderFrame()
 proc renderFrame(a) =
   if a.theme.nextThemeIndex.isSome:
@@ -4908,8 +4960,16 @@ proc renderFrame(a) =
     renderUI(a)
     uiRendered = true
 
-  if mapHasLevels(a): handleGlobalKeyEvents(a)
-  else:               handleGlobalKeyEvents_NoLevels(a)
+  if a.splash.win == nil:
+    if mapHasLevels(a): handleGlobalKeyEvents(a)
+    else:               handleGlobalKeyEvents_NoLevels(a)
+
+  else:
+    if a.win.glfwWin.focused:
+      glfw.makeContextCurrent(g_app.splash.win)
+      closeSplash(a)
+      glfw.makeContextCurrent(g_app.win.glfwWin)
+
 
   if not a.opt.showThemePane or not uiRendered:
     renderUI(a)
@@ -4921,12 +4981,12 @@ proc renderFrame(a) =
 # }}}
 # {{{ renderFrameSplash()
 proc renderFrameSplash(a) =
-  alias(win, a.splash.win)
-  alias(vg, a.splash.vg)
+  alias(s, a.splash)
+  alias(vg, s.vg)
 
   let
-    (winWidth, winHeight) = win.size
-    (fbWidth, fbHeight) = win.framebufferSize
+    (winWidth, winHeight) = s.win.size
+    (fbWidth, fbHeight) = s.win.framebufferSize
     pxRatio = fbWidth / winWidth
 
   glViewport(0, 0, fbWidth, fbHeight)
@@ -4935,12 +4995,58 @@ proc renderFrameSplash(a) =
 
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
 
+  if s.updateImages:
+    proc colorImage(d: var ImageData, color: Color) =
+      for i in 0..<(d.width * d.height):
+        d.data[i*4]   = (color.r * 255).byte
+        d.data[i*4+1] = (color.g * 255).byte
+        d.data[i*4+2] = (color.b * 255).byte
+
+    template createImage(d: var ImageData): Image =
+      vg.createImageRGBA(
+        d.width, d.height,
+        data = toOpenArray(d.data, 0, d.size()-1)
+      )
+
+    template createPattern(img: var Image, alpha: float = 1.0): Paint =
+      let scale = fbWidth / s.logo.width
+
+      let (w, h) = vg.imageSize(img)
+      vg.imagePattern(
+        ox=0, oy=0, ex=w*scale, ey=h*scale, angle=0, img, alpha
+      )
+
+    colorImage(s.logo, s.logoColor)
+    colorImage(s.logoOutline, s.logoOutlineColor)
+    colorImage(s.logoShadow, s.logoShadowColor)
+
+    s.logoImage = createImage(s.logo)
+    s.logoOutlineImage = createImage(s.logoOutline)
+    s.logoShadowImage = createImage(s.logoShadow)
+
+    s.logoPaint = createPattern(s.logoImage)
+    s.logoOutlinePaint = createPattern(s.logoOutlineImage)
+    s.logoShadowPaint = createPattern(s.logoShadowImage, alpha=0.66)
+
+    s.updateImages = false
+
+
   vg.beginPath()
-  vg.circle(200, 200, 100)
-  vg.fillColor(red())
+  vg.rect(0, 0, winWidth.float, winHeight.float)
+
+  vg.fillPaint(s.logoShadowPaint)
+  vg.fill()
+
+  vg.fillPaint(s.logoOutlinePaint)
+  vg.fill()
+
+  vg.fillPaint(s.logoPaint)
   vg.fill()
 
   vg.endFrame()
+
+  if shouldCloseSplash(a.splash.win):
+    closeSplash(a)
 
 # }}}
 
@@ -5084,38 +5190,62 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   info("App init completed")
 
 
-proc initSplash(): Splash =
+proc createSplashWindow(a) =
+  alias(s, g_app.splash)
+
   var cfg = DefaultOpenglWindowConfig
-  # TODO set proper size
-  cfg.size = (1000, 1000)
-  cfg.title = ""
+  cfg.visible = false
   cfg.resizable = false
   cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
   cfg.nMultiSamples = 4
   cfg.transparentFramebuffer = true
   cfg.decorated = false
+  cfg.floating = true
 
   when not defined(windows):
     cfg.version = glv32
     cfg.forwardCompat = true
     cfg.profile = opCoreProfile
 
-  result.win = newWindow(cfg)
-  result.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
-
-#  loadSplashImages(vg)
+  s.win = newWindow(cfg)
+  s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
 
 
-proc cleanup() =
+proc initSplash(a) =
+  alias(s, g_app.splash)
+
+  s.logo = loadImage(DataDir / "logo.png")
+  s.logoOutline = loadImage(DataDir / "logo-outline.png")
+  s.logoShadow = loadImage(DataDir / "logo-shadow.png")
+
+  proc createAlpha(d: var ImageData) =
+    for i in 0..<(d.width * d.height):
+      # copy the R component to the alpha channel
+      d.data[i*4+3] = d.data[i*4]
+
+  createAlpha(s.logo)
+  createAlpha(s.logoOutline)
+  createAlpha(s.logoShadow)
+
+  s.logoColor = rgb(77, 66, 55)
+  s.logoOutlineColor = rgb(204, 192, 160)
+  s.logoShadowColor = rgb(0, 0, 0)
+
+  s.updateImages = true
+
+
+proc cleanup(a) =
   info("Exiting app...")
 
   koi.deinit()
 
   nvgDeleteContext(g_app.vg)
-  nvgDeleteContext(g_app.splash.vg)
+  if a.splash.vg != nil:
+    nvgDeleteContext(g_app.splash.vg)
 
-  g_app.win.glfwWin.destroy()
-  g_app.splash.win.destroy()
+  a.win.glfwWin.destroy()
+  if a.splash.win != nil:
+    a.splash.win.destroy()
 
   glfw.terminate()
 
@@ -5137,7 +5267,10 @@ proc main() =
   try:
     let (win, vg) = initGfx(g_app)
     initApp(win, vg)
-    g_app.splash = initSplash()
+
+    createSplashWindow(g_app)
+    initSplash(g_app)
+    showSplash(g_app)
 
     while not g_app.shouldClose:
       # Render app
@@ -5146,13 +5279,16 @@ proc main() =
       glFlush()
 
       # Render splash
-      glfw.makeContextCurrent(g_app.splash.win)
-      renderFrameSplash(g_app)
-      glFlush()
+      if g_app.splash.win != nil:
+        glfw.makeContextCurrent(g_app.splash.win)
+        renderFrameSplash(g_app)
+        glFlush()
 
       # Swap buffers
       glfw.swapBuffers(g_app.win.glfwWin)
-      glfw.swapBuffers(g_app.splash.win)
+
+      if g_app.splash.win != nil:
+        glfw.swapBuffers(g_app.splash.win)
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
@@ -5160,7 +5296,7 @@ proc main() =
       else:
         glfw.waitEvents()
 
-    cleanup()
+    cleanup(g_app)
 
   except Exception as e:
     fatal("A fatal error has occured, the application will now exit: \n" &
