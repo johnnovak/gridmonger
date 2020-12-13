@@ -4297,32 +4297,35 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
-      koi.label("Background")
-      koi.color(ts.general.backgroundColor)
+      group:
+        koi.label("Background")
+        koi.color(ts.general.backgroundColor)
 
-      koi.label("Title Background")
-      koi.color(ts.window.backgroundColor)
+      group:
+        koi.label("Title Background")
+        koi.color(ts.window.backgroundColor)
 
-      koi.label("Title Background Inactive")
-      koi.color(ts.window.bgColorUnfocused)
+        koi.label("Title Background Inactive")
+        koi.color(ts.window.bgColorUnfocused)
 
-      koi.label("Title")
-      koi.color(ts.window.textColor)
+        koi.label("Title")
+        koi.color(ts.window.textColor)
 
-      koi.label("Title Inactive")
-      koi.color(ts.window.textColorUnfocused)
+        koi.label("Title Inactive")
+        koi.color(ts.window.textColorUnfocused)
 
-      koi.label("Modified Flag")
-      koi.color(ts.window.modifiedFlagColor)
+        koi.label("Modified Flag")
+        koi.color(ts.window.modifiedFlagColor)
 
-      koi.label("Button")
-      koi.color(ts.window.buttonColor)
+      group:
+        koi.label("Button")
+        koi.color(ts.window.buttonColor)
 
-      koi.label("Button Hover")
-      koi.color(ts.window.buttonColorHover)
+        koi.label("Button Hover")
+        koi.color(ts.window.buttonColorHover)
 
-      koi.label("Button Down")
-      koi.color(ts.window.buttonColorDown)
+        koi.label("Button Down")
+        koi.color(ts.window.buttonColorDown)
 
 
     if koi.subSectionHeader("Dialog", te.sectionDialog):
@@ -4394,32 +4397,35 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 
     if koi.subSectionHeader("Widget", te.sectionWidget):
-      koi.label("Corner Radius")
-      koi.horizSlider(startVal=WidgetCornerRadiusLimits.min,
-                      endVal=WidgetCornerRadiusLimits.max,
-                      ts.general.cornerRadius,
-                      style=ThemeEditorSliderStyle)
+      group:
+        koi.label("Corner Radius")
+        koi.horizSlider(startVal=WidgetCornerRadiusLimits.min,
+                        endVal=WidgetCornerRadiusLimits.max,
+                        ts.general.cornerRadius,
+                        style=ThemeEditorSliderStyle)
 
-      koi.label("Background")
-      koi.color(ts.widget.bgColor)
+      group:
+        koi.label("Background")
+        koi.color(ts.widget.bgColor)
 
-      koi.label("Background Hover")
-      koi.color(ts.widget.bgColorHover)
+        koi.label("Background Hover")
+        koi.color(ts.widget.bgColorHover)
 
-      koi.label("Background Active") # TODO
-      koi.color(ts.general.highlightColor)
+        koi.label("Background Active") # TODO
+        koi.color(ts.general.highlightColor)
 
-      koi.label("Background Disabled")
-      koi.color(ts.widget.bgColorDisabled)
+        koi.label("Background Disabled")
+        koi.color(ts.widget.bgColorDisabled)
 
-      koi.label("Foreground") # TODO
-      koi.color(ts.widget.textColor)
+      group:
+        koi.label("Foreground") # TODO
+        koi.color(ts.widget.textColor)
 
-      koi.label("Foreground Active") # TODO
-      koi.color(ts.widget.textColorActive)
+        koi.label("Foreground Active") # TODO
+        koi.color(ts.widget.textColorActive)
 
-      koi.label("Foreground Disabled") # TODO
-      koi.color(ts.widget.textColorDisabled)
+        koi.label("Foreground Disabled") # TODO
+        koi.color(ts.widget.textColorDisabled)
 
 
     if koi.subSectionHeader("Text Field", te.sectionTextField):
@@ -4437,20 +4443,22 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 
     if koi.subSectionHeader("Status Bar", te.sectionStatusBar):
-      koi.label("Background")
-      koi.color(ts.statusBar.backgroundColor)
+      group:
+        koi.label("Background")
+        koi.color(ts.statusBar.backgroundColor)
 
-      koi.label("Text")
-      koi.color(ts.statusBar.textColor)
+        koi.label("Text")
+        koi.color(ts.statusBar.textColor)
 
-      koi.label("Command Background")
-      koi.color(ts.statusBar.commandBgColor)
+      group:
+        koi.label("Command Background")
+        koi.color(ts.statusBar.commandBgColor)
 
-      koi.label("Command")
-      koi.color(ts.statusBar.commandColor)
+        koi.label("Command")
+        koi.color(ts.statusBar.commandColor)
 
-      koi.label("Coordinates")
-      koi.color(ts.statusBar.coordsColor)
+        koi.label("Coordinates")
+        koi.color(ts.statusBar.coordsColor)
 
 
     if koi.subSectionHeader("About Button", te.sectionAboutButton):
@@ -4591,23 +4599,25 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 
     if koi.subSectionHeader("Shadow", te.sectionShadow):
-      koi.label("Inner Shadow")
-      koi.color(ts.level.innerShadowColor)
+      group:
+        koi.label("Inner Shadow")
+        koi.color(ts.level.innerShadowColor)
 
-      koi.label("Inner Shadow Width")
-      koi.horizSlider(startVal=LevelShadowWidthLimits.min,
-                      endVal=LevelShadowWidthLimits.max,
-                      ts.level.innerShadowWidthFactor,
-                      style=ThemeEditorSliderStyle)
+        koi.label("Inner Shadow Width")
+        koi.horizSlider(startVal=LevelShadowWidthLimits.min,
+                        endVal=LevelShadowWidthLimits.max,
+                        ts.level.innerShadowWidthFactor,
+                        style=ThemeEditorSliderStyle)
 
-      koi.label("Outer Shadow")
-      koi.color(ts.level.outerShadowColor)
+      group:
+        koi.label("Outer Shadow")
+        koi.color(ts.level.outerShadowColor)
 
-      koi.label("Outer Shadow Width")
-      koi.horizSlider(startVal=LevelShadowWidthLimits.min,
-                      endVal=LevelShadowWidthLimits.max,
-                      ts.level.outerShadowWidthFactor,
-                      style=ThemeEditorSliderStyle)
+        koi.label("Outer Shadow Width")
+        koi.horizSlider(startVal=LevelShadowWidthLimits.min,
+                        endVal=LevelShadowWidthLimits.max,
+                        ts.level.outerShadowWidthFactor,
+                        style=ThemeEditorSliderStyle)
 
 
     if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
@@ -4672,23 +4682,25 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 
     if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
-      koi.label("Button")
-      koi.color(ts.leveldropDown.buttonColor)
+      group:
+        koi.label("Button")
+        koi.color(ts.leveldropDown.buttonColor)
 
-      koi.label("Button Hover")
-      koi.color(ts.leveldropDown.buttonColorHover)
+        koi.label("Button Hover")
+        koi.color(ts.leveldropDown.buttonColorHover)
 
-      koi.label("Label") # TODO
-      koi.color(ts.leveldropDown.textColor)
+        koi.label("Button Label") # TODO
+        koi.color(ts.leveldropDown.textColor)
 
-      koi.label("Item List Background")
-      koi.color(ts.leveldropDown.itemListColor)
+      group:
+        koi.label("Item List Background")
+        koi.color(ts.leveldropDown.itemListColor)
 
-      koi.label("Item")
-      koi.color(ts.leveldropDown.itemColor)
+        koi.label("Item")
+        koi.color(ts.leveldropDown.itemColor)
 
-      koi.label("Item Hover")
-      koi.color(ts.leveldropDown.itemColorHover)
+        koi.label("Item Hover")
+        koi.color(ts.leveldropDown.itemColorHover)
 
 
   # }}}

@@ -3,13 +3,12 @@ BUGS
   - cut shouldn't cut walls of bordering cells
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - preferences doesn't get loaded
+  - theme editor: left separator line problem when regions are enabled
 
 
 TODO
 
 v0.9
-  - splash screen
-
   - update all themes
 
   - cascading theme loading (built-in vs user themes)
@@ -20,6 +19,8 @@ v0.9
     - rename properties according to theme editor
 
   - autosave
+
+  - reduce float edit precision
 
   - new prefs:
     - auto save on/off, frequency
@@ -43,6 +44,7 @@ v0.9
   - region name reassignment when resizing a level
 
   - level selector popup
+  - theme selector popup/window
 
   - map/level comments
   - metadata (author, game, etc)
