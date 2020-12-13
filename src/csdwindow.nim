@@ -291,9 +291,11 @@ proc handleWindowDragEvents(win) =
 
         if d > wrdNone:
           case d
-          of wrdW, wrdE: setCursorShape(csHorizResize)
-          of wrdN, wrdS: setCursorShape(csVertResize)
-          else: setCursorShape(csHand)
+          of wrdW,  wrdE:  setCursorShape(csResizeEW)
+          of wrdN,  wrdS:  setCursorShape(csResizeNS)
+          of wrdNW, wrdSE: setCursorShape(csResizeNWSE)
+          of wrdNE, wrdSW: setCursorShape(csResizeNESW)
+          else: setCursorShape(csArrow)
 
           if koi.mbLeftDown():
             win.mx0 = mx

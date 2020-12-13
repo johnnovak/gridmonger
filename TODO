@@ -11,7 +11,13 @@ v0.9
   - splash screen
 
   - update all themes
+
   - cascading theme loading (built-in vs user themes)
+
+  - config format:
+    - get rid of quotation marks
+    - insert new lines after sections when writing
+    - rename properties according to theme editor
 
   - autosave
 
@@ -60,8 +66,6 @@ v1.0
   - come up with final marker icon set
 
 v1.1
-  - upgrade to custom glfw branch with custom resize icons
-
   - colorpicker: display floats in HSV mode
   - theme editor: undo
   - pick color under cursor
