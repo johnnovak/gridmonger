@@ -142,6 +142,12 @@ proc framebufferSize*(win): tuple[w, h: int32] =
 proc show*(win) =
   win.w.show()
 
+proc hide*(win) =
+  win.w.hide()
+
+proc focus*(win) =
+  win.w.focus()
+
 proc shouldClose*(win): bool =
   win.w.shouldClose
 

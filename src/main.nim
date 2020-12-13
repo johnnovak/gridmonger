@@ -378,50 +378,52 @@ type
 
 
   ThemeEditor = object
-    sectionUserInterface:        bool
-    sectionWidget:               bool
-    sectionTextField:            bool
-    sectionDialog:               bool
-    sectionTitleBar:             bool
-    sectionStatusBar:            bool
-    sectionLeveldropDown:        bool
-    sectionAboutButton:          bool
+    prevState:               ThemeStyle
 
-    sectionLevel:                bool
-    sectionLevelGeneral:         bool
-    sectionGrid:                 bool
-    sectionOutline:              bool
-    sectionShadow:               bool
-    sectionBackgroundHatch:      bool
-    sectionFloorColors:          bool
-    sectionNotes:                bool
+    sectionUserInterface:    bool
+    sectionWidget:           bool
+    sectionTextField:        bool
+    sectionDialog:           bool
+    sectionTitleBar:         bool
+    sectionStatusBar:        bool
+    sectionLeveldropDown:    bool
+    sectionAboutButton:      bool
+    sectionSplashImage:      bool
 
-    sectionPanes:                bool
-    sectionNotesPane:            bool
-    sectionToolbarPane:          bool
+    sectionLevel:            bool
+    sectionLevelGeneral:     bool
+    sectionGrid:             bool
+    sectionOutline:          bool
+    sectionShadow:           bool
+    sectionBackgroundHatch:  bool
+    sectionFloorColors:      bool
+    sectionNotes:            bool
+
+    sectionPanes:            bool
+    sectionNotesPane:        bool
+    sectionToolbarPane:      bool
 
 
   Splash = object
-    win:              Window
-    vg:               NVGContext
+    win:           Window
+    vg:            NVGContext
+    show:          bool
 
-    logo:             ImageData
-    logoOutline:      ImageData
-    logoShadow:       ImageData
+    logo:          ImageData
+    outline:       ImageData
+    shadow:        ImageData
 
-    logoImage:        Image
-    logoOutlineImage: Image
-    logoShadowImage:  Image
+    logoImage:     Image
+    outlineImage:  Image
+    shadowImage:   Image
 
-    logoPaint:        Paint
-    logoOutlinePaint: Paint
-    logoShadowPaint:  Paint
+    logoPaint:     Paint
+    outlinePaint:  Paint
+    shadowPaint:   Paint
 
-    logoColor:        Color
-    logoOutlineColor: Color
-    logoShadowColor:  Color
-
-    updateImages:     bool
+    updateLogoImage:     bool
+    updateOutlineImage:  bool
+    updateShadowImage:   bool
 
 
 var g_app: AppContext
@@ -3441,13 +3443,41 @@ proc showSplash(a) =
   s.win.show()
 
 # }}}
+# {{{ shouldCloseSplash()
+proc shouldCloseSplash(a): bool =
+  alias(w, a.splash.win)
+
+  if a.opt.showThemePane:
+    not a.splash.show
+  else:
+    w.isKeyDown(keyEscape) or
+    w.isKeyDown(keySpace) or
+    w.isKeyDown(keyEnter) or
+    w.isKeyDown(keyKpEnter) or
+    w.mouseButtonDown(mbLeft) or
+    w.mouseButtonDown(mbRight) or
+    w.mouseButtonDown(mbMiddle)
+
+# }}}
 # {{{ closeSplash()
 proc closeSplash(a) =
   alias(s, g_app.splash)
+
   s.win.destroy()
-  nvgDeleteContext(s.vg)
   s.win = nil
+
+  s.vg.deleteImage(s.logoImage)
+  s.vg.deleteImage(s.outlineImage)
+  s.vg.deleteImage(s.shadowImage)
+
+  s.logoImage = NoImage
+  s.outlineImage = NoImage
+  s.shadowImage = NoImage
+
+  nvgDeleteContext(s.vg)
   s.vg = nil
+
+  s.show = false
 
 # }}}
 
@@ -4240,26 +4270,19 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 # {{{ Theme editor
 
 var ThemeEditorScrollViewStyle = getDefaultScrollViewStyle()
-
 with ThemeEditorScrollViewStyle:
   vertScrollBarWidth = 14.0
-
   with scrollBarStyle:
     thumbPad = 4.0
 
-
 var ThemeEditorSliderStyle = getDefaultSliderStyle()
-
 with ThemeEditorSliderStyle:
   trackCornerRadius = 8.0
   valueCornerRadius = 6.0
 
-
 var ThemeEditorAutoLayoutParams = DefaultAutoLayoutParams
-
 with ThemeEditorAutoLayoutParams:
   rightPad = 1.0
-
 
 # {{{ renderThemeEditorProps()
 proc renderThemeEditorProps(x, y, w, h: float; a) =
@@ -4439,6 +4462,30 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
       koi.label("Down")
       koi.color(ts.aboutButton.colorActive)
+
+
+    if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
+      group:
+        koi.label("Logo")
+        koi.color(ts.splashImage.logoColor)
+        if ts.splashImage.logoColor != te.prevState.splashImage.logoColor:
+          a.splash.updateLogoImage = true
+
+        koi.label("Outline")
+        koi.color(ts.splashImage.outlineColor)
+        if ts.splashImage.outlineColor != te.prevState.splashImage.outlineColor:
+          a.splash.updateOutlineImage = true
+
+        koi.label("Shadow Alpha")
+        koi.horizSlider(startVal=AlphaLimits.min, endVal=AlphaLimits.max,
+                        ts.splashImage.shadowAlpha,
+                        style=ThemeEditorSliderStyle)
+        if ts.splashImage.shadowAlpha != te.prevState.splashImage.shadowAlpha:
+          a.splash.updateShadowImage = true
+
+      group:
+        koi.label("Show Splash")
+        koi.checkBox(a.splash.show)
 
   # }}}
   # {{{ Level section
@@ -4668,6 +4715,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   # }}}
 
   koi.endScrollView()
+
+  te.prevState = ts.deepCopy()
 
 # }}}
 # {{{ renderThemeEditorPane()
@@ -4962,16 +5011,6 @@ proc renderFramePre(a) =
 
 # }}}
 
-proc shouldCloseSplash(w: Window): bool =
-  w.isKeyDown(keyEscape) or
-  w.isKeyDown(keySpace) or
-  w.isKeyDown(keyEnter) or
-  w.isKeyDown(keyKpEnter) or
-  w.mouseButtonDown(mbLeft) or
-  w.mouseButtonDown(mbRight) or
-  w.mouseButtonDown(mbMiddle)
-
-
 # {{{ renderFrame()
 proc renderFrame(a) =
   if a.theme.nextThemeIndex.isSome:
@@ -4990,7 +5029,7 @@ proc renderFrame(a) =
     else:               handleGlobalKeyEvents_NoLevels(a)
 
   else:
-    if a.win.glfwWin.focused:
+    if not a.opt.showThemePane and a.win.glfwWin.focused:
       glfw.makeContextCurrent(g_app.splash.win)
       closeSplash(a)
       glfw.makeContextCurrent(g_app.win.glfwWin)
@@ -5008,6 +5047,7 @@ proc renderFrame(a) =
 proc renderFrameSplash(a) =
   alias(s, a.splash)
   alias(vg, s.vg)
+  alias(ts, a.theme.style)
 
   let
     (winWidth, winHeight) = s.win.size
@@ -5020,49 +5060,63 @@ proc renderFrameSplash(a) =
 
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
 
-  if s.updateImages:
-    proc colorImage(d: var ImageData, color: Color) =
-      for i in 0..<(d.width * d.height):
-        d.data[i*4]   = (color.r * 255).byte
-        d.data[i*4+1] = (color.g * 255).byte
-        d.data[i*4+2] = (color.b * 255).byte
+  proc colorImage(d: var ImageData, color: Color) =
+    for i in 0..<(d.width * d.height):
+      d.data[i*4]   = (color.r * 255).byte
+      d.data[i*4+1] = (color.g * 255).byte
+      d.data[i*4+2] = (color.b * 255).byte
 
-    template createImage(d: var ImageData): Image =
-      vg.createImageRGBA(
-        d.width, d.height,
-        data = toOpenArray(d.data, 0, d.size()-1)
-      )
+  template createImage(d: var ImageData): Image =
+    vg.createImageRGBA(
+      d.width, d.height,
+      data = toOpenArray(d.data, 0, d.size()-1)
+    )
 
-    template createPattern(img: var Image, alpha: float = 1.0): Paint =
-      let scale = fbWidth / s.logo.width
+  template createPattern(img: var Image, alpha: float = 1.0): Paint =
+    let scale = fbWidth / s.logo.width
 
-      let (w, h) = vg.imageSize(img)
-      vg.imagePattern(
-        ox=0, oy=0, ex=w*scale, ey=h*scale, angle=0, img, alpha
-      )
+    let (w, h) = vg.imageSize(img)
+    vg.imagePattern(
+      ox=0, oy=0, ex=w*scale, ey=h*scale, angle=0, img, alpha
+    )
 
-    colorImage(s.logo, s.logoColor)
-    colorImage(s.logoOutline, s.logoOutlineColor)
-    colorImage(s.logoShadow, s.logoShadowColor)
+  if s.logoImage == NoImage or s.updateLogoImage:
+    colorImage(s.logo, ts.splashImage.logoColor)
+    if s.logoImage == NoImage:
+      s.logoImage = createImage(s.logo)
+    else:
+      vg.updateImage(s.logoImage, cast[ptr byte](s.logo.data))
+    s.updateLogoImage = false
 
-    s.logoImage = createImage(s.logo)
-    s.logoOutlineImage = createImage(s.logoOutline)
-    s.logoShadowImage = createImage(s.logoShadow)
+  if s.outlineImage == NoImage or s.updateOutlineImage:
+    colorImage(s.outline, ts.splashImage.outlineColor)
+    if s.outlineImage == NoImage:
+      s.outlineImage = createImage(s.outline)
+    else:
+      vg.updateImage(s.outlineImage, cast[ptr byte](s.outline.data))
+    s.updateOutlineImage = false
 
-    s.logoPaint = createPattern(s.logoImage)
-    s.logoOutlinePaint = createPattern(s.logoOutlineImage)
-    s.logoShadowPaint = createPattern(s.logoShadowImage, alpha=0.66)
+  if s.shadowImage == NoImage or s.updateShadowImage:
+    colorImage(s.shadow, black())
+    if s.shadowImage == NoImage:
+      s.shadowImage = createImage(s.shadow)
+    else:
+      vg.updateImage(s.shadowImage, cast[ptr byte](s.shadow.data))
+    s.updateShadowImage = false
 
-    s.updateImages = false
 
+  s.logoPaint = createPattern(s.logoImage)
+  s.outlinePaint = createPattern(s.outlineImage)
+  s.shadowPaint = createPattern(s.shadowImage,
+                                alpha=ts.splashImage.shadowAlpha)
 
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, winHeight.float)
 
-  vg.fillPaint(s.logoShadowPaint)
+  vg.fillPaint(s.shadowPaint)
   vg.fill()
 
-  vg.fillPaint(s.logoOutlinePaint)
+  vg.fillPaint(s.outlinePaint)
   vg.fill()
 
   vg.fillPaint(s.logoPaint)
@@ -5070,7 +5124,7 @@ proc renderFrameSplash(a) =
 
   vg.endFrame()
 
-  if shouldCloseSplash(a.splash.win):
+  if shouldCloseSplash(a):
     closeSplash(a)
 
 # }}}
@@ -5084,6 +5138,23 @@ proc loadFonts(vg: NVGContext) =
 
   discard addFallbackFont(vg, boldFont, iconFont)
   discard addFallbackFont(vg, blackFont, iconFont)
+
+
+proc loadSplashImages(a) =
+  alias(s, g_app.splash)
+
+  s.logo = loadImage(DataDir / "logo.png")
+  s.outline = loadImage(DataDir / "logo-outline.png")
+  s.shadow = loadImage(DataDir / "logo-shadow.png")
+
+  proc createAlpha(d: var ImageData) =
+    for i in 0..<(d.width * d.height):
+      # copy the R component to the alpha channel
+      d.data[i*4+3] = d.data[i*4]
+
+  createAlpha(s.logo)
+  createAlpha(s.outline)
+  createAlpha(s.shadow)
 
 
 proc setDefaultWidgetStyles(a) =
@@ -5212,6 +5283,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.win.show()
 
+  # TODO based on config
+  a.splash.show = true
+
   info("App init completed")
 
 
@@ -5225,6 +5299,7 @@ proc createSplashWindow(a) =
   cfg.nMultiSamples = 4
   cfg.transparentFramebuffer = true
   cfg.hideFromTaskbar = true
+  cfg.mousePassthru = true
   cfg.decorated = false
   cfg.floating = true
 
@@ -5235,29 +5310,6 @@ proc createSplashWindow(a) =
 
   s.win = newWindow(cfg)
   s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
-
-
-proc initSplash(a) =
-  alias(s, g_app.splash)
-
-  s.logo = loadImage(DataDir / "logo.png")
-  s.logoOutline = loadImage(DataDir / "logo-outline.png")
-  s.logoShadow = loadImage(DataDir / "logo-shadow.png")
-
-  proc createAlpha(d: var ImageData) =
-    for i in 0..<(d.width * d.height):
-      # copy the R component to the alpha channel
-      d.data[i*4+3] = d.data[i*4]
-
-  createAlpha(s.logo)
-  createAlpha(s.logoOutline)
-  createAlpha(s.logoShadow)
-
-  s.logoColor = rgb(77, 66, 55)
-  s.logoOutlineColor = rgb(204, 192, 160)
-  s.logoShadowColor = rgb(0, 0, 0)
-
-  s.updateImages = true
 
 
 proc cleanup(a) =
@@ -5294,10 +5346,6 @@ proc main() =
     let (win, vg) = initGfx(g_app)
     initApp(win, vg)
 
-    createSplashWindow(g_app)
-    initSplash(g_app)
-    showSplash(g_app)
-
     while not g_app.shouldClose:
       # Render app
       glfw.makeContextCurrent(g_app.win.glfwWin)
@@ -5305,6 +5353,16 @@ proc main() =
       glFlush()
 
       # Render splash
+      if g_app.splash.win == nil and g_app.splash.show:
+        createSplashWindow(g_app)
+        glfw.makeContextCurrent(g_app.splash.win)
+
+        if g_app.splash.logo.data == nil:
+          loadSplashImages(g_app)
+        showSplash(g_app)
+        if g_app.opt.showThemePane:
+          g_app.win.focus()
+
       if g_app.splash.win != nil:
         glfw.makeContextCurrent(g_app.splash.win)
         renderFrameSplash(g_app)

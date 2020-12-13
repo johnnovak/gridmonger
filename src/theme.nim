@@ -194,11 +194,14 @@ const
   DialogShadowOffsetLimits*  = (min: -10.0, max: 10.0)
   DialogShadowFeatherLimits* = (min:   0.0, max: 50.0)
 
+  AlphaLimits*               = (min:   0.0, max: 1.0)
+
   HatchStrokeWidthLimits*    = (min:   0.5, max: 10.0)
   HatchSpacingLimits*        = (min:   1.0, max: 10.0)
 
   LevelOutlineWidthLimits*   = (min:   0.0, max: 1.0)
   LevelShadowWidthLimits*    = (min:   0.0, max: 1.0)
+
 
 proc limit(v: var float, limits: tuple[min: float, max: float]) =
   v = v.clamp(limits.min, limits.max)
@@ -218,6 +221,9 @@ proc loadTheme*(filename: string): ThemeStyle =
     limit(shadowXOffset, DialogShadowOffsetLimits)
     limit(shadowYOffset, DialogShadowOffsetLimits)
     limit(shadowFeather, DialogShadowFeatherLimits)
+
+  with result.splashImage:
+    limit(shadowAlpha, AlphaLimits)
 
   with result.level:
     limit(bgHatchStrokeWidth, HatchStrokeWidthLimits)
