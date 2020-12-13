@@ -5199,6 +5199,7 @@ proc createSplashWindow(a) =
   cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
   cfg.nMultiSamples = 4
   cfg.transparentFramebuffer = true
+  cfg.hideFromTaskbar = true
   cfg.decorated = false
   cfg.floating = true
 
