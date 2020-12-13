@@ -4528,6 +4528,14 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.label("Link Marker")
         koi.color(ts.level.linkMarkerColor)
 
+      group:
+        koi.label("Region Border")
+        koi.color(ts.level.regionBorderColor)
+
+        koi.label("Region Border Empty")
+        koi.color(ts.level.regionBorderEmptyColor)
+
+
     if koi.subSectionHeader("Background Hatch", te.sectionBackgroundHatch):
       koi.label("Background Hatch?")
       koi.checkBox(ts.level.bgHatch)
