@@ -1,17 +1,26 @@
 BUGS
   - cut and the paste back doesn't yield the same results
   - cut shouldn't cut walls of bordering cells
-
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
+  - preferences doesn't get loaded
 
 
 TODO
 
 v0.9
+  - splash screen
+
   - update all themes
+  - cascading theme loading (built-in vs user themes)
+
+  - autosave
+
+  - new prefs:
+    - auto save on/off, frequency
+    - disable vsync
+    - disable / autohide splash screen
 
   - attempt to save map on crash
-  - autosave
   - display dialog on crash with instruction to file a bug report (print log
     file location and backup file location)
 
@@ -33,23 +42,28 @@ v0.9
   - metadata (author, game, etc)
 
   - about dialog
-  - splash screen
+  - help screen?
 
   - toggle grid?
 
   - align left/right half of the screen buttons
 
   - theme editor
+    - image file loading
+    - scrollbars should always be visible
+    - action buttons should work
+    - hex color: only accept hex chars
 
 
-v1
+v1.0
   - clean up icons
   - come up with final marker icon set
 
-v2
+v1.1
   - upgrade to custom glfw branch with custom resize icons
 
   - colorpicker: display floats in HSV mode
+  - theme editor: undo
   - pick color under cursor
 
   - show current color / tool in statusbar when toolbar is not visible
@@ -99,3 +113,4 @@ FONTS
   - https://fonts.google.com/specimen/Neuton
   - https://fonts.google.com/specimen/Grenze
   - https://fonts.google.com/specimen/Fondamento
+
