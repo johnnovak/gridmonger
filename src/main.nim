@@ -4305,7 +4305,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("Dialog", te.sectionDialog):
       group:
         koi.label("Corner Radius")
-        koi.horizSlider(startVal=0, endVal=20, ts.dialog.cornerRadius,
+        koi.horizSlider(startVal=WidgetCornerRadiusLimits.min,
+                        endVal=WidgetCornerRadiusLimits.max,
+                        ts.dialog.cornerRadius,
                         style=ThemeEditorSliderStyle)
 
         koi.label("Title Background")
@@ -4328,14 +4330,18 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.color(ts.dialog.outerBorderColor)
 
         koi.label("Outer Border Width")
-        koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.outerBorderWidth,
+        koi.horizSlider(startVal=DialogBorderWidthLimits.min,
+                        endVal=DialogBorderWidthLimits.max,
+                        ts.dialog.outerBorderWidth,
                         style=ThemeEditorSliderStyle)
 
         koi.label("Inner Border")
         koi.color(ts.dialog.innerBorderColor)
 
         koi.label("Inner Border Width")
-        koi.horizSlider(startVal=0.0, endVal=30, ts.dialog.innerBorderWidth,
+        koi.horizSlider(startVal=DialogBorderWidthLimits.min,
+                        endVal=DialogBorderWidthLimits.max,
+                        ts.dialog.innerBorderWidth,
                         style=ThemeEditorSliderStyle)
 
       group:
@@ -4343,15 +4349,21 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.checkBox(ts.dialog.shadow)
 
         koi.label("Shadow X Offset")
-        koi.horizSlider(startVal=0.0, endVal=10, ts.dialog.shadowXOffset,
+        koi.horizSlider(startVal=DialogShadowOffsetLimits.min,
+                        endVal=DialogShadowOffsetLimits.max,
+                        ts.dialog.shadowXOffset,
                         style=ThemeEditorSliderStyle)
 
         koi.label("Shadow Y Offset")
-        koi.horizSlider(startVal=0.0, endVal=10, ts.dialog.shadowYOffset,
+        koi.horizSlider(startVal=DialogShadowOffsetLimits.min,
+                        endVal=DialogShadowOffsetLimits.max,
+                        ts.dialog.shadowYOffset,
                         style=ThemeEditorSliderStyle)
 
         koi.label("Shadow Feather")
-        koi.horizSlider(startVal=0.0, endVal=50, ts.dialog.shadowFeather,
+        koi.horizSlider(startVal=DialogShadowFeatherLimits.min,
+                        endVal=DialogShadowFeatherLimits.max,
+                        ts.dialog.shadowFeather,
                         style=ThemeEditorSliderStyle)
 
         koi.label("Shadow Color")
@@ -4360,7 +4372,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
     if koi.subSectionHeader("Widget", te.sectionWidget):
       koi.label("Corner Radius")
-      koi.horizSlider(startVal=0, endVal=12, ts.general.cornerRadius,
+      koi.horizSlider(startVal=WidgetCornerRadiusLimits.min,
+                      endVal=WidgetCornerRadiusLimits.max,
+                      ts.general.cornerRadius,
                       style=ThemeEditorSliderStyle)
 
       koi.label("Background")
@@ -4475,11 +4489,15 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.color(ts.level.bgHatchColor)
 
       koi.label("Hatch Stroke Width")
-      koi.horizSlider(startVal=0.5, endVal=10, ts.level.bgHatchStrokeWidth,
+      koi.horizSlider(startVal=HatchStrokeWidthLimits.min,
+                      endVal=HatchStrokeWidthLimits.max,
+                      ts.level.bgHatchStrokeWidth,
                       style=ThemeEditorSliderStyle)
 
       koi.label("Hatch Spacing")
-      koi.horizSlider(startVal=1.0, endVal=10, ts.level.bgHatchSpacingFactor,
+      koi.horizSlider(startVal=HatchSpacingLimits.min,
+                      endVal=HatchSpacingLimits.max,
+                      ts.level.bgHatchSpacingFactor,
                       style=ThemeEditorSliderStyle)
 
 
@@ -4504,29 +4522,36 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label("Fill Style")
       koi.dropDown(OutlineFillStyle, ts.level.outlineFillStyle)
 
-      koi.label("Overscan")
-      koi.checkBox(ts.level.outlineOverscan)
-
       koi.label("Outline")
       koi.color(ts.level.outlineColor)
 
       koi.label("Outline Width")
-      koi.horizSlider(startVal=0, endVal=1.0, ts.level.outlineWidthFactor,
+      koi.horizSlider(startVal=LevelOutlineWidthLimits.min,
+                      endVal=LevelOutlineWidthLimits.max,
+                      ts.level.outlineWidthFactor,
                       style=ThemeEditorSliderStyle)
+
+      koi.label("Overscan")
+      koi.checkBox(ts.level.outlineOverscan)
+
 
     if koi.subSectionHeader("Shadow", te.sectionShadow):
       koi.label("Inner Shadow")
       koi.color(ts.level.innerShadowColor)
 
       koi.label("Inner Shadow Width")
-      koi.horizSlider(startVal=0, endVal=1.0, ts.level.innerShadowWidthFactor,
+      koi.horizSlider(startVal=LevelShadowWidthLimits.min,
+                      endVal=LevelShadowWidthLimits.max,
+                      ts.level.innerShadowWidthFactor,
                       style=ThemeEditorSliderStyle)
 
       koi.label("Outer Shadow")
       koi.color(ts.level.outerShadowColor)
 
       koi.label("Outer Shadow Width")
-      koi.horizSlider(startVal=0, endVal=1.0, ts.level.outerShadowWidthFactor,
+      koi.horizSlider(startVal=LevelShadowWidthLimits.min,
+                      endVal=LevelShadowWidthLimits.max,
+                      ts.level.outerShadowWidthFactor,
                       style=ThemeEditorSliderStyle)
 
 

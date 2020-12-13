@@ -67,6 +67,11 @@ defineTheme:
     colorHover:         Color
     colorActive:        Color
 
+  splash:
+    logoColor:          Color
+    outlineColor:       Color
+    shadowAlpha:        float
+
   level:
     backgroundColor:        Color
     drawColor:              Color

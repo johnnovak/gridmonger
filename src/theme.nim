@@ -187,17 +187,21 @@ include themedef
 
 
 const
-  WidgetCornerRadiusLimits = (0.0, 12.0)
-  DialogCornerRadiusLimits = (0.0, 20.0)
-  DialogBorderWidthLimits  = (0.0, 30.0)
-  HatchStrokeWidthLimits   = (0.5, 10.0)
-  HatchSpacingLimits       = (1.0, 10.0)
-  OutlineWidthLimits       = (0.0, 1.0)
-  ShadowWidthLimits        = (0.0, 1.0)
+  WidgetCornerRadiusLimits*  = (min:   0.0, max: 12.0)
 
-proc limit(v: var float, limits: (float, float)) =
-  let (minVal, maxVal) = limits
-  v = v.clamp(minVal, maxVal)
+  DialogCornerRadiusLimits*  = (min:   0.0, max: 20.0)
+  DialogBorderWidthLimits*   = (min:   0.0, max: 30.0)
+  DialogShadowOffsetLimits*  = (min: -10.0, max: 10.0)
+  DialogShadowFeatherLimits* = (min:   0.0, max: 50.0)
+
+  HatchStrokeWidthLimits*    = (min:   0.5, max: 10.0)
+  HatchSpacingLimits*        = (min:   1.0, max: 10.0)
+
+  LevelOutlineWidthLimits*   = (min:   0.0, max: 1.0)
+  LevelShadowWidthLimits*    = (min:   0.0, max: 1.0)
+
+proc limit(v: var float, limits: tuple[min: float, max: float]) =
+  v = v.clamp(limits.min, limits.max)
 
 
 proc loadTheme*(filename: string): ThemeStyle =
@@ -211,13 +215,16 @@ proc loadTheme*(filename: string): ThemeStyle =
     limit(cornerRadius, DialogCornerRadiusLimits)
     limit(outerBorderWidth, DialogBorderWidthLimits)
     limit(innerBorderWidth, DialogBorderWidthLimits)
+    limit(shadowXOffset, DialogShadowOffsetLimits)
+    limit(shadowYOffset, DialogShadowOffsetLimits)
+    limit(shadowFeather, DialogShadowFeatherLimits)
 
   with result.level:
     limit(bgHatchStrokeWidth, HatchStrokeWidthLimits)
     limit(bgHatchSpacingFactor, HatchSpacingLimits)
-    limit(outlineWidthFactor, OutlineWidthLimits)
-    limit(innerShadowWidthFactor, ShadowWidthLimits)
-    limit(outerShadowWidthFactor, ShadowWidthLimits)
+    limit(outlineWidthFactor, LevelOutlineWidthLimits)
+    limit(innerShadowWidthFactor, LevelShadowWidthLimits)
+    limit(outerShadowWidthFactor, LevelShadowWidthLimits)
 
 proc saveTheme*(theme: ThemeStyle, filename: string) =
 
