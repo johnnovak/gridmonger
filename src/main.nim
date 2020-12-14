@@ -5171,7 +5171,7 @@ proc renderFrameSplash(a) =
     )
 
   template createPattern(img: var Image, alpha: float = 1.0): Paint =
-    let scale = fbWidth / s.logo.width
+    let scale = fbWidth / s.logo.width / pxRatio
 
     let (w, h) = vg.imageSize(img)
     vg.imagePattern(
@@ -5400,12 +5400,13 @@ proc createSplashWindow(mousePassthru: bool = false; a) =
   cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
   cfg.nMultiSamples = 4
   cfg.transparentFramebuffer = true
-  cfg.hideFromTaskbar = true
-  cfg.mousePassthru = mousePassthru
   cfg.decorated = false
   cfg.floating = true
 
-  when not defined(windows):
+  when defined(windows):
+    cfg.hideFromTaskbar = true
+    cfg.mousePassthru = mousePassthru
+  else:
     cfg.version = glv32
     cfg.forwardCompat = true
     cfg.profile = opCoreProfile
