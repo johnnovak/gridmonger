@@ -5131,7 +5131,7 @@ proc renderFrame(a) =
       glfw.makeContextCurrent(g_app.splash.win)
       closeSplash(a)
       glfw.makeContextCurrent(g_app.win.glfwWin)
-
+      g_app.win.focus()
 
   if not a.opt.showThemePane or not uiRendered:
     renderUI(a)
@@ -5224,6 +5224,7 @@ proc renderFrameSplash(a) =
 
   if shouldCloseSplash(a):
     closeSplash(a)
+    a.win.focus()
 
 # }}}
 
