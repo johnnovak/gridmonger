@@ -68,7 +68,9 @@ v1.0
   - come up with final marker icon set
 
 v1.1
-  - colorpicker: display floats in HSV mode
+  - colorpicker:
+    - display floats in HSV mode
+    - right-click cancel in triangle & hue circle
   - theme editor: undo
   - pick color under cursor
 
