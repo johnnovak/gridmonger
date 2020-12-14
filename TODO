@@ -14,6 +14,7 @@ v0.9
   - cascading theme loading (built-in vs user themes)
 
   - config format:
+    - experiment with toml again
     - get rid of quotation marks
     - insert new lines after sections when writing
     - rename properties according to theme editor

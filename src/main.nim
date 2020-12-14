@@ -141,7 +141,11 @@ type
 
   Options = object
     showSplash:        bool
+    hideSplashSecs:    Natural
     loadLastFile:      bool
+    autoSave:          bool
+    autoSaveFreqSecs:  Natural
+    disableVSync:      bool
 
     scrollMargin:      Natural
     showNotesPane:     bool
@@ -248,9 +252,11 @@ type
     activateFirstTextField: bool
 
     showSplash:             bool
+    hideSplashSecs:         string
     loadLastFile:           bool
+    disableVSync:           bool
     autoSave:               bool
-    autoSaveFrequencySecs:  string
+    autoSaveFreqSecs:       string
 
 
   SaveDiscardDialogParams = object
@@ -488,6 +494,7 @@ proc saveConfig(a) =
 
   let a = AppConfig(
     showSplash: opt.showSplash,
+    hideSplashSecs: opt.hideSplashSecs,
     loadLastFile: opt.loadLastFile,
     lastFileName: a.doc.filename,
 
@@ -496,6 +503,7 @@ proc saveConfig(a) =
     ypos: ypos,
     width: width,
     height: height,
+    disableVSync: opt.disableVSync,
 
     # TODO use common struct for DISP chunk & this
     themeName: theme.themeNames[theme.currThemeIndex],
@@ -513,8 +521,8 @@ proc saveConfig(a) =
     viewStartRow: dp.viewStartRow,
     viewStartCol: dp.viewStartCol,
 
-    autoSaveFrequencySecs: 120,  # TODO
-    autoSaveSlots: 2  # TODO
+    autoSave: opt.autoSave,
+    autoSaveFreqSecs: opt.autoSaveFreqSecs
   )
 
   saveAppConfig(a, ConfigFile)
@@ -1567,10 +1575,12 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
 
-  dlg.showSplash = true # TODO
-  dlg.loadLastFile = true # TODO
-  dlg.autoSave = true # TODO
-  dlg.autoSaveFrequencySecs = "30"
+  dlg.showSplash = a.opt.showSplash
+  dlg.hideSplashSecs = $a.opt.hideSplashSecs
+  dlg.loadLastFile = a.opt.loadLastFile
+  dlg.disableVSync = a.opt.disableVSync
+  dlg.autoSave = a.opt.autoSave
+  dlg.autoSaveFreqSecs = $a.opt.autoSaveFreqSecs
 
   dlg.isOpen = true
 
@@ -1578,7 +1588,7 @@ proc openPreferencesDialog(a) =
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
     DlgWidth = 370.0
-    DlgHeight = 345.0
+    DlgHeight = 360.0
     LabelWidth = 235.0
     PadYLarge = 48
     PadYSmall = 30
@@ -1591,16 +1601,36 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   clearStatusMessage(a)
 
   var x = 30.0
-  var y = 60.0
+  var y = 56.0
 
-  koi.label(x, y, LabelWidth, h, "Show splash screen at startup",
+  koi.label(x, y, LabelWidth, h, "Show splash image at startup",
             style=a.ui.labelStyle)
   koi.checkBox(
     x + LabelWidth, y + DlgCheckBoxYOffs, DlgCheckBoxWidth, dlg.showSplash,
     style = a.ui.checkBoxStyle
   )
 
+  let autoHideDisabled = not dlg.showSplash
+
   y += PadYSmall
+  koi.label(x, y, LabelWidth, h, "Auto-hide splash after N seconds",
+            state = if autoHideDisabled: wsDisabled else: wsNormal,
+            style=a.ui.labelStyle)
+
+  koi.textField(
+    x + LabelWidth, y, w = 40.0, h,
+    dlg.hideSplashSecs,
+    activate = dlg.activateFirstTextField,
+    disabled = autoHideDisabled,
+    constraint = TextFieldConstraint(
+      kind: tckInteger,
+      min: 1,
+      max: 20
+    ).some,
+    style = a.ui.textFieldStyle
+  )
+
+  y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Open last file at startup",
             style=a.ui.labelStyle)
   koi.checkBox(
@@ -1608,18 +1638,24 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     style = a.ui.checkBoxStyle
   )
 
+  let autoSaveDisabled = not dlg.autoSave
+
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Auto-save", style=a.ui.labelStyle)
+
   koi.checkBox(x + LabelWidth, y, DlgCheckBoxWidth, dlg.autoSave,
                style = a.ui.checkBoxStyle)
 
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Auto-save frequency (seconds)",
+            state = if autoSaveDisabled: wsDisabled else: wsNormal,
             style=a.ui.labelStyle)
+
   koi.textField(
-    x + LabelWidth, y, w = 60.0, h,
-    dlg.autoSaveFrequencySecs,
+    x + LabelWidth, y, w = 40.0, h,
+    dlg.autoSaveFreqSecs,
     activate = dlg.activateFirstTextField,
+    disabled = autoSaveDisabled,
     constraint = TextFieldConstraint(
       kind: tckInteger,
       min: 30,
@@ -1628,9 +1664,21 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     style = a.ui.textFieldStyle
   )
 
+  y += PadYLarge
+  koi.label(x, y, LabelWidth, h, "Disable vertical sync", style=a.ui.labelStyle)
+  koi.checkBox(x + LabelWidth, y, DlgCheckBoxWidth, dlg.disableVSync,
+               style = a.ui.checkBoxStyle)
+
   y += 20
 
   proc okAction(dlg: var PreferencesDialogParams; a) =
+    a.opt.showSplash       = dlg.showSplash
+    a.opt.hideSplashSecs   = parseInt(dlg.hideSplashSecs).Natural
+    a.opt.loadLastFile     = dlg.loadLastFile
+    a.opt.disableVSync     = dlg.disableVSync
+    a.opt.autoSave         = dlg.autoSave
+    a.opt.autoSaveFreqSecs = parseInt(dlg.autoSaveFreqSecs).Natural
+
     saveConfig(a)
     koi.closeDialog()
     dlg.isOpen = false
@@ -4259,6 +4307,8 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isKeyDown(keyPageUp,   {mkCtrl, mkAlt}):   prevThemeAction(a)
     elif ke.isKeyDown(keyPageDown, {mkCtrl, mkAlt}):   nextThemeAction(a)
 
+    elif ke.isKeyDown(keyU,        {mkCtrl, mkAlt}):   openPreferencesDialog(a)
+
     elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
          ke.isKeyDown(keyU, repeat=true):
       undoAction(a)
@@ -5270,7 +5320,12 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.opt.scrollMargin = 3
   a.opt.showSplash = cfg.showSplash
+  a.opt.hideSplashSecs = cfg.hideSplashSecs
   a.opt.loadLastFile = cfg.loadLastFile
+  a.opt.disableVSync = cfg.disableVSync
+  a.opt.autoSave = cfg.autoSave
+  a.opt.autoSaveFreqSecs = cfg.autoSaveFreqSecs
+
   a.opt.showNotesPane = cfg.showNotesPane
   a.opt.showToolsPane = cfg.showToolsPane
   a.opt.drawTrail = cfg.drawTrail
@@ -5331,8 +5386,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.win.show()
 
-  # TODO based on config
-  a.splash.show = true
+  a.splash.show = a.opt.showSplash
 
   info("App init completed")
 
