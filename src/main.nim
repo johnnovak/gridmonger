@@ -39,6 +39,13 @@ import utils
 const
   BuildGitHash = staticExec("git rev-parse --short HEAD").strip
 
+# {{{ logError()
+proc logError(e: ref Exception) =
+  logging.error("Error message: " & e.msg & "\n\nStrack trace:\n" &
+                getStackTrace(e))
+
+# }}}
+
 # {{{ Paths
 const
 # TODO
@@ -474,14 +481,12 @@ let g_appShortcuts = {
 
 # }}}
 
-# {{{ logError()
-proc logError(e: ref Exception) =
-  logging.error("Error message: " & e.msg & "\n\nStrack trace:\n" &
-                getStackTrace(e))
+# {{{ setSwapInterval()
+proc setSwapInterval(a) =
+  glfw.swapInterval(if a.opt.disableVSync: 0 else: 1)
 
 # }}}
-
-# {{{ Config handling
+# {{{ saveConfig()
 proc saveConfig(a) =
   alias(ui, a.ui)
   alias(cur, a.ui.cursor)
@@ -528,226 +533,18 @@ proc saveConfig(a) =
   saveAppConfig(a, ConfigFile)
 
 # }}}
-
-# {{{ mapHasLevels()
-proc mapHasLevels(a): bool =
-  a.doc.map.levels.len > 0
-
-# }}}
-# {{{ currSortedLevelIdx()
-proc currSortedLevelIdx(a): Natural =
-  a.doc.map.findSortedLevelIdxByLevelIdx(a.ui.cursor.level)
-
-# }}}
-# {{{ currLevel()
-proc currLevel(a): Level =
-  a.doc.map.levels[a.ui.cursor.level]
-
-# }}}
-# {{{ coordOptsForCurrLevel()
-proc coordOptsForCurrLevel(a): CoordinateOptions =
-  let l = currLevel(a)
-  if l.overrideCoordOpts: l.coordOpts else: a.doc.map.coordOpts
-
-# }}}
-# {{{ clearStatusMessage()
-proc clearStatusMessage(a) =
-  a.ui.statusIcon = NoIcon
-  a.ui.statusMessage = ""
-  a.ui.statusCommands = @[]
-
-# }}}
-# {{{ setStatusMessage()
-proc setStatusMessage(icon, msg: string, commands: seq[string]; a) =
-  a.ui.statusIcon = icon
-  a.ui.statusMessage = msg
-  a.ui.statusCommands = commands
-
-proc setStatusMessage(icon, msg: string; a) =
-  setStatusMessage(icon, msg, commands = @[], a)
-
-proc setStatusMessage(msg: string; a) =
-  setStatusMessage(NoIcon, msg, commands = @[], a)
-
-# }}}
-# {{{ drawStatusBar()
-proc drawStatusBar(y: float, winWidth: float; a) =
+# {{{ loadImage()
+proc loadImage(path: string; a): Option[Paint] =
   alias(vg, a.vg)
-  alias(s, a.theme.style.statusBar)
-
-  let ty = y + StatusBarHeight * TextVertAlignFactor
-
-  # Bar background
-  vg.save()
-
-  vg.beginPath()
-  vg.rect(0, y, winWidth, StatusBarHeight)
-  vg.fillColor(s.backgroundColor)
-  vg.fill()
-
-  # Display cursor coordinates
-  vg.setFont(14)
-
-  if mapHasLevels(a):
-    let
-      l = currLevel(a)
-      coordOpts = coordOptsForCurrLevel(a)
-      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
-      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
-      cursorPos = fmt"({col}, {row})"
-      tw = vg.textWidth(cursorPos)
-
-    vg.fillColor(s.coordsColor)
-    vg.textAlign(haLeft, vaMiddle)
-    discard vg.text(winWidth - tw - 7, ty, cursorPos)
-
-    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
-
-  # Display icon & message
-  const
-    IconPosX = 10
-    MessagePosX = 30
-    MessagePadX = 20
-    CommandLabelPadX = 13
-    CommandTextPadX = 10
-
-  var x = 10.0
-
-  vg.fillColor(s.textColor)
-  discard vg.text(IconPosX, ty, a.ui.statusIcon)
-
-  let tx = vg.text(MessagePosX, ty, a.ui.statusMessage)
-  x = tx + MessagePadX
-
-  # Display commands, if present
-  for i, cmd in a.ui.statusCommands.pairs:
-    if i mod 2 == 0:
-      let label = cmd
-      let w = vg.textWidth(label)
-
-      vg.beginPath()
-      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
-      vg.fillColor(s.commandBgColor)
-      vg.fill()
-
-      vg.fillColor(s.commandColor)
-      discard vg.text(x + 5, ty, label)
-      x += w + CommandLabelPadX
-    else:
-      let text = cmd
-      vg.fillColor(s.textColor)
-      let tx = vg.text(x, ty, text)
-      x = tx + CommandTextPadX
-
-  vg.restore()
-
-# }}}
-
-# {{{ loadMap()
-proc resetCursorAndViewStart(a)
-
-proc loadMap(filename: string; a): bool =
-  info(fmt"Loading map '{filename}'...")
-
   try:
-    let t0 = getMonoTime()
-    a.doc.map = readMapFile(filename)
-    let dt = getMonoTime() - t0
+    let img = vg.createImage(path, {ifRepeatX, ifRepeatY})
 
-    a.doc.filename = filename
+    let (w, h) = vg.imageSize(img)
+    let paint = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
+    result = paint.some
 
-    initUndoManager(a.doc.undoManager)
-
-    resetCursorAndViewStart(a)
-
-    let message = fmt"Map '{filename}' loaded in " &
-                  fmt"{durationToFloatMillis(dt):.2f} ms"
-
-    info(message)
-    setStatusMessage(IconFloppy, message, a)
-    result = true
-
-  except CatchableError as e:
-    logError(e)
-    setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
-
-# }}}
-# {{{ openMap()
-proc openMap(a) =
-  when defined(DEBUG): discard
-  else:
-    let filename = fileDialog(fdOpenFile,
-                              filters=GridmongerMapFileFilter)
-    if filename != "":
-      discard loadMap(filename, a)
-# }}}
-# {{{ saveMapAction()
-proc saveMap(filename: string; a) =
-  alias(cur, a.ui.cursor)
-  alias(dp, a.ui.drawLevelParams)
-
-  let mapDisplayOpts = MapDisplayOptions(
-    currLevel       : cur.level,
-    zoomLevel       : dp.getZoomLevel(),
-    cursorRow       : cur.row,
-    cursorCol       : cur.col,
-    viewStartRow    : dp.viewStartRow,
-    viewStartCol    : dp.viewStartCol
-  )
-
-  writeMapFile(a.doc.map, mapDisplayOpts, filename)
-  a.doc.undoManager.setLastSaveState()
-  setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
-
-proc saveMapAsAction(a) =
-  when not defined(DEBUG):
-    var filename = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
-    if filename != "":
-      try:
-        filename = addFileExt(filename, MapFileExt)
-        info(fmt"Saving map to '{filename}'")
-
-        saveMap(filename, a)
-        a.doc.filename = filename
-      except CatchableError as e:
-        logError(e)
-        setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
-
-proc saveMapAction(a) =
-  if a.doc.filename != "": saveMap(a.doc.filename, a)
-  else: saveMapAsAction(a)
-
-# }}}
-
-# {{{ searchThemes()
-proc searchThemes(a) =
-  for path in walkFiles(ThemesDir / fmt"*.{ThemeExt}"):
-    let (_, name, _) = splitFile(path)
-    a.theme.themeNames.add(name)
-  sort(a.theme.themeNames)
-
-# }}}
-# {{{ findThemeIndex()
-proc findThemeIndex(name: string; a): int =
-  for i, n in a.theme.themeNames:
-    if n == name:
-      return i
-  return -1
-
-# }}}
-# {{{ themePath()
-proc themePath(index: Natural; a): string =
-  let name = a.theme.themeNames[index]
-  ThemesDir / addFileExt(name, ThemeExt)
-
-# }}}
-# {{{ loadTheme()
-proc loadTheme(index: Natural; a) =
-  let name = a.theme.themeNames[index]
-  let path = themePath(index, a)
-  info(fmt"Loading theme '{name}' from '{path}'")
-
-  a.theme.style = loadTheme(path)
+  except NVGError:
+    result = Paint.none
 
 # }}}
 # {{{ updateWidgetStyles()
@@ -933,83 +730,67 @@ proc updateWidgetStyles(a) =
     label.colorDown  = abs.colorActive
 
 # }}}
-# {{{ loadImage()
-proc loadImage(path: string; a): Option[Paint] =
-  alias(vg, a.vg)
-  try:
-    let img = vg.createImage(path, {ifRepeatX, ifRepeatY})
 
-    let (w, h) = vg.imageSize(img)
-    let paint = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
-    result = paint.some
+# {{{ Helpers/utils
 
-  except NVGError:
-    result = Paint.none
+# {{{ mapHasLevels()
+proc mapHasLevels(a): bool =
+  a.doc.map.levels.len > 0
 
 # }}}
-# {{{ switchTheme()
-proc switchTheme(themeIndex: Natural; a) =
-  loadTheme(themeIndex, a)
-  updateWidgetStyles(a)
+# {{{ currSortedLevelIdx()
+proc currSortedLevelIdx(a): Natural =
+  a.doc.map.findSortedLevelIdxByLevelIdx(a.ui.cursor.level)
 
-  let bgImageName = a.theme.style.general.backgroundImage
-  if bgImageName != "":
-    var imgPath = ThemeImagesDir / bgImageName
-    var image = loadImage(imgPath, a)
-    if image.isNone:
-      info(fmt"Couldn't load background image '{imgPath}'. " &
-           "Attempting to load it from the user themes images directory now.")
+# }}}
+# {{{ currLevel()
+proc currLevel(a): Level =
+  a.doc.map.levels[a.ui.cursor.level]
 
-      imgPath = UserThemeImagesDir / bgImageName
-      image = loadImage(imgPath, a)
-      if image.isNone:
-        logging.error(fmt"Couldn't load background image '{imgPath}'")
-
-    a.ui.backgroundImage = image
-    a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
-  else:
-    a.ui.backgroundImage = Paint.none
-    a.ui.drawLevelParams.backgroundImage = Paint.none
-
-  a.doc.levelStyle = a.theme.style.level
-
-  a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
-                                           koi.getPxRatio())
-
-  a.win.setStyle(a.theme.style.window)
-
-  a.theme.currThemeIndex = themeIndex
+# }}}
+# {{{ coordOptsForCurrLevel()
+proc coordOptsForCurrLevel(a): CoordinateOptions =
+  let l = currLevel(a)
+  if l.overrideCoordOpts: l.coordOpts else: a.doc.map.coordOpts
 
 # }}}
 
-# {{{ Key handling
-proc hasKeyEvent(): bool =
-  koi.hasEvent() and koi.currEvent().kind == ekKey
+# {{{ clearStatusMessage()
+proc clearStatusMessage(a) =
+  a.ui.statusIcon = NoIcon
+  a.ui.statusMessage = ""
+  a.ui.statusCommands = @[]
 
-# TODO change all into isShorcut* (if possible)
-func isKeyDown(ev: Event, keys: set[Key],
-               mods: set[ModifierKey] = {},
-               repeat=false): bool =
+# }}}
+# {{{ setStatusMessage()
+proc setStatusMessage(icon, msg: string, commands: seq[string]; a) =
+  a.ui.statusIcon = icon
+  a.ui.statusMessage = msg
+  a.ui.statusCommands = commands
 
-  # ignore numlock & capslock
-  let eventMods = ev.mods - {mkNumLock, mkCapsLock}
-  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  ev.action in a and ev.key in keys and eventmods == mods
+proc setStatusMessage(icon, msg: string; a) =
+  setStatusMessage(icon, msg, commands = @[], a)
 
+proc setStatusMessage(msg: string; a) =
+  setStatusMessage(NoIcon, msg, commands = @[], a)
 
-func isKeyDown(ev: Event, key: Key,
-               mods: set[ModifierKey] = {}, repeat=false): bool =
-  isKeyDown(ev, {key}, mods, repeat)
-
-func isKeyUp(ev: Event, keys: set[Key]): bool =
-  ev.action == kaUp and ev.key in keys
-
-proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
-  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  if ev.kind == ekKey and ev.action in a:
-    let sc = mkKeyShortcut(ev.key, ev.mods)
-    result = sc in g_appShortcuts[shortcut]
-
+# }}}
+# {{{ setSelectModeSelectMessage()
+proc setSelectModeSelectMessage(a) =
+  setStatusMessage(IconSelection, "Mark selection",
+                   @["D", "draw", "E", "erase",
+                     "R", "add rect", "S", "sub rect",
+                     "A", "mark all", "U", "unmark all",
+                     "C/Y", "copy", "X", "cut",
+                     "Ctrl", "special"], a)
+# }}}
+# {{{ setSelectModeActionMessage()
+proc setSelectModeActionMessage(a) =
+  setStatusMessage(IconSelection, "Mark selection",
+                   @["Ctrl+E", "erase", "Ctrl+F", "fill",
+                     "Ctrl+S", "surround", "Ctrl+R", "crop",
+                     "Ctrl+M", "move (cut+paste)",
+                     "Ctrl+C", "set color"], a)
 # }}}
 
 # {{{ resetCursorAndViewStart()
@@ -1093,6 +874,30 @@ proc updateViewStartAndCursorPosition(a) =
   updateLastCursorViewCoords(a)
 
 # }}}
+# {{{ locationAtMouse()
+proc locationAtMouse(a): Option[Location] =
+  alias(dp, a.ui.drawLevelParams)
+
+  let
+    mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
+    mouseViewCol = ((koi.mx() - dp.startX) / dp.gridSize).int
+
+    mouseRow = dp.viewStartRow + mouseViewRow
+    mouseCol = dp.viewStartCol + mouseViewCol
+
+  if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
+     mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
+
+    result = Location(
+      level: a.ui.cursor.level,
+      row: mouseRow,
+      col: mouseCol
+    ).some
+  else:
+    result = Location.none
+
+# }}}
+
 # {{{ moveLevel()
 proc moveLevel(dir: CardinalDir, steps: Natural; a) =
   alias(cur, a.ui.cursor)
@@ -1193,23 +998,7 @@ proc moveCursorTo(loc: Location; a) =
   elif dy > 0: moveCursor(dirS,  dy, a)
 
 # }}}
-# {{{ setSelectModeSelectMessage()
-proc setSelectModeSelectMessage(a) =
-  setStatusMessage(IconSelection, "Mark selection",
-                   @["D", "draw", "E", "erase",
-                     "R", "add rect", "S", "sub rect",
-                     "A", "mark all", "U", "unmark all",
-                     "C/Y", "copy", "X", "cut",
-                     "Ctrl", "special"], a)
-# }}}
-# {{{ setSelectModeActionMessage()
-proc setSelectModeActionMessage(a) =
-  setStatusMessage(IconSelection, "Mark selection",
-                   @["Ctrl+E", "erase", "Ctrl+F", "fill",
-                     "Ctrl+S", "surround", "Ctrl+R", "crop",
-                     "Ctrl+M", "move (cut+paste)",
-                     "Ctrl+C", "set color"], a)
-# }}}
+
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
   let l = currLevel(a)
@@ -1256,6 +1045,106 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 
 # }}}
 
+# }}}
+
+# {{{ Theme handling
+
+# {{{ searchThemes()
+proc searchThemes(a) =
+  for path in walkFiles(ThemesDir / fmt"*.{ThemeExt}"):
+    let (_, name, _) = splitFile(path)
+    a.theme.themeNames.add(name)
+  sort(a.theme.themeNames)
+
+# }}}
+# {{{ findThemeIndex()
+proc findThemeIndex(name: string; a): int =
+  for i, n in a.theme.themeNames:
+    if n == name:
+      return i
+  return -1
+
+# }}}
+# {{{ themePath()
+proc themePath(index: Natural; a): string =
+  let name = a.theme.themeNames[index]
+  ThemesDir / addFileExt(name, ThemeExt)
+
+# }}}
+# {{{ loadTheme()
+proc loadTheme(index: Natural; a) =
+  let name = a.theme.themeNames[index]
+  let path = themePath(index, a)
+  info(fmt"Loading theme '{name}' from '{path}'")
+
+  a.theme.style = loadTheme(path)
+
+# }}}
+# {{{ switchTheme()
+proc switchTheme(themeIndex: Natural; a) =
+  loadTheme(themeIndex, a)
+  updateWidgetStyles(a)
+
+  let bgImageName = a.theme.style.general.backgroundImage
+  if bgImageName != "":
+    var imgPath = ThemeImagesDir / bgImageName
+    var image = loadImage(imgPath, a)
+    if image.isNone:
+      info(fmt"Couldn't load background image '{imgPath}'. " &
+           "Attempting to load it from the user themes images directory now.")
+
+      imgPath = UserThemeImagesDir / bgImageName
+      image = loadImage(imgPath, a)
+      if image.isNone:
+        logging.error(fmt"Couldn't load background image '{imgPath}'")
+
+    a.ui.backgroundImage = image
+    a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
+  else:
+    a.ui.backgroundImage = Paint.none
+    a.ui.drawLevelParams.backgroundImage = Paint.none
+
+  a.doc.levelStyle = a.theme.style.level
+
+  a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
+                                           koi.getPxRatio())
+
+  a.win.setStyle(a.theme.style.window)
+
+  a.theme.currThemeIndex = themeIndex
+
+# }}}
+
+# }}}
+# {{{ Key handling
+proc hasKeyEvent(): bool =
+  koi.hasEvent() and koi.currEvent().kind == ekKey
+
+# TODO change all into isShorcut* (if possible)
+func isKeyDown(ev: Event, keys: set[Key],
+               mods: set[ModifierKey] = {},
+               repeat=false): bool =
+
+  # ignore numlock & capslock
+  let eventMods = ev.mods - {mkNumLock, mkCapsLock}
+  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
+  ev.action in a and ev.key in keys and eventmods == mods
+
+
+func isKeyDown(ev: Event, key: Key,
+               mods: set[ModifierKey] = {}, repeat=false): bool =
+  isKeyDown(ev, {key}, mods, repeat)
+
+func isKeyUp(ev: Event, keys: set[Key]): bool =
+  ev.action == kaUp and ev.key in keys
+
+proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
+  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
+  if ev.kind == ekKey and ev.action in a:
+    let sc = mkKeyShortcut(ev.key, ev.mods)
+    result = sc in g_appShortcuts[shortcut]
+
+# }}}
 # {{{ Dialogs
 const
   DlgItemHeight    = 24.0
@@ -1718,6 +1607,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 # }}}
 # {{{ Save/discard changes dialog
+
+proc saveMapAction(a)
+
 proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
   const
     DlgWidth = 350.0
@@ -2943,6 +2835,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
 # }}}
 # }}}
+# {{{ Actions
 
 # {{{ undoAction()
 proc undoAction(a) =
@@ -2979,6 +2872,43 @@ proc newMapAction(a) =
     openNewMapDialog(a)
 
 # }}}
+# {{{ loadMap()
+proc loadMap(filename: string; a): bool =
+  info(fmt"Loading map '{filename}'...")
+
+  try:
+    let t0 = getMonoTime()
+    a.doc.map = readMapFile(filename)
+    let dt = getMonoTime() - t0
+
+    a.doc.filename = filename
+
+    initUndoManager(a.doc.undoManager)
+
+    resetCursorAndViewStart(a)
+
+    let message = fmt"Map '{filename}' loaded in " &
+                  fmt"{durationToFloatMillis(dt):.2f} ms"
+
+    info(message)
+    setStatusMessage(IconFloppy, message, a)
+    result = true
+
+  except CatchableError as e:
+    logError(e)
+    setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
+
+# }}}
+# {{{ openMap()
+proc openMap(a) =
+  when defined(DEBUG): discard
+  else:
+    let filename = fileDialog(fdOpenFile,
+                              filters=GridmongerMapFileFilter)
+    if filename != "":
+      discard loadMap(filename, a)
+
+# }}}
 # {{{ openMapAction()
 proc openMapAction(a) =
   alias(dlg, a.dialog.saveDiscardDialog)
@@ -2987,6 +2917,47 @@ proc openMapAction(a) =
     dlg.action = openMap
   else:
     openMap(a)
+
+# }}}
+# {{{ saveMap()
+proc saveMap(filename: string; a) =
+  alias(cur, a.ui.cursor)
+  alias(dp, a.ui.drawLevelParams)
+
+  let mapDisplayOpts = MapDisplayOptions(
+    currLevel       : cur.level,
+    zoomLevel       : dp.getZoomLevel(),
+    cursorRow       : cur.row,
+    cursorCol       : cur.col,
+    viewStartRow    : dp.viewStartRow,
+    viewStartCol    : dp.viewStartCol
+  )
+
+  writeMapFile(a.doc.map, mapDisplayOpts, filename)
+  a.doc.undoManager.setLastSaveState()
+  setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
+
+# }}}
+# {{{ saveMapAsAction()
+proc saveMapAsAction(a) =
+  when not defined(DEBUG):
+    var filename = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
+    if filename != "":
+      try:
+        filename = addFileExt(filename, MapFileExt)
+        info(fmt"Saving map to '{filename}'")
+
+        saveMap(filename, a)
+        a.doc.filename = filename
+      except CatchableError as e:
+        logError(e)
+        setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
+
+# }}}
+# {{{ saveMapAction()
+proc saveMapAction(a) =
+  if a.doc.filename != "": saveMap(a.doc.filename, a)
+  else: saveMapAsAction(a)
 
 # }}}
 # {{{ reloadThemeAction()
@@ -3096,90 +3067,8 @@ proc startDrawWallsAction(a) =
 
 # }}}
 
-# {{{ drawEmptyMap()
-proc drawEmptyMap(a) =
-  alias(vg, a.vg)
-  alias(ls, a.doc.levelStyle)
-
-  vg.setFont(size=22)
-  vg.fillColor(ls.drawColor)
-  vg.textAlign(haCenter, vaMiddle)
-  var y = drawAreaHeight(a) * 0.5
-  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
-
 # }}}
-# {{{ drawNoteTooltip()
-proc drawNoteTooltip(note: Note, a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-  alias(dp, a.ui.drawLevelParams)
 
-  if note.text != "":
-    const PadX = 10
-    const PadY = 8
-
-    var
-      noteBoxX = koi.mx() + 16
-      noteBoxY = koi.my() + 20
-      noteBoxW = 250.0
-
-    vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.5)
-
-    let
-      bounds = vg.textBoxBounds(noteBoxX + PadX,
-                                noteBoxY + PadY,
-                                noteBoxW - PadX*2, note.text)
-      noteTextH = bounds.y2 - bounds.y1
-      noteTextW = bounds.x2 - bounds.x1
-      noteBoxH = noteTextH + PadY*2
-
-    noteBoxW = noteTextW + PadX*2
-
-    let
-      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
-      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
-
-    if xOver > 0:
-      noteBoxX -= xOver
-
-    if yOver > 0:
-      noteBoxY -= noteBoxH + 22
-
-    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
-
-    vg.fillColor(a.theme.style.level.noteTooltipBgColor)
-    vg.beginPath()
-    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
-    vg.fill()
-
-    vg.fillColor(a.theme.style.level.noteTooltipTextColor)
-    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
-
-# }}}
-# {{{ locationAtMouse()
-proc locationAtMouse(a): Option[Location] =
-  alias(dp, a.ui.drawLevelParams)
-
-  let
-    mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
-    mouseViewCol = ((koi.mx() - dp.startX) / dp.gridSize).int
-
-    mouseRow = dp.viewStartRow + mouseViewRow
-    mouseCol = dp.viewStartCol + mouseViewCol
-
-  if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
-     mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
-
-    result = Location(
-      level: a.ui.cursor.level,
-      row: mouseRow,
-      col: mouseCol
-    ).some
-  else:
-    result = Location.none
-
-# }}}
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents(a) =
   alias(ui, a.ui)
@@ -3223,314 +3112,6 @@ proc handleLevelMouseEvents(a) =
 
 
 # }}}
-# {{{ renderLevel()
-proc renderLevel(a) =
-  alias(dp, a.ui.drawLevelParams)
-  alias(ui, a.ui)
-  alias(opt, a.opt)
-
-  let l = currLevel(a)
-
-  let i = instantiationInfo(fullPaths=true)
-  let id = koi.generateId(i.filename, i.line, "gridmonger-level")
-
-  updateViewStartAndCursorPosition(a)
-
-  let
-    x = dp.startX
-    y = dp.startY
-    w = dp.viewCols * dp.gridSize
-    h = dp.viewRows * dp.gridSize
-
-  # Hit testing
-  if koi.isHit(x, y, w, h):
-    koi.setHot(id)
-    if koi.hasNoActiveItem() and
-       (koi.mbLeftDown() or koi.mbRightDown() or koi.mbMiddleDown()):
-      koi.setActive(id)
-
-  if koi.isHot(id) and isActive(id):
-    handleLevelMouseEvents(a)
-
-  # Draw level
-  if dp.viewRows > 0 and dp.viewCols > 0:
-    dp.cursorRow = ui.cursor.row
-    dp.cursorCol = ui.cursor.col
-    dp.cellCoordOpts = coordOptsForCurrLevel(a)
-    dp.regionOpts = l.regionOpts
-
-    dp.cursorOrient = CardinalDir.none
-    if opt.walkMode and
-       ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
-      dp.cursorOrient = ui.cursorOrient.some
-
-    dp.selection = ui.selection
-    dp.selectionRect = ui.selRect
-
-    dp.selectionBuffer =
-      if   ui.editMode == emPastePreview: ui.copyBuf
-      elif ui.editMode in {emMovePreview, emNudgePreview}: ui.nudgeBuf
-      else: SelectionBuffer.none
-
-    drawLevel(
-      a.doc.map,
-      ui.cursor.level,
-      DrawLevelContext(ls: a.doc.levelStyle, dp: dp, vg: a.vg)
-    )
-
-  # Draw note tooltip
-  if koi.isHot(id):
-    if not (opt.wasdMode and isActive(id)):
-
-      let locOpt = locationAtMouse(a)
-      if locOpt.isSome:
-        let loc = locOpt.get
-
-        if l.hasNote(loc.row, loc.col):
-          let note = l.getNote(loc.row, loc.col)
-          if note.kind != nkLabel:
-            drawNoteTooltip(note, a)
-
-# }}}
-# {{{ renderToolsPane()
-# {{{ specialWallDrawProc()
-proc specialWallDrawProc(ls: LevelStyle,
-                         ts: ToolbarPaneStyle,
-                         dp: DrawLevelParams): RadioButtonsDrawProc =
-
-  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               state: WidgetState, first, last: bool,
-               x, y, w, h: float, style: RadioButtonsStyle) =
-
-    var col = case state
-              of wsActive:      ls.cursorColor
-              of wsHover:       ts.buttonBgColorHover
-              of wsActiveHover: ls.cursorColor
-              of wsDown:        ls.cursorColor
-              else:             ts.buttonBgColor
-
-    # Nasty stuff, but it's not really worth refactoring everything for
-    # this little aesthetic fix...
-    let savedFloorColor = ls.floorColor[0]
-    let savedBackgroundImage = dp.backgroundImage
-
-    ls.floorColor[0] = lerp(ls.backgroundColor, col, col.a).withAlpha(1.0)
-    dp.backgroundImage = Paint.none
-
-    const Pad = 5
-
-    vg.beginPath()
-    vg.fillColor(col)
-    vg.rect(x, y, w-Pad, h-Pad)
-    vg.fill()
-
-    dp.setZoomLevel(ls, 4)
-    let ctx = DrawLevelContext(ls: ls, dp: dp, vg: vg)
-
-    var cx = x + 5
-    var cy = y + 15
-
-    template drawAtZoomLevel(zl: Natural, body: untyped) =
-      vg.save()
-      # A bit messy... but so is life! =8)
-      dp.setZoomLevel(ls, zl)
-      vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
-      body
-      dp.setZoomLevel(ls, 4)
-      vg.restore()
-
-    case SpecialWalls[buttonIdx]
-    of wNone:              discard
-    of wWall:              drawSolidWallHoriz(cx, cy, ctx=ctx)
-    of wIllusoryWall:      drawIllusoryWallHoriz(cx+2, cy, ctx=ctx)
-    of wInvisibleWall:     drawInvisibleWallHoriz(cx-2, cy, ctx=ctx)
-    of wDoor:              drawDoorHoriz(cx, cy, ctx=ctx)
-    of wLockedDoor:        drawLockedDoorHoriz(cx, cy, ctx=ctx)
-    of wArchway:           drawArchwayHoriz(cx, cy, ctx=ctx)
-
-    of wSecretDoor:
-      drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ctx=ctx)
-
-    of wOneWayDoorNE:
-      drawAtZoomLevel(8):  drawOneWayDoorHorizNE(cx-4, cy+1, ctx=ctx)
-
-    of wLeverSW:
-      drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx=ctx)
-
-    of wNicheSW:           drawNicheHorizSW(cx, cy, floorColor=0, ctx=ctx)
-
-    of wStatueSW:
-      drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ctx=ctx)
-
-    of wKeyhole:
-      drawAtZoomLevel(6):  drawKeyholeHoriz(cx-2, cy, ctx=ctx)
-
-    of wWritingSW:
-      drawAtZoomLevel(12): drawWritingHorizSW(cx-6, cy+4, ctx=ctx)
-
-    else: discard
-
-    # ...aaaaand restore it!
-    ls.floorColor[0] = savedFloorColor
-    dp.backgroundImage = savedBackgroundImage
-
-# }}}
-
-proc renderToolsPane(x, y, w, h: float; a) =
-  alias(ui, a.ui)
-  alias(ls, a.doc.levelStyle)
-  alias(ts, a.theme.style.toolbarPane)
-
-  koi.radioButtons(
-    x = x,
-    y = y,
-    w = 36,
-    h = 35,
-    labels = newSeq[string](SpecialWalls.len),
-    ui.currSpecialWall,
-    tooltips = @[],
-    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
-    drawProc = specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
-  )
-
-  koi.radioButtons(
-    x = x + 3,
-    y = y + 446,
-    w = 30,
-    h = 30,
-    labels = newSeq[string](ls.floorColor.len),
-    ui.currFloorColor,
-    tooltips = @[],
-    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 9),
-    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq, ls.cursorColor).some
-  )
-
-# }}}
-# {{{ drawNotesPane()
-proc drawNotesPane(x, y, w, h: float; a) =
-  alias(vg, a.vg)
-  alias(s, a.theme.style.notesPane)
-
-  let l = currLevel(a)
-  let cur = a.ui.cursor
-
-  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
-     l.hasNote(cur.row, cur.col):
-
-    let note = l.getNote(cur.row, cur.col)
-    if note.text == "" or note.kind == nkLabel: return
-
-    vg.save()
-
-    case note.kind
-    of nkIndexed:
-      drawIndexedNote(x, y-12, note.index, 36,
-                      bgColor=s.indexBgColor[note.indexColor],
-                      fgColor=s.indexColor, vg)
-
-    of nkCustomId:
-      vg.fillColor(s.textColor)
-      vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+18, y-2, note.customId)
-
-    of nkIcon:
-      vg.fillColor(s.textColor)
-      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y-3, NoteIcons[note.icon])
-
-    of nkComment:
-      vg.fillColor(s.textColor)
-      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y-2, IconComment)
-
-    of nkLabel: discard
-
-    vg.fillColor(s.textColor)
-    vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.4)
-    vg.intersectScissor(x+40, y, w-40, h)
-    vg.textBox(x+40, y, w-40, note.text)
-
-    vg.restore()
-
-# }}}
-# {{{ drawModeAndOptionIndicators()
-proc drawModeAndOptionIndicators(a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-  alias(ls, a.doc.levelStyle)
-
-  var x = ui.levelLeftPad
-  let y = TitleBarHeight + 32
-
-  vg.save()
-
-  vg.fillColor(ls.coordsHighlightColor)
-
-  if a.opt.wasdMode:
-    vg.setFont(15.0)
-    discard vg.text(x, y, fmt"WASD+{IconMouse}")
-    x += 80
-
-  if a.opt.drawTrail:
-    vg.setFont(19)
-    discard vg.text(x, y+1, IconShoePrints)
-
-  vg.restore()
-
-# }}}
-
-# {{{ showSplash()
-proc showSplash(a) =
-  alias(s, g_app.splash)
-
-  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
-  let w = (maxWidth * 0.6).int32
-  let h = (w/s.logo.width * s.logo.height).int32
-
-  s.win.size = (w, h)
-  s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
-  s.win.show()
-
-# }}}
-# {{{ shouldCloseSplash()
-proc shouldCloseSplash(a): bool =
-  alias(w, a.splash.win)
-
-  if a.opt.showThemePane:
-    not a.splash.show
-  else:
-    w.isKeyDown(keyEscape) or
-    w.isKeyDown(keySpace) or
-    w.isKeyDown(keyEnter) or
-    w.isKeyDown(keyKpEnter) or
-    w.mouseButtonDown(mbLeft) or
-    w.mouseButtonDown(mbRight) or
-    w.mouseButtonDown(mbMiddle)
-
-# }}}
-# {{{ closeSplash()
-proc closeSplash(a) =
-  alias(s, g_app.splash)
-
-  s.win.destroy()
-  s.win = nil
-
-  s.vg.deleteImage(s.logoImage)
-  s.vg.deleteImage(s.outlineImage)
-  s.vg.deleteImage(s.shadowImage)
-
-  s.logoImage = NoImage
-  s.outlineImage = NoImage
-  s.shadowImage = NoImage
-
-  nvgDeleteContext(s.vg)
-  s.vg = nil
-
-  s.show = false
-
-# }}}
-
 # {{{ handleGlobalKeyEvents()
 # TODO separate into level events and global events
 proc handleGlobalKeyEvents(a) =
@@ -4319,6 +3900,399 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
 # }}}
 
+# {{{ Drawing/rendering
+
+# {{{ drawEmptyMap()
+proc drawEmptyMap(a) =
+  alias(vg, a.vg)
+  alias(ls, a.doc.levelStyle)
+
+  vg.setFont(size=22)
+  vg.fillColor(ls.drawColor)
+  vg.textAlign(haCenter, vaMiddle)
+  var y = drawAreaHeight(a) * 0.5
+  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
+
+# }}}
+# {{{ drawNoteTooltip()
+proc drawNoteTooltip(note: Note, a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+  alias(dp, a.ui.drawLevelParams)
+
+  if note.text != "":
+    const PadX = 10
+    const PadY = 8
+
+    var
+      noteBoxX = koi.mx() + 16
+      noteBoxY = koi.my() + 20
+      noteBoxW = 250.0
+
+    vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.5)
+
+    let
+      bounds = vg.textBoxBounds(noteBoxX + PadX,
+                                noteBoxY + PadY,
+                                noteBoxW - PadX*2, note.text)
+      noteTextH = bounds.y2 - bounds.y1
+      noteTextW = bounds.x2 - bounds.x1
+      noteBoxH = noteTextH + PadY*2
+
+    noteBoxW = noteTextW + PadX*2
+
+    let
+      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
+      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
+
+    if xOver > 0:
+      noteBoxX -= xOver
+
+    if yOver > 0:
+      noteBoxY -= noteBoxH + 22
+
+    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
+
+    vg.fillColor(a.theme.style.level.noteTooltipBgColor)
+    vg.beginPath()
+    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
+    vg.fill()
+
+    vg.fillColor(a.theme.style.level.noteTooltipTextColor)
+    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
+
+# }}}
+# {{{ renderLevel()
+proc renderLevel(a) =
+  alias(dp, a.ui.drawLevelParams)
+  alias(ui, a.ui)
+  alias(opt, a.opt)
+
+  let l = currLevel(a)
+
+  let i = instantiationInfo(fullPaths=true)
+  let id = koi.generateId(i.filename, i.line, "gridmonger-level")
+
+  updateViewStartAndCursorPosition(a)
+
+  let
+    x = dp.startX
+    y = dp.startY
+    w = dp.viewCols * dp.gridSize
+    h = dp.viewRows * dp.gridSize
+
+  # Hit testing
+  if koi.isHit(x, y, w, h):
+    koi.setHot(id)
+    if koi.hasNoActiveItem() and
+       (koi.mbLeftDown() or koi.mbRightDown() or koi.mbMiddleDown()):
+      koi.setActive(id)
+
+  if koi.isHot(id) and isActive(id):
+    handleLevelMouseEvents(a)
+
+  # Draw level
+  if dp.viewRows > 0 and dp.viewCols > 0:
+    dp.cursorRow = ui.cursor.row
+    dp.cursorCol = ui.cursor.col
+    dp.cellCoordOpts = coordOptsForCurrLevel(a)
+    dp.regionOpts = l.regionOpts
+
+    dp.cursorOrient = CardinalDir.none
+    if opt.walkMode and
+       ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
+      dp.cursorOrient = ui.cursorOrient.some
+
+    dp.selection = ui.selection
+    dp.selectionRect = ui.selRect
+
+    dp.selectionBuffer =
+      if   ui.editMode == emPastePreview: ui.copyBuf
+      elif ui.editMode in {emMovePreview, emNudgePreview}: ui.nudgeBuf
+      else: SelectionBuffer.none
+
+    drawLevel(
+      a.doc.map,
+      ui.cursor.level,
+      DrawLevelContext(ls: a.doc.levelStyle, dp: dp, vg: a.vg)
+    )
+
+  # Draw note tooltip
+  if koi.isHot(id):
+    if not (opt.wasdMode and isActive(id)):
+
+      let locOpt = locationAtMouse(a)
+      if locOpt.isSome:
+        let loc = locOpt.get
+
+        if l.hasNote(loc.row, loc.col):
+          let note = l.getNote(loc.row, loc.col)
+          if note.kind != nkLabel:
+            drawNoteTooltip(note, a)
+
+# }}}
+# {{{ renderToolsPane()
+# {{{ specialWallDrawProc()
+proc specialWallDrawProc(ls: LevelStyle,
+                         ts: ToolbarPaneStyle,
+                         dp: DrawLevelParams): RadioButtonsDrawProc =
+
+  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
+               state: WidgetState, first, last: bool,
+               x, y, w, h: float, style: RadioButtonsStyle) =
+
+    var col = case state
+              of wsActive:      ls.cursorColor
+              of wsHover:       ts.buttonBgColorHover
+              of wsActiveHover: ls.cursorColor
+              of wsDown:        ls.cursorColor
+              else:             ts.buttonBgColor
+
+    # Nasty stuff, but it's not really worth refactoring everything for
+    # this little aesthetic fix...
+    let savedFloorColor = ls.floorColor[0]
+    let savedBackgroundImage = dp.backgroundImage
+
+    ls.floorColor[0] = lerp(ls.backgroundColor, col, col.a).withAlpha(1.0)
+    dp.backgroundImage = Paint.none
+
+    const Pad = 5
+
+    vg.beginPath()
+    vg.fillColor(col)
+    vg.rect(x, y, w-Pad, h-Pad)
+    vg.fill()
+
+    dp.setZoomLevel(ls, 4)
+    let ctx = DrawLevelContext(ls: ls, dp: dp, vg: vg)
+
+    var cx = x + 5
+    var cy = y + 15
+
+    template drawAtZoomLevel(zl: Natural, body: untyped) =
+      vg.save()
+      # A bit messy... but so is life! =8)
+      dp.setZoomLevel(ls, zl)
+      vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
+      body
+      dp.setZoomLevel(ls, 4)
+      vg.restore()
+
+    case SpecialWalls[buttonIdx]
+    of wNone:              discard
+    of wWall:              drawSolidWallHoriz(cx, cy, ctx=ctx)
+    of wIllusoryWall:      drawIllusoryWallHoriz(cx+2, cy, ctx=ctx)
+    of wInvisibleWall:     drawInvisibleWallHoriz(cx-2, cy, ctx=ctx)
+    of wDoor:              drawDoorHoriz(cx, cy, ctx=ctx)
+    of wLockedDoor:        drawLockedDoorHoriz(cx, cy, ctx=ctx)
+    of wArchway:           drawArchwayHoriz(cx, cy, ctx=ctx)
+
+    of wSecretDoor:
+      drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ctx=ctx)
+
+    of wOneWayDoorNE:
+      drawAtZoomLevel(8):  drawOneWayDoorHorizNE(cx-4, cy+1, ctx=ctx)
+
+    of wLeverSW:
+      drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx=ctx)
+
+    of wNicheSW:           drawNicheHorizSW(cx, cy, floorColor=0, ctx=ctx)
+
+    of wStatueSW:
+      drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ctx=ctx)
+
+    of wKeyhole:
+      drawAtZoomLevel(6):  drawKeyholeHoriz(cx-2, cy, ctx=ctx)
+
+    of wWritingSW:
+      drawAtZoomLevel(12): drawWritingHorizSW(cx-6, cy+4, ctx=ctx)
+
+    else: discard
+
+    # ...aaaaand restore it!
+    ls.floorColor[0] = savedFloorColor
+    dp.backgroundImage = savedBackgroundImage
+
+# }}}
+
+proc renderToolsPane(x, y, w, h: float; a) =
+  alias(ui, a.ui)
+  alias(ls, a.doc.levelStyle)
+  alias(ts, a.theme.style.toolbarPane)
+
+  koi.radioButtons(
+    x = x,
+    y = y,
+    w = 36,
+    h = 35,
+    labels = newSeq[string](SpecialWalls.len),
+    ui.currSpecialWall,
+    tooltips = @[],
+    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
+    drawProc = specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
+  )
+
+  koi.radioButtons(
+    x = x + 3,
+    y = y + 446,
+    w = 30,
+    h = 30,
+    labels = newSeq[string](ls.floorColor.len),
+    ui.currFloorColor,
+    tooltips = @[],
+    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 9),
+    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq, ls.cursorColor).some
+  )
+
+# }}}
+# {{{ drawNotesPane()
+proc drawNotesPane(x, y, w, h: float; a) =
+  alias(vg, a.vg)
+  alias(s, a.theme.style.notesPane)
+
+  let l = currLevel(a)
+  let cur = a.ui.cursor
+
+  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
+     l.hasNote(cur.row, cur.col):
+
+    let note = l.getNote(cur.row, cur.col)
+    if note.text == "" or note.kind == nkLabel: return
+
+    vg.save()
+
+    case note.kind
+    of nkIndexed:
+      drawIndexedNote(x, y-12, note.index, 36,
+                      bgColor=s.indexBgColor[note.indexColor],
+                      fgColor=s.indexColor, vg)
+
+    of nkCustomId:
+      vg.fillColor(s.textColor)
+      vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x+18, y-2, note.customId)
+
+    of nkIcon:
+      vg.fillColor(s.textColor)
+      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x+20, y-3, NoteIcons[note.icon])
+
+    of nkComment:
+      vg.fillColor(s.textColor)
+      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+      discard vg.text(x+20, y-2, IconComment)
+
+    of nkLabel: discard
+
+    vg.fillColor(s.textColor)
+    vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.4)
+    vg.intersectScissor(x+40, y, w-40, h)
+    vg.textBox(x+40, y, w-40, note.text)
+
+    vg.restore()
+
+# }}}
+# {{{ drawModeAndOptionIndicators()
+proc drawModeAndOptionIndicators(a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+  alias(ls, a.doc.levelStyle)
+
+  var x = ui.levelLeftPad
+  let y = TitleBarHeight + 32
+
+  vg.save()
+
+  vg.fillColor(ls.coordsHighlightColor)
+
+  if a.opt.wasdMode:
+    vg.setFont(15.0)
+    discard vg.text(x, y, fmt"WASD+{IconMouse}")
+    x += 80
+
+  if a.opt.drawTrail:
+    vg.setFont(19)
+    discard vg.text(x, y+1, IconShoePrints)
+
+  vg.restore()
+
+# }}}
+# {{{ drawStatusBar()
+proc drawStatusBar(y: float, winWidth: float; a) =
+  alias(vg, a.vg)
+  alias(s, a.theme.style.statusBar)
+
+  let ty = y + StatusBarHeight * TextVertAlignFactor
+
+  # Bar background
+  vg.save()
+
+  vg.beginPath()
+  vg.rect(0, y, winWidth, StatusBarHeight)
+  vg.fillColor(s.backgroundColor)
+  vg.fill()
+
+  # Display cursor coordinates
+  vg.setFont(14)
+
+  if mapHasLevels(a):
+    let
+      l = currLevel(a)
+      coordOpts = coordOptsForCurrLevel(a)
+      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
+      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
+      cursorPos = fmt"({col}, {row})"
+      tw = vg.textWidth(cursorPos)
+
+    vg.fillColor(s.coordsColor)
+    vg.textAlign(haLeft, vaMiddle)
+    discard vg.text(winWidth - tw - 7, ty, cursorPos)
+
+    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
+
+  # Display icon & message
+  const
+    IconPosX = 10
+    MessagePosX = 30
+    MessagePadX = 20
+    CommandLabelPadX = 13
+    CommandTextPadX = 10
+
+  var x = 10.0
+
+  vg.fillColor(s.textColor)
+  discard vg.text(IconPosX, ty, a.ui.statusIcon)
+
+  let tx = vg.text(MessagePosX, ty, a.ui.statusMessage)
+  x = tx + MessagePadX
+
+  # Display commands, if present
+  for i, cmd in a.ui.statusCommands.pairs:
+    if i mod 2 == 0:
+      let label = cmd
+      let w = vg.textWidth(label)
+
+      vg.beginPath()
+      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
+      vg.fillColor(s.commandBgColor)
+      vg.fill()
+
+      vg.fillColor(s.commandColor)
+      discard vg.text(x + 5, ty, label)
+      x += w + CommandLabelPadX
+    else:
+      let text = cmd
+      vg.fillColor(s.textColor)
+      let tx = vg.text(x, ty, text)
+      x = tx + CommandTextPadX
+
+  vg.restore()
+
+# }}}
+
+# }}}
 # {{{ Theme editor
 
 var ThemeEditorScrollViewStyle = getDefaultScrollViewStyle()
@@ -4926,12 +4900,43 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # }}}
 
-# {{{ saveConfigAndExit()
-proc saveConfigAndExit(a) =
-  saveConfig(a)
-  a.shouldClose = true
+# {{{ showSplash()
+proc showSplash(a) =
+  alias(s, g_app.splash)
+
+  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
+  let w = (maxWidth * 0.6).int32
+  let h = (w/s.logo.width * s.logo.height).int32
+
+  s.win.size = (w, h)
+  s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
+  s.win.show()
 
 # }}}
+# {{{ closeSplash()
+proc closeSplash(a) =
+  alias(s, g_app.splash)
+
+  s.win.destroy()
+  s.win = nil
+
+  s.vg.deleteImage(s.logoImage)
+  s.vg.deleteImage(s.outlineImage)
+  s.vg.deleteImage(s.shadowImage)
+
+  s.logoImage = NoImage
+  s.outlineImage = NoImage
+  s.shadowImage = NoImage
+
+  nvgDeleteContext(s.vg)
+  s.vg = nil
+
+  s.show = false
+
+# }}}
+
+# {{{ Main render/UI loop
+
 # {{{ renderUI()
 proc renderUI(a) =
   alias(ui, a.ui)
@@ -5056,46 +5061,24 @@ proc renderUI(a) =
     resizeLevelDialog(dlg.resizeLevelDialog, a)
 
 # }}}
-# {{{ loadPendingTheme()
-proc loadPendingTheme(themeIndex: Natural, a) =
-  try:
-    switchTheme(themeIndex, a)
-    a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
-
-  except CatchableError as e:
-    logError(e)
-    let name = a.theme.themeNames[themeIndex]
-    setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
-    a.theme.nextThemeIndex = Natural.none
-
-  # nextThemeIndex will be reset at the start of the current frame after
-  # displaying the status message
-
-# }}}
-# {{{ displayThemeLoadedMessage()
-proc displayThemeLoadedMessage(a) =
-  let themeName = a.theme.themeNames[a.theme.currThemeIndex]
-  if a.theme.themeReloaded:
-    setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
-  else:
-    setStatusMessage(fmt"Switched to '{themeName}' theme", a)
-
-# }}}
-# {{{ handleWindowClose()
-proc handleWindowClose(a) =
-  when defined(NO_QUIT_DIALOG):
-    saveConfigAndExit(a)
-  else:
-    if not koi.isDialogOpen():
-      if a.doc.undoManager.isModified:
-        a.dialog.saveDiscardDialog.isOpen = true
-        a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
-      else:
-        saveConfigAndExit(a)
-
-# }}}
 # {{{ renderFramePre()
 proc renderFramePre(a) =
+
+  proc loadPendingTheme(themeIndex: Natural, a) =
+    try:
+      switchTheme(themeIndex, a)
+      a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
+
+    except CatchableError as e:
+      logError(e)
+      let name = a.theme.themeNames[themeIndex]
+      setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
+      a.theme.nextThemeIndex = Natural.none
+
+    # nextThemeIndex will be reset at the start of the current frame after
+    # displaying the status message
+
+
   if a.theme.nextThemeIndex.isSome:
     loadPendingTheme(a.theme.nextThemeIndex.get, a)
 
@@ -5108,12 +5091,35 @@ proc renderFramePre(a) =
                                              koi.getPxRatio())
 
 # }}}
-
 # {{{ renderFrame()
 proc renderFrame(a) =
+
+  proc displayThemeLoadedMessage(a) =
+    let themeName = a.theme.themeNames[a.theme.currThemeIndex]
+    if a.theme.themeReloaded:
+      setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+    else:
+      setStatusMessage(fmt"Switched to '{themeName}' theme", a)
+
   if a.theme.nextThemeIndex.isSome:
     displayThemeLoadedMessage(a)
     a.theme.nextThemeIndex = Natural.none
+
+  proc handleWindowClose(a) =
+    proc saveConfigAndExit(a) =
+      saveConfig(a)
+      a.shouldClose = true
+
+    when defined(NO_QUIT_DIALOG):
+      saveConfigAndExit(a)
+    else:
+      if not koi.isDialogOpen():
+        if a.doc.undoManager.isModified:
+          a.dialog.saveDiscardDialog.isOpen = true
+          a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
+        else:
+          saveConfigAndExit(a)
+
 
   # XXX HACK: If the theme pane is shown, widgets are handled first, then then
   # the global shortcuts, so widget-specific shorcuts can take precedence
@@ -5222,13 +5228,31 @@ proc renderFrameSplash(a) =
 
   vg.endFrame()
 
+
+  proc shouldCloseSplash(a): bool =
+    alias(w, a.splash.win)
+
+    if a.opt.showThemePane:
+      not a.splash.show
+    else:
+      w.isKeyDown(keyEscape) or
+      w.isKeyDown(keySpace) or
+      w.isKeyDown(keyEnter) or
+      w.isKeyDown(keyKpEnter) or
+      w.mouseButtonDown(mbLeft) or
+      w.mouseButtonDown(mbRight) or
+      w.mouseButtonDown(mbMiddle)
+
   if shouldCloseSplash(a):
     closeSplash(a)
     a.win.focus()
 
 # }}}
 
+# }}}
 # {{{ Init & cleanup
+
+# {{{ loadFonts()
 proc loadFonts(vg: NVGContext) =
   discard vg.createFont("sans", DataDir / "Roboto-Regular.ttf")
   let boldFont = vg.createFont("sans-bold", DataDir / "Roboto-Bold.ttf")
@@ -5238,7 +5262,8 @@ proc loadFonts(vg: NVGContext) =
   discard addFallbackFont(vg, boldFont, iconFont)
   discard addFallbackFont(vg, blackFont, iconFont)
 
-
+# }}}
+# {{{ loadSplashImages()
 proc loadSplashImages(a) =
   alias(s, g_app.splash)
 
@@ -5255,7 +5280,8 @@ proc loadSplashImages(a) =
   createAlpha(s.outline)
   createAlpha(s.shadow)
 
-
+# }}}
+# {{{ setDefaultWidgetStyles()
 proc setDefaultWidgetStyles(a) =
   var s = koi.getDefaultCheckBoxStyle()
 
@@ -5265,7 +5291,8 @@ proc setDefaultWidgetStyles(a) =
 
   koi.setDefaultCheckboxStyle(s)
 
-
+# }}}
+# {{{ initGfx()
 proc initGfx(a): (CSDWindow, NVGContext) =
   glfw.initialize()
   let win = newCSDWindow()
@@ -5293,7 +5320,8 @@ GPU info
 
   result = (win, vg)
 
-
+# }}}
+# {{{ initApp()
 proc initApp(win: CSDWindow, vg: NVGContext) =
   alias(a, g_app)
 
@@ -5391,7 +5419,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   info("App init completed")
 
-
+# }}}
+# {{{ createSplashWindow()
 proc createSplashWindow(mousePassthru: bool = false; a) =
   alias(s, g_app.splash)
 
@@ -5415,7 +5444,8 @@ proc createSplashWindow(mousePassthru: bool = false; a) =
   s.win = newWindow(cfg)
   s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
 
-
+# }}}
+# {{{ cleanup()
 proc cleanup(a) =
   info("Exiting app...")
 
@@ -5434,8 +5464,13 @@ proc cleanup(a) =
   info("Cleanup successful, bye!")
 
 # }}}
+
+# }}}
+
 # {{{ main()
 proc main() =
+  alias(a, g_app)
+
   discard tryRemoveFile(LogFile)
   var fileLog = newFileLogger(LogFile, fmtStr="[$levelname] $date $time - ", bufSize=0)
   addHandler(fileLog)
@@ -5447,36 +5482,36 @@ proc main() =
   info(fmt"UserThemesDir = {UserThemesDir}")
 
   try:
-    let (win, vg) = initGfx(g_app)
+    let (win, vg) = initGfx(a)
     initApp(win, vg)
 
-    while not g_app.shouldClose:
+    while not a.shouldClose:
       # Render app
-      glfw.makeContextCurrent(g_app.win.glfwWin)
-      csdwindow.renderFrame(g_app.win, g_app.vg)
+      glfw.makeContextCurrent(a.win.glfwWin)
+      csdwindow.renderFrame(a.win, a.vg)
       glFlush()
 
       # Render splash
-      if g_app.splash.win == nil and g_app.splash.show:
-        createSplashWindow(mousePassthru = g_app.opt.showThemePane, g_app)
-        glfw.makeContextCurrent(g_app.splash.win)
+      if a.splash.win == nil and a.splash.show:
+        createSplashWindow(mousePassthru = a.opt.showThemePane, a)
+        glfw.makeContextCurrent(a.splash.win)
 
-        if g_app.splash.logo.data == nil:
-          loadSplashImages(g_app)
-        showSplash(g_app)
-        if g_app.opt.showThemePane:
-          g_app.win.focus()
+        if a.splash.logo.data == nil:
+          loadSplashImages(a)
+        showSplash(a)
+        if a.opt.showThemePane:
+          a.win.focus()
 
-      if g_app.splash.win != nil:
-        glfw.makeContextCurrent(g_app.splash.win)
-        renderFrameSplash(g_app)
+      if a.splash.win != nil:
+        glfw.makeContextCurrent(a.splash.win)
+        renderFrameSplash(a)
         glFlush()
 
       # Swap buffers
-      glfw.swapBuffers(g_app.win.glfwWin)
+      glfw.swapBuffers(a.win.glfwWin)
 
-      if g_app.splash.win != nil:
-        glfw.swapBuffers(g_app.splash.win)
+      if a.splash.win != nil:
+        glfw.swapBuffers(a.splash.win)
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
@@ -5484,7 +5519,7 @@ proc main() =
       else:
         glfw.waitEvents()
 
-    cleanup(g_app)
+    cleanup(a)
 
   except Exception as e:
     fatal("A fatal error has occured, the application will now exit: \n" &
