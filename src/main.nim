@@ -1537,13 +1537,13 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   let autosaveDisabled = not dlg.autosave
 
   y += PadYLarge
-  koi.label(x, y, LabelWidth, h, "Auto-save", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Autosave", style=a.ui.labelStyle)
 
   koi.checkBox(x + LabelWidth, y, DlgCheckBoxWidth, dlg.autosave,
                style = a.ui.checkBoxStyle)
 
   y += PadYSmall
-  koi.label(x, y, LabelWidth, h, "Auto-save frequency (minutes)",
+  koi.label(x, y, LabelWidth, h, "Autosave frequency (minutes)",
             state = if autosaveDisabled: wsDisabled else: wsNormal,
             style=a.ui.labelStyle)
 
@@ -2954,7 +2954,7 @@ proc saveMap(filename: string, autosave: bool = false; a) =
 
   except CatchableError as e:
     logError(e)
-    let prefix = if autosave: "Auto-save failed: " else: ""
+    let prefix = if autosave: "Autosave failed: " else: ""
     setStatusMessage(IconWarning, fmt"{prefix}Cannot save map: {e.msg}", a)
 
 # }}}
@@ -4955,11 +4955,11 @@ proc handleAutosave(a) =
   if a.opt.autosave and a.doc.undoManager.isModified:
     let dt = getMonoTime() - a.doc.lastAutosaveTime
     if dt > initDuration(minutes = a.opt.autosaveFreqMins):
-      let filename = if a.doc.filename != "":
+      let filename = if a.doc.filename == "":
                        AutosaveDir / addFileExt("untitled", MapFileExt)
                      else: a.doc.filename
 
-      saveMap(a.doc.filename, autosave=true, a)
+      saveMap(filename, autosave=true, a)
       a.doc.lastAutosaveTime = getMonoTime()
 
 # }}}
@@ -5366,6 +5366,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   alias(a, g_app)
 
   createDir(ConfigDir)
+  createDir(AutosaveDir)
   createDir(UserThemesDir)
 
   let cfg = loadAppConfig(ConfigFile)
@@ -5520,6 +5521,7 @@ proc main() =
   # TODO
 #  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), compiled on {BuildOS} at {BuildDateTime}")
   info(fmt"Gridmonger v{AppVersion} ({BuildGitHash})")
+  info(fmt"HomeDir = {HomeDir}")
   info(fmt"ConfigFile = {ConfigFile}")
   info(fmt"UserThemesDir = {UserThemesDir}")
 
