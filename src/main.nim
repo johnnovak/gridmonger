@@ -684,6 +684,7 @@ proc updateWidgetStyles(a) =
     fontSize = 14
     color = s.dialog.textColor
     colorDisabled = s.dialog.textColor.lerp(s.dialog.backgroundColor, 0.7)
+    asdf
     align = haLeft
 
   # Warning label
