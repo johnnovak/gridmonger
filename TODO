@@ -6,6 +6,13 @@ BUGS
   - theme editor: left separator line problem when regions are enabled
 
 
+TESTS
+
+- test ini with invalid values
+- test pasting in various non-image clipboard contents (textfields, color)
+- test with themes / data folder deleted
+
+
 TODO
 
 v0.9
@@ -14,9 +21,10 @@ v0.9
   - cascading theme loading (built-in vs user themes)
 
   - config format:
-    - experiment with toml again
-    - get rid of quotation marks
-    - insert new lines after sections when writing
+    - write own config handler:
+      - experiment with toml again
+      - get rid of quotation marks
+      - insert new lines after sections when writing
     - rename properties according to theme editor
 
   - autosave
