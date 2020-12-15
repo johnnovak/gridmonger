@@ -1569,6 +1569,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.opt.autoSaveFreqSecs = parseInt(dlg.autoSaveFreqSecs).Natural
 
     saveConfig(a)
+    setSwapInterval(a)
+
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -5391,6 +5393,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
+  a.splash.show = a.opt.showSplash
+  setSwapInterval(a)
+
   # Init window
   a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(a)
   a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(a)
@@ -5414,8 +5419,6 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
     a.win.maximize()
 
   a.win.show()
-
-  a.splash.show = a.opt.showSplash
 
   info("App init completed")
 
