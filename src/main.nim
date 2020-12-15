@@ -59,6 +59,8 @@ const
 
   DataDir = "data"
 
+  HomeDir = getHomeDir() / "Gridmonger"
+  AutosaveDir = HomeDir / "Autosave"
   ConfigDir = getConfigDir() / "Gridmonger"
   ConfigFile = ConfigDir / "gridmonger.ini"
 
@@ -145,13 +147,14 @@ type
     map:               Map
     levelStyle:        LevelStyle
     undoManager:       UndoManager[Map, UndoStateData]
+    lastAutosaveTime:  MonoTime
 
   Options = object
     showSplash:        bool
-    hideSplashSecs:    Natural
+    splashTimeoutSecs: Natural
     loadLastFile:      bool
-    autoSave:          bool
-    autoSaveFreqSecs:  Natural
+    autosave:          bool
+    autosaveFreqMins:  Natural
     disableVSync:      bool
 
     scrollMargin:      Natural
@@ -259,11 +262,11 @@ type
     activateFirstTextField: bool
 
     showSplash:             bool
-    hideSplashSecs:         string
+    splashTimeoutSecs:      string
     loadLastFile:           bool
     disableVSync:           bool
-    autoSave:               bool
-    autoSaveFreqSecs:       string
+    autosave:               bool
+    autosaveFreqMins:       string
 
 
   SaveDiscardDialogParams = object
@@ -500,7 +503,7 @@ proc saveConfig(a) =
 
   let a = AppConfig(
     showSplash: opt.showSplash,
-    hideSplashSecs: opt.hideSplashSecs,
+    splashTimeoutSecs: opt.splashTimeoutSecs,
     loadLastFile: opt.loadLastFile,
     lastFileName: a.doc.filename,
 
@@ -527,8 +530,8 @@ proc saveConfig(a) =
     viewStartRow: dp.viewStartRow,
     viewStartCol: dp.viewStartCol,
 
-    autoSave: opt.autoSave,
-    autoSaveFreqSecs: opt.autoSaveFreqSecs
+    autosave: opt.autosave,
+    autosaveFreqMins: opt.autosaveFreqMins
   )
 
   saveAppConfig(a, ConfigFile)
@@ -1469,11 +1472,11 @@ proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
 
   dlg.showSplash = a.opt.showSplash
-  dlg.hideSplashSecs = $a.opt.hideSplashSecs
+  dlg.splashTimeoutSecs = $a.opt.splashTimeoutSecs
   dlg.loadLastFile = a.opt.loadLastFile
   dlg.disableVSync = a.opt.disableVSync
-  dlg.autoSave = a.opt.autoSave
-  dlg.autoSaveFreqSecs = $a.opt.autoSaveFreqSecs
+  dlg.autosave = a.opt.autosave
+  dlg.autosaveFreqMins = $a.opt.autosaveFreqMins
 
   dlg.isOpen = true
 
@@ -1506,13 +1509,13 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   let autoHideDisabled = not dlg.showSplash
 
   y += PadYSmall
-  koi.label(x, y, LabelWidth, h, "Auto-hide splash after N seconds",
+  koi.label(x, y, LabelWidth, h, "Auto-close splash after N seconds",
             state = if autoHideDisabled: wsDisabled else: wsNormal,
             style=a.ui.labelStyle)
 
   koi.textField(
     x + LabelWidth, y, w = 40.0, h,
-    dlg.hideSplashSecs,
+    dlg.splashTimeoutSecs,
     activate = dlg.activateFirstTextField,
     disabled = autoHideDisabled,
     constraint = TextFieldConstraint(
@@ -1531,28 +1534,28 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     style = a.ui.checkBoxStyle
   )
 
-  let autoSaveDisabled = not dlg.autoSave
+  let autosaveDisabled = not dlg.autosave
 
   y += PadYLarge
   koi.label(x, y, LabelWidth, h, "Auto-save", style=a.ui.labelStyle)
 
-  koi.checkBox(x + LabelWidth, y, DlgCheckBoxWidth, dlg.autoSave,
+  koi.checkBox(x + LabelWidth, y, DlgCheckBoxWidth, dlg.autosave,
                style = a.ui.checkBoxStyle)
 
   y += PadYSmall
-  koi.label(x, y, LabelWidth, h, "Auto-save frequency (seconds)",
-            state = if autoSaveDisabled: wsDisabled else: wsNormal,
+  koi.label(x, y, LabelWidth, h, "Auto-save frequency (minutes)",
+            state = if autosaveDisabled: wsDisabled else: wsNormal,
             style=a.ui.labelStyle)
 
   koi.textField(
     x + LabelWidth, y, w = 40.0, h,
-    dlg.autoSaveFreqSecs,
+    dlg.autosaveFreqMins,
     activate = dlg.activateFirstTextField,
-    disabled = autoSaveDisabled,
+    disabled = autosaveDisabled,
     constraint = TextFieldConstraint(
       kind: tckInteger,
-      min: 30,
-      max: 1800
+      min: 1,
+      max: 30
     ).some,
     style = a.ui.textFieldStyle
   )
@@ -1565,12 +1568,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   y += 20
 
   proc okAction(dlg: var PreferencesDialogParams; a) =
-    a.opt.showSplash       = dlg.showSplash
-    a.opt.hideSplashSecs   = parseInt(dlg.hideSplashSecs).Natural
-    a.opt.loadLastFile     = dlg.loadLastFile
-    a.opt.disableVSync     = dlg.disableVSync
-    a.opt.autoSave         = dlg.autoSave
-    a.opt.autoSaveFreqSecs = parseInt(dlg.autoSaveFreqSecs).Natural
+    a.opt.showSplash        = dlg.showSplash
+    a.opt.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
+    a.opt.loadLastFile      = dlg.loadLastFile
+    a.opt.disableVSync      = dlg.disableVSync
+    a.opt.autosave          = dlg.autosave
+    a.opt.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
 
     saveConfig(a)
     setSwapInterval(a)
@@ -1692,7 +1695,7 @@ proc openNewMapDialog(a) =
   alias(dlg, a.dialog.newMapDialog)
   alias(co, a.doc.map.coordOpts)
 
-  dlg.name = "Untitled Map"
+  dlg.name        = "Untitled Map"
   dlg.origin      = co.origin.ord
   dlg.rowStyle    = co.rowStyle.ord
   dlg.columnStyle = co.columnStyle.ord
@@ -2888,6 +2891,7 @@ proc loadMap(filename: string; a): bool =
     let dt = getMonoTime() - t0
 
     a.doc.filename = filename
+    a.doc.lastAutosaveTime = getMonoTime()
 
     initUndoManager(a.doc.undoManager)
 
@@ -2926,22 +2930,32 @@ proc openMapAction(a) =
 
 # }}}
 # {{{ saveMap()
-proc saveMap(filename: string; a) =
+proc saveMap(filename: string, autosave: bool = false; a) =
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
   let mapDisplayOpts = MapDisplayOptions(
-    currLevel       : cur.level,
-    zoomLevel       : dp.getZoomLevel(),
-    cursorRow       : cur.row,
-    cursorCol       : cur.col,
-    viewStartRow    : dp.viewStartRow,
-    viewStartCol    : dp.viewStartCol
+    currLevel    : cur.level,
+    zoomLevel    : dp.getZoomLevel(),
+    cursorRow    : cur.row,
+    cursorCol    : cur.col,
+    viewStartRow : dp.viewStartRow,
+    viewStartCol : dp.viewStartCol
   )
 
-  writeMapFile(a.doc.map, mapDisplayOpts, filename)
-  a.doc.undoManager.setLastSaveState()
-  setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
+  info(fmt"Saving map to '{filename}'")
+
+  try:
+    writeMapFile(a.doc.map, mapDisplayOpts, filename)
+    a.doc.undoManager.setLastSaveState()
+
+    if not autosave:
+      setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
+
+  except CatchableError as e:
+    logError(e)
+    let prefix = if autosave: "Auto-save failed: " else: ""
+    setStatusMessage(IconWarning, fmt"{prefix}Cannot save map: {e.msg}", a)
 
 # }}}
 # {{{ saveMapAsAction()
@@ -2949,20 +2963,15 @@ proc saveMapAsAction(a) =
   when not defined(DEBUG):
     var filename = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
     if filename != "":
-      try:
-        filename = addFileExt(filename, MapFileExt)
-        info(fmt"Saving map to '{filename}'")
+      filename = addFileExt(filename, MapFileExt)
 
-        saveMap(filename, a)
-        a.doc.filename = filename
-      except CatchableError as e:
-        logError(e)
-        setStatusMessage(IconWarning, fmt"Cannot save map: {e.msg}", a)
+      saveMap(filename, autosave=false, a)
+      a.doc.filename = filename
 
 # }}}
 # {{{ saveMapAction()
 proc saveMapAction(a) =
-  if a.doc.filename != "": saveMap(a.doc.filename, a)
+  if a.doc.filename != "": saveMap(a.doc.filename, autosave=false, a)
   else: saveMapAsAction(a)
 
 # }}}
@@ -4941,6 +4950,20 @@ proc closeSplash(a) =
 
 # }}}
 
+# {{{ handleAutosave()
+proc handleAutosave(a) =
+  if a.opt.autosave and a.doc.undoManager.isModified:
+    let dt = getMonoTime() - a.doc.lastAutosaveTime
+    if dt > initDuration(minutes = a.opt.autosaveFreqMins):
+      let filename = if a.doc.filename != "":
+                       AutosaveDir / addFileExt("untitled", MapFileExt)
+                     else: a.doc.filename
+
+      saveMap(a.doc.filename, autosave=true, a)
+      a.doc.lastAutosaveTime = getMonoTime()
+
+# }}}
+
 # {{{ Main render/UI loop
 
 # {{{ renderUI()
@@ -5245,10 +5268,10 @@ proc renderFrameSplash(a) =
       not a.splash.show
     else:
       let autoClose =
-        if not a.opt.showThemePane and a.opt.hideSplashSecs > 0:
+        if not a.opt.showThemePane and a.opt.splashTimeoutSecs > 0:
           let dt = getMonoTime() - a.splash.t0
           koi.setFramesLeft()
-          dt > initDuration(seconds = a.opt.hideSplashSecs)
+          dt > initDuration(seconds = a.opt.splashTimeoutSecs)
         else: false
 
       w.isKeyDown(keyEscape) or
@@ -5366,11 +5389,11 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.opt.scrollMargin = 3
   a.opt.showSplash = cfg.showSplash
-  a.opt.hideSplashSecs = cfg.hideSplashSecs
+  a.opt.splashTimeoutSecs = cfg.splashTimeoutSecs
   a.opt.loadLastFile = cfg.loadLastFile
   a.opt.disableVSync = cfg.disableVSync
-  a.opt.autoSave = cfg.autoSave
-  a.opt.autoSaveFreqSecs = cfg.autoSaveFreqSecs
+  a.opt.autosave = cfg.autosave
+  a.opt.autosaveFreqMins = cfg.autosaveFreqMins
 
   a.opt.showNotesPane = cfg.showNotesPane
   a.opt.showToolsPane = cfg.showToolsPane
@@ -5532,11 +5555,13 @@ proc main() =
       if a.splash.win != nil:
         glfw.swapBuffers(a.splash.win)
 
+      handleAutosave(a)
+
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
-        glfw.waitEvents()
+        glfw.waitEventsTimeout(15)
 
     cleanup(a)
 

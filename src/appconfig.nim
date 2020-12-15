@@ -9,7 +9,7 @@ type
   AppConfig* = object
     # Startup section
     showSplash*:            bool
-    hideSplashSecs*:        Natural
+    splashTimeoutSecs*:     Natural
     loadLastFile*:          bool
     lastFileName*:          string
 
@@ -37,13 +37,13 @@ type
     viewStartCol*:          Natural
 
     # Autosave section
-    autoSave*:              bool
-    autoSaveFreqSecs*:      Natural
+    autosave*:              bool
+    autosaveFreqMins*:      Natural
 
 
 const DefaultAppConfig = AppConfig(
   showSplash: true,
-  hideSplashSecs: 0,
+  splashTimeoutSecs: 0,
   loadLastFile: true,
   lastFileName: "",
 
@@ -69,8 +69,8 @@ const DefaultAppConfig = AppConfig(
   viewStartRow: 0,
   viewStartCol: 0,
 
-  autoSave: true,
-  autoSaveFreqSecs: 60,
+  autosave: true,
+  autosaveFreqMins: 60,
 )
 
 
@@ -116,7 +116,7 @@ proc loadAppConfig*(fname: string): AppConfig =
   var a = DefaultAppConfig.deepCopy()
 
   cfg.getBool(   StartupSection, ShowSplashKey,     a.showSplash)
-  cfg.getNatural(StartupSection, HideSplashSecsKey, a.hideSplashSecs)
+  cfg.getNatural(StartupSection, HideSplashSecsKey, a.splashTimeoutSecs)
   cfg.getBool(   StartupSection, LoadLastFileKey,   a.loadLastFile)
   cfg.getString( StartupSection, LastFileNameKey,   a.lastFileName)
 
@@ -142,8 +142,8 @@ proc loadAppConfig*(fname: string): AppConfig =
   cfg.getNatural(UISection, ViewStartRowKey, a.viewStartRow)
   cfg.getNatural(UISection, ViewStartColKey, a.viewStartCol)
 
-  cfg.getBool(   AutoSaveSection, EnabledKey,       a.autoSave)
-  cfg.getNatural(AutoSaveSection, FrequencySecsKey, a.autoSaveFreqSecs)
+  cfg.getBool(   AutoSaveSection, EnabledKey,       a.autosave)
+  cfg.getNatural(AutoSaveSection, FrequencySecsKey, a.autosaveFreqMins)
 
   if a.width  < WindowMinWidth:  a.width  = DefaultAppConfig.width
   if a.height < WindowMinHeight: a.height = DefaultAppConfig.height
@@ -162,7 +162,7 @@ proc toConfig(a: AppConfig): Config =
   var cfg = newConfig()
 
   cfg.setSectionKey(StartupSection, ShowSplashKey,     a.showSplash.toYesNo)
-  cfg.setSectionKey(StartupSection, HideSplashSecsKey, $a.hideSplashSecs)
+  cfg.setSectionKey(StartupSection, HideSplashSecsKey, $a.splashTimeoutSecs)
   cfg.setSectionKey(StartupSection, LoadLastFileKey,   a.loadLastFile.toYesNo)
   cfg.setSectionKey(StartupSection, LastFileNameKey,   a.lastFileName)
 
@@ -188,8 +188,8 @@ proc toConfig(a: AppConfig): Config =
   cfg.setSectionKey(UISection, ViewStartRowKey,      $a.viewStartRow)
   cfg.setSectionKey(UISection, ViewStartColKey,      $a.viewStartCol)
 
-  cfg.setSectionKey(AutoSaveSection, EnabledKey,       a.autoSave.toYesNo)
-  cfg.setSectionKey(AutoSaveSection, FrequencySecsKey, $a.autoSaveFreqSecs)
+  cfg.setSectionKey(AutoSaveSection, EnabledKey,       a.autosave.toYesNo)
+  cfg.setSectionKey(AutoSaveSection, FrequencySecsKey, $a.autosaveFreqMins)
 
   result = cfg
 
