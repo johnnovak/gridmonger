@@ -422,6 +422,7 @@ type
     win:           Window
     vg:            NVGContext
     show:          bool
+    t0:            MonoTime
 
     logo:          ImageData
     outline:       ImageData
@@ -1517,7 +1518,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     constraint = TextFieldConstraint(
       kind: tckInteger,
       min: 1,
-      max: 20
+      max: 5
     ).some,
     style = a.ui.textFieldStyle
   )
@@ -1551,7 +1552,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     constraint = TextFieldConstraint(
       kind: tckInteger,
       min: 30,
-      max: 3600
+      max: 1800
     ).some,
     style = a.ui.textFieldStyle
   )
@@ -5243,13 +5244,21 @@ proc renderFrameSplash(a) =
     if a.opt.showThemePane:
       not a.splash.show
     else:
+      let autoClose =
+        if not a.opt.showThemePane and a.opt.hideSplashSecs > 0:
+          let dt = getMonoTime() - a.splash.t0
+          koi.setFramesLeft()
+          dt > initDuration(seconds = a.opt.hideSplashSecs)
+        else: false
+
       w.isKeyDown(keyEscape) or
       w.isKeyDown(keySpace) or
       w.isKeyDown(keyEnter) or
       w.isKeyDown(keyKpEnter) or
       w.mouseButtonDown(mbLeft) or
       w.mouseButtonDown(mbRight) or
-      w.mouseButtonDown(mbMiddle)
+      w.mouseButtonDown(mbMiddle) or
+      autoClose
 
   if shouldCloseSplash(a):
     closeSplash(a)
@@ -5400,6 +5409,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
   a.splash.show = a.opt.showSplash
+  a.splash.t0 = getMonoTime()
   setSwapInterval(a)
 
   # Init window
