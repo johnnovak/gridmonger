@@ -5234,6 +5234,9 @@ proc renderFrameSplash(a) =
   vg.endFrame()
 
 
+  if not a.opt.showThemePane and a.splash.win.shouldClose:
+    a.shouldClose = true
+
   proc shouldCloseSplash(a): bool =
     alias(w, a.splash.win)
 
