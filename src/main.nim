@@ -616,9 +616,11 @@ proc updateWidgetStyles(a) =
     bgFillColor         = ws.bgColor
     bgFillColorHover    = ws.bgColorHover
     bgFillColorActive   = s.textField.bgColorActive
+    bgFillColorDisabled = ws.bgColorDisabled
     textColor           = ws.textColor
     textColorHover      = ws.textColor
     textColorActive     = s.textField.textColorActive
+    textColorDisabled   = ws.textColorDisabled
     cursorColor         = s.textField.cursorColor
     selectionColor      = s.textField.selectionColor
 
@@ -681,6 +683,7 @@ proc updateWidgetStyles(a) =
   with a.ui.labelStyle:
     fontSize = 14
     color = s.dialog.textColor
+    colorDisabled = s.dialog.textColor.lerp(s.dialog.backgroundColor, 0.7)
     align = haLeft
 
   # Warning label
