@@ -149,6 +149,16 @@ proc copyNotesFrom(l; destRow, destCol: Natural,
 
 # }}}
 
+# {{{ isNeighbourCellEmpty*()
+proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool {.inline.} =
+  l.cellGrid.isNeighbourCellEmpty(r,c, dir)
+
+# }}}
+# {{{ isEmpty*()
+proc isEmpty*(l; r,c: Natural): bool {.inline.} =
+  l.cellGrid.isEmpty(r,c)
+
+# }}}
 # {{{ getFloor*()
 proc getFloor*(l; r,c: Natural): Floor {.inline.} =
   l.cellGrid.getFloor(r,c)
@@ -190,25 +200,15 @@ proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
   l.cellGrid.setWall(r,c, dir, w)
 
 # }}}
+# {{{ canSetWall*()
+proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
+  l.getFloor(r,c) != fNone or not l.isNeighbourCellEmpty(r,c, {dir})
+
+# }}}
 # {{{ getNeighbourCell*()
 proc getNeighbourCell*(l; r,c: Natural,
                        dir: Direction): Option[Cell] {.inline.} =
   l.cellGrid.getNeighbourCell(r,c, dir)
-
-# }}}
-# {{{ isNeighbourCellEmpty*()
-proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool {.inline.} =
-  l.cellGrid.isNeighbourCellEmpty(r,c, dir)
-
-# }}}
-# {{{ isEmpty*()
-proc isEmpty*(l; r,c: Natural): bool {.inline.} =
-  l.cellGrid.isEmpty(r,c)
-
-# }}}
-# {{{ canSetWall*()
-proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
-  l.getFloor(r,c) != fNone or not l.isNeighbourCellEmpty(r,c, {dir})
 
 # }}}
 
@@ -411,6 +411,5 @@ proc newLevelFrom*(l): Level =
   newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
 
 # }}}
-
 
 # vim: et:ts=2:sw=2:fdm=marker

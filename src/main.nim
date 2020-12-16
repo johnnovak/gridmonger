@@ -2802,7 +2802,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     if validationError != "": return
 
     var note = Note(kind: nkLabel, text: dlg.text, labelColor: dlg.color)
-    actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
+    actions.setLabel(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
     setStatusMessage(IconComment, "Set label", a)
     koi.closeDialog()
@@ -3492,11 +3492,18 @@ proc handleGlobalKeyEvents(a) =
           openEditNoteDialog(a)
 
       elif ke.isKeyDown(keyN, {mkShift}):
-        if map.isEmpty(cur):
-          setStatusMessage(IconWarning, "No note to delete in cell", a)
+        if not map.hasNote(cur):
+          setStatusMessage(IconWarning, "No note to erase in cell", a)
         else:
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
+
+      elif ke.isKeyDown(keyT, {mkShift}):
+        if not (map.hasNote(cur) and map.getNote(cur).kind == nkLabel):
+          setStatusMessage(IconWarning, "No label to erase in cell", a)
+        else:
+          actions.eraseLabel(map, cur, um)
+          setStatusMessage(IconEraser, "Label erased", a)
 
       elif ke.isKeyDown(keyT, {mkCtrl}):
         openEditLabelDialog(a)

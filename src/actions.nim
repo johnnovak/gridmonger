@@ -187,6 +187,22 @@ proc eraseNote*(map; loc: Location; um) =
     l.delNote(loc.row, loc.col)
 
 # }}}
+# {{{ setLabel*()
+proc setLabel*(map; loc: Location, n: Note; um) =
+
+  singleCellAction(map, loc, um, "Set label", m):
+    alias(l, m.levels[loc.level])
+    l.setNote(loc.row, loc.col, n)
+
+# }}}
+# {{{ eraseLabel*()
+proc eraseLabel*(map; loc: Location; um) =
+
+  singleCellAction(map, loc, um, "Erase label", m):
+    alias(l, m.levels[loc.level])
+    l.delNote(loc.row, loc.col)
+
+# }}}
 # {{{ setLink*()
 proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   let srcFloor = map.getFloor(src)

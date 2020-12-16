@@ -2315,6 +2315,7 @@ proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
           ob[r,c] = {}
 
 # }}}
+
 # {{{ drawLevel*()
 proc drawLevel*(map: Map, level: Natural; ctx) =
   alias(dp, ctx.dp)

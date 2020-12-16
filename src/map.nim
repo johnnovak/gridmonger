@@ -10,6 +10,7 @@ import tables
 
 using m: Map
 
+# {{{ newMap*()
 proc newMap*(name: string): Map =
   var m = new Map
   m.name = name
@@ -29,14 +30,17 @@ proc newMap*(name: string): Map =
 
   result = m
 
+# }}}
 
+# {{{ findSortedLevelIdxByLevelIdx*()
 proc findSortedLevelIdxByLevelIdx*(m; i: Natural): Natural =
   for sortedLevelIdx, levelIdx in m.sortedLevelIdxToLevelIdx.pairs:
     if i == levelIdx:
       return sortedLevelIdx
   assert false
 
-
+# }}}
+# {{{ refreshSortedLevelNames*()
 proc refreshSortedLevelNames*(m) =
   proc mkSortedLevelName(l: Level): string =
     let elevation = if l.elevation == 0: "G" else: $l.elevation
@@ -64,61 +68,106 @@ proc refreshSortedLevelNames*(m) =
     m.sortedLevelNames.add(mkSortedLevelName(level))
     m.sortedLevelIdxToLevelIdx[sortedIdx] = levelIdx
 
+# }}}
 
+# {{{ addLevel*()
 proc addLevel*(m; l: Level) =
   m.levels.add(l)
   m.refreshSortedLevelNames()
 
+# }}}
+# {{{ delLevel*()
 proc delLevel*(m; levelIdx: Natural) =
   m.levels.del(levelIdx)
   m.refreshSortedLevelNames()
 
+# }}}
 
+# {{{ hasNote*()
+proc hasNote*(m; loc: Location): bool {.inline.} =
+  m.levels[loc.level].hasNote(loc.row, loc.col)
+
+# }}}
+# {{{ getNote*()
+proc getNote*(m; loc: Location): Note {.inline.} =
+  m.levels[loc.level].getNote(loc.row, loc.col)
+
+# }}}
+
+# {{{ eraseCellLinks*()
 proc eraseCellLinks*(m; loc: Location) =
   m.links.delBySrc(loc)
   m.links.delByDest(loc)
 
-proc getFloor*(m; loc: Location): Floor {.inline.} =
-  m.levels[loc.level].getFloor(loc.row, loc.col)
+# }}}
+# {{{ eraseCell*()
+proc eraseCell*(m; loc: Location) =
+  m.levels[loc.level].eraseCell(loc.row, loc.col)
+  m.eraseCellLinks(loc)
 
+# }}}
+# {{{ eraseCellWalls*()
+proc eraseCellWalls*(m; loc: Location) =
+  m.levels[loc.level].eraseCellWalls(loc.row, loc.col)
+
+# }}}
+
+# {{{ isEmpty*()
 proc isEmpty*(m; loc: Location): bool {.inline.} =
   m.levels[loc.level].isEmpty(loc.row, loc.col)
 
+# }}}
+# {{{ getFloor*()
+proc getFloor*(m; loc: Location): Floor {.inline.} =
+  m.levels[loc.level].getFloor(loc.row, loc.col)
+
+# }}}
+# {{{ setFloor*()
 proc setFloor*(m; loc: Location, f: Floor) =
   m.levels[loc.level].setFloor(loc.row, loc.col, f)
   m.eraseCellLinks(loc)
 
+# }}}
+# {{{ getFloorOrientation*()
 proc getFloorOrientation*(m; loc: Location): Orientation {.inline.} =
   m.levels[loc.level].getFloorOrientation(loc.row, loc.col)
 
+# }}}
+# {{{ setFloorOrientation*()
 proc setFloorOrientation*(m; loc: Location, ot: Orientation) =
   m.levels[loc.level].setFloorOrientation(loc.row, loc.col, ot)
 
+# }}}
+# {{{ guessFloorOrientation*()
 proc guessFloorOrientation*(m; loc: Location): Orientation =
   m.levels[loc.level].guessFloorOrientation(loc.row, loc.col)
 
+# }}}
+# {{{ getFloorColor*()
 proc getFloorColor*(m; loc: Location): Natural {.inline.} =
   m.levels[loc.level].getFloorColor(loc.row, loc.col)
 
+# }}}
+# {{{ setFloorColor*()
 proc setFloorColor*(m; loc: Location,
                     floorColor: byte) {.inline.} =
   m.levels[loc.level].setFloorColor(loc.row, loc.col, floorColor)
 
-
+# }}}
+# {{{ getWall*()
 proc getWall*(m; loc: Location, dir: CardinalDir): Wall {.inline.} =
   m.levels[loc.level].getWall(loc.row, loc.col, dir)
 
-proc canSetWall*(m; loc: Location, dir: CardinalDir): bool =
-  m.levels[loc.level].canSetWall(loc.row, loc.col, dir)
-
+# }}}
+# {{{ setWall*()
 proc setWall*(m; loc: Location, dir: CardinalDir, w: Wall) =
   m.levels[loc.level].setWall(loc.row, loc.col, dir, w)
 
-proc eraseCellWalls*(m; loc: Location) =
-  m.levels[loc.level].eraseCellWalls(loc.row, loc.col)
+# }}}
+# {{{ canSetWall*()
+proc canSetWall*(m; loc: Location, dir: CardinalDir): bool =
+  m.levels[loc.level].canSetWall(loc.row, loc.col, dir)
 
-proc eraseCell*(m; loc: Location) =
-  m.levels[loc.level].eraseCell(loc.row, loc.col)
-  m.eraseCellLinks(loc)
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
