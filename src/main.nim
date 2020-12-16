@@ -3505,6 +3505,15 @@ proc handleGlobalKeyEvents(a) =
           actions.eraseLabel(map, cur, um)
           setStatusMessage(IconEraser, "Label erased", a)
 
+#[ TODO
+      elif ke.isKeyDown(keyD, {mkCtrl, mkAlt}):
+        actions.excavateTrail(map, cur, um)
+        setStatusMessage(IconEraser, "Trail excavated", a)
+
+      elif ke.isKeyDown(keyC, {mkCtrl, mkAlt}):
+        actions.clearTrail(map, cur, um)
+        setStatusMessage(IconEraser, "Trail cleared", a)
+]#
       elif ke.isKeyDown(keyT, {mkCtrl}):
         openEditLabelDialog(a)
 

@@ -7,7 +7,7 @@ import utils
 
 using g: CellGrid
 
-
+# {{{ cellIndex()
 template cellIndex(g; r,c: Natural): Natural =
   # We need to be able to address the bottommost & rightmost "edge" columns
   # & rows within the module.
@@ -17,15 +17,21 @@ template cellIndex(g; r,c: Natural): Natural =
   assert c < w
   r*w + c
 
+# }}}
+# {{{ `[]=`()
 proc `[]=`(g; r,c: Natural, cell: Cell) {.inline.} =
   g.cells[cellIndex(g, r,c)] = cell
 
+# }}}
+# {{{ `[]`()
 proc `[]`(g; r,c: Natural): var Cell {.inline.} =
   # We need to be able to address the bottommost & rightmost "edge" columns
   # & rows within the module.
   result = g.cells[cellIndex(g, r,c)]
 
+# }}}
 
+# {{{ getWall*()
 proc getWall*(g; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
   assert r < g.rows
   assert c < g.cols
@@ -36,7 +42,8 @@ proc getWall*(g; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
   of dirS: g[r+1, c  ].wallN
   of dirE: g[r,   c+1].wallW
 
-
+# }}}
+# {{{ setWall*()
 proc setWall*(g; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
   assert r < g.rows
   assert c < g.cols
@@ -47,41 +54,53 @@ proc setWall*(g; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
   of dirS: g[r+1, c  ].wallN = w
   of dirE: g[r,   c+1].wallW = w
 
-
+# }}}
+# {{{ getFloor*()
 proc getFloor*(g; r,c: Natural): Floor {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floor
 
+# }}}
+# {{{ setFloor*()
 proc setFloor*(g; r,c: Natural, f: Floor) {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floor = f
 
+# }}}
+# {{{ getFloorOrientation*()
 proc getFloorOrientation*(g; r,c: Natural): Orientation {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorOrientation
 
+# }}}
+# {{{ setFloorOrientation*()
 proc setFloorOrientation*(g; r,c: Natural, ot: Orientation) {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorOrientation = ot
 
-
+# }}}
+# {{{ getFloorColor*()
 proc getFloorColor*(g; r,c: Natural): byte {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorColor
 
+# }}}
+# {{{ setFloorColor*()
 proc setFloorColor*(g; r,c: Natural, col: byte) {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorColor = col
 
+# }}}
 
 const EmptyFloors = {fNone, fTrail}
 
+# {{{ isEmpty*()
 proc isEmpty*(f: Floor): bool {.inline.} =
   f in EmptyFloors
 
@@ -91,7 +110,8 @@ proc isEmpty*(c: Cell): bool {.inline.} =
 proc isEmpty*(g; r,c: Natural): bool {.inline.} =
   g[r,c].isEmpty
 
-
+# }}}
+# {{{ fill*()
 proc fill*(g; rect: Rect[Natural], cell: Cell) =
   assert rect.r1 < g.rows
   assert rect.c1 < g.cols
@@ -107,7 +127,8 @@ proc fill*(g; cell: Cell) =
   let rect = rectN(0, 0, g.rows, g.cols)
   g.fill(rect, cell)
 
-
+# }}}
+# {{{ newCellGrid*()
 proc newCellGrid*(rows, cols: Natural): CellGrid =
   var g = new CellGrid
   g.rows = rows
@@ -121,7 +142,8 @@ proc newCellGrid*(rows, cols: Natural): CellGrid =
   g.fill(Cell.default)
   result = g
 
-
+# }}}
+# {{{ copyFrom*()
 proc copyFrom*(g; destRow, destCol: Natural,
                src: CellGrid, srcRect: Rect[Natural]) =
   # This function cannot fail as the copied area is clipped to the extents of
@@ -150,15 +172,20 @@ proc copyFrom*(g; destRow, destCol: Natural,
   for r in 0..<rows:
     g[destRow+r, destCol+cols].wallW = src[srcRow+r, srcCol+cols].wallW
 
-
+# }}}
+# {{{ getNeighbourCell*()
 proc getNeighbourCell*(g; r,c: Natural, dir: Direction): Option[Cell] =
   let (nr, nc) = step(r,c, dir)
   if nr < 0 or nc < 0 or nr >= g.rows or nc >= g.cols: Cell.none
   else: g[nr,nc].some
 
+# }}}
+# {{{ isNeighbourCellEmpty*()
 proc isNeighbourCellEmpty*(g; r,c: Natural, dir: Direction): bool =
   let c = getNeighbourCell(g, r,c, dir)
   if c.isNone: true
   else: c.get.isEmpty
+
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

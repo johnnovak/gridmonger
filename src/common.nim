@@ -125,6 +125,8 @@ type
     floorOrientation*: Orientation
     floorColor*:       byte
     wallN*, wallW*:    Wall
+    # TODO
+    # trail*:            bool
 
   Floor* = enum
     fNone                = (  0, "blank"),
@@ -217,5 +219,6 @@ const
   # internal IDs, never written to disk
   CopyBufferLevelIndex* = 1_000_000
   MoveBufferLevelIndex* = 1_000_001
+
 
 # vim: et:ts=2:sw=2:fdm=marker

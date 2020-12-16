@@ -28,6 +28,12 @@ v0.9
 
   - cascading theme loading (built-in vs user themes)
 
+  - trail:
+    - should be a cell flag instead of a floor type
+    - excavate trail
+    - clear whole trail
+    - erase trail
+
   - config format:
     - write own config handler:
       - experiment with toml again
@@ -51,7 +57,6 @@ v0.9
   - colours in two columns (to support 1366x768)
   - 10 colours (1st color must be the default)
 
-  - remove tool for text labels
   - region parameters (only name for now)
   - region name reassignment when resizing a level
 
