@@ -3,6 +3,8 @@ BUGS
   - cut shouldn't cut walls of bordering cells
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - theme editor: left separator line problem when regions are enabled
+  - add note: cannot tab to ID field (ID tab)
+  - textfields: max length (note, ID field)
 
 
 TESTS
@@ -18,6 +20,7 @@ v0.9
   - update all themes
 
   - map/level comments
+
   - metadata
     - level:
       - comments
@@ -30,6 +33,7 @@ v0.9
 
   - trail:
     - should be a cell flag instead of a floor type
+    - show/hide trail
     - excavate trail
     - clear whole trail
     - erase trail

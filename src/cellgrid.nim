@@ -122,7 +122,6 @@ proc fill*(g; rect: Rect[Natural], cell: Cell) =
     for c in rect.c1..rect.c2:
       g[r,c] = cell
 
-
 proc fill*(g; cell: Cell) =
   let rect = rectN(0, 0, g.rows, g.cols)
   g.fill(rect, cell)
