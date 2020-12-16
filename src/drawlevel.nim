@@ -928,7 +928,7 @@ proc drawInnerShadows(viewBuf: Level; ctx) =
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
 
-        if viewBuf.getFloor(bufRow, bufCol) != fNone:
+        if not viewBuf.isEmpty(bufRow, bufCol):
           let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
           let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
           let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
@@ -967,7 +967,7 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
 
-        if viewBuf.getFloor(bufRow, bufCol) == fNone:
+        if viewBuf.isEmpty(bufRow, bufCol):
           let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
           let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
           let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
@@ -2262,7 +2262,7 @@ proc renderEdgeOutlines(viewBuf: Level): OutlineBuf =
   for r in 0..<viewBuf.rows:
     for c in 0..<viewBuf.cols:
 
-      if viewBuf.getFloor(r,c) == fNone:
+      if viewBuf.isEmpty(r,c):
         var cell: OutlineCell
 
         if not isNeighbourCellEmpty(viewBuf, r,c, North): cell.incl(olN)

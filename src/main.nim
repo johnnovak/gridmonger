@@ -1,4 +1,5 @@
 import algorithm
+import browsers
 import lenientops
 import logging except Level
 import macros
@@ -1520,7 +1521,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     disabled = autoHideDisabled,
     constraint = TextFieldConstraint(
       kind: tckInteger,
-      min: 1,
+      min: 0,
       max: 5
     ).some,
     style = a.ui.textFieldStyle
