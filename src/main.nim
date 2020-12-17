@@ -15,6 +15,7 @@ import times
 
 import glad/gl
 import glfw
+from glfw/wrapper import IconImageObj
 import koi
 import koi/undomanager
 import nanovg
@@ -36,6 +37,9 @@ import selection
 import theme
 import utils
 
+
+when defined(windows):
+  {.link: "icons/gridmonger.res".}
 
 const
   BuildGitHash = staticExec("git rev-parse --short HEAD").strip
@@ -5306,6 +5310,30 @@ proc renderFrameSplash(a) =
 # }}}
 # {{{ Init & cleanup
 
+# {{{ loadAndSetIcon()
+proc loadAndSetIcon(a) =
+  var icons: array[5, wrapper.IconImageObj]
+
+  proc add(idx: Natural, img: ImageData) =
+    icons[idx].width = img.width.int32
+    icons[idx].height = img.height.int32
+    icons[idx].pixels = cast[ptr cuchar](img.data)
+
+  var icon32 = loadImage(DataDir / "icon32.png")
+  var icon48 = loadImage(DataDir / "icon48.png")
+  var icon64 = loadImage(DataDir / "icon64.png")
+  var icon128 = loadImage(DataDir / "icon128.png")
+  var icon256 = loadImage(DataDir / "icon256.png")
+
+  add(0, icon32)
+  add(1, icon48)
+  add(2, icon64)
+  add(3, icon128)
+  add(4, icon256)
+
+  a.win.glfwWin.icons = icons
+
+# }}}
 # {{{ loadFonts()
 proc loadFonts(vg: NVGContext) =
   discard vg.createFont("sans", DataDir / "Roboto-Regular.ttf")
@@ -5390,6 +5418,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a = new AppContext
   a.win = win
   a.vg = vg
+
+  loadAndSetIcon(a)
 
   setDefaultWidgetStyles(a)
 

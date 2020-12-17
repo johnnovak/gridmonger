@@ -1,4 +1,4 @@
-<img src="data/logo-big-bw.png" width="100%" alt="Gridmonger" />
+<img src="extras/logo-big-bw.png" width="100%" alt="Gridmonger" />
 
 <p align="center"><em>Your trusty old-school CRPG companion</em></p>
 
