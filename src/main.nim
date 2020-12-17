@@ -2550,7 +2550,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   koi.label(x, y, LabelWidth, h, "Marker", style=a.ui.labelStyle)
   koi.radioButtons(
-    x + LabelWidth, y, 300, h+3,
+    x + LabelWidth, y, 296, h,
     labels = @["None", "Number", "ID", "Icon"],
     dlg.kind,
     style = a.ui.radioButtonStyle
