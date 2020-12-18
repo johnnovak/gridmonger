@@ -3,7 +3,6 @@ BUGS
   - cut shouldn't cut walls of bordering cells
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - theme editor: left separator line problem when regions are enabled
-  - add note: cannot tab to ID field (ID tab)
   - textfields: max length (note, ID field)
 
 
