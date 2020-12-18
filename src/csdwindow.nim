@@ -409,7 +409,8 @@ proc handleWindowDragEvents(win) =
       of wrdNone:
         discard
 
-      let (newWidth, newHeight) = (max(newW, WindowMinWidth), max(newH, WindowMinHeight))
+      let (newWidth, newHeight) = (max(newW, WindowMinWidth),
+                                   max(newH, WindowMinHeight))
 
 #      if newW >= newWidth and newH >= newHeight:
       (win.posX0, win.posY0) = (newX, newY)

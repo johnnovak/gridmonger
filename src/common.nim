@@ -14,8 +14,8 @@ const
 
   MaxLabelWidthInCells* = 15
 
-  WindowMinWidth* = 640
-  WindowMinHeight* = 480
+  WindowMinWidth* = 520
+  WindowMinHeight* = 520
 
 
 type

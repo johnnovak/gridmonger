@@ -4,6 +4,7 @@ BUGS
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - theme editor: left separator line problem when regions are enabled
   - textfields: max length (note, ID field)
+  - notes panel: text area scrollbar appears offset
 
 
 TESTS
@@ -56,8 +57,6 @@ v0.9
   - disable ctrl in excavate, erase & floor modes
   - center map to screen
 
-  - two-column toolbars for small window sizes
-  - colours in two columns (to support 1366x768)
   - 10 colours (1st color must be the default)
 
   - region parameters (only name for now)

@@ -94,15 +94,18 @@ const
   LevelBottomPad_NoCoords = 10.0
   LevelLeftPad_NoCoords   = 28.0
 
-  NotesPaneHeight         = 60.0
+  NotesPaneHeight         = 62.0
   NotesPaneTopPad         = 10.0
-  NotesPaneRightPad       = 110.0
+  NotesPaneRightPad       = 50.0
   NotesPaneBottomPad      = 10.0
   NotesPaneLeftPad        = 20.0
 
-  ToolsPaneWidth          = 60.0
+  ToolsPaneWidthNarrow    = 60.0
+  ToolsPaneWidthWide      = 90.0
   ToolsPaneTopPad         = 91.0
   ToolsPaneBottomPad      = 30.0
+  ToolsPaneYBreakpoint1   = 735.0
+  ToolsPaneYBreakpoint2   = 855.0
 
   ThemePaneWidth          = 316.0
 
@@ -839,6 +842,12 @@ proc drawAreaHeight(a): float =
   koi.winHeight() - TitleBarHeight
 
 # }}}
+# {{{ toolsPaneWidth()
+proc toolsPaneWidth(): float =
+  if koi.winHeight() < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
+  else: ToolsPaneWidthNarrow
+
+# }}}
 # {{{ updateViewStartAndCursorPosition()
 proc updateViewStartAndCursorPosition(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -873,7 +882,7 @@ proc updateViewStartAndCursorPosition(a) =
                              NotesPaneBottomPad
 
   if a.opt.showToolsPane:
-    ui.levelDrawAreaWidth -= ToolsPaneWidth
+    ui.levelDrawAreaWidth -= toolsPaneWidth()
 
   dp.viewRows = min(dp.numDisplayableRows(ui.levelDrawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(ui.levelDrawAreaWidth), l.cols)
@@ -4099,6 +4108,7 @@ proc renderLevel(a) =
 
 # }}}
 # {{{ renderToolsPane()
+
 # {{{ specialWallDrawProc()
 proc specialWallDrawProc(ls: LevelStyle,
                          ts: ToolbarPaneStyle,
@@ -4187,33 +4197,57 @@ proc renderToolsPane(x, y, w, h: float; a) =
   alias(ls, a.doc.levelStyle)
   alias(ts, a.theme.style.toolbarPane)
 
+  var
+    toolItemsPerColumn = 12
+    toolX = x
+
+    colorItemsPerColum = 10
+    colorX = x + 3
+    colorY = y + 445
+
+  if koi.winHeight() < ToolsPaneYBreakpoint2:
+    colorItemsPerColum = 5
+    toolX += 30
+
+  if koi.winHeight() < ToolsPaneYBreakpoint1:
+    toolItemsPerColumn = 6
+    toolX -= 30
+    colorX += 3
+    colorY -= 210
+
   koi.radioButtons(
-    x = x,
+    x = toolX,
     y = y,
     w = 36,
     h = 35,
     labels = newSeq[string](SpecialWalls.len),
     ui.currSpecialWall,
     tooltips = @[],
-    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 20),
+    layout = RadioButtonsLayout(kind: rblGridVert,
+                                itemsPerColumn: toolItemsPerColumn),
+
     drawProc = specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
   )
 
   koi.radioButtons(
-    x = x + 3,
-    y = y + 446,
+    x = colorX,
+    y = colorY,
     w = 30,
     h = 30,
     labels = newSeq[string](ls.floorColor.len),
     ui.currFloorColor,
     tooltips = @[],
-    layout = RadioButtonsLayout(kind: rblGridVert, itemsPerColumn: 9),
-    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq, ls.cursorColor).some
+
+    layout = RadioButtonsLayout(kind: rblGridVert,
+                                itemsPerColumn: colorItemsPerColum),
+
+    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq,
+                                        ls.cursorColor).some
   )
 
 # }}}
-# {{{ drawNotesPane()
-proc drawNotesPane(x, y, w, h: float; a) =
+# {{{ renderNotesPane()
+proc renderNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(s, a.theme.style.notesPane)
 
@@ -5030,7 +5064,6 @@ proc renderUI(a) =
 
   # Clear background
   vg.beginPath()
-  # TODO shouldn't have to calculate visible window area manually
   vg.rect(0, TitleBarHeight, uiWidth, winHeight - TitleBarHeight)
 
   if ui.backgroundImage.isSome:
@@ -5063,7 +5096,7 @@ proc renderUI(a) =
       x = round((uiWidth - levelDropDownWidth) * 0.5),
       y = 45.0,
       w = levelDropDownWidth,
-      h = 24.0,   # TODO calc y
+      h = 24.0,
       levelItems,
       sortedLevelIdx,
       tooltip = "",
@@ -5075,19 +5108,19 @@ proc renderUI(a) =
     renderLevel(a)
 
     if a.opt.showNotesPane:
-      drawNotesPane(
+      renderNotesPane(
         x = NotesPaneLeftPad,
         y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
-        w = uiWidth - NotesPaneLeftPad - NotesPaneRightPad,
+        w = uiWidth - toolsPaneWidth() - NotesPaneLeftPad - NotesPaneRightPad,
         h = NotesPaneHeight,
         a
       )
 
     if a.opt.showToolsPane:
       renderToolsPane(
-        x = uiWidth - ToolsPaneWidth,
+        x = uiWidth - toolsPaneWidth(),
         y = ToolsPaneTopPad,
-        w = ToolsPaneWidth,
+        w = toolsPaneWidth(),
         h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
         a
       )

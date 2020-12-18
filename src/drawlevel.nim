@@ -2148,12 +2148,12 @@ proc drawRegionBorders(l: Level, viewBuf: Level; ctx) =
   alias(dp, ctx.dp)
 
   drawRegionBorderRows(l, viewBuf, ctx, viewRow):
-    drawCellWallsNorth(viewBuf, viewRow, regionBorder=true, ctx)
     drawEmptyRegionBorderNorth(viewBuf, viewRow, ctx)
+    drawCellWallsNorth(viewBuf, viewRow, regionBorder=true, ctx)
 
   drawRegionBorderCols(l, viewBuf, ctx, viewCol):
-    drawCellWallsWest(viewBuf, viewCol, regionBorder=true, ctx)
     drawEmptyRegionBorderWest(viewBuf, viewCol, ctx)
+    drawCellWallsWest(viewBuf, viewCol, regionBorder=true, ctx)
 
 # }}}
 # {{{ drawRegionBorderEdges()
