@@ -9,9 +9,11 @@ type
   AppConfig* = object
     # Startup section
     showSplash*:            bool
+    autoCloseSplash*:       bool
     splashTimeoutSecs*:     Natural
-    loadLastFile*:          bool
-    lastFileName*:          string
+
+    loadLastMap*:           bool
+    lastMapFileName*:       string
 
     # Window section
     maximized*:             bool
@@ -43,9 +45,11 @@ type
 
 const DefaultAppConfig = AppConfig(
   showSplash: true,
-  splashTimeoutSecs: 0,
-  loadLastFile: true,
-  lastFileName: "",
+  autoCloseSplash: false,
+  splashTimeoutSecs: 3,
+
+  loadLastMap: true,
+  lastMapFileName: "",
 
   maximized: false,
   xpos: -1,
@@ -77,9 +81,10 @@ const DefaultAppConfig = AppConfig(
 const
   StartupSection = "startup"
   ShowSplashKey = "showSplash"
-  HideSplashSecsKey = "hideSplash"
-  LoadLastFileKey = "loadLastFile"
-  LastFileNameKey = "lastFileName"
+  AutoCloseSplashKey = "autoCloseSplash"
+  SplashTimeoutSecsKey = "splashTimeoutSecs"
+  LoadLastMapKey = "loadLastMap"
+  LastMapFileNameKey = "lastMapFileName"
 
   WindowSection = "window"
   MaximizedKey = "maximized"
@@ -115,10 +120,11 @@ proc loadAppConfig*(fname: string): AppConfig =
 
   var a = DefaultAppConfig.deepCopy()
 
-  cfg.getBool(   StartupSection, ShowSplashKey,     a.showSplash)
-  cfg.getNatural(StartupSection, HideSplashSecsKey, a.splashTimeoutSecs)
-  cfg.getBool(   StartupSection, LoadLastFileKey,   a.loadLastFile)
-  cfg.getString( StartupSection, LastFileNameKey,   a.lastFileName)
+  cfg.getBool(   StartupSection, ShowSplashKey,        a.showSplash)
+  cfg.getBool(   StartupSection, AutoCloseSplashKey,   a.autoCloseSplash)
+  cfg.getNatural(StartupSection, SplashTimeoutSecsKey, a.splashTimeoutSecs)
+  cfg.getBool(   StartupSection, LoadLastMapKey,       a.loadLastMap)
+  cfg.getString( StartupSection, LastMapFileNameKey,   a.lastMapFileName)
 
   cfg.getBool(    WindowSection, MaximizedKey,    a.maximized)
   cfg.getNatural( WindowSection, XposKey,         a.xpos)
@@ -161,10 +167,11 @@ proc toYesNo(b: bool): string =
 proc toConfig(a: AppConfig): Config =
   var cfg = newConfig()
 
-  cfg.setSectionKey(StartupSection, ShowSplashKey,     a.showSplash.toYesNo)
-  cfg.setSectionKey(StartupSection, HideSplashSecsKey, $a.splashTimeoutSecs)
-  cfg.setSectionKey(StartupSection, LoadLastFileKey,   a.loadLastFile.toYesNo)
-  cfg.setSectionKey(StartupSection, LastFileNameKey,   a.lastFileName)
+  cfg.setSectionKey(StartupSection, ShowSplashKey,        a.showSplash.toYesNo)
+  cfg.setSectionKey(StartupSection, AutoCloseSplashKey,   a.autoCloseSplash.toYesNo)
+  cfg.setSectionKey(StartupSection, SplashTimeoutSecsKey, $a.splashTimeoutSecs)
+  cfg.setSectionKey(StartupSection, LoadLastMapKey,       a.loadLastMap.toYesNo)
+  cfg.setSectionKey(StartupSection, LastMapFileNameKey,   a.lastMapFileName)
 
   cfg.setSectionKey(WindowSection, MaximizedKey,     a.maximized.toYesNo)
   cfg.setSectionKey(WindowSection, XposKey,          $a.xpos)

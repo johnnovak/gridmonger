@@ -156,8 +156,9 @@ type
 
   Options = object
     showSplash:        bool
+    autoCloseSplash:   bool
     splashTimeoutSecs: Natural
-    loadLastFile:      bool
+    loadLastMap:       bool
     autosave:          bool
     autosaveFreqMins:  Natural
     disableVSync:      bool
@@ -263,15 +264,17 @@ type
 
 
   PreferencesDialogParams = object
-    isOpen:                 bool
+    isOpen:       bool
+    activeTab:    Natural
     activateFirstTextField: bool
 
-    showSplash:             bool
-    splashTimeoutSecs:      string
-    loadLastFile:           bool
-    disableVSync:           bool
-    autosave:               bool
-    autosaveFreqMins:       string
+    showSplash:         bool
+    autoCloseSplash:    bool
+    splashTimeoutSecs:  string
+    loadLastMap:        bool
+    disableVSync:       bool
+    autosave:           bool
+    autosaveFreqMins:   string
 
 
   SaveDiscardDialogParams = object
@@ -508,9 +511,10 @@ proc saveConfig(a) =
 
   let a = AppConfig(
     showSplash: opt.showSplash,
+    autoCloseSplash: opt.autoCloseSplash,
     splashTimeoutSecs: opt.splashTimeoutSecs,
-    loadLastFile: opt.loadLastFile,
-    lastFileName: a.doc.filename,
+    loadLastMap: opt.loadLastMap,
+    lastMapFileName: a.doc.filename,
 
     maximized: a.win.maximized,
     xpos: xpos,
@@ -1164,7 +1168,10 @@ const
   DlgButtonPad     = 10.0
   DlgNumberWidth   = 50.0
   DlgCheckBoxSize  = 18.0
-  DlgCheckBoxYOffs = 3.0
+  DlgTopPad        = 50.0
+  DlgTopNoTabPad   = 60.0
+  DlgLeftPad       = 30.0
+  DlgTabBottomPad  = 50.0
 
   DialogLayoutParams = AutoLayoutParams(
     itemsPerRow:      2,
@@ -1480,8 +1487,9 @@ proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
 
   dlg.showSplash = a.opt.showSplash
+  dlg.autoCloseSplash = a.opt.autoCloseSplash
   dlg.splashTimeoutSecs = $a.opt.splashTimeoutSecs
-  dlg.loadLastFile = a.opt.loadLastFile
+  dlg.loadLastMap = a.opt.loadLastMap
   dlg.disableVSync = a.opt.disableVSync
   dlg.autosave = a.opt.autosave
   dlg.autosaveFreqMins = $a.opt.autosaveFreqMins
@@ -1492,91 +1500,116 @@ proc openPreferencesDialog(a) =
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
     DlgWidth = 370.0
-    DlgHeight = 345.0
+    DlgHeight = 375.0
+    TabWidth = 180.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
                   x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 56.0
+  var x = DlgLeftPad
+  var y = DlgTopPad
 
+  let tabLabels = @["Startup", "General"]
+
+  koi.radioButtons(
+    (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
+    tabLabels, dlg.activeTab,
+    style = a.ui.radioButtonStyle
+  )
+
+  y += DlgTabBottomPad
   koi.beginView(x, y, 1000, 1000)
 
   var lp = DialogLayoutParams
-  lp.labelWidth = 235
+  lp.labelWidth = 220
   koi.initAutoLayout(lp)
 
-  group:
-    koi.label("Show splash image at startup", style=a.ui.labelStyle)
+  if dlg.activeTab == 0:  # General
 
-    koi.nextItemHeight(DlgCheckBoxSize)
-    koi.checkBox(dlg.showSplash, style = a.ui.checkBoxStyle)
+    group:
+      koi.label("Show splash image", style=a.ui.labelStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.showSplash, style = a.ui.checkBoxStyle)
 
-    let autoHideDisabled = not dlg.showSplash
 
-    koi.label("Auto-close splash after N seconds",
-              state = if autoHideDisabled: wsDisabled else: wsNormal,
-              style=a.ui.labelStyle)
+      var disabled = not dlg.showSplash
+      koi.label("Auto-close splash",
+                state=(if disabled: wsDisabled else: wsNormal),
+                style=a.ui.labelStyle)
 
-    koi.nextItemWidth(DlgNumberWidth)
-    koi.textField(
-      dlg.splashTimeoutSecs,
-      activate = dlg.activateFirstTextField,
-      disabled = autoHideDisabled,
-      constraint = TextFieldConstraint(
-        kind: tckInteger,
-        min: 0,
-        max: 5
-      ).some,
-      style = a.ui.textFieldStyle
-    )
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.autoCloseSplash, disabled=disabled,
+                   style = a.ui.checkBoxStyle)
 
-  group:
-    koi.label("Open last file at startup", style=a.ui.labelStyle)
 
-    koi.nextItemHeight(DlgCheckBoxSize)
-    koi.checkBox(dlg.loadLastFile, style = a.ui.checkBoxStyle)
+      disabled = not (dlg.showSplash and dlg.autoCloseSplash)
+      koi.label("Auto-close timeout (seconds)",
+                state=(if disabled: wsDisabled else: wsNormal),
+                style=a.ui.labelStyle)
 
-  group:
-    let autosaveDisabled = not dlg.autosave
+      koi.nextItemWidth(DlgNumberWidth)
+      koi.textField(
+        dlg.splashTimeoutSecs,
+        activate = dlg.activateFirstTextField,
+        disabled = disabled,
+        constraint = TextFieldConstraint(
+          kind: tckInteger,
+          min: 1,
+          max: 10
+        ).some,
+        style = a.ui.textFieldStyle
+      )
 
-    koi.label("Autosave", style=a.ui.labelStyle)
+    group:
+      koi.label("Load last map", style=a.ui.labelStyle)
 
-    koi.nextItemHeight(DlgCheckBoxSize)
-    koi.checkBox(dlg.autosave, style = a.ui.checkBoxStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.loadLastMap, style = a.ui.checkBoxStyle)
 
-    koi.label("Autosave frequency (minutes)",
-              state = if autosaveDisabled: wsDisabled else: wsNormal,
-              style=a.ui.labelStyle)
 
-    koi.nextItemWidth(DlgNumberWidth)
-    koi.textField(
-      dlg.autosaveFreqMins,
-      activate = dlg.activateFirstTextField,
-      disabled = autosaveDisabled,
-      constraint = TextFieldConstraint(
-        kind: tckInteger,
-        min: 1,
-        max: 30
-      ).some,
-      style = a.ui.textFieldStyle
-    )
+  elif dlg.activeTab == 1:  # General
 
-  group:
-    koi.label("Disable vertical sync", style=a.ui.labelStyle)
+    group:
+      let autosaveDisabled = not dlg.autosave
 
-    koi.nextItemHeight(DlgCheckBoxSize)
-    koi.checkBox(dlg.disableVSync, style = a.ui.checkBoxStyle)
+      koi.label("Autosave", style=a.ui.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.autosave, style = a.ui.checkBoxStyle)
+
+      koi.label("Autosave frequency (minutes)",
+                state = if autosaveDisabled: wsDisabled else: wsNormal,
+                style=a.ui.labelStyle)
+
+      koi.nextItemWidth(DlgNumberWidth)
+      koi.textField(
+        dlg.autosaveFreqMins,
+        activate = dlg.activateFirstTextField,
+        disabled = autosaveDisabled,
+        constraint = TextFieldConstraint(
+          kind: tckInteger,
+          min: 1,
+          max: 30
+        ).some,
+        style = a.ui.textFieldStyle
+      )
+
+    group:
+      koi.label("Disable vertical sync", style=a.ui.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.disableVSync, style = a.ui.checkBoxStyle)
 
   koi.endView()
 
 
   proc okAction(dlg: var PreferencesDialogParams; a) =
     a.opt.showSplash        = dlg.showSplash
+    a.opt.autoCloseSplash   = dlg.autoCloseSplash
     a.opt.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
-    a.opt.loadLastFile      = dlg.loadLastFile
+    a.opt.loadLastMap       = dlg.loadLastMap
     a.opt.disableVSync      = dlg.disableVSync
     a.opt.autosave          = dlg.autosave
     a.opt.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
@@ -1609,6 +1642,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
+
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
@@ -1637,8 +1672,8 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 50.0
+  var x = DlgLeftPad
+  var y = DlgTopPad
 
   koi.label(x, y, DlgWidth, h, "You have unsaved changes.",
             style=a.ui.labelStyle)
@@ -1721,8 +1756,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
   a.clearStatusMessage()
 
-  var x = 30.0
-  var y = 60.0
+  var x = DlgLeftPad
+  var y = DlgTopNoTabPad
 
   koi.beginView(x, y, 1000, 1000)
   koi.initAutoLayout(DialogLayoutParams)
@@ -1834,8 +1869,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 60.0
+  var x = DlgLeftPad
+  var y = DlgTopNoTabPad
 
   koi.beginView(x, y, 1000, 1000)
   koi.initAutoLayout(DialogLayoutParams)
@@ -1980,8 +2015,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 50.0
+  var x = DlgLeftPad
+  var y = DlgTopPad
 
   let tabLabels = @["General", "Coordinates", "Regions"]
 
@@ -1991,7 +2026,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
     style = a.ui.radioButtonStyle
   )
 
-  y += 50
+  y += DlgTabBottomPad
 
   koi.beginView(x, y, 1000, 1000)
   koi.initAutoLayout(DialogLayoutParams)
@@ -2168,8 +2203,8 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 50.0
+  var x = DlgLeftPad
+  var y = DlgTopPad
 
   let tabLabels = @["General", "Coordinates", "Regions"]
 
@@ -2179,7 +2214,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
     style = a.ui.radioButtonStyle
   )
 
-  y += 50
+  y += DlgTabBottomPad
 
   koi.beginView(x, y, 1000, 1000)
   koi.initAutoLayout(DialogLayoutParams)
@@ -2303,7 +2338,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   const
     DlgWidth = 270.0
     DlgHeight = 300.0
-    LabelWidth = 70.0
+    LabelWidth = 80.0
     PadYSmall = 32
     PadYLarge = 40
 
@@ -2314,8 +2349,8 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 60.0
+  var x = DlgLeftPad
+  var y = DlgTopNoTabPad
 
   koi.label(x, y, LabelWidth, h, "Columns", style=a.ui.labelStyle)
   koi.textField(
@@ -2447,8 +2482,8 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 50.0
+  var x = DlgLeftPad
+  var y = DlgTopPad
 
   koi.label(x, y, DlgWidth, h, "Do you want to delete the current level?",
             style=a.ui.labelStyle)
@@ -2532,7 +2567,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   alias(ls, a.doc.levelStyle)
 
   const
-    DlgWidth = 492.0
+    DlgWidth = 486.0
     DlgHeight = 410.0
     LabelWidth = 80.0
 
@@ -2545,8 +2580,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 60.0
+  var x = DlgLeftPad
+  var y = DlgTopNoTabPad
 
   koi.label(x, y, LabelWidth, h, "Marker", style=a.ui.labelStyle)
   koi.radioButtons(
@@ -2751,8 +2786,8 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   clearStatusMessage(a)
 
-  var x = 30.0
-  var y = 60.0
+  var x = DlgLeftPad
+  var y = DlgTopNoTabPad
 
   koi.label(x, y, LabelWidth, h, "Text", style=a.ui.labelStyle)
   koi.textArea(
@@ -5286,7 +5321,7 @@ proc renderFrameSplash(a) =
       not a.splash.show
     else:
       let autoClose =
-        if not a.opt.showThemePane and a.opt.splashTimeoutSecs > 0:
+        if not a.opt.showThemePane and a.opt.autoCloseSplash:
           let dt = getMonoTime() - a.splash.t0
           koi.setFramesLeft()
           dt > initDuration(seconds = a.opt.splashTimeoutSecs)
@@ -5434,8 +5469,9 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.opt.scrollMargin = 3
   a.opt.showSplash = cfg.showSplash
+  a.opt.autoCloseSplash = cfg.autoCloseSplash
   a.opt.splashTimeoutSecs = cfg.splashTimeoutSecs
-  a.opt.loadLastFile = cfg.loadLastFile
+  a.opt.loadLastMap = cfg.loadLastMap
   a.opt.disableVSync = cfg.disableVSync
   a.opt.autosave = cfg.autosave
   a.opt.autosaveFreqMins = cfg.autosaveFreqMins
@@ -5450,8 +5486,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle,
                                     clamp(cfg.zoomLevel, MinZoomLevel, MaxZoomLevel))
 
-  if cfg.loadLastFile and cfg.lastFileName != "":
-    if not loadMap(cfg.lastFileName, a):
+  if cfg.loadLastMap and cfg.lastMapFileName != "":
+    if not loadMap(cfg.lastMapFileName, a):
       a.doc.map = newMap("Untitled Map")
   else:
     a.doc.map = newMap("Untitled Map")
