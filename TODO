@@ -2,9 +2,10 @@ BUGS
   - cut and the paste back doesn't yield the same results
   - cut shouldn't cut walls of bordering cells
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
-  - theme editor: left separator line problem when regions are enabled
   - textfields: max length (note, ID field)
   - notes panel: text area scrollbar appears offset
+
+  - drawlevel - pixel level drawing problems (also for regions)
 
 
 TESTS

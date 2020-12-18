@@ -4910,6 +4910,9 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   vg.fill()
 
   # Left separator line
+  vg.strokeWidth(1.0)
+  vg.lineCap(lcjSquare)
+
   vg.beginPath()
   vg.moveTo(x+0.5, y)
   vg.lineTo(x+0.5, y+h)
