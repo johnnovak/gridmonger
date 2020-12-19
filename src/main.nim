@@ -213,18 +213,6 @@ type
 
     backgroundImage:   Option[Paint]
 
-    buttonStyle:           ButtonStyle
-    checkBoxStyle:         CheckboxStyle
-    dialogStyle:           koi.DialogStyle
-    labelStyle:            LabelStyle
-    radioButtonStyle:      RadioButtonsStyle
-    textAreaStyle:         TextAreaStyle
-    textFieldStyle:        koi.TextFieldStyle
-
-    aboutButtonStyle:      ButtonStyle
-    iconRadioButtonsStyle: RadioButtonsStyle
-    warningLabelStyle:     LabelStyle
-
 
   EditMode = enum
     emNormal,
@@ -243,12 +231,28 @@ type
 
   Theme = object
     style:                  ThemeStyle
+
     themeNames:             seq[string]
     currThemeIndex:         Natural
     nextThemeIndex:         Option[Natural]
     themeReloaded:          bool
-    levelDropDownStyle:     DropDownStyle
     reinitDrawLevelParams:  bool
+
+    buttonStyle:            ButtonStyle
+    checkBoxStyle:          CheckboxStyle
+    dialogStyle:            koi.DialogStyle
+    labelStyle:             LabelStyle
+    radioButtonStyle:       RadioButtonsStyle
+    textAreaStyle:          TextAreaStyle
+    textFieldStyle:         koi.TextFieldStyle
+
+    aboutButtonStyle:       ButtonStyle
+    iconRadioButtonsStyle:  RadioButtonsStyle
+    warningLabelStyle:      LabelStyle
+
+    levelDropDownStyle:     DropDownStyle
+    noteTextAreaStyle:      TextAreaStyle
+
 
   Dialog = object
     preferencesDialog:      PreferencesDialogParams
@@ -571,9 +575,9 @@ proc updateWidgetStyles(a) =
   alias(ws, s.widget)
 
   # Button
-  a.ui.buttonStyle = koi.getDefaultButtonStyle()
+  a.theme.buttonStyle = koi.getDefaultButtonStyle()
 
-  with a.ui.buttonStyle:
+  with a.theme.buttonStyle:
     cornerRadius      = gs.cornerRadius
     fillColor         = ws.bgColor
     fillColorHover    = ws.bgColorHover
@@ -588,9 +592,9 @@ proc updateWidgetStyles(a) =
     label.colorDisabled    = ws.textColorDisabled
 
   # Radio button
-  a.ui.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
+  a.theme.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
 
-  with a.ui.radioButtonStyle:
+  with a.theme.radioButtonStyle:
     buttonCornerRadius         = gs.cornerRadius
     buttonFillColor            = ws.bgColor
     buttonFillColorHover       = ws.bgColorHover
@@ -605,9 +609,9 @@ proc updateWidgetStyles(a) =
     label.colorActiveHover = ws.textColorActive
 
   # Icon radio button
-  a.ui.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
+  a.theme.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
 
-  with a.ui.iconRadioButtonsStyle:
+  with a.theme.iconRadioButtonsStyle:
     buttonPadHoriz             = 4.0
     buttonPadVert              = 4.0
     buttonFillColor            = ws.bgColor
@@ -626,9 +630,9 @@ proc updateWidgetStyles(a) =
     label.padHoriz         = 0
 
   # Text field
-  a.ui.textFieldStyle = koi.getDefaultTextFieldStyle()
+  a.theme.textFieldStyle = koi.getDefaultTextFieldStyle()
 
-  with a.ui.textFieldStyle:
+  with a.theme.textFieldStyle:
     bgCornerRadius      = gs.cornerRadius
     bgFillColor         = ws.bgColor
     bgFillColorHover    = ws.bgColorHover
@@ -642,23 +646,23 @@ proc updateWidgetStyles(a) =
     selectionColor      = s.textField.selectionColor
 
   # Text area
-  a.ui.textAreaStyle = koi.getDefaultTextAreaStyle()
+  a.theme.textAreaStyle = koi.getDefaultTextAreaStyle()
 
-  with a.ui.textAreaStyle:
-    bgCornerRadius      = gs.cornerRadius
-    bgFillColor         = ws.bgColor
-    bgFillColorHover    = lerp(ws.bgColor, ws.bgColorHover, 0.5)
-    bgFillColorActive   = s.textField.bgColorActive
-    textColor           = ws.textColor
-    textColorHover      = ws.textColor
-    textColorActive     = s.textField.textColorActive
-    cursorColor         = s.textField.cursorColor
-    selectionColor      = s.textField.selectionColor
+  with a.theme.textAreaStyle:
+    bgCornerRadius    = gs.cornerRadius
+    bgFillColor       = ws.bgColor
+    bgFillColorHover  = lerp(ws.bgColor, ws.bgColorHover, 0.5)
+    bgFillColorActive = s.textField.bgColorActive
+    textColor         = ws.textColor
+    textColorHover    = ws.textColor
+    textColorActive   = s.textField.textColorActive
+    cursorColor       = s.textField.cursorColor
+    selectionColor    = s.textField.selectionColor
 
   # Check box
-  a.ui.checkBoxStyle = koi.getDefaultCheckBoxStyle()
+  a.theme.checkBoxStyle = koi.getDefaultCheckBoxStyle()
 
-  with a.ui.checkBoxStyle:
+  with a.theme.checkBoxStyle:
     cornerRadius          = gs.cornerRadius
     fillColor             = ws.bgColor
     fillColorHover        = ws.bgColorHover
@@ -674,9 +678,9 @@ proc updateWidgetStyles(a) =
     iconInactive          = NoIcon
 
   # Dialog style
-  a.ui.dialogStyle = koi.getDefaultDialogStyle()
+  a.theme.dialogStyle = koi.getDefaultDialogStyle()
 
-  with a.ui.dialogStyle:
+  with a.theme.dialogStyle:
     cornerRadius      = s.dialog.cornerRadius
     backgroundColor   = s.dialog.backgroundColor
     titleBarBgColor   = s.dialog.titleBarBgColor
@@ -688,25 +692,25 @@ proc updateWidgetStyles(a) =
     innerBorderWidth  = s.dialog.innerBorderWidth
 
     with shadow:
-      enabled         = s.dialog.shadow
-      xOffset         = s.dialog.shadowXOffset
-      yOffset         = s.dialog.shadowYOffset
-      feather         = s.dialog.shadowFeather
-      color           = s.dialog.shadowColor
+      enabled = s.dialog.shadow
+      xOffset = s.dialog.shadowXOffset
+      yOffset = s.dialog.shadowYOffset
+      feather = s.dialog.shadowFeather
+      color   = s.dialog.shadowColor
 
   # Label
-  a.ui.labelStyle = koi.getDefaultLabelStyle()
+  a.theme.labelStyle = koi.getDefaultLabelStyle()
 
-  with a.ui.labelStyle:
+  with a.theme.labelStyle:
     fontSize = 14
     color = s.dialog.textColor
     colorDisabled = s.dialog.textColor.lerp(s.dialog.backgroundColor, 0.7)
     align = haLeft
 
   # Warning label
-  a.ui.warningLabelStyle = koi.getDefaultLabelStyle()
+  a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
 
-  with a.ui.warningLabelStyle:
+  with a.theme.warningLabelStyle:
     color = s.dialog.warningTextColor
     multiLine = true
 
@@ -739,15 +743,30 @@ proc updateWidgetStyles(a) =
   # About button
   alias(abs, s.aboutButton)
 
-  a.ui.aboutButtonStyle = koi.getDefaultButtonStyle()
+  a.theme.aboutButtonStyle = koi.getDefaultButtonStyle()
 
-  with a.ui.aboutButtonStyle:
+  with a.theme.aboutButtonStyle:
     labelOnly        = true
     label.fontSize   = 20.0
     label.padHoriz   = 0
     label.color      = abs.color
     label.colorHover = abs.colorHover
     label.colorDown  = abs.colorActive
+
+  # Note text area
+  a.theme.noteTextAreaStyle = koi.getDefaultTextAreaStyle()
+  with a.theme.noteTextAreaStyle:
+    bgFillColor         = black(0)
+    bgFillColorHover    = black(0)
+    bgFillColorActive   = black(0)
+    bgFillColorDisabled = black(0)
+
+    textPadHoriz        = 0.0
+    textPadVert         = 0.0
+    textFontSize        = 15.0
+    textFontFace        = "sans-bold"
+    textLineHeight      = 1.4
+    textColorDisabled   = s.notesPane.textColor
 
 # }}}
 
@@ -1203,32 +1222,32 @@ template coordinateFields() =
   const LetterLabelWidth = 100
 
   group:
-    koi.label("Origin", style=a.ui.labelStyle)
+    koi.label("Origin", style=a.theme.labelStyle)
     koi.radioButtons(
       labels = @["Northwest", "Southwest"],
       dlg.origin,
-      style = a.ui.radioButtonStyle
+      style = a.theme.radioButtonStyle
     )
 
   group:
-    koi.label("Column style", style=a.ui.labelStyle)
+    koi.label("Column style", style=a.theme.labelStyle)
     koi.radioButtons(
       labels = @["Number", "Letter"],
       dlg.columnStyle,
-      style = a.ui.radioButtonStyle
+      style = a.theme.radioButtonStyle
     )
 
-    koi.label("Row style", style=a.ui.labelStyle)
+    koi.label("Row style", style=a.theme.labelStyle)
     koi.radioButtons(
       labels = @["Number", "Letter"],
       dlg.rowStyle,
-      style = a.ui.radioButtonStyle
+      style = a.theme.radioButtonStyle
     )
 
   group:
     let letterLabelX = x + 190
 
-    koi.label("Column offset", style=a.ui.labelStyle)
+    koi.label("Column offset", style=a.theme.labelStyle)
     var y = koi.currAutoLayoutY()
 
     koi.nextItemWidth(DlgNumberWidth)
@@ -1240,18 +1259,18 @@ template coordinateFields() =
         minInt: LevelColumnsLimits.minInt,
         maxInt: LevelColumnsLimits.maxInt
       ).some,
-      style = a.ui.textFieldStyle
+      style = a.theme.textFieldStyle
     )
     if CoordinateStyle(dlg.columnStyle) == csLetter:
       try:
         let i = parseInt(dlg.columnStart)
         koi.label(letterLabelX, y, LetterLabelWidth, DlgItemHeight,
                   i.clamp(0, LevelColumnsLimits.maxInt).toLetterCoord,
-                  style=a.ui.labelStyle)
+                  style=a.theme.labelStyle)
       except ValueError:
         discard
 
-    koi.label("Row offset", style=a.ui.labelStyle)
+    koi.label("Row offset", style=a.theme.labelStyle)
     y = koi.currAutoLayoutY()
 
 
@@ -1263,14 +1282,14 @@ template coordinateFields() =
         minInt: LevelRowsLimits.minInt,
         maxInt: LevelRowsLimits.maxInt
       ).some,
-      style = a.ui.textFieldStyle
+      style = a.theme.textFieldStyle
     )
     if CoordinateStyle(dlg.rowStyle) == csLetter:
       try:
         let i = parseInt(dlg.rowStart)
         koi.label(letterLabelX, y, LetterLabelWidth, DlgItemHeight,
                   i.clamp(0, LevelRowsLimits.maxInt).toLetterCoord,
-                  style=a.ui.labelStyle)
+                  style=a.theme.labelStyle)
       except ValueError:
         discard
 
@@ -1278,14 +1297,14 @@ template coordinateFields() =
 # {{{ regionFields()
 template regionFields() =
   group:
-    koi.label("Enable regions", style=a.ui.labelStyle)
+    koi.label("Enable regions", style=a.theme.labelStyle)
 
     koi.nextItemHeight(DlgCheckBoxSize)
-    koi.checkBox(dlg.enableRegions, style = a.ui.checkBoxStyle)
+    koi.checkBox(dlg.enableRegions, style = a.theme.checkBoxStyle)
 
     if dlg.enableRegions:
       group:
-        koi.label("Region columns", style=a.ui.labelStyle)
+        koi.label("Region columns", style=a.theme.labelStyle)
 
         koi.nextItemWidth(DlgNumberWidth)
         koi.textField(
@@ -1296,11 +1315,11 @@ template regionFields() =
             minInt: LevelRowsLimits.minInt,
             maxInt: LevelRowsLimits.maxInt
           ).some,
-          style = a.ui.textFieldStyle
+          style = a.theme.textFieldStyle
         )
 
 
-        koi.label("Region rows", style=a.ui.labelStyle)
+        koi.label("Region rows", style=a.theme.labelStyle)
 
         koi.nextItemWidth(DlgNumberWidth)
         koi.textField(
@@ -1310,20 +1329,20 @@ template regionFields() =
             minInt: LevelColumnsLimits.minInt,
             maxInt: LevelColumnsLimits.maxInt
           ).some,
-          style = a.ui.textFieldStyle
+          style = a.theme.textFieldStyle
         )
 
       group:
-        koi.label("Per-region coordinates", style=a.ui.labelStyle)
+        koi.label("Per-region coordinates", style=a.theme.labelStyle)
 
         koi.nextItemHeight(DlgCheckBoxSize)
-        koi.checkBox(dlg.perRegionCoords, style = a.ui.checkBoxStyle)
+        koi.checkBox(dlg.perRegionCoords, style = a.theme.checkBoxStyle)
 
 # }}}
 # {{{ levelCommonFields()
 template levelCommonFields() =
   group:
-    koi.label("Location Name", style=a.ui.labelStyle)
+    koi.label("Location Name", style=a.theme.labelStyle)
 
     koi.textField(
       dlg.locationName,
@@ -1331,25 +1350,25 @@ template levelCommonFields() =
       constraint = TextFieldConstraint(
         kind: tckString,
         minLen: LevelLocationNameLimits.minLen,
-        maxLen: LevelLocationNameLimits.maxLen.some
+        maxLen: LevelLocationNameLimits.maxRuneLen.some
       ).some,
-      style = a.ui.textFieldStyle
+      style = a.theme.textFieldStyle
     )
 
-    koi.label("Level Name", style=a.ui.labelStyle)
+    koi.label("Level Name", style=a.theme.labelStyle)
 
     koi.textField(
       dlg.levelName,
       constraint = TextFieldConstraint(
         kind: tckString,
         minLen: LevelNameLimits.minLen,
-        maxLen: LevelNameLimits.maxLen.some
+        maxLen: LevelNameLimits.maxRuneLen.some
       ).some,
-      style = a.ui.textFieldStyle
+      style = a.theme.textFieldStyle
     )
 
   group:
-    koi.label("Elevation", style=a.ui.labelStyle)
+    koi.label("Elevation", style=a.theme.labelStyle)
 
     koi.nextItemWidth(DlgNumberWidth)
     koi.textField(
@@ -1359,7 +1378,7 @@ template levelCommonFields() =
         minInt: LevelElevationLimits.minInt,
         maxInt: LevelElevationLimits.maxInt
       ).some,
-      style = a.ui.textFieldStyle
+      style = a.theme.textFieldStyle
     )
 
 # }}}
@@ -1514,7 +1533,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     TabWidth = 180.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -1526,7 +1546,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   koi.radioButtons(
     (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
-    style = a.ui.radioButtonStyle
+    style = a.theme.radioButtonStyle
   )
 
   y += DlgTabBottomPad
@@ -1539,25 +1559,25 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   if dlg.activeTab == 0:  # General
 
     group:
-      koi.label("Show splash image", style=a.ui.labelStyle)
+      koi.label("Show splash image", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.showSplash, style = a.ui.checkBoxStyle)
+      koi.checkBox(dlg.showSplash, style = a.theme.checkBoxStyle)
 
 
       var disabled = not dlg.showSplash
       koi.label("Auto-close splash",
                 state=(if disabled: wsDisabled else: wsNormal),
-                style=a.ui.labelStyle)
+                style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.autoCloseSplash, disabled=disabled,
-                   style = a.ui.checkBoxStyle)
+                   style = a.theme.checkBoxStyle)
 
 
       disabled = not (dlg.showSplash and dlg.autoCloseSplash)
       koi.label("Auto-close timeout (seconds)",
                 state=(if disabled: wsDisabled else: wsNormal),
-                style=a.ui.labelStyle)
+                style=a.theme.labelStyle)
 
       koi.nextItemWidth(DlgNumberWidth)
       koi.textField(
@@ -1569,14 +1589,14 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
           minInt: 1,
           maxInt: 10
         ).some,
-        style = a.ui.textFieldStyle
+        style = a.theme.textFieldStyle
       )
 
     group:
-      koi.label("Load last map", style=a.ui.labelStyle)
+      koi.label("Load last map", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.loadLastMap, style = a.ui.checkBoxStyle)
+      koi.checkBox(dlg.loadLastMap, style = a.theme.checkBoxStyle)
 
 
   elif dlg.activeTab == 1:  # General
@@ -1584,14 +1604,14 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     group:
       let autosaveDisabled = not dlg.autosave
 
-      koi.label("Autosave", style=a.ui.labelStyle)
+      koi.label("Autosave", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.autosave, style = a.ui.checkBoxStyle)
+      koi.checkBox(dlg.autosave, style = a.theme.checkBoxStyle)
 
       koi.label("Autosave frequency (minutes)",
                 state = if autosaveDisabled: wsDisabled else: wsNormal,
-                style=a.ui.labelStyle)
+                style=a.theme.labelStyle)
 
       koi.nextItemWidth(DlgNumberWidth)
       koi.textField(
@@ -1603,14 +1623,14 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
           minInt: 1,
           maxInt: 30
         ).some,
-        style = a.ui.textFieldStyle
+        style = a.theme.textFieldStyle
       )
 
     group:
-      koi.label("Disable vertical sync", style=a.ui.labelStyle)
+      koi.label("Disable vertical sync", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.disableVSync, style = a.ui.checkBoxStyle)
+      koi.checkBox(dlg.disableVSync, style = a.theme.checkBoxStyle)
 
   koi.endView()
 
@@ -1637,12 +1657,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                style = a.ui.buttonStyle):
+                style = a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
-                style = a.ui.buttonStyle):
+                style = a.theme.buttonStyle):
     cancelAction(dlg, a)
 
   dlg.activateFirstTextField = false
@@ -1678,7 +1698,8 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Changes?",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -1686,12 +1707,12 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
   var y = DlgTopPad
 
   koi.label(x, y, DlgWidth, h, "You have unsaved changes.",
-            style=a.ui.labelStyle)
+            style=a.theme.labelStyle)
 
   y += h
   koi.label(
     x, y, DlgWidth, h, "Do you want to save your changes first?",
-    style=a.ui.labelStyle
+    style=a.theme.labelStyle
   )
 
   proc saveAction(dlg: var SaveDiscardDialogParams; a) =
@@ -1712,17 +1733,17 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Save",
-                style = a.ui.buttonStyle):
+                style = a.theme.buttonStyle):
     saveAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconTrash} Discard",
-                style = a.ui.buttonStyle):
+                style = a.theme.buttonStyle):
     discardAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
-                style = a.ui.buttonStyle):
+                style = a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -1762,7 +1783,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     DlgHeight = 375.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Map",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   a.clearStatusMessage()
 
@@ -1772,16 +1794,16 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   koi.beginView(x, y, 1000, 1000)
   koi.initAutoLayout(DialogLayoutParams)
 
-  koi.label("Name", style=a.ui.labelStyle)
+  koi.label("Name", style=a.theme.labelStyle)
   koi.textField(
     dlg.name,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
       minLen: MapNameLimits.minLen,
-      maxLen: MapNameLimits.maxLen.some
+      maxLen: MapNameLimits.maxRuneLen.some
     ).some,
-    style = a.ui.textFieldStyle
+    style = a.theme.textFieldStyle
   )
 
   coordinateFields()
@@ -1797,7 +1819,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 70, DlgWidth, DlgItemHeight, validationError,
-              style=a.ui.warningLabelStyle)
+              style=a.theme.warningLabelStyle)
 
 
   proc okAction(dlg: var NewMapDialogParams; a) =
@@ -1829,12 +1851,12 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                disabled=validationError != "", style = a.ui.buttonStyle):
+                disabled=validationError != "", style = a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
-                style = a.ui.buttonStyle):
+                style = a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -1875,7 +1897,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     DlgHeight = 375.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  Edit Map Properties",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -1885,16 +1908,16 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   koi.beginView(x, y, 1000, 1000)
   koi.initAutoLayout(DialogLayoutParams)
 
-  koi.label("Name", style=a.ui.labelStyle)
+  koi.label("Name", style=a.theme.labelStyle)
   koi.textField(
     dlg.name,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
       minLen: MapNameLimits.minLen,
-      maxLen: MapNameLimits.maxLen.some
+      maxLen: MapNameLimits.maxRuneLen.some
     ).some,
-    style = a.ui.textFieldStyle
+    style = a.theme.textFieldStyle
   )
 
   coordinateFields()
@@ -1910,7 +1933,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 70, DlgWidth, DlgItemHeight, validationError,
-              style=a.ui.warningLabelStyle)
+              style=a.theme.warningLabelStyle)
 
 
   proc okAction(dlg: var EditMapPropsDialogParams; a) =
@@ -1941,12 +1964,12 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                disabled=(validationError != ""), style=a.ui.buttonStyle):
+                disabled=(validationError != ""), style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -2021,7 +2044,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
     TabWidth = 300.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2033,7 +2057,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   koi.radioButtons(
     (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
-    style = a.ui.radioButtonStyle
+    style = a.theme.radioButtonStyle
   )
 
   y += DlgTabBottomPad
@@ -2046,7 +2070,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
     levelCommonFields()
 
     group:
-      koi.label("Columns", style=a.ui.labelStyle)
+      koi.label("Columns", style=a.theme.labelStyle)
 
       koi.nextItemWidth(DlgNumberWidth)
       koi.textField(
@@ -2056,10 +2080,10 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
           minInt: LevelColumnsLimits.minInt,
           maxInt: LevelColumnsLimits.maxInt
         ).some,
-        style = a.ui.textFieldStyle
+        style = a.theme.textFieldStyle
       )
 
-      koi.label("Rows", style=a.ui.labelStyle)
+      koi.label("Rows", style=a.theme.labelStyle)
 
       koi.nextItemWidth(DlgNumberWidth)
       koi.textField(
@@ -2069,16 +2093,16 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
           minInt: LevelRowsLimits.minInt,
           maxInt: LevelRowsLimits.maxInt
         ).some,
-        style = a.ui.textFieldStyle
+        style = a.theme.textFieldStyle
       )
 
   elif dlg.activeTab == 1:  # Coordinates
 
     group:
-      koi.label("Override map settings", style=a.ui.labelStyle)
+      koi.label("Override map settings", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.overrideCoordOpts, style = a.ui.checkBoxStyle)
+      koi.checkBox(dlg.overrideCoordOpts, style = a.theme.checkBoxStyle)
 
       if dlg.overrideCoordOpts:
         coordinateFields()
@@ -2097,7 +2121,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
-              style=a.ui.warningLabelStyle)
+              style=a.theme.warningLabelStyle)
 
 
   proc okAction(dlg: var NewLevelDialogParams; a) =
@@ -2144,12 +2168,12 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                disabled=(validationError != ""), style=a.ui.buttonStyle):
+                disabled=(validationError != ""), style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
   dlg.activateFirstTextField = false
@@ -2209,7 +2233,8 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   koi.beginDialog(DlgWidth, DlgHeight,
                   fmt"{IconNewFile}  Edit Level Properties",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2221,7 +2246,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   koi.radioButtons(
     (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
-    style = a.ui.radioButtonStyle
+    style = a.theme.radioButtonStyle
   )
 
   y += DlgTabBottomPad
@@ -2235,10 +2260,10 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   elif dlg.activeTab == 1:  # Coordinates
 
-    koi.label("Override map settings", style=a.ui.labelStyle)
+    koi.label("Override map settings", style=a.theme.labelStyle)
 
     koi.nextItemHeight(DlgCheckBoxSize)
-    koi.checkBox(dlg.overrideCoordOpts, style = a.ui.checkBoxStyle)
+    koi.checkBox(dlg.overrideCoordOpts, style = a.theme.checkBoxStyle)
 
     if dlg.overrideCoordOpts:
       coordinateFields()
@@ -2264,7 +2289,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
-              style=a.ui.warningLabelStyle)
+              style=a.theme.warningLabelStyle)
 
 
   proc okAction(dlg: var EditLevelPropsParams; a) =
@@ -2306,12 +2331,12 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                disabled=(validationError != ""), style=a.ui.buttonStyle):
+                disabled=(validationError != ""), style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -2355,14 +2380,15 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCrop}  Resize Level",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
   var x = DlgLeftPad
   var y = DlgTopNoTabPad
 
-  koi.label(x, y, LabelWidth, h, "Columns", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Columns", style=a.theme.labelStyle)
   koi.textField(
     x + LabelWidth, y, w = DlgNumberWidth, h,
     dlg.cols,
@@ -2372,11 +2398,11 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
       minInt: LevelColumnsLimits.minInt,
       maxInt: LevelColumnsLimits.maxInt
     ).some,
-    style = a.ui.textFieldStyle
+    style = a.theme.textFieldStyle
   )
 
   y += PadYSmall
-  koi.label(x, y, LabelWidth, h, "Rows", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Rows", style=a.theme.labelStyle)
   koi.textField(
     x + LabelWidth, y, w = DlgNumberWidth, h,
     dlg.rows,
@@ -2385,7 +2411,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
       minInt: LevelRowsLimits.minInt,
       maxInt: LevelRowsLimits.maxInt
     ).some,
-    style = a.ui.textFieldStyle
+    style = a.theme.textFieldStyle
   )
 
   const IconsPerRow = 3
@@ -2397,14 +2423,14 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   ]
 
   y += PadYLarge
-  koi.label(x, y, LabelWidth, h, "Anchor", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Anchor", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, 35, 35,
     labels = AnchorIcons,
     dlg.anchor,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: IconsPerRow),
-    style = a.ui.iconRadioButtonsStyle
+    style = a.theme.iconRadioButtonsStyle
   )
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -2441,12 +2467,12 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     dlg.isOpen = false
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -2488,7 +2514,8 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   let h = DlgItemHeight
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconTrash}  Delete level?",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
@@ -2496,7 +2523,7 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   var y = DlgTopPad
 
   koi.label(x, y, DlgWidth, h, "Do you want to delete the current level?",
-            style=a.ui.labelStyle)
+            style=a.theme.labelStyle)
 
   proc deleteAction(dlg: var DeleteLevelDialogParams; a) =
     koi.closeDialog()
@@ -2514,12 +2541,12 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Delete",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     deleteAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -2586,30 +2613,31 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   let title = (if dlg.editMode: "Edit" else: "Add") & " Note"
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
   var x = DlgLeftPad
   var y = DlgTopNoTabPad
 
-  koi.label(x, y, LabelWidth, h, "Marker", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Marker", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, 296, h,
     labels = @["None", "Number", "ID", "Icon"],
     dlg.kind,
-    style = a.ui.radioButtonStyle
+    style = a.theme.radioButtonStyle
   )
 
   y += 40
-  koi.label(x, y, LabelWidth, h, "Text", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Text", style=a.theme.labelStyle)
   koi.textArea(
     x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
-      maxLen: NoteTextLimits.maxLen.some
+      maxLen: NoteTextLimits.maxRuneLen.some
     ).some,
-    style = a.ui.textAreaStyle
+    style = a.theme.textAreaStyle
   )
 
   y += 108
@@ -2619,7 +2647,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   case dlg.kind:
   of nkIndexed:
-    koi.label(x, y, LabelWidth, h, "Color", style=a.ui.labelStyle)
+    koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
     koi.radioButtons(
       x + LabelWidth, y, 28, 28,
       labels = newSeq[string](ls.noteIndexBgColor.len),
@@ -2631,27 +2659,27 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     )
 
   of nkCustomId:
-    koi.label(x, y, LabelWidth, h, "ID", style=a.ui.labelStyle)
+    koi.label(x, y, LabelWidth, h, "ID", style=a.theme.labelStyle)
     koi.textField(
       x + LabelWidth, y, w = DlgNumberWidth, h,
       dlg.customId,
       constraint = TextFieldConstraint(
         kind: tckString,
         minLen: NoteCustomIdLimits.minLen,
-        maxLen: NoteCustomIdLimits.maxLen.some
+        maxLen: NoteCustomIdLimits.maxRuneLen.some
       ).some,
-      style = a.ui.textFieldStyle
+      style = a.theme.textFieldStyle
     )
 
   of nkIcon:
-    koi.label(x, y, LabelWidth, h, "Icon", style=a.ui.labelStyle)
+    koi.label(x, y, LabelWidth, h, "Icon", style=a.theme.labelStyle)
     koi.radioButtons(
       x + LabelWidth, y, 35, 35,
       labels = NoteIcons,
       dlg.icon,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 10),
-      style = a.ui.iconRadioButtonsStyle
+      style = a.theme.iconRadioButtonsStyle
     )
 
   of nkComment, nkLabel: discard
@@ -2680,7 +2708,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   y += 44
 
   for err in validationErrors:
-    koi.label(x, y, DlgWidth, h, err, style=a.ui.warningLabelStyle)
+    koi.label(x, y, DlgWidth, h, err, style=a.theme.warningLabelStyle)
     y += h
 
 
@@ -2713,12 +2741,12 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
                 disabled=validationErrors.len > 0,
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -2791,28 +2819,29 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   let title = (if dlg.editMode: "Edit" else: "Add") & " Label"
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}",
-                  x = calcDialogX(DlgWidth, a).some, style = a.ui.dialogStyle)
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
 
   clearStatusMessage(a)
 
   var x = DlgLeftPad
   var y = DlgTopNoTabPad
 
-  koi.label(x, y, LabelWidth, h, "Text", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Text", style=a.theme.labelStyle)
   koi.textArea(
     x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
-      maxLen: NoteTextLimits.maxLen.some
+      maxLen: NoteTextLimits.maxRuneLen.some
     ).some,
-    style = a.ui.textAreaStyle
+    style = a.theme.textAreaStyle
   )
 
   y += 108
 
   let NumIndexColors = ls.noteIndexBgColor.len
 
-  koi.label(x, y, LabelWidth, h, "Color", style=a.ui.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, 28, 28,
     labels = newSeq[string](ls.noteIndexBgColor.len), # TODO
@@ -2821,7 +2850,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
     drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq, # TODO
                                         ls.cursorColor).some,
-    style = a.ui.radioButtonStyle
+    style = a.theme.radioButtonStyle
   )
 
   dlg.activateFirstTextField = false
@@ -2834,7 +2863,8 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   y += 44
 
   if validationError != "":
-    koi.label(x, y, DlgWidth, h, validationError, style=a.ui.warningLabelStyle)
+    koi.label(x, y, DlgWidth, h, validationError,
+              style=a.theme.warningLabelStyle)
     y += h
 
 
@@ -2857,12 +2887,12 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
-                disabled=(validationError != ""), style=a.ui.buttonStyle):
+                disabled=(validationError != ""), style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
-                style=a.ui.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
 
@@ -3563,7 +3593,14 @@ proc handleGlobalKeyEvents(a) =
         openPreferencesDialog(a)
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
-        openNewLevelDialog(a)
+        if map.levels.len < NumLevelsLimits.maxInt:
+          openNewLevelDialog(a)
+        else:
+          setStatusMessage(
+            IconWarning,
+            "Cannot add new level: maximum number of levels has been reached " &
+            fmt"({NumLevelsLimits.maxInt})", a
+          )
 
       elif ke.isKeyDown(keyD, {mkCtrl}):
         openDeleteLevelDialog(a)
@@ -4284,18 +4321,10 @@ proc renderNotesPane(x, y, w, h: float; a) =
 
     of nkLabel: discard
 
-    vg.fillColor(s.textColor)
-    vg.setFont(15, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.4)
-    vg.intersectScissor(x+40, y, w-40, h)
-    vg.textBox(x+40, y, w-40, note.text)
 
-#    var text = note.text
-#    koi.textArea(
-#      x+40, y, w-40, h, text,
-#      disabled = true,
-#      style = a.ui.textAreaStyle
-#    )
+    var text = note.text
+    koi.textArea(x+40, y-11, w-20, h+10, text, disabled=true,
+                 style=a.theme.noteTextAreaStyle)
 
     vg.restore()
 
@@ -5085,7 +5114,7 @@ proc renderUI(a) =
 
   # About button
   if button(x = uiWidth - 55, y = 45, w = 20, h = DlgItemHeight, IconQuestion,
-            style = ui.aboutButtonStyle):
+            style = a.theme.aboutButtonStyle):
     # TODO
     discard
 

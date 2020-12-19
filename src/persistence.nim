@@ -10,6 +10,7 @@ import riff
 
 import bitable
 import common
+import drawlevel
 import fieldlimits
 import icons
 import level
@@ -39,7 +40,7 @@ const
   CellFloorColorLimits*    = intLimits(min=0, max=8)
 
   NumNotesLimits*          = intLimits(min=0, max=10_000)
-  NoteTextLimits*          = strLimits(minLen=0, maxLen=1600, maxRuneLen=800) # TODO restore to 400
+  NoteTextLimits*          = strLimits(minLen=0, maxLen=1600, maxRuneLen=400)
   NoteCustomIdLimits*      = strLimits(minLen=1, maxLen=2, maxRuneLen=2)
   NoteColorLimits*         = intLimits(min=0, max=3)
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
@@ -48,7 +49,7 @@ const
 
   ThemeNameLimits*         = strLimits(minLen=1, maxLen=200, maxRuneLen=200)
 
-  ZoomLevelLimits*         = intLimits(min=1, max=20)
+  ZoomLevelLimits*         = intLimits(min=MinZoomLevel, max=MaxZoomLevel)
 
 # }}}
 
