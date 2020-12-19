@@ -27,6 +27,7 @@ import appconfig
 import common
 import csdwindow
 import drawlevel
+import fieldlimits
 import icons
 import level
 import links
@@ -1236,8 +1237,8 @@ template coordinateFields() =
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
         kind: tckInteger,
-        min: 0,
-        max: LevelNumRowsMax
+        minInt: LevelColumnsLimits.minInt,
+        maxInt: LevelColumnsLimits.maxInt
       ).some,
       style = a.ui.textFieldStyle
     )
@@ -1245,7 +1246,7 @@ template coordinateFields() =
       try:
         let i = parseInt(dlg.columnStart)
         koi.label(letterLabelX, y, LetterLabelWidth, DlgItemHeight,
-                  i.clamp(0, LevelNumColumnsMax).toLetterCoord,
+                  i.clamp(0, LevelColumnsLimits.maxInt).toLetterCoord,
                   style=a.ui.labelStyle)
       except ValueError:
         discard
@@ -1259,8 +1260,8 @@ template coordinateFields() =
       dlg.rowStart,
       constraint = TextFieldConstraint(
         kind: tckInteger,
-        min: 0,
-        max: LevelNumColumnsMax
+        minInt: LevelRowsLimits.minInt,
+        maxInt: LevelRowsLimits.maxInt
       ).some,
       style = a.ui.textFieldStyle
     )
@@ -1268,7 +1269,7 @@ template coordinateFields() =
       try:
         let i = parseInt(dlg.rowStart)
         koi.label(letterLabelX, y, LetterLabelWidth, DlgItemHeight,
-                  i.clamp(0, LevelNumRowsMax).toLetterCoord,
+                  i.clamp(0, LevelRowsLimits.maxInt).toLetterCoord,
                   style=a.ui.labelStyle)
       except ValueError:
         discard
@@ -1292,8 +1293,8 @@ template regionFields() =
           activate = dlg.activateFirstTextField,
           constraint = TextFieldConstraint(
             kind: tckInteger,
-            min: 2,
-            max: LevelNumRowsMax
+            minInt: LevelRowsLimits.minInt,
+            maxInt: LevelRowsLimits.maxInt
           ).some,
           style = a.ui.textFieldStyle
         )
@@ -1306,8 +1307,8 @@ template regionFields() =
           dlg.regionRows,
           constraint = TextFieldConstraint(
             kind: tckInteger,
-            min: 2,
-            max: LevelNumColumnsMax
+            minInt: LevelColumnsLimits.minInt,
+            maxInt: LevelColumnsLimits.maxInt
           ).some,
           style = a.ui.textFieldStyle
         )
@@ -1329,8 +1330,8 @@ template levelCommonFields() =
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
         kind: tckString,
-        minLen: 0,
-        maxLen: LevelLocationNameMaxLen
+        minLen: LevelLocationNameLimits.minLen,
+        maxLen: LevelLocationNameLimits.maxLen.some
       ).some,
       style = a.ui.textFieldStyle
     )
@@ -1341,8 +1342,8 @@ template levelCommonFields() =
       dlg.levelName,
       constraint = TextFieldConstraint(
         kind: tckString,
-        minLen: LevelNameMinLen,
-        maxLen: LevelNameMaxLen
+        minLen: LevelNameLimits.minLen,
+        maxLen: LevelNameLimits.maxLen.some
       ).some,
       style = a.ui.textFieldStyle
     )
@@ -1355,8 +1356,8 @@ template levelCommonFields() =
       dlg.elevation,
       constraint = TextFieldConstraint(
         kind: tckInteger,
-        min: LevelElevationMin,
-        max: LevelElevationMax
+        minInt: LevelElevationLimits.minInt,
+        maxInt: LevelElevationLimits.maxInt
       ).some,
       style = a.ui.textFieldStyle
     )
@@ -1565,8 +1566,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         disabled = disabled,
         constraint = TextFieldConstraint(
           kind: tckInteger,
-          min: 1,
-          max: 10
+          minInt: 1,
+          maxInt: 10
         ).some,
         style = a.ui.textFieldStyle
       )
@@ -1599,8 +1600,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         disabled = autosaveDisabled,
         constraint = TextFieldConstraint(
           kind: tckInteger,
-          min: 1,
-          max: 30
+          minInt: 1,
+          maxInt: 30
         ).some,
         style = a.ui.textFieldStyle
       )
@@ -1777,8 +1778,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
-      minLen: 0,
-      maxLen: MapNameMaxLen
+      minLen: MapNameLimits.minLen,
+      maxLen: MapNameLimits.maxLen.some
     ).some,
     style = a.ui.textFieldStyle
   )
@@ -1890,8 +1891,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
-      minLen: 0,
-      maxLen: MapNameMaxLen
+      minLen: MapNameLimits.minLen,
+      maxLen: MapNameLimits.maxLen.some
     ).some,
     style = a.ui.textFieldStyle
   )
@@ -2052,8 +2053,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
         dlg.cols,
         constraint = TextFieldConstraint(
           kind: tckInteger,
-          min: LevelNumColumnsMin,
-          max: LevelNumColumnsMax
+          minInt: LevelColumnsLimits.minInt,
+          maxInt: LevelColumnsLimits.maxInt
         ).some,
         style = a.ui.textFieldStyle
       )
@@ -2065,8 +2066,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
         dlg.rows,
         constraint = TextFieldConstraint(
           kind: tckInteger,
-          min: LevelNumRowsMin,
-          max: LevelNumRowsMax
+          minInt: LevelRowsLimits.minInt,
+          maxInt: LevelRowsLimits.maxInt
         ).some,
         style = a.ui.textFieldStyle
       )
@@ -2368,8 +2369,8 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckInteger,
-      min: LevelNumColumnsMin,
-      max: LevelNumColumnsMax
+      minInt: LevelColumnsLimits.minInt,
+      maxInt: LevelColumnsLimits.maxInt
     ).some,
     style = a.ui.textFieldStyle
   )
@@ -2381,8 +2382,8 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     dlg.rows,
     constraint = TextFieldConstraint(
       kind: tckInteger,
-      min: LevelNumRowsMin,
-      max: LevelNumRowsMax
+      minInt: LevelRowsLimits.minInt,
+      maxInt: LevelRowsLimits.maxInt
     ).some,
     style = a.ui.textFieldStyle
   )
@@ -2606,8 +2607,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
-      minLen: 0,
-      maxLen: NoteTextMaxLen
+      maxLen: NoteTextLimits.maxLen.some
     ).some,
     style = a.ui.textAreaStyle
   )
@@ -2637,8 +2637,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
       dlg.customId,
       constraint = TextFieldConstraint(
         kind: tckString,
-        minLen: 0,
-        maxLen: NoteCustomIdMaxLen
+        minLen: NoteCustomIdLimits.minLen,
+        maxLen: NoteCustomIdLimits.maxLen.some
       ).some,
       style = a.ui.textFieldStyle
     )
@@ -2803,8 +2803,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     x + LabelWidth, y, w = 346, h = 92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
-      minLen: 0,
-      maxLen: NoteTextMaxLen
+      maxLen: NoteTextLimits.maxLen.some
     ).some,
     style = a.ui.textAreaStyle
   )
@@ -4291,6 +4290,13 @@ proc renderNotesPane(x, y, w, h: float; a) =
     vg.intersectScissor(x+40, y, w-40, h)
     vg.textBox(x+40, y, w-40, note.text)
 
+#    var text = note.text
+#    koi.textArea(
+#      x+40, y, w-40, h, text,
+#      disabled = true,
+#      style = a.ui.textAreaStyle
+#    )
+
     vg.restore()
 
 # }}}
@@ -4484,8 +4490,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("Dialog", te.sectionDialog):
       group:
         prop("Corner Radius", dialog, cornerRadius):
-          koi.horizSlider(startVal=WidgetCornerRadiusLimits.min,
-                          endVal=WidgetCornerRadiusLimits.max,
+          koi.horizSlider(startVal=WidgetCornerRadiusLimits.minFloat,
+                          endVal=WidgetCornerRadiusLimits.maxFloat,
                           ts.dialog.cornerRadius,
                           style=ThemeEditorSliderStyle)
 
@@ -4509,8 +4515,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
           koi.color(ts.dialog.outerBorderColor)
 
         prop("Outer Border Width", dialog, outerBorderWidth):
-          koi.horizSlider(startVal=DialogBorderWidthLimits.min,
-                          endVal=DialogBorderWidthLimits.max,
+          koi.horizSlider(startVal=DialogBorderWidthLimits.minFloat,
+                          endVal=DialogBorderWidthLimits.maxFloat,
                           ts.dialog.outerBorderWidth,
                           style=ThemeEditorSliderStyle)
 
@@ -4518,8 +4524,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
           koi.color(ts.dialog.innerBorderColor)
 
         prop("Inner Border Width", dialog, innerBorderWidth):
-          koi.horizSlider(startVal=DialogBorderWidthLimits.min,
-                          endVal=DialogBorderWidthLimits.max,
+          koi.horizSlider(startVal=DialogBorderWidthLimits.minFloat,
+                          endVal=DialogBorderWidthLimits.maxFloat,
                           ts.dialog.innerBorderWidth,
                           style=ThemeEditorSliderStyle)
 
@@ -4528,20 +4534,20 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
           koi.checkBox(ts.dialog.shadow)
 
         prop("Shadow X Offset", dialog, shadowXOffset):
-          koi.horizSlider(startVal=DialogShadowOffsetLimits.min,
-                          endVal=DialogShadowOffsetLimits.max,
+          koi.horizSlider(startVal=DialogShadowOffsetLimits.minFloat,
+                          endVal=DialogShadowOffsetLimits.maxFloat,
                           ts.dialog.shadowXOffset,
                           style=ThemeEditorSliderStyle)
 
         prop("Shadow Y Offset", dialog, shadowYOffset):
-          koi.horizSlider(startVal=DialogShadowOffsetLimits.min,
-                          endVal=DialogShadowOffsetLimits.max,
+          koi.horizSlider(startVal=DialogShadowOffsetLimits.minFloat,
+                          endVal=DialogShadowOffsetLimits.maxFloat,
                           ts.dialog.shadowYOffset,
                           style=ThemeEditorSliderStyle)
 
         prop("Shadow Feather", dialog, shadowFeather):
-          koi.horizSlider(startVal=DialogShadowFeatherLimits.min,
-                          endVal=DialogShadowFeatherLimits.max,
+          koi.horizSlider(startVal=DialogShadowFeatherLimits.minFloat,
+                          endVal=DialogShadowFeatherLimits.maxFloat,
                           ts.dialog.shadowFeather,
                           style=ThemeEditorSliderStyle)
 
@@ -4552,8 +4558,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("Widget", te.sectionWidget):
       group:
         prop("Corner Radius", general, cornerRadius):
-          koi.horizSlider(startVal=WidgetCornerRadiusLimits.min,
-                          endVal=WidgetCornerRadiusLimits.max,
+          koi.horizSlider(startVal=WidgetCornerRadiusLimits.minFloat,
+                          endVal=WidgetCornerRadiusLimits.maxFloat,
                           ts.general.cornerRadius,
                           style=ThemeEditorSliderStyle)
 
@@ -4638,7 +4644,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
           a.splash.updateOutlineImage = true
 
         prop("Shadow Alpha", splashImage, shadowAlpha):
-          koi.horizSlider(startVal=AlphaLimits.min, endVal=AlphaLimits.max,
+          koi.horizSlider(startVal=AlphaLimits.minFloat,
+                          endVal=AlphaLimits.maxFloat,
                           ts.splashImage.shadowAlpha,
                           style=ThemeEditorSliderStyle)
 
@@ -4706,14 +4713,14 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.color(ts.level.bgHatchColor)
 
       prop("Hatch Stroke Width", level, bgHatchStrokeWidth):
-        koi.horizSlider(startVal=HatchStrokeWidthLimits.min,
-                        endVal=HatchStrokeWidthLimits.max,
+        koi.horizSlider(startVal=HatchStrokeWidthLimits.minFloat,
+                        endVal=HatchStrokeWidthLimits.maxFloat,
                         ts.level.bgHatchStrokeWidth,
                         style=ThemeEditorSliderStyle)
 
       prop("Hatch Spacing", level, bgHatchSpacingFactor):
-        koi.horizSlider(startVal=HatchSpacingLimits.min,
-                        endVal=HatchSpacingLimits.max,
+        koi.horizSlider(startVal=HatchSpacingLimits.minFloat,
+                        endVal=HatchSpacingLimits.maxFloat,
                         ts.level.bgHatchSpacingFactor,
                         style=ThemeEditorSliderStyle)
 
@@ -4743,8 +4750,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.color(ts.level.outlineColor)
 
       prop("Outline Width", level, outlineWidthFactor):
-        koi.horizSlider(startVal=LevelOutlineWidthLimits.min,
-                        endVal=LevelOutlineWidthLimits.max,
+        koi.horizSlider(startVal=LevelOutlineWidthLimits.minFloat,
+                        endVal=LevelOutlineWidthLimits.maxFloat,
                         ts.level.outlineWidthFactor,
                         style=ThemeEditorSliderStyle)
 
@@ -4758,8 +4765,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
           koi.color(ts.level.innerShadowColor)
 
         prop("Inner Shadow Width", level, innerShadowWidthFactor):
-          koi.horizSlider(startVal=LevelShadowWidthLimits.min,
-                          endVal=LevelShadowWidthLimits.max,
+          koi.horizSlider(startVal=LevelShadowWidthLimits.minFloat,
+                          endVal=LevelShadowWidthLimits.maxFloat,
                           ts.level.innerShadowWidthFactor,
                           style=ThemeEditorSliderStyle)
 
@@ -4768,8 +4775,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
           koi.color(ts.level.outerShadowColor)
 
         prop("Outer Shadow Width", level, outerShadowWidthFactor):
-          koi.horizSlider(startVal=LevelShadowWidthLimits.min,
-                          endVal=LevelShadowWidthLimits.max,
+          koi.horizSlider(startVal=LevelShadowWidthLimits.minFloat,
+                          endVal=LevelShadowWidthLimits.maxFloat,
                           ts.level.outerShadowWidthFactor,
                           style=ThemeEditorSliderStyle)
 

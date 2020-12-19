@@ -4,11 +4,13 @@ import options
 import strformat
 import strutils
 import sugar
+import unicode
 
 import riff
 
 import bitable
 import common
+import fieldlimits
 import icons
 import level
 import map
@@ -18,45 +20,35 @@ import utils
 # TODO use app version instead?
 const CurrentMapVersion = 1
 
-# {{{ Field constraints
+# {{{ Field limits
+
 const
-  MapNameMinLen* = 1
-  MapNameMaxLen* = 100
+  MapNameLimits*           = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
 
-  NumLevelsMax* = 999
-  LevelLocationNameMinLen* = 1
-  LevelLocationNameMaxLen* = 100
-  LevelNameMinLen* = 0
-  LevelNameMaxLen* = 100
-  LevelElevationMin* = -200
-  LevelElevationMax* = 200
-  LevelNumRowsMin* = 1
-  LevelNumRowsMax* = 6666
-  LevelNumColumnsMin* = 1
-  LevelNumColumnsMax* = 6666
+  NumLevelsLimits*         = intLimits(min=0, max=999)
+  LevelLocationNameLimits* = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
+  LevelNameLimits*         = strLimits(minLen=0, maxLen=400, maxRuneLen=100)
+  LevelElevationLimits*    = intLimits(min= -200, max=200)
+  LevelRowsLimits*         = intLimits(min=1, max=6666)
+  LevelColumnsLimits*      = intLimits(min=1, max=6666)
 
-  RegionNameMaxLen* = 100
-  RegionColumnsMin* = 2
-  RegionColumnsMax* = LevelNumColumnsMax
-  RegionRowsMin* = 2
-  RegionRowsMax* = LevelNumRowsMax
+  RegionNameLimits*        = strLimits(minLen=0, maxLen=400, maxRuneLen=100)
+  RegionRowsLimits*        = intLimits(min=2, max=6666)
+  RegionColumnsLimits*     = intLimits(min=2, max=6666)
 
-  CellFloorColorMin* = 0
-  CellFloorColorMax* = 8
+  CellFloorColorLimits*    = intLimits(min=0, max=8)
 
-  NumNotesMax* = 10_000
-  NoteTextMaxLen* = 400
-  NoteCustomIdMinLen* = 1
-  NoteCustomIdMaxLen* = 2
-  NoteColorMax* = 3
+  NumNotesLimits*          = intLimits(min=0, max=10_000)
+  NoteTextLimits*          = strLimits(minLen=0, maxLen=1600, maxRuneLen=800) # TODO restore to 400
+  NoteCustomIdLimits*      = strLimits(minLen=1, maxLen=2, maxRuneLen=2)
+  NoteColorLimits*         = intLimits(min=0, max=3)
+  NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
 
-  NumLinksMax* = 10_000
+  NumLinksLimits*          = intLimits(min=0, max=10_000)
 
-  ThemeNameMin* = 1
-  ThemeNameMax* = 255
+  ThemeNameLimits*         = strLimits(minLen=1, maxLen=200, maxRuneLen=200)
 
-  ZoomLevelMin* = 1
-  ZoomLevelMax* = 20
+  ZoomLevelLimits*         = intLimits(min=1, max=20)
 
 # }}}
 
@@ -99,6 +91,7 @@ proc appendInGroupChunkMsg(msg: string, groupChunkId: Option[string]): string =
   else: msg
 
 # }}}
+
 # {{{ chunkOnlyOnceError()
 proc chunkOnlyOnceError(chunkId: string,
                         groupChunkId: Option[string] = string.none) =
@@ -129,24 +122,33 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
   raiseMapReadError(msg)
 
 # }}}
+
 # {{{ checkStringLength()
-proc checkStringLength(s: string, name: string,
-                       min: Natural = 0, max: Natural = 0) =
-  if s.len < min or s.len > max:
+proc checkStringLength(s: string, name: string, limit: FieldLimits) =
+  if s.len < limit.minLen or s.len > limit.maxLen:
     raiseMapReadError(
-      fmt"The length of {name} must be between {min} and " &
-      fmt"{max} bytes, actual length: {s.len}, value: {s}"
+      fmt"The length of {name} must be between {limit.minLen} and " &
+      fmt"{limit.maxLen} bytes, actual length: {s.len}, value: {s}"
+    )
+
+  if s.runeLen > limit.maxRuneLen:
+    raiseMapReadError(
+      fmt"The maximum allowed length of {name} is {limit.maxRuneLen} " &
+      fmt"UTF-8 code points, actual length: {s.runeLen}, value: {s}"
     )
 
 # }}}
 # {{{ checkValueRange()
-proc checkValueRange(v: SomeInteger, name: string,
-                     min: SomeInteger = 0, max: SomeInteger = 0) =
+proc checkValueRange[T: SomeInteger](v: T, name: string,
+                                     min: T = 0, max: T = 0) =
   if v < min or v > max:
     raiseMapReadError(
       fmt"The value of {name} must be between {min} and " &
       fmt"{max}, actual value: {v}"
     )
+
+proc checkValueRange[T: SomeInteger](v: T, name: string, limit: FieldLimits) =
+  checkValueRange(v, name, T(limit.minInt), T(limit.maxInt))
 
 # }}}
 # {{{ checkEnum()
@@ -182,19 +184,20 @@ proc readDisplayOptions_v1(rr): MapDisplayOptions =
 # {{{ readLinks_v1()
 proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
   var numLinks = rr.read(uint16).int
-  checkValueRange(numLinks, "links.numLinks", max=NumLinksMax)
-
-  let LevelsMax = levels.len-1
+  checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
 
   result = initBiTable[Location, Location](nextPowerOfTwo(numLinks))
+
+  let maxLevelIndex = NumLevelsLimits.maxInt - 1
+
   while numLinks > 0:
     let src = readLocation(rr)
-    checkValueRange(src.level, "lnks.srcLevel", max=LevelsMax)
+    checkValueRange(src.level, "lnks.srcLevel", max=maxLevelIndex)
     checkValueRange(src.row, "lnks.srcRow", max=levels[src.level].rows-1)
     checkValueRange(src.col, "lnks.srcColumh", max=levels[src.level].cols-1)
 
     let dest = readLocation(rr)
-    checkValueRange(dest.level, "lnks.destLevel", max=LevelsMax)
+    checkValueRange(dest.level, "lnks.destLevel", max=maxLevelIndex)
     checkValueRange(dest.row, "lnks.destRow", max=levels[dest.level].cols-1)
     checkValueRange(dest.col, "lnks.destColumh", max=levels[dest.level].cols-1)
 
@@ -206,23 +209,19 @@ proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
 proc readLevelProperties_v1(rr): Level =
   let locationName = rr.readWStr()
   checkStringLength(locationName, "lvl.prop.locationName",
-                    LevelLocationNameMinLen, LevelLocationNameMaxLen)
+                    LevelLocationNameLimits)
 
   let levelName = rr.readWStr()
-  checkStringLength(levelName, "lvl.prop.levelName",
-                    LevelNameMinLen, LevelNameMaxLen)
+  checkStringLength(levelName, "lvl.prop.levelName", LevelNameLimits)
 
   let elevation = rr.read(int16).int
-  checkValueRange(elevation, "lvl.prop.elevation",
-                  LevelElevationMin, LevelElevationMax)
+  checkValueRange(elevation, "lvl.prop.elevation", LevelElevationLimits)
 
   let numRows = rr.read(uint16)
-  checkValueRange(numRows, "lvl.prop.numRows",
-                  LevelNumRowsMin, LevelNumRowsMax)
+  checkValueRange(numRows, "lvl.prop.numRows", LevelRowsLimits)
 
   let numColumns = rr.read(uint16)
-  checkValueRange(numColumns, "lvl.prop.numColumns",
-                  LevelNumColumnsMin, LevelNumColumnsMax)
+  checkValueRange(numColumns, "lvl.prop.numColumns", LevelColumnsLimits)
 
   let overrideCoordOpts = rr.read(uint8).bool
 
@@ -243,8 +242,7 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
     checkEnum(floorOrientation, "lvl.cell.floorOrientation", Orientation)
 
     let floorColor = rr.read(uint8)
-    checkValueRange(floorColor, "lvl.cell.floorColor",
-                    CellFloorColorMin, CellFloorColorMax)
+    checkValueRange(floorColor, "lvl.cell.floorColor", CellFloorColorLimits)
 
     let wallN = rr.read(uint8)
     checkEnum(wallN, "lvl.cell.wallN", Wall)
@@ -266,7 +264,7 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
 # {{{ readLevelNotes_v1()
 proc readLevelNotes_v1(rr; l: Level) =
   let numNotes = rr.read(uint16).Natural
-  checkValueRange(numNotes, "lvl.note.numNotes", max=NumNotesMax)
+  checkValueRange(numNotes, "lvl.note.numNotes", NumNotesLimits)
 
   for i in 0..<numNotes:
     let row = rr.read(uint16)
@@ -286,32 +284,32 @@ proc readLevelNotes_v1(rr; l: Level) =
 
     of nkIndexed:
       let index = rr.read(uint16)
-      checkValueRange(index, "lvl.note.index", max=NumNotesMax-1)
+      checkValueRange(index, "lvl.note.index", max=NumNotesLimits.maxInt-1)
       note.index = index
 
       let indexColor = rr.read(uint8)
-      checkValueRange(indexColor, "lvl.note.indexColor", max=NoteColorMax)
+      checkValueRange(indexColor, "lvl.note.indexColor", NoteColorLimits)
       note.indexColor = indexColor
 
     of nkIcon:
       let icon = rr.read(uint8)
-      checkValueRange(icon, "lvl.note.icon", max=NoteIconMax)
+      checkValueRange(icon, "lvl.note.icon", NoteIconLimits)
       note.icon = icon
 
     of nkCustomId:
       let customId = rr.readBStr()
-      checkStringLength(customId, "lvl.note.customId",
-                        NoteCustomIdMinLen, NoteCustomIdMaxLen)
+      checkStringLength(customId, "lvl.note.customId", NoteCustomIdLimits)
       note.customId = customId
 
     of nkLabel:
       let labelColor = rr.read(uint8)
-      checkValueRange(labelColor, "lvl.note.labelColor", max=NoteColorMax)
+      checkValueRange(labelColor, "lvl.note.labelColor", NoteColorLimits)
       note.labelColor = labelColor
 
     let text = rr.readWStr()
-    let textMinLen = if note.kind in {nkComment, nkLabel}: 1 else: 0
-    checkStringLength(text, "lvl.note.text", textMinLen, NoteTextMaxLen)
+    var textLimit = NoteTextLimits
+    if note.kind in {nkComment, nkLabel}: textLimit.minLen = 1
+    checkStringLength(text, "lvl.note.text", textLimit)
 
     note.text = text
     l.setNote(row, col, note)
@@ -345,12 +343,10 @@ proc readRegions_v1(rr): (RegionOptions, seq[string]) =
   let enableRegions = rr.read(uint8).bool
 
   let regionColumns = rr.read(uint16)
-  checkValueRange(regionColumns, "lvl.regn.regionColumns",
-                  RegionColumnsMin, RegionColumnsMax)
+  checkValueRange(regionColumns, "lvl.regn.regionColumns", RegionColumnsLimits)
 
   let regionRows = rr.read(uint16)
-  checkValueRange(regionRows, "lvl.regn.regionRows",
-                  RegionRowsMin, RegionRowsMax)
+  checkValueRange(regionRows, "lvl.regn.regionRows", RegionRowsLimits)
 
   let perRegionCoords = rr.read(uint8).bool
 
@@ -366,7 +362,7 @@ proc readRegions_v1(rr): (RegionOptions, seq[string]) =
   var regionNames: seq[string] = @[]
   for i in 0..<numRegions:
     let name = rr.readBStr()
-    checkStringLength(name, "lvl.regn.regionName", max=RegionNameMaxLen)
+    checkStringLength(name, "lvl.regn.regionName", RegionNameLimits)
     regionNames.add(name)
 
   result = (regionOpts, regionNames)
@@ -464,8 +460,10 @@ proc readLevelList_v1(rr): seq[Level] =
       if ci.kind == ckGroup:
         case ci.formatTypeId
         of FourCC_GRDM_lvl:
-          if levels.len == NumLevelsMax:
-            raiseMapReadError(fmt"Map contains more than {NumLevelsMax} levels")
+          if levels.len > NumLevelsLimits.maxInt:
+            raiseMapReadError(
+              fmt"Map cannot contain more than {NumLevelsLimits.maxInt} levels"
+            )
 
           levels.add(readLevel_v1(rr))
           rr.exitGroup()
@@ -490,7 +488,7 @@ proc readMapProperties_v1(rr): Map =
     raiseMapReadError(fmt"Unsupported map file version: {version}")
 
   let name = rr.readBStr()
-  checkStringLength(name, "map.prop.name", MapNameMinLen, MapNameMaxLen)
+  checkStringLength(name, "map.prop.name", MapNameLimits)
 
   result = newMap(name)
 

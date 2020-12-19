@@ -7,6 +7,7 @@ import nanovg
 
 import common
 import cfghelper
+import fieldlimits
 import macros
 import strutils
 import with
@@ -187,24 +188,20 @@ include themedef
 
 
 const
-  WidgetCornerRadiusLimits*  = (min:   0.0, max: 12.0)
+  WidgetCornerRadiusLimits*  = floatLimits(min =   0.0, max = 12.0)
 
-  DialogCornerRadiusLimits*  = (min:   0.0, max: 20.0)
-  DialogBorderWidthLimits*   = (min:   0.0, max: 30.0)
-  DialogShadowOffsetLimits*  = (min: -10.0, max: 10.0)
-  DialogShadowFeatherLimits* = (min:   0.0, max: 50.0)
+  DialogCornerRadiusLimits*  = floatLimits(min =   0.0, max = 20.0)
+  DialogBorderWidthLimits*   = floatLimits(min =   0.0, max = 30.0)
+  DialogShadowOffsetLimits*  = floatLimits(min = -10.0, max = 10.0)
+  DialogShadowFeatherLimits* = floatLimits(min =   0.0, max = 50.0)
 
-  AlphaLimits*               = (min:   0.0, max: 1.0)
+  AlphaLimits*               = floatLimits(min =   0.0, max = 1.0)
 
-  HatchStrokeWidthLimits*    = (min:   0.5, max: 10.0)
-  HatchSpacingLimits*        = (min:   1.0, max: 10.0)
+  HatchStrokeWidthLimits*    = floatLimits(min =   0.5, max = 10.0)
+  HatchSpacingLimits*        = floatLimits(min =   1.0, max = 10.0)
 
-  LevelOutlineWidthLimits*   = (min:   0.0, max: 1.0)
-  LevelShadowWidthLimits*    = (min:   0.0, max: 1.0)
-
-
-proc limit(v: var float, limits: tuple[min: float, max: float]) =
-  v = v.clamp(limits.min, limits.max)
+  LevelOutlineWidthLimits*   = floatLimits(min =   0.0, max = 1.0)
+  LevelShadowWidthLimits*    = floatLimits(min =   0.0, max = 1.0)
 
 
 proc loadTheme*(filename: string): ThemeStyle =
@@ -212,25 +209,29 @@ proc loadTheme*(filename: string): ThemeStyle =
   result = parseTheme(cfg)
 
   with result.general:
-    limit(cornerRadius, WidgetCornerRadiusLimits)
+    cornerRadius = cornerRadius.limit(WidgetCornerRadiusLimits)
 
   with result.dialog:
-    limit(cornerRadius, DialogCornerRadiusLimits)
-    limit(outerBorderWidth, DialogBorderWidthLimits)
-    limit(innerBorderWidth, DialogBorderWidthLimits)
-    limit(shadowXOffset, DialogShadowOffsetLimits)
-    limit(shadowYOffset, DialogShadowOffsetLimits)
-    limit(shadowFeather, DialogShadowFeatherLimits)
+    cornerRadius = cornerRadius.limit(DialogCornerRadiusLimits)
+    outerBorderWidth = outerBorderWidth.limit(DialogBorderWidthLimits)
+    innerBorderWidth = innerBorderWidth.limit(DialogBorderWidthLimits)
+    shadowXOffset = shadowXOffset.limit(DialogShadowOffsetLimits)
+    shadowYOffset = shadowYOffset.limit(DialogShadowOffsetLimits)
+    shadowFeather = shadowFeather.limit(DialogShadowFeatherLimits)
 
   with result.splashImage:
-    limit(shadowAlpha, AlphaLimits)
+    shadowAlpha = shadowAlpha.limit(AlphaLimits)
 
   with result.level:
-    limit(bgHatchStrokeWidth, HatchStrokeWidthLimits)
-    limit(bgHatchSpacingFactor, HatchSpacingLimits)
-    limit(outlineWidthFactor, LevelOutlineWidthLimits)
-    limit(innerShadowWidthFactor, LevelShadowWidthLimits)
-    limit(outerShadowWidthFactor, LevelShadowWidthLimits)
+    bgHatchStrokeWidth = bgHatchStrokeWidth.limit(HatchStrokeWidthLimits)
+    bgHatchSpacingFactor = bgHatchSpacingFactor.limit(HatchSpacingLimits)
+    outlineWidthFactor = outlineWidthFactor.limit(LevelOutlineWidthLimits)
+
+    innerShadowWidthFactor =
+      innerShadowWidthFactor.limit(LevelShadowWidthLimits)
+
+    outerShadowWidthFactor =
+      outerShadowWidthFactor.limit(LevelShadowWidthLimits)
 
 proc saveTheme*(theme: ThemeStyle, filename: string) =
 

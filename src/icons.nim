@@ -1,7 +1,4 @@
 const
-  NoteIconMax* = 39
-
-const
   NoIcon* = ""
 
   IconArrowDown* = "\uea36"
@@ -169,6 +166,6 @@ const NoteIcons* = @[
   IconTower
 ]
 
-assert NoteIcons.len == NoteIconMax+1
+const NoteIconMax* = NoteIcons.len - 1
 
 # vim: et:ts=2:sw=2:fdm=marker
