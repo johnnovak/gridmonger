@@ -14,10 +14,8 @@ import theme
 const
   TitleBarFontSize = 14.0
   TitleBarHeight* = 26.0
-  TitleBarTitlePosX = 50.0
+  TitleBarTitlePosX = 16.0
   TitleBarButtonWidth = 23.0
-  TitleBarPinButtonsLeftPad = 4.0
-  TitleBarPinButtonTotalWidth = TitleBarPinButtonsLeftPad + TitleBarButtonWidth
   TitleBarWindowButtonsRightPad = 6.0
   TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*3 +
                                     TitleBarWindowButtonsRightPad
@@ -233,11 +231,6 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   let oldCurrLayer = koi.currentLayer()
   koi.setCurrentLayer(layerWindowDecoration)
 
-  # Pin window button
-  if koi.button(TitleBarPinButtonsLeftPad, by, bw, bh, IconPin, style=bs):
-    # TODO
-    discard
-
   # Minimise/maximise/close window buttons
   let x = winWidth - TitleBarWindowButtonsTotalWidth
 
@@ -271,8 +264,7 @@ proc handleWindowDragEvents(win) =
   of wdsNone:
     if koi.hasNoActiveItem() and koi.mbLeftDown():
       if my < TitleBarHeight and
-         mx > TitleBarPinButtonTotalWidth and
-         mx < winWidth - TitleBarWindowButtonsTotalWidth:
+         mx > 0 and mx < winWidth - TitleBarWindowButtonsTotalWidth:
         win.mx0 = mx
         win.my0 = my
         (win.posX0, win.posY0) = win.w.pos

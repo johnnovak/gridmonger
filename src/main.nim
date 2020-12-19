@@ -353,6 +353,7 @@ type
     locationName: string
     levelName:    string
     elevation:    string
+    comments:     string
 
     # Coordinates tab
     overrideCoordOpts: bool
@@ -2223,6 +2224,7 @@ proc openEditLevelPropsDialog(a) =
   dlg.locationName = l.locationName
   dlg.levelName = l.levelName
   dlg.elevation = $l.elevation
+  dlg.comments = "" # TODO
 
   let co = coordOptsForCurrLevel(a)
   dlg.overrideCoordOpts = l.overrideCoordOpts
@@ -2246,7 +2248,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   const
     DlgWidth = 430.0
-    DlgHeight = 436.0
+    DlgHeight = 450.0
     TabWidth = 300.0
 
   koi.beginDialog(DlgWidth, DlgHeight,
@@ -2275,6 +2277,20 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   if dlg.activeTab == 0:  # General
 
     levelCommonFields()
+
+    group:
+      koi.label("Comments", style=a.theme.labelStyle)
+
+      koi.textArea(
+        x=0, y=147, w=370, h=92,
+        dlg.comments,
+        activate = dlg.activateFirstTextField,
+        # TODO
+  #      constraint = TextAreaConstraint(
+  #        maxLen: NoteTextLimits.maxRuneLen.some
+  #      ).some,
+        style = a.theme.textAreaStyle
+      )
 
   elif dlg.activeTab == 1:  # Coordinates
 
@@ -2828,7 +2844,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   alias(ls, a.doc.levelStyle)
 
   const
-    DlgWidth = 492.0
+    DlgWidth = 486.0
     DlgHeight = 270.0
     LabelWidth = 80.0
 

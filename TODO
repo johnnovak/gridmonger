@@ -3,6 +3,7 @@ BUGS
   - cut shouldn't cut walls of bordering cells
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
   - textfields: max length (note, ID field)
+  - note dialog: first tab, tab x2, ID tab -> ID field is in edit mode
 
   - drawlevel - pixel level drawing problems (also for regions)
 
@@ -44,8 +45,6 @@ v0.9
       - get rid of quotation marks
       - insert new lines after sections when writing
     - rename properties according to theme editor
-
-  - reduce float edit precision
 
   - textarea: mouse handling
 
