@@ -659,6 +659,18 @@ proc updateWidgetStyles(a) =
     cursorColor       = s.textField.cursorColor
     selectionColor    = s.textField.selectionColor
 
+    with scrollBarStyleNormal:
+      let c = s.textField.scrollBarColorNormal
+      thumbFillColor      = c.withAlpha(0.4)
+      thumbFillColorHover = c.withAlpha(0.5)
+      thumbFillColorDown  = c.withAlpha(0.6)
+
+    with scrollBarStyleEdit:
+      let c = s.textField.scrollBarColorEdit
+      thumbFillColor      = c.withAlpha(0.4)
+      thumbFillColorHover = c.withAlpha(0.5)
+      thumbFillColorDown  = c.withAlpha(0.6)
+
   # Check box
   a.theme.checkBoxStyle = koi.getDefaultCheckBoxStyle()
 
@@ -767,6 +779,12 @@ proc updateWidgetStyles(a) =
     textFontFace        = "sans-bold"
     textLineHeight      = 1.4
     textColorDisabled   = s.notesPane.textColor
+
+    with scrollBarStyleNormal:
+      let c = s.notesPane.scrollBarColor
+      thumbFillColor      = c.withAlpha(0.4)
+      thumbFillColorHover = c.withAlpha(0.5)
+      thumbFillColorDown  = c.withAlpha(0.6)
 
 # }}}
 
@@ -4617,18 +4635,26 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 
     if koi.subSectionHeader("Text Field", te.sectionTextField):
-      prop("Edit Background", textField, bgColorActive):
-        koi.color(ts.textField.bgColorActive)
+      group:
+        prop("Edit Background", textField, bgColorActive):
+          koi.color(ts.textField.bgColorActive)
 
-      prop("Edit Text", textField, textColorActive):
-        koi.color(ts.textField.textColorActive)
+        prop("Edit Text", textField, textColorActive):
+          koi.color(ts.textField.textColorActive)
 
-      prop("Cursor", textField, cursorColor):
-        koi.color(ts.textField.cursorColor)
+      group:
+        prop("Cursor", textField, cursorColor):
+          koi.color(ts.textField.cursorColor)
 
-      prop("Selection", textField, selectionColor):
-        koi.color(ts.textField.selectionColor)
+        prop("Selection", textField, selectionColor):
+          koi.color(ts.textField.selectionColor)
 
+      group:
+        prop("Scroll Bar Normal", textField, scrollBarColorNormal):
+          koi.color(ts.textField.scrollBarColorNormal)
+
+        prop("Scroll Bar Edit", textField, scrollBarColorEdit):
+          koi.color(ts.textField.scrollBarColorEdit)
 
     if koi.subSectionHeader("Status Bar", te.sectionStatusBar):
       group:
@@ -4897,23 +4923,29 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   # {{{ Panes section
   if koi.sectionHeader("Panes", te.sectionPanes):
     if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
-      prop("Text", notesPane, textColor):
-        koi.color(ts.notesPane.textColor)
+      group:
+        prop("Text", notesPane, textColor):
+          koi.color(ts.notesPane.textColor)
 
-      prop("Index Background 1", notesPane, indexBgColor, 0):
-        koi.color(ts.notesPane.indexBgColor[0])
+      group:
+        prop("Index Background 1", notesPane, indexBgColor, 0):
+          koi.color(ts.notesPane.indexBgColor[0])
 
-      prop("Index Background 2", notesPane, indexBgColor, 1):
-        koi.color(ts.notesPane.indexBgColor[1])
+        prop("Index Background 2", notesPane, indexBgColor, 1):
+          koi.color(ts.notesPane.indexBgColor[1])
 
-      prop("Index Background 3", notesPane, indexBgColor, 2):
-        koi.color(ts.notesPane.indexBgColor[2])
+        prop("Index Background 3", notesPane, indexBgColor, 2):
+          koi.color(ts.notesPane.indexBgColor[2])
 
-      prop("Index Background 4", notesPane, indexBgColor, 3):
-        koi.color(ts.notesPane.indexBgColor[3])
+        prop("Index Background 4", notesPane, indexBgColor, 3):
+          koi.color(ts.notesPane.indexBgColor[3])
 
-      prop("Index", notesPane, indexColor):
-        koi.color(ts.notesPane.indexColor)
+        prop("Index", notesPane, indexColor):
+          koi.color(ts.notesPane.indexColor)
+
+      group:
+        prop("Scroll Bar", notesPane, scrollBarColor):
+          koi.color(ts.notesPane.scrollBarColor)
 
     if koi.subSectionHeader("Toolbar Pane", te.sectionToolbarPane):
       prop("Button ", toolbarPane, buttonBgColor):

@@ -14,10 +14,12 @@ defineTheme:
     textColorDisabled:  Color
 
   textField:
-    bgColorActive:      Color
-    textColorActive:    Color
-    cursorColor:        Color
-    selectionColor:     Color
+    bgColorActive:        Color
+    textColorActive:      Color
+    cursorColor:          Color
+    selectionColor:       Color
+    scrollBarColorNormal: Color
+    scrollBarColorEdit:   Color
 
   dialog:
     cornerRadius:       float
@@ -126,6 +128,7 @@ defineTheme:
     textColor:          Color
     indexColor:         Color
     indexBgColor:       array[4, Color]
+    scrollBarColor:     Color
 
   toolbarPane:
     buttonBgColor:      Color
