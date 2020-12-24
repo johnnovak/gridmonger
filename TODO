@@ -22,15 +22,38 @@ v0.9
 
   - map/level comments
 
-  - metadata
-    - level:
-      - comments
-    - map:
-      - game
-      - author
-      - comments
+  - region parameters (only name for now)
+  - region name reassignment when resizing a level
+
+  - about dialog
+  - help screen?
+
+  - toggle grid?
 
   - cascading theme loading (built-in vs user themes)
+
+  - textarea: mouse handling
+
+  - attempt to save map on crash
+  - display dialog on crash with instruction to file a bug report (print log
+    file location and backup file location)
+
+  - disable ctrl movement in wasd mode
+  - disable ctrl in excavate, erase & floor modes
+  - center map to screen
+
+  - 10 colours (1st color must be the default)
+
+  - level selector popup
+  - theme selector popup/window
+
+  - align left/right half of the screen buttons
+
+  - theme editor
+    - image file loading
+    - scrollbars should always be visible
+    - action buttons should work
+    - hex color: only accept hex chars
 
   - trail:
     - should be a cell flag instead of a floor type
@@ -45,37 +68,6 @@ v0.9
       - get rid of quotation marks
       - insert new lines after sections when writing
     - rename properties according to theme editor
-
-  - textarea: mouse handling
-
-  - attempt to save map on crash
-  - display dialog on crash with instruction to file a bug report (print log
-    file location and backup file location)
-
-  - disable ctrl movement in wasd mode
-  - disable ctrl in excavate, erase & floor modes
-  - center map to screen
-
-  - 10 colours (1st color must be the default)
-
-  - region parameters (only name for now)
-  - region name reassignment when resizing a level
-
-  - level selector popup
-  - theme selector popup/window
-
-  - about dialog
-  - help screen?
-
-  - toggle grid?
-
-  - align left/right half of the screen buttons
-
-  - theme editor
-    - image file loading
-    - scrollbars should always be visible
-    - action buttons should work
-    - hex color: only accept hex chars
 
 
 v1.0

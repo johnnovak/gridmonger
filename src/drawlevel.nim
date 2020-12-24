@@ -1432,7 +1432,8 @@ proc drawArchwayHoriz*(x, y: float, regionBorder: bool = false,
 
 # }}}
 # {{{ drawOneWayDoorHoriz*()
-proc drawOneWayDoorHoriz*(x, y: float, northEast: bool, regionBorder: bool; ctx) =
+proc drawOneWayDoorHoriz*(x, y: float, northEast: bool,
+                          regionBorder: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1520,7 +1521,8 @@ proc drawLeverHorizSW*(x, y: float, regionBorder: bool = false; ctx) =
 
 # }}}
 # {{{ drawNicheHoriz*()
-proc drawNicheHoriz*(x, y: float, regionBorder: bool, northEast: bool, floorColor: Natural; ctx) =
+proc drawNicheHoriz*(x, y: float, regionBorder: bool, northEast: bool,
+                     floorColor: Natural; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)

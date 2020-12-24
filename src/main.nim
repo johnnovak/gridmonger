@@ -1486,7 +1486,8 @@ proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
 
 # }}}
 # {{{ colorRadioButtonDrawProc()
-proc colorRadioButtonDrawProc(colors: seq[Color],
+proc colorRadioButtonDrawProc(backgroundColor: Color,
+                              colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
 
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
@@ -1496,7 +1497,8 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
     let sw = 2.0
     let (x, y, w, h) = snapToGrid(x, y, w, h, sw)
 
-    var col = colors[buttonIdx]
+    let fc = colors[buttonIdx]
+    var col = lerp(backgroundColor, fc, fc.a).withAlpha(1.0)
 
     if state in {wsHover, wsDown, wsActiveHover}:
       col = col.lerp(white(), 0.15)
@@ -2688,7 +2690,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
       dlg.indexColor,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq,
+      drawProc = colorRadioButtonDrawProc(ls.backgroundColor,
+                                          ls.noteIndexBgColor.toSeq,
                                           ls.cursorColor).some
     )
 
@@ -2882,7 +2885,8 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq, # TODO
+    drawProc = colorRadioButtonDrawProc(ls.backgroundColor,
+                                        ls.noteIndexBgColor.toSeq, # TODO
                                         ls.cursorColor).some,
     style = a.theme.radioButtonStyle
   )
@@ -4311,7 +4315,8 @@ proc renderToolsPane(x, y, w, h: float; a) =
     layout = RadioButtonsLayout(kind: rblGridVert,
                                 itemsPerColumn: colorItemsPerColum),
 
-    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq,
+    drawProc = colorRadioButtonDrawProc(ls.backgroundColor,
+                                        ls.floorColor.toSeq,
                                         ls.cursorColor).some
   )
 
@@ -5717,6 +5722,8 @@ proc main() =
   discard tryRemoveFile(LogFile)
   var fileLog = newFileLogger(LogFile, fmtStr="[$levelname] $date $time - ", bufSize=0)
   addHandler(fileLog)
+
+  echo "stuff"
 
   # TODO
 #  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), compiled on {BuildOS} at {BuildDateTime}")
