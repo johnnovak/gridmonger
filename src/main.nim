@@ -1361,7 +1361,7 @@ template regionFields() =
 # {{{ levelCommonFields()
 template levelCommonFields() =
   group:
-    koi.label("Location Name", style=a.theme.labelStyle)
+    koi.label("Location name", style=a.theme.labelStyle)
 
     koi.textField(
       dlg.locationName,
@@ -1374,7 +1374,7 @@ template levelCommonFields() =
       style = a.theme.textFieldStyle
     )
 
-    koi.label("Level Name", style=a.theme.labelStyle)
+    koi.label("Level name", style=a.theme.labelStyle)
 
     koi.textField(
       dlg.levelName,
