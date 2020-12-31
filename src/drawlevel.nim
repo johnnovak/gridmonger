@@ -254,26 +254,31 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
 
   for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
 
+    var sp = spacing * pxRatio
+
     var image = vg.renderToImage(
-      width  = spacing * pxRatio.int,
-      height = spacing * pxRatio.int,
+      width  = sp.int,
+      height = sp.int,
       getPxRatio(),
       {ifRepeatX, ifRepeatY}
     ):
-      var sw = 1.0
+      var sw: float
       if pxRatio == 1.0:
         if spacing <= 4:
+          sw = 1.0
           vg.shapeAntiAlias(false)
         else:
           sw = 0.8
+      else:
+        sw = 2.0
 
       vg.strokeColor(strokeColor)
       vg.strokeWidth(sw)
 
       vg.beginPath()
       for i in 0..10:
-        vg.moveTo(-2, i*spacing + 2.0)
-        vg.lineTo(i*spacing + 2.0, -2)
+        vg.moveTo(-2, i*sp + 2.0)
+        vg.lineTo(i*sp + 2.0, -2)
       vg.stroke()
 
       vg.shapeAntiAlias(true)
