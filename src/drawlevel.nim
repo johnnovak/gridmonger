@@ -1020,9 +1020,9 @@ proc drawTrail(x, y: float; ctx) =
   vg.fill()
 
 # }}}
-# {{{ drawSecretDoor()
-proc drawSecretDoor(x, y: float, isCursorActive: bool,
-                    floorColor: Natural; ctx) =
+# {{{ drawSecretDoorBlock()
+proc drawSecretDoorBlock(x, y: float, isCursorActive: bool,
+                         floorColor: Natural; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
 
@@ -1385,7 +1385,7 @@ proc drawSecretDoorHoriz*(x, y: float, regionBorder: bool = false; ctx) =
   vg.lineTo(snap(xe, sw), snap(y, sw))
   vg.stroke()
 
-  drawIcon(x, y-dp.gridSize*0.5, 0.02, -0.02, "S", dp.gridSize, ls.drawColor,
+  drawIcon(x, y-dp.gridSize*0.5, 0.01, -0.04, "S", dp.gridSize, ls.drawColor,
            fontSizeFactor=0.43, ctx.vg)
 
 # }}}
@@ -1467,16 +1467,13 @@ proc drawOneWayDoorHoriz*(x, y: float, northEast: bool,
   var icon: string
 
   # Arrow
-  ox = 0.021
+  ox = 0.011
   if northEast:
     icon = IconThinArrowUp
-    if ls.lineWidth == lwThin:
-      oy = -0.06
-    else:
-      oy = -0.1
+    oy = -0.06
   else:
     icon = IconThinArrowDown
-    oy = 0.045
+    oy = 0.02
 
   drawIcon(x, y-dp.gridSize*0.5, ox, oy, icon,
            dp.gridSize, ls.drawColor, fontSizeFactor=0.46, ctx.vg)
@@ -1859,12 +1856,15 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   of fDoor:                drawOriented(drawDoorHoriz)
   of fLockedDoor:          drawOriented(drawLockedDoorHoriz)
   of fArchway:             drawOriented(drawArchwayHoriz)
-  of fSecretDoor:          drawSecretDoor(
+  of fSecretDoorBlock:     drawSecretDoorBlock(
                              x, y,
                              isCursorActive(viewRow, viewCol, dp),
                              viewBuf.getFloorColor(bufRow, bufCol),
                              ctx
                            )
+  of fSecretDoor:          drawOriented(drawSecretDoorHoriz)
+  of fOneWayDoor1:         drawOriented(drawOneWayDoorHorizNE)
+  of fOneWayDoor2:         drawOriented(drawOneWayDoorHorizSW)
   of fPressurePlate:       draw(drawPressurePlate)
   of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
   of fClosedPit:           draw(drawClosedPit)

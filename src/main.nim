@@ -130,6 +130,44 @@ const
     wWritingSW
   ]
 
+  FloorsKey1 = @[
+    fDoor,
+    fLockedDoor,
+    fArchway
+  ]
+
+  FloorsKey2 = @[
+    fSecretDoor,
+    fSecretDoorBlock,
+    fOneWayDoor1,
+    fOneWayDoor2
+  ]
+
+  FloorsKey3 = @[
+    fPressurePlate,
+    fHiddenPressurePlate
+  ]
+
+  FloorsKey4 = @[
+    fClosedPit,
+    fOpenPit,
+    fHiddenPit,
+    fCeilingPit
+  ]
+
+  FloorsKey5 = @[
+    fTeleportSource,
+    fSpinner,
+    fInvisibleBarrier
+  ]
+
+  FloorsKey6 = @[
+    fStairsDown,
+    fStairsUp,
+    fDoorEnter,
+    fDoorExit
+  ]
+
 # }}}
 # {{{ AppContext
 type
@@ -3156,19 +3194,16 @@ proc setFloorAction(f: Floor; a) =
 
 # }}}
 # {{{ setOrCycleFloorAction()
-proc setOrCycleFloorAction(first, last: Floor, forward: bool; a) =
-  assert first <= last
-
+proc setOrCycleFloorAction(floors: seq[Floor], forward: bool; a) =
   var floor = a.doc.map.getFloor(a.ui.cursor)
 
-  if floor >= first and floor <= last:
-    var f = ord(floor)
-    let first = ord(first)
-    let last = ord(last)
-    if forward: inc(f) else: dec(f)
-    floor = (first + floorMod(f-first, last-first+1)).Floor
+  var i = floors.find(floor)
+  echo i
+  if i > -1:
+    if forward: inc(i) else: dec(i)
+    floor = floors[floorMod(i, floors.len)]
   else:
-    floor = if forward: first else: last
+    floor = if forward: floors[0] else: floors[^1]
 
   setFloorAction(floor, a)
 
@@ -3434,29 +3469,22 @@ proc handleGlobalKeyEvents(a) =
                          @[IconArrowsAll, "set/clear"], a)
 
       elif ke.isKeyDown(key1) or ke.isKeyDown(key1, {mkShift}):
-        setOrCycleFloorAction(fDoor, fSecretDoor,
-                               forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(FloorsKey1, forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key2) or ke.isKeyDown(key2, {mkShift}):
-        setOrCycleFloorAction(fPressurePlate, fHiddenPressurePlate,
-                              forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(FloorsKey2, forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key3) or ke.isKeyDown(key3, {mkShift}):
-        setOrCycleFloorAction(fClosedPit, fCeilingPit,
-                              forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(FloorsKey3, forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key4) or ke.isKeyDown(key4, {mkShift}):
-        setFloorAction(fTeleportSource, a)
+        setOrCycleFloorAction(FloorsKey4, forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key5) or ke.isKeyDown(key5, {mkShift}):
-        setOrCycleFloorAction(fStairsDown, fDoorExit,
-                              forward=not koi.shiftDown(), a)
+        setOrCycleFloorAction(FloorsKey5, forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(key6) or ke.isKeyDown(key6, {mkShift}):
-        setFloorAction(fSpinner, a)
-
-      elif ke.isKeyDown(key7) or ke.isKeyDown(key7, {mkShift}):
-        setFloorAction(fInvisibleBarrier, a)
+        setOrCycleFloorAction(FloorsKey6, forward=not koi.shiftDown(), a)
 
       elif ke.isKeyDown(keyLeftBracket, repeat=true):
         if ui.currSpecialWall > 0: dec(ui.currSpecialWall)
