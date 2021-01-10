@@ -4768,6 +4768,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         prop("Background", level, backgroundColor):
           koi.color(ts.level.backgroundColor)
 
+      group:
         prop("Foreground", level, drawColor):
           koi.color(ts.level.drawColor)
 
@@ -4784,6 +4785,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         prop("Coordinates Highlight", level, coordsHighlightColor):
           koi.color(ts.level.coordsHighlightColor)
 
+      group:
         prop("Cursor", level, cursorColor):
           koi.color(ts.level.cursorColor)
 
@@ -4886,6 +4888,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 
     if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
+      prop("Transparent Floor", level, transparentFloor):
+        koi.checkbox(ts.level.transparentFloor)
+
       prop("Floor 1", level, floorColor, 0):
         koi.color(ts.level.floorColor[0])
 

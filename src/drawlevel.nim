@@ -301,7 +301,21 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
   dp.setZoomLevel(ls, dp.zoomLevel)
 
 # }}}
+# {{{ calcFloorColor()
+func calcFloorColor(floorColor: Natural, transparentFloor: bool = false;
+                    ctx): Color =
+  alias(ls, ctx.ls)
 
+  let fc = ls.floorColor[floorColor]
+
+  if transparentFloor: fc
+  else:
+    let fc0 = ls.floorColor[0]
+    let baseBg = lerp(ls.backgroundColor.withAlpha(1.0), fc0.withAlpha(1.0),
+                      fc0.a)
+    lerp(baseBg, fc, fc.a)
+
+# }}}
 # {{{ setLevelClippingRect()
 proc setLevelClippingRect(l: Level; ctx) =
   alias(dp, ctx.dp)
@@ -337,6 +351,7 @@ proc setLevelClippingRect(l: Level; ctx) =
   vg.intersectScissor(x, y, w, h)
 
 # }}}
+#
 # {{{ drawBackground()
 proc drawBackground(ctx) =
   alias(ls, ctx.ls)
@@ -1038,8 +1053,7 @@ proc drawSecretDoorBlock(x, y: float, isCursorActive: bool,
     fontSizeFactor = DefaultIconFontSizeFactor
     gs = dp.gridSize
 
-  let fc = ls.floorColor[floorColor]
-  var bgCol = lerp(ls.backgroundColor, fc, fc.a).withAlpha(1.0)
+  var bgCol = calcFloorColor(floorColor, ctx=ctx)
   if isCursorActive:
     bgCol = lerp(bgCol, ls.cursorColor, ls.cursorColor.a).withAlpha(1.0)
 
@@ -1817,7 +1831,11 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level; ctx) =
       if not viewBuf.isEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        let floorColor = ls.floorColor[viewBuf.getFloorColor(bufRow, bufCol)]
+        let floorColor = calcFloorColor(
+          viewBuf.getFloorColor(bufRow, bufCol),
+          ls.transparentFloor,
+          ctx
+        )
         drawFloorBg(x, y, floorColor, ctx)
         drawGrid(x, y, ls.gridColorFloor, ls.gridStyleFloor, ctx)
 

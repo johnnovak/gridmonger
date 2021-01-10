@@ -78,6 +78,7 @@ defineTheme:
     backgroundColor:        Color
     drawColor:              Color
     lightDrawColor:         Color
+    transparentFloor:       bool
     floorColor:             array[9, Color]
     lineWidth:              LineWidth
 
