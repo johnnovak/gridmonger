@@ -301,9 +301,9 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
   dp.setZoomLevel(ls, dp.zoomLevel)
 
 # }}}
-# {{{ calcFloorColor()
-func calcFloorColor(floorColor: Natural, transparentFloor: bool = false;
-                    ctx): Color =
+# {{{ calcBlendedFloorColor*()
+func calcBlendedFloorColor*(floorColor: Natural, transparentFloor: bool = false;
+                            ctx): Color =
   alias(ls, ctx.ls)
 
   let fc = ls.floorColor[floorColor]
@@ -1053,7 +1053,7 @@ proc drawSecretDoorBlock(x, y: float, isCursorActive: bool,
     fontSizeFactor = DefaultIconFontSizeFactor
     gs = dp.gridSize
 
-  var bgCol = calcFloorColor(floorColor, ctx=ctx)
+  var bgCol = calcBlendedFloorColor(floorColor, ctx=ctx)
   if isCursorActive:
     bgCol = lerp(bgCol, ls.cursorColor, ls.cursorColor.a).withAlpha(1.0)
 
@@ -1831,7 +1831,7 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level; ctx) =
       if not viewBuf.isEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        let floorColor = calcFloorColor(
+        let floorColor = calcBlendedFloorColor(
           viewBuf.getFloorColor(bufRow, bufCol),
           ls.transparentFloor,
           ctx

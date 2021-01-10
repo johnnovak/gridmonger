@@ -1524,8 +1524,7 @@ proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
 
 # }}}
 # {{{ colorRadioButtonDrawProc()
-proc colorRadioButtonDrawProc(backgroundColor: Color,
-                              colors: seq[Color],
+proc colorRadioButtonDrawProc(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
 
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
@@ -1535,9 +1534,7 @@ proc colorRadioButtonDrawProc(backgroundColor: Color,
     let sw = 2.0
     let (x, y, w, h) = snapToGrid(x, y, w, h, sw)
 
-    let fc = colors[buttonIdx]
-    var col = lerp(backgroundColor, fc, fc.a).withAlpha(1.0)
-
+    var col = colors[buttonIdx]
     if state in {wsHover, wsDown, wsActiveHover}:
       col = col.lerp(white(), 0.15)
 
@@ -2728,8 +2725,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
       dlg.indexColor,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc = colorRadioButtonDrawProc(ls.backgroundColor,
-                                          ls.noteIndexBgColor.toSeq,
+      drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq,
                                           ls.cursorColor).some
     )
 
@@ -2923,8 +2919,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.backgroundColor,
-                                        ls.noteIndexBgColor.toSeq, # TODO
+    drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq, # TODO
                                         ls.cursorColor).some,
     style = a.theme.radioButtonStyle
   )
@@ -4343,8 +4338,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     layout = RadioButtonsLayout(kind: rblGridVert,
                                 itemsPerColumn: colorItemsPerColum),
 
-    drawProc = colorRadioButtonDrawProc(ls.backgroundColor,
-                                        ls.floorColor.toSeq,
+    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq,
                                         ls.cursorColor).some
   )
 
