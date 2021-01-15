@@ -94,7 +94,23 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 proc setFloor*(map; loc: Location, f: Floor, floorColor: byte; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
+    let note = m.getNote(loc)
+    if note.isSome and note.get.kind == nkLabel:
+      alias(l, m.levels[loc.level])
+      l.delNote(loc.row, loc.col)
+
     m.setFloor(loc, f)
+    m.setFloorColor(loc, floorColor)
+
+# }}}
+# {{{ clearFloor*()
+proc clearFloor*(map; loc: Location, floorColor: byte; um) =
+
+  singleCellAction(map, loc, um, fmt"Clear floor", m):
+    alias(l, m.levels[loc.level])
+    l.delNote(loc.row, loc.col)
+
+    m.setFloor(loc, fEmpty)
     m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -184,7 +200,9 @@ proc eraseNote*(map; loc: Location; um) =
 
   singleCellAction(map, loc, um, "Erase note", m):
     alias(l, m.levels[loc.level])
-    l.delNote(loc.row, loc.col)
+    let note = m.getNote(loc)
+    if note.isSome and note.get.kind != nkLabel:
+      l.delNote(loc.row, loc.col)
 
 # }}}
 # {{{ setLabel*()
@@ -192,6 +210,7 @@ proc setLabel*(map; loc: Location, n: Note; um) =
 
   singleCellAction(map, loc, um, "Set label", m):
     alias(l, m.levels[loc.level])
+    m.setFloor(loc, fEmpty)
     l.setNote(loc.row, loc.col, n)
 
 # }}}
@@ -200,7 +219,9 @@ proc eraseLabel*(map; loc: Location; um) =
 
   singleCellAction(map, loc, um, "Erase label", m):
     alias(l, m.levels[loc.level])
-    l.delNote(loc.row, loc.col)
+    let note = m.getNote(loc)
+    if note.isSome and note.get.kind == nkLabel:
+      l.delNote(loc.row, loc.col)
 
 # }}}
 # {{{ setLink*()

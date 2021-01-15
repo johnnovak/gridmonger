@@ -1,4 +1,5 @@
 import algorithm
+import options
 import sequtils
 import strformat
 
@@ -89,7 +90,7 @@ proc hasNote*(m; loc: Location): bool {.inline.} =
 
 # }}}
 # {{{ getNote*()
-proc getNote*(m; loc: Location): Note {.inline.} =
+proc getNote*(m; loc: Location): Option[Note] {.inline.} =
   m.levels[loc.level].getNote(loc.row, loc.col)
 
 # }}}

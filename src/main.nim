@@ -2644,10 +2644,10 @@ proc openEditNoteDialog(a) =
   dlg.row = cur.row
   dlg.col = cur.col
 
-  if l.hasNote(cur.row, cur.col) and
-     l.getNote(cur.row, cur.col).kind != nkLabel:
+  let note = l.getNote(cur.row, cur.col)
 
-    let note = l.getNote(cur.row, cur.col)
+  if note.isSome and note.get.kind != nkLabel:
+    let note = note.get
     dlg.editMode = true
     dlg.kind = note.kind
     dlg.text = note.text
@@ -2861,14 +2861,13 @@ proc openEditLabelDialog(a) =
   dlg.row = cur.row
   dlg.col = cur.col
 
-  if l.hasNote(cur.row, cur.col) and
-     l.getNote(cur.row, cur.col).kind == nkLabel:
+  let note = l.getNote(cur.row, cur.col)
 
-    let note = l.getNote(cur.row, cur.col)
+  if note.isSome and note.get.kind == nkLabel:
+    let note = note.get
     dlg.editMode = true
     dlg.text = note.text
     dlg.color = note.labelColor
-
   else:
     dlg.editMode = false
     dlg.text = ""
@@ -3193,7 +3192,6 @@ proc setOrCycleFloorAction(floors: seq[Floor], forward: bool; a) =
   var floor = a.doc.map.getFloor(a.ui.cursor)
 
   var i = floors.find(floor)
-  echo i
   if i > -1:
     if forward: inc(i) else: dec(i)
     floor = floors[floorMod(i, floors.len)]
@@ -3222,7 +3220,11 @@ proc startDrawWallsAction(a) =
   setStatusMessage("", "Draw walls", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
+# {{{ startDrawWallsSpecialAction()
+proc startDrawWallsSpecialAction(a) =
+  setStatusMessage("", "Draw walls special", @[IconArrowsAll, "set/clear"], a)
 
+# }}}
 # }}}
 
 # {{{ handleLevelMouseEvents()
@@ -3253,6 +3255,19 @@ proc handleLevelMouseEvents(a) =
       if not koi.mbRightDown():
         ui.editMode = emNormal
         clearStatusMessage(a)
+      else:
+        if koi.mbLeftDown():
+          ui.editMode = emDrawWallSpecial
+          startDrawWallsSpecialAction(a)
+
+    elif ui.editMode == emDrawWallSpecial:
+      if not koi.mbRightDown():
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+      else:
+        if not koi.mbLeftDown():
+          ui.editMode = emDrawWall
+          startDrawWallsAction(a)
 
     elif ui.editMode == emEraseCell:
       if not koi.mbMiddleDown():
@@ -3426,7 +3441,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emExcavate
         startExcavateAction(a)
 
-      elif not opt.wasdMode and ke.isKeyDown(keyE):
+      elif not (opt.wasdMode and opt.walkMode) and ke.isKeyDown(keyE):
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
@@ -3460,8 +3475,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyR):
         ui.editMode = emDrawWallSpecial
-        setStatusMessage("", "Draw wall special",
-                         @[IconArrowsAll, "set/clear"], a)
+        startDrawWallsSpecialAction(a)
 
       elif ke.isKeyDown(key1) or ke.isKeyDown(key1, {mkShift}):
         setOrCycleFloorAction(FloorsKey1, forward=not koi.shiftDown(), a)
@@ -3632,7 +3646,8 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconEraser, "Note erased", a)
 
       elif ke.isKeyDown(keyT, {mkShift}):
-        if not (map.hasNote(cur) and map.getNote(cur).kind == nkLabel):
+        let note = map.getNote(cur)
+        if not (note.isSome and note.get.kind == nkLabel):
           setStatusMessage(IconWarning, "No label to erase in cell", a)
         else:
           actions.eraseLabel(map, cur, um)
@@ -3696,7 +3711,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyT, {mkAlt}):
         toggleShowOption(opt.showToolsPane, NoIcon, "Tools pane", a)
 
-      elif ke.isKeyDown(keyBackslash):
+      elif ke.isKeyDown(keyGraveAccent):
         opt.walkMode = not opt.walkMode
         let msg = if opt.walkMode: "Walk mode" else: "Normal mode"
         setStatusMessage(msg, a)
@@ -3731,7 +3746,7 @@ proc handleGlobalKeyEvents(a) =
           actions.eraseCell(map, cur, um)
 
         elif ui.editMode == emClearFloor:
-          actions.setFloor(map, cur, fEmpty, ui.currFloorColor, um)
+          actions.clearFloor(map, cur, ui.currFloorColor, um)
 
         elif ui.editMode == emColorFloor:
           let floor = map.getFloor(cur)
@@ -4198,8 +4213,9 @@ proc renderLevel(a) =
       if locOpt.isSome:
         let loc = locOpt.get
 
-        if l.hasNote(loc.row, loc.col):
-          let note = l.getNote(loc.row, loc.col)
+        let note = l.getNote(loc.row, loc.col)
+        if note.isSome:
+          let note = note.get
           if note.kind != nkLabel:
             drawNoteTooltip(note, a)
 
@@ -4348,13 +4364,13 @@ proc renderNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(s, a.theme.style.notesPane)
 
-  let l = currLevel(a)
-  let cur = a.ui.cursor
+  let
+    l = currLevel(a)
+    cur = a.ui.cursor
+    note = l.getNote(cur.row, cur.col)
 
-  if not (a.ui.editMode in {emPastePreview, emNudgePreview}) and
-     l.hasNote(cur.row, cur.col):
-
-    let note = l.getNote(cur.row, cur.col)
+  if note.isSome and not (a.ui.editMode in {emPastePreview, emNudgePreview}):
+    let note = note.get
     if note.text == "" or note.kind == nkLabel: return
 
     vg.save()
@@ -5749,8 +5765,6 @@ proc main() =
   discard tryRemoveFile(LogFile)
   var fileLog = newFileLogger(LogFile, fmtStr="[$levelname] $date $time - ", bufSize=0)
   addHandler(fileLog)
-
-  echo "stuff"
 
   # TODO
 #  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), compiled on {BuildOS} at {BuildDateTime}")

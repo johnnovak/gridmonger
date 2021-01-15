@@ -83,9 +83,11 @@ proc hasNote*(l; r,c: Natural): bool {.inline.} =
 
 # }}}
 # {{{ getNote*()
-proc getNote*(l; r,c: Natural): Note =
+proc getNote*(l; r,c: Natural): Option[Note] =
   let key = locationKey(l, r,c)
-  l.notes[key]
+  if l.notes.hasKey(key):
+    l.notes[key].some
+  else: Note.none
 
 # }}}
 # {{{ setNote*()
@@ -130,16 +132,6 @@ proc delNotes(l; rect: Rect[Natural]) =
   for (r,c) in toDel: l.delNote(r,c)
 
 # }}}
-# {{{ convertNoteToComment()
-proc convertNoteToComment(l; r,c: Natural) =
-  if l.hasNote(r,c):
-    let note = l.getNote(r,c)
-    if note.kind != nkComment:
-      l.delNote(r,c)
-      let commentNote = Note(kind: nkComment, text: note.text)
-      l.setNote(r,c, commentNote)
-
-# }}}
 # {{{ copyNotesFrom()
 proc copyNotesFrom(l; destRow, destCol: Natural,
                    src: Level, srcRect: Rect[Natural]) =
@@ -162,6 +154,19 @@ proc isEmpty*(l; r,c: Natural): bool {.inline.} =
 # {{{ getFloor*()
 proc getFloor*(l; r,c: Natural): Floor {.inline.} =
   l.cellGrid.getFloor(r,c)
+
+# }}}
+# {{{ convertNoteToComment()
+proc convertNoteToComment(l; r,c: Natural) =
+  let note = l.getNote(r,c)
+  if note.isSome:
+    let note = note.get
+    if note.kind != nkComment:
+      l.delNote(r,c)
+
+    if note.kind != nkLabel:
+      let commentNote = Note(kind: nkComment, text: note.text)
+      l.setNote(r,c, commentNote)
 
 # }}}
 # {{{ setFloor*()
@@ -345,7 +350,7 @@ proc paste*(l; destRow, destCol: int, src: Level,
 
           l.delNote(r,c)
           if src.hasNote(srcRow, srcCol):
-            l.setNote(r,c, src.getNote(srcRow, srcCol))
+            l.setNote(r,c, src.getNote(srcRow, srcCol).get)
 
 # }}}
 
