@@ -209,8 +209,10 @@ proc eraseNote*(map; loc: Location; um) =
 proc setLabel*(map; loc: Location, n: Note; um) =
 
   singleCellAction(map, loc, um, "Set label", m):
+    if m.getFloor(loc) != fNone:
+      m.setFloor(loc, fEmpty)
+
     alias(l, m.levels[loc.level])
-    m.setFloor(loc, fEmpty)
     l.setNote(loc.row, loc.col, n)
 
 # }}}

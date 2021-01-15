@@ -4929,6 +4929,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       prop("Floor 9", level, floorColor, 8):
         koi.color(ts.level.floorColor[8])
 
+      prop("Floor 10", level, floorColor, 9):
+        koi.color(ts.level.floorColor[9])
+
 
     if koi.subSectionHeader("Notes", te.sectionNotes):
       group:

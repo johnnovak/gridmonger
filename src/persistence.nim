@@ -16,6 +16,7 @@ import icons
 import level
 import map
 import utils
+import theme
 
 
 # TODO use app version instead?
@@ -37,12 +38,12 @@ const
   RegionRowsLimits*        = intLimits(min=2, max=6666)
   RegionColumnsLimits*     = intLimits(min=2, max=6666)
 
-  CellFloorColorLimits*    = intLimits(min=0, max=8)
+  CellFloorColorLimits*    = intLimits(min=0, max=LevelStyle.floorColor.len)
 
   NumNotesLimits*          = intLimits(min=0, max=10_000)
   NoteTextLimits*          = strLimits(minLen=0, maxLen=1600, maxRuneLen=400)
   NoteCustomIdLimits*      = strLimits(minLen=1, maxLen=2, maxRuneLen=2)
-  NoteColorLimits*         = intLimits(min=0, max=3)
+  NoteColorLimits*         = intLimits(min=0, max=LevelStyle.noteIndexBgColor.len)
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
 
   NumLinksLimits*          = intLimits(min=0, max=10_000)
