@@ -1,7 +1,6 @@
 import lenientops
 import math
 import options
-import strutils
 
 import glad/gl
 import koi
@@ -880,7 +879,7 @@ proc drawNote(x, y: float, note: Note; ctx) =
 
   # }}}
 # {{{ drawLabel()
-proc drawLabel(x, y: float, text: string; ctx) =
+proc drawLabel(x, y: float, label: Note; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -892,20 +891,17 @@ proc drawLabel(x, y: float, text: string; ctx) =
   vg.intersectScissor(dp.startX, dp.startY, w, h)
 
   vg.beginPath()
-  vg.rect(dp.startX, dp.startY, w, h)
+
   vg.setFont((dp.gridSize * 0.48).float)
-  vg.fillColor(ls.drawColor)
+  vg.fillColor(ls.labelColor[label.labelColor])
   vg.textAlign(haLeft, vaMiddle)
   vg.textLineHeight(1.2)
-
-  # TODO remove when textbox widget is available
-  var text = text.replace("\\n", "\n")
 
   vg.textBox(
     x + dp.gridSize * 0.22,
     y + dp.gridSize * TextVertAlignFactor,
     MaxLabelWidthInCells * dp.gridSize,
-    text
+    label.text
   )
 
   vg.restore()
@@ -1930,7 +1926,7 @@ proc drawLabels(viewBuf: Level; ctx) =
         x = cellX(viewCol, dp)
         y = cellY(viewRow, dp)
 
-      drawLabel(x, y, note.text, ctx)
+      drawLabel(x, y, note, ctx)
 
 # }}}
 # {{{ drawLinkMarkers()

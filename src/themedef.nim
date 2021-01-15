@@ -120,6 +120,8 @@ defineTheme:
     noteTooltipBgColor:     Color
     noteTooltipTextColor:   Color
 
+    labelColor:             array[4, Color]
+
     linkMarkerColor:        Color
 
     regionBorderColor:      Color

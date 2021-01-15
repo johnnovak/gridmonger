@@ -470,6 +470,7 @@ type
     sectionBackgroundHatch:  bool
     sectionFloorColors:      bool
     sectionNotes:            bool
+    sectionLabels:           bool
 
     sectionPanes:            bool
     sectionNotesPane:        bool
@@ -2918,7 +2919,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq, # TODO
+    drawProc = colorRadioButtonDrawProc(ls.labelColor.toSeq, # TODO
                                         ls.cursorColor).some,
     style = a.theme.radioButtonStyle
   )
@@ -4959,6 +4960,21 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
         prop("Tooltip", level, noteTooltipTextColor):
           koi.color(ts.level.noteTooltipTextColor)
+
+
+    if koi.subSectionHeader("Labels", te.sectionLabels):
+      group:
+        prop("Label Color 1", level, labelColor, 0):
+          koi.color(ts.level.labelColor[0])
+
+        prop("Label Color 2", level, labelColor, 1):
+          koi.color(ts.level.labelColor[1])
+
+        prop("Label Color 3", level, labelColor, 2):
+          koi.color(ts.level.labelColor[2])
+
+        prop("Label Color 4", level, labelColor, 3):
+          koi.color(ts.level.labelColor[3])
 
 
     if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
