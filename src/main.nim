@@ -2915,7 +2915,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, 28, 28,
-    labels = newSeq[string](ls.noteIndexBgColor.len), # TODO
+    labels = newSeq[string](ls.labelColor.len), # TODO
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
