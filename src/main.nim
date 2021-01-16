@@ -236,6 +236,8 @@ type
     currSpecialWall:   Natural
     currFloorColor:    byte
 
+    drawNoteTooltip:   bool
+
     levelTopPad:       float
     levelRightPad:     float
     levelBottomPad:    float
@@ -830,6 +832,18 @@ proc updateWidgetStyles(a) =
 
 # {{{ Helpers/utils
 
+func viewRow(row: Natural; a): int =
+  row - a.ui.drawLevelParams.viewStartRow
+
+func viewRow(a): int =
+  viewRow(a.ui.cursor.row, a)
+
+func viewCol(col: Natural; a): int =
+  col - a.ui.drawLevelParams.viewStartCol
+
+func viewCol(a): int =
+  viewCol(a.ui.cursor.col, a)
+
 # {{{ mapHasLevels()
 proc mapHasLevels(a): bool =
   a.doc.map.levels.len > 0
@@ -904,8 +918,8 @@ proc updateLastCursorViewCoords(a) =
   alias(dp, a.ui.drawLevelParams)
   alias(cur, a.ui.cursor)
 
-  a.ui.lastCursorViewX = dp.gridSize * (cur.col - dp.viewStartCol)
-  a.ui.lastCursorViewY = dp.gridSize * (cur.row - dp.viewStartRow)
+  a.ui.lastCursorViewX = dp.gridSize * viewCol(a)
+  a.ui.lastCursorViewY = dp.gridSize * viewRow(a)
 
 # }}}
 # {{{ drawAreaWidth()
@@ -1019,8 +1033,8 @@ proc moveLevel(dir: CardinalDir, steps: Natural; a) =
   of dirS: newViewStartRow = min(dp.viewStartRow + steps, maxViewStartRow)
   of dirN: newViewStartRow = max(dp.viewStartRow - steps, 0)
 
-  cur.row = cur.row + (newViewStartRow - dp.viewStartRow)
-  cur.col = cur.col + (newViewStartCol - dp.viewStartCol)
+  cur.row = cur.row + viewRow(newViewStartRow, a)
+  cur.col = cur.col + viewCol(newViewStartCol, a)
 
   dp.viewStartRow = newViewStartRow
   dp.viewStartCol = newViewStartCol
@@ -1037,7 +1051,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural; a) =
   case dir:
   of dirE:
     cur.col = min(cur.col + steps, l.cols-1)
-    let viewCol = cur.col - dp.viewStartCol
+    let viewCol = viewCol(cur.col, a)
     let viewColMax = dp.viewCols-1 - sm
     if viewCol > viewColMax:
       dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol +
@@ -1045,7 +1059,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural; a) =
 
   of dirS:
     cur.row = min(cur.row + steps, l.rows-1)
-    let viewRow = cur.row - dp.viewStartRow
+    let viewRow = viewRow(cur.row, a)
     let viewRowMax = dp.viewRows-1 - sm
     if viewRow > viewRowMax:
       dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow +
@@ -1053,13 +1067,13 @@ proc moveCursor(dir: CardinalDir, steps: Natural; a) =
 
   of dirW:
     cur.col = max(cur.col - steps, 0)
-    let viewCol = cur.col - dp.viewStartCol
+    let viewCol = viewCol(cur.col, a)
     if viewCol < sm:
       dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
 
   of dirN:
     cur.row = max(cur.row - steps, 0)
-    let viewRow = cur.row - dp.viewStartRow
+    let viewRow = viewRow(cur.row, a)
     if viewRow < sm:
       dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
 
@@ -3241,6 +3255,168 @@ proc nextFloorColorAction(a) =
 # }}}
 
 # }}}
+# {{{ Drawing
+
+# {{{ drawEmptyMap()
+proc drawEmptyMap(a) =
+  alias(vg, a.vg)
+  alias(ls, a.doc.levelStyle)
+
+  vg.setFont(size=22)
+  vg.fillColor(ls.drawColor)
+  vg.textAlign(haCenter, vaMiddle)
+  var y = drawAreaHeight(a) * 0.5
+  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
+
+# }}}
+# {{{ drawNoteTooltip()
+proc drawNoteTooltip(x, y: float, note: Note, a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+  alias(dp, a.ui.drawLevelParams)
+
+  if note.text != "":
+    const PadX = 10
+    const PadY = 8
+
+    var
+      noteBoxX = x
+      noteBoxY = y
+      noteBoxW = 250.0
+
+    vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.5)
+
+    let
+      bounds = vg.textBoxBounds(noteBoxX + PadX,
+                                noteBoxY + PadY,
+                                noteBoxW - PadX*2, note.text)
+      noteTextH = bounds.y2 - bounds.y1
+      noteTextW = bounds.x2 - bounds.x1
+      noteBoxH = noteTextH + PadY*2
+
+    noteBoxW = noteTextW + PadX*2
+
+    let
+      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
+      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
+
+    if xOver > 0:
+      noteBoxX -= xOver
+
+    if yOver > 0:
+      noteBoxY -= noteBoxH + 22
+
+    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
+
+    vg.fillColor(a.theme.style.level.noteTooltipBgColor)
+    vg.beginPath()
+    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
+    vg.fill()
+
+    vg.fillColor(a.theme.style.level.noteTooltipTextColor)
+    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
+
+# }}}
+# {{{ drawModeAndOptionIndicators()
+proc drawModeAndOptionIndicators(a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+  alias(ls, a.doc.levelStyle)
+
+  var x = ui.levelLeftPad
+  let y = TitleBarHeight + 32
+
+  vg.save()
+
+  vg.fillColor(ls.coordsHighlightColor)
+
+  if a.opt.wasdMode:
+    vg.setFont(15.0)
+    discard vg.text(x, y, fmt"WASD+{IconMouse}")
+    x += 80
+
+  if a.opt.drawTrail:
+    vg.setFont(19)
+    discard vg.text(x, y+1, IconShoePrints)
+
+  vg.restore()
+
+# }}}
+# {{{ drawStatusBar()
+proc drawStatusBar(y: float, winWidth: float; a) =
+  alias(vg, a.vg)
+  alias(s, a.theme.style.statusBar)
+
+  let ty = y + StatusBarHeight * TextVertAlignFactor
+
+  # Bar background
+  vg.save()
+
+  vg.beginPath()
+  vg.rect(0, y, winWidth, StatusBarHeight)
+  vg.fillColor(s.backgroundColor)
+  vg.fill()
+
+  # Display cursor coordinates
+  vg.setFont(14)
+
+  if mapHasLevels(a):
+    let
+      l = currLevel(a)
+      coordOpts = coordOptsForCurrLevel(a)
+      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
+      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
+      cursorPos = fmt"({col}, {row})"
+      tw = vg.textWidth(cursorPos)
+
+    vg.fillColor(s.coordsColor)
+    vg.textAlign(haLeft, vaMiddle)
+    discard vg.text(winWidth - tw - 7, ty, cursorPos)
+
+    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
+
+  # Display icon & message
+  const
+    IconPosX = 10
+    MessagePosX = 30
+    MessagePadX = 20
+    CommandLabelPadX = 13
+    CommandTextPadX = 10
+
+  var x = 10.0
+
+  vg.fillColor(s.textColor)
+  discard vg.text(IconPosX, ty, a.ui.statusIcon)
+
+  let tx = vg.text(MessagePosX, ty, a.ui.statusMessage)
+  x = tx + MessagePadX
+
+  # Display commands, if present
+  for i, cmd in a.ui.statusCommands.pairs:
+    if i mod 2 == 0:
+      let label = cmd
+      let w = vg.textWidth(label)
+
+      vg.beginPath()
+      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
+      vg.fillColor(s.commandBgColor)
+      vg.fill()
+
+      vg.fillColor(s.commandColor)
+      discard vg.text(x + 5, ty, label)
+      x += w + CommandLabelPadX
+    else:
+      let text = cmd
+      vg.fillColor(s.textColor)
+      let tx = vg.text(x, ty, text)
+      x = tx + CommandTextPadX
+
+  vg.restore()
+
+# }}}
+
+# }}}
 
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents(a) =
@@ -3661,6 +3837,9 @@ proc handleGlobalKeyEvents(a) =
         else:
           actions.eraseLabel(map, cur, um)
           setStatusMessage(IconEraser, "Label erased", a)
+
+      elif ke.isKeyDown(keySpace):
+        ui.drawNoteToolTip = true
 
 #[ TODO
       elif ke.isKeyDown(keyD, {mkCtrl, mkAlt}):
@@ -4099,69 +4278,8 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
 # }}}
 
-# {{{ Drawing/rendering
+# {{{ Rendering
 
-# {{{ drawEmptyMap()
-proc drawEmptyMap(a) =
-  alias(vg, a.vg)
-  alias(ls, a.doc.levelStyle)
-
-  vg.setFont(size=22)
-  vg.fillColor(ls.drawColor)
-  vg.textAlign(haCenter, vaMiddle)
-  var y = drawAreaHeight(a) * 0.5
-  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
-
-# }}}
-# {{{ drawNoteTooltip()
-proc drawNoteTooltip(note: Note, a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-  alias(dp, a.ui.drawLevelParams)
-
-  if note.text != "":
-    const PadX = 10
-    const PadY = 8
-
-    var
-      noteBoxX = koi.mx() + 16
-      noteBoxY = koi.my() + 20
-      noteBoxW = 250.0
-
-    vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.5)
-
-    let
-      bounds = vg.textBoxBounds(noteBoxX + PadX,
-                                noteBoxY + PadY,
-                                noteBoxW - PadX*2, note.text)
-      noteTextH = bounds.y2 - bounds.y1
-      noteTextW = bounds.x2 - bounds.x1
-      noteBoxH = noteTextH + PadY*2
-
-    noteBoxW = noteTextW + PadX*2
-
-    let
-      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
-      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
-
-    if xOver > 0:
-      noteBoxX -= xOver
-
-    if yOver > 0:
-      noteBoxY -= noteBoxH + 22
-
-    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
-
-    vg.fillColor(a.theme.style.level.noteTooltipBgColor)
-    vg.beginPath()
-    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
-    vg.fill()
-
-    vg.fillColor(a.theme.style.level.noteTooltipTextColor)
-    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
-
-# }}}
 # {{{ renderLevel()
 proc renderLevel(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -4218,6 +4336,9 @@ proc renderLevel(a) =
     )
 
   # Draw note tooltip
+  var mouseOverCellWithNote = false
+  var note: Note
+
   if koi.isHot(id):
     if not (opt.wasdMode and isActive(id)):
 
@@ -4225,11 +4346,25 @@ proc renderLevel(a) =
       if locOpt.isSome:
         let loc = locOpt.get
 
-        let note = l.getNote(loc.row, loc.col)
-        if note.isSome:
-          let note = note.get
+        let noteOpt = l.getNote(loc.row, loc.col)
+        if noteOpt.isSome:
+          note = noteOpt.get
           if note.kind != nkLabel:
-            drawNoteTooltip(note, a)
+            mouseOverCellWithNote = true
+            ui.drawNoteTooltip = false
+
+  if mouseOverCellWithNote:
+    let
+      x = koi.mx() + 16
+      y = koi.my() + 20
+    drawNoteTooltip(x, y, note, a)
+
+  elif ui.drawNoteTooltip:
+#    let viewRow = cur.row - dp.viewStartRow
+#    let viewCol = cur.col - dp.viewStartCol
+    discard
+
+#    drawNoteTooltip(x, y, note, a)
 
 # }}}
 # {{{ renderToolsPane()
@@ -4416,103 +4551,6 @@ proc renderNotesPane(x, y, w, h: float; a) =
                  style=a.theme.noteTextAreaStyle)
 
     vg.restore()
-
-# }}}
-# {{{ drawModeAndOptionIndicators()
-proc drawModeAndOptionIndicators(a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-  alias(ls, a.doc.levelStyle)
-
-  var x = ui.levelLeftPad
-  let y = TitleBarHeight + 32
-
-  vg.save()
-
-  vg.fillColor(ls.coordsHighlightColor)
-
-  if a.opt.wasdMode:
-    vg.setFont(15.0)
-    discard vg.text(x, y, fmt"WASD+{IconMouse}")
-    x += 80
-
-  if a.opt.drawTrail:
-    vg.setFont(19)
-    discard vg.text(x, y+1, IconShoePrints)
-
-  vg.restore()
-
-# }}}
-# {{{ drawStatusBar()
-proc drawStatusBar(y: float, winWidth: float; a) =
-  alias(vg, a.vg)
-  alias(s, a.theme.style.statusBar)
-
-  let ty = y + StatusBarHeight * TextVertAlignFactor
-
-  # Bar background
-  vg.save()
-
-  vg.beginPath()
-  vg.rect(0, y, winWidth, StatusBarHeight)
-  vg.fillColor(s.backgroundColor)
-  vg.fill()
-
-  # Display cursor coordinates
-  vg.setFont(14)
-
-  if mapHasLevels(a):
-    let
-      l = currLevel(a)
-      coordOpts = coordOptsForCurrLevel(a)
-      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
-      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
-      cursorPos = fmt"({col}, {row})"
-      tw = vg.textWidth(cursorPos)
-
-    vg.fillColor(s.coordsColor)
-    vg.textAlign(haLeft, vaMiddle)
-    discard vg.text(winWidth - tw - 7, ty, cursorPos)
-
-    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
-
-  # Display icon & message
-  const
-    IconPosX = 10
-    MessagePosX = 30
-    MessagePadX = 20
-    CommandLabelPadX = 13
-    CommandTextPadX = 10
-
-  var x = 10.0
-
-  vg.fillColor(s.textColor)
-  discard vg.text(IconPosX, ty, a.ui.statusIcon)
-
-  let tx = vg.text(MessagePosX, ty, a.ui.statusMessage)
-  x = tx + MessagePadX
-
-  # Display commands, if present
-  for i, cmd in a.ui.statusCommands.pairs:
-    if i mod 2 == 0:
-      let label = cmd
-      let w = vg.textWidth(label)
-
-      vg.beginPath()
-      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
-      vg.fillColor(s.commandBgColor)
-      vg.fill()
-
-      vg.fillColor(s.commandColor)
-      discard vg.text(x + 5, ty, label)
-      x += w + CommandLabelPadX
-    else:
-      let text = cmd
-      vg.fillColor(s.textColor)
-      let tx = vg.text(x, ty, text)
-      x = tx + CommandTextPadX
-
-  vg.restore()
 
 # }}}
 
