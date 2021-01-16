@@ -236,7 +236,8 @@ type
     currSpecialWall:   Natural
     currFloorColor:    byte
 
-    drawNoteTooltip:   bool
+    drawNoteTooltip:     bool
+    noteTooltipLocation: Location
 
     levelTopPad:       float
     levelRightPad:     float
@@ -432,7 +433,7 @@ type
     editMode:     bool
     row:          Natural
     col:          Natural
-    kind:         NoteKind
+    kind:         AnnotationKind
     index:        Natural
     indexColor:   Natural
     customId:     string
@@ -832,35 +833,39 @@ proc updateWidgetStyles(a) =
 
 # {{{ Helpers/utils
 
+# {{{ viewRow()
 func viewRow(row: Natural; a): int =
   row - a.ui.drawLevelParams.viewStartRow
 
 func viewRow(a): int =
   viewRow(a.ui.cursor.row, a)
 
+# }}}
+# {{{ viewCol()
 func viewCol(col: Natural; a): int =
   col - a.ui.drawLevelParams.viewStartCol
 
 func viewCol(a): int =
   viewCol(a.ui.cursor.col, a)
 
+# }}}
 # {{{ mapHasLevels()
-proc mapHasLevels(a): bool =
+func mapHasLevels(a): bool =
   a.doc.map.levels.len > 0
 
 # }}}
 # {{{ currSortedLevelIdx()
-proc currSortedLevelIdx(a): Natural =
+func currSortedLevelIdx(a): Natural =
   a.doc.map.findSortedLevelIdxByLevelIdx(a.ui.cursor.level)
 
 # }}}
 # {{{ currLevel()
-proc currLevel(a): Level =
+func currLevel(a): Level =
   a.doc.map.levels[a.ui.cursor.level]
 
 # }}}
 # {{{ coordOptsForCurrLevel()
-proc coordOptsForCurrLevel(a): CoordinateOptions =
+func coordOptsForCurrLevel(a): CoordinateOptions =
   let l = currLevel(a)
   if l.overrideCoordOpts: l.coordOpts else: a.doc.map.coordOpts
 
@@ -2661,19 +2666,19 @@ proc openEditNoteDialog(a) =
 
   let note = l.getNote(cur.row, cur.col)
 
-  if note.isSome and note.get.kind != nkLabel:
+  if note.isSome:
     let note = note.get
     dlg.editMode = true
     dlg.kind = note.kind
     dlg.text = note.text
 
-    if note.kind == nkIndexed:
+    if note.kind == akIndexed:
       dlg.index = note.index
       dlg.indexColor = note.indexColor
-    elif note.kind == nkIcon:
+    elif note.kind == akIcon:
       dlg.icon = note.icon
 
-    if note.kind == nkCustomId:
+    if note.kind == akCustomId:
       dlg.customId = note.customId
     else:
       dlg.customId = ""
@@ -2732,7 +2737,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   const IconsPerRow = 10
 
   case dlg.kind:
-  of nkIndexed:
+  of akIndexed:
     koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
     koi.radioButtons(
       x + LabelWidth, y, 28, 28,
@@ -2744,7 +2749,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
                                           ls.cursorColor).some
     )
 
-  of nkCustomId:
+  of akCustomId:
     koi.label(x, y, LabelWidth, h, "ID", style=a.theme.labelStyle)
     koi.textField(
       x + LabelWidth, y, w = DlgNumberWidth, h,
@@ -2757,7 +2762,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
       style = a.theme.textFieldStyle
     )
 
-  of nkIcon:
+  of akIcon:
     koi.label(x, y, LabelWidth, h, "Icon", style=a.theme.labelStyle)
     koi.radioButtons(
       x + LabelWidth, y, 35, 35,
@@ -2768,17 +2773,17 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
       style = a.theme.iconRadioButtonsStyle
     )
 
-  of nkComment, nkLabel: discard
+  of akComment, akLabel: discard
 
   dlg.activateFirstTextField = false
 
   # Validation
   var validationErrors: seq[string] = @[]
 
-  if dlg.kind in {nkComment, nkIndexed, nkCustomId}:
+  if dlg.kind in {akComment, akIndexed, akCustomId}:
     if dlg.text == "":
       validationErrors.add(mkValidationError("Text is mandatory"))
-  if dlg.kind == nkCustomId:
+  if dlg.kind == akCustomId:
     if dlg.customId == "":
       validationErrors.add(mkValidationError("ID is mandatory"))
     else:
@@ -2803,15 +2808,15 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   proc okAction(dlg: var EditNoteDialogParams; a) =
     if validationErrors.len > 0: return
 
-    var note = Note(
+    var note = Annotation(
       kind: dlg.kind,
       text: dlg.text
     )
     case note.kind
-    of nkCustomId: note.customId = dlg.customId
-    of nkIndexed:  note.indexColor = dlg.indexColor
-    of nkIcon:     note.icon = dlg.icon
-    of nkComment, nkLabel: discard
+    of akCustomId: note.customId = dlg.customId
+    of akIndexed:  note.indexColor = dlg.indexColor
+    of akIcon:     note.icon = dlg.icon
+    of akComment, akLabel: discard
 
     actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
@@ -2840,17 +2845,17 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    dlg.kind = NoteKind(
-      handleTabNavigation(ke, ord(dlg.kind), ord(nkIcon))
+    dlg.kind = AnnotationKind(
+      handleTabNavigation(ke, ord(dlg.kind), ord(akIcon))
     )
 
     case dlg.kind
-    of nkComment, nkCustomId, nkLabel: discard
-    of nkIndexed:
+    of akComment, akCustomId, akLabel: discard
+    of akIndexed:
       dlg.indexColor = handleGridRadioButton(
         ke, dlg.indexColor, NumIndexColors, buttonsPerRow=NumIndexColors
       )
-    of nkIcon:
+    of akIcon:
       dlg.icon = handleGridRadioButton(
         ke, dlg.icon, NoteIcons.len, IconsPerRow
       )
@@ -2876,13 +2881,13 @@ proc openEditLabelDialog(a) =
   dlg.row = cur.row
   dlg.col = cur.col
 
-  let note = l.getNote(cur.row, cur.col)
+  let label = l.getLabel(cur.row, cur.col)
 
-  if note.isSome and note.get.kind == nkLabel:
-    let note = note.get
+  if label.isSome:
+    let label = label.get
     dlg.editMode = true
-    dlg.text = note.text
-    dlg.color = note.labelColor
+    dlg.text = label.text
+    dlg.color = label.labelColor
   else:
     dlg.editMode = false
     dlg.text = ""
@@ -2958,7 +2963,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   proc okAction(dlg: var EditLabelDialogParams; a) =
     if validationError != "": return
 
-    var note = Note(kind: nkLabel, text: dlg.text, labelColor: dlg.color)
+    var note = Annotation(kind: akLabel, text: dlg.text, labelColor: dlg.color)
     actions.setLabel(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
     setStatusMessage(IconComment, "Set label", a)
@@ -3270,7 +3275,7 @@ proc drawEmptyMap(a) =
 
 # }}}
 # {{{ drawNoteTooltip()
-proc drawNoteTooltip(x, y: float, note: Note, a) =
+proc drawNoteTooltip(x, y: float, note: Annotation, a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
   alias(dp, a.ui.drawLevelParams)
@@ -3824,22 +3829,22 @@ proc handleGlobalKeyEvents(a) =
           openEditNoteDialog(a)
 
       elif ke.isKeyDown(keyN, {mkShift}):
-        if not map.hasNote(cur):
-          setStatusMessage(IconWarning, "No note to erase in cell", a)
-        else:
+        if map.hasNote(cur):
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
+        else:
+          setStatusMessage(IconWarning, "No note to erase in cell", a)
 
       elif ke.isKeyDown(keyT, {mkShift}):
-        let note = map.getNote(cur)
-        if not (note.isSome and note.get.kind == nkLabel):
-          setStatusMessage(IconWarning, "No label to erase in cell", a)
-        else:
+        if map.hasLabel(cur):
           actions.eraseLabel(map, cur, um)
           setStatusMessage(IconEraser, "Label erased", a)
+        else:
+          setStatusMessage(IconWarning, "No label to erase in cell", a)
 
       elif ke.isKeyDown(keySpace):
         ui.drawNoteToolTip = true
+        ui.noteTooltipLocation = cur
 
 #[ TODO
       elif ke.isKeyDown(keyD, {mkCtrl, mkAlt}):
@@ -4337,7 +4342,7 @@ proc renderLevel(a) =
 
   # Draw note tooltip
   var mouseOverCellWithNote = false
-  var note: Note
+  var note: Option[Annotation]
 
   if koi.isHot(id):
     if not (opt.wasdMode and isActive(id)):
@@ -4346,18 +4351,17 @@ proc renderLevel(a) =
       if locOpt.isSome:
         let loc = locOpt.get
 
-        let noteOpt = l.getNote(loc.row, loc.col)
-        if noteOpt.isSome:
-          note = noteOpt.get
-          if note.kind != nkLabel:
-            mouseOverCellWithNote = true
-            ui.drawNoteTooltip = false
+        note = l.getNote(loc.row, loc.col)
+        if note.isSome:
+          mouseOverCellWithNote = true
+          ui.drawNoteTooltip = false
 
   if mouseOverCellWithNote:
     let
       x = koi.mx() + 16
       y = koi.my() + 20
-    drawNoteTooltip(x, y, note, a)
+
+    drawNoteTooltip(x, y, note.get, a)
 
   elif ui.drawNoteTooltip:
 #    let viewRow = cur.row - dp.viewStartRow
@@ -4518,32 +4522,32 @@ proc renderNotesPane(x, y, w, h: float; a) =
 
   if note.isSome and not (a.ui.editMode in {emPastePreview, emNudgePreview}):
     let note = note.get
-    if note.text == "" or note.kind == nkLabel: return
+    if note.text == "" or note.kind == akLabel: return
 
     vg.save()
 
     case note.kind
-    of nkIndexed:
+    of akIndexed:
       drawIndexedNote(x, y-12, note.index, 36,
                       bgColor=s.indexBgColor[note.indexColor],
                       fgColor=s.indexColor, vg)
 
-    of nkCustomId:
+    of akCustomId:
       vg.fillColor(s.textColor)
       vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+18, y-2, note.customId)
 
-    of nkIcon:
+    of akIcon:
       vg.fillColor(s.textColor)
       vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+20, y-3, NoteIcons[note.icon])
 
-    of nkComment:
+    of akComment:
       vg.fillColor(s.textColor)
       vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
       discard vg.text(x+20, y-2, IconComment)
 
-    of nkLabel: discard
+    of akLabel: discard
 
 
     var text = note.text

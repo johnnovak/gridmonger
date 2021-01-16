@@ -86,7 +86,7 @@ type
     regionNames*:       seq[string]
 
     cellGrid*:          CellGrid
-    notes*:             Table[Natural, Note]
+    annotations*:       Table[Natural, Annotation]
 
   LineWidth* = enum
     lwThin   = (0, "Thin"),
@@ -175,17 +175,17 @@ type
     wWritingNE     = (70, "writing")
     wWritingSW     = (71, "writing")
 
-  NoteKind* = enum
-    nkComment, nkIndexed, nkCustomId, nkIcon, nkLabel
+  AnnotationKind* = enum
+    akComment, akIndexed, akCustomId, akIcon, akLabel
 
-  Note* = object
+  Annotation* = object
     text*: string
-    case kind*: NoteKind
-    of nkComment:  discard
-    of nkIndexed:  index*, indexColor*: Natural
-    of nkCustomId: customId*: string
-    of nkIcon:     icon*: Natural
-    of nkLabel:    labelColor*: Natural
+    case kind*: AnnotationKind
+    of akComment:  discard
+    of akIndexed:  index*, indexColor*: Natural
+    of akCustomId: customId*: string
+    of akIcon:     icon*: Natural
+    of akLabel:    labelColor*: Natural
 
 
 const

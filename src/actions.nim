@@ -45,7 +45,7 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
   let undoLevel = newLevelFrom(map.levels[lvl], rect)
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[lvl].copyCellsAndNotesFrom(
+    m.levels[lvl].copyCellsAndAnnotationsFrom(
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
@@ -94,10 +94,9 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 proc setFloor*(map; loc: Location, f: Floor, floorColor: byte; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
-    let note = m.getNote(loc)
-    if note.isSome and note.get.kind == nkLabel:
+    if m.hasLabel(loc):
       alias(l, m.levels[loc.level])
-      l.delNote(loc.row, loc.col)
+      l.delAnnotation(loc.row, loc.col)
 
     m.setFloor(loc, f)
     m.setFloorColor(loc, floorColor)
@@ -108,7 +107,7 @@ proc clearFloor*(map; loc: Location, floorColor: byte; um) =
 
   singleCellAction(map, loc, um, fmt"Clear floor", m):
     alias(l, m.levels[loc.level])
-    l.delNote(loc.row, loc.col)
+    l.delAnnotation(loc.row, loc.col)
 
     m.setFloor(loc, fEmpty)
     m.setFloorColor(loc, floorColor)
@@ -185,14 +184,14 @@ proc toggleFloorOrientation*(map; loc: Location; um) =
 
 # }}}
 # {{{ setNote*()
-proc setNote*(map; loc: Location, n: Note; um) =
+proc setNote*(map; loc: Location, n: Annotation; um) =
 
   singleCellAction(map, loc, um, "Set note", m):
     alias(l, m.levels[loc.level])
-    if n.kind != nkComment:
+    if n.kind != akComment:
       m.setFloor(loc, fEmpty)
 
-    l.setNote(loc.row, loc.col, n)
+    l.setAnnotation(loc.row, loc.col, n)
 
 # }}}
 # {{{ eraseNote*()
@@ -200,20 +199,19 @@ proc eraseNote*(map; loc: Location; um) =
 
   singleCellAction(map, loc, um, "Erase note", m):
     alias(l, m.levels[loc.level])
-    let note = m.getNote(loc)
-    if note.isSome and note.get.kind != nkLabel:
-      l.delNote(loc.row, loc.col)
+    if m.hasNote(loc):
+      l.delAnnotation(loc.row, loc.col)
 
 # }}}
 # {{{ setLabel*()
-proc setLabel*(map; loc: Location, n: Note; um) =
+proc setLabel*(map; loc: Location, n: Annotation; um) =
 
   singleCellAction(map, loc, um, "Set label", m):
     if m.getFloor(loc) != fNone:
       m.setFloor(loc, fEmpty)
 
     alias(l, m.levels[loc.level])
-    l.setNote(loc.row, loc.col, n)
+    l.setAnnotation(loc.row, loc.col, n)
 
 # }}}
 # {{{ eraseLabel*()
@@ -221,9 +219,8 @@ proc eraseLabel*(map; loc: Location; um) =
 
   singleCellAction(map, loc, um, "Erase label", m):
     alias(l, m.levels[loc.level])
-    let note = m.getNote(loc)
-    if note.isSome and note.get.kind == nkLabel:
-      l.delNote(loc.row, loc.col)
+    if m.hasLabel(loc):
+      l.delAnnotation(loc.row, loc.col)
 
 # }}}
 # {{{ setLink*()
@@ -282,7 +279,7 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   if map.links.hasWithDest(src):  oldLinks.set(map.links.getByDest(src), src)
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[level].copyCellsAndNotesFrom(
+    m.levels[level].copyCellsAndAnnotationsFrom(
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
@@ -633,7 +630,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                             newRows, newCols, l.overrideCoordOpts, l.coordOpts,
                             l.regionOpts, newRegionNames)
 
-    newLevel.copyCellsAndNotesFrom(destRow, destCol, l, copyRect)
+    newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
     l = newLevel
 
     for src in oldLinks.keys: m.links.delBySrc(src)

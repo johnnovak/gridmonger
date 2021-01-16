@@ -90,7 +90,17 @@ proc hasNote*(m; loc: Location): bool {.inline.} =
 
 # }}}
 # {{{ getNote*()
-proc getNote*(m; loc: Location): Option[Note] {.inline.} =
+proc getNote*(m; loc: Location): Option[Annotation] {.inline.} =
+  m.levels[loc.level].getNote(loc.row, loc.col)
+
+# }}}
+# {{{ hasLabel*()
+proc hasLabel*(m; loc: Location): bool {.inline.} =
+  m.levels[loc.level].hasLabel(loc.row, loc.col)
+
+# }}}
+# {{{ getLabel*()
+proc getLabel*(m; loc: Location): Option[Annotation] {.inline.} =
   m.levels[loc.level].getNote(loc.row, loc.col)
 
 # }}}

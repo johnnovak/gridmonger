@@ -40,7 +40,7 @@ const
 
   CellFloorColorLimits*    = intLimits(min=0, max=LevelStyle.floorColor.len)
 
-  NumNotesLimits*          = intLimits(min=0, max=10_000)
+  NumAnnotationsLimits*    = intLimits(min=0, max=10_000)
   NoteTextLimits*          = strLimits(minLen=0, maxLen=1600, maxRuneLen=400)
   NoteCustomIdLimits*      = strLimits(minLen=1, maxLen=2, maxRuneLen=2)
   NoteColorLimits*         = intLimits(min=0, max=LevelStyle.noteIndexBgColor.len)
@@ -63,7 +63,7 @@ const
   FourCC_GRDM_lvl  = "lvl "
   FourCC_GRDM_lvls = "lvls"
   FourCC_GRDM_map  = "map "
-  FourCC_GRDM_note = "note"
+  FourCC_GRDM_anno = "note"  # TODO rename to 'anno'
   FourCC_GRDM_prop = "prop"
   FourCC_GRDM_regn = "regn"
 
@@ -263,58 +263,61 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
   result = cells
 
 # }}}
-# {{{ readLevelNotes_v1()
-proc readLevelNotes_v1(rr; l: Level) =
-  let numNotes = rr.read(uint16).Natural
-  checkValueRange(numNotes, "lvl.note.numNotes", NumNotesLimits)
+# {{{ readLevelAnnotations_v1()
+proc readLevelAnnotations_v1(rr; l: Level) =
+  let numAnnotations = rr.read(uint16).Natural
+  checkValueRange(numAnnotations, "lvl.anno.numAnnotations",
+                  NumAnnotationsLimits)
 
-  for i in 0..<numNotes:
+  for i in 0..<numAnnotations:
     let row = rr.read(uint16)
-    checkValueRange(row, "lvl.note.row", max=l.rows.uint16-1)
+    checkValueRange(row, "lvl.anno.row", max=l.rows.uint16-1)
 
     let col = rr.read(uint16)
-    checkValueRange(col, "lvl.note.col", max=l.cols.uint16-1)
+    checkValueRange(col, "lvl.anno.col", max=l.cols.uint16-1)
 
     let kind = rr.read(uint8)
-    checkEnum(kind, "lvl.note.kind", NoteKind)
+    checkEnum(kind, "lvl.anno.kind", AnnotationKind)
 
-    var note = Note(kind: NoteKind(kind))
+    var anno = Annotation(kind: AnnotationKind(kind))
 
-    case note.kind
-    of nkComment:
+    case anno.kind
+    of akComment:
       discard
 
-    of nkIndexed:
+    of akIndexed:
       let index = rr.read(uint16)
-      checkValueRange(index, "lvl.note.index", max=NumNotesLimits.maxInt-1)
-      note.index = index
+      checkValueRange(index, "lvl.anno.index",
+                      max=NumAnnotationsLimits.maxInt-1)
+      anno.index = index
 
       let indexColor = rr.read(uint8)
-      checkValueRange(indexColor, "lvl.note.indexColor", NoteColorLimits)
-      note.indexColor = indexColor
+      checkValueRange(indexColor, "lvl.annot.indexColor", NoteColorLimits)
+      anno.indexColor = indexColor
 
-    of nkIcon:
+    of akIcon:
       let icon = rr.read(uint8)
-      checkValueRange(icon, "lvl.note.icon", NoteIconLimits)
-      note.icon = icon
+      checkValueRange(icon, "lvl.annot.icon", NoteIconLimits)
+      anno.icon = icon
 
-    of nkCustomId:
+    of akCustomId:
       let customId = rr.readBStr()
-      checkStringLength(customId, "lvl.note.customId", NoteCustomIdLimits)
-      note.customId = customId
+      checkStringLength(customId, "lvl.anno.customId", NoteCustomIdLimits)
+      anno.customId = customId
 
-    of nkLabel:
+    of akLabel:
       let labelColor = rr.read(uint8)
-      checkValueRange(labelColor, "lvl.note.labelColor", NoteColorLimits)
-      note.labelColor = labelColor
+      checkValueRange(labelColor, "lvl.anno.labelColor", NoteColorLimits)
+      anno.labelColor = labelColor
 
     let text = rr.readWStr()
     var textLimit = NoteTextLimits
-    if note.kind in {nkComment, nkLabel}: textLimit.minLen = 1
-    checkStringLength(text, "lvl.note.text", textLimit)
+    # TODO shouldn't minlen be 1 for all?
+    if anno.kind in {akComment, akLabel}: textLimit.minLen = 1
+    checkStringLength(text, "lvl.anno.text", textLimit)
 
-    note.text = text
-    l.setNote(row, col, note)
+    anno.text = text
+    l.setAnnotation(row, col, anno)
 
 # }}}
 # {{{ readCoordinateOptions_v1*()
@@ -378,7 +381,7 @@ proc readLevel_v1(rr): Level =
     coorCursor = Cursor.none
     regnCursor = Cursor.none
     cellCursor = Cursor.none
-    noteCursor = Cursor.none
+    annoCursor = Cursor.none
 
   if not rr.hasSubChunks():
     raiseMapReadError(fmt"'{FourCC_GRDM_lvl}' group chunk is empty")
@@ -408,10 +411,10 @@ proc readLevel_v1(rr): Level =
           chunkOnlyOnceError(FourCC_GRDM_cell, groupChunkId)
         cellCursor = rr.cursor.some
 
-      of FourCC_GRDM_note:
-        if noteCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_note, groupChunkId)
-        noteCursor = rr.cursor.some
+      of FourCC_GRDM_anno:
+        if annoCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRDM_anno, groupChunkId)
+        annoCursor = rr.cursor.some
 
       else:
         invalidChunkError(ci.id, FourCC_GRDM_lvls)
@@ -444,9 +447,9 @@ proc readLevel_v1(rr): Level =
 
   level.cellGrid.cells = readLevelData_v1(rr, numCells)
 
-  if noteCursor.isSome:
-    rr.cursor = noteCursor.get
-    readLevelNotes_v1(rr, level)
+  if annoCursor.isSome:
+    rr.cursor = annoCursor.get
+    readLevelAnnotations_v1(rr, level)
 
   result = level
 
@@ -737,33 +740,34 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
   rw.endChunk()
 
 # }}}
-# {{{ writeLevelNotes_v1()
-proc writeLevelNotes_v1(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_note)
+# {{{ writeLevelAnnotations_v1()
+proc writeLevelAnnotations_v1(rw; l: Level) =
+#  rw.beginChunk(FourCC_GRDM_anno)
+  rw.beginChunk("anno")
 
-  rw.write(l.numNotes.uint16)
+  rw.write(l.numAnnotations.uint16)
 
-  for (row, col, note) in l.allNotes:
+  for (row, col, anno) in l.allAnnotations:
     rw.write(row.uint16)
     rw.write(col.uint16)
 
-    rw.write(note.kind.uint8)
-    case note.kind
-    of nkComment: discard
-    of nkIndexed:
-      rw.write(note.index.uint16)
-      rw.write(note.indexColor.uint8)
+    rw.write(anno.kind.uint8)
+    case anno.kind
+    of akComment: discard
+    of akIndexed:
+      rw.write(anno.index.uint16)
+      rw.write(anno.indexColor.uint8)
 
-    of nkCustomId:
-      rw.writeBStr(note.customId)
+    of akCustomId:
+      rw.writeBStr(anno.customId)
 
-    of nkIcon:
-      rw.write(note.icon.uint8)
+    of akIcon:
+      rw.write(anno.icon.uint8)
 
-    of nkLabel:
-      rw.write(note.labelColor.uint8)
+    of akLabel:
+      rw.write(anno.labelColor.uint8)
 
-    rw.writeWStr(note.text)
+    rw.writeWStr(anno.text)
 
   rw.endChunk()
 
@@ -776,7 +780,7 @@ proc writeLevel_v1(rw; l: Level) =
   writeCoordinateOptions_v1(rw, l.coordOpts)
   writeRegions_v1(rw, l)
   writeLevelCells_v1(rw, l.cellGrid.cells)
-  writeLevelNotes_v1(rw, l)
+  writeLevelAnnotations_v1(rw, l)
 
   rw.endChunk()
 

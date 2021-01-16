@@ -45,7 +45,7 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   l.regionNames = regionNames
 
   l.cellGrid = newCellGrid(rows, cols)
-  l.notes = initTable[Natural, Note]()
+  l.annotations = initTable[Natural, Annotation]()
 
   result = l
 
@@ -61,83 +61,150 @@ proc cols*(l): Natural {.inline.} =
 
 # }}}
 
-# {{{ locationKey()
-template locationKey(m; r,c: Natural): Natural =
-  let h = m.rows
-  let w = m.cols
+# {{{ locationToKey()
+template locationToKey(l; r,c: Natural): Natural =
+  let h = l.rows
+  let w = l.cols
   assert r < h
   assert c < w
   r*w + c
 
 # }}}
-
-# {{{ numNotes*()
-proc numNotes*(l): Natural =
-  l.notes.len
+# {{{ keyToLocation()
+template keyToLocation(l; k: Natural): (Natural, Natural) =
+  let
+    w = l.cols
+    r = (k div w).Natural
+    c = (k mod w).Natural
+  (r,c)
 
 # }}}
+
+# {{{ isLabel*()
+func isLabel*(a: Annotation): bool = a.kind == akLabel
+
+# }}}
+# {{{ isNote*()
+func isNote*(a: Annotation): bool = not a.isLabel
+
+# }}}
+
+# {{{ hasAnnotation*()
+proc hasAnnotation*(l; r,c: Natural): bool {.inline.} =
+  let key = l.locationToKey(r,c)
+  l.annotations.hasKey(key)
+
+# }}}
+# {{{ getAnnotation*()
+proc getAnnotation*(l; r,c: Natural): Option[Annotation] =
+  let key = l.locationToKey(r,c)
+  if l.annotations.hasKey(key):
+    result = l.annotations[key].some
+
+# }}}
+# {{{ setAnnotation*()
+proc setAnnotation*(l; r,c: Natural, a: Annotation) =
+  let key = l.locationToKey(r,c)
+  l.annotations[key] = a
+
+# }}}
+# {{{ delAnnotation*()
+proc delAnnotation*(l; r,c: Natural) =
+  let key = l.locationToKey(r,c)
+  if l.annotations.hasKey(key):
+    l.annotations.del(key)
+
+# }}}
+
+# {{{ numAnnotations*()
+proc numAnnotations*(l): Natural =
+  l.annotations.len
+
+# }}}
+# {{{ allAnnotations*()
+iterator allAnnotations*(l): (Natural, Natural, Annotation) =
+  for k, a in l.annotations.pairs:
+    let (r,c) = l.keyToLocation(k)
+    yield (r,c, a)
+
+# }}}
+# {{{ delAnnotations()
+proc delAnnotations(l; rect: Rect[Natural]) =
+  var toDel: seq[(Natural, Natural)]
+
+  for r,c, _ in l.allAnnotations:
+    if rect.contains(r,c):
+      toDel.add((r,c))
+
+  for (r,c) in toDel: l.delAnnotation(r,c)
+
+# }}}
+# {{{ copyAnnotationsFrom()
+proc copyAnnotationsFrom(l; destRow, destCol: Natural,
+                   src: Level, srcRect: Rect[Natural]) =
+  for (r,c, a) in src.allAnnotations:
+    if srcRect.contains(r,c):
+      l.setAnnotation(destRow + r - srcRect.r1, destCol + c - srcRect.c1, a)
+
+# }}}
+
 # {{{ hasNote*()
-proc hasNote*(l; r,c: Natural): bool {.inline.} =
-  let key = locationKey(l, r,c)
-  l.notes.hasKey(key)
+proc hasNote*(l; r,c: Natural): bool =
+  let a = l.getAnnotation(r,c)
+  result = a.isSome and a.get.isNote
 
 # }}}
 # {{{ getNote*()
-proc getNote*(l; r,c: Natural): Option[Note] =
-  let key = locationKey(l, r,c)
-  if l.notes.hasKey(key):
-    l.notes[key].some
-  else: Note.none
+proc getNote*(l; r,c: Natural): Option[Annotation] =
+  let a = l.getAnnotation(r,c)
+  if a.isSome:
+    if a.get.isNote: result = a
 
 # }}}
-# {{{ setNote*()
-proc setNote*(l; r,c: Natural, note: Note) =
-  let key = locationKey(l, r,c)
-  l.notes[key] = note
-
-# }}}
-# {{{ delNote*()
-proc delNote*(l; r,c: Natural) =
-  let key = locationKey(l, r,c)
-  if l.notes.hasKey(key):
-    l.notes.del(key)
+# {{{ allNotes*()
+iterator allNotes*(l): (Natural, Natural, Annotation) =
+  for k, a in l.annotations.pairs:
+    if a.isNote:
+      let (r,c) = l.keyToLocation(k)
+      yield (r,c, a)
+    else:
+      continue
 
 # }}}
 # {{{ reindexNotes*()
 proc reindexNotes*(l) =
   var keys: seq[int] = @[]
-  for k, n in l.notes.pairs():
-    if n.kind == nkIndexed:
+  for k, n in l.annotations.pairs():
+    if n.kind == akIndexed:
       keys.add(k)
+
   sort(keys)
   for i, k in keys.pairs():
-    l.notes[k].index = i+1
+    l.annotations[k].index = i+1
 
 # }}}
-# {{{ allNotes*()
-iterator allNotes*(l): (Natural, Natural, Note) =
-  for k, note in l.notes.pairs:
-    let
-      row = k div l.cols
-      col = k mod l.cols
-    yield (row.Natural, col.Natural, note)
+
+# {{{ hasLabel*()
+proc hasLabel*(l; r,c: Natural): bool =
+  let a = l.getAnnotation(r,c)
+  result = a.isSome and a.get.isLabel
 
 # }}}
-# {{{ delNotes()
-proc delNotes(l; rect: Rect[Natural]) =
-  var toDel: seq[(Natural, Natural)]
-  for r,c, _ in l.allNotes:
-    if rect.contains(r,c):
-      toDel.add((r,c))
-  for (r,c) in toDel: l.delNote(r,c)
+# {{{ getLabel*()
+proc getLabel*(l; r,c: Natural): Option[Annotation] =
+  let a = l.getAnnotation(r,c)
+  if a.isSome:
+    if a.get.isLabel: result = a
 
 # }}}
-# {{{ copyNotesFrom()
-proc copyNotesFrom(l; destRow, destCol: Natural,
-                   src: Level, srcRect: Rect[Natural]) =
-  for (r,c, note) in src.allNotes:
-    if srcRect.contains(r,c):
-      l.setNote(destRow + r - srcRect.r1, destCol + c - srcRect.c1, note)
+# {{{ allLabels*()
+iterator allLabels*(l): (Natural, Natural, Annotation) =
+  for k, a in l.annotations.pairs:
+    if a.isLabel:
+      let (r,c) = l.keyToLocation(k)
+      yield (r,c, a)
+    else:
+      continue
 
 # }}}
 
@@ -158,15 +225,15 @@ proc getFloor*(l; r,c: Natural): Floor {.inline.} =
 # }}}
 # {{{ convertNoteToComment()
 proc convertNoteToComment(l; r,c: Natural) =
-  let note = l.getNote(r,c)
-  if note.isSome:
-    let note = note.get
-    if note.kind != nkComment:
-      l.delNote(r,c)
+  let a = l.getAnnotation(r,c)
+  if a.isSome:
+    let note = a.get
+    if note.kind != akComment:
+      l.delAnnotation(r,c)
 
-    if note.kind != nkLabel:
-      let commentNote = Note(kind: nkComment, text: note.text)
-      l.setNote(r,c, commentNote)
+    if note.kind != akLabel:
+      let comment = Annotation(kind: akComment, text: note.text)
+      l.setAnnotation(r,c, comment)
 
 # }}}
 # {{{ setFloor*()
@@ -242,7 +309,7 @@ proc eraseCellWalls*(l; r,c: Natural) =
 proc eraseCell*(l; r,c: Natural) =
   l.eraseCellWalls(r,c)
   l.setFloor(r,c, fNone)
-  l.delNote(r,c)
+  l.delAnnotation(r,c)
 
 # }}}
 
@@ -348,22 +415,22 @@ proc paste*(l; destRow, destCol: int, src: Level,
             copyWall(dirS)
             copyWall(dirE)
 
-          l.delNote(r,c)
-          if src.hasNote(srcRow, srcCol):
-            l.setNote(r,c, src.getNote(srcRow, srcCol).get)
+          l.delAnnotation(r,c)
+          if src.hasAnnotation(srcRow, srcCol):
+            l.setAnnotation(r,c, src.getAnnotation(srcRow, srcCol).get)
 
 # }}}
 
-# {{{ copyCellsAndNotesFrom*(()
-proc copyCellsAndNotesFrom*(l; destRow, destCol: Natural,
+# {{{ copyCellsAndAnnotationsFrom*(()
+proc copyCellsAndAnnotationsFrom*(l; destRow, destCol: Natural,
                src: Level, srcRect: Rect[Natural]) =
 
   l.cellGrid.copyFrom(destRow, destCol, src.cellGrid, srcRect)
 
-  l.delNotes(rectN(destRow, destCol,
+  l.delAnnotations(rectN(destRow, destCol,
                    destRow + srcRect.rows, destCol + srcRect.cols))
 
-  l.copyNotesFrom(destRow, destCol, src, srcRect)
+  l.copyAnnotationsFrom(destRow, destCol, src, srcRect)
 
 # }}}
 # {{{ newLevelFrom*()
@@ -406,7 +473,7 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural],
                       src.overrideCoordOpts, src.coordOpts,
                       src.regionOpts, newRegionNames)
 
-  dest.copyCellsAndNotesFrom(destRow, destCol, src, srcRect)
+  dest.copyCellsAndAnnotationsFrom(destRow, destCol, src, srcRect)
 
   result = dest
 

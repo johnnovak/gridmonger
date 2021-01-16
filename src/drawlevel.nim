@@ -850,23 +850,23 @@ proc drawCustomIdNote(x, y: float, s: string; ctx) =
 
 # }}}
 # {{{ drawNote()
-proc drawNote(x, y: float, note: Note; ctx) =
+proc drawNote(x, y: float, note: Annotation; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   case note.kind
-  of nkComment:  discard
-  of nkIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
-  of nkCustomId: drawCustomIdNote(x, y, note.customId, ctx)
+  of akComment:  discard
+  of akIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
+  of akCustomId: drawCustomIdNote(x, y, note.customId, ctx)
 
-  of nkIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
+  of akIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
                           dp.gridSize, ls.noteMarkerColor,
                           DefaultIconFontSizeFactor, vg)
 
-  of nkLabel:    discard
+  of akLabel:    discard
 
-  if not (note.kind in {nkIndexed, nkLabel}) and note.text != "":
+  if note.kind != akIndexed:
     let w = dp.gridSize*0.3
 
     vg.fillColor(ls.noteCommentColor)
@@ -879,7 +879,7 @@ proc drawNote(x, y: float, note: Note; ctx) =
 
   # }}}
 # {{{ drawLabel()
-proc drawLabel(x, y: float, label: Note; ctx) =
+proc drawLabel(x, y: float, label: Annotation; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1918,15 +1918,15 @@ proc drawLabels(viewBuf: Level; ctx) =
     viewBuf.cols - ViewBufBorder
   )
 
-  for bufRow, bufCol, note in viewBuf.allNotes:
-    if note.kind == nkLabel and rect.contains(bufRow, bufCol):
+  for bufRow, bufCol, label in viewBuf.allLabels:
+    if rect.contains(bufRow, bufCol):
       let
         viewRow = bufRow - ViewBufBorder
         viewCol = bufCol - ViewBufBorder
         x = cellX(viewCol, dp)
         y = cellY(viewRow, dp)
 
-      drawLabel(x, y, note, ctx)
+      drawLabel(x, y, label, ctx)
 
 # }}}
 # {{{ drawLinkMarkers()
@@ -1964,7 +1964,7 @@ proc drawNotes(viewBuf: Level; ctx) =
   )
 
   for bufRow, bufCol, note in viewBuf.allNotes:
-    if note.kind != nkLabel and rect.contains(bufRow, bufCol):
+    if rect.contains(bufRow, bufCol):
       let
         viewRow = bufRow - ViewBufBorder
         viewCol = bufCol - ViewBufBorder
