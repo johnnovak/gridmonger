@@ -3226,6 +3226,20 @@ proc startDrawWallsSpecialAction(a) =
   setStatusMessage("", "Draw walls special", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
+# {{{ prevFloorColorAction()
+proc prevFloorColorAction(a) =
+  if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
+  else: a.ui.currFloorColor = a.doc.levelStyle.floorColor.high.byte
+
+# }}}
+# {{{ nextFloorColorAction()
+proc nextFloorColorAction(a) =
+  if a.ui.currFloorColor < a.doc.levelStyle.floorColor.high.byte:
+    inc(a.ui.currFloorColor)
+  else: a.ui.currFloorColor = 0
+
+# }}}
+
 # }}}
 
 # {{{ handleLevelMouseEvents()
@@ -3293,7 +3307,6 @@ proc handleGlobalKeyEvents(a) =
   alias(um, a.doc.undoManager)
   alias(dp, a.ui.drawLevelParams)
   alias(opt, a.opt)
-  alias(ls, a.doc.levelStyle)
 
   var l = currLevel(a)
 
@@ -3504,13 +3517,8 @@ proc handleGlobalKeyEvents(a) =
         if ui.currSpecialWall < SpecialWalls.high: inc(ui.currSpecialWall)
         else: ui.currSpecialWall = 0
 
-      elif ke.isKeyDown(keyComma, repeat=true):
-        if ui.currFloorColor > 0: dec(ui.currFloorColor)
-        else: ui.currFloorColor = ls.floorColor.high.byte
-
-      elif ke.isKeyDown(keyPeriod, repeat=true):
-        if ui.currFloorColor < ls.floorColor.high.byte: inc(ui.currFloorColor)
-        else: ui.currFloorColor = 0
+      elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
+      elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
 
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyU, repeat=true):
@@ -3915,6 +3923,9 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
+
+      elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
+      elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
 
       elif ke.isKeyDown(keyEscape):
         exitSelectMode(a)
