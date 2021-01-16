@@ -4895,7 +4895,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
                         style=ThemeEditorSliderStyle)
 
 
-    if koi.subSectionHeader("Grid", te.sectionOutline):
+    if koi.subSectionHeader("Grid", te.sectionGrid):
       prop("Background Grid Style", level, gridStyleBackground):
         koi.dropDown(GridStyle, ts.level.gridStyleBackground)
 
