@@ -42,7 +42,7 @@ const
   CellFloorColorLimits*    = intLimits(min=0, max=LevelStyle.floorColor.len)
 
   NumAnnotationsLimits*    = intLimits(min=0, max=10_000)
-  NoteTextLimits*          = strLimits(minLen=0, maxLen=1600, maxRuneLen=400)
+  NoteTextLimits*          = strLimits(minLen=1, maxLen=1600, maxRuneLen=400)
   NoteCustomIdLimits*      = strLimits(minLen=1, maxLen=2, maxRuneLen=2)
   NoteColorLimits*         = intLimits(min=0, max=LevelStyle.noteIndexBgColor.len)
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
@@ -342,10 +342,7 @@ proc readLevelAnnotations_v1(rr; l: Level) =
     let text = rr.readWStr()
     debug(fmt"    text: {text}")
 
-    var textLimit = NoteTextLimits
-    # TODO shouldn't minlen be 1 for all?
-    if anno.kind in {akComment, akLabel}: textLimit.minLen = 1
-    checkStringLength(text, "lvl.anno.text", textLimit)
+    checkStringLength(text, "lvl.anno.text", NoteTextLimits)
 
     anno.text = text
     l.setAnnotation(row, col, anno)
@@ -817,7 +814,6 @@ proc writeLevelAnnotations_v1(rw; l: Level) =
     of akLabel:
       rw.write(anno.labelColor.uint8)
 
-#    let text = if anno.text == "": " " else: anno.text
     rw.writeWStr(anno.text)
 
   rw.endChunk()
