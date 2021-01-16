@@ -1,5 +1,6 @@
 import algorithm
 import math
+import logging except Level
 import options
 import strformat
 import strutils
@@ -63,7 +64,7 @@ const
   FourCC_GRDM_lvl  = "lvl "
   FourCC_GRDM_lvls = "lvls"
   FourCC_GRDM_map  = "map "
-  FourCC_GRDM_anno = "note"  # TODO rename to 'anno'
+  FourCC_GRDM_anno = "anno"
   FourCC_GRDM_prop = "prop"
   FourCC_GRDM_regn = "regn"
 
@@ -178,6 +179,8 @@ proc readLocation(rr): Location =
 # }}}
 # {{{ readDisplayOptions_v1()
 proc readDisplayOptions_v1(rr): MapDisplayOptions =
+  info(fmt"Reading display options...")
+
   # TODO
   discard
 
@@ -185,6 +188,8 @@ proc readDisplayOptions_v1(rr): MapDisplayOptions =
 # }}}
 # {{{ readLinks_v1()
 proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
+  info(fmt"Reading links...")
+
   var numLinks = rr.read(uint16).int
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
 
@@ -209,23 +214,31 @@ proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
 # }}}
 # {{{ readLevelProperties_v1()
 proc readLevelProperties_v1(rr): Level =
+  info(fmt"Reading level properties...")
+
   let locationName = rr.readWStr()
+  info(fmt"  locationName: {locationName}")
   checkStringLength(locationName, "lvl.prop.locationName",
                     LevelLocationNameLimits)
 
   let levelName = rr.readWStr()
+  info(fmt"  levelName: {levelName}")
   checkStringLength(levelName, "lvl.prop.levelName", LevelNameLimits)
 
   let elevation = rr.read(int16).int
+  info(fmt"  elevation: {elevation}")
   checkValueRange(elevation, "lvl.prop.elevation", LevelElevationLimits)
 
   let numRows = rr.read(uint16)
+  info(fmt"  numRows: {numRows}")
   checkValueRange(numRows, "lvl.prop.numRows", LevelRowsLimits)
 
   let numColumns = rr.read(uint16)
+  info(fmt"  numColumns: {numColumns}")
   checkValueRange(numColumns, "lvl.prop.numColumns", LevelColumnsLimits)
 
   let overrideCoordOpts = rr.read(uint8).bool
+  info(fmt"  overrideCoordOpts: {overrideCoordOpts}")
 
   result = newLevel(locationName, levelName, elevation, numRows, numColumns)
   result.overrideCoordOpts = overrideCoordOpts
@@ -233,6 +246,8 @@ proc readLevelProperties_v1(rr): Level =
 # }}}
 # {{{ readLevelData_v1()
 proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
+  info(fmt"Reading level data...")
+
   var cells: seq[Cell]
   newSeq[Cell](cells, numCells)
 
@@ -265,18 +280,26 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
 # }}}
 # {{{ readLevelAnnotations_v1()
 proc readLevelAnnotations_v1(rr; l: Level) =
+  info(fmt"Reading annotations...")
+
   let numAnnotations = rr.read(uint16).Natural
+  info(fmt"  numAnnotations: {numAnnotations}")
   checkValueRange(numAnnotations, "lvl.anno.numAnnotations",
                   NumAnnotationsLimits)
 
   for i in 0..<numAnnotations:
+    debug(fmt"  annotation index: {i}")
+
     let row = rr.read(uint16)
+    debug(fmt"  row: {row}")
     checkValueRange(row, "lvl.anno.row", max=l.rows.uint16-1)
 
     let col = rr.read(uint16)
+    debug(fmt"  col: {col}")
     checkValueRange(col, "lvl.anno.col", max=l.cols.uint16-1)
 
     let kind = rr.read(uint8)
+    debug(fmt"  kind: {kind}")
     checkEnum(kind, "lvl.anno.kind", AnnotationKind)
 
     var anno = Annotation(kind: AnnotationKind(kind))
@@ -287,30 +310,38 @@ proc readLevelAnnotations_v1(rr; l: Level) =
 
     of akIndexed:
       let index = rr.read(uint16)
+      debug(fmt"    index: {index}")
       checkValueRange(index, "lvl.anno.index",
                       max=NumAnnotationsLimits.maxInt-1)
       anno.index = index
 
       let indexColor = rr.read(uint8)
-      checkValueRange(indexColor, "lvl.annot.indexColor", NoteColorLimits)
+      debug(fmt"    indexColor: {indexColor}")
+      checkValueRange(indexColor, "lvl.anno.indexColor", NoteColorLimits)
       anno.indexColor = indexColor
 
     of akIcon:
       let icon = rr.read(uint8)
-      checkValueRange(icon, "lvl.annot.icon", NoteIconLimits)
+      debug(fmt"    icon: {icon}")
+      checkValueRange(icon, "lvl.anno.icon", NoteIconLimits)
       anno.icon = icon
 
     of akCustomId:
       let customId = rr.readBStr()
+      debug(fmt"    customId: {customId}")
       checkStringLength(customId, "lvl.anno.customId", NoteCustomIdLimits)
       anno.customId = customId
 
     of akLabel:
       let labelColor = rr.read(uint8)
+      debug(fmt"    labelColor: {labelColor}")
       checkValueRange(labelColor, "lvl.anno.labelColor", NoteColorLimits)
       anno.labelColor = labelColor
+#      discard
 
     let text = rr.readWStr()
+    debug(fmt"    text: {text}")
+
     var textLimit = NoteTextLimits
     # TODO shouldn't minlen be 1 for all?
     if anno.kind in {akComment, akLabel}: textLimit.minLen = 1
@@ -322,6 +353,8 @@ proc readLevelAnnotations_v1(rr; l: Level) =
 # }}}
 # {{{ readCoordinateOptions_v1*()
 proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
+  info(fmt"Reading coordinate options...")
+
   let origin = rr.read(uint8)
   checkEnum(origin, fmt"${parentChunk}.coor.origin", CoordinateOrigin)
 
@@ -345,6 +378,8 @@ proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
 # }}}
 # {{{ readRegions_v1*()
 proc readRegions_v1(rr): (RegionOptions, seq[string]) =
+  info(fmt"Reading regions...")
+
   let enableRegions = rr.read(uint8).bool
 
   let regionColumns = rr.read(uint16)
@@ -375,6 +410,8 @@ proc readRegions_v1(rr): (RegionOptions, seq[string]) =
 # }}}
 # {{{ readLevel_v1()
 proc readLevel_v1(rr): Level =
+  info(fmt"Reading level...")
+
   let groupChunkId = FourCC_GRDM_lvls.some
   var
     propCursor = Cursor.none
@@ -456,6 +493,8 @@ proc readLevel_v1(rr): Level =
 # }}}
 # {{{ readLevelList_v1()
 proc readLevelList_v1(rr): seq[Level] =
+  info(fmt"Reading level list...")
+
   var levels = newSeq[Level]()
 
   if rr.hasSubChunks():
@@ -487,12 +526,16 @@ proc readLevelList_v1(rr): seq[Level] =
 # }}}
 # {{{ readMapProperties_v1()
 proc readMapProperties_v1(rr): Map =
+  info(fmt"Reading map properties...")
+
   # TODO is inside Map the best place for this? or introduce a header chunk?
   let version = rr.read(uint16)
+  info(fmt"  version: {version}")
   if version > CurrentMapVersion:
     raiseMapReadError(fmt"Unsupported map file version: {version}")
 
   let name = rr.readBStr()
+  info(fmt"  name: {name}")
   checkStringLength(name, "map.prop.name", MapNameLimits)
 
   result = newMap(name)
@@ -500,6 +543,8 @@ proc readMapProperties_v1(rr): Map =
 # }}}
 # {{{ readMap_v1()
 proc readMap_v1(rr): Map =
+  info(fmt"Reading GRDM.map chunk...")
+
   let groupChunkId = FourCC_GRDM_map.some
   var
     propCursor = Cursor.none
@@ -559,6 +604,8 @@ proc readMapFile*(filename: string): Map =
         fmt"RIFF formatTypeId: {fourCCToCharStr(riffChunk.formatTypeId)}"
       )
 
+    info(fmt"Map headers OK")
+
     var
       mapCursor = Cursor.none
       linksCursor = Cursor.none
@@ -575,13 +622,16 @@ proc readMapFile*(filename: string): Map =
       if ci.kind == ckGroup:
         case ci.formatTypeId
         of FourCC_INFO:
+          info(fmt"INFO chunk found")
           discard  # TODO
 
         of FourCC_GRDM_map:
+          info(fmt"GRDM.map group chunk found")
           if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_map)
           mapCursor = rr.cursor.some
 
         of FourCC_GRDM_lvls:
+          info(fmt"GRDM.lvls group chunk found")
           if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lvls)
           levelListCursor = rr.cursor.some
 
@@ -591,16 +641,18 @@ proc readMapFile*(filename: string): Map =
         case ci.id
 
         of FourCC_GRDM_lnks:
+          info(fmt"GRDM.lnks chunk found")
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
           linksCursor = rr.cursor.some
 
         of FourCC_GRDM_disp:
+          info(fmt"GRDM.lnks disp found")
           if displayOptsCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_disp)
           displayOptsCursor = rr.cursor.some
 
         else:
-          echo fmt"Skiping unknown top level chunk, " &
-               fmt"chunkId: {fourCCToCharStr(ci.id)}"
+          info(fmt"Skiping unknown top level chunk, " &
+               fmt"chunkId: {fourCCToCharStr(ci.id)}")
 
       if rr.hasNextChunk():
         ci = rr.nextChunk()
@@ -629,10 +681,8 @@ proc readMapFile*(filename: string): Map =
     result = m
 
   except MapReadError as e:
-    echo getStackTrace(e)
     raise e
   except CatchableError as e:
-    echo getStackTrace(e)
     raise newException(MapReadError, fmt"Error reading map file: {e.msg}", e)
   finally:
     if rr != nil: rr.close()
@@ -742,8 +792,8 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
 # }}}
 # {{{ writeLevelAnnotations_v1()
 proc writeLevelAnnotations_v1(rw; l: Level) =
-#  rw.beginChunk(FourCC_GRDM_anno)
-  rw.beginChunk("anno")
+  rw.beginChunk(FourCC_GRDM_anno)
+#  rw.beginChunk("anno")
 
   rw.write(l.numAnnotations.uint16)
 
@@ -767,6 +817,7 @@ proc writeLevelAnnotations_v1(rw; l: Level) =
     of akLabel:
       rw.write(anno.labelColor.uint8)
 
+#    let text = if anno.text == "": " " else: anno.text
     rw.writeWStr(anno.text)
 
   rw.endChunk()
