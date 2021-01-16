@@ -1,7 +1,7 @@
 import algorithm
 import browsers
 import lenientops
-import logging except Level
+import logging
 import macros
 import math
 import options
@@ -860,7 +860,7 @@ func currSortedLevelIdx(a): Natural =
 
 # }}}
 # {{{ currLevel()
-func currLevel(a): Level =
+func currLevel(a): common.Level =
   a.doc.map.levels[a.ui.cursor.level]
 
 # }}}
@@ -5835,7 +5835,8 @@ proc main() =
   alias(a, g_app)
 
   discard tryRemoveFile(LogFile)
-  var fileLog = newFileLogger(LogFile, fmtStr="[$levelname] $date $time - ", bufSize=0)
+  var fileLog = newFileLogger(LogFile, fmtStr="[$levelname] $date $time - ",
+                              levelThreshold=lvlDebug)
   addHandler(fileLog)
 
   # TODO
