@@ -217,6 +217,7 @@ type
 
   UI = object
     cursor:            Location
+    lastCursor:        Location
     cursorOrient:      CardinalDir
     editMode:          EditMode
 
@@ -236,8 +237,7 @@ type
     currSpecialWall:   Natural
     currFloorColor:    byte
 
-    drawNoteTooltip:     bool
-    noteTooltipLocation: Location
+    manualNoteTooltipState: ManualNoteTooltipState
 
     levelTopPad:       float
     levelRightPad:     float
@@ -253,6 +253,13 @@ type
     levelDrawAreaHeight: float
 
     backgroundImage:   Option[Paint]
+
+
+  ManualNoteTooltipState = object
+    show:     bool
+    location: Location
+    mx:       float
+    my:       float
 
 
   EditMode = enum
@@ -3423,6 +3430,14 @@ proc drawStatusBar(y: float, winWidth: float; a) =
 
 # }}}
 
+# {{{ resetManualNoteTooltip()
+proc resetManualNoteTooltip(a) =
+  with a.ui.manualNoteTooltipState:
+    show = false
+    mx = -1
+    my = -1
+
+# }}}
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents(a) =
   alias(ui, a.ui)
@@ -3470,13 +3485,12 @@ proc handleLevelMouseEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-  else:   # not WASD mode
+  else:  # not WASD mode
     if koi.mbLeftDown():
-      let loc= locationAtMouse(a)
+      let loc = locationAtMouse(a)
       if loc.isSome:
         a.ui.cursor = loc.get
-
-
+        resetManualNoteTooltip(a)
 
 # }}}
 # {{{ handleGlobalKeyEvents()
@@ -3614,6 +3628,14 @@ proc handleGlobalKeyEvents(a) =
       # This to prevent creating an undoable action for every turn in walk
       # mode
       let prevCursor = cur
+
+      # Reset tooltip display on certain keypresses only
+      if not (ke.key == keySpace) and
+         not (ke.action == kaUp) and
+         not (ke.key in {keyLeftControl,  keyLeftShift,  keyLeftAlt,
+                         keyRightControl, keyRightShift, keyRightAlt}):
+        resetManualNoteTooltip(a)
+
 
       if opt.walkMode: handleMoveWalk(ke, a)
       else:
@@ -3843,8 +3865,15 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconWarning, "No label to erase in cell", a)
 
       elif ke.isKeyDown(keySpace):
-        ui.drawNoteToolTip = true
-        ui.noteTooltipLocation = cur
+        if ui.manualNoteTooltipState.show:
+          resetManualNoteTooltip(a)
+        else:
+          if map.hasNote(cur):
+            with ui.manualNoteTooltipState:
+              show = true
+              location = cur
+              mx = koi.mx()
+              my = koi.my()
 
 #[ TODO
       elif ke.isKeyDown(keyD, {mkCtrl, mkAlt}):
@@ -4298,6 +4327,11 @@ proc renderLevel(a) =
 
   updateViewStartAndCursorPosition(a)
 
+  if ui.lastCursor != ui.cursor:
+    resetManualNoteTooltip(a)
+
+  ui.lastCursor = ui.cursor
+
   let
     x = dp.startX
     y = dp.startY
@@ -4341,34 +4375,45 @@ proc renderLevel(a) =
     )
 
   # Draw note tooltip
+  const
+    NoteTooltipXOffs = 16
+    NoteTooltipYOffs = 20
+
   var mouseOverCellWithNote = false
   var note: Option[Annotation]
 
-  if koi.isHot(id):
-    if not (opt.wasdMode and isActive(id)):
+  if koi.isHot(id) and
+     not (opt.wasdMode and isActive(id)) and
+     (koi.mx() != ui.manualNoteTooltipState.mx or
+      koi.my() != ui.manualNoteTooltipState.my):
 
-      let locOpt = locationAtMouse(a)
-      if locOpt.isSome:
-        let loc = locOpt.get
+    let locOpt = locationAtMouse(a)
+    if locOpt.isSome:
+      let loc = locOpt.get
 
-        note = l.getNote(loc.row, loc.col)
-        if note.isSome:
-          mouseOverCellWithNote = true
-          ui.drawNoteTooltip = false
+      note = l.getNote(loc.row, loc.col)
+      if note.isSome:
+        mouseOverCellWithNote = true
+        resetManualNoteTooltip(a)
 
-  if mouseOverCellWithNote:
-    let
-      x = koi.mx() + 16
-      y = koi.my() + 20
+
+  if ui.manualNoteTooltipState.show:
+    let loc = ui.manualNoteTooltipState.location
+    note = l.getNote(loc.row, loc.col)
+
+  if note.isSome:
+    var x, y: float
+
+    if mouseOverCellWithNote:
+      x = koi.mx() + NoteTooltipXOffs
+      y = koi.my() + NoteTooltipYOffs
+
+    elif ui.manualNoteTooltipState.show:
+      x = dp.startX + viewCol(a) * dp.gridSize + NoteTooltipXOffs
+      y = dp.startY + viewRow(a) * dp.gridSize + NoteTooltipYOffs
 
     drawNoteTooltip(x, y, note.get, a)
 
-  elif ui.drawNoteTooltip:
-#    let viewRow = cur.row - dp.viewStartRow
-#    let viewCol = cur.col - dp.viewStartCol
-    discard
-
-#    drawNoteTooltip(x, y, note, a)
 
 # }}}
 # {{{ renderToolsPane()
@@ -5288,6 +5333,7 @@ proc renderUI(a) =
 
   if not mapHasLevels(a):
     drawEmptyMap(a)
+
   else:
     let levelItems = a.doc.map.sortedLevelNames
     var sortedLevelIdx = currSortedLevelIdx(a)
