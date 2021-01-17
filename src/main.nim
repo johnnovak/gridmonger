@@ -220,7 +220,6 @@ type
     lastCursor:        Location
     cursorOrient:      CardinalDir
     editMode:          EditMode
-    mouseMode:         MouseMode
 
     lastCursorViewX:   float
     lastCursorViewY:   float
@@ -277,10 +276,6 @@ type
     emMovePreview,
     emNudgePreview,
     emSetCellLink
-
-  MouseMode = enum
-    mmNormal,
-    mmDragCursor
 
   Theme = object
     style:                  ThemeStyle
@@ -3494,8 +3489,6 @@ proc handleLevelMouseEvents(a) =
     if koi.mbLeftDown():
       let loc = locationAtMouse(a)
       if loc.isSome:
-        # TODO correct?
-        ui.lastCursor = a.ui.cursor
         a.ui.cursor = loc.get
         resetManualNoteTooltip(a)
 
@@ -3959,13 +3952,15 @@ proc handleGlobalKeyEvents(a) =
     of emExcavate, emEraseCell, emClearFloor, emColorFloor:
       # This to prevent creating an undoable action for every turn in walk
       # mode
+      let prevCursor = cur
+
       if opt.walkMode: handleMoveWalk(ke, a)
       else:
         # TODO disallow cursor jump with ctrl
         let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
-      if cur != ui.lastCursor:
+      if cur != prevCursor:
         if   ui.editMode == emExcavate:
           actions.excavate(map, cur, ui.currFloorColor, um)
 
