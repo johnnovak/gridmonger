@@ -350,7 +350,17 @@ proc setLevelClippingRect(l: Level; ctx) =
   vg.intersectScissor(x, y, w, h)
 
 # }}}
-#
+
+
+# {{{ forAllViewCells_CellCoords() 
+template forAllViewCells_CellCoords(body: untyped) =
+  for viewRow {.inject.} in 0..<dp.viewRows:
+    for viewCol {.inject.} in 0..<dp.viewCols:
+      let row {.inject.} = dp.viewStartRow + viewRow
+      let col {.inject.} = dp.viewStartCol + viewCol
+      body
+# }}}
+
 # {{{ drawBackground()
 proc drawBackground(ctx) =
   alias(ls, ctx.ls)
@@ -494,16 +504,12 @@ proc drawCellOutlines(l: Level; ctx) =
   vg.strokeColor(ls.outlineColor)
   vg.beginPath()
 
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
-      let row = dp.viewStartRow + viewRow
-      let col = dp.viewStartCol + viewCol
+  forAllViewCells_CellCoords:
+    if l.isEmpty(row, col) and isOutline(row, col):
+      let x = snap(cellX(viewCol, dp), sw)
+      let y = snap(cellY(viewRow, dp), sw)
 
-      if l.isEmpty(row, col) and isOutline(row, col):
-        let x = snap(cellX(viewCol, dp), sw)
-        let y = snap(cellY(viewRow, dp), sw)
-
-        vg.rect(x, y, dp.gridSize, dp.gridSize)
+      vg.rect(x, y, dp.gridSize, dp.gridSize)
 
   vg.fill()
   vg.stroke()
@@ -951,6 +957,21 @@ proc drawLinkMarker(x, y: float; ctx) =
   vg.fill()
 
 # }}}
+
+# {{{ drawShadows_IterateViewBuf()
+template drawShadows_IterateViewBuf(body: untyped) =
+  for bufRow {.inject.} in ViewBufBorder..<viewBuf.rows - ViewBufBorder:
+    for bufCol {.inject.} in ViewBufBorder..<viewBuf.cols - ViewBufBorder:
+      let viewRow = bufRow - ViewBufBorder
+      let viewCol = bufCol - ViewBufBorder
+
+      if not isCursorActive(viewRow, viewCol, dp):
+        let x {.inject.} = cellX(viewCol, dp)
+        let y {.inject.} = cellY(viewRow, dp)
+
+        body
+
+# }}}
 # {{{ drawInnerShadows()
 proc drawInnerShadows(viewBuf: Level; ctx) =
   alias(dp, ctx.dp)
@@ -962,30 +983,22 @@ proc drawInnerShadows(viewBuf: Level; ctx) =
 
   let shadowWidth = dp.gridSize * ls.innerShadowWidthFactor
 
-  for bufRow in ViewBufBorder..<viewBuf.rows - ViewBufBorder:
-    for bufCol in ViewBufBorder..<viewBuf.cols - ViewBufBorder:
-      let viewRow = bufRow - ViewBufBorder
-      let viewCol = bufCol - ViewBufBorder
+  drawShadows_IterateViewBuf:
+    if not viewBuf.isEmpty(bufRow, bufCol):
+      let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
+      let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
+      let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
 
-      if not isCursorActive(viewRow, viewCol, dp):
-        let x = cellX(viewCol, dp)
-        let y = cellY(viewRow, dp)
+      if emptyN:
+        let offs = if not emptyW and not emptyNW: shadowWidth else: 0
+        vg.rect(x+offs, y, dp.gridSize-offs, shadowWidth)
 
-        if not viewBuf.isEmpty(bufRow, bufCol):
-          let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
-          let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
-          let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
+      if emptyW:
+        let offs = if not emptyN and not emptyNW: shadowWidth else: 0
+        vg.rect(x, y+offs, shadowWidth, dp.gridSize-offs)
 
-          if emptyN:
-            let offs = if not emptyW and not emptyNW: shadowWidth else: 0
-            vg.rect(x+offs, y, dp.gridSize-offs, shadowWidth)
-
-          if emptyW:
-            let offs = if not emptyN and not emptyNW: shadowWidth else: 0
-            vg.rect(x, y+offs, shadowWidth, dp.gridSize-offs)
-
-          if not emptyN and not emptyW and emptyNW:
-            vg.rect(x, y, shadowWidth, shadowWidth)
+      if not emptyN and not emptyW and emptyNW:
+        vg.rect(x, y, shadowWidth, shadowWidth)
 
   vg.fill()
 
@@ -1001,30 +1014,22 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
 
   let shadowWidth = dp.gridSize * ls.outerShadowWidthFactor
 
-  for bufRow in ViewBufBorder..<viewBuf.rows - ViewBufBorder:
-    for bufCol in ViewBufBorder..<viewBuf.cols - ViewBufBorder:
-      let viewRow = bufRow - ViewBufBorder
-      let viewCol = bufCol - ViewBufBorder
+  drawShadows_IterateViewBuf:
+    if viewBuf.isEmpty(bufRow, bufCol):
+      let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
+      let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
+      let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
 
-      if not isCursorActive(viewRow, viewCol, dp):
-        let x = cellX(viewCol, dp)
-        let y = cellY(viewRow, dp)
+      if not emptyN:
+        let offs = if emptyW and emptyNW: shadowWidth else: 0
+        vg.rect(x+offs, y, dp.gridSize-offs, shadowWidth)
 
-        if viewBuf.isEmpty(bufRow, bufCol):
-          let emptyN  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, North)
-          let emptyW  = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, West)
-          let emptyNW = viewBuf.isNeighbourCellEmpty(bufRow, bufCol, NorthWest)
+      if not emptyW:
+        let offs = if emptyN and emptyNW: shadowWidth else: 0
+        vg.rect(x, y+offs, shadowWidth, dp.gridSize-offs)
 
-          if not emptyN:
-            let offs = if emptyW and emptyNW: shadowWidth else: 0
-            vg.rect(x+offs, y, dp.gridSize-offs, shadowWidth)
-
-          if not emptyW:
-            let offs = if emptyN and emptyNW: shadowWidth else: 0
-            vg.rect(x, y+offs, shadowWidth, dp.gridSize-offs)
-
-          if emptyN and emptyW and not emptyNW:
-            vg.rect(x, y, shadowWidth, shadowWidth)
+      if emptyN and emptyW and not emptyNW:
+        vg.rect(x, y, shadowWidth, shadowWidth)
 
   vg.fill()
 
@@ -1907,18 +1912,17 @@ proc drawFloors(viewBuf: Level; ctx) =
 # }}}
 # {{{ drawTrail()
 proc drawTrail(viewBuf: Level; ctx) =
-#  alias(dp, ctx.dp)
-#
-#  for r in 0..<dp.viewRows:
-#    for c in 0..<dp.viewCols:
-#      let bufRow = viewRow + ViewBufBorder
-#      let bufCol = viewCol + ViewBufBorder
-#
-#      if not viewBuf.isEmpty(bufRow, bufCol):
-#        let x = cellX(viewCol, dp)
-#        let y = cellY(viewRow, dp)
-#        drawTrail(x, y, ctx)
-  discard
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let bufRow = viewRow + ViewBufBorder
+      let bufCol = viewCol + ViewBufBorder
+
+      if viewBuf.hasTrail(bufRow, bufCol):
+        let x = cellX(viewCol, dp)
+        let y = cellY(viewRow, dp)
+        drawTrail(x, y, ctx)
 
 # }}}
 
@@ -1951,20 +1955,18 @@ proc drawLinkMarkers(map: Map, level: Natural; ctx) =
   var loc: Location
   loc.level = level
 
-  for viewRow in 0..<dp.viewRows:
-    for viewCol in 0..<dp.viewCols:
-      loc.row = dp.viewStartRow + viewRow
-      loc.col = dp.viewStartCol + viewCol
+  forAllViewCells_CellCoords:
+    (loc.row, loc.col) = (row, col)
 
-      if (map.links.hasWithSrc(loc) and
-          not isSpecialLevelIndex(map.links.getBySrc(loc).level)) or
+    if (map.links.hasWithSrc(loc) and
+        not isSpecialLevelIndex(map.links.getBySrc(loc).level)) or
 
-         (map.links.hasWithDest(loc) and
-          not isSpecialLevelIndex(map.links.getByDest(loc).level)):
+       (map.links.hasWithDest(loc) and
+        not isSpecialLevelIndex(map.links.getByDest(loc).level)):
 
-        let x = cellX(viewCol, dp)
-        let y = cellY(viewRow, dp)
-        drawLinkMarker(x, y, ctx)
+      let x = cellX(viewCol, dp)
+      let y = cellY(viewRow, dp)
+      drawLinkMarker(x, y, ctx)
 
 # }}}
 # {{{ drawNotes()
