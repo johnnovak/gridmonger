@@ -4524,6 +4524,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     colorX += 3
     colorY -= 210
 
+  # Draw special walls
   koi.radioButtons(
     x = toolX,
     y = y,
@@ -4538,6 +4539,18 @@ proc renderToolsPane(x, y, w, h: float; a) =
     drawProc = specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
   )
 
+  # Draw floor colors
+  var floorColors = newSeqOfCap[Color](ls.floorColor.len)
+  let
+    bgCol = ls.backgroundColor
+    fc0 = ls.floorColor[0]
+
+  for fc in ls.floorColor:
+    let c = if ls.transparentFloor: fc
+            else: bgCol.withAlpha(1.0).lerp(fc0, fc0.a)
+                                      .lerp(fc, fc.a).withAlpha(1.0)
+    floorColors.add(c)
+
   koi.radioButtons(
     x = colorX,
     y = colorY,
@@ -4550,8 +4563,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     layout = RadioButtonsLayout(kind: rblGridVert,
                                 itemsPerColumn: colorItemsPerColum),
 
-    drawProc = colorRadioButtonDrawProc(ls.floorColor.toSeq,
-                                        ls.cursorColor).some
+    drawProc = colorRadioButtonDrawProc(floorColors, ls.cursorColor).some
   )
 
 # }}}
