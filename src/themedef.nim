@@ -124,6 +124,8 @@ defineTheme:
 
     linkMarkerColor:        Color
 
+    trailColor:             Color
+
     regionBorderColor:      Color
     regionBorderEmptyColor: Color
 

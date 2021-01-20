@@ -758,7 +758,7 @@ proc drawTrail(x, y: float; ctx) =
 
   let a = dp.gridSize - 2*offs + sw
 
-  vg.fillColor(ls.lightDrawColor)
+  vg.fillColor(ls.trailColor)
   vg.beginPath()
   vg.rect(x1, y1, a, a)
   vg.fill()

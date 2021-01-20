@@ -267,12 +267,15 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
     let wallW = rr.read(uint8)
     checkEnum(wallW, "lvl.cell.wallW", Wall)
 
+    let trail = rr.read(uint8).bool
+
     cells[i] = Cell(
       floor: floor.Floor,
       floorOrientation: floorOrientation.Orientation,
       floorColor: floorColor,
       wallN: wallN.Wall,
-      wallW: wallW.Wall
+      wallW: wallW.Wall,
+      trail: trail
     )
 
   result = cells
@@ -783,6 +786,7 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
     rw.write(c.floorColor.uint8)
     rw.write(c.wallN.uint8)
     rw.write(c.wallW.uint8)
+    rw.write(c.trail.uint8)
 
   rw.endChunk()
 

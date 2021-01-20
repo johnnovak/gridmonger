@@ -928,7 +928,6 @@ proc resetCursorAndViewStart(a) =
 # {{{ updateLastCursorViewCoords()
 proc updateLastCursorViewCoords(a) =
   alias(dp, a.ui.drawLevelParams)
-  alias(cur, a.ui.cursor)
 
   a.ui.lastCursorViewX = dp.gridSize * viewCol(a)
   a.ui.lastCursorViewY = dp.gridSize * viewRow(a)
@@ -4917,6 +4916,10 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         prop("Link Marker", level, linkMarkerColor):
           koi.color(ts.level.linkMarkerColor)
+
+      group:
+        prop("Trail", level, trailColor):
+          koi.color(ts.level.trailColor)
 
       group:
         prop("Region Border", level, regionBorderColor):
