@@ -55,6 +55,7 @@ proc setWall*(g; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
   of dirE: g[r,   c+1].wallW = w
 
 # }}}
+
 # {{{ getFloor*()
 proc getFloor*(g; r,c: Natural): Floor {.inline.} =
   assert r < g.rows
@@ -98,11 +99,24 @@ proc setFloorColor*(g; r,c: Natural, col: byte) {.inline.} =
 
 # }}}
 
-const EmptyFloors = {fNone, fTrail}
+# {{{ hasTrail*()
+proc hasTrail*(g; r,c: Natural): bool {.inline.} =
+  assert r < g.rows
+  assert c < g.cols
+  g[r,c].trail
+
+# }}}
+# {{{ setTrail*()
+proc setTrail*(g; r,c: Natural, t: bool) {.inline.} =
+  assert r < g.rows
+  assert c < g.cols
+  g[r,c].trail = t
+
+# }}}
 
 # {{{ isEmpty*()
 proc isEmpty*(f: Floor): bool {.inline.} =
-  f in EmptyFloors
+  f == fEmpty
 
 proc isEmpty*(c: Cell): bool {.inline.} =
   c.floor.isEmpty

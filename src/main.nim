@@ -3541,10 +3541,6 @@ proc handleGlobalKeyEvents(a) =
   proc turnRight(dir: CardinalDir): CardinalDir =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
 
-  proc setTrailAtCursor(a) =
-    if map.isEmpty(cur):
-      actions.setFloor(map, cur, fTrail, ui.currFloorColor, um)
-
   proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
     opt = not opt
     let state = if opt: on else: off
@@ -3644,7 +3640,7 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage("moved", a)
 
       if opt.drawTrail and cur != prevCursor:
-        setTrailAtCursor(a)
+        map.setTrail(cur, true)
 
       elif ke.isKeyDown({keyPageUp, keyKpSubtract}) or
          ke.isKeyDown(keyMinus, {mkCtrl}):
@@ -3666,7 +3662,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emClearFloor
         setStatusMessage(IconEraser, "Clear floor",
                          @[IconArrowsAll, "clear"], a)
-        actions.setFloor(map, cur, fEmpty, ui.currFloorColor, um)
+        actions.setFloor(map, cur, fBlank, ui.currFloorColor, um)
 
       elif ke.isKeyDown(keyO):
         actions.toggleFloorOrientation(map, cur, um)
@@ -3682,8 +3678,7 @@ proc handleGlobalKeyEvents(a) =
         setStatusMessage(IconEraser, "Set color",
                          @[IconArrowsAll, "set color"], a)
 
-        let floor = map.getFloor(cur)
-        if floor != fNone:
+        if not map.isEmpty(cur):
           actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
       elif not opt.wasdMode and ke.isKeyDown(keyW):
@@ -3971,8 +3966,7 @@ proc handleGlobalKeyEvents(a) =
           actions.clearFloor(map, cur, ui.currFloorColor, um)
 
         elif ui.editMode == emColorFloor:
-          let floor = map.getFloor(cur)
-          if floor != fNone:
+          if not map.isEmpty(cur):
             actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
       if not opt.wasdMode and ke.isKeyUp({keyD, keyE}):

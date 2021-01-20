@@ -731,6 +731,33 @@ proc drawFloorBg(x, y: float, color: Color; ctx) =
   vg.fill()
 
 # }}}
+# {{{ drawTrail()
+proc drawTrail(x, y: float; ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    offs = (dp.gridSize * 0.38).int
+    sw = dp.thinStrokeWidth
+
+  var x1, y1: float
+  if dp.lineWidth == lwThin:
+    x1 = x + offs
+    y1 = y + offs
+  else:
+    let sw2 = sw*0.5
+    x1 = snap(x + offs - sw2, sw)
+    y1 = snap(y + offs - sw2, sw)
+
+  let a = dp.gridSize - 2*offs + sw
+
+  vg.fillColor(ls.lightDrawColor)
+  vg.beginPath()
+  vg.rect(x1, y1, a, a)
+  vg.fill()
+
+# }}}
 # {{{ drawGrid()
 proc drawGrid(x, y: float, color: Color, gridStyle: GridStyle; ctx) =
   alias(dp, ctx.dp)
@@ -1004,33 +1031,6 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
 # }}}
 
 # {{{ Draw floor types
-# {{{ drawTrail()
-proc drawTrail(x, y: float; ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  let
-    offs = (dp.gridSize * 0.38).int
-    sw = dp.thinStrokeWidth
-
-  var x1, y1: float
-  if dp.lineWidth == lwThin:
-    x1 = x + offs
-    y1 = y + offs
-  else:
-    let sw2 = sw*0.5
-    x1 = snap(x + offs - sw2, sw)
-    y1 = snap(y + offs - sw2, sw)
-
-  let a = dp.gridSize - 2*offs + sw
-
-  vg.fillColor(ls.lightDrawColor)
-  vg.beginPath()
-  vg.rect(x1, y1, a, a)
-  vg.fill()
-
-# }}}
 # {{{ drawSecretDoorBlock()
 proc drawSecretDoorBlock(x, y: float, isCursorActive: bool,
                          floorColor: Natural; ctx) =
@@ -1864,9 +1864,8 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   vg.intersectScissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
   case viewBuf.getFloor(bufRow, bufCol)
-  of fNone:                discard
   of fEmpty:               discard
-  of fTrail:               draw(drawTrail)
+  of fBlank:               discard
   of fDoor:                drawOriented(drawDoorHoriz)
   of fLockedDoor:          drawOriented(drawLockedDoorHoriz)
   of fArchway:             drawOriented(drawArchwayHoriz)
@@ -1904,6 +1903,22 @@ proc drawFloors(viewBuf: Level; ctx) =
   for r in 0..<dp.viewRows:
     for c in 0..<dp.viewCols:
       drawCellFloor(viewBuf, r,c, ctx)
+
+# }}}
+# {{{ drawTrail()
+proc drawTrail(viewBuf: Level; ctx) =
+#  alias(dp, ctx.dp)
+#
+#  for r in 0..<dp.viewRows:
+#    for c in 0..<dp.viewCols:
+#      let bufRow = viewRow + ViewBufBorder
+#      let bufCol = viewCol + ViewBufBorder
+#
+#      if not viewBuf.isEmpty(bufRow, bufCol):
+#        let x = cellX(viewCol, dp)
+#        let y = cellY(viewRow, dp)
+#        drawTrail(x, y, ctx)
+  discard
 
 # }}}
 
@@ -2388,6 +2403,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
     drawCursor(ctx)
 
   drawFloors(viewBuf, ctx)
+  drawTrail(viewBuf, ctx)
   drawNotes(viewBuf, ctx)
   drawLabels(viewBuf, ctx)
 

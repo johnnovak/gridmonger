@@ -109,7 +109,7 @@ proc clearFloor*(map; loc: Location, floorColor: byte; um) =
     alias(l, m.levels[loc.level])
     l.delAnnotation(loc.row, loc.col)
 
-    m.setFloor(loc, fEmpty)
+    m.setFloor(loc, fBlank)
     m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -151,7 +151,7 @@ proc excavate*(map; loc: Location, floorColor: byte; um) =
     alias(r, loc.row)
 
     m.eraseCell(loc)
-    m.setFloor(loc, fEmpty)
+    m.setFloor(loc, fBlank)
     m.setFloorColor(loc, floorColor)
 
     if r == 0 or l.isEmpty(r-1, c):
@@ -189,7 +189,7 @@ proc setNote*(map; loc: Location, n: Annotation; um) =
   singleCellAction(map, loc, um, "Set note", m):
     alias(l, m.levels[loc.level])
     if n.kind != akComment:
-      m.setFloor(loc, fEmpty)
+      m.setFloor(loc, fBlank)
 
     l.setAnnotation(loc.row, loc.col, n)
 
@@ -207,8 +207,8 @@ proc eraseNote*(map; loc: Location; um) =
 proc setLabel*(map; loc: Location, n: Annotation; um) =
 
   singleCellAction(map, loc, um, "Set label", m):
-    if m.getFloor(loc) != fNone:
-      m.setFloor(loc, fEmpty)
+    if not m.isEmpty(loc):
+      m.setFloor(loc, fBlank)
 
     alias(l, m.levels[loc.level])
     l.setAnnotation(loc.row, loc.col, n)
@@ -332,7 +332,7 @@ proc fillSelection*(map; level: Natural, sel: Selection,
           loc.row = r
           loc.col = c
           m.eraseCell(loc)
-          m.setFloor(loc, fEmpty)
+          m.setFloor(loc, fBlank)
           m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -375,7 +375,7 @@ proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
         if sel[r,c]:
           loc.row = r
           loc.col = c
-          if m.getFloor(loc) != fNone:
+          if not m.isEmpty(loc):
             m.setFloorColor(loc, floorColor)
 
 # }}}

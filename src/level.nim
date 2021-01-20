@@ -274,13 +274,24 @@ proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
 # }}}
 # {{{ canSetWall*()
 proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
-  l.getFloor(r,c) != fNone or not l.isNeighbourCellEmpty(r,c, {dir})
+  not l.isEmpty(r,c) or not l.isNeighbourCellEmpty(r,c, {dir})
 
 # }}}
 # {{{ getNeighbourCell*()
 proc getNeighbourCell*(l; r,c: Natural,
                        dir: Direction): Option[Cell] {.inline.} =
   l.cellGrid.getNeighbourCell(r,c, dir)
+
+# }}}
+
+# {{{ hasTrail*()
+proc hasTrail*(l; r,c: Natural): bool {.inline.} =
+  l.cellGrid.hasTrail(r,c)
+
+# }}}
+# {{{ setTrail*()
+proc setTrail*(l; r,c: Natural, t: bool) {.inline.} =
+  l.cellGrid.setTrail(r,c, t)
 
 # }}}
 
@@ -308,7 +319,7 @@ proc eraseCellWalls*(l; r,c: Natural) =
 # {{{ eraseCell*()
 proc eraseCell*(l; r,c: Natural) =
   l.eraseCellWalls(r,c)
-  l.setFloor(r,c, fNone)
+  l.setFloor(r,c, fEmpty)
   l.delAnnotation(r,c)
 
 # }}}

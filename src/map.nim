@@ -165,6 +165,7 @@ proc setFloorColor*(m; loc: Location,
   m.levels[loc.level].setFloorColor(loc.row, loc.col, floorColor)
 
 # }}}
+
 # {{{ getWall*()
 proc getWall*(m; loc: Location, dir: CardinalDir): Wall {.inline.} =
   m.levels[loc.level].getWall(loc.row, loc.col, dir)
@@ -181,4 +182,15 @@ proc canSetWall*(m; loc: Location, dir: CardinalDir): bool =
 
 # }}}
 
+# {{{ hasTrail*()
+proc hasTrail*(m; loc: Location): bool =
+  m.levels[loc.level].hasTrail(loc.row, loc.col)
+
+# }}}
+# {{{ setTrail*()
+proc setTrail*(m; loc: Location, t: bool) =
+  m.levels[loc.level].setTrail(loc.row, loc.col, t)
+
+# }}}
+#
 # vim: et:ts=2:sw=2:fdm=marker

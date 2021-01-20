@@ -125,13 +125,11 @@ type
     floorOrientation*: Orientation
     floorColor*:       byte
     wallN*, wallW*:    Wall
-    # TODO
-    # trail*:            bool
+    trail*:            bool
 
   Floor* = enum
-    fNone                = ( 0, "blank"),
-    fEmpty               = ( 1, "empty"),  # TODO rename to blank? interferes with isFloorEmpty
-    fTrail               = ( 2, "trail"),  # TODO remove, there will be a separate trail layer
+    fEmpty               = ( 0, "none"),
+    fBlank               = ( 1, "blank"),
     fDoor                = (20, "door"),
     fLockedDoor          = (21, "locked door"),
     fArchway             = (22, "archway"),
