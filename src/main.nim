@@ -178,7 +178,7 @@ type
     prefs:       Preferences
 
     doc:         Document
-    opt:         Options
+    opts:        Options
     ui:          UI
     theme:       Theme
     dialog:      Dialog
@@ -557,7 +557,7 @@ let g_appShortcuts = {
 
 # {{{ setSwapInterval()
 proc setSwapInterval(a) =
-  glfw.swapInterval(if a.opt.disableVSync: 0 else: 1)
+  glfw.swapInterval(if a.opts.disableVSync: 0 else: 1)
 
 # }}}
 # {{{ savePreferences()
@@ -565,17 +565,17 @@ proc savePreferences(a) =
   alias(ui, a.ui)
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
-  alias(opt, a.opt)
+  alias(opts, a.opts)
   alias(theme, a.theme)
 
   let (xpos, ypos) = if a.win.maximized: a.win.oldPos else: a.win.pos
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
 
   let prefs = Preferences(
-    showSplash: opt.showSplash,
-    autoCloseSplash: opt.autoCloseSplash,
-    splashTimeoutSecs: opt.splashTimeoutSecs,
-    loadLastMap: opt.loadLastMap,
+    showSplash: opts.showSplash,
+    autoCloseSplash: opts.autoCloseSplash,
+    splashTimeoutSecs: opts.splashTimeoutSecs,
+    loadLastMap: opts.loadLastMap,
     lastMapFileName: a.doc.filename,
 
     maximized: a.win.maximized,
@@ -583,17 +583,17 @@ proc savePreferences(a) =
     ypos: ypos,
     width: width,
     height: height,
-    disableVSync: opt.disableVSync,
+    disableVSync: opts.disableVSync,
 
     # TODO use common struct for DISP chunk & this
     themeName: theme.themeNames[theme.currThemeIndex],
     zoomLevel: dp.getZoomLevel(),
     showCellCoords: dp.drawCellCoords,
-    showToolsPane: opt.showToolsPane,
-    showNotesPane: opt.showNotesPane,
-    drawTrail: opt.drawTrail,
-    wasdMode: opt.wasdMode,
-    walkMode: opt.walkMode,
+    showToolsPane: opts.showToolsPane,
+    showNotesPane: opts.showNotesPane,
+    drawTrail: opts.drawTrail,
+    wasdMode: opts.wasdMode,
+    walkMode: opts.walkMode,
 
     currLevel: cur.level,
     cursorRow: cur.row,
@@ -601,8 +601,8 @@ proc savePreferences(a) =
     viewStartRow: dp.viewStartRow,
     viewStartCol: dp.viewStartCol,
 
-    autosave: opt.autosave,
-    autosaveFreqMins: opt.autosaveFreqMins
+    autosave: opts.autosave,
+    autosaveFreqMins: opts.autosaveFreqMins
   )
 
   savePreferences(prefs, ConfigFile)
@@ -939,7 +939,7 @@ proc updateLastCursorViewCoords(a) =
 # }}}
 # {{{ drawAreaWidth()
 proc drawAreaWidth(a): float =
-  if a.opt.showThemePane: koi.winWidth() - ThemePaneWidth
+  if a.opts.showThemePane: koi.winWidth() - ThemePaneWidth
   else: koi.winWidth()
 
 # }}}
@@ -984,11 +984,11 @@ proc updateViewStartAndCursorPosition(a) =
                                                a.ui.levelBottomPad -
                                                StatusBarHeight
 
-  if a.opt.showNotesPane:
+  if a.opts.showNotesPane:
    ui.levelDrawAreaHeight -= NotesPaneTopPad + NotesPaneHeight +
                              NotesPaneBottomPad
 
-  if a.opt.showToolsPane:
+  if a.opts.showToolsPane:
     ui.levelDrawAreaWidth -= toolsPaneWidth()
 
   dp.viewRows = min(dp.numDisplayableRows(ui.levelDrawAreaHeight), l.rows)
@@ -1061,7 +1061,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
-  let sm = a.opt.scrollMargin
+  let sm = a.opts.scrollMargin
 
   case dir:
   of dirE:
@@ -1601,13 +1601,13 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
 
-  dlg.showSplash = a.opt.showSplash
-  dlg.autoCloseSplash = a.opt.autoCloseSplash
-  dlg.splashTimeoutSecs = $a.opt.splashTimeoutSecs
-  dlg.loadLastMap = a.opt.loadLastMap
-  dlg.disableVSync = a.opt.disableVSync
-  dlg.autosave = a.opt.autosave
-  dlg.autosaveFreqMins = $a.opt.autosaveFreqMins
+  dlg.showSplash = a.opts.showSplash
+  dlg.autoCloseSplash = a.opts.autoCloseSplash
+  dlg.splashTimeoutSecs = $a.opts.splashTimeoutSecs
+  dlg.loadLastMap = a.opts.loadLastMap
+  dlg.disableVSync = a.opts.disableVSync
+  dlg.autosave = a.opts.autosave
+  dlg.autosaveFreqMins = $a.opts.autosaveFreqMins
 
   dlg.isOpen = true
 
@@ -1722,13 +1722,13 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 
   proc okAction(dlg: var PreferencesDialogParams; a) =
-    a.opt.showSplash        = dlg.showSplash
-    a.opt.autoCloseSplash   = dlg.autoCloseSplash
-    a.opt.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
-    a.opt.loadLastMap       = dlg.loadLastMap
-    a.opt.disableVSync      = dlg.disableVSync
-    a.opt.autosave          = dlg.autosave
-    a.opt.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
+    a.opts.showSplash        = dlg.showSplash
+    a.opts.autoCloseSplash   = dlg.autoCloseSplash
+    a.opts.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
+    a.opts.loadLastMap       = dlg.loadLastMap
+    a.opts.disableVSync      = dlg.disableVSync
+    a.opts.autosave          = dlg.autosave
+    a.opts.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
 
     savePreferences(a)
     setSwapInterval(a)
@@ -3352,12 +3352,12 @@ proc drawModeAndOptionIndicators(a) =
 
   vg.fillColor(ls.coordsHighlightColor)
 
-  if a.opt.wasdMode:
+  if a.opts.wasdMode:
     vg.setFont(15.0)
     discard vg.text(x, y, fmt"WASD+{IconMouse}")
     x += 80
 
-  if a.opt.drawTrail:
+  if a.opts.drawTrail:
     vg.setFont(19)
     discard vg.text(x, y+1, IconShoePrints)
 
@@ -3450,9 +3450,9 @@ proc resetManualNoteTooltip(a) =
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents(a) =
   alias(ui, a.ui)
-  alias(opt, a.opt)
+  alias(opts, a.opts)
 
-  if opt.wasdMode:
+  if opts.wasdMode:
     if ui.editMode == emNormal:
       if koi.mbLeftDown():
         ui.editMode = emExcavate
@@ -3510,7 +3510,7 @@ proc handleGlobalKeyEvents(a) =
   alias(cur, a.ui.cursor)
   alias(um, a.doc.undoManager)
   alias(dp, a.ui.drawLevelParams)
-  alias(opt, a.opt)
+  alias(opts, a.opts)
 
   var l = currLevel(a)
 
@@ -3563,7 +3563,7 @@ proc handleGlobalKeyEvents(a) =
 
 
   proc handleMoveWalk(ke: Event; a) =
-    let k = if opt.wasdMode: WalkKeysWasd else: WalkKeysCursor
+    let k = if opts.wasdMode: WalkKeysWasd else: WalkKeysCursor
 
     if ke.isKeyDown(k.forward, repeat=true):
       moveCursor(ui.cursorOrient, steps=1, a)
@@ -3588,7 +3588,7 @@ proc handleGlobalKeyEvents(a) =
 
 
   template handleMoveKeys(ke: Event, moveHandler: untyped) =
-    let k = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+    let k = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
 
     if   ke.isKeyDown(k.left,  repeat=true): moveHandler(dirW, a)
     elif ke.isKeyDown(k.right, repeat=true): moveHandler(dirE, a)
@@ -3642,13 +3642,13 @@ proc handleGlobalKeyEvents(a) =
         resetManualNoteTooltip(a)
 
 
-      if opt.walkMode: handleMoveWalk(ke, a)
+      if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         if handleMoveCursor(ke, moveKeys, a):
           setStatusMessage("moved", a)
 
-      if opt.drawTrail and cur != prevCursor:
+      if opts.drawTrail and cur != prevCursor:
         map.setTrail(cur, true)
 
       elif ke.isKeyDown({keyPageUp, keyKpSubtract}) or
@@ -3659,11 +3659,11 @@ proc handleGlobalKeyEvents(a) =
            ke.isKeyDown(keyEqual, {mkCtrl}):
         nextLevelAction(a)
 
-      elif not opt.wasdMode and ke.isKeyDown(keyD):
+      elif not opts.wasdMode and ke.isKeyDown(keyD):
         ui.editMode = emExcavate
         startExcavateAction(a)
 
-      elif not (opt.wasdMode and opt.walkMode) and ke.isKeyDown(keyE):
+      elif not (opts.wasdMode and opts.walkMode) and ke.isKeyDown(keyE):
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
@@ -3694,7 +3694,7 @@ proc handleGlobalKeyEvents(a) =
         if not map.isEmpty(cur):
           actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
-      elif not opt.wasdMode and ke.isKeyDown(keyW):
+      elif not opts.wasdMode and ke.isKeyDown(keyW):
         ui.editMode = emDrawWall
         startDrawWallsAction(a)
 
@@ -3936,25 +3936,25 @@ proc handleGlobalKeyEvents(a) =
         toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
 
       elif ke.isKeyDown(keyN, {mkAlt}):
-        toggleShowOption(opt.showNotesPane, NoIcon, "Notes pane", a)
+        toggleShowOption(opts.showNotesPane, NoIcon, "Notes pane", a)
 
       elif ke.isKeyDown(keyT, {mkAlt}):
-        toggleShowOption(opt.showToolsPane, NoIcon, "Tools pane", a)
+        toggleShowOption(opts.showToolsPane, NoIcon, "Tools pane", a)
 
       elif ke.isKeyDown(keyGraveAccent):
-        opt.walkMode = not opt.walkMode
-        let msg = if opt.walkMode: "Walk mode" else: "Normal mode"
+        opts.walkMode = not opts.walkMode
+        let msg = if opts.walkMode: "Walk mode" else: "Normal mode"
         setStatusMessage(msg, a)
 
       elif ke.isKeyDown(keyTab):
-        toggleOnOffOption(opt.wasdMode, IconMouse, "WASD mode", a)
+        toggleOnOffOption(opts.wasdMode, IconMouse, "WASD mode", a)
 
       elif ke.isKeyDown(keyT):
         map.setTrail(cur, true)
-        toggleOnOffOption(opt.drawTrail, IconShoePrints, "Draw trail", a)
+        toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
       elif ke.isKeyDown(keyF12):
-        toggleShowOption(opt.showThemePane, NoIcon, "Theme editor pane", a)
+        toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
 
     # }}}
     # {{{ emExcavate, emEraseCell, emEraseTrail, emClearFloor, emColorFloor
@@ -3963,10 +3963,10 @@ proc handleGlobalKeyEvents(a) =
       # mode
       let prevCursor = cur
 
-      if opt.walkMode: handleMoveWalk(ke, a)
+      if opts.walkMode: handleMoveWalk(ke, a)
       else:
         # TODO disallow cursor jump with ctrl
-        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
       if cur != prevCursor:
@@ -3986,7 +3986,7 @@ proc handleGlobalKeyEvents(a) =
           if not map.isEmpty(cur):
             actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
-      if not opt.wasdMode and ke.isKeyUp({keyD, keyE}):
+      if not opts.wasdMode and ke.isKeyUp({keyD, keyE}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -4005,7 +4005,7 @@ proc handleGlobalKeyEvents(a) =
 
       handleMoveKeys(ke, handleMoveKey)
 
-      if not opt.wasdMode and ke.isKeyUp({keyW}):
+      if not opts.wasdMode and ke.isKeyUp({keyW}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -4185,9 +4185,9 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emPastePreview
     of emPastePreview:
-      if opt.walkMode: handleMoveWalk(ke, a)
+      if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
       a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
@@ -4212,9 +4212,9 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emMovePreview
     of emMovePreview:
-      if opt.walkMode: handleMoveWalk(ke, a)
+      if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
       a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
@@ -4261,9 +4261,9 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSetCellLink
     of emSetCellLink:
-      if opt.walkMode: handleMoveWalk(ke, a)
+      if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        let moveKeys = if opt.wasdMode: MoveKeysWasd else: MoveKeysCursor
+        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
       if ke.isKeyDown({keyPageUp, keyKpSubtract}) or
@@ -4329,7 +4329,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 proc renderLevel(a) =
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
-  alias(opt, a.opt)
+  alias(opts, a.opts)
 
   let l = currLevel(a)
 
@@ -4367,7 +4367,7 @@ proc renderLevel(a) =
     dp.regionOpts = l.regionOpts
 
     dp.cursorOrient = CardinalDir.none
-    if opt.walkMode and
+    if opts.walkMode and
        ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
       dp.cursorOrient = ui.cursorOrient.some
 
@@ -4394,13 +4394,13 @@ proc renderLevel(a) =
   var note: Option[Annotation]
 
   if koi.isHot(id) and
-     not (opt.wasdMode and isActive(id)) and
+     not (opts.wasdMode and isActive(id)) and
      (koi.mx() != ui.manualNoteTooltipState.mx or
       koi.my() != ui.manualNoteTooltipState.my):
 
-    let locOpt = locationAtMouse(a)
-    if locOpt.isSome:
-      let loc = locOpt.get
+    let loc = locationAtMouse(a)
+    if loc.isSome:
+      let loc = loc.get
 
       note = l.getNote(loc.row, loc.col)
       if note.isSome:
@@ -5318,9 +5318,9 @@ proc closeSplash(a) =
 
 # {{{ handleAutosave()
 proc handleAutosave(a) =
-  if a.opt.autosave and a.doc.undoManager.isModified:
+  if a.opts.autosave and a.doc.undoManager.isModified:
     let dt = getMonoTime() - a.doc.lastAutosaveTime
-    if dt > initDuration(minutes = a.opt.autosaveFreqMins):
+    if dt > initDuration(minutes = a.opts.autosaveFreqMins):
       let filename = if a.doc.filename == "":
                        AutosaveDir / addFileExt("untitled", MapFileExt)
                      else: a.doc.filename
@@ -5387,7 +5387,7 @@ proc renderUI(a) =
 
     renderLevel(a)
 
-    if a.opt.showNotesPane:
+    if a.opts.showNotesPane:
       renderNotesPane(
         x = NotesPaneLeftPad,
         y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
@@ -5396,7 +5396,7 @@ proc renderUI(a) =
         a
       )
 
-    if a.opt.showToolsPane:
+    if a.opts.showToolsPane:
       renderToolsPane(
         x = uiWidth - toolsPaneWidth(),
         y = ToolsPaneTopPad,
@@ -5415,7 +5415,7 @@ proc renderUI(a) =
   # XXX hack, we need to render the theme editor before the dialogs, so
   # that keyboard shortcuts in the the theme editor take precedence (e.g.
   # when pressing ESC to close the colorpicker, the dialog should not close)
-  if a.opt.showThemePane:
+  if a.opts.showThemePane:
     let
       x = uiWidth
       y = TitleBarHeight
@@ -5519,7 +5519,7 @@ proc renderFrame(a) =
   # XXX HACK: If the theme pane is shown, widgets are handled first, then then
   # the global shortcuts, so widget-specific shorcuts can take precedence
   var uiRendered = false
-  if a.opt.showThemePane:
+  if a.opts.showThemePane:
     renderUI(a)
     uiRendered = true
 
@@ -5528,13 +5528,13 @@ proc renderFrame(a) =
     else:               handleGlobalKeyEvents_NoLevels(a)
 
   else:
-    if not a.opt.showThemePane and a.win.glfwWin.focused:
+    if not a.opts.showThemePane and a.win.glfwWin.focused:
       glfw.makeContextCurrent(g_app.splash.win)
       closeSplash(a)
       glfw.makeContextCurrent(g_app.win.glfwWin)
       g_app.win.focus()
 
-  if not a.opt.showThemePane or not uiRendered:
+  if not a.opts.showThemePane or not uiRendered:
     renderUI(a)
 
   if a.win.shouldClose:
@@ -5624,20 +5624,20 @@ proc renderFrameSplash(a) =
   vg.endFrame()
 
 
-  if not a.opt.showThemePane and a.splash.win.shouldClose:
+  if not a.opts.showThemePane and a.splash.win.shouldClose:
     a.shouldClose = true
 
   proc shouldCloseSplash(a): bool =
     alias(w, a.splash.win)
 
-    if a.opt.showThemePane:
+    if a.opts.showThemePane:
       not a.splash.show
     else:
       let autoClose =
-        if not a.opt.showThemePane and a.opt.autoCloseSplash:
+        if not a.opts.showThemePane and a.opts.autoCloseSplash:
           let dt = getMonoTime() - a.splash.t0
           koi.setFramesLeft()
-          dt > initDuration(seconds = a.opt.splashTimeoutSecs)
+          dt > initDuration(seconds = a.opts.splashTimeoutSecs)
         else: false
 
       w.isKeyDown(keyEscape) or
@@ -5780,20 +5780,20 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   if themeIndex == -1: themeIndex = 0
   switchTheme(themeIndex, a)
 
-  a.opt.scrollMargin = 3
-  a.opt.showSplash = prefs.showSplash
-  a.opt.autoCloseSplash = prefs.autoCloseSplash
-  a.opt.splashTimeoutSecs = prefs.splashTimeoutSecs
-  a.opt.loadLastMap = prefs.loadLastMap
-  a.opt.disableVSync = prefs.disableVSync
-  a.opt.autosave = prefs.autosave
-  a.opt.autosaveFreqMins = prefs.autosaveFreqMins
+  a.opts.scrollMargin = 3
+  a.opts.showSplash = prefs.showSplash
+  a.opts.autoCloseSplash = prefs.autoCloseSplash
+  a.opts.splashTimeoutSecs = prefs.splashTimeoutSecs
+  a.opts.loadLastMap = prefs.loadLastMap
+  a.opts.disableVSync = prefs.disableVSync
+  a.opts.autosave = prefs.autosave
+  a.opts.autosaveFreqMins = prefs.autosaveFreqMins
 
-  a.opt.showNotesPane = prefs.showNotesPane
-  a.opt.showToolsPane = prefs.showToolsPane
-  a.opt.drawTrail = prefs.drawTrail
-  a.opt.walkMode = prefs.walkMode
-  a.opt.wasdMode = prefs.wasdMode
+  a.opts.showNotesPane = prefs.showNotesPane
+  a.opts.showToolsPane = prefs.showToolsPane
+  a.opts.drawTrail = prefs.drawTrail
+  a.opts.walkMode = prefs.walkMode
+  a.opts.wasdMode = prefs.wasdMode
 
   a.ui.drawLevelParams.drawCellCoords = prefs.showCellCoords
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle,
@@ -5826,7 +5826,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
-  a.splash.show = a.opt.showSplash
+  a.splash.show = a.opts.showSplash
   a.splash.t0 = getMonoTime()
   setSwapInterval(a)
 
@@ -5932,13 +5932,13 @@ proc main() =
 
       # Render splash
       if a.splash.win == nil and a.splash.show:
-        createSplashWindow(mousePassthru = a.opt.showThemePane, a)
+        createSplashWindow(mousePassthru = a.opts.showThemePane, a)
         glfw.makeContextCurrent(a.splash.win)
 
         if a.splash.logo.data == nil:
           loadSplashImages(a)
         showSplash(a)
-        if a.opt.showThemePane:
+        if a.opts.showThemePane:
           a.win.focus()
 
       if a.splash.win != nil:
