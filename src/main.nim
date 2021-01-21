@@ -175,7 +175,7 @@ type
     win:         CSDWindow
     vg:          NVGContext
 
-    config:      AppConfig
+    prefs:       Preferences
 
     doc:         Document
     opt:         Options
@@ -200,12 +200,15 @@ type
     showSplash:        bool
     autoCloseSplash:   bool
     splashTimeoutSecs: Natural
+
     loadLastMap:       bool
     autosave:          bool
     autosaveFreqMins:  Natural
+
     disableVSync:      bool
 
     scrollMargin:      Natural
+
     showNotesPane:     bool
     showToolsPane:     bool
     showThemePane:     bool
@@ -268,6 +271,7 @@ type
     emDrawWall,
     emDrawWallSpecial,
     emEraseCell,
+    emEraseTrail,
     emClearFloor,
     emColorFloor,
     emSelect,
@@ -556,8 +560,8 @@ proc setSwapInterval(a) =
   glfw.swapInterval(if a.opt.disableVSync: 0 else: 1)
 
 # }}}
-# {{{ saveConfig()
-proc saveConfig(a) =
+# {{{ savePreferences()
+proc savePreferences(a) =
   alias(ui, a.ui)
   alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
@@ -567,7 +571,7 @@ proc saveConfig(a) =
   let (xpos, ypos) = if a.win.maximized: a.win.oldPos else: a.win.pos
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
 
-  let a = AppConfig(
+  let prefs = Preferences(
     showSplash: opt.showSplash,
     autoCloseSplash: opt.autoCloseSplash,
     splashTimeoutSecs: opt.splashTimeoutSecs,
@@ -601,7 +605,7 @@ proc saveConfig(a) =
     autosaveFreqMins: opt.autosaveFreqMins
   )
 
-  saveAppConfig(a, ConfigFile)
+  savePreferences(prefs, ConfigFile)
 
 # }}}
 # {{{ loadImage()
@@ -1726,7 +1730,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.opt.autosave          = dlg.autosave
     a.opt.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
 
-    saveConfig(a)
+    savePreferences(a)
     setSwapInterval(a)
 
     koi.closeDialog()
@@ -3241,6 +3245,12 @@ proc startEraseCellsAction(a) =
   setStatusMessage(IconEraser, "Erase cells", @[IconArrowsAll, "erase"], a)
 
 # }}}
+# {{{ startEraseTrailAction()
+proc startEraseTrailAction(a) =
+  a.doc.map.setTrail(a.ui.cursor, false)
+  setStatusMessage(IconEraser, "Erase trail", @[IconArrowsAll, "erase"], a)
+
+# }}}
 # {{{ startDrawWallsAction()
 proc startDrawWallsAction(a) =
   setStatusMessage("", "Draw walls", @[IconArrowsAll, "set/clear"], a)
@@ -3657,6 +3667,10 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
+      elif ke.isKeyDown(keyX):
+        ui.editMode = emEraseTrail
+        startEraseTrailAction(a)
+
       elif ke.isKeyDown(keyF):
         ui.editMode = emClearFloor
         setStatusMessage(IconEraser, "Clear floor",
@@ -3936,14 +3950,15 @@ proc handleGlobalKeyEvents(a) =
         toggleOnOffOption(opt.wasdMode, IconMouse, "WASD mode", a)
 
       elif ke.isKeyDown(keyT):
+        map.setTrail(cur, true)
         toggleOnOffOption(opt.drawTrail, IconShoePrints, "Draw trail", a)
 
       elif ke.isKeyDown(keyF12):
         toggleShowOption(opt.showThemePane, NoIcon, "Theme editor pane", a)
 
     # }}}
-    # {{{ emExcavate, emEraseCell, emClearFloor, emColorFloor
-    of emExcavate, emEraseCell, emClearFloor, emColorFloor:
+    # {{{ emExcavate, emEraseCell, emEraseTrail, emClearFloor, emColorFloor
+    of emExcavate, emEraseCell, emEraseTrail, emClearFloor, emColorFloor:
       # This to prevent creating an undoable action for every turn in walk
       # mode
       let prevCursor = cur
@@ -3961,6 +3976,9 @@ proc handleGlobalKeyEvents(a) =
         elif ui.editMode == emEraseCell:
           actions.eraseCell(map, cur, um)
 
+        elif ui.editMode == emEraseTrail:
+          map.setTrail(cur, false)
+
         elif ui.editMode == emClearFloor:
           actions.clearFloor(map, cur, ui.currFloorColor, um)
 
@@ -3972,7 +3990,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      if ke.isKeyUp({keyF, keyC}):
+      if ke.isKeyUp({keyF, keyC, keyX}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -5484,7 +5502,7 @@ proc renderFrame(a) =
 
   proc handleWindowClose(a) =
     proc saveConfigAndExit(a) =
-      saveConfig(a)
+      savePreferences(a)
       a.shouldClose = true
 
     when defined(NO_QUIT_DIALOG):
@@ -5741,7 +5759,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   createDir(AutosaveDir)
   createDir(UserThemesDir)
 
-  let cfg = loadAppConfig(ConfigFile)
+  let prefs = loadPreferences(ConfigFile)
 
   loadFonts(vg)
 
@@ -5758,31 +5776,32 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.ui.drawLevelParams = newDrawLevelParams()
 
   searchThemes(a)
-  var themeIndex = findThemeIndex(cfg.themeName, a)
+  var themeIndex = findThemeIndex(prefs.themeName, a)
   if themeIndex == -1: themeIndex = 0
   switchTheme(themeIndex, a)
 
   a.opt.scrollMargin = 3
-  a.opt.showSplash = cfg.showSplash
-  a.opt.autoCloseSplash = cfg.autoCloseSplash
-  a.opt.splashTimeoutSecs = cfg.splashTimeoutSecs
-  a.opt.loadLastMap = cfg.loadLastMap
-  a.opt.disableVSync = cfg.disableVSync
-  a.opt.autosave = cfg.autosave
-  a.opt.autosaveFreqMins = cfg.autosaveFreqMins
+  a.opt.showSplash = prefs.showSplash
+  a.opt.autoCloseSplash = prefs.autoCloseSplash
+  a.opt.splashTimeoutSecs = prefs.splashTimeoutSecs
+  a.opt.loadLastMap = prefs.loadLastMap
+  a.opt.disableVSync = prefs.disableVSync
+  a.opt.autosave = prefs.autosave
+  a.opt.autosaveFreqMins = prefs.autosaveFreqMins
 
-  a.opt.showNotesPane = cfg.showNotesPane
-  a.opt.showToolsPane = cfg.showToolsPane
-  a.opt.drawTrail = cfg.drawTrail
-  a.opt.walkMode = cfg.walkMode
-  a.opt.wasdMode = cfg.wasdMode
+  a.opt.showNotesPane = prefs.showNotesPane
+  a.opt.showToolsPane = prefs.showToolsPane
+  a.opt.drawTrail = prefs.drawTrail
+  a.opt.walkMode = prefs.walkMode
+  a.opt.wasdMode = prefs.wasdMode
 
-  a.ui.drawLevelParams.drawCellCoords = cfg.showCellCoords
+  a.ui.drawLevelParams.drawCellCoords = prefs.showCellCoords
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle,
-                                    clamp(cfg.zoomLevel, MinZoomLevel, MaxZoomLevel))
+                                    clamp(prefs.zoomLevel, MinZoomLevel,
+                                          MaxZoomLevel))
 
-  if cfg.loadLastMap and cfg.lastMapFileName != "":
-    if not loadMap(cfg.lastMapFileName, a):
+  if prefs.loadLastMap and prefs.lastMapFileName != "":
+    if not loadMap(prefs.lastMapFileName, a):
       a.doc.map = newMap("Untitled Map")
   else:
     a.doc.map = newMap("Untitled Map")
@@ -5791,17 +5810,17 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   # TODO check values?
   # TODO timestamp check to determine whether to read the DISP info from the
   # conf or from the file
-  a.ui.drawLevelParams.viewStartRow = cfg.viewStartRow
-  a.ui.drawLevelParams.viewStartCol = cfg.viewStartCol
+  a.ui.drawLevelParams.viewStartRow = prefs.viewStartRow
+  a.ui.drawLevelParams.viewStartCol = prefs.viewStartCol
 
-  if cfg.currLevel > a.doc.map.levels.high:
+  if prefs.currLevel > a.doc.map.levels.high:
     a.ui.cursor.level = 0
     a.ui.cursor.row = 0
     a.ui.cursor.col = 0
   else:
-    a.ui.cursor.level = cfg.currLevel
-    a.ui.cursor.row = cfg.cursorRow
-    a.ui.cursor.col = cfg.cursorCol
+    a.ui.cursor.level = prefs.currLevel
+    a.ui.cursor.row = prefs.cursorRow
+    a.ui.cursor.col = prefs.cursorCol
 
   updateLastCursorViewCoords(a)
 
@@ -5818,19 +5837,19 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
 
-  let width = cfg.width.clamp(WindowMinWidth, maxWidth)
-  let height = cfg.height.clamp(WindowMinHeight, maxHeight)
+  let width = prefs.width.clamp(WindowMinWidth, maxWidth)
+  let height = prefs.height.clamp(WindowMinHeight, maxHeight)
 
-  var xpos = cfg.xpos
+  var xpos = prefs.xpos
   if xpos < 0: xpos = (maxWidth - width) div 2
 
-  var ypos = cfg.ypos
+  var ypos = prefs.ypos
   if ypos < 0: ypos = (maxHeight - height) div 2
 
   a.win.size = (width, height)
   a.win.pos = (xpos, ypos)
 
-  if cfg.maximized:
+  if prefs.maximized:
     a.win.maximize()
 
   a.win.show()

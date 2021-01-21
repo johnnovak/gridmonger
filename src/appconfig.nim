@@ -6,7 +6,7 @@ import common
 
 
 type
-  AppConfig* = object
+  Preferences* = object
     # Startup section
     showSplash*:            bool
     autoCloseSplash*:       bool
@@ -21,13 +21,13 @@ type
     width*, height*:        int
     disableVSync*:          bool
 
-    # TODO UI state, use a common structure for appconfig and the DISP chunk
+    # TODO UI state, use a common structure for preferences and the DISP chunk
     # UI section
-    themeName*:             string
-    zoomLevel*:             Natural
-    showCellCoords*:        bool
-    showToolsPane*:         bool
-    showNotesPane*:         bool
+    themeName*:             string    # conf & map
+    zoomLevel*:             Natural   # conf & map
+    showCellCoords*:        bool      # conf & map
+    showToolsPane*:         bool      # conf & map
+    showNotesPane*:         bool      # conf & map
     drawTrail*:             bool
     wasdMode*:              bool
     walkMode*:              bool
@@ -43,7 +43,7 @@ type
     autosaveFreqMins*:      Natural
 
 
-const DefaultAppConfig = AppConfig(
+const DefaultPreferences = Preferences(
   showSplash: true,
   autoCloseSplash: false,
   splashTimeoutSecs: 3,
@@ -115,10 +115,10 @@ const
   FrequencySecsKey = "frequencySecs"
 
 
-proc loadAppConfig*(fname: string): AppConfig =
+proc loadPreferences*(fname: string): Preferences =
   var cfg = loadConfig(fname)
 
-  var a = DefaultAppConfig.deepCopy()
+  var a = DefaultPreferences.deepCopy()
 
   cfg.getBool(   StartupSection, ShowSplashKey,        a.showSplash)
   cfg.getBool(   StartupSection, AutoCloseSplashKey,   a.autoCloseSplash)
@@ -151,8 +151,8 @@ proc loadAppConfig*(fname: string): AppConfig =
   cfg.getBool(   AutoSaveSection, EnabledKey,       a.autosave)
   cfg.getNatural(AutoSaveSection, FrequencySecsKey, a.autosaveFreqMins)
 
-  if a.width  < WindowMinWidth:  a.width  = DefaultAppConfig.width
-  if a.height < WindowMinHeight: a.height = DefaultAppConfig.height
+  if a.width  < WindowMinWidth:  a.width  = DefaultPreferences.width
+  if a.height < WindowMinHeight: a.height = DefaultPreferences.height
 
   result = a
 
@@ -164,7 +164,7 @@ proc toYesNo(b: bool): string =
   if b: "yes" else: "no"
 
 
-proc toConfig(a: AppConfig): Config =
+proc toConfig(a: Preferences): Config =
   var cfg = newConfig()
 
   cfg.setSectionKey(StartupSection, ShowSplashKey,        a.showSplash.toYesNo)
@@ -201,6 +201,6 @@ proc toConfig(a: AppConfig): Config =
   result = cfg
 
 
-proc saveAppConfig*(a: AppConfig, fname: string) =
+proc savePreferences*(a: Preferences, fname: string) =
   writeConfig(a.toConfig, fname)
 
