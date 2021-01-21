@@ -23,7 +23,6 @@ when not defined(DEBUG): import osdialog
 import with
 
 import actions
-import appconfig
 import common
 import csdwindow
 import drawlevel
@@ -33,6 +32,7 @@ import level
 import links
 import map
 import persistence
+import preferences
 import rect
 import selection
 import theme
