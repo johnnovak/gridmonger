@@ -22,8 +22,8 @@ type
     loadLastMap*:       bool
     disableVSync*:      bool
 
-    autosave:           bool
-    autosaveFreqMins:   Natural
+    autosave*:          bool
+    autosaveFreqMins*:  Natural
 
 
   AppState* = object
@@ -46,12 +46,12 @@ type
 
 
   WindowState* = object
-    maximized*:         bool
-    xpos*, ypos*:       int
-    width*, height*:    int
+    maximized*:      bool
+    xpos*, ypos*:    int
+    width*, height*: int
 
   MiscState* = object
-    lastMapFileName:    string
+    lastMapFileName*: string
 
 
 const DefaultAppConfig = AppConfig(
@@ -244,7 +244,7 @@ proc toConfig(ac: AppConfig): Config =
 
   alias(m, ac.misc)
 
-  cfg.setSectionKey(PreferencesSection, LastMapFileNameKey, m.lastMapFileName)
+  cfg.setSectionKey(MiscStateSection, LastMapFileNameKey, m.lastMapFileName)
 
   result = cfg
 

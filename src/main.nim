@@ -81,7 +81,8 @@ const
 # }}}
 # {{{ Constants
 const
-  CursorJump = 5
+  CursorJump   = 5
+  ScrollMargin = 3
 
   StatusBarHeight         = 26.0
 
@@ -106,7 +107,7 @@ const
   ToolsPaneTopPad         = 91.0
   ToolsPaneBottomPad      = 30.0
   ToolsPaneYBreakpoint1   = 735.0
-  ToolsPaneYBreakpoint2   = 855.0
+  ToolsPaneYBreakpoint2   = 885.0
 
   ThemePaneWidth          = 316.0
 
@@ -176,13 +177,13 @@ type
     vg:          NVGContext
 
     prefs:       Preferences
-    state:       AppState
 
     doc:         Document
-    ui:          UI
-    theme:       Theme
-    dialog:      Dialog
+    opts:        Options
+    ui:          UIState
+    dialog:      Dialogs
 
+    theme:       Theme
     themeEditor: ThemeEditor
     splash:      Splash
 
@@ -197,8 +198,6 @@ type
     lastAutosaveTime:  MonoTime
 
   Options = object
-    scrollMargin:      Natural
-
     showNotesPane:     bool
     showToolsPane:     bool
     showThemePane:     bool
@@ -208,7 +207,7 @@ type
     wasdMode:          bool
 
 
-  UI = object
+  UIState = object
     cursor:            Location
     lastCursor:        Location
     cursorOrient:      CardinalDir
@@ -296,7 +295,7 @@ type
     noteTextAreaStyle:      TextAreaStyle
 
 
-  Dialog = object
+  Dialogs = object
     preferencesDialog:      PreferencesDialogParams
 
     saveDiscardDialog:      SaveDiscardDialogParams
@@ -558,36 +557,44 @@ proc savePreferences(a) =
   alias(opts, a.opts)
   alias(theme, a.theme)
 
-  let (xpos, ypos) = if a.win.maximized: a.win.oldPos else: a.win.pos
+  let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
 
-  let prefs = Preferences(
-    lastMapFileName: a.doc.filename,
+  let cfg = AppConfig(
+    prefs: a.prefs,
 
-    maximized: a.win.maximized,
-    xpos: xpos,
-    ypos: ypos,
-    width: width,
-    height: height,
+    # TODO store appstate in map
+    app: AppState(
+      themeName:      theme.themeNames[theme.currThemeIndex],
 
-    # TODO use common struct for DISP chunk & this
-    themeName: theme.themeNames[theme.currThemeIndex],
-    zoomLevel: dp.getZoomLevel(),
-    showCellCoords: dp.drawCellCoords,
-    showToolsPane: opts.showToolsPane,
-    showNotesPane: opts.showNotesPane,
-    drawTrail: opts.drawTrail,
-    wasdMode: opts.wasdMode,
-    walkMode: opts.walkMode,
+      zoomLevel:      dp.getZoomLevel(),
+      currLevel:      cur.level,
+      cursorRow:      cur.row,
+      cursorCol:      cur.col,
+      viewStartRow:   dp.viewStartRow,
+      viewStartCol:   dp.viewStartCol,
 
-    currLevel: cur.level,
-    cursorRow: cur.row,
-    cursorCol: cur.col,
-    viewStartRow: dp.viewStartRow,
-    viewStartCol: dp.viewStartCol,
+      showCellCoords: dp.drawCellCoords,
+      showToolsPane:  opts.showToolsPane,
+      showNotesPane:  opts.showNotesPane,
+
+      wasdMode:       opts.wasdMode,
+      walkMode:       opts.walkMode,
+      drawTrail:      opts.drawTrail
+    ),
+    win: WindowState(
+      maximized: a.win.maximized,
+      xpos:      xpos,
+      ypos:      ypos,
+      width:     width,
+      height:    height
+    ),
+    misc: MiscState(
+      lastMapFileName: a.doc.filename
+    )
   )
 
-  savePreferences(prefs, ConfigFile)
+  saveAppConfig(cfg, ConfigFile)
 
 # }}}
 # {{{ loadImage()
@@ -1043,7 +1050,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
-  let sm = a.opts.scrollMargin
+  let sm = ScrollMargin
 
   case dir:
   of dirE:
@@ -5741,13 +5748,14 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   createDir(AutosaveDir)
   createDir(UserThemesDir)
 
-  let prefs = loadPreferences(ConfigFile)
+  let cfg = loadAppConfig(ConfigFile)
 
   loadFonts(vg)
 
   a = new AppContext
   a.win = win
   a.vg = vg
+  a.prefs = cfg.prefs
 
   loadAndSetIcon(a)
 
@@ -5758,25 +5766,23 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.ui.drawLevelParams = newDrawLevelParams()
 
   searchThemes(a)
-  var themeIndex = findThemeIndex(prefs.themeName, a)
+  var themeIndex = findThemeIndex(cfg.app.themeName, a)
   if themeIndex == -1: themeIndex = 0
   switchTheme(themeIndex, a)
 
-  a.opts.scrollMargin = 3
+  a.opts.showNotesPane = cfg.app.showNotesPane
+  a.opts.showToolsPane = cfg.app.showToolsPane
+  a.opts.drawTrail = cfg.app.drawTrail
+  a.opts.walkMode = cfg.app.walkMode
+  a.opts.wasdMode = cfg.app.wasdMode
 
-  a.opts.showNotesPane = prefs.showNotesPane
-  a.opts.showToolsPane = prefs.showToolsPane
-  a.opts.drawTrail = prefs.drawTrail
-  a.opts.walkMode = prefs.walkMode
-  a.opts.wasdMode = prefs.wasdMode
-
-  a.ui.drawLevelParams.drawCellCoords = prefs.showCellCoords
+  a.ui.drawLevelParams.drawCellCoords = cfg.app.showCellCoords
   a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle,
-                                    clamp(prefs.zoomLevel, MinZoomLevel,
+                                    clamp(cfg.app.zoomLevel, MinZoomLevel,
                                           MaxZoomLevel))
 
-  if prefs.loadLastMap and prefs.lastMapFileName != "":
-    if not loadMap(prefs.lastMapFileName, a):
+  if a.prefs.loadLastMap and cfg.misc.lastMapFileName != "":
+    if not loadMap(cfg.misc.lastMapFileName, a):
       a.doc.map = newMap("Untitled Map")
   else:
     a.doc.map = newMap("Untitled Map")
@@ -5785,17 +5791,17 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   # TODO check values?
   # TODO timestamp check to determine whether to read the DISP info from the
   # conf or from the file
-  a.ui.drawLevelParams.viewStartRow = prefs.viewStartRow
-  a.ui.drawLevelParams.viewStartCol = prefs.viewStartCol
+  a.ui.drawLevelParams.viewStartRow = cfg.app.viewStartRow
+  a.ui.drawLevelParams.viewStartCol = cfg.app.viewStartCol
 
-  if prefs.currLevel > a.doc.map.levels.high:
+  if cfg.app.currLevel > a.doc.map.levels.high:
     a.ui.cursor.level = 0
     a.ui.cursor.row = 0
     a.ui.cursor.col = 0
   else:
-    a.ui.cursor.level = prefs.currLevel
-    a.ui.cursor.row = prefs.cursorRow
-    a.ui.cursor.col = prefs.cursorCol
+    a.ui.cursor.level = cfg.app.currLevel
+    a.ui.cursor.row = cfg.app.cursorRow
+    a.ui.cursor.col = cfg.app.cursorCol
 
   updateLastCursorViewCoords(a)
 
@@ -5812,19 +5818,19 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
 
-  let width = prefs.width.clamp(WindowMinWidth, maxWidth)
-  let height = prefs.height.clamp(WindowMinHeight, maxHeight)
+  let width  = cfg.win.width.clamp(WindowMinWidth, maxWidth)
+  let height = cfg.win.height.clamp(WindowMinHeight, maxHeight)
 
-  var xpos = prefs.xpos
+  var xpos = cfg.win.xpos
   if xpos < 0: xpos = (maxWidth - width) div 2
 
-  var ypos = prefs.ypos
+  var ypos = cfg.win.ypos
   if ypos < 0: ypos = (maxHeight - height) div 2
 
   a.win.size = (width, height)
   a.win.pos = (xpos, ypos)
 
-  if prefs.maximized:
+  if cfg.win.maximized:
     a.win.maximize()
 
   a.win.show()

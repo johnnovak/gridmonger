@@ -25,6 +25,8 @@ v0.9
   - region parameters (only name for now)
   - region name reassignment when resizing a level
 
+  - store AppState in map
+
   - about dialog
   - help screen?
 
@@ -42,8 +44,6 @@ v0.9
   - disable ctrl in excavate, erase & floor modes
   - center map to screen
 
-  - 10 colours (1st color must be the default)
-
   - level selector popup
   - theme selector popup/window
 
@@ -56,11 +56,9 @@ v0.9
     - hex color: only accept hex chars
 
   - trail:
-    - should be a cell flag instead of a floor type
     - show/hide trail
     - excavate trail
     - clear whole trail
-    - erase trail
 
   - config format:
     - write own config handler:
