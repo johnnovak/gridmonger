@@ -23,6 +23,7 @@ when not defined(DEBUG): import osdialog
 import with
 
 import actions
+import appconfig
 import common
 import csdwindow
 import drawlevel
@@ -32,7 +33,6 @@ import level
 import links
 import map
 import persistence
-import preferences
 import rect
 import selection
 import theme
@@ -176,9 +176,9 @@ type
     vg:          NVGContext
 
     prefs:       Preferences
+    state:       AppState
 
     doc:         Document
-    opts:        Options
     ui:          UI
     theme:       Theme
     dialog:      Dialog
@@ -197,16 +197,6 @@ type
     lastAutosaveTime:  MonoTime
 
   Options = object
-    showSplash:        bool
-    autoCloseSplash:   bool
-    splashTimeoutSecs: Natural
-
-    loadLastMap:       bool
-    autosave:          bool
-    autosaveFreqMins:  Natural
-
-    disableVSync:      bool
-
     scrollMargin:      Natural
 
     showNotesPane:     bool
@@ -557,7 +547,7 @@ let g_appShortcuts = {
 
 # {{{ setSwapInterval()
 proc setSwapInterval(a) =
-  glfw.swapInterval(if a.opts.disableVSync: 0 else: 1)
+  glfw.swapInterval(if a.prefs.disableVSync: 0 else: 1)
 
 # }}}
 # {{{ savePreferences()
@@ -572,10 +562,6 @@ proc savePreferences(a) =
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
 
   let prefs = Preferences(
-    showSplash: opts.showSplash,
-    autoCloseSplash: opts.autoCloseSplash,
-    splashTimeoutSecs: opts.splashTimeoutSecs,
-    loadLastMap: opts.loadLastMap,
     lastMapFileName: a.doc.filename,
 
     maximized: a.win.maximized,
@@ -583,7 +569,6 @@ proc savePreferences(a) =
     ypos: ypos,
     width: width,
     height: height,
-    disableVSync: opts.disableVSync,
 
     # TODO use common struct for DISP chunk & this
     themeName: theme.themeNames[theme.currThemeIndex],
@@ -600,9 +585,6 @@ proc savePreferences(a) =
     cursorCol: cur.col,
     viewStartRow: dp.viewStartRow,
     viewStartCol: dp.viewStartCol,
-
-    autosave: opts.autosave,
-    autosaveFreqMins: opts.autosaveFreqMins
   )
 
   savePreferences(prefs, ConfigFile)
@@ -1601,13 +1583,13 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
 
-  dlg.showSplash = a.opts.showSplash
-  dlg.autoCloseSplash = a.opts.autoCloseSplash
-  dlg.splashTimeoutSecs = $a.opts.splashTimeoutSecs
-  dlg.loadLastMap = a.opts.loadLastMap
-  dlg.disableVSync = a.opts.disableVSync
-  dlg.autosave = a.opts.autosave
-  dlg.autosaveFreqMins = $a.opts.autosaveFreqMins
+  dlg.showSplash = a.prefs.showSplash
+  dlg.autoCloseSplash = a.prefs.autoCloseSplash
+  dlg.splashTimeoutSecs = $a.prefs.splashTimeoutSecs
+  dlg.loadLastMap = a.prefs.loadLastMap
+  dlg.disableVSync = a.prefs.disableVSync
+  dlg.autosave = a.prefs.autosave
+  dlg.autosaveFreqMins = $a.prefs.autosaveFreqMins
 
   dlg.isOpen = true
 
@@ -1722,13 +1704,13 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 
   proc okAction(dlg: var PreferencesDialogParams; a) =
-    a.opts.showSplash        = dlg.showSplash
-    a.opts.autoCloseSplash   = dlg.autoCloseSplash
-    a.opts.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
-    a.opts.loadLastMap       = dlg.loadLastMap
-    a.opts.disableVSync      = dlg.disableVSync
-    a.opts.autosave          = dlg.autosave
-    a.opts.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
+    a.prefs.showSplash        = dlg.showSplash
+    a.prefs.autoCloseSplash   = dlg.autoCloseSplash
+    a.prefs.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
+    a.prefs.loadLastMap       = dlg.loadLastMap
+    a.prefs.disableVSync      = dlg.disableVSync
+    a.prefs.autosave          = dlg.autosave
+    a.prefs.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
 
     savePreferences(a)
     setSwapInterval(a)
@@ -5318,9 +5300,9 @@ proc closeSplash(a) =
 
 # {{{ handleAutosave()
 proc handleAutosave(a) =
-  if a.opts.autosave and a.doc.undoManager.isModified:
+  if a.prefs.autosave and a.doc.undoManager.isModified:
     let dt = getMonoTime() - a.doc.lastAutosaveTime
-    if dt > initDuration(minutes = a.opts.autosaveFreqMins):
+    if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
       let filename = if a.doc.filename == "":
                        AutosaveDir / addFileExt("untitled", MapFileExt)
                      else: a.doc.filename
@@ -5634,10 +5616,10 @@ proc renderFrameSplash(a) =
       not a.splash.show
     else:
       let autoClose =
-        if not a.opts.showThemePane and a.opts.autoCloseSplash:
+        if not a.opts.showThemePane and a.prefs.autoCloseSplash:
           let dt = getMonoTime() - a.splash.t0
           koi.setFramesLeft()
-          dt > initDuration(seconds = a.opts.splashTimeoutSecs)
+          dt > initDuration(seconds = a.prefs.splashTimeoutSecs)
         else: false
 
       w.isKeyDown(keyEscape) or
@@ -5781,13 +5763,6 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   switchTheme(themeIndex, a)
 
   a.opts.scrollMargin = 3
-  a.opts.showSplash = prefs.showSplash
-  a.opts.autoCloseSplash = prefs.autoCloseSplash
-  a.opts.splashTimeoutSecs = prefs.splashTimeoutSecs
-  a.opts.loadLastMap = prefs.loadLastMap
-  a.opts.disableVSync = prefs.disableVSync
-  a.opts.autosave = prefs.autosave
-  a.opts.autosaveFreqMins = prefs.autosaveFreqMins
 
   a.opts.showNotesPane = prefs.showNotesPane
   a.opts.showToolsPane = prefs.showToolsPane
@@ -5826,7 +5801,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
-  a.splash.show = a.opts.showSplash
+  a.splash.show = a.prefs.showSplash
   a.splash.t0 = getMonoTime()
   setSwapInterval(a)
 
