@@ -36,6 +36,7 @@ import persistence
 import rect
 import selection
 import theme
+import unicode
 import utils
 
 
@@ -43,7 +44,7 @@ when defined(windows):
   {.link: "icons/gridmonger.res".}
 
 const
-  BuildGitHash = staticExec("git rev-parse --short HEAD").strip
+  BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
 
 # {{{ logError()
 proc logError(e: ref Exception) =
@@ -130,6 +131,8 @@ const
     wKeyhole,
     wWritingSW
   ]
+
+  SpecialWallTooltips = SpecialWalls.mapIt(($it).title())
 
   FloorsKey1 = @[
     fDoor,
@@ -4532,7 +4535,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     h = 35,
     labels = newSeq[string](SpecialWalls.len),
     ui.currSpecialWall,
-    tooltips = @[],
+    tooltips = SpecialWallTooltips,
     layout = RadioButtonsLayout(kind: rblGridVert,
                                 itemsPerColumn: toolItemsPerColumn),
 
