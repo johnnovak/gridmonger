@@ -5346,7 +5346,7 @@ proc renderUI(a) =
 
   # About button
   if button(x = uiWidth - 55, y = 45, w = 20, h = DlgItemHeight, IconQuestion,
-            style = a.theme.aboutButtonStyle):
+            style = a.theme.aboutButtonStyle, tooltip = "About"):
     # TODO
     discard
 
