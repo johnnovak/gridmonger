@@ -60,4 +60,12 @@ func contains*[T: RectType](a: Rect[T], r,c: T): bool =
   c >= a.c1 and c < a.c2
 
 
+proc expand*[T: RectType](a: var Rect[T], r,c: T) =
+  if   r <  a.r1: a.r1 = r
+  elif r >= a.r2: a.r2 = r+1
+
+  if   c <  a.c1: a.c1 = c
+  elif c >= a.c2: a.c2 = c+1
+
+
 # vim: et:ts=2:sw=2:fdm=marker

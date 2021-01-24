@@ -294,6 +294,11 @@ proc setTrail*(l; r,c: Natural, t: bool) {.inline.} =
   l.cellGrid.setTrail(r,c, t)
 
 # }}}
+# {{{ calcTrailBoundingBox*()
+proc calcTrailBoundingBox*(l): Option[Rect[Natural]] {.inline.} =
+  l.cellGrid.calcTrailBoundingBox()
+
+# }}}
 
 # {{{ eraseOrphanedWalls*()
 proc eraseOrphanedWalls*(l; r,c: Natural) =

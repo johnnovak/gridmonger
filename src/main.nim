@@ -3659,10 +3659,6 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
-      elif ke.isKeyDown(keyX):
-        ui.editMode = emEraseTrail
-        startEraseTrailAction(a)
-
       elif ke.isKeyDown(keyF):
         ui.editMode = emClearFloor
         setStatusMessage(IconEraser, "Clear floor",
@@ -3719,6 +3715,22 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyRightBracket, repeat=true):
         if ui.currSpecialWall < SpecialWalls.high: inc(ui.currSpecialWall)
         else: ui.currSpecialWall = 0
+
+      elif ke.isKeyDown(keyX):
+        ui.editMode = emEraseTrail
+        startEraseTrailAction(a)
+
+      elif ke.isKeyDown(keyD, {mkCtrl, mkAlt}):
+        let bbox = l.calcTrailBoundingBox()
+        if bbox.isSome:
+          actions.excavateTrail(map, cur, bbox.get, ui.currFloorColor, um)
+          setStatusMessage(IconEraser, "Trail excavated", a)
+        else:
+          setStatusMessage(IconWarning, "No trail to excavate", a)
+
+      elif ke.isKeyDown(keyX, {mkCtrl, mkAlt}):
+        actions.clearTrail(map, cur, um)
+        setStatusMessage(IconEraser, "Trail cleared", a)
 
       elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
       elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
@@ -3875,15 +3887,6 @@ proc handleGlobalKeyEvents(a) =
               mx = koi.mx()
               my = koi.my()
 
-#[ TODO
-      elif ke.isKeyDown(keyD, {mkCtrl, mkAlt}):
-        actions.excavateTrail(map, cur, um)
-        setStatusMessage(IconEraser, "Trail excavated", a)
-
-      elif ke.isKeyDown(keyC, {mkCtrl, mkAlt}):
-        actions.clearTrail(map, cur, um)
-        setStatusMessage(IconEraser, "Trail cleared", a)
-]#
       elif ke.isKeyDown(keyT, {mkCtrl}):
         openEditLabelDialog(a)
 

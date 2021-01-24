@@ -7,6 +7,7 @@ import common
 import level
 import links
 import tables
+import utils
 
 
 using m: Map
@@ -192,5 +193,37 @@ proc setTrail*(m; loc: Location, t: bool) =
   m.levels[loc.level].setTrail(loc.row, loc.col, t)
 
 # }}}
-#
+
+# {{{ excavate*()
+proc excavate*(m; loc: Location, floorColor: byte) =
+  alias(l, m.levels[loc.level])
+  alias(c, loc.col)
+  alias(r, loc.row)
+
+  m.eraseCell(loc)
+  m.setFloor(loc, fBlank)
+  m.setFloorColor(loc, floorColor)
+
+  if r == 0 or l.isEmpty(r-1, c):
+    m.setWall(loc, dirN, wWall)
+  else:
+    m.setWall(loc, dirN, wNone)
+
+  if c == 0 or l.isEmpty(r, c-1):
+    m.setWall(loc, dirW, wWall)
+  else:
+    m.setWall(loc, dirW, wNone)
+
+  if r == l.rows-1 or l.isEmpty(r+1, c):
+    m.setWall(loc, dirS, wWall)
+  else:
+    m.setWall(loc, dirS, wNone)
+
+  if c == l.cols-1 or l.isEmpty(r, c+1):
+    m.setWall(loc, dirE, wWall)
+  else:
+    m.setWall(loc, dirE, wNone)
+
+# }}}
+
 # vim: et:ts=2:sw=2:fdm=marker

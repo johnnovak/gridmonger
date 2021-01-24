@@ -23,35 +23,32 @@ using
   um:  var UndoManager[Map, UndoStateData]
 
 # {{{ cellAreaAction()
-template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
-                        groupWithPrev: bool,
+template cellAreaAction(map; loc: Location, rect: Rect[Natural];
+                        um; groupWithPrev: bool,
                         actName: string, actionMap, actionBody: untyped) =
 
   let usd = UndoStateData(
     actionName: actName,
-    # TODO raise bug for this (doesn't compile if lvl is renamed to level)
-    # TODO investigate why we need to use different parameter names in nested
-    # templates
-    location: Location(level: lvl, row: rect.r1, col: rect.c1)
+    location: loc
   )
 
   let action = proc (actionMap: var Map): UndoStateData =
     actionBody
-    actionMap.levels[lvl].reindexNotes()
+    actionMap.levels[loc.level].reindexNotes()
     result = usd
 
-  var oldLinks = map.links.filterByInRect(lvl, rect)
+  var oldLinks = map.links.filterByInRect(loc.level, rect)
 
-  let undoLevel = newLevelFrom(map.levels[lvl], rect)
+  let undoLevel = newLevelFrom(map.levels[loc.level], rect)
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[lvl].copyCellsAndAnnotationsFrom(
+    m.levels[loc.level].copyCellsAndAnnotationsFrom(
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
       srcRect = rectN(0, 0, undoLevel.rows, undoLevel.cols)
     )
-    m.levels[lvl].reindexNotes()
+    m.levels[loc.level].reindexNotes()
 
     # Delete existing links in undo area
     let delRect = rectN(
@@ -60,7 +57,7 @@ template cellAreaAction(map; lvl: Natural, rect: Rect[Natural]; um;
       rect.r1 + undoLevel.rows,
       rect.c1 + undoLevel.cols
     )
-    for src in m.links.filterByInRect(lvl, delRect).keys:
+    for src in m.links.filterByInRect(loc.level, delRect).keys:
       m.links.delBySrc(src)
 
     m.links.addAll(oldLinks)
@@ -78,7 +75,7 @@ template singleCellAction(map; loc: Location; um;
     r = loc.row
     cellRect = rectN(r, c, r+1, c+1)
 
-  cellAreaAction(map, loc.level, cellRect, um, groupWithPrev=false,
+  cellAreaAction(map, loc, cellRect, um, groupWithPrev=false,
                  actionName, actionMap, actionBody)
 
 # }}}
@@ -144,35 +141,28 @@ proc eraseCell*(map; loc: Location; um) =
 # }}}
 # {{{ excavate*()
 proc excavate*(map; loc: Location, floorColor: byte; um) =
-
   singleCellAction(map, loc, um, "Excavate", m):
-    alias(l, m.levels[loc.level])
-    alias(c, loc.col)
-    alias(r, loc.row)
+    m.excavate(loc, floorColor)
 
-    m.eraseCell(loc)
-    m.setFloor(loc, fBlank)
-    m.setFloorColor(loc, floorColor)
+# }}}
+# {{{ excavateTrail*()
+proc excavateTrail*(map; loc: Location, bbox: Rect[Natural], floorColor: byte;
+                    um) =
 
-    if r == 0 or l.isEmpty(r-1, c):
-      m.setWall(loc, dirN, wWall)
-    else:
-      m.setWall(loc, dirN, wNone)
+  cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Excavate trail", m):
+    var loc = loc
 
-    if c == 0 or l.isEmpty(r, c-1):
-      m.setWall(loc, dirW, wWall)
-    else:
-      m.setWall(loc, dirW, wNone)
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
+        loc.row = r
+        loc.col = c
+        if m.hasTrail(loc):
+          m.excavate(loc, floorColor)
 
-    if r == l.rows-1 or l.isEmpty(r+1, c):
-      m.setWall(loc, dirS, wWall)
-    else:
-      m.setWall(loc, dirS, wNone)
-
-    if c == l.cols-1 or l.isEmpty(r, c+1):
-      m.setWall(loc, dirE, wWall)
-    else:
-      m.setWall(loc, dirE, wNone)
+# }}}
+# {{{ clearTrail*()
+proc clearTrail*(map; loc: Location, um) =
+  alias(l, m.levels[loc.level])
 
 # }}}
 # {{{ toggleFloorOrientation*()
@@ -304,10 +294,12 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
 proc eraseSelection*(map; level: Natural, sel: Selection,
                      bbox: Rect[Natural]; um) =
 
-  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+  let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
+
+  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
                  "Erase selection", m):
-    var loc: Location
-    loc.level = level
+
+    var loc = Location(level: level)
 
     for r in bbox.r1..<bbox.r2:
       for c in bbox.c1..<bbox.c2:
@@ -321,10 +313,12 @@ proc eraseSelection*(map; level: Natural, sel: Selection,
 proc fillSelection*(map; level: Natural, sel: Selection,
                     bbox: Rect[Natural], floorColor: byte; um) =
 
-  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+  let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
+
+  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
                  "Fill selection", m):
-    var loc: Location
-    loc.level = level
+
+    var loc = Location(level: level)
 
     for r in bbox.r1..<bbox.r2:
       for c in bbox.c1..<bbox.c2:
@@ -340,10 +334,12 @@ proc fillSelection*(map; level: Natural, sel: Selection,
 proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
                                  bbox: Rect[Natural]; um) =
 
-  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+  let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
+
+  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
                  "Surround selection with walls", m):
-    var loc: Location
-    loc.level = level
+
+    var loc = Location(level: level)
 
     for r in bbox.r1..<bbox.r2:
       for c in bbox.c1..<bbox.c2:
@@ -365,10 +361,12 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
 proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
                              bbox: Rect[Natural], floorColor: byte; um) =
 
-  cellAreaAction(map, level, bbox, um, groupWithPrev=false,
+  let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
+
+  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
                  "Set floor color of selection", m):
-    var loc: Location
-    loc.level = level
+
+    var loc = Location(level: level)
 
     for r in bbox.r1..<bbox.r2:
       for c in bbox.c1..<bbox.c2:
@@ -418,8 +416,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
   transformAndCollectLinks(oldLinks, newLinks, sel, bbox)
 
 
-  cellAreaAction(map, level, bbox, um,
-                 groupWithPrev=false, "Cut selection", m):
+  cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Cut selection", m):
 
     for s in oldLinks.keys: m.links.delBySrc(s)
     m.links.addAll(newLinks)
@@ -455,16 +452,15 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
   )
 
   if rect.isSome:
-    cellAreaAction(map, pasteLoc.level, rect.get, um,
-                   groupWithPrev, actionName, m):
+    cellAreaAction(map, pasteLoc, rect.get, um, groupWithPrev, actionName, m):
+
       alias(l, m.levels[pasteLoc.level])
 
       let bbox = l.paste(pasteLoc.row, pasteLoc.col, sb.level, sb.selection)
 
       if bbox.isSome:
         let bbox = bbox.get
-        var loc: Location
-        loc.level = pasteLoc.level
+        var loc = Location(level: pasteLoc.level)
 
         # Erase links in the paste area
         for r in bbox.r1..<bbox.r2:

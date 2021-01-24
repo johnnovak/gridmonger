@@ -113,7 +113,19 @@ proc setTrail*(g; r,c: Natural, t: bool) {.inline.} =
   g[r,c].trail = t
 
 # }}}
+# {{{ calcTrailBoundingBox*()
+proc calcTrailBoundingBox*(g): Option[Rect[Natural]] =
+  var bbox = Rect[Natural].none
+  for r in 0..<g.rows:
+    for c in 0..<g.cols:
+      if g.hasTrail(r,c):
+        if bbox.isNone: bbox = rectN(r, c, r+1, c+1).some
+        else: bbox.get.expand(r,c)
 
+  result = bbox
+
+# }}}
+#
 # {{{ isEmpty*()
 proc isEmpty*(f: Floor): bool {.inline.} =
   f == fEmpty
