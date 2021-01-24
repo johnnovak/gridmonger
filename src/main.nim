@@ -555,13 +555,14 @@ proc setSwapInterval(a) =
 # {{{ savePreferences()
 proc savePreferences(a) =
   alias(ui, a.ui)
-  alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
   alias(opts, a.opts)
   alias(theme, a.theme)
 
   let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
+
+  let cur = a.ui.cursor
 
   let cfg = AppConfig(
     prefs: a.prefs,
@@ -836,6 +837,15 @@ proc updateWidgetStyles(a) =
 
 # {{{ Helpers/utils
 
+# {{{ setCursor()
+proc setCursor(cur: Location; a) =
+  a.ui.lastCursor = a.ui.cursor
+  a.ui.cursor = cur
+
+  if a.opts.drawTrail:
+    a.doc.map.setTrail(cur, true)
+
+# }}}
 # {{{ viewRow()
 func viewRow(row: Natural; a): int =
   row - a.ui.drawLevelParams.viewStartRow
@@ -951,7 +961,8 @@ proc toolsPaneWidth(): float =
 proc updateViewStartAndCursorPosition(a) =
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
-  alias(cur, a.ui.cursor)
+
+  var cur = a.ui.cursor
 
   let l = currLevel(a)
 
@@ -995,6 +1006,7 @@ proc updateViewStartAndCursorPosition(a) =
   cur.row = viewEndRow.clamp(dp.viewStartRow, cur.row)
   cur.col = viewEndCol.clamp(dp.viewStartCol, cur.col)
 
+  setCursor(cur, a)
   updateLastCursorViewCoords(a)
 
 # }}}
@@ -1024,7 +1036,6 @@ proc locationAtMouse(a): Option[Location] =
 
 # {{{ moveLevel()
 proc moveLevel(dir: CardinalDir, steps: Natural; a) =
-  alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
@@ -1040,20 +1051,23 @@ proc moveLevel(dir: CardinalDir, steps: Natural; a) =
   of dirS: newViewStartRow = min(dp.viewStartRow + steps, maxViewStartRow)
   of dirN: newViewStartRow = max(dp.viewStartRow - steps, 0)
 
+  var cur = a.ui.cursor
   cur.row = cur.row + viewRow(newViewStartRow, a)
   cur.col = cur.col + viewCol(newViewStartCol, a)
+
+  setCursor(cur, a)
 
   dp.viewStartRow = newViewStartRow
   dp.viewStartCol = newViewStartCol
 
 # }}}
-# {{{ moveCursor()
-proc moveCursor(dir: CardinalDir, steps: Natural; a) =
-  alias(cur, a.ui.cursor)
+# {{{ stepCursor()
+proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
   let sm = ScrollMargin
+  var cur = cur
 
   case dir:
   of dirE:
@@ -1084,6 +1098,14 @@ proc moveCursor(dir: CardinalDir, steps: Natural; a) =
     if viewRow < sm:
       dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
 
+  result = cur
+
+# }}}
+# {{{ moveCursor()
+proc moveCursor(dir: CardinalDir, steps: Natural; a) =
+  let cur = stepCursor(a.ui.cursor, dir, steps, a)
+  setCursor(cur, a)
+
 # }}}
 # {{{ moveSelStart()
 proc moveSelStart(dir: CardinalDir; a) =
@@ -1109,17 +1131,21 @@ proc moveSelStart(dir: CardinalDir; a) =
 # }}}
 # {{{ moveCursorTo()
 proc moveCursorTo(loc: Location; a) =
-  alias(cur, a.ui.cursor)
-
+  var cur = a.ui.cursor
   cur.level = loc.level
 
-  let  dx = loc.col - cur.col
-  if   dx < 0: moveCursor(dirW, -dx, a)
-  elif dx > 0: moveCursor(dirE,  dx, a)
+  let dx = loc.col - cur.col
+  let dy = loc.row - cur.row
 
-  let  dy = loc.row - cur.row
-  if   dy < 0: moveCursor(dirN, -dy, a)
-  elif dy > 0: moveCursor(dirS,  dy, a)
+  cur = if   dx < 0: stepCursor(cur, dirW, -dx, a)
+        elif dx > 0: stepCursor(cur, dirE,  dx, a)
+        else: cur
+
+  cur = if   dy < 0: stepCursor(cur, dirN, -dy, a)
+        elif dy > 0: stepCursor(cur, dirS,  dy, a)
+        else: cur
+
+  setCursor(cur, a)
 
 # }}}
 
@@ -2114,7 +2140,6 @@ proc openNewLevelDialog(a) =
 
 proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   alias(map, a.doc.map)
-  alias(cur, a.ui.cursor)
 
   const
     DlgWidth = 430.0
@@ -2225,12 +2250,13 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
       perRegionCoords : dlg.perRegionCoords
     )
 
-    cur = actions.addNewLevel(
-      a.doc.map, cur, dlg.locationName,
+    let cur = actions.addNewLevel(
+      a.doc.map, a.ui.cursor, dlg.locationName,
       dlg.levelName, elevation, rows, cols,
       dlg.overrideCoordOpts, coordOpts, regionOpts,
       a.doc.undoManager
     )
+    setCursor(cur, a)
 
     setStatusMessage(IconFile, fmt"New {rows}x{cols} level created", a)
 
@@ -2597,7 +2623,6 @@ proc openDeleteLevelDialog(a) =
 
 proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   alias(map, a.doc.map)
-  alias(cur, a.ui.cursor)
   alias(um, a.doc.undoManager)
 
   const
@@ -2622,8 +2647,9 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
-    cur = actions.deleteLevel(map, cur, um)
+    let cur = actions.deleteLevel(map, a.ui.cursor, um)
     setStatusMessage(IconTrash, "Deleted level", a)
+    setCursor(cur, a)
 
 
   proc cancelAction(dlg: var DeleteLevelDialogParams; a) =
@@ -2660,7 +2686,8 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
 # {{{ Edit note dialog
 proc openEditNoteDialog(a) =
   alias(dlg, a.dialog.editNoteDialog)
-  alias(cur, a.ui.cursor)
+
+  let cur = a.ui.cursor
 
   let l = currLevel(a)
   dlg.row = cur.row
@@ -2877,7 +2904,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 # {{{ Edit label dialog
 proc openEditLabelDialog(a) =
   alias(dlg, a.dialog.editLabelDialog)
-  alias(cur, a.ui.cursor)
+
+  let cur = a.ui.cursor
 
   let l = currLevel(a)
   dlg.row = cur.row
@@ -3096,8 +3124,9 @@ proc openMapAction(a) =
 # }}}
 # {{{ saveMap()
 proc saveMap(filename: string, autosave: bool = false; a) =
-  alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
+
+  let cur = a.ui.cursor
 
   let mapDisplayOpts = MapDisplayOptions(
     currLevel    : cur.level,
@@ -3162,25 +3191,27 @@ proc nextThemeAction(a) =
 # }}}
 # {{{ prevLevelAction()
 proc prevLevelAction(a) =
-  alias(cur, a.ui.cursor)
   var si = currSortedLevelIdx(a)
   if si > 0:
+    var cur = a.ui.cursor
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
+    setCursor(cur, a)
 
 # }}}
 # {{{ nextLevelAction()
 proc nextLevelAction(a) =
-  alias(cur, a.ui.cursor)
   var si = currSortedLevelIdx(a)
   if si < a.doc.map.levels.len-1:
+    var cur = a.ui.cursor
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
+    setCursor(cur, a)
 
 # }}}
 # {{{ centerCursorAfterZoom()
 proc centerCursorAfterZoom(a) =
-  alias(cur, a.ui.cursor)
   alias(dp, a.ui.drawLevelParams)
 
+  let cur = a.ui.cursor
   let viewCol = round(a.ui.lastCursorViewX / dp.gridSize).int
   let viewRow = round(a.ui.lastCursorViewY / dp.gridSize).int
   dp.viewStartCol = max(cur.col - viewCol, 0)
@@ -3201,10 +3232,8 @@ proc decZoomLevelAction(a) =
 # }}}
 # {{{ setFloorAction()
 proc setFloorAction(f: Floor; a) =
-  alias(cur, a.ui.cursor)
-
-  let ot = a.doc.map.guessFloorOrientation(cur)
-  actions.setOrientedFloor(a.doc.map, cur, f, ot, a.ui.currFloorColor,
+  let ot = a.doc.map.guessFloorOrientation(a.ui.cursor)
+  actions.setOrientedFloor(a.doc.map, a.ui.cursor, f, ot, a.ui.currFloorColor,
                            a.doc.undoManager)
   setStatusMessage(fmt"Set floor – {f}", a)
 
@@ -3499,7 +3528,6 @@ proc handleLevelMouseEvents(a) =
 proc handleGlobalKeyEvents(a) =
   alias(ui, a.ui)
   alias(map, a.doc.map)
-  alias(cur, a.ui.cursor)
   alias(um, a.doc.undoManager)
   alias(dp, a.ui.drawLevelParams)
   alias(opts, a.opts)
@@ -3614,7 +3642,6 @@ proc handleGlobalKeyEvents(a) =
 
     result = false
 
-
   if hasKeyEvent():
     let ke = koi.currEvent()
     # TODO eventHandled is not set here, but it's not actually needed (yet)
@@ -3622,10 +3649,6 @@ proc handleGlobalKeyEvents(a) =
     case ui.editMode:
     # {{{ emNormal
     of emNormal:
-      # This to prevent creating an undoable action for every turn in walk
-      # mode
-      let prevCursor = cur
-
       # Reset tooltip display on certain keypresses only
       if not (ke.key == keySpace) and
          not (ke.action == kaUp) and
@@ -3633,17 +3656,13 @@ proc handleGlobalKeyEvents(a) =
                          keyRightControl, keyRightShift, keyRightAlt}):
         resetManualNoteTooltip(a)
 
-
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         if handleMoveCursor(ke, moveKeys, a):
           setStatusMessage("moved", a)
 
-      if opts.drawTrail and cur != prevCursor:
-        map.setTrail(cur, true)
-
-      elif ke.isKeyDown({keyPageUp, keyKpSubtract}) or
+      if ke.isKeyDown({keyPageUp, keyKpSubtract}) or
          ke.isKeyDown(keyMinus, {mkCtrl}):
         prevLevelAction(a)
 
@@ -3651,7 +3670,9 @@ proc handleGlobalKeyEvents(a) =
            ke.isKeyDown(keyEqual, {mkCtrl}):
         nextLevelAction(a)
 
-      elif not opts.wasdMode and ke.isKeyDown(keyD):
+      let cur = a.ui.cursor
+
+      if not opts.wasdMode and ke.isKeyDown(keyD):
         ui.editMode = emExcavate
         startExcavateAction(a)
 
@@ -3958,32 +3979,29 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emExcavate, emEraseCell, emEraseTrail, emClearFloor, emColorFloor
     of emExcavate, emEraseCell, emEraseTrail, emClearFloor, emColorFloor:
-      # This to prevent creating an undoable action for every turn in walk
-      # mode
-      let prevCursor = cur
-
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         # TODO disallow cursor jump with ctrl
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
-      if cur != prevCursor:
-        if   ui.editMode == emExcavate:
-          actions.excavate(map, cur, ui.currFloorColor, um)
+      let cur = a.ui.cursor
 
-        elif ui.editMode == emEraseCell:
-          actions.eraseCell(map, cur, um)
+      if   ui.editMode == emExcavate:
+        actions.excavate(map, cur, ui.currFloorColor, um)
 
-        elif ui.editMode == emEraseTrail:
-          map.setTrail(cur, false)
+      elif ui.editMode == emEraseCell:
+        actions.eraseCell(map, cur, um)
 
-        elif ui.editMode == emClearFloor:
-          actions.clearFloor(map, cur, ui.currFloorColor, um)
+      elif ui.editMode == emEraseTrail:
+        map.setTrail(cur, false)
 
-        elif ui.editMode == emColorFloor:
-          if not map.isEmpty(cur):
-            actions.setFloorColor(map, cur, ui.currFloorColor, um)
+      elif ui.editMode == emClearFloor:
+        actions.clearFloor(map, cur, ui.currFloorColor, um)
+
+      elif ui.editMode == emColorFloor:
+        if not map.isEmpty(cur):
+          actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
       if not opts.wasdMode and ke.isKeyUp({keyD, keyE}):
         ui.editMode = emNormal
@@ -3997,6 +4015,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emDrawWall
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir; a) =
+        let cur = a.ui.cursor
         if map.canSetWall(cur, dir):
           let w = if map.getWall(cur, dir) == wWall: wNone
                   else: wWall
@@ -4012,8 +4031,11 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emDrawWallSpecial
     of emDrawWallSpecial:
       proc handleMoveKey(dir: CardinalDir; a) =
+        let cur = a.ui.cursor
+
         if map.canSetWall(cur, dir):
           var curSpecWall = SpecialWalls[ui.currSpecialWall]
+
           if   curSpecWall == wOneWayDoorNE:
             if dir in {dirS, dirW}: curSpecWall = wOneWayDoorSW
           elif curSpecWall == wLeverSW:
@@ -4027,6 +4049,7 @@ proc handleGlobalKeyEvents(a) =
 
           let w = if map.getWall(cur, dir) == curSpecWall: wNone
                   else: curSpecWall
+
           actions.setWall(map, cur, dir, w, um)
 
       handleMoveKeys(ke, handleMoveKey)
@@ -4039,6 +4062,8 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emSelect
     of emSelect:
       discard handleMoveCursor(ke, MoveKeysCursor, a)
+
+      let cur = a.ui.cursor
 
       if koi.ctrlDown(): setSelectModeActionMessage(a)
       else:              setSelectModeSelectMessage(a)
@@ -4076,8 +4101,12 @@ proc handleGlobalKeyEvents(a) =
           ui.cutToBuffer = true
 
           exitSelectMode(a)
+
+          var cur = cur
           cur.row = bbox.r1
           cur.col = bbox.c1
+          setCursor(cur, a)
+
           setStatusMessage(IconCut, "Cut selection to buffer", a)
 
       elif ke.isKeyDown(keyM, {mkCtrl}):
@@ -4090,8 +4119,11 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
 
           # Enter paste preview mode
+          var cur = cur
           cur.row = bbox.r1
           cur.col = bbox.c1
+          setCursor(cur, a)
+
           dp.selStartRow = cur.row
           dp.selStartCol = cur.col
 
@@ -4159,6 +4191,8 @@ proc handleGlobalKeyEvents(a) =
     of emSelectRect:
       discard handleMoveCursor(ke, MoveKeysCursor, a)
 
+      let cur = a.ui.cursor
+
       var r1,c1, r2,c2: Natural
       if ui.selRect.get.startRow <= cur.row:
         r1 = ui.selRect.get.startRow
@@ -4189,8 +4223,10 @@ proc handleGlobalKeyEvents(a) =
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
-      a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
-      a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
+      let cur = a.ui.cursor
+
+      a.ui.drawLevelParams.selStartRow = cur.row
+      a.ui.drawLevelParams.selStartCol = cur.col
 
       if ke.isKeyDown({keyEnter, keyP}):
         actions.pasteSelection(map, cur, ui.copyBuf.get,
@@ -4216,8 +4252,10 @@ proc handleGlobalKeyEvents(a) =
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
-      a.ui.drawLevelParams.selStartRow = a.ui.cursor.row
-      a.ui.drawLevelParams.selStartCol = a.ui.cursor.col
+      let cur = a.ui.cursor
+
+      a.ui.drawLevelParams.selStartRow = cur.row
+      a.ui.drawLevelParams.selStartCol = cur.col
 
       if ke.isKeyDown({keyEnter, keyP}):
         actions.pasteSelection(map, cur, ui.nudgeBuf.get,
@@ -4239,6 +4277,8 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emNudgePreview
     of emNudgePreview:
       handleMoveKeys(ke, moveSelStart)
+
+      let cur = a.ui.cursor
 
       if   ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
@@ -4273,7 +4313,9 @@ proc handleGlobalKeyEvents(a) =
            ke.isKeyDown(keyEqual, {mkCtrl}):
         nextLevelAction(a)
 
-      elif ke.isKeyDown(keyEnter):
+      let cur = a.ui.cursor
+
+      if ke.isKeyDown(keyEnter):
         actions.setLink(map, src=ui.linkSrcLocation, dest=cur,
                         ui.currFloorColor, um)
         ui.editMode = emNormal
@@ -4339,8 +4381,6 @@ proc renderLevel(a) =
 
   if ui.lastCursor != ui.cursor:
     resetManualNoteTooltip(a)
-
-  ui.lastCursor = ui.cursor
 
   let
     x = dp.startX
