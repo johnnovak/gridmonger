@@ -161,8 +161,17 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural], floorColor: byte;
 
 # }}}
 # {{{ clearTrail*()
-proc clearTrail*(map; loc: Location, um) =
+proc clearTrail*(map; loc: Location, bbox: Rect[Natural], um) =
   alias(l, m.levels[loc.level])
+
+  cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Clear trail", m):
+    var loc = loc
+
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
+        loc.row = r
+        loc.col = c
+        m.setTrail(loc, false)
 
 # }}}
 # {{{ toggleFloorOrientation*()

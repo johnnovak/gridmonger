@@ -3729,8 +3729,12 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconWarning, "No trail to excavate", a)
 
       elif ke.isKeyDown(keyX, {mkCtrl, mkAlt}):
-        actions.clearTrail(map, cur, um)
-        setStatusMessage(IconEraser, "Trail cleared", a)
+        let bbox = l.calcTrailBoundingBox()
+        if bbox.isSome:
+          actions.clearTrail(map, cur, bbox.get, um)
+          setStatusMessage(IconEraser, "Trail cleared", a)
+        else:
+          setStatusMessage(IconWarning, "No trail to clear", a)
 
       elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
       elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
