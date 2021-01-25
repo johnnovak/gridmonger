@@ -2407,7 +2407,6 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   drawFloors(viewBuf, ctx)
   drawTrail(viewBuf, ctx)
   drawNotes(viewBuf, ctx)
-  drawLabels(viewBuf, ctx)
 
   if not drawSelectionBuffer:
     drawLinkMarkers(map, level, ctx)
@@ -2422,6 +2421,8 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   if dp.regionOpts.enableRegions:
     drawRegionBorders(l, viewBuf, ctx)
+
+  drawLabels(viewBuf, ctx)
 
   if dp.selection.isSome:
     drawSelection(ctx)
