@@ -1153,6 +1153,7 @@ proc moveCursorTo(loc: Location; a) =
 proc enterSelectMode(a) =
   let l = currLevel(a)
 
+  a.opts.drawTrail = false
   a.ui.editMode = emSelect
   a.ui.selection = some(newSelection(l.rows, l.cols))
   a.ui.drawLevelParams.drawCursorGuides = true
@@ -1929,6 +1930,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   proc okAction(dlg: var NewMapDialogParams; a) =
     if validationError != "": return
 
+    a.opts.drawTrail = false
+
     a.doc.filename = ""
     a.doc.map = newMap(dlg.name)
 
@@ -2229,6 +2232,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   proc okAction(dlg: var NewLevelDialogParams; a) =
     if validationError != "": return
+
+    a.opts.drawTrail = false
 
     let
       rows = parseInt(dlg.rows)
@@ -2646,6 +2651,8 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   proc deleteAction(dlg: var DeleteLevelDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
+
+    a.opts.drawTrail = false
 
     let cur = actions.deleteLevel(map, a.ui.cursor, um)
     setStatusMessage(IconTrash, "Deleted level", a)
@@ -3193,6 +3200,7 @@ proc nextThemeAction(a) =
 proc prevLevelAction(a) =
   var si = currSortedLevelIdx(a)
   if si > 0:
+    a.opts.drawTrail = false
     var cur = a.ui.cursor
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
     setCursor(cur, a)
@@ -3202,6 +3210,7 @@ proc prevLevelAction(a) =
 proc nextLevelAction(a) =
   var si = currSortedLevelIdx(a)
   if si < a.doc.map.levels.len-1:
+    a.opts.drawTrail = false
     var cur = a.ui.cursor
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
     setCursor(cur, a)
@@ -3809,6 +3818,7 @@ proc handleGlobalKeyEvents(a) =
         dp.selStartCol = 0
 
         ui.editMode = emNudgePreview
+        opts.drawTrail = false
         setStatusMessage(IconArrowsAll, "Nudge preview",
                          @[IconArrowsAll, "nudge",
                          "Enter", "confirm", "Esc", "exit"], a)
