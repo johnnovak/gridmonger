@@ -7,6 +7,7 @@ BUGS
   - undo after cut/erase/etc selection should restore cursor to selection to
     left corner, not bottom right
   - drawlevel - pixel level drawing problems (also for regions)
+  - turn off trail mode when changing the level via the dropwodn
 
 
 TESTS

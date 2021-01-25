@@ -389,7 +389,7 @@ proc isSpecialLevelIndex*(idx: Natural): bool =
 
 # {{{ paste*()
 proc paste*(l; destRow, destCol: int, src: Level,
-            sel: Selection): Option[Rect[Natural]] =
+            sel: Selection, pasteTrail: bool = false): Option[Rect[Natural]] =
 
   let destRect = rectI(
     destRow, destCol,
@@ -418,6 +418,9 @@ proc paste*(l; destRow, destCol: int, src: Level,
 
           let ot = src.getFloorOrientation(srcRow, srcCol)
           l.setFloorOrientation(r,c, ot)
+
+          if pasteTrail:
+            l.setTrail(r,c, src.hasTrail(srcRow, srcCol))
 
           template copyWall(dir: CardinalDir) =
             let w = src.getWall(srcRow, srcCol, dir)
@@ -450,8 +453,7 @@ proc copyCellsAndAnnotationsFrom*(l; destRow, destCol: Natural,
 
 # }}}
 # {{{ newLevelFrom*()
-proc newLevelFrom*(src: Level, rect: Rect[Natural],
-                   border: Natural=0): Level =
+proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
   assert rect.r1 < src.rows
   assert rect.c1 < src.cols
   assert rect.r2 <= src.rows
@@ -493,8 +495,7 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural],
 
   result = dest
 
-# }}}
-# {{{ newLevelFrom*()
+
 proc newLevelFrom*(l): Level =
   newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
 

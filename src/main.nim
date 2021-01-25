@@ -62,6 +62,7 @@ const
 #  BuildDateTime = if defined(windows): staticExec("date /T") & staticExec("time /T")
 #                  else: staticExec("date")
 
+  # TODO in home dir?
   LogFile = "gridmonger.log"
 
   DataDir = "data"
@@ -4240,7 +4241,8 @@ proc handleGlobalKeyEvents(a) =
 
       if ke.isKeyDown({keyEnter, keyP}):
         actions.pasteSelection(map, cur, ui.copyBuf.get,
-                               linkSrcLevelIndex=CopyBufferLevelIndex, um)
+                               linkSrcLevelIndex=CopyBufferLevelIndex, um,
+                               pasteTrail=true)
 
         if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 

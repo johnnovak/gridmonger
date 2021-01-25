@@ -445,6 +445,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
                      linkSrcLevelIndex: Natural; um;
                      groupWithPrev: bool = false,
+                     pasteTrail: bool = false,
                      actionName: string = "Pasted buffer") =
 
   let rect = rectN(
@@ -465,7 +466,8 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
       alias(l, m.levels[pasteLoc.level])
 
-      let bbox = l.paste(pasteLoc.row, pasteLoc.col, sb.level, sb.selection)
+      let bbox = l.paste(pasteLoc.row, pasteLoc.col, sb.level, sb.selection,
+                         pasteTrail)
 
       if bbox.isSome:
         let bbox = bbox.get
@@ -642,8 +644,9 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     m.links.addAll(newLinks)
 
     var usd = usd
-    usd.location.col = (usd.location.col.int + colOffs).Natural
-    usd.location.row = (usd.location.row.int + rowOffs).Natural
+    let loc = usd.location
+    usd.location.col = (loc.col.int + colOffs).clamp(0, newCols-1).Natural
+    usd.location.row = (loc.row.int + rowOffs).clamp(0, newRows-1).Natural
     result = usd
 
 
@@ -729,7 +732,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.regionOpts,
       sb.level.regionNames
     )
-    discard l.paste(rowOffs, colOffs, sb.level, sb.selection)
+    discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
     m.levels[loc.level] = l
 
     for src in oldLinks.keys: m.links.delBySrc(src)
