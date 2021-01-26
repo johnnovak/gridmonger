@@ -8,6 +8,9 @@ BUGS
     left corner, not bottom right
   - drawlevel - pixel level drawing problems (also for regions)
   - turn off trail mode when changing the level via the dropwodn
+  - cut linked stair from level -1 to -2, paste it into a level -3: the
+    direction is not updated
+  - cannot link ceiling pit to pit
 
 
 TESTS

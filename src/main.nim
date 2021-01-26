@@ -1066,7 +1066,7 @@ proc moveLevel(dir: CardinalDir, steps: Natural; a) =
 proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   alias(dp, a.ui.drawLevelParams)
 
-  let l = currLevel(a)
+  let l = a.doc.map.levels[cur.level]
   let sm = ScrollMargin
   var cur = cur
 
@@ -1137,7 +1137,7 @@ proc moveCursorTo(loc: Location; a) =
 
   let dx = loc.col - cur.col
   let dy = loc.row - cur.row
-
+  
   cur = if   dx < 0: stepCursor(cur, dirW, -dx, a)
         elif dx > 0: stepCursor(cur, dirE,  dx, a)
         else: cur
@@ -3873,7 +3873,6 @@ proc handleGlobalKeyEvents(a) =
           ui.linkSrcLocation = cur
           ui.editMode = emSetCellLink
 
-          # TODO icon per type
           setStatusMessage(IconLink,
                            fmt"Set {linkFloorToString(floor)} destination",
                            @[IconArrowsAll, "select cell",
