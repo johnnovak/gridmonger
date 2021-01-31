@@ -96,18 +96,19 @@ proc setFloor*(map; loc: Location, f: Floor, floorColor: byte; um) =
       l.delAnnotation(loc.row, loc.col)
 
     m.setFloor(loc, f)
-    m.setFloorColor(loc, floorColor)
+
+    if m.isEmpty(loc):
+      m.setFloorColor(loc, floorColor)
 
 # }}}
-# {{{ clearFloor*()
-proc clearFloor*(map; loc: Location, floorColor: byte; um) =
+# {{{ drawClearFloor*()
+proc drawClearFloor*(map; loc: Location, floorColor: byte; um) =
 
-  singleCellAction(map, loc, um, fmt"Clear floor", m):
+  singleCellAction(map, loc, um, fmt"Draw/clear floor", m):
     alias(l, m.levels[loc.level])
     l.delAnnotation(loc.row, loc.col)
 
     m.setFloor(loc, fBlank)
-    m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ setFloorColor*()
@@ -121,10 +122,12 @@ proc setFloorColor*(map; loc: Location, floorColor: byte; um) =
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
                        floorColor: byte; um) =
 
-  singleCellAction(map, loc, um, fmt"Set oriented floor {EnDash} {f}", m):
+  singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
     m.setFloor(loc, f)
     m.setFloorOrientation(loc, ot)
-    m.setFloorColor(loc, floorColor)
+
+    if m.isEmpty(loc):
+      m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ eraseCellWalls*()
@@ -141,7 +144,7 @@ proc eraseCell*(map; loc: Location; um) =
 # }}}
 # {{{ excavate*()
 proc excavate*(map; loc: Location, floorColor: byte; um) =
-  singleCellAction(map, loc, um, "Excavate", m):
+  singleCellAction(map, loc, um, "Excavate tunnel", m):
     m.excavate(loc, floorColor)
 
 # }}}
@@ -240,8 +243,6 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
       destFloor = fStairsUp
       map.setFloor(src, fStairsDown)
 
-    map.setFloorColor(src, floorColor)
-
   let level = dest.level
   let linkType = linkFloorToString(srcFloor)
 
@@ -257,7 +258,6 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
     m.links.delBySrc(src)
 
     m.setFloor(dest, destFloor)
-    m.setFloorColor(dest, floorColor)
 
     m.links.set(src, dest)
     m.levels[level].reindexNotes()

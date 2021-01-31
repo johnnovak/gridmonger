@@ -2656,7 +2656,7 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
     a.opts.drawTrail = false
 
     let cur = actions.deleteLevel(map, a.ui.cursor, um)
-    setStatusMessage(IconTrash, "Deleted level", a)
+    setStatusMessage(IconTrash, "Level deleted", a)
     setCursor(cur, a)
 
 
@@ -3107,7 +3107,7 @@ proc loadMap(filename: string; a): bool =
 
   except CatchableError as e:
     logError(e)
-    setStatusMessage(IconWarning, fmt"Cannot load map: {e.msg}", a)
+    setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
 
 # }}}
 # {{{ openMap()
@@ -3157,7 +3157,7 @@ proc saveMap(filename: string, autosave: bool = false; a) =
   except CatchableError as e:
     logError(e)
     let prefix = if autosave: "Autosave failed: " else: ""
-    setStatusMessage(IconWarning, fmt"{prefix}Cannot save map: {e.msg}", a)
+    setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
 
 # }}}
 # {{{ saveMapAsAction()
@@ -3245,21 +3245,24 @@ proc setFloorAction(f: Floor; a) =
   let ot = a.doc.map.guessFloorOrientation(a.ui.cursor)
   actions.setOrientedFloor(a.doc.map, a.ui.cursor, f, ot, a.ui.currFloorColor,
                            a.doc.undoManager)
-  setStatusMessage(fmt"Set floor – {f}", a)
+  setStatusMessage(fmt"Set floor type – {f}", a)
 
 # }}}
 # {{{ setOrCycleFloorAction()
 proc setOrCycleFloorAction(floors: seq[Floor], forward: bool; a) =
   var floor = a.doc.map.getFloor(a.ui.cursor)
 
-  var i = floors.find(floor)
-  if i > -1:
-    if forward: inc(i) else: dec(i)
-    floor = floors[floorMod(i, floors.len)]
-  else:
-    floor = if forward: floors[0] else: floors[^1]
+  if floor != fEmpty:
+    var i = floors.find(floor)
+    if i > -1:
+      if forward: inc(i) else: dec(i)
+      floor = floors[floorMod(i, floors.len)]
+    else:
+      floor = if forward: floors[0] else: floors[^1]
 
-  setFloorAction(floor, a)
+    setFloorAction(floor, a)
+  else:
+    setStatusMessage(IconWarning, "Cannot set floor type of an empty cell", a)
 
 # }}}
 # {{{ startExcavateAction()
@@ -3267,13 +3270,14 @@ proc startExcavateAction(a) =
   actions.excavate(a.doc.map, a.ui.cursor, a.ui.currFloorColor,
                    a.doc.undoManager)
 
-  setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll, "draw"], a)
+  setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll,
+                   "excavate"], a)
 
 # }}}
 # {{{ startEraseCellsAction()
 proc startEraseCellsAction(a) =
   actions.eraseCell(a.doc.map, a.ui.cursor, a.doc.undoManager)
-  setStatusMessage(IconEraser, "Erase cells", @[IconArrowsAll, "erase"], a)
+  setStatusMessage(IconEraser, "Erase cell", @[IconArrowsAll, "erase"], a)
 
 # }}}
 # {{{ startEraseTrailAction()
@@ -3672,12 +3676,12 @@ proc handleGlobalKeyEvents(a) =
         if handleMoveCursor(ke, moveKeys, a):
           setStatusMessage("moved", a)
 
-      if ke.isKeyDown({keyPageUp, keyKpSubtract}) or
-         ke.isKeyDown(keyMinus, {mkCtrl}):
+      if ke.isKeyDown({keyPageUp, keyKpSubtract}, repeat=true) or
+         ke.isKeyDown(keyMinus, {mkCtrl}, repeat=true):
         prevLevelAction(a)
 
-      elif ke.isKeyDown({keyPageDown, keyKpAdd}) or
-           ke.isKeyDown(keyEqual, {mkCtrl}):
+      elif ke.isKeyDown({keyPageDown, keyKpAdd}, repeat=true) or
+           ke.isKeyDown(keyEqual, {mkCtrl}, repeat=true):
         nextLevelAction(a)
 
       let cur = a.ui.cursor
@@ -3692,8 +3696,8 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyF):
         ui.editMode = emClearFloor
-        setStatusMessage(IconEraser, "Clear floor",
-                         @[IconArrowsAll, "clear"], a)
+        setStatusMessage(IconEraser, "Draw/clear floor",
+                         @[IconArrowsAll, "draw/clear"], a)
         actions.setFloor(map, cur, fBlank, ui.currFloorColor, um)
 
       elif ke.isKeyDown(keyO):
@@ -3707,7 +3711,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyC):
         ui.editMode = emColorFloor
-        setStatusMessage(IconEraser, "Set color",
+        setStatusMessage(IconEraser, "Set floor color",
                          @[IconArrowsAll, "set color"], a)
 
         if not map.isEmpty(cur):
@@ -3787,7 +3791,7 @@ proc handleGlobalKeyEvents(a) =
                                  linkSrcLevelIndex=CopyBufferLevelIndex, um)
           if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
-          setStatusMessage(IconPaste, "Pasted buffer", a)
+          setStatusMessage(IconPaste, "Buffer pasted", a)
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
 
@@ -4007,7 +4011,7 @@ proc handleGlobalKeyEvents(a) =
         map.setTrail(cur, false)
 
       elif ui.editMode == emClearFloor:
-        actions.clearFloor(map, cur, ui.currFloorColor, um)
+        actions.drawClearFloor(map, cur, ui.currFloorColor, um)
 
       elif ui.editMode == emColorFloor:
         if not map.isEmpty(cur):
@@ -4316,12 +4320,12 @@ proc handleGlobalKeyEvents(a) =
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
-      if ke.isKeyDown({keyPageUp, keyKpSubtract}) or
-         ke.isKeyDown(keyMinus, {mkCtrl}):
+      if ke.isKeyDown({keyPageUp, keyKpSubtract}, repeat=true) or
+         ke.isKeyDown(keyMinus, {mkCtrl}, repeat=true):
         prevLevelAction(a)
 
-      elif ke.isKeyDown({keyPageDown, keyKpAdd}) or
-           ke.isKeyDown(keyEqual, {mkCtrl}):
+      elif ke.isKeyDown({keyPageDown, keyKpAdd}, repeat=true) or
+           ke.isKeyDown(keyEqual, {mkCtrl}, repeat=true):
         nextLevelAction(a)
 
       let cur = a.ui.cursor
