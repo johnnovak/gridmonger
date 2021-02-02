@@ -265,7 +265,7 @@ type
     emDrawWallSpecial,
     emEraseCell,
     emEraseTrail,
-    emClearFloor,
+    emDrawClearFloor,
     emColorFloor,
     emSelect,
     emSelectRect
@@ -1692,8 +1692,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         disabled = disabled,
         constraint = TextFieldConstraint(
           kind: tckInteger,
-          minInt: 1,
-          maxInt: 10
+          minInt: SplashTimeoutSecsLimits.minInt,
+          maxInt: SplashTimeoutSecsLimits.maxInt
         ).some,
         style = a.theme.textFieldStyle
       )
@@ -1726,8 +1726,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         disabled = autosaveDisabled,
         constraint = TextFieldConstraint(
           kind: tckInteger,
-          minInt: 1,
-          maxInt: 30
+          minInt: AutosaveFreqMinsLimits.minInt,
+          maxInt: AutosaveFreqMinsLimits.maxInt
         ).some,
         style = a.theme.textFieldStyle
       )
@@ -3695,10 +3695,10 @@ proc handleGlobalKeyEvents(a) =
         startEraseCellsAction(a)
 
       elif ke.isKeyDown(keyF):
-        ui.editMode = emClearFloor
+        ui.editMode = emDrawClearFloor
         setStatusMessage(IconEraser, "Draw/clear floor",
                          @[IconArrowsAll, "draw/clear"], a)
-        actions.setFloor(map, cur, fBlank, ui.currFloorColor, um)
+        actions.drawClearFloor(map, cur, ui.currFloorColor, um)
 
       elif ke.isKeyDown(keyO):
         actions.toggleFloorOrientation(map, cur, um)
@@ -3991,8 +3991,8 @@ proc handleGlobalKeyEvents(a) =
         toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
 
     # }}}
-    # {{{ emExcavate, emEraseCell, emEraseTrail, emClearFloor, emColorFloor
-    of emExcavate, emEraseCell, emEraseTrail, emClearFloor, emColorFloor:
+    # {{{ emExcavate, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
+    of emExcavate, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         # TODO disallow cursor jump with ctrl
@@ -4010,7 +4010,7 @@ proc handleGlobalKeyEvents(a) =
       elif ui.editMode == emEraseTrail:
         map.setTrail(cur, false)
 
-      elif ui.editMode == emClearFloor:
+      elif ui.editMode == emDrawClearFloor:
         actions.drawClearFloor(map, cur, ui.currFloorColor, um)
 
       elif ui.editMode == emColorFloor:
@@ -4422,7 +4422,7 @@ proc renderLevel(a) =
 
     dp.cursorOrient = CardinalDir.none
     if opts.walkMode and
-       ui.editMode in {emNormal, emExcavate, emEraseCell, emClearFloor}:
+       ui.editMode in {emNormal, emExcavate, emEraseCell, emDrawClearFloor}:
       dp.cursorOrient = ui.cursorOrient.some
 
     dp.selection = ui.selection
@@ -5842,9 +5842,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   a.opts.wasdMode = cfg.app.wasdMode
 
   a.ui.drawLevelParams.drawCellCoords = cfg.app.showCellCoords
-  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle,
-                                    clamp(cfg.app.zoomLevel, MinZoomLevel,
-                                          MaxZoomLevel))
+  a.ui.drawLevelParams.setZoomLevel(a.doc.levelStyle, cfg.app.zoomLevel)
 
   if a.prefs.loadLastMap and cfg.misc.lastMapFileName != "":
     if not loadMap(cfg.misc.lastMapFileName, a):
@@ -5883,8 +5881,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
 
-  let width  = cfg.win.width.clamp(WindowMinWidth, maxWidth)
-  let height = cfg.win.height.clamp(WindowMinHeight, maxHeight)
+  let width  = cfg.win.width
+  let height = cfg.win.height
 
   var xpos = cfg.win.xpos
   if xpos < 0: xpos = (maxWidth - width) div 2
@@ -5892,7 +5890,7 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   var ypos = cfg.win.ypos
   if ypos < 0: ypos = (maxHeight - height) div 2
 
-  a.win.size = (width, height)
+  a.win.size = (width.int, height.int)
   a.win.pos = (xpos, ypos)
 
   if cfg.win.maximized:
