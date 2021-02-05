@@ -87,20 +87,6 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
     m.setWall(loc, dir, w)
 
 # }}}
-# {{{ setFloor*()
-proc setFloor*(map; loc: Location, f: Floor, floorColor: byte; um) =
-
-  singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
-    if m.hasLabel(loc):
-      alias(l, m.levels[loc.level])
-      l.delAnnotation(loc.row, loc.col)
-
-    m.setFloor(loc, f)
-
-    if m.isEmpty(loc):
-      m.setFloorColor(loc, floorColor)
-
-# }}}
 # {{{ drawClearFloor*()
 proc drawClearFloor*(map; loc: Location, floorColor: byte; um) =
 
@@ -109,6 +95,7 @@ proc drawClearFloor*(map; loc: Location, floorColor: byte; um) =
     l.delAnnotation(loc.row, loc.col)
 
     m.setFloor(loc, fBlank)
+    m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ setFloorColor*()
