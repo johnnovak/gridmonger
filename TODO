@@ -1,16 +1,23 @@
 BUGS
   - cut and the paste back doesn't yield the same results
+
   - cut shouldn't cut walls of bordering cells
-  - left edge of spinner symbols is cut off on high zoom levels on retina screens
+
   - textfields: max length (note, ID field)
-  - note dialog: first tab, tab x2, ID tab -> ID field is in edit mode
+
   - undo after cut/erase/etc selection should restore cursor to selection to
     left corner, not bottom right
+
   - drawlevel - pixel level drawing problems (also for regions)
+
   - turn off trail mode when changing the level via the dropwodn
+
   - cut linked stair from level -1 to -2, paste it into a level -3: the
     direction is not updated
+
   - cannot link ceiling pit to pit
+
+  - left edge of spinner symbols is cut off on high zoom levels on retina screens
 
 
 TESTS
