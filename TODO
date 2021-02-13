@@ -1,8 +1,6 @@
 BUGS
   - cut and the paste back doesn't yield the same results
 
-  - cannot link ceiling pit to pit
-
   - cut shouldn't cut walls of bordering cells
 
   - textfields: max length (note, ID field)
@@ -16,6 +14,8 @@ BUGS
 
   - cut linked stair from level -1 to -2, paste it into a level -3: the
     direction is not updated
+
+  - cannot link ceiling pit to pit
 
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
 
