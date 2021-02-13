@@ -125,7 +125,6 @@ proc eraseCellWalls*(map; loc: Location; um) =
 # }}}
 # {{{ eraseCell*()
 proc eraseCell*(map; loc: Location; um) =
-  echo "**** eraseCell"
   singleCellAction(map, loc, um, "Erase cell", m):
     m.eraseCell(loc)
 
@@ -153,7 +152,6 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural], floorColor: byte;
 # }}}
 # {{{ clearTrail*()
 proc clearTrail*(map; loc: Location, bbox: Rect[Natural], um) =
-  alias(l, m.levels[loc.level])
 
   cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Clear trail", m):
     var loc = loc
@@ -218,10 +216,11 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   let srcFloor = map.getFloor(src)
 
   var destFloor: Floor
-  if   srcFloor in LinkPitSources:  destFloor = fCeilingPit
-  elif srcFloor == fTeleportSource: destFloor = fTeleportDestination
-  elif srcFloor == fDoorEnter:      destFloor = fDoorExit
-  elif srcFloor == fDoorExit:       destFloor = fDoorEnter
+  if   srcFloor in LinkPitSources:       destFloor = fCeilingPit
+  elif srcFloor == fTeleportSource:      destFloor = fTeleportDestination
+  elif srcFloor == fTeleportDestination: destFloor = fTeleportSource
+  elif srcFloor == fDoorEnter:           destFloor = fDoorExit
+  elif srcFloor == fDoorExit:            destFloor = fDoorEnter
   elif srcFloor in LinkStairs:
     if map.levels[src.level].elevation < map.levels[dest.level].elevation:
       destFloor = fStairsDown
@@ -244,6 +243,7 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
     # edge case: support for overwriting existing link
     # (delete existing links originating from src)
     m.links.delBySrc(src)
+    m.links.delByDest(src)
 
     m.setFloor(dest, destFloor)
 

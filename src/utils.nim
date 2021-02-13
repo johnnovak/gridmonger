@@ -19,7 +19,7 @@ proc linkFloorToString*(f: Floor): string =
   if   f in (LinkPitSources + LinkPitDestinations): return "pit"
   elif f in LinkStairs: return "stairs"
   elif f in LinkDoors: return "door"
-  elif f in {fTeleportSource, fTeleportDestination}: return "teleport"
+  elif f in LinkTeleports: return "teleport"
 
 # }}}
 # {{{ hash*(ml: Location)

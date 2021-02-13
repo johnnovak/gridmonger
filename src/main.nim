@@ -1144,7 +1144,7 @@ proc moveCursorTo(loc: Location; a) =
 
   let dx = loc.col - cur.col
   let dy = loc.row - cur.row
-  
+
   cur = if   dx < 0: stepCursor(cur, dirW, -dx, a)
         elif dx > 0: stepCursor(cur, dirE,  dx, a)
         else: cur
@@ -3864,17 +3864,17 @@ proc handleGlobalKeyEvents(a) =
               moveCursorTo(src, a)
               result = true
 
-        if floor in (LinkPitSources + {fTeleportSource}):
+        if floor in LinkPitSources:
           if not jumpToDest(a):
             setStatusMessage(IconWarning,
                              fmt"{linkType} is not linked to a destination", a)
 
-        elif floor in (LinkPitDestinations + {fTeleportDestination}):
+        elif floor in LinkPitDestinations:
           if not jumpToSrc(a):
             setStatusMessage(IconWarning,
                              fmt"{linkType} is not linked to a source", a)
 
-        elif floor in (LinkStairs + LinkDoors):
+        elif floor in (LinkTeleports + LinkStairs + LinkDoors):
           if not jumpToDest(a):
             if not jumpToSrc(a):
               setStatusMessage(IconWarning, fmt"{linktype} is not linked", a)
@@ -4347,6 +4347,10 @@ proc handleGlobalKeyEvents(a) =
         if map.isEmpty(cur):
           setStatusMessage(IconWarning,
                            "Cannot set link destination to an empty cell", a)
+
+        elif cur == ui.linkSrcLocation:
+          setStatusMessage(IconWarning,
+                           "Cannot set link destination to the source cell", a)
         else:
           actions.setLink(map, src=ui.linkSrcLocation, dest=cur,
                           ui.currFloorColor, um)
