@@ -4007,21 +4007,22 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = a.ui.cursor
 
-      if   ui.editMode == emExcavate:
-        actions.excavate(map, cur, ui.currFloorColor, um)
+      if cur != a.ui.lastCursor:
+        if   ui.editMode == emExcavate:
+          actions.excavate(map, cur, ui.currFloorColor, um)
 
-      elif ui.editMode == emEraseCell:
-        actions.eraseCell(map, cur, um)
+        elif ui.editMode == emEraseCell:
+          actions.eraseCell(map, cur, um)
 
-      elif ui.editMode == emEraseTrail:
-        map.setTrail(cur, false)
+        elif ui.editMode == emEraseTrail:
+          map.setTrail(cur, false)
 
-      elif ui.editMode == emDrawClearFloor:
-        actions.drawClearFloor(map, cur, ui.currFloorColor, um)
+        elif ui.editMode == emDrawClearFloor:
+          actions.drawClearFloor(map, cur, ui.currFloorColor, um)
 
-      elif ui.editMode == emColorFloor:
-        if not map.isEmpty(cur):
-          actions.setFloorColor(map, cur, ui.currFloorColor, um)
+        elif ui.editMode == emColorFloor:
+          if not map.isEmpty(cur):
+            actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
       if not opts.wasdMode and ke.isKeyUp({keyD, keyE}):
         ui.editMode = emNormal

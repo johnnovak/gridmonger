@@ -125,6 +125,7 @@ proc eraseCellWalls*(map; loc: Location; um) =
 # }}}
 # {{{ eraseCell*()
 proc eraseCell*(map; loc: Location; um) =
+  echo "**** eraseCell"
   singleCellAction(map, loc, um, "Erase cell", m):
     m.eraseCell(loc)
 
