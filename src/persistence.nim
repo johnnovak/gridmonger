@@ -724,7 +724,7 @@ proc writeLinks_v1(rw; links: BiTable[Location, Location]) =
     rw.write(loc.col.uint16)
 
   for src in sortedKeys:
-    let dest = links[src]
+    let dest = links[src].get
     writeLocation(src)
     writeLocation(dest)
 

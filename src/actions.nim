@@ -259,10 +259,18 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   let undoLevel = newLevelFrom(map.levels[level], rect)
 
   var oldLinks = initLinks()
-  if map.links.hasWithSrc(dest):  oldLinks.set(dest, map.links.getBySrc(dest))
-  if map.links.hasWithDest(dest): oldLinks.set(map.links.getByDest(dest), dest)
-  if map.links.hasWithSrc(src):   oldLinks.set(src, map.links.getBySrc(src))
-  if map.links.hasWithDest(src):  oldLinks.set(map.links.getByDest(src), src)
+
+  var old = map.links.getBySrc(dest)
+  if old.isSome: oldLinks.set(dest, old.get)
+
+  old = map.links.getByDest(dest)
+  if old.isSome: oldLinks.set(old.get, dest)
+
+  old = map.links.getBySrc(src)
+  if old.isSome: oldLinks.set(src, old.get)
+
+  old = map.links.getByDest(src)
+  if old.isSome: oldLinks.set(old.get, src)
 
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[level].copyCellsAndAnnotationsFrom(

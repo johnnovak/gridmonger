@@ -1958,11 +1958,11 @@ proc drawLinkMarkers(map: Map, level: Natural; ctx) =
   forAllViewCells_CellCoords:
     (loc.row, loc.col) = (row, col)
 
-    if (map.links.hasWithSrc(loc) and
-        not isSpecialLevelIndex(map.links.getBySrc(loc).level)) or
+    let srcLoc = map.links.getBySrc(loc)
+    let destLoc = map.links.getByDest(loc)
 
-       (map.links.hasWithDest(loc) and
-        not isSpecialLevelIndex(map.links.getByDest(loc).level)):
+    if (srcLoc.isSome  and not isSpecialLevelIndex(srcLoc.get.level)) or
+       (destLoc.isSome and not isSpecialLevelIndex(destLoc.get.level)):
 
       let x = cellX(viewCol, dp)
       let y = cellY(viewRow, dp)

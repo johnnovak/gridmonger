@@ -3837,8 +3837,9 @@ proc handleGlobalKeyEvents(a) =
 
         proc jumpToDest(a): bool =
           let src = cur
-          if map.links.hasWithSrc(src):
-            let dest = map.links.getBySrc(src)
+          let dest = map.links.getBySrc(src)
+          if dest.isSome:
+            let dest = dest.get
             if isSpecialLevelIndex(dest.level):
               result = false
             else:
@@ -3847,8 +3848,9 @@ proc handleGlobalKeyEvents(a) =
 
         proc jumpToSrc(a): bool =
           let dest = cur
-          if map.links.hasWithDest(dest):
-            let src = map.links.getByDest(dest)
+          let src = map.links.getByDest(dest)
+          if src.isSome:
+            let src = src.get
             if isSpecialLevelIndex(src.level):
               result = false
             else:

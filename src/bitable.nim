@@ -1,3 +1,4 @@
+import options
 import tables
 
 
@@ -42,11 +43,13 @@ proc hasKey*[K, V](t: BiTable[K, V], key: K): bool =
 proc hasVal*[K, V](t: BiTable[K, V], val: V): bool=
   t.valToKey.hasKey(val)
 
-proc getValByKey*[K, V](t: BiTable[K, V], key: K): V =
-  t.keyToVal[key]
+proc getValByKey*[K, V](t: BiTable[K, V], key: K): Option[V] =
+  if t.hasKey(key): t.keyToVal[key].some
+  else: V.none
 
-proc getKeyByVal*[K, V](t: BiTable[K, V], val: V): K =
-  t.valToKey[val]
+proc getKeyByVal*[K, V](t: BiTable[K, V], val: V): Option[K] =
+  if t.hasVal(val): t.valToKey[val].some
+  else: K.none
 
 proc delByKey*[K, V](t: var BiTable[K, V], key: K) =
   if key in t.keyToVal:
@@ -60,7 +63,7 @@ proc delByVal*[K, V](t: var BiTable[K, V], val: V) =
     t.valToKey.del(val)
     t.keyToVal.del(key)
 
-proc `[]`*[K, V](t: BiTable[K, V], key: K): V =
+proc `[]`*[K, V](t: BiTable[K, V], key: K): Option[V] =
   t.getValByKey(key)
 
 proc `[]=`*[K, V](t: var BiTable[K, V], key: K, val: V) =
@@ -82,33 +85,20 @@ when isMainModule:
   t[1] = "cat"
   assert t.hasKey(1) == true
   assert t.len == 1
-  assert t[1] == "cat"
-  assert t.getValByKey(1) == "cat"
-  assert t.getKeyByVal("cat") == 1
+  assert t[1] == "cat".some
+  assert t.getValByKey(1) == "cat".some
+  assert t.getKeyByVal("cat") == 1.some
 
   t[2] = "dog"
   assert t.len == 2
-  assert t[2] == "dog"
-  assert t.getValByKey(2) == "dog"
-  assert t.getKeyByVal("dog") == 2
+  assert t[2] == "dog".some
+  assert t.getValByKey(2) == "dog".some
+  assert t.getKeyByVal("dog") == 2.some
 
-  try:
-    discard t[42]
-    assert false
-  except KeyError as e:
-    assert true
+  assert t[42] == string.none
+  assert t.getValByKey(42) == string.none
 
-  try:
-    discard t.getValByKey(42)
-    assert false
-  except KeyError as e:
-    assert true
-
-  try:
-    discard t.getKeyByVal("lion")
-    assert false
-  except KeyError as e:
-    assert true
+  assert t.getKeyByVal("lion") == int.none
 
   t.delByKey(42)
   assert t.len == 2
