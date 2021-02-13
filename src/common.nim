@@ -187,14 +187,14 @@ type
 
 
 const
-  LinkPitSources*      = {fClosedPit, fOpenPit, fHiddenPit}
-  LinkPitDestinations* = {fCeilingPit}
-  LinkStairs*          = {fStairsDown, fStairsUp}
-  LinkDoors*           = {fDoorEnter, fDoorExit}
+  LinkPitAbove* = {fClosedPit, fOpenPit, fHiddenPit}
+  LinkPitBelow* = {fCeilingPit}
+  LinkStairs*   = {fStairsDown, fStairsUp}
+  LinkDoors*    = {fDoorEnter, fDoorExit}
 
-  LinkSources* = LinkPitSources + LinkStairs + LinkDoors + {fTeleportSource}
+  LinkSources* = LinkPitAbove + LinkStairs + LinkDoors + {fTeleportSource}
 
-  LinkDestinations* = LinkPitDestinations + LinkStairs + LinkDoors +
+  LinkDestinations* = LinkPitBelow + LinkStairs + LinkDoors +
                       {fTeleportDestination}
 
 
