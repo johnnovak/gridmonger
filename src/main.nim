@@ -923,7 +923,13 @@ proc setSelectModeActionMessage(a) =
                      "Ctrl+M", "move (cut+paste)",
                      "Ctrl+C", "set color"], a)
 # }}}
-
+# {{{ setSetLinkDestinationMessage()
+proc setSetLinkDestinationMessage(floor: Floor; a) =
+  setStatusMessage(IconLink,
+                   fmt"Set {linkFloorToString(floor)} destination",
+                   @[IconArrowsAll, "select cell",
+                   "Enter", "set", "Esc", "cancel"], a)
+# }}}
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
   a.ui.cursor.level = 0
@@ -3882,11 +3888,7 @@ proc handleGlobalKeyEvents(a) =
         if floor in LinkSources:
           ui.linkSrcLocation = cur
           ui.editMode = emSetCellLink
-
-          setStatusMessage(IconLink,
-                           fmt"Set {linkFloorToString(floor)} destination",
-                           @[IconArrowsAll, "select cell",
-                           "Enter", "set", "Esc", "cancel"], a)
+          setSetLinkDestinationMessage(floor, a)
         else:
           setStatusMessage(IconWarning,
                            "Cannot link current cell", a)
@@ -4337,14 +4339,24 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = a.ui.cursor
 
+      if cur != a.ui.lastCursor:
+        let floor = map.getFloor(ui.linkSrcLocation)
+        setSetLinkDestinationMessage(floor, a)
+
       if ke.isKeyDown(keyEnter):
-        actions.setLink(map, src=ui.linkSrcLocation, dest=cur,
-                        ui.currFloorColor, um)
-        ui.editMode = emNormal
-        let linkType = linkFloorToString(map.getFloor(cur))
-        setStatusMessage(IconLink,
-                         fmt"{capitalizeAscii(linkType)} link destination set",
-                         a)
+        if map.isEmpty(cur):
+          setStatusMessage(IconWarning,
+                           "Cannot set link destination to an empty cell", a)
+        else:
+          actions.setLink(map, src=ui.linkSrcLocation, dest=cur,
+                          ui.currFloorColor, um)
+
+          ui.editMode = emNormal
+
+          let linkType = linkFloorToString(map.getFloor(cur))
+          setStatusMessage(IconLink,
+                           fmt"{capitalizeAscii(linkType)} link destination set",
+                           a)
 
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
