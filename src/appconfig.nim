@@ -3,8 +3,16 @@ import parsecfg
 
 import cfghelper
 import common
+import fieldlimits
+import drawlevel
 import utils
 
+const
+  SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
+  AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
+  ZoomLevelLimits*         = intLimits(MinZoomLevel, MaxZoomLevel)
+  WindowWidthLimits*       = intLimits(WindowMinWidth, max=20_000)
+  WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
 
 type
   AppConfig* = object
@@ -48,7 +56,7 @@ type
   WindowState* = object
     maximized*:      bool
     xpos*, ypos*:    int
-    width*, height*: int
+    width*, height*: Natural
 
   MiscState* = object
     lastMapFileName*: string
@@ -64,7 +72,7 @@ const DefaultAppConfig = AppConfig(
     disableVSync: false,
 
     autosave: true,
-    autosaveFreqMins: 60
+    autosaveFreqMins: 2
   ),
 
   win: WindowState(
@@ -159,11 +167,16 @@ proc loadAppConfig*(fname: string): AppConfig =
 
   cfg.getBool(   PreferencesSection, ShowSplashKey,        p.showSplash)
   cfg.getBool(   PreferencesSection, AutoCloseSplashKey,   p.autoCloseSplash)
-  cfg.getNatural(PreferencesSection, SplashTimeoutSecsKey, p.splashTimeoutSecs)
+
+  cfg.getNatural(PreferencesSection, SplashTimeoutSecsKey, p.splashTimeoutSecs,
+                 SplashTimeoutSecsLimits)
+
   cfg.getBool(   PreferencesSection, LoadLastMapKey,       p.loadLastMap)
   cfg.getBool(   PreferencesSection, DisableVSyncKey,      p.disableVSync)
   cfg.getBool(   PreferencesSection, AutosaveKey,          p.autosave)
-  cfg.getNatural(PreferencesSection, AutosaveFreqMinsKey,  p.autosaveFreqMins)
+
+  cfg.getNatural(PreferencesSection, AutosaveFreqMinsKey,  p.autosaveFreqMins,
+                 AutosaveFreqMinsLimits)
 
   alias(w, result.win)
   var winWidth, winHeight: Natural
@@ -171,21 +184,24 @@ proc loadAppConfig*(fname: string): AppConfig =
   cfg.getBool(   WindowStateSection, MaximizedKey, w.maximized)
   cfg.getNatural(WindowStateSection, XposKey,      w.xpos)
   cfg.getNatural(WindowStateSection, YposKey,      w.ypos)
-  cfg.getNatural(WindowStateSection, WidthKey,     winWidth)
-  cfg.getNatural(WindowStateSection, HeightKey,    winHeight)
+  cfg.getNatural(WindowStateSection, WidthKey,  winWidth,  WindowWidthLimits)
+  cfg.getNatural(WindowStateSection, HeightKey, winHeight, WindowHeightLimits)
 
   if winWidth  >= WindowMinWidth:  w.width  = winWidth
   if winHeight >= WindowMinHeight: w.height = winHeight
 
   alias(a, result.app)
 
-  cfg.getString( AppStateSection, ThemeNameKey,      a.themeName)
-  cfg.getNatural(AppStateSection, ZoomLevelKey,      a.zoomLevel)
+  cfg.getString( AppStateSection, ThemeNameKey, a.themeName)
+
+  cfg.getNatural(AppStateSection, ZoomLevelKey, a.zoomLevel, ZoomLevelLimits)
+
   cfg.getNatural(AppStateSection, CurrLevelKey,      a.currLevel)
   cfg.getNatural(AppStateSection, CursorRowKey,      a.cursorRow)
   cfg.getNatural(AppStateSection, CursorColKey,      a.cursorCol)
   cfg.getNatural(AppStateSection, ViewStartRowKey,   a.viewStartRow)
   cfg.getNatural(AppStateSection, ViewStartColKey,   a.viewStartCol)
+
   cfg.getBool(   AppStateSection, ShowCellCoordsKey, a.showCellCoords)
   cfg.getBool(   AppStateSection, ShowToolsPaneKey,  a.showToolsPane)
   cfg.getBool(   AppStateSection, ShowNotesPaneKey,  a.showNotesPane)

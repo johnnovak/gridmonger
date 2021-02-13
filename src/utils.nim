@@ -16,7 +16,7 @@ proc durationToFloatMillis*(d: Duration): float64 =
 
 # {{{ linkFloorToString*()
 proc linkFloorToString*(f: Floor): string =
-  if   f in (LinkPitSources + LinkPitDestinations): return "pit"
+  if   f in (LinkPitAbove + LinkPitBelow): return "pit"
   elif f in LinkStairs: return "stairs"
   elif f in LinkDoors: return "door"
   elif f in {fTeleportSource, fTeleportDestination}: return "teleport"

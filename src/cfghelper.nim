@@ -1,3 +1,4 @@
+import fieldlimits
 import logging except Level
 import options
 import parsecfg
@@ -81,6 +82,23 @@ proc getInt*(cfg: Config, section, key: string, i: var int) =
 proc getNatural*(cfg: Config, section, key: string, n: var int) =
   var i: int
   getInt(cfg, section, key, i)
+  if i >= 0:
+    n = i.Natural
+  else:
+    invalidValueError(section, key, "natural", $i)
+
+
+proc getNatural*(cfg: Config, section, key: string, n: var int,
+                 limits: FieldLimits) =
+  var i: int
+
+  case limits.kind:
+  of fkInt:
+    getInt(cfg, section, key, i)
+    i = i.limit(limits)
+  else:
+    error(fmt"Invalid FieldLimits for Natural type: {limits}")
+
   if i >= 0:
     n = i.Natural
   else:
