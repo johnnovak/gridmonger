@@ -3774,6 +3774,9 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
       elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
 
+      elif ke.isKeyDown(keyI):
+        a.ui.currFloorColor = map.getFloorColor(cur).byte
+
       elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
            ke.isKeyDown(keyU, repeat=true):
         undoAction(a)
