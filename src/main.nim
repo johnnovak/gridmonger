@@ -162,6 +162,7 @@ const
 
   FloorsKey5 = @[
     fTeleportSource,
+    fTeleportDestination,
     fSpinner,
     fInvisibleBarrier
   ]
