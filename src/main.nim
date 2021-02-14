@@ -2062,8 +2062,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
       columnStart : parseInt(dlg.columnStart)
     )
 
-    actions.setMapProps(a.doc.map, a.ui.cursor, dlg.name, coordOpts,
-                        a.doc.undoManager)
+    actions.setMapProperties(a.doc.map, a.ui.cursor, dlg.name, coordOpts,
+                             a.doc.undoManager)
 
     setStatusMessage(IconFile, "Map properties updated", a)
 
@@ -2444,10 +2444,10 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
       perRegionCoords : dlg.perRegionCoords
     )
 
-    actions.setLevelProps(a.doc.map, a.ui.cursor,
-                          dlg.locationName, dlg.levelName, elevation,
-                          dlg.overrideCoordOpts, coordOpts, regionOpts,
-                          a.doc.undoManager)
+    actions.setLevelProperties(a.doc.map, a.ui.cursor,
+                               dlg.locationName, dlg.levelName, elevation,
+                               dlg.overrideCoordOpts, coordOpts, regionOpts,
+                               a.doc.undoManager)
 
     setStatusMessage(fmt"Level properties updated", a)
 

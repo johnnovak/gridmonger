@@ -214,23 +214,6 @@ proc eraseLabel*(map; loc: Location; um) =
 # {{{ setLink*()
 proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   let srcFloor = map.getFloor(src)
-
-  var destFloor: Floor
-  if   srcFloor in LinkPitSources:       destFloor = fCeilingPit
-  elif srcFloor == fTeleportSource:      destFloor = fTeleportDestination
-  elif srcFloor == fTeleportDestination: destFloor = fTeleportSource
-  elif srcFloor == fDoorEnter:           destFloor = fDoorExit
-  elif srcFloor == fDoorExit:            destFloor = fDoorEnter
-  elif srcFloor in LinkStairs:
-    if map.levels[src.level].elevation < map.levels[dest.level].elevation:
-      destFloor = fStairsDown
-      # TODO could be made undoable, but probably not worth bothering with it
-      map.setFloor(src, fStairsUp)
-    else:
-      destFloor = fStairsUp
-      map.setFloor(src, fStairsDown)
-
-  let level = dest.level
   let linkType = linkFloorToString(srcFloor)
 
   let usd = UndoStateData(
@@ -240,15 +223,31 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
 
   # Do Action
   let action = proc (m: var Map): UndoStateData =
-    # edge case: support for overwriting existing link
+    let srcFloor = m.getFloor(src)
+
+    # Edge case: support for overwriting existing link
     # (delete existing links originating from src)
     m.links.delBySrc(src)
     m.links.delByDest(src)
 
+    var destFloor: Floor
+    if   srcFloor in LinkPitSources:       destFloor = fCeilingPit
+    elif srcFloor == fTeleportSource:      destFloor = fTeleportDestination
+    elif srcFloor == fTeleportDestination: destFloor = fTeleportSource
+    elif srcFloor == fDoorEnter:           destFloor = fDoorExit
+    elif srcFloor == fDoorExit:            destFloor = fDoorEnter
+    elif srcFloor in LinkStairs:
+      if m.levels[src.level].elevation < m.levels[dest.level].elevation:
+        destFloor = fStairsDown
+        m.setFloor(src, fStairsUp)
+      else:
+        destFloor = fStairsUp
+        m.setFloor(src, fStairsDown)
+
     m.setFloor(dest, destFloor)
 
     m.links.set(src, dest)
-    m.levels[level].reindexNotes()
+    m.levels[dest.level].reindexNotes()
     result = usd
 
   # Undo Action
@@ -257,7 +256,7 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
     c = dest.col
     rect = rectN(r, c, r+1, c+1)  # single cell
 
-  let undoLevel = newLevelFrom(map.levels[level], rect)
+  let undoLevel = newLevelFrom(map.levels[dest.level], rect)
 
   var oldLinks = initLinks()
 
@@ -273,14 +272,15 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   old = map.links.getByDest(src)
   if old.isSome: oldLinks.set(old.get, src)
 
+
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[level].copyCellsAndAnnotationsFrom(
+    m.levels[dest.level].copyCellsAndAnnotationsFrom(
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
       srcRect = rectN(0, 0, 1, 1)  # single cell
     )
-    m.levels[level].reindexNotes()
+    m.levels[dest.level].reindexNotes()
 
     # Delete existing links in undo area
     m.links.delBySrc(dest)
@@ -754,11 +754,11 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   action(map).location
 
 # }}}
-# {{{ setLevelProps*()
-proc setLevelProps*(map; loc: Location, locationName, levelName: string,
-                    elevation: int, overrideCoordOpts: bool,
-                    coordOpts: CoordinateOptions, regionOpts: RegionOptions;
-                    um) =
+# {{{ setLevelProperties*()
+proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
+                         elevation: int, overrideCoordOpts: bool,
+                         coordOpts: CoordinateOptions,
+                         regionOpts: RegionOptions; um) =
 
   let usd = UndoStateData(actionName: "Edit level properties", location: loc)
 
@@ -797,9 +797,9 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
   discard action(map)
 
 # }}}
-# {{{ setMapProps*()
-proc setMapProps*(map; loc: Location, name: string,
-                  coordOpts: CoordinateOptions; um) =
+# {{{ setMapPropertiess*()
+proc setMapProperties*(map; loc: Location, name: string,
+                       coordOpts: CoordinateOptions; um) =
 
   let usd = UndoStateData(actionName: "Edit map properties", location: loc)
 
