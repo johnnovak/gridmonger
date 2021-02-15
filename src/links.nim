@@ -59,6 +59,7 @@ proc delByDest*(vl; dest: Location) =
   vl.delByVal(dest)
 
 # }}}
+
 # {{{ filterBySrcInRect*()
 proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural],
                         sel: Option[Selection] = Selection.none): Links =
@@ -105,6 +106,7 @@ proc filterByInRect*(l; level: Natural, rect: Rect[Natural],
 
 
 # }}}
+
 # {{{ filterBySrcLevel*()
 proc filterBySrcLevel*(l; level: Natural): Links =
   result = initBiTable[Location, Location]()
@@ -128,6 +130,7 @@ proc filterByLevel*(l; level: Natural): Links =
 
 
 # }}}
+
 # {{{ remapLevelIndex*()
 proc remapLevelIndex*(vl; oldIndex, newIndex: Natural) =
   var links = vl.filterByLevel(oldIndex)

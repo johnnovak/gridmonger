@@ -3838,50 +3838,13 @@ proc handleGlobalKeyEvents(a) =
                          @[IconArrowsAll, "nudge",
                          "Enter", "confirm", "Esc", "exit"], a)
 
+
       elif ke.isKeyDown(keyG):
-        let floor = map.getFloor(cur)
-        let linkType = capitalizeAscii(linkFloorToString(floor))
-
-        proc jumpToDest(a): bool =
-          let src = cur
-          let dest = map.links.getBySrc(src)
-          if dest.isSome:
-            let dest = dest.get
-            if isSpecialLevelIndex(dest.level):
-              result = false
-            else:
-              moveCursorTo(dest, a)
-              result = true
-
-        proc jumpToSrc(a): bool =
-          let dest = cur
-          let src = map.links.getByDest(dest)
-          if src.isSome:
-            let src = src.get
-            if isSpecialLevelIndex(src.level):
-              result = false
-            else:
-              moveCursorTo(src, a)
-              result = true
-
-        if floor in LinkPitSources:
-          if not jumpToDest(a):
-            setStatusMessage(IconWarning,
-                             fmt"{linkType} is not linked to a destination", a)
-
-        elif floor in LinkPitDestinations:
-          if not jumpToSrc(a):
-            setStatusMessage(IconWarning,
-                             fmt"{linkType} is not linked to a source", a)
-
-        elif floor in (LinkTeleports + LinkStairs + LinkDoors):
-          if not jumpToDest(a):
-            if not jumpToSrc(a):
-              setStatusMessage(IconWarning, fmt"{linktype} is not linked", a)
-
+        let otherLoc = map.getLinkedLocation(cur)
+        if otherLoc.isSome:
+          moveCursorTo(otherLoc.get, a)
         else:
           setStatusMessage(IconWarning, "Not a linked cell", a)
-
 
       elif ke.isKeyDown(keyG, {mkShift}):
         let floor = map.getFloor(cur)
@@ -3890,8 +3853,7 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emSetCellLink
           setSetLinkDestinationMessage(floor, a)
         else:
-          setStatusMessage(IconWarning,
-                           "Cannot link current cell", a)
+          setStatusMessage(IconWarning, "Cannot link current cell", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
         incZoomLevelAction(a)

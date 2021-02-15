@@ -183,6 +183,31 @@ proc canSetWall*(m; loc: Location, dir: CardinalDir): bool =
 
 # }}}
 
+# {{{ getLinkedLocation*()
+proc getLinkedLocation*(m; loc: Location): Option[Location] =
+  var other = m.links.getBySrc(loc)
+  if other.isNone:
+    other = m.links.getByDest(loc)
+
+  if other.isSome:
+    if isSpecialLevelIndex(loc.level):
+      result = Location.none
+    else:
+      result = other
+
+# }}}
+# {{{ normaliseLinkedStairs*()
+proc normaliseLinkedStairs*(m; level: Natural) =
+  alias(l, m.levels[level])
+  for r in 0..l.rows:
+    for c in 0..l.cols:
+      let f = l.getFloor(r,c)
+      if f in LinkStairs:
+        discard
+
+# }}}
+
+
 # {{{ hasTrail*()
 proc hasTrail*(m; loc: Location): bool =
   m.levels[loc.level].hasTrail(loc.row, loc.col)
