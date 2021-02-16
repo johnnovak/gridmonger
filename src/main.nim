@@ -170,8 +170,8 @@ const
   FloorsKey6 = @[
     fStairsDown,
     fStairsUp,
-    fDoorEnter,
-    fDoorExit
+    fEntranceDoor,
+    fExitDoor
   ]
 
 # }}}

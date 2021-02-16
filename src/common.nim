@@ -145,8 +145,8 @@ type
     fCeilingPit          = (43, "ceiling pit"),
     fStairsDown          = (50, "stairs down"),
     fStairsUp            = (51, "stairs up"),
-    fDoorEnter           = (52, "entrance door"),
-    fDoorExit            = (53, "exit door"),
+    fEntranceDoor        = (52, "entrance door"),
+    fExitDoor            = (53, "exit door"),
     fSpinner             = (60, "spinner"),
     fTeleportSource      = (70, "teleport"),
     fTeleportDestination = (71, "teleport destination"),
@@ -191,7 +191,7 @@ const
   LinkPitDestinations* = {fCeilingPit}
   LinkTeleports*       = {fTeleportSource, fTeleportDestination}
   LinkStairs*          = {fStairsDown, fStairsUp}
-  LinkDoors*           = {fDoorEnter, fDoorExit}
+  LinkDoors*           = {fEntranceDoor, fExitDoor}
 
   LinkSources* = LinkPitSources + LinkTeleports + LinkStairs + LinkDoors
 

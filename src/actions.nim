@@ -214,23 +214,6 @@ proc eraseLabel*(map; loc: Location; um) =
 # {{{ setLink*()
 proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   let srcFloor = map.getFloor(src)
-
-  var destFloor: Floor
-  if   srcFloor in LinkPitSources:       destFloor = fCeilingPit
-  elif srcFloor == fTeleportSource:      destFloor = fTeleportDestination
-  elif srcFloor == fTeleportDestination: destFloor = fTeleportSource
-  elif srcFloor == fDoorEnter:           destFloor = fDoorExit
-  elif srcFloor == fDoorExit:            destFloor = fDoorEnter
-  elif srcFloor in LinkStairs:
-    if map.levels[src.level].elevation < map.levels[dest.level].elevation:
-      destFloor = fStairsDown
-      # TODO could be made undoable, but probably not worth bothering with it
-      map.setFloor(src, fStairsUp)
-    else:
-      destFloor = fStairsUp
-      map.setFloor(src, fStairsDown)
-
-  let level = dest.level
   let linkType = linkFloorToString(srcFloor)
 
   let usd = UndoStateData(
@@ -245,10 +228,32 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
     m.links.delBySrc(src)
     m.links.delByDest(src)
 
+    var destFloor: Floor
+    if   srcFloor in LinkPitSources:       destFloor = fCeilingPit
+    elif srcFloor == fTeleportSource:      destFloor = fTeleportDestination
+    elif srcFloor == fTeleportDestination: destFloor = fTeleportSource
+    elif srcFloor == fEntranceDoor:        destFloor = fExitDoor
+    elif srcFloor == fExitDoor:            destFloor = fEntranceDoor
+    elif srcFloor in LinkStairs:
+      let
+        srcElevation = m.levels[src.level].elevation
+        destElevation = m.levels[dest.level].elevation
+
+      if srcElevation < destElevation:
+        destFloor = fStairsDown
+        m.setFloor(src, fStairsUp)
+
+      elif srcElevation > destElevation:
+        destFloor = fStairsUp
+        m.setFloor(src, fStairsDown)
+
+      else:
+        destFloor = if srcFloor == fStairsUp: fStairsDown else: fStairsUp
+
     m.setFloor(dest, destFloor)
 
     m.links.set(src, dest)
-    m.levels[level].reindexNotes()
+    m.levels[dest.level].reindexNotes()
     result = usd
 
   # Undo Action
@@ -257,7 +262,7 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
     c = dest.col
     rect = rectN(r, c, r+1, c+1)  # single cell
 
-  let undoLevel = newLevelFrom(map.levels[level], rect)
+  let undoLevel = newLevelFrom(map.levels[dest.level], rect)
 
   var oldLinks = initLinks()
 
@@ -274,13 +279,13 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   if old.isSome: oldLinks.set(old.get, src)
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[level].copyCellsAndAnnotationsFrom(
+    m.levels[dest.level].copyCellsAndAnnotationsFrom(
       destRow = rect.r1,
       destCol = rect.c1,
       src     = undoLevel,
       srcRect = rectN(0, 0, 1, 1)  # single cell
     )
-    m.levels[level].reindexNotes()
+    m.levels[dest.level].reindexNotes()
 
     # Delete existing links in undo area
     m.links.delBySrc(dest)
@@ -510,6 +515,8 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
         for s in linkKeysToRemove: m.links.delByKey(s)
         m.links.addAll(linksToAdd)
+
+        m.normaliseLinkedStairs(pasteLoc.level)
 
 # }}}
 
@@ -764,12 +771,19 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
 
   let action = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
+
+    let prevElevation = l.elevation
+
     l.locationName = locationName
     l.levelName = levelName
     l.elevation = elevation
     l.overrideCoordOpts = overrideCoordOpts
     l.coordOpts = coordOpts
     l.regionOpts = regionOpts
+
+    if prevElevation != elevation:
+      m.normaliseLinkedStairs(loc.level)
+
     m.refreshSortedLevelNames()
     result = usd
 
@@ -784,12 +798,19 @@ proc setLevelProps*(map; loc: Location, locationName, levelName: string,
 
   var undoAction = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
+
+    let prevElevation = l.elevation
+
     l.locationName = oldLocationName
     l.levelName = oldLevelName
     l.elevation = oldElevation
     l.overrideCoordOpts = oldOverrideCoordOpts
     l.coordOpts = oldCoordOpts
     l.regionOpts = oldRegionOpts
+
+    if prevElevation != oldElevation:
+      m.normaliseLinkedStairs(loc.level)
+
     m.refreshSortedLevelNames()
     result = usd
 

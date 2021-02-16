@@ -190,7 +190,7 @@ proc getLinkedLocation*(m; loc: Location): Option[Location] =
     other = m.links.getByDest(loc)
 
   if other.isSome:
-    if isSpecialLevelIndex(loc.level):
+    if isSpecialLevelIndex(other.get.level):
       result = Location.none
     else:
       result = other
@@ -199,14 +199,28 @@ proc getLinkedLocation*(m; loc: Location): Option[Location] =
 # {{{ normaliseLinkedStairs*()
 proc normaliseLinkedStairs*(m; level: Natural) =
   alias(l, m.levels[level])
-  for r in 0..l.rows:
-    for c in 0..l.cols:
+
+  for r in 0..<l.rows:
+    for c in 0..<l.cols:
       let f = l.getFloor(r,c)
+
       if f in LinkStairs:
-        discard
+        let this = Location(level: level, row: r, col: c)
+        let that = m.getLinkedLocation(this)
+        if that.isSome:
+          let that = that.get
+
+          let thisElevation = m.levels[this.level].elevation
+          let thatElevation = m.levels[that.level].elevation
+
+          proc setFloors(thisFloor, thatFloor: Floor) =
+            m.levels[this.level].setFloor(this.row, this.col, thisFloor)
+            m.levels[that.level].setFloor(that.row, that.col, thatFloor)
+
+          if   thisElevation > thatElevation: setFloors(fStairsDown, fStairsUp)
+          elif thisElevation < thatElevation: setFloors(fStairsUp, fStairsDown)
 
 # }}}
-
 
 # {{{ hasTrail*()
 proc hasTrail*(m; loc: Location): bool =
