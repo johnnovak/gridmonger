@@ -329,64 +329,6 @@ proc eraseCell*(l; r,c: Natural) =
 
 # }}}
 
-# {{{ guessFloorOrientation*()
-proc guessFloorOrientation*(l; r,c: Natural): Orientation =
-  if l.getWall(r,c, dirN) != wNone and
-     l.getWall(r,c, dirS) != wNone:
-    Vert
-  else:
-    Horiz
-
-# }}}
-# {{{ calcResizeParams*()
-proc calcResizeParams*(
-  l; newRows, newCols: Natural, align: Direction
- ): tuple[destRow, destCol: Natural, copyRect: Rect[Natural]] =
-
-  var srcRect = rectI(0, 0, l.rows, l.cols)
-
-  proc shiftHoriz(r: var Rect[int], d: int) =
-    r.c1 += d
-    r.c2 += d
-
-  proc shiftVert(r: var Rect[int], d: int) =
-    r.r1 += d
-    r.r2 += d
-
-  if dirE in align:
-    srcRect.shiftHoriz(newCols - l.cols)
-  elif {dirE, dirW} * align == {}:
-    srcRect.shiftHoriz((newCols - l.cols) div 2)
-
-  if dirS in align:
-    srcRect.shiftVert(newRows - l.rows)
-  elif {dirS, dirN} * align == {}:
-    srcRect.shiftVert((newRows - l.rows) div 2)
-
-  let destRect = rectI(0, 0, newRows, newCols)
-  var intRect = srcRect.intersect(destRect).get
-
-  var copyRect: Rect[Natural]
-  var destRow = 0
-  if srcRect.r1 < 0: copyRect.r1 = -srcRect.r1
-  else: destRow = srcRect.r1
-
-  var destCol = 0
-  if srcRect.c1 < 0: copyRect.c1 = -srcRect.c1
-  else: destCol = srcRect.c1
-
-  copyRect.r2 = copyRect.r1 + intRect.rows
-  copyRect.c2 = copyRect.c1 + intRect.cols
-
-  result = (destRow.Natural, destCol.Natural, copyRect)
-
-# }}}
-# {{{ isSpecialLevelIndex*()
-proc isSpecialLevelIndex*(idx: Natural): bool =
-  idx >= CopyBufferLevelIndex
-
-# }}}
-
 # {{{ paste*()
 proc paste*(l; destRow, destCol: int, src: Level,
             sel: Selection, pasteTrail: bool = false): Option[Rect[Natural]] =
@@ -498,6 +440,64 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
 
 proc newLevelFrom*(l): Level =
   newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
+
+# }}}
+
+# {{{ guessFloorOrientation*()
+proc guessFloorOrientation*(l; r,c: Natural): Orientation =
+  if l.getWall(r,c, dirN) != wNone and
+     l.getWall(r,c, dirS) != wNone:
+    Vert
+  else:
+    Horiz
+
+# }}}
+# {{{ calcResizeParams*()
+proc calcResizeParams*(
+  l; newRows, newCols: Natural, align: Direction
+ ): tuple[destRow, destCol: Natural, copyRect: Rect[Natural]] =
+
+  var srcRect = rectI(0, 0, l.rows, l.cols)
+
+  proc shiftHoriz(r: var Rect[int], d: int) =
+    r.c1 += d
+    r.c2 += d
+
+  proc shiftVert(r: var Rect[int], d: int) =
+    r.r1 += d
+    r.r2 += d
+
+  if dirE in align:
+    srcRect.shiftHoriz(newCols - l.cols)
+  elif {dirE, dirW} * align == {}:
+    srcRect.shiftHoriz((newCols - l.cols) div 2)
+
+  if dirS in align:
+    srcRect.shiftVert(newRows - l.rows)
+  elif {dirS, dirN} * align == {}:
+    srcRect.shiftVert((newRows - l.rows) div 2)
+
+  let destRect = rectI(0, 0, newRows, newCols)
+  var intRect = srcRect.intersect(destRect).get
+
+  var copyRect: Rect[Natural]
+  var destRow = 0
+  if srcRect.r1 < 0: copyRect.r1 = -srcRect.r1
+  else: destRow = srcRect.r1
+
+  var destCol = 0
+  if srcRect.c1 < 0: copyRect.c1 = -srcRect.c1
+  else: destCol = srcRect.c1
+
+  copyRect.r2 = copyRect.r1 + intRect.rows
+  copyRect.c2 = copyRect.c1 + intRect.cols
+
+  result = (destRow.Natural, destCol.Natural, copyRect)
+
+# }}}
+# {{{ isSpecialLevelIndex*()
+proc isSpecialLevelIndex*(idx: Natural): bool =
+  idx >= CopyBufferLevelIndex
 
 # }}}
 

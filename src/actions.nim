@@ -234,15 +234,23 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
     if   srcFloor in LinkPitSources:       destFloor = fCeilingPit
     elif srcFloor == fTeleportSource:      destFloor = fTeleportDestination
     elif srcFloor == fTeleportDestination: destFloor = fTeleportSource
-    elif srcFloor == fDoorEnter:           destFloor = fDoorExit
-    elif srcFloor == fDoorExit:            destFloor = fDoorEnter
+    elif srcFloor == fEntranceDoor:        destFloor = fExitDoor
+    elif srcFloor == fExitDoor:            destFloor = fEntranceDoor
     elif srcFloor in LinkStairs:
-      if m.levels[src.level].elevation < m.levels[dest.level].elevation:
+      let
+        srcElevation = m.levels[src.level].elevation
+        destElevation = m.levels[dest.level].elevation
+
+      if srcElevation < destElevation:
         destFloor = fStairsDown
         m.setFloor(src, fStairsUp)
-      else:
+
+      elif srcElevation > destElevation:
         destFloor = fStairsUp
         m.setFloor(src, fStairsDown)
+
+      else:
+        destFloor = if srcFloor == fStairsUp: fStairsDown else: fStairsUp
 
     m.setFloor(dest, destFloor)
 
@@ -511,6 +519,8 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
         for s in linkKeysToRemove: m.links.delByKey(s)
         m.links.addAll(linksToAdd)
 
+        m.normaliseLinkedStairs(pasteLoc.level)
+
 # }}}
 
 # {{{ addNewLevel*()
@@ -764,12 +774,19 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 
   let action = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
+
+    let prevElevation = l.elevation
+
     l.locationName = locationName
     l.levelName = levelName
     l.elevation = elevation
     l.overrideCoordOpts = overrideCoordOpts
     l.coordOpts = coordOpts
     l.regionOpts = regionOpts
+
+    if prevElevation != elevation:
+      m.normaliseLinkedStairs(loc.level)
+
     m.refreshSortedLevelNames()
     result = usd
 
@@ -784,12 +801,19 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 
   var undoAction = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
+
+    let prevElevation = l.elevation
+
     l.locationName = oldLocationName
     l.levelName = oldLevelName
     l.elevation = oldElevation
     l.overrideCoordOpts = oldOverrideCoordOpts
     l.coordOpts = oldCoordOpts
     l.regionOpts = oldRegionOpts
+
+    if prevElevation != oldElevation:
+      m.normaliseLinkedStairs(loc.level)
+
     m.refreshSortedLevelNames()
     result = usd
 
