@@ -12,6 +12,12 @@ BUGS
 
   - turn off trail mode when changing the level via the dropwodn
 
+
+LOW PRIORITY BUGS
+
+  - in paste preview mode, you cannot use "negative" col & row paste
+    destination
+
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
 
 
