@@ -3646,20 +3646,23 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, 1, a)
     elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, 1, a)
 
-    elif ke.isKeyDown(k.left,  {mkCtrl}, repeat=true): moveCursor(dirW, j, a)
-    elif ke.isKeyDown(k.right, {mkCtrl}, repeat=true): moveCursor(dirE, j, a)
-    elif ke.isKeyDown(k.up,    {mkCtrl}, repeat=true): moveCursor(dirN, j, a)
-    elif ke.isKeyDown(k.down,  {mkCtrl}, repeat=true): moveCursor(dirS, j, a)
-
     elif ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevel(dirW, 1, a)
     elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevel(dirE, 1, a)
     elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, 1, a)
     elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, 1, a)
 
-    elif ke.isKeyDown(k.left,  {mkCtrl, mkShift}, repeat=true): moveLevel(dirW, j, a)
-    elif ke.isKeyDown(k.right, {mkCtrl, mkShift}, repeat=true): moveLevel(dirE, j, a)
-    elif ke.isKeyDown(k.up,    {mkCtrl, mkShift}, repeat=true): moveLevel(dirN, j, a)
-    elif ke.isKeyDown(k.down,  {mkCtrl, mkShift}, repeat=true): moveLevel(dirS, j, a)
+    const mkCS = {mkCtrl, mkShift}
+
+    if not a.opts.wasdMode:
+      if   ke.isKeyDown(k.left,  {mkCtrl}, repeat=true): moveCursor(dirW, j, a)
+      elif ke.isKeyDown(k.right, {mkCtrl}, repeat=true): moveCursor(dirE, j, a)
+      elif ke.isKeyDown(k.up,    {mkCtrl}, repeat=true): moveCursor(dirN, j, a)
+      elif ke.isKeyDown(k.down,  {mkCtrl}, repeat=true): moveCursor(dirS, j, a)
+
+      elif ke.isKeyDown(k.left,  mkCS, repeat=true): moveLevel(dirW, j, a)
+      elif ke.isKeyDown(k.right, mkCS, repeat=true): moveLevel(dirE, j, a)
+      elif ke.isKeyDown(k.up,    mkCS, repeat=true): moveLevel(dirN, j, a)
+      elif ke.isKeyDown(k.down,  mkCS, repeat=true): moveLevel(dirS, j, a)
 
     result = false
 
