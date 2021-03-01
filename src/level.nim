@@ -232,8 +232,11 @@ proc convertNoteToComment(l; r,c: Natural) =
       l.delAnnotation(r,c)
 
     if note.kind != akLabel:
-      let comment = Annotation(kind: akComment, text: note.text)
-      l.setAnnotation(r,c, comment)
+      if note.text == "":
+        l.delAnnotation(r,c)
+      else:
+        let comment = Annotation(kind: akComment, text: note.text)
+        l.setAnnotation(r,c, comment)
 
 # }}}
 # {{{ setFloor*()

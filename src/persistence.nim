@@ -43,6 +43,7 @@ const
 
   NumAnnotationsLimits*    = intLimits(min=0, max=10_000)
   NoteTextLimits*          = strLimits(minLen=1, maxLen=1600, maxRuneLen=400)
+  NoteIconTextLimits*      = strLimits(minLen=0, maxLen=1600, maxRuneLen=400)
   NoteCustomIdLimits*      = strLimits(minLen=1, maxLen=2, maxRuneLen=2)
   NoteColorLimits*         = intLimits(min=0, max=LevelStyle.noteIndexBgColor.len)
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
@@ -340,12 +341,14 @@ proc readLevelAnnotations_v1(rr; l: Level) =
       debug(fmt"    labelColor: {labelColor}")
       checkValueRange(labelColor, "lvl.anno.labelColor", NoteColorLimits)
       anno.labelColor = labelColor
-#      discard
 
     let text = rr.readWStr()
     debug(fmt"    text: {text}")
 
-    checkStringLength(text, "lvl.anno.text", NoteTextLimits)
+    let textLimits = if anno.kind == akIcon: NoteIconTextLimits
+                     else: NoteTextLimits
+
+    checkStringLength(text, "lvl.anno.text", textLimits)
 
     anno.text = text
     l.setAnnotation(row, col, anno)
