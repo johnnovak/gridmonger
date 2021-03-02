@@ -197,6 +197,10 @@ const
 
 
 type
+  # Selections always have the same dimensions as the level the selection was
+  # made in. The actual selection rectangle is then retrieved with the
+  # boundingBox() method.
+  #
   # (0,0) is the top-left cell of the selection
   Selection* = ref object
     rows*, cols*: Natural

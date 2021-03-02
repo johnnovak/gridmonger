@@ -1,7 +1,8 @@
 BUGS
   - cut and the paste back doesn't yield the same results
-
   - cut shouldn't cut walls of bordering cells
+
+  - draw trail should not delete existing cells, only change floor color
 
   - textfields: max length (note, ID field)
 
@@ -53,8 +54,6 @@ v0.9
   - display dialog on crash with instruction to file a bug report (print log
     file location and backup file location)
 
-  - disable ctrl movement in wasd mode
-  - disable ctrl in excavate, erase & floor modes
   - center map to screen
 
   - level selector popup

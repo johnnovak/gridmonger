@@ -1177,6 +1177,7 @@ proc exitSelectMode(a) =
 
 # }}}
 # {{{ copySelection()
+#[
 proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   alias(ui, a.ui)
 
@@ -1197,6 +1198,59 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
       level: newLevelFrom(currLevel(a), bbox)
     ))
     eraseOrphanedWalls(buf.get)
+
+    ui.cutToBuffer = false
+
+  result = bbox
+]#
+# }}}
+
+# {{{ copySelection()
+proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
+  alias(ui, a.ui)
+
+  let sel = ui.selection.get
+  let bbox = sel.boundingBox()
+
+  if bbox.isSome:
+    let bbox = bbox.get
+    let srcLevel = currLevel(a)
+
+    var destLevel = newLevel(
+      locationName = "", levelName = "", elevation = 0,
+      rows = bbox.rows, cols = bbox.cols
+    )
+
+    for r in bbox.r1..<bbox.r2:
+      for c in bbox.c1..<bbox.c2:
+        if sel[r,c] and not srcLevel.isEmpty(r,c):
+          let dr = r - bbox.r1
+          let dc = c - bbox.c1
+
+          let floor = srcLevel.getFloor(r,c)
+          destLevel.setFloor(dr, dc, floor)
+
+          let fo = srcLevel.getFloorOrientation(r,c)
+          destLevel.setFloorOrientation(dr, dc, fo)
+
+          let floorColor = srcLevel.getFloorColor(r,c)
+          destLevel.setFloorColor(dr, dc, floorColor)
+
+          template copyWall(dir: CardinalDir) =
+            let w = srcLevel.getWall(r,c, dir)
+            destLevel.setWall(dr, dc, dir, w)
+
+          copyWall(dirN)
+          copyWall(dirW)
+          copyWall(dirS)
+          copyWall(dirE)
+
+    destLevel.copyAnnotationsFrom(destRow=0, destCol=0, srcLevel, bbox)
+
+    buf = some(SelectionBuffer(
+      selection: newSelectionFrom(sel, bbox),
+      level: destLevel
+    ))
 
     ui.cutToBuffer = false
 
