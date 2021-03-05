@@ -4058,10 +4058,13 @@ proc handleGlobalKeyEvents(a) =
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir; a) =
         let cur = a.ui.cursor
-        if map.canSetWall(cur, dir):
-          let w = if map.getWall(cur, dir) == wWall: wNone
-                  else: wWall
-          actions.setWall(map, cur, dir, w, um)
+        if map.isEmpty(cur):
+          setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
+        else:
+          if map.canSetWall(cur, dir):
+            let w = if map.getWall(cur, dir) == wWall: wNone
+                    else: wWall
+            actions.setWall(map, cur, dir, w, um)
 
       handleMoveKeys(ke, handleMoveKey)
 
