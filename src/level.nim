@@ -10,6 +10,11 @@ import selection
 
 using l: Level
 
+const
+  # internal IDs, never written to disk
+  CopyBufferLevelIndex* = 1_000_000
+  MoveBufferLevelIndex* = 1_000_001
+
 # {{{ newLevel*()
 const DefaultCoordOpts = CoordinateOptions(
   origin:      coNorthWest,
@@ -371,17 +376,13 @@ proc paste*(l; destRow, destCol: int, src: Level,
             let w = src.getWall(srcRow, srcCol, dir)
             l.setWall(r,c, dir, w)
 
-          let
-            emptyFloor = floor == fEmpty
-            topRow    = r == dr.r1
-            bottomRow = r == dr.r2-1
-            leftCol   = c == dr.c1
-            rightCol  = c == dr.c2-1
-
-          if not (topRow    and emptyFloor): copyWall(dirN)
-          if not (bottomRow and emptyFloor): copyWall(dirS)
-          if not (leftCol   and emptyFloor): copyWall(dirW)
-          if not (rightCol  and emptyFloor): copyWall(dirE)
+          if floor.isEmpty:
+            l.eraseOrphanedWalls(r,c)
+          else:
+            copyWall(dirN)
+            copyWall(dirW)
+            copyWall(dirS)
+            copyWall(dirE)
 
           l.delAnnotation(r,c)
           if src.hasAnnotation(srcRow, srcCol):

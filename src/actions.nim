@@ -397,8 +397,10 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
   let level = loc.level
   var oldLinks = map.links.filterByInRect(level, bbox, sel.some)
 
-  proc transformAndCollectLinks(origLinks: Links, linksBuf: var Links,
-                                selection: Selection, bbox: Rect[Natural]) =
+  proc transformAndCollectLinks(origLinks: Links, selection: Selection,
+                                bbox: Rect[Natural]): Links =
+    result = initLinks()
+
     for src, dest in origLinks.pairs:
       var src = src
       var dest = dest
@@ -406,15 +408,16 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
       # Transform location so it's relative to the top-left corner of the
       # buffer
-      if src.level == level and
-         bbox.contains(src.row, src.col) and selection[src.row, src.col]:
+      if selection[src.row, src.col] and
+         src.level == level and bbox.contains(src.row, src.col):
+
         src.level = linkDestLevelIndex
         src.row = src.row - bbox.r1
         src.col = src.col - bbox.c1
         addLink = true
 
-      if dest.level == level and
-         bbox.contains(dest.row, dest.col) and selection[dest.row, dest.col]:
+      if selection[dest.row, dest.col] and
+         dest.level == level and bbox.contains(dest.row, dest.col):
 
         dest.level = linkDestLevelIndex
         dest.row = dest.row - bbox.r1
@@ -422,11 +425,10 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
         addLink = true
 
       if addLink:
-        linksBuf.set(src, dest)
+        result.set(src, dest)
 
 
-  var newLinks = initLinks()
-  transformAndCollectLinks(oldLinks, newLinks, sel, bbox)
+  let newLinks = transformAndCollectLinks(oldLinks, sel, bbox)
 
 
   cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Cut selection", m):
@@ -442,12 +444,13 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
         if sel[r,c]:
           l.row = r
           l.col = c
-          m.eraseCell(l)
+          if not m.isEmpty(l):
+            m.eraseCell(l)
 
 # }}}
 # {{{ pasteSelection*()
 proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
-                     linkSrcLevelIndex: Natural; um;
+                     pasteBufferLevelIndex: Natural; um;
                      groupWithPrev: bool = false,
                      pasteTrail: bool = false,
                      actionName: string = "Pasted buffer") =
@@ -470,25 +473,30 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
       alias(l, m.levels[pasteLoc.level])
 
-      let bbox = l.paste(pasteLoc.row, pasteLoc.col, sb.level, sb.selection,
-                         pasteTrail)
+      let destRect = l.paste(pasteLoc.row, pasteLoc.col,
+                             sb.level, sb.selection, pasteTrail)
 
-      if bbox.isSome:
-        let bbox = bbox.get
+      if destRect.isSome:
+        let destRect = destRect.get
         var loc = Location(level: pasteLoc.level)
 
-        # Erase links in the paste area
-        for r in bbox.r1..<bbox.r2:
-          for c in bbox.c1..<bbox.c2:
+        # Erase existing map links in the paste area (taking selection into
+        # account)
+        for r in destRect.r1..<destRect.r2:
+          for c in destRect.c1..<destRect.c2:
             loc.row = r
             loc.col = c
-            m.eraseCellLinks(loc)
+            if sb.selection[r-destRect.r1, c-destRect.c1]:
+              m.eraseCellLinks(loc)
 
+        # Recreate links from the paste buffer
+        var linksToDeleteBySrc = newSeq[Location]()
+        var linksToDeleteByDest = newSeq[Location]()
 
-        # Recreate links from the copy buffer
-        var linkKeysToRemove = newSeq[Location]()
         var linksToAdd = initLinks()
 
+        # More efficient to just iterate through all links in the map in one
+        # go
         for src, dest in m.links.pairs:
           var
             src = src
@@ -497,26 +505,44 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
             srcInside = true
             destInside = true
 
-          if src.level == linkSrcLevelIndex:
-            linkKeysToRemove.add(src)
+          # Link starting from a paste buffer locationn (pointing to either
+          # a map location, or another paste buffer location)
+          if src.level == pasteBufferLevelIndex:
+            linksToDeleteBySrc.add(src)
+
+            # Add paste location offset
             src.level = pasteLoc.level
             src.row += pasteLoc.row
             src.col += pasteLoc.col
-            srcInside = bbox.contains(src.row, src.col)
+
+            # We need this check because the full paste rect might get clipped
+            # if it cannot fit into the available map area
+            srcInside = destRect.contains(src.row, src.col)
             addLink = true
 
-          if dest.level == linkSrcLevelIndex:
-            linkKeysToRemove.add(src)
+          # Link pointing to a paste buffer location (from either a map
+          # location, or another paste buffer location)
+          if dest.level == pasteBufferLevelIndex:
+            linksToDeleteByDest.add(dest)
+
+            # Add paste location offset
             dest.level = pasteLoc.level
             dest.row += pasteLoc.row
             dest.col += pasteLoc.col
-            destInside = bbox.contains(dest.row, dest.col)
+
+            # We need this check because the full paste rect might get clipped
+            # if it cannot fit into the available map area
+            destInside = destRect.contains(dest.row, dest.col)
             addLink = true
 
           if addLink and srcInside and destInside:
             linksToAdd[src] = dest
 
-        for s in linkKeysToRemove: m.links.delByKey(s)
+        # Delete paste buffer links
+        for s in linksToDeleteBySrc:  m.links.delBySrc(s)
+        for s in linksToDeleteByDest: m.links.delByDest(s)
+
+        # Recreate links between real map locations
         m.links.addAll(linksToAdd)
 
         m.normaliseLinkedStairs(pasteLoc.level)

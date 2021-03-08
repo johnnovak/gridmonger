@@ -77,7 +77,6 @@ proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural],
         if sel.isNone or (sel.isSome and sel.get[r,c]):
           result[src] = dest.get
 
-
 # }}}
 # {{{ filterByDestInRect*()
 proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural],
@@ -96,14 +95,12 @@ proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural],
         if sel.isNone or (sel.isSome and sel.get[r,c]):
           result[src.get] = dest
 
-
 # }}}
 # {{{ filterByInRect*()
 proc filterByInRect*(l; level: Natural, rect: Rect[Natural],
                      sel: Option[Selection] = Selection.none): Links =
   result = l.filterBySrcInRect(level, rect, sel)
   result.addAll(l.filterByDestInRect(level, rect, sel))
-
 
 # }}}
 

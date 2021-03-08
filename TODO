@@ -1,7 +1,4 @@
 BUGS
-  - cut and the paste back doesn't yield the same results
-  - cut shouldn't cut walls of bordering cells
-
   - draw trail should not delete existing cells, only change floor color
 
   - textfields: max length (note, ID field)
