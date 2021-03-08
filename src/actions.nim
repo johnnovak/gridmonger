@@ -59,6 +59,7 @@ template cellAreaAction(map; loc: Location, rect: Rect[Natural];
     )
     for src in m.links.filterByInRect(loc.level, delRect).keys:
       m.links.delBySrc(src)
+      # TODO delByDest as well?
 
     m.links.addAll(oldLinks)
     result = usd
@@ -397,8 +398,10 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
   let level = loc.level
   var oldLinks = map.links.filterByInRect(level, bbox, sel.some)
 
-  proc transformAndCollectLinks(origLinks: Links, linksBuf: var Links,
-                                selection: Selection, bbox: Rect[Natural]) =
+  proc transformAndCollectLinks(origLinks: Links, selection: Selection,
+                                bbox: Rect[Natural]): Links =
+    result = initLinks()
+
     for src, dest in origLinks.pairs:
       var src = src
       var dest = dest
@@ -406,15 +409,16 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
       # Transform location so it's relative to the top-left corner of the
       # buffer
-      if src.level == level and
-         bbox.contains(src.row, src.col) and selection[src.row, src.col]:
+      if selection[src.row, src.col] and
+         src.level == level and bbox.contains(src.row, src.col):
+
         src.level = linkDestLevelIndex
         src.row = src.row - bbox.r1
         src.col = src.col - bbox.c1
         addLink = true
 
-      if dest.level == level and
-         bbox.contains(dest.row, dest.col) and selection[dest.row, dest.col]:
+      if selection[dest.row, dest.col] and 
+         dest.level == level and bbox.contains(dest.row, dest.col):
 
         dest.level = linkDestLevelIndex
         dest.row = dest.row - bbox.r1
@@ -422,16 +426,18 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
         addLink = true
 
       if addLink:
-        linksBuf.set(src, dest)
+        result.set(src, dest)
 
 
-  var newLinks = initLinks()
-  transformAndCollectLinks(oldLinks, newLinks, sel, bbox)
+  let newLinks = transformAndCollectLinks(oldLinks, sel, bbox)
 
 
   cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Cut selection", m):
 
-    for s in oldLinks.keys: m.links.delBySrc(s)
+    for s in oldLinks.keys:
+      m.links.delBySrc(s)
+      # TODO del by dest?
+ 
     m.links.addAll(newLinks)
 
     var l: Location
@@ -442,7 +448,8 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
         if sel[r,c]:
           l.row = r
           l.col = c
-          m.eraseCell(l)
+          if not m.isEmpty(l):
+            m.eraseCell(l)
 
 # }}}
 # {{{ pasteSelection*()
@@ -478,12 +485,14 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
         var loc = Location(level: pasteLoc.level)
 
         # Erase links in the paste area
+        # TODO take selection buffer into account
         for r in bbox.r1..<bbox.r2:
           for c in bbox.c1..<bbox.c2:
             loc.row = r
             loc.col = c
             m.eraseCellLinks(loc)
 
+        echo m.links
 
         # Recreate links from the copy buffer
         var linkKeysToRemove = newSeq[Location]()
@@ -503,6 +512,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
             src.row += pasteLoc.row
             src.col += pasteLoc.col
             srcInside = bbox.contains(src.row, src.col)
+            echo srcInside
             addLink = true
 
           if dest.level == linkSrcLevelIndex:
@@ -511,13 +521,18 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
             dest.row += pasteLoc.row
             dest.col += pasteLoc.col
             destInside = bbox.contains(dest.row, dest.col)
+            echo destInside
             addLink = true
 
+          # TODO is this condition correct?
           if addLink and srcInside and destInside:
             linksToAdd[src] = dest
 
         for s in linkKeysToRemove: m.links.delByKey(s)
         m.links.addAll(linksToAdd)
+
+        echo "--- final ---"
+        echo m.links
 
         m.normaliseLinkedStairs(pasteLoc.level)
 
@@ -572,6 +587,8 @@ proc deleteLevel*(map; loc: Location; um): Location =
 
     for src in oldLinks.keys:
       m.links.delBySrc(src)
+
+    # TODO delByDest as well?
 
     if adjustLinks:
       let oldLevelIdx = m.levels.high+1
@@ -647,6 +664,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     l = newLevel
 
     for src in oldLinks.keys: m.links.delBySrc(src)
+    # TODO delByDest as well?
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -662,6 +680,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for src in newLinks.keys: m.links.delBySrc(src)
+    # TODO delByDest as well?
     m.links.addAll(oldLinks)
     result = usd
 
@@ -690,6 +709,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     m.levels[loc.level] = newLevelFrom(m.levels[loc.level], cropRect)
 
     for src in oldLinks.keys: m.links.delBySrc(src)
+    # TODO delByDest as well?
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -704,6 +724,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for src in newLinks.keys: m.links.delBySrc(src)
+    # TODO delByDest as well?
     m.links.addAll(oldLinks)
     result = usd
 
@@ -742,6 +763,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     m.levels[loc.level] = l
 
     for src in oldLinks.keys: m.links.delBySrc(src)
+    # TODO delByDest as well?
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -756,6 +778,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for src in newLinks.keys: m.links.delBySrc(src)
+    # TODO delByDest as well?
     m.links.addAll(oldLinks)
 
     result = usd

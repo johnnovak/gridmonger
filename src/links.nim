@@ -96,7 +96,6 @@ proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural],
         if sel.isNone or (sel.isSome and sel.get[r,c]):
           result[src.get] = dest
 
-
 # }}}
 # {{{ filterByInRect*()
 proc filterByInRect*(l; level: Natural, rect: Rect[Natural],
