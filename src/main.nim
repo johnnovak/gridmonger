@@ -2972,11 +2972,11 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, 28, 28,
-    labels = newSeq[string](ls.labelColor.len), # TODO
+    labels = newSeq[string](ls.labelColor.len),
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.labelColor.toSeq, # TODO
+    drawProc = colorRadioButtonDrawProc(ls.labelColor.toSeq,
                                         ls.cursorColor).some,
     style = a.theme.radioButtonStyle
   )
@@ -3029,7 +3029,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     var eventHandled = true
 
     dlg.color = handleGridRadioButton(
-      ke, dlg.color, NumIndexColors, buttonsPerRow=NumIndexColors  # TODO
+      ke, dlg.color, NumIndexColors, buttonsPerRow=NumIndexColors
     )
 
     if ke.isShortcutDown(scNextTextField):
@@ -3630,7 +3630,8 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.down,  repeat=true): moveHandler(dirS, a)
 
 
-  proc handleMoveCursor(ke: Event, k: MoveKeys; a): bool =
+  proc handleMoveCursor(ke: Event, k: MoveKeys,
+                        allowPan, allowJump: bool; a): bool =
     const j = CursorJump
     result = true
 
@@ -3638,26 +3639,30 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, 1, a)
     elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, 1, a)
     elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, 1, a)
-
-    elif ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevel(dirW, 1, a)
-    elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevel(dirE, 1, a)
-    elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, 1, a)
-    elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, 1, a)
+    elif allowPan:
+      if   ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevel(dirW, 1, a)
+      elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevel(dirE, 1, a)
+      elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, 1, a)
+      elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, 1, a)
 
     const mkCS = {mkCtrl, mkShift}
 
-    if not a.opts.wasdMode:
+    if not a.opts.wasdMode and allowJump:
       if   ke.isKeyDown(k.left,  {mkCtrl}, repeat=true): moveCursor(dirW, j, a)
       elif ke.isKeyDown(k.right, {mkCtrl}, repeat=true): moveCursor(dirE, j, a)
       elif ke.isKeyDown(k.up,    {mkCtrl}, repeat=true): moveCursor(dirN, j, a)
       elif ke.isKeyDown(k.down,  {mkCtrl}, repeat=true): moveCursor(dirS, j, a)
-
-      elif ke.isKeyDown(k.left,  mkCS, repeat=true): moveLevel(dirW, j, a)
-      elif ke.isKeyDown(k.right, mkCS, repeat=true): moveLevel(dirE, j, a)
-      elif ke.isKeyDown(k.up,    mkCS, repeat=true): moveLevel(dirN, j, a)
-      elif ke.isKeyDown(k.down,  mkCS, repeat=true): moveLevel(dirS, j, a)
+      elif allowPan:
+        if   ke.isKeyDown(k.left,  mkCS, repeat=true): moveLevel(dirW, j, a)
+        elif ke.isKeyDown(k.right, mkCS, repeat=true): moveLevel(dirE, j, a)
+        elif ke.isKeyDown(k.up,    mkCS, repeat=true): moveLevel(dirN, j, a)
+        elif ke.isKeyDown(k.down,  mkCS, repeat=true): moveLevel(dirS, j, a)
 
     result = false
+
+
+  proc handleMoveCursor(ke: Event, k: MoveKeys; a): bool =
+    handleMoveCursor(ke, k, allowPan=true, allowJump=true, a)
 
   if hasKeyEvent():
     let ke = koi.currEvent()
@@ -3814,7 +3819,6 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
 
       elif ke.isKeyDown(keyG, {mkCtrl}):
-        # TODO warning when map is empty?
         let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
         ui.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
@@ -3961,9 +3965,9 @@ proc handleGlobalKeyEvents(a) =
     of emExcavate, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        # TODO disallow cursor jump with ctrl
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        discard handleMoveCursor(ke, moveKeys, a)
+        discard handleMoveCursor(ke, moveKeys,
+                                 allowPan=false, allowJump=false, a)
 
       let cur = a.ui.cursor
 
@@ -3984,11 +3988,11 @@ proc handleGlobalKeyEvents(a) =
           if not map.isEmpty(cur):
             actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
-      if not opts.wasdMode and ke.isKeyUp({keyD, keyE}):
+      if not opts.wasdMode and ke.isKeyUp({keyD}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      if ke.isKeyUp({keyF, keyC, keyX}):
+      if ke.isKeyUp({keyC, keyE, keyF, keyX}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
