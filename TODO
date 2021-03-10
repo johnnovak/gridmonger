@@ -48,21 +48,10 @@ v0.9
   - textarea: mouse handling
 
   - attempt to save map on crash
-  - display dialog on crash with instruction to file a bug report (print log
-    file location and backup file location)
 
   - center map to screen
 
-  - level selector popup
-  - theme selector popup/window
-
   - align left/right half of the screen buttons
-
-  - theme editor
-    - image file loading
-    - scrollbars should always be visible
-    - action buttons should work
-    - hex color: only accept hex chars
 
   - trail:
     - show/hide trail
@@ -124,6 +113,19 @@ v1.1
   - linux package?
 
   - legend / locations / notes window
+
+  - level selector popup
+  - theme selector popup/window
+
+  - theme editor
+    - image file loading
+    - scrollbars should always be visible
+    - action buttons should work
+    - hex color: only accept hex chars
+
+  - display dialog on crash with instruction to file a bug report (print log
+    file location and backup file location)
+
 
 
 LOW PRIORITY
