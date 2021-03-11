@@ -1,6 +1,4 @@
 BUGS
-  - draw trail should not delete existing cells, only change floor color
-
   - textfields: max length (note, ID field)
 
   - undo after cut/erase/etc selection should restore cursor to selection to
@@ -29,23 +27,21 @@ TESTS
 TODO
 
 v0.9
-  - update all themes
-
-  - map/level comments
-
   - region parameters (only name for now)
   - region name reassignment when resizing a level
-
-  - store AppState in map
 
   - about dialog
   - help screen?
 
+  - update all themes
+
+  - map/level comments
+
+  - store AppState in map
+
   - toggle grid?
 
   - cascading theme loading (built-in vs user themes)
-
-  - textarea: mouse handling
 
   - attempt to save map on crash
 
@@ -54,9 +50,9 @@ v0.9
   - align left/right half of the screen buttons
 
   - trail:
-    - show/hide trail
-    - excavate trail
-    - clear whole trail
+    - show/hide trail?
+
+  - textarea: mouse handling
 
   - config format:
     - write own config handler:

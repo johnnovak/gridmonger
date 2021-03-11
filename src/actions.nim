@@ -148,13 +148,18 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural], floorColor: byte;
         loc.row = r
         loc.col = c
         if m.hasTrail(loc):
-          m.excavate(loc, floorColor)
+          if m.isEmpty(loc):
+            m.excavate(loc, floorColor)
+          else:
+            m.setFloorColor(loc, floorColor)
 
 # }}}
 # {{{ clearTrail*()
-proc clearTrail*(map; loc: Location, bbox: Rect[Natural], um) =
+proc clearTrail*(map; loc: Location, bbox: Rect[Natural]; um;
+                 groupWithPrev: bool = false;
+                 actionName: string = "Clear trail") =
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Clear trail", m):
+  cellAreaAction(map, loc, bbox, um, groupWithPrev, actionName, m):
     var loc = loc
 
     for r in bbox.r1..<bbox.r2:
@@ -437,7 +442,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
     for s in oldLinks.keys:
       m.links.delBySrc(s)
       # TODO del by dest?
- 
+
     m.links.addAll(newLinks)
 
     var l: Location

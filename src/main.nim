@@ -3767,6 +3767,8 @@ proc handleGlobalKeyEvents(a) =
         let bbox = l.calcTrailBoundingBox()
         if bbox.isSome:
           actions.excavateTrail(map, cur, bbox.get, ui.currFloorColor, um)
+          actions.clearTrail(map, cur, bbox.get, um,
+                             groupWithPrev=true, actionName="Excavate trail")
           setStatusMessage(IconEraser, "Trail excavated", a)
         else:
           setStatusMessage(IconWarning, "No trail to excavate", a)
