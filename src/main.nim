@@ -841,8 +841,10 @@ proc updateWidgetStyles(a) =
 
 # {{{ setCursor()
 proc setCursor(cur: Location; a) =
-  a.ui.lastCursor = a.ui.cursor
   a.ui.cursor = cur
+
+  if a.ui.lastCursor.level != a.ui.cursor.level:
+    a.opts.drawTrail = false
 
   if a.opts.drawTrail:
     a.doc.map.setTrail(cur, true)
@@ -3201,7 +3203,6 @@ proc nextThemeAction(a) =
 proc prevLevelAction(a) =
   var si = currSortedLevelIdx(a)
   if si > 0:
-    a.opts.drawTrail = false
     var cur = a.ui.cursor
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
     setCursor(cur, a)
@@ -3211,7 +3212,6 @@ proc prevLevelAction(a) =
 proc nextLevelAction(a) =
   var si = currSortedLevelIdx(a)
   if si < a.doc.map.levels.len-1:
-    a.opts.drawTrail = false
     var cur = a.ui.cursor
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
     setCursor(cur, a)
@@ -3813,6 +3813,7 @@ proc handleGlobalKeyEvents(a) =
           dp.selStartRow = cur.row
           dp.selStartCol = cur.col
 
+          opts.drawTrail = false
           ui.editMode = emPastePreview
           setStatusMessage(IconTiles, "Paste preview",
                            @[IconArrowsAll, "placement",
@@ -4469,6 +4470,8 @@ proc renderLevel(a) =
 
     drawNoteTooltip(x, y, note.get, a)
 
+
+  a.ui.lastCursor = a.ui.cursor
 
 # }}}
 # {{{ renderToolsPane()
@@ -5427,7 +5430,10 @@ proc renderUI(a) =
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
       style = a.theme.levelDropDownStyle
     )
-    ui.cursor.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+
+    var cur = ui.cursor
+    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+    setCursor(cur, a)
 
     renderLevel(a)
 
@@ -5560,7 +5566,7 @@ proc renderFrame(a) =
           saveConfigAndExit(a)
 
 
-  # XXX HACK: If the theme pane is shown, widgets are handled first, then then
+  # XXX HACK: If the theme pane is shown, widgets are handled first, then
   # the global shortcuts, so widget-specific shorcuts can take precedence
   var uiRendered = false
   if a.opts.showThemePane:
