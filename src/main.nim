@@ -191,6 +191,7 @@ type
     theme:       Theme
     themeEditor: ThemeEditor
     splash:      Splash
+    aboutLogo:   AboutLogo
 
     shouldClose: bool
 
@@ -292,7 +293,9 @@ type
     textAreaStyle:          TextAreaStyle
     textFieldStyle:         koi.TextFieldStyle
 
+    aboutDialogStyle:       koi.DialogStyle
     aboutButtonStyle:       ButtonStyle
+
     iconRadioButtonsStyle:  RadioButtonsStyle
     warningLabelStyle:      LabelStyle
 
@@ -301,6 +304,7 @@ type
 
 
   Dialogs = object
+    aboutDialog:            AboutDialogParams
     preferencesDialog:      PreferencesDialogParams
 
     saveDiscardDialog:      SaveDiscardDialogParams
@@ -315,6 +319,14 @@ type
 
     editNoteDialog:         EditNoteDialogParams
     editLabelDialog:        EditLabelDialogParams
+
+
+  AboutDialogParams = object
+    isOpen:        bool
+    logoPaint:     Paint
+    outlinePaint:  Paint
+    shadowPaint:   Paint
+
 
 
   PreferencesDialogParams = object
@@ -506,6 +518,13 @@ type
     updateLogoImage:     bool
     updateOutlineImage:  bool
     updateShadowImage:   bool
+
+
+  AboutLogo = object
+    logo:             ImageData
+    logoImage:        Image
+    logoPaint:        Paint
+    updateLogoImage:  bool
 
 
 var g_app: AppContext
@@ -759,6 +778,9 @@ proc updateWidgetStyles(a) =
       feather = s.dialog.shadowFeather
       color   = s.dialog.shadowColor
 
+  a.theme.aboutDialogStyle = a.theme.dialogStyle
+  a.theme.aboutDialogStyle.drawTitleBar = false
+
   # Label
   a.theme.labelStyle = koi.getDefaultLabelStyle()
 
@@ -834,6 +856,40 @@ proc updateWidgetStyles(a) =
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
+
+# }}}
+# {{{ colorImage()
+proc colorImage(d: var ImageData, color: Color) =
+  for i in 0..<(d.width * d.height):
+    d.data[i*4]   = (color.r * 255).byte
+    d.data[i*4+1] = (color.g * 255).byte
+    d.data[i*4+2] = (color.b * 255).byte
+
+# }}}
+# {{{ createImage()
+template createImage(d: var ImageData): Image =
+  vg.createImageRGBA(
+    d.width, d.height,
+    data = toOpenArray(d.data, 0, d.size()-1)
+  )
+
+# }}}
+# {{{ createPattern()
+proc createPattern(vg: NVGContext,src: ImageData, dest: var Image,
+                   alpha: float = 1.0, scale: float = 1.0,
+                   xoffs: float = 0, yoffs: float = 0): Paint =
+  let
+    win = glfw.currentContext()
+    (winWidth, _) = win.size
+    (fbWidth, _) = win.framebufferSize
+    pxRatio = fbWidth / winWidth
+
+  let scale = scale / pxRatio
+
+  let (w, h) = vg.imageSize(dest)
+  vg.imagePattern(
+    ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, dest, alpha
+  )
 
 # }}}
 
@@ -1617,6 +1673,101 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 
 # }}}
 
+
+# {{{ About dialog
+proc openAboutDialog(a) =
+  a.dialog.aboutDialog.isOpen = true
+
+
+proc aboutDialog(dlg: var AboutDialogParams; a) =
+  alias(al, a.aboutLogo)
+  alias(ts, a.theme.style)
+  alias(vg, a.vg)
+
+  const
+    DlgWidth = 370.0
+    DlgHeight = 440.0
+    TabWidth = 180.0
+
+  let
+    dialogX = floor(calcDialogX(DlgWidth, a))
+    dialogY = floor((koi.winHeight() - DlgHeight) * 0.5)
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconQuestion}  About Gridmonger",
+                  x=dialogX.some, y=dialogY.some,
+                  style=a.theme.aboutDialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopPad
+  let w = DlgWidth
+  let h = DlgItemHeight
+
+  if al.logoImage == NoImage or al.updateLogoImage:
+#    colorImage(al.logo, ts.splashImage.logoColor)
+    colorImage(al.logo, white())
+    if al.logoImage == NoImage:
+      al.logoImage = createImage(al.logo)
+    else:
+      vg.updateImage(al.logoImage, cast[ptr byte](al.logo.data))
+    al.updateLogoImage = false
+
+  # TODO use x2 image on hidpi screens
+  al.logoPaint = createPattern(a.vg, src=al.logo, dest=al.logoImage,
+                               xoffs=dialogX, yoffs=dialogY)
+
+
+  koi.image(0, 0, DlgWidth.float, DlgHeight.float, al.logoPaint)
+
+  var labelStyle = a.theme.labelStyle.deepCopy()
+  labelStyle.align = haCenter
+
+  y += 265
+  koi.label(0, y, w, h, fmt"version {AppVersion}  ({BuildGitHash})",
+            style=labelStyle)
+
+  y += 25
+  koi.label(0, y, w, h, "Developed by John Novak, 2019-2021", style=labelStyle)
+
+  x = (DlgWidth - (3*DlgButtonWidth + 2*DlgButtonPad)) * 0.5
+  y += 50
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Manual",
+                style=a.theme.buttonStyle):
+    discard
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Website",
+                style=a.theme.buttonStyle):
+    discard
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Forum",
+                style=a.theme.buttonStyle):
+    discard
+
+  proc closeAction(dlg: var AboutDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  # HACK
+  if not koi.hasHotItem() and koi.mbLeftDown():
+    closeAction(dlg, a)
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if ke.isShortcutDown(scCancel) or ke.isShortcutDown(scAccept):
+      closeAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
 # {{{ Preferences dialog
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
@@ -1650,7 +1801,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   let tabLabels = @["Startup", "General"]
 
   koi.radioButtons(
-    (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
+    (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
     style = a.theme.radioButtonStyle
   )
@@ -2162,7 +2313,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   let tabLabels = @["General", "Coordinates", "Regions"]
 
   koi.radioButtons(
-    (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
+    (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
     style = a.theme.radioButtonStyle
   )
@@ -2355,7 +2506,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   let tabLabels = @["General", "Coordinates", "Regions"]
 
   koi.radioButtons(
-    (DlgWidth - TabWidth) / 2, y, TabWidth, DlgItemHeight,
+    (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
     style = a.theme.radioButtonStyle
   )
@@ -3044,6 +3195,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   koi.endDialog()
 
 # }}}
+
 # }}}
 # {{{ Actions
 
@@ -3072,6 +3224,7 @@ proc redoAction(a) =
   else:
     setStatusMessage(IconWarning, "Nothing to redo", a)
 # }}}
+
 # {{{ newMapAction()
 proc newMapAction(a) =
   if a.doc.undoManager.isModified:
@@ -3177,6 +3330,7 @@ proc saveMapAction(a) =
   else: saveMapAsAction(a)
 
 # }}}
+
 # {{{ reloadThemeAction()
 proc reloadThemeAction(a) =
   a.theme.nextThemeIndex = a.theme.currThemeIndex.some
@@ -3197,6 +3351,7 @@ proc nextThemeAction(a) =
   a.theme.nextThemeIndex = i.some
 
 # }}}
+
 # {{{ prevLevelAction()
 proc prevLevelAction(a) =
   var si = currSortedLevelIdx(a)
@@ -3217,6 +3372,7 @@ proc nextLevelAction(a) =
     setCursor(cur, a)
 
 # }}}
+
 # {{{ centerCursorAfterZoom()
 proc centerCursorAfterZoom(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -3240,6 +3396,7 @@ proc decZoomLevelAction(a) =
   centerCursorAfterZoom(a)
 
 # }}}
+
 # {{{ setFloorAction()
 proc setFloorAction(f: Floor; a) =
   let ot = a.doc.map.guessFloorOrientation(a.ui.cursor)
@@ -3388,15 +3545,13 @@ proc drawModeAndOptionIndicators(a) =
   vg.fillColor(ls.coordsHighlightColor)
 
   if a.opts.wasdMode:
-    vg.setFont(15.0)
+    vg.setFont(15)
     discard vg.text(x, y, fmt"WASD+{IconMouse}")
     x += 80
 
   if a.opts.drawTrail:
     vg.setFont(19)
     discard vg.text(x, y+1, IconShoePrints)
-
-  vg.restore()
 
 # }}}
 # {{{ drawStatusBar()
@@ -4911,6 +5066,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.color(ts.splashImage.logoColor)
         if ts.splashImage.logoColor != te.prevState.splashImage.logoColor:
           a.splash.updateLogoImage = true
+          a.aboutLogo.updateLogoImage = true # TODO should have it's own color
 
         koi.label("Outline")
         koi.color(ts.splashImage.outlineColor)
@@ -5256,6 +5412,10 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   koi.label(cx, cy, w, wh, fmt"T  H  E  M  E       E  D  I  T  O  R",
             style=titleStyle)
 
+  var betaStyle = getDefaultLabelStyle()
+  betaStyle.color = a.theme.style.general.highlightColor
+  koi.label(cx + 265, cy, 40, wh, fmt"beta", style=betaStyle)
+
   # Theme name & action buttons
   vg.beginPath()
   vg.rect(x+1, y+TitleHeight, w, h=96)
@@ -5278,7 +5438,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   let buttonsDisabled = koi.isDialogOpen()
 
-  if koi.button(cx, cy, w=bw, h=wh, "New", disabled=buttonsDisabled):
+  if koi.button(cx, cy, w=bw, h=wh, "New", disabled=true):
     discard
 
   cx += bw + bp
@@ -5287,11 +5447,11 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
     discard
 
   cx += bw + bp
-  if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=buttonsDisabled):
+  if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):
     discard
 
   cx += bw + bp
-  if koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=buttonsDisabled):
+  if koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=true):
     discard
 
   # Scroll view with properties
@@ -5393,8 +5553,7 @@ proc renderUI(a) =
   # About button
   if button(x = uiWidth - 55, y = 45, w = 20, h = DlgItemHeight, IconQuestion,
             style = a.theme.aboutButtonStyle, tooltip = "About"):
-    # TODO
-    discard
+    openAboutDialog(a)
 
   if not mapHasLevels(a):
     drawEmptyMap(a)
@@ -5463,7 +5622,10 @@ proc renderUI(a) =
     renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
-  if dlg.preferencesDialog.isOpen:
+  if dlg.aboutDialog.isOpen:
+    aboutDialog(dlg.aboutDialog, a)
+
+  elif dlg.preferencesDialog.isOpen:
     preferencesDialog(dlg.preferencesDialog, a)
 
   elif dlg.saveDiscardDialog.isOpen:
@@ -5567,10 +5729,10 @@ proc renderFrame(a) =
 
   else:
     if not a.opts.showThemePane and a.win.glfwWin.focused:
-      glfw.makeContextCurrent(g_app.splash.win)
+      glfw.makeContextCurrent(a.splash.win)
       closeSplash(a)
-      glfw.makeContextCurrent(g_app.win.glfwWin)
-      g_app.win.focus()
+      glfw.makeContextCurrent(a.win.glfwWin)
+      a.win.focus()
 
   if not a.opts.showThemePane or not uiRendered:
     renderUI(a)
@@ -5597,26 +5759,6 @@ proc renderFrameSplash(a) =
 
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
 
-  proc colorImage(d: var ImageData, color: Color) =
-    for i in 0..<(d.width * d.height):
-      d.data[i*4]   = (color.r * 255).byte
-      d.data[i*4+1] = (color.g * 255).byte
-      d.data[i*4+2] = (color.b * 255).byte
-
-  template createImage(d: var ImageData): Image =
-    vg.createImageRGBA(
-      d.width, d.height,
-      data = toOpenArray(d.data, 0, d.size()-1)
-    )
-
-  template createPattern(img: var Image, alpha: float = 1.0): Paint =
-    let scale = fbWidth / s.logo.width / pxRatio
-
-    let (w, h) = vg.imageSize(img)
-    vg.imagePattern(
-      ox=0, oy=0, ex=w*scale, ey=h*scale, angle=0, img, alpha
-    )
-
   if s.logoImage == NoImage or s.updateLogoImage:
     colorImage(s.logo, ts.splashImage.logoColor)
     if s.logoImage == NoImage:
@@ -5642,10 +5784,16 @@ proc renderFrameSplash(a) =
     s.updateShadowImage = false
 
 
-  s.logoPaint = createPattern(s.logoImage)
-  s.outlinePaint = createPattern(s.outlineImage)
-  s.shadowPaint = createPattern(s.shadowImage,
-                                alpha=ts.splashImage.shadowAlpha)
+  let scale = winWidth / s.logo.width
+
+  s.logoPaint = createPattern(vg, src=s.logo, dest=s.logoImage,
+                              scale=scale)
+
+  s.outlinePaint = createPattern(vg, src=s.outline, dest=s.outlineImage,
+                                 scale=scale)
+
+  s.shadowPaint = createPattern(vg, src=s.shadow, dest=s.shadowImage,
+                                alpha=ts.splashImage.shadowAlpha, scale)
 
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, winHeight.float)
@@ -5731,22 +5879,32 @@ proc loadFonts(vg: NVGContext) =
   discard addFallbackFont(vg, blackFont, iconFont)
 
 # }}}
-# {{{ loadSplashImages()
+# {{{ createAlpha()
+proc createAlpha(d: var ImageData) =
+  for i in 0..<(d.width * d.height):
+    # copy the R component to the alpha channel
+    d.data[i*4+3] = d.data[i*4]
+
+# }}}
+# {{{ loadSplashmages()
 proc loadSplashImages(a) =
-  alias(s, g_app.splash)
+  alias(s, a.splash)
 
-  s.logo = loadImage(DataDir / "logo.png")
+  s.logo    = loadImage(DataDir / "logo.png")
   s.outline = loadImage(DataDir / "logo-outline.png")
-  s.shadow = loadImage(DataDir / "logo-shadow.png")
-
-  proc createAlpha(d: var ImageData) =
-    for i in 0..<(d.width * d.height):
-      # copy the R component to the alpha channel
-      d.data[i*4+3] = d.data[i*4]
+  s.shadow  = loadImage(DataDir / "logo-shadow.png")
 
   createAlpha(s.logo)
   createAlpha(s.outline)
   createAlpha(s.shadow)
+
+# }}}
+# {{{ loadAboutLogoImage()
+proc loadAboutLogoImage(a) =
+  alias(al, a.aboutLogo)
+
+  al.logo = loadImage(DataDir / "logo-small.png")
+  createAlpha(al.logo)
 
 # }}}
 # {{{ setDefaultWidgetStyles()
@@ -5916,9 +6074,9 @@ proc cleanup(a) =
 
   koi.deinit()
 
-  nvgDeleteContext(g_app.vg)
+  nvgDeleteContext(a.vg)
   if a.splash.vg != nil:
-    nvgDeleteContext(g_app.splash.vg)
+    nvgDeleteContext(a.splash.vg)
 
   a.win.glfwWin.destroy()
   if a.splash.win != nil:
@@ -5955,6 +6113,10 @@ proc main() =
     while not a.shouldClose:
       # Render app
       glfw.makeContextCurrent(a.win.glfwWin)
+
+      if a.aboutLogo.logo.data == nil:
+        loadAboutLogoImage(a)
+
       csdwindow.renderFrame(a.win, a.vg)
       glFlush()
 
