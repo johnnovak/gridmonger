@@ -779,7 +779,7 @@ proc updateWidgetStyles(a) =
       feather = s.dialog.shadowFeather
       color   = s.dialog.shadowColor
 
-  a.theme.aboutDialogStyle = a.theme.dialogStyle
+  a.theme.aboutDialogStyle = a.theme.dialogStyle.deepCopy()
   a.theme.aboutDialogStyle.drawTitleBar = false
 
   # Label
