@@ -129,17 +129,21 @@ macro defineTheme(arg: untyped): untyped =
         of "string", "bool", "Color", "float":
           let getter = newIdentNode("get" & propType.strVal.capitalizeAscii())
           parseThemeBody.add quote do:
-            config.`getter`(`sectionName`, `propName`, result.`sectionNameSym`.`propNameSym`)
+            config.`getter`(`sectionName`, `propName`,
+                            result.`sectionNameSym`.`propNameSym`)
 
           writeThemeBody.add quote do:
-            result.setSectionKey(`sectionName`, `propName`, $theme.`sectionNameSym`.`propNameSym`)
+            result.setSectionKey(`sectionName`, `propName`,
+                                 $theme.`sectionNameSym`.`propNameSym`)
 
         else: # enum
           parseThemeBody.add quote do:
-            getEnum[`propType`](config, `sectionName`, `propName`, result.`sectionNameSym`.`propNameSym`)
+            getEnum[`propType`](config, `sectionName`, `propName`,
+                                result.`sectionNameSym`.`propNameSym`)
 
           writeThemeBody.add quote do:
-            result.setSectionKey(`sectionName`, `propName`, $theme.`sectionNameSym`.`propNameSym`)
+            result.setSectionKey(`sectionName`, `propName`,
+                                 $theme.`sectionNameSym`.`propNameSym`)
 
       elif propType.kind == nnkBracketExpr:
         let propType = propParamsStmt[0]
@@ -152,10 +156,14 @@ macro defineTheme(arg: untyped): untyped =
           let index = newIntLitNode(i-1)
           let theme = newIdentNode("theme")
           parseThemeBody.add quote do:
-            config.getColor(`sectionName`, `propNameN`, result.`sectionNameSym`.`propNameSym`[`index`])
+            config.getColor(`sectionName`, `propNameN`,
+                            result.`sectionNameSym`.`propNameSym`[`index`])
 
           writeThemeBody.add quote do:
-            result.setSectionKey(`sectionName`, `propNameN`, $`theme`.`sectionNameSym`.`propNameSym`[`index`])
+            result.setSectionKey(
+              `sectionName`, `propNameN`,
+               $`theme`.`sectionNameSym`.`propNameSym`[`index`]
+             )
 
     typeSection.add(
       makeSectionTypeDef(sectionName, propsToAdd)
@@ -232,6 +240,7 @@ proc loadTheme*(filename: string): ThemeStyle =
 
     outerShadowWidthFactor =
       outerShadowWidthFactor.limit(LevelShadowWidthLimits)
+
 
 proc saveTheme*(theme: ThemeStyle, filename: string) =
 

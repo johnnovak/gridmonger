@@ -69,6 +69,9 @@ defineTheme:
     colorHover:         Color
     colorActive:        Color
 
+  aboutDialog:
+    logoColor:          Color
+
   splashImage:
     logoColor:          Color
     outlineColor:       Color

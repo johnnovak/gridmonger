@@ -480,6 +480,7 @@ type
     sectionStatusBar:        bool
     sectionLeveldropDown:    bool
     sectionAboutButton:      bool
+    sectionAboutDialog:      bool
     sectionSplashImage:      bool
 
     sectionLevel:            bool
@@ -1705,8 +1706,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   let h = DlgItemHeight
 
   if al.logoImage == NoImage or al.updateLogoImage:
-#    colorImage(al.logo, ts.splashImage.logoColor)
-    colorImage(al.logo, white())
+    colorImage(al.logo, ts.aboutDialog.logoColor)
     if al.logoImage == NoImage:
       al.logoImage = createImage(al.logo)
     else:
@@ -1715,6 +1715,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 
   # TODO use x2 image on hidpi screens
   al.logoPaint = createPattern(a.vg, src=al.logo, dest=al.logoImage,
+                               alpha=ts.aboutDialog.logoColor.a,
                                xoffs=dialogX, yoffs=dialogY)
 
 
@@ -1747,13 +1748,17 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
     discard
 
   proc closeAction(dlg: var AboutDialogParams; a) =
+    a.aboutLogo.updateLogoImage = true
     koi.closeDialog()
     dlg.isOpen = false
 
 
-  # HACK
-  if not koi.hasHotItem() and koi.mbLeftDown():
-    closeAction(dlg, a)
+  # HACK, HACK, HACK!
+  if not a.opts.showThemePane:
+    if not koi.hasHotItem() and koi.hasEvent():
+      let ev = koi.currEvent()
+      if ev.kind == ekMouseButton and ev.button == mbLeft and ev.pressed:
+        closeAction(dlg, a)
 
   if hasKeyEvent():
     let ke = koi.currEvent()
@@ -5060,13 +5065,19 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.color(ts.aboutButton.colorActive)
 
 
+    if koi.subSectionHeader("About Dialog", te.sectionAboutDialog):
+      koi.label("Logo")
+      koi.color(ts.aboutDialog.logoColor)
+      if ts.aboutDialog.logoColor != te.prevState.aboutDialog.logoColor:
+        a.aboutLogo.updateLogoImage = true # TODO should have it's own color
+
+
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
       group:
         koi.label("Logo")
         koi.color(ts.splashImage.logoColor)
         if ts.splashImage.logoColor != te.prevState.splashImage.logoColor:
           a.splash.updateLogoImage = true
-          a.aboutLogo.updateLogoImage = true # TODO should have it's own color
 
         koi.label("Outline")
         koi.color(ts.splashImage.outlineColor)
