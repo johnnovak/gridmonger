@@ -5502,10 +5502,13 @@ proc showSplash(a) =
   s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
   s.win.show()
 
+  if not a.opts.showThemePane:
+    koi.setFocusCaptured(true)
+
 # }}}
 # {{{ closeSplash()
 proc closeSplash(a) =
-  alias(s, g_app.splash)
+  alias(s, a.splash)
 
   s.win.destroy()
   s.win = nil
@@ -5522,6 +5525,9 @@ proc closeSplash(a) =
   s.vg = nil
 
   s.show = false
+
+  if not a.opts.showThemePane:
+    koi.setFocusCaptured(false)
 
 # }}}
 
