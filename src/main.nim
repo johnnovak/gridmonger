@@ -1716,7 +1716,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   # TODO use x2 image on hidpi screens
   al.logoPaint = createPattern(a.vg, src=al.logo, dest=al.logoImage,
                                alpha=ts.aboutDialog.logoColor.a,
-                               xoffs=dialogX, yoffs=dialogY)
+                               xoffs=dialogX, yoffs=dialogY, scale=0.5)
 
 
   koi.image(0, 0, DlgWidth.float, DlgHeight.float, al.logoPaint)
@@ -5920,7 +5920,7 @@ proc loadSplashImages(a) =
 proc loadAboutLogoImage(a) =
   alias(al, a.aboutLogo)
 
-  al.logo = loadImage(DataDir / "logo-small.png")
+  al.logo = loadImage(DataDir / "logo-smallx2.png")
   createAlpha(al.logo)
 
 # }}}
