@@ -459,7 +459,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 # }}}
 # {{{ pasteSelection*()
 proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
-                     pasteBufferLevelIndex: Natural; um;
+                     pasteBufferLevelIndex: Natural, undoLoc: Location; um;
                      groupWithPrev: bool = false,
                      pasteTrail: bool = false,
                      actionName: string = "Pasted buffer") =
@@ -478,7 +478,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
   )
 
   if rect.isSome:
-    cellAreaAction(map, pasteLoc, rect.get, um, groupWithPrev, actionName, m):
+    cellAreaAction(map, undoLoc, rect.get, um, groupWithPrev, actionName, m):
 
       alias(l, m.levels[pasteLoc.level])
 

@@ -226,6 +226,7 @@ type
     copyBuf:           Option[SelectionBuffer]
     nudgeBuf:          Option[SelectionBuffer]
     cutToBuffer:       bool
+    moveUndoLocation:  Location
 
     statusIcon:        string
     statusMessage:     string
@@ -3801,7 +3802,8 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyP):
         if ui.copyBuf.isSome:
           actions.pasteSelection(map, cur, ui.copyBuf.get,
-                                 pasteBufferLevelIndex=CopyBufferLevelIndex, um)
+                                 pasteBufferLevelIndex=CopyBufferLevelIndex,
+                                 undoLoc=cur, um)
           if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
           setStatusMessage(IconPaste, "Buffer pasted", a)
@@ -4087,7 +4089,12 @@ proc handleGlobalKeyEvents(a) =
         let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.cutSelection(map, cur, bbox, selection,
+          var bboxTopLeft = Location(
+            level: cur.level,
+            col: bbox.c1,
+            row: bbox.r1
+          )
+          actions.cutSelection(map, bboxTopLeft, bbox, selection,
                                linkDestLevelIndex=CopyBufferLevelIndex, um)
           ui.cutToBuffer = true
 
@@ -4105,7 +4112,14 @@ proc handleGlobalKeyEvents(a) =
         let bbox = copySelection(ui.nudgeBuf, a)
         if bbox.isSome:
           let bbox = bbox.get
-          actions.cutSelection(map, cur, bbox, selection,
+          var bboxTopLeft = Location(
+            level: cur.level,
+            col: bbox.c1,
+            row: bbox.r1
+          )
+          ui.moveUndoLocation = bboxTopLeft
+
+          actions.cutSelection(map, bboxTopLeft, bbox, selection,
                                linkDestLevelIndex=MoveBufferLevelIndex, um)
           exitSelectMode(a)
 
@@ -4221,8 +4235,8 @@ proc handleGlobalKeyEvents(a) =
 
       if ke.isKeyDown({keyEnter, keyP}):
         actions.pasteSelection(map, cur, ui.copyBuf.get,
-                               pasteBufferLevelIndex=CopyBufferLevelIndex, um,
-                               pasteTrail=true)
+                               pasteBufferLevelIndex=CopyBufferLevelIndex,
+                               undoLoc=cur, um, pasteTrail=true)
 
         if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
@@ -4252,8 +4266,8 @@ proc handleGlobalKeyEvents(a) =
       if ke.isKeyDown({keyEnter, keyP}):
         actions.pasteSelection(map, cur, ui.nudgeBuf.get,
                                pasteBufferLevelIndex=MoveBufferLevelIndex,
-                               um, groupWithPrev=true,
-                               actionName="Move selection")
+                               undoLoc=ui.moveUndoLocation, um,
+                               groupWithPrev=true, actionName="Move selection")
 
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
