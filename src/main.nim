@@ -877,20 +877,13 @@ template createImage(d: var ImageData): Image =
 
 # }}}
 # {{{ createPattern()
-proc createPattern(vg: NVGContext,src: ImageData, dest: var Image,
-                   alpha: float = 1.0, scale: float = 1.0,
-                   xoffs: float = 0, yoffs: float = 0): Paint =
-  let
-    win = glfw.currentContext()
-    (winWidth, _) = win.size
-    (fbWidth, _) = win.framebufferSize
-    pxRatio = fbWidth / winWidth
+proc createPattern(vg: NVGContext, img: var Image, alpha: float = 1.0,
+                   xoffs: float = 0, yoffs: float = 0,
+                   scale: float = 1.0): Paint =
 
-  let scale = scale / pxRatio
-
-  let (w, h) = vg.imageSize(dest)
+  let (w, h) = vg.imageSize(img)
   vg.imagePattern(
-    ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, dest, alpha
+    ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, img, alpha
   )
 
 # }}}
@@ -1716,10 +1709,11 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
       vg.updateImage(al.logoImage, cast[ptr byte](al.logo.data))
     al.updateLogoImage = false
 
-  # TODO use x2 image on hidpi screens
-  al.logoPaint = createPattern(a.vg, src=al.logo, dest=al.logoImage,
+  let scale = DlgWidth / al.logo.width
+
+  al.logoPaint = createPattern(a.vg, al.logoImage,
                                alpha=ts.aboutDialog.logoColor.a,
-                               xoffs=dialogX, yoffs=dialogY, scale=0.5)
+                               xoffs=dialogX, yoffs=dialogY, scale=scale)
 
 
   koi.image(0, 0, DlgWidth.float, DlgHeight.float, al.logoPaint)
@@ -5829,14 +5823,12 @@ proc renderFrameSplash(a) =
 
   let scale = winWidth / s.logo.width
 
-  s.logoPaint = createPattern(vg, src=s.logo, dest=s.logoImage,
-                              scale=scale)
+  s.logoPaint = createPattern(vg, s.logoImage, scale=scale)
 
-  s.outlinePaint = createPattern(vg, src=s.outline, dest=s.outlineImage,
-                                 scale=scale)
+  s.outlinePaint = createPattern(vg, s.outlineImage, scale=scale)
 
-  s.shadowPaint = createPattern(vg, src=s.shadow, dest=s.shadowImage,
-                                alpha=ts.splashImage.shadowAlpha, scale)
+  s.shadowPaint = createPattern(vg, s.shadowImage,
+                                alpha=ts.splashImage.shadowAlpha, scale=scale)
 
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, winHeight.float)
