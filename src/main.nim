@@ -1684,7 +1684,6 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   const
     DlgWidth = 370.0
     DlgHeight = 440.0
-    TabWidth = 180.0
 
   let
     dialogX = floor(calcDialogX(DlgWidth, a))
@@ -5938,7 +5937,7 @@ proc loadSplashImages(a) =
 proc loadAboutLogoImage(a) =
   alias(al, a.aboutLogo)
 
-  al.logo = loadImage(DataDir / "logo-smallx2.png")
+  al.logo = loadImage(DataDir / "logo-small.png")
   createAlpha(al.logo)
 
 # }}}

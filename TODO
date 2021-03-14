@@ -7,14 +7,6 @@ BUGS
   - drawlevel - pixel level drawing problems (also for regions)
 
 
-LOW PRIORITY BUGS
-
-  - in paste preview mode, you cannot use "negative" col & row paste
-    destination
-
-  - left edge of spinner symbols is cut off on high zoom levels on retina screens
-
-
 TESTS
 
 - test ini with invalid values
@@ -28,29 +20,19 @@ v0.9
   - region parameters (only name for now)
   - region name reassignment when resizing a level
 
-  - about dialog
-  - help screen?
-
-  - update all themes
+  - align left/right half of the screen buttons
 
   - map/level comments
 
-  - store AppState in map
+  - bg texture hi-dpi support
 
-  - toggle grid?
-
+  - finalise all themes
   - cascading theme loading (built-in vs user themes)
 
-  - attempt to save map on crash
-
-  - center map to screen
-
-  - align left/right half of the screen buttons
-
-  - trail:
-    - show/hide trail?
-
   - textarea: mouse handling
+
+  - store AppState in map
+  - attempt to save map on crash
 
   - config format:
     - write own config handler:
@@ -58,6 +40,10 @@ v0.9
       - get rid of quotation marks
       - insert new lines after sections when writing
     - rename properties according to theme editor
+
+  - center map to screen?
+  - toggle grid?
+  - show/hide trail?
 
 
 v1.0
@@ -125,6 +111,13 @@ v1.1
 LOW PRIORITY
   - proper multi-window handling in csdwindow
   - better csdwindow separation (e.g. titlebar)
+
+  - in paste preview mode, you cannot use "negative" col & row paste
+    destination
+
+  - left edge of spinner symbols is cut off on high zoom levels on retina screens
+
+  - better undo manager
 
 
 FONTS
