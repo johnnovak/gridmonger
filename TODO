@@ -34,6 +34,8 @@ v0.9
   - store AppState in map
   - attempt to save map on crash
 
+  - stack traces in release build?
+
   - config format:
     - write own config handler:
       - experiment with toml again

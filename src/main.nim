@@ -20,6 +20,7 @@ import koi
 import koi/undomanager
 import nanovg
 when not defined(DEBUG): import osdialog
+import simple_parseopt
 import with
 
 import actions
@@ -45,6 +46,10 @@ when defined(windows):
 
 const
   BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
+  ThemeExt = "cfg"
+
+  BuildOS = if defined(windows): staticExec("ver")
+            else: staticExec("uname -v")
 
 # {{{ logError()
 proc logError(e: ref Exception) =
@@ -53,34 +58,6 @@ proc logError(e: ref Exception) =
 
 # }}}
 
-# {{{ Paths
-const
-# TODO
-#  BuildOS = if defined(windows): staticExec("ver")
-#            else: staticExec("uname -v")
-
-#  BuildDateTime = if defined(windows): staticExec("date /T") & staticExec("time /T")
-#                  else: staticExec("date")
-
-  # TODO in home dir?
-  LogFile = "gridmonger.log"
-
-  DataDir = "data"
-
-  HomeDir = getHomeDir() / "Gridmonger"
-  AutosaveDir = HomeDir / "Autosave"
-  ConfigDir = getConfigDir() / "Gridmonger"
-  ConfigFile = ConfigDir / "gridmonger.ini"
-
-  ThemesDir = "themes"
-  ImagesDir = "images"
-  ThemeImagesDir = ThemesDir / ImagesDir
-  UserThemesDir = ConfigDir / ThemesDir
-  UserThemeImagesDir = UserThemesDir / ImagesDir
-
-  ThemeExt = "cfg"
-
-# }}}
 # {{{ Constants
 const
   CursorJump   = 5
@@ -182,6 +159,7 @@ type
     vg:          NVGContext
 
     prefs:       Preferences
+    path:        Paths
 
     doc:         Document
     opts:        Options
@@ -194,6 +172,18 @@ type
     aboutLogo:   AboutLogo
 
     shouldClose: bool
+
+
+  Paths = object
+    homeDir:            string
+    dataDir:            string
+    autosaveDir:        string
+    themesDir:          string
+    themeImagesDir:     string
+    userThemesDir:      string
+    userThemeImagesDir: string
+    configFile:         string
+    logFile:            string
 
 
   Document = object
@@ -621,7 +611,7 @@ proc savePreferences(a) =
     )
   )
 
-  saveAppConfig(cfg, ConfigFile)
+  saveAppConfig(cfg, a.path.configFile)
 
 # }}}
 # {{{ loadImage()
@@ -1256,7 +1246,7 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 
 # {{{ searchThemes()
 proc searchThemes(a) =
-  for path in walkFiles(ThemesDir / fmt"*.{ThemeExt}"):
+  for path in walkFiles(a.path.themesDir / fmt"*.{ThemeExt}"):
     let (_, name, _) = splitFile(path)
     a.theme.themeNames.add(name)
   sort(a.theme.themeNames)
@@ -1273,7 +1263,7 @@ proc findThemeIndex(name: string; a): int =
 # {{{ themePath()
 proc themePath(index: Natural; a): string =
   let name = a.theme.themeNames[index]
-  ThemesDir / addFileExt(name, ThemeExt)
+  a.path.themesDir / addFileExt(name, ThemeExt)
 
 # }}}
 # {{{ loadTheme()
@@ -1292,13 +1282,13 @@ proc switchTheme(themeIndex: Natural; a) =
 
   let bgImageName = a.theme.style.general.backgroundImage
   if bgImageName != "":
-    var imgPath = ThemeImagesDir / bgImageName
+    var imgPath = a.path.themeImagesDir / bgImageName
     var image = loadImage(imgPath, a)
     if image.isNone:
       info(fmt"Couldn't load background image '{imgPath}'. " &
            "Attempting to load it from the user themes images directory now.")
 
-      imgPath = UserThemeImagesDir / bgImageName
+      imgPath = a.path.userThemeImagesDir / bgImageName
       image = loadImage(imgPath, a)
       if image.isNone:
         logging.error(fmt"Couldn't load background image '{imgPath}'")
@@ -5553,7 +5543,7 @@ proc handleAutosave(a) =
     let dt = getMonoTime() - a.doc.lastAutosaveTime
     if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
       let filename = if a.doc.filename == "":
-                       AutosaveDir / addFileExt("untitled", MapFileExt)
+                       a.path.autosaveDir / addFileExt("untitled", MapFileExt)
                      else: a.doc.filename
 
       saveMap(filename, autosave=true, a)
@@ -5878,8 +5868,42 @@ proc renderFrameSplash(a) =
 # }}}
 # {{{ Init & cleanup
 
+# {{{ initPaths()
+proc initPaths(portableMode: bool, a) =
+  alias(p, a.path)
+
+  const
+    GridmongerDir = "Gridmonger"
+    DataDir = "Data"
+    ImagesDir = "Images"
+
+  if portableMode:
+    p.homeDir = "."
+  else:
+    p.homeDir = getHomeDir() / GridmongerDir
+
+  p.dataDir = DataDir
+
+  p.logFile = p.homeDir / "gridmonger.log"
+  p.configFile = p.homeDir / "gridmonger.ini"
+
+  p.autosaveDir = p.homeDir / "Autosave"
+
+  p.themesDir = "Themes"
+  p.themeImagesDir = p.themesDir / ImagesDir
+  p.userThemesDir = p.homeDir / "User Themes"
+  p.userThemeImagesDir = p.userThemesDir / ImagesDir
+
+  createDir(p.homeDir)
+  createDir(p.autosaveDir)
+  createDir(p.userThemesDir)
+  createDir(p.userThemeImagesDir)
+
+# }}}
 # {{{ loadAndSetIcon()
 proc loadAndSetIcon(a) =
+  alias(p, a.path)
+
   var icons: array[5, wrapper.IconImageObj]
 
   proc add(idx: Natural, img: ImageData) =
@@ -5887,11 +5911,11 @@ proc loadAndSetIcon(a) =
     icons[idx].height = img.height.int32
     icons[idx].pixels = cast[ptr cuchar](img.data)
 
-  var icon32 = loadImage(DataDir / "icon32.png")
-  var icon48 = loadImage(DataDir / "icon48.png")
-  var icon64 = loadImage(DataDir / "icon64.png")
-  var icon128 = loadImage(DataDir / "icon128.png")
-  var icon256 = loadImage(DataDir / "icon256.png")
+  var icon32 = loadImage(p.dataDir / "icon32.png")
+  var icon48 = loadImage(p.dataDir / "icon48.png")
+  var icon64 = loadImage(p.dataDir / "icon64.png")
+  var icon128 = loadImage(p.dataDir / "icon128.png")
+  var icon256 = loadImage(p.dataDir / "icon256.png")
 
   add(0, icon32)
   add(1, icon48)
@@ -5903,11 +5927,14 @@ proc loadAndSetIcon(a) =
 
 # }}}
 # {{{ loadFonts()
-proc loadFonts(vg: NVGContext) =
-  discard vg.createFont("sans", DataDir / "Roboto-Regular.ttf")
-  let boldFont = vg.createFont("sans-bold", DataDir / "Roboto-Bold.ttf")
-  let blackFont = vg.createFont("sans-black", DataDir / "Roboto-Black.ttf")
-  let iconFont = vg.createFont("icon", DataDir / "GridmongerIcons.ttf")
+proc loadFonts(a) =
+  alias(vg, a.vg)
+  alias(p, a.path)
+
+  discard vg.createFont("sans", p.dataDir / "Roboto-Regular.ttf")
+  let boldFont = vg.createFont("sans-bold", p.dataDir / "Roboto-Bold.ttf")
+  let blackFont = vg.createFont("sans-black", p.dataDir / "Roboto-Black.ttf")
+  let iconFont = vg.createFont("icon", p.dataDir / "GridmongerIcons.ttf")
 
   discard addFallbackFont(vg, boldFont, iconFont)
   discard addFallbackFont(vg, blackFont, iconFont)
@@ -5923,10 +5950,11 @@ proc createAlpha(d: var ImageData) =
 # {{{ loadSplashmages()
 proc loadSplashImages(a) =
   alias(s, a.splash)
+  alias(p, a.path)
 
-  s.logo    = loadImage(DataDir / "logo.png")
-  s.outline = loadImage(DataDir / "logo-outline.png")
-  s.shadow  = loadImage(DataDir / "logo-shadow.png")
+  s.logo    = loadImage(p.dataDir / "logo.png")
+  s.outline = loadImage(p.dataDir / "logo-outline.png")
+  s.shadow  = loadImage(p.dataDir / "logo-shadow.png")
 
   createAlpha(s.logo)
   createAlpha(s.outline)
@@ -5937,7 +5965,7 @@ proc loadSplashImages(a) =
 proc loadAboutLogoImage(a) =
   alias(al, a.aboutLogo)
 
-  al.logo = loadImage(DataDir / "logo-small.png")
+  al.logo = loadImage(a.path.dataDir / "logo-small.png")
   createAlpha(al.logo)
 
 # }}}
@@ -5953,7 +5981,7 @@ proc setDefaultWidgetStyles(a) =
 
 # }}}
 # {{{ initGfx()
-proc initGfx(a): (CSDWindow, NVGContext) =
+proc initGfx(a) =
   glfw.initialize()
   let win = newCSDWindow()
 
@@ -5978,32 +6006,30 @@ GPU info
 
   koi.init(vg, getProcAddress)
 
-  result = (win, vg)
+  a.win = win
+  a.vg = vg
+
+# }}}
+# {{{ initLogger(a)
+proc initLogger(a) =
+  discard tryRemoveFile(a.path.logFile)
+  echo a.path.logFile
+  var fileLog = newFileLogger(a.path.logFile,
+                              fmtStr="[$levelname] $date $time - ",
+                              levelThreshold=lvlDebug)
+  addHandler(fileLog)
 
 # }}}
 # {{{ initApp()
-proc initApp(win: CSDWindow, vg: NVGContext) =
-  alias(a, g_app)
-
-  createDir(ConfigDir)
-  createDir(AutosaveDir)
-  createDir(UserThemesDir)
-
-  let cfg = loadAppConfig(ConfigFile)
-
-  loadFonts(vg)
-
-  a = new AppContext
-  a.win = win
-  a.vg = vg
+proc initApp(a) =
+  let cfg = loadAppConfig(a.path.configFile)
   a.prefs = cfg.prefs
 
+  loadFonts(a)
   loadAndSetIcon(a)
-
   setDefaultWidgetStyles(a)
 
   a.doc.undoManager = newUndoManager[Map, UndoStateData]()
-
   a.ui.drawLevelParams = newDrawLevelParams()
 
   searchThemes(a)
@@ -6051,8 +6077,8 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
   setSwapInterval(a)
 
   # Init window
-  a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(a)
-  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(a)
+  a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(g_app)
+  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
 
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
@@ -6073,8 +6099,6 @@ proc initApp(win: CSDWindow, vg: NVGContext) =
     a.win.maximize()
 
   a.win.show()
-
-  info("App init completed")
 
 # }}}
 # {{{ createSplashWindow()
@@ -6128,21 +6152,18 @@ proc cleanup(a) =
 proc main() =
   alias(a, g_app)
 
-  discard tryRemoveFile(LogFile)
-  var fileLog = newFileLogger(LogFile, fmtStr="[$levelname] $date $time - ",
-                              levelThreshold=lvlDebug)
-  addHandler(fileLog)
+  a = new AppContext
 
-  # TODO
-#  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), compiled on {BuildOS} at {BuildDateTime}")
-  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash})")
-  info(fmt"HomeDir = {HomeDir}")
-  info(fmt"ConfigFile = {ConfigFile}")
-  info(fmt"UserThemesDir = {UserThemesDir}")
+  initPaths(portableMode=true, a)
+  initLogger(a)
+
+  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), " &
+       fmt"compiled at {CompileDate} {CompileTime}")
+  info(fmt"Paths: {a.path}")
 
   try:
-    let (win, vg) = initGfx(a)
-    initApp(win, vg)
+    initGfx(a)
+    initApp(a)
 
     while not a.shouldClose:
       # Render app
