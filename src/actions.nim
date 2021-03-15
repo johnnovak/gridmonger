@@ -59,7 +59,6 @@ template cellAreaAction(map; loc: Location, rect: Rect[Natural];
     )
     for src in m.links.filterByInRect(loc.level, delRect).keys:
       m.links.delBySrc(src)
-      # TODO delByDest as well?
 
     m.links.addAll(oldLinks)
     result = usd
@@ -441,7 +440,6 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
     for s in oldLinks.keys:
       m.links.delBySrc(s)
-      # TODO del by dest?
 
     m.links.addAll(newLinks)
 
@@ -607,8 +605,6 @@ proc deleteLevel*(map; loc: Location; um): Location =
     for src in oldLinks.keys:
       m.links.delBySrc(src)
 
-    # TODO delByDest as well?
-
     if adjustLinks:
       let oldLevelIdx = m.levels.high+1
       let newLevelIdx = loc.level
@@ -683,7 +679,6 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     l = newLevel
 
     for src in oldLinks.keys: m.links.delBySrc(src)
-    # TODO delByDest as well?
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -699,7 +694,6 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for src in newLinks.keys: m.links.delBySrc(src)
-    # TODO delByDest as well?
     m.links.addAll(oldLinks)
     result = usd
 
@@ -728,7 +722,6 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     m.levels[loc.level] = newLevelFrom(m.levels[loc.level], cropRect)
 
     for src in oldLinks.keys: m.links.delBySrc(src)
-    # TODO delByDest as well?
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -743,7 +736,6 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for src in newLinks.keys: m.links.delBySrc(src)
-    # TODO delByDest as well?
     m.links.addAll(oldLinks)
     result = usd
 
@@ -782,7 +774,6 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     m.levels[loc.level] = l
 
     for src in oldLinks.keys: m.links.delBySrc(src)
-    # TODO delByDest as well?
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -797,7 +788,6 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     m.levels[loc.level] = newLevelFrom(undoLevel)
 
     for src in newLinks.keys: m.links.delBySrc(src)
-    # TODO delByDest as well?
     m.links.addAll(oldLinks)
 
     result = usd

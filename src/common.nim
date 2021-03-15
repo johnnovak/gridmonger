@@ -206,14 +206,12 @@ type
     rows*, cols*: Natural
     cells*:       seq[bool]
 
-  # TODO make ref?
   SelectionRect* = object
     startRow*: Natural
     startCol*: Natural
     rect*:     Rect[Natural]
     selected*: bool
 
-  # TODO make ref?
   SelectionBuffer* = object
     level*:     Level
     selection*: Selection

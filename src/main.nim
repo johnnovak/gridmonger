@@ -543,7 +543,7 @@ type AppShortcut = enum
   scDiscard,
 
 # TODO some shortcuts win/mac specific?
-# TODO introduce shortcus for everything
+# TODO introduce shortcuts for everything
 let g_appShortcuts = {
 
   scNextTextField:    @[mkKeyShortcut(keyTab,           {})],
@@ -580,7 +580,6 @@ proc savePreferences(a) =
   let cfg = AppConfig(
     prefs: a.prefs,
 
-    # TODO store appstate in map
     app: AppState(
       themeName:      theme.themeNames[theme.currThemeIndex],
 
@@ -998,7 +997,6 @@ proc drawAreaWidth(a): float =
 # }}}
 # {{{ drawAreaHeight()
 proc drawAreaHeight(a): float =
-  # TODO
   koi.winHeight() - TitleBarHeight
 
 # }}}
@@ -1315,9 +1313,7 @@ proc switchTheme(themeIndex: Natural; a) =
 proc hasKeyEvent(): bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
 
-# TODO change all into isShorcut* (if possible)
-func isKeyDown(ev: Event, keys: set[Key],
-               mods: set[ModifierKey] = {},
+func isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
                repeat=false): bool =
 
   # ignore numlock & capslock
@@ -3682,7 +3678,7 @@ proc handleLevelMouseEvents(a) =
 
 # }}}
 # {{{ handleGlobalKeyEvents()
-# TODO separate into level events and global events
+# TODO separate into level events and global events?
 proc handleGlobalKeyEvents(a) =
   alias(ui, a.ui)
   alias(map, a.doc.map)
@@ -5075,7 +5071,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label("Logo")
       koi.color(ts.aboutDialog.logoColor)
       if ts.aboutDialog.logoColor != te.prevState.aboutDialog.logoColor:
-        a.aboutLogo.updateLogoImage = true # TODO should have it's own color
+        a.aboutLogo.updateLogoImage = true
 
 
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
@@ -5482,7 +5478,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   g_themeEditorPropsFocusCaptured = koi.focusCaptured()
   koi.setFocusCaptured(fc)
 
-  # TODO ultimately we'll do most of switchTheme here (extract etc)
+  # TODO ultimately we'll do most of switchTheme here (extract etc),
   # but at the end of the frame and lazily somehow (only if something has
   # changed), because sometimes we need to precalc stuff when the style
   # changes
