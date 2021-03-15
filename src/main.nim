@@ -4223,8 +4223,11 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyX):
         let selection = ui.selection.get
-        # TODO !!! clear links with CopyBufferLevelIndex from map first!
-        # (because there might be an "unpasted" selection in the "cut buffer")
+
+        # delete links from a previous cut to buffer operation if it hasn't
+        # been pasted yet
+        map.deleteLinksFromOrToLevel(CopyBufferLevelIndex)
+
         let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           let bbox = bbox.get

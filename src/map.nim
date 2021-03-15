@@ -221,6 +221,13 @@ proc normaliseLinkedStairs*(m; level: Natural) =
           elif thisElevation < thatElevation: setFloors(fStairsUp, fStairsDown)
 
 # }}}
+# {{{ deleteLinksFromOrToLevel*()
+proc deleteLinksFromOrToLevel*(m; level: Natural) =
+  var linksToDelete = m.links.filterByLevel(level)
+  for src in linksToDelete.keys:
+    m.links.delBySrc(src)
+
+# }}}
 
 # {{{ hasTrail*()
 proc hasTrail*(m; loc: Location): bool =
