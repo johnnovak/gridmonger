@@ -174,7 +174,6 @@ proc copyFrom*(g; destRow, destCol: Natural,
   # This function cannot fail as the copied area is clipped to the extents of
   # the destination area (so nothing gets copied in the worst case).
   let
-    # TODO use rect.intersect
     srcCol = srcRect.c1
     srcRow = srcRect.r1
     srcRows = max(src.rows - srcRow, 0)

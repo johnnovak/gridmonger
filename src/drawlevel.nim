@@ -2295,10 +2295,10 @@ proc drawSelectionHighlight(ctx) =
 proc renderEdgeOutlines(viewBuf: Level): OutlineBuf =
   var ol = newOutlineBuf(viewBuf.rows, viewBuf.cols)
 
-  # TODO do not use the whole border=10 for the outline calculation, border of
-  # 1 is enough
-  for r in 0..<viewBuf.rows:
-    for c in 0..<viewBuf.cols:
+  let borderOffs = ViewBufBorder-1
+
+  for r in borderOffs..<viewBuf.rows-borderOffs:
+    for c in borderOffs..<viewBuf.cols-borderOffs:
 
       if viewBuf.isEmpty(r,c):
         var cell: OutlineCell
