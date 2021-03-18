@@ -6,6 +6,8 @@ BUGS
 
   - drawlevel - pixel level drawing problems (also for regions)
 
+  - switch tab: (shift)+ctrl+tab
+
 
 TESTS
 
@@ -21,8 +23,6 @@ v0.9
   - region name reassignment when resizing a level
 
   - align left/right half of the screen buttons
-
-  - store appstate in map
 
   - map/level comments
 

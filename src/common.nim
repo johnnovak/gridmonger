@@ -23,6 +23,12 @@ type
     Horiz = (0, "horiz")
     Vert  = (1, "vert")
 
+  Location* = object
+    level*:     Natural
+    row*, col*: Natural
+
+
+type
   CardinalDir* = enum
     dirN  = (0, "North")
     dirE  = (1, "East")
@@ -67,13 +73,6 @@ type
     csNumber, csLetter
 
 
-  RegionOptions* = object
-    enableRegions*:   bool
-    regionColumns*:   Natural
-    regionRows*:      Natural
-    perRegionCoords*: bool
-
-
   Level* = ref object
     locationName*:      string
     levelName*:         string
@@ -83,31 +82,44 @@ type
     coordOpts*:         CoordinateOptions
 
     regionOpts*:        RegionOptions
-    regionNames*:       seq[string]
+    regions*:           Regions
+
+    annotations*:       Annotations
 
     cellGrid*:          CellGrid
-    annotations*:       Table[Natural, Annotation]
 
-  LineWidth* = enum
-    lwThin   = (0, "Thin"),
-    lwNormal = (1, "Normal")
 
-  GridStyle* = enum
-    gsNone   = (0, "None"),
-    gsSolid  = (1, "Solid"),
-    gsLoose  = (2, "Loose"),
-    gsCross  = (3, "Cross")
+  RegionOptions* = object
+    enableRegions*:   bool
+    regionColumns*:   Natural
+    regionRows*:      Natural
+    perRegionCoords*: bool
 
-  OutlineStyle* = enum
-    osNone                = (0, "None"),
-    osCell                = (1, "Cell"),
-    osSquareEdges         = (2, "Square Edges"),
-    osRoundedEdges        = (3, "Rounded Edges"),
-    osRoundedEdgesFilled  = (4, "Filled Rounded Edges")
+  Regions* = Table[RegionCoords, Region]
 
-  OutlineFillStyle* = enum
-    ofsSolid    = (0, "Solid")
-    ofsHatched  = (1, "Hatched")
+  RegionCoords* = object
+    row*, col*: Natural
+
+  Region* = object
+    name: string
+
+
+  Annotations* = ref object
+    cols*, rows*:  Natural
+    annotations*:  Table[Natural, Annotation]
+
+  AnnotationKind* = enum
+    akComment, akIndexed, akCustomId, akIcon, akLabel
+
+  Annotation* = object
+    text*: string
+    case kind*: AnnotationKind
+    of akComment:  discard
+    of akIndexed:  index*, indexColor*: Natural
+    of akCustomId: customId*: string
+    of akIcon:     icon*: Natural
+    of akLabel:    labelColor*: Natural
+
 
   CellGrid* = ref object
     cols*:  Natural
@@ -116,9 +128,6 @@ type
     # Cells are stored in row-major order; (0,0) is the top-left cell
     cells*: seq[Cell]
 
-  Location* = object
-    level*:     Natural
-    row*, col*: Natural
 
   Cell* = object
     floor*:            Floor
@@ -173,28 +182,6 @@ type
     wWritingNE     = (70, "writing")
     wWritingSW     = (71, "writing")
 
-  AnnotationKind* = enum
-    akComment, akIndexed, akCustomId, akIcon, akLabel
-
-  Annotation* = object
-    text*: string
-    case kind*: AnnotationKind
-    of akComment:  discard
-    of akIndexed:  index*, indexColor*: Natural
-    of akCustomId: customId*: string
-    of akIcon:     icon*: Natural
-    of akLabel:    labelColor*: Natural
-
-
-const
-  LinkPitSources*      = {fClosedPit, fOpenPit, fHiddenPit}
-  LinkPitDestinations* = {fCeilingPit}
-  LinkTeleports*       = {fTeleportSource, fTeleportDestination}
-  LinkStairs*          = {fStairsDown, fStairsUp}
-  LinkDoors*           = {fEntranceDoor, fExitDoor}
-
-  LinkSources* = LinkPitSources + LinkTeleports + LinkStairs + LinkDoors
-
 
 type
   # Selections always have the same dimensions as the level the selection was
@@ -215,6 +202,39 @@ type
   SelectionBuffer* = object
     level*:     Level
     selection*: Selection
+
+
+type
+  LineWidth* = enum
+    lwThin   = (0, "Thin"),
+    lwNormal = (1, "Normal")
+
+  GridStyle* = enum
+    gsNone   = (0, "None"),
+    gsSolid  = (1, "Solid"),
+    gsLoose  = (2, "Loose"),
+    gsCross  = (3, "Cross")
+
+  OutlineStyle* = enum
+    osNone                = (0, "None"),
+    osCell                = (1, "Cell"),
+    osSquareEdges         = (2, "Square Edges"),
+    osRoundedEdges        = (3, "Rounded Edges"),
+    osRoundedEdgesFilled  = (4, "Filled Rounded Edges")
+
+  OutlineFillStyle* = enum
+    ofsSolid    = (0, "Solid")
+    ofsHatched  = (1, "Hatched")
+
+
+const
+  LinkPitSources*      = {fClosedPit, fOpenPit, fHiddenPit}
+  LinkPitDestinations* = {fCeilingPit}
+  LinkTeleports*       = {fTeleportSource, fTeleportDestination}
+  LinkStairs*          = {fStairsDown, fStairsUp}
+  LinkDoors*           = {fEntranceDoor, fExitDoor}
+
+  LinkSources* = LinkPitSources + LinkTeleports + LinkStairs + LinkDoors
 
 
 # vim: et:ts=2:sw=2:fdm=marker

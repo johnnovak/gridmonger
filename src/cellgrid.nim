@@ -31,6 +31,38 @@ proc `[]`(g; r,c: Natural): var Cell {.inline.} =
 
 # }}}
 
+# {{{ fill*()
+proc fill*(g; rect: Rect[Natural], cell: Cell) =
+  assert rect.r1 < g.rows
+  assert rect.c1 < g.cols
+  assert rect.r2 <= g.rows
+  assert rect.c2 <= g.cols
+
+  for r in rect.r1..rect.r2:
+    for c in rect.c1..rect.c2:
+      g[r,c] = cell
+
+proc fill*(g; cell: Cell) =
+  let rect = rectN(0, 0, g.rows, g.cols)
+  g.fill(rect, cell)
+
+# }}}
+# {{{ newCellGrid*()
+proc newCellGrid*(rows, cols: Natural): CellGrid =
+  var g = new CellGrid
+  g.rows = rows
+  g.cols = cols
+
+  # We're storing one extra row & column at the bottom-right edges ("edge"
+  # rows & columns) so we can store the South and East walls of the bottommost
+  # row and rightmost column, respectively.
+  newSeq(g.cells, (rows+1) * (cols+1))
+
+  g.fill(Cell.default)
+  result = g
+
+# }}}
+
 # {{{ getWall*()
 proc getWall*(g; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
   assert r < g.rows
@@ -135,37 +167,6 @@ proc isEmpty*(c: Cell): bool {.inline.} =
 
 proc isEmpty*(g; r,c: Natural): bool {.inline.} =
   g[r,c].isEmpty
-
-# }}}
-# {{{ fill*()
-proc fill*(g; rect: Rect[Natural], cell: Cell) =
-  assert rect.r1 < g.rows
-  assert rect.c1 < g.cols
-  assert rect.r2 <= g.rows
-  assert rect.c2 <= g.cols
-
-  for r in rect.r1..rect.r2:
-    for c in rect.c1..rect.c2:
-      g[r,c] = cell
-
-proc fill*(g; cell: Cell) =
-  let rect = rectN(0, 0, g.rows, g.cols)
-  g.fill(rect, cell)
-
-# }}}
-# {{{ newCellGrid*()
-proc newCellGrid*(rows, cols: Natural): CellGrid =
-  var g = new CellGrid
-  g.rows = rows
-  g.cols = cols
-
-  # We're storing one extra row & column at the bottom-right edges ("edge"
-  # rows & columns) so we can store the South and East walls of the bottommost
-  # row and rightmost column, respectively.
-  newSeq(g.cells, (rows+1) * (cols+1))
-
-  g.fill(Cell.default)
-  result = g
 
 # }}}
 # {{{ copyFrom*()

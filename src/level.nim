@@ -2,6 +2,7 @@ import algorithm
 import options
 import tables
 
+import annotations
 import common
 import cellgrid
 import rect
@@ -35,8 +36,7 @@ proc newLevel*(locationName, levelName: string, elevation: int,
                rows, cols: Natural,
                overrideCoordOpts: bool = false,
                coordOpts: CoordinateOptions = DefaultCoordOpts,
-               regionOpts: RegionOptions = DefaultRegionOpts,
-               regionNames: seq[string]=  @[]): Level =
+               regionOpts: RegionOptions = DefaultRegionOpts): Level =
 
   var l = new Level
   l.locationName = locationName
@@ -47,14 +47,16 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   l.coordOpts = coordOpts
 
   l.regionOpts = regionOpts
-  l.regionNames = regionNames
+  l.regions = initTable[RegionCoords, Region]()
 
   l.cellGrid = newCellGrid(rows, cols)
-  l.annotations = initTable[Natural, Annotation]()
+  l.annotations = newAnnotations(rows, cols)
 
   result = l
 
 # }}}
+
+# {{{ CellGrid
 # {{{ rows*()
 proc rows*(l): Natural {.inline.} =
   l.cellGrid.rows
@@ -66,187 +68,31 @@ proc cols*(l): Natural {.inline.} =
 
 # }}}
 
-# {{{ locationToKey()
-template locationToKey(l; r,c: Natural): Natural =
-  let h = l.rows
-  let w = l.cols
-  assert r < h
-  assert c < w
-  r*w + c
-
-# }}}
-# {{{ keyToLocation()
-template keyToLocation(l; k: Natural): (Natural, Natural) =
-  let
-    w = l.cols
-    r = (k div w).Natural
-    c = (k mod w).Natural
-  (r,c)
-
-# }}}
-
-# {{{ isLabel*()
-func isLabel*(a: Annotation): bool = a.kind == akLabel
-
-# }}}
-# {{{ isNote*()
-func isNote*(a: Annotation): bool = not a.isLabel
-
-# }}}
-
-# {{{ hasAnnotation*()
-proc hasAnnotation*(l; r,c: Natural): bool {.inline.} =
-  let key = l.locationToKey(r,c)
-  l.annotations.hasKey(key)
-
-# }}}
-# {{{ getAnnotation*()
-proc getAnnotation*(l; r,c: Natural): Option[Annotation] =
-  let key = l.locationToKey(r,c)
-  if l.annotations.hasKey(key):
-    result = l.annotations[key].some
-
-# }}}
-# {{{ setAnnotation*()
-proc setAnnotation*(l; r,c: Natural, a: Annotation) =
-  let key = l.locationToKey(r,c)
-  l.annotations[key] = a
-
-# }}}
-# {{{ delAnnotation*()
-proc delAnnotation*(l; r,c: Natural) =
-  let key = l.locationToKey(r,c)
-  if l.annotations.hasKey(key):
-    l.annotations.del(key)
-
-# }}}
-
-# {{{ numAnnotations*()
-proc numAnnotations*(l): Natural =
-  l.annotations.len
-
-# }}}
-# {{{ allAnnotations*()
-iterator allAnnotations*(l): (Natural, Natural, Annotation) =
-  for k, a in l.annotations.pairs:
-    let (r,c) = l.keyToLocation(k)
-    yield (r,c, a)
-
-# }}}
-# {{{ delAnnotations()
-proc delAnnotations(l; rect: Rect[Natural]) =
-  var toDel: seq[(Natural, Natural)]
-
-  for r,c, _ in l.allAnnotations:
-    if rect.contains(r,c):
-      toDel.add((r,c))
-
-  for (r,c) in toDel: l.delAnnotation(r,c)
-
-# }}}
-# {{{ copyAnnotationsFrom*()
-proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
-                          src: Level, srcRect: Rect[Natural]) =
-  for (r,c, a) in src.allAnnotations:
-    if srcRect.contains(r,c):
-      l.setAnnotation(destRow + r - srcRect.r1, destCol + c - srcRect.c1, a)
-
-# }}}
-
-# {{{ hasNote*()
-proc hasNote*(l; r,c: Natural): bool =
-  let a = l.getAnnotation(r,c)
-  result = a.isSome and a.get.isNote
-
-# }}}
-# {{{ getNote*()
-proc getNote*(l; r,c: Natural): Option[Annotation] =
-  let a = l.getAnnotation(r,c)
-  if a.isSome:
-    if a.get.isNote: result = a
-
-# }}}
-# {{{ allNotes*()
-iterator allNotes*(l): (Natural, Natural, Annotation) =
-  for k, a in l.annotations.pairs:
-    if a.isNote:
-      let (r,c) = l.keyToLocation(k)
-      yield (r,c, a)
-    else:
-      continue
-
-# }}}
-# {{{ reindexNotes*()
-proc reindexNotes*(l) =
-  var keys: seq[int] = @[]
-  for k, n in l.annotations.pairs():
-    if n.kind == akIndexed:
-      keys.add(k)
-
-  sort(keys)
-  for i, k in keys.pairs():
-    l.annotations[k].index = i+1
-
-# }}}
-
-# {{{ hasLabel*()
-proc hasLabel*(l; r,c: Natural): bool =
-  let a = l.getAnnotation(r,c)
-  result = a.isSome and a.get.isLabel
-
-# }}}
-# {{{ getLabel*()
-proc getLabel*(l; r,c: Natural): Option[Annotation] =
-  let a = l.getAnnotation(r,c)
-  if a.isSome:
-    if a.get.isLabel: result = a
-
-# }}}
-# {{{ allLabels*()
-iterator allLabels*(l): (Natural, Natural, Annotation) =
-  for k, a in l.annotations.pairs:
-    if a.isLabel:
-      let (r,c) = l.keyToLocation(k)
-      yield (r,c, a)
-    else:
-      continue
-
-# }}}
-
-# {{{ isNeighbourCellEmpty*()
-proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool {.inline.} =
-  l.cellGrid.isNeighbourCellEmpty(r,c, dir)
-
-# }}}
 # {{{ isEmpty*()
 proc isEmpty*(l; r,c: Natural): bool {.inline.} =
   l.cellGrid.isEmpty(r,c)
 
 # }}}
+# {{{ isNeighbourCellEmpty*()
+proc isNeighbourCellEmpty*(l; r,c: Natural, dir: Direction): bool {.inline.} =
+  l.cellGrid.isNeighbourCellEmpty(r,c, dir)
+
+# }}}
+# {{{ getNeighbourCell*()
+proc getNeighbourCell*(l; r,c: Natural,
+                       dir: Direction): Option[Cell] {.inline.} =
+  l.cellGrid.getNeighbourCell(r,c, dir)
+
+# }}}
+
 # {{{ getFloor*()
 proc getFloor*(l; r,c: Natural): Floor {.inline.} =
   l.cellGrid.getFloor(r,c)
 
 # }}}
-# {{{ convertNoteToComment()
-proc convertNoteToComment(l; r,c: Natural) =
-  let a = l.getAnnotation(r,c)
-  if a.isSome:
-    let note = a.get
-    if note.kind != akComment:
-      l.delAnnotation(r,c)
-
-    if note.kind != akLabel:
-      if note.text == "":
-        l.delAnnotation(r,c)
-      else:
-        let comment = Annotation(kind: akComment, text: note.text)
-        l.setAnnotation(r,c, comment)
-
-# }}}
 # {{{ setFloor*()
 proc setFloor*(l; r,c: Natural, f: Floor) =
-  l.convertNoteToComment(r,c)
+  l.annotations.convertNoteToComment(r,c)
   l.cellGrid.setFloor(r,c, f)
 
 # }}}
@@ -285,11 +131,71 @@ proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
   not l.isEmpty(r,c) or not l.isNeighbourCellEmpty(r,c, {dir})
 
 # }}}
-# {{{ getNeighbourCell*()
-proc getNeighbourCell*(l; r,c: Natural,
-                       dir: Direction): Option[Cell] {.inline.} =
-  l.cellGrid.getNeighbourCell(r,c, dir)
+# }}}
 
+# {{{ Annotations
+# {{{ getAnnotation*()
+proc getAnnotation*(l; r,c: Natural): Option[Annotation] =
+  l.annotations.getAnnotation(r,c)
+
+# }}}
+# {{{ setAnnotation*()
+proc setAnnotation*(l; r,c: Natural, a: Annotation) =
+  l.annotations.setAnnotation(r,c, a)
+
+# }}}
+# {{{ delAnnotation*()
+proc delAnnotation*(l; r,c: Natural) =
+  l.annotations.delAnnotation(r,c)
+
+# }}}
+# {{{ numAnnotations*()
+proc numAnnotations*(l): Natural =
+  l.annotations.numAnnotations()
+
+# }}}
+# {{{ allAnnotations*()
+template allAnnotations*(a): (Natural, Natural, Annotation) =
+  l.annotations.allAnnotations()
+
+# }}}
+
+# {{{ hasNote*()
+proc hasNote*(l; r,c: Natural): bool =
+  l.annotations.hasNote(r,c)
+
+# }}}
+# {{{ getNote*()
+proc getNote*(l; r,c: Natural): Option[Annotation] =
+  l.annotations.getNote(r,c)
+
+# }}}
+# {{{ allNotes*()
+template allNotes*(l): (Natural, Natural, Annotation) =
+  l.annotations.allNotes()
+
+# }}}
+# {{{ reindexNotes*()
+proc reindexNotes*(l) =
+  l.annotations.reindexNotes()
+
+# }}}
+
+# {{{ hasLabel*()
+proc hasLabel*(l; r,c: Natural): bool =
+  l.annotations.hasLabel(r,c)
+
+# }}}
+# {{{ getLabel*()
+proc getLabel*(l; r,c: Natural): Option[Annotation] =
+  l.annotations.getLabel(r,c)
+
+# }}}
+# {{{ allLabels*()
+template allLabels*(l): (Natural, Natural, Annotation) =
+  l.annotations.allLabels()
+
+# }}}
 # }}}
 
 # {{{ hasTrail*()
@@ -333,7 +239,7 @@ proc eraseCellWalls*(l; r,c: Natural) =
 proc eraseCell*(l; r,c: Natural) =
   l.eraseCellWalls(r,c)
   l.setFloor(r,c, fEmpty)
-  l.delAnnotation(r,c)
+  l.annotations.delAnnotation(r,c)
 
 # }}}
 
@@ -384,20 +290,32 @@ proc paste*(l; destRow, destCol: int, src: Level,
             copyWall(dirS)
             copyWall(dirE)
 
-          l.delAnnotation(r,c)
-          if src.hasAnnotation(srcRow, srcCol):
-            l.setAnnotation(r,c, src.getAnnotation(srcRow, srcCol).get)
+          l.annotations.delAnnotation(r,c)
+          if src.annotations.hasAnnotation(srcRow, srcCol):
+            l.annotations.setAnnotation(
+              r,c, src.annotations.getAnnotation(srcRow, srcCol).get
+            )
 
 # }}}
 
+# {{{ copyAnnotationsFrom*()
+proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
+                          src: Level, srcRect: Rect[Natural]) =
+  for (r,c, a) in src.annotations.allAnnotations:
+    if srcRect.contains(r,c):
+      l.annotations.setAnnotation(destRow + r - srcRect.r1,
+                                  destCol + c - srcRect.c1, a)
+
+# }}}
 # {{{ copyCellsAndAnnotationsFrom*(()
 proc copyCellsAndAnnotationsFrom*(l; destRow, destCol: Natural,
                src: Level, srcRect: Rect[Natural]) =
 
   l.cellGrid.copyFrom(destRow, destCol, src.cellGrid, srcRect)
 
-  l.delAnnotations(rectN(destRow, destCol,
-                   destRow + srcRect.rows, destCol + srcRect.cols))
+  l.annotations.delAnnotations(
+    rectN(destRow, destCol, destRow + srcRect.rows, destCol + srcRect.cols)
+  )
 
   l.copyAnnotationsFrom(destRow, destCol, src, srcRect)
 
@@ -433,13 +351,11 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
 
   # TODO region names needs to be updated when resizing the level
   # (search for newRegionNames and update all occurences)
-  let newRegionNames = src.regionNames
-
   var dest = newLevel(src.locationName, src.levelName, src.elevation,
                       rows = rect.rows + border*2,
                       cols = rect.cols + border*2,
                       src.overrideCoordOpts, src.coordOpts,
-                      src.regionOpts, newRegionNames)
+                      src.regionOpts)
 
   dest.copyCellsAndAnnotationsFrom(destRow, destCol, src, srcRect)
 
@@ -506,6 +422,22 @@ proc calcResizeParams*(
 # {{{ isSpecialLevelIndex*()
 proc isSpecialLevelIndex*(idx: Natural): bool =
   idx >= CopyBufferLevelIndex
+
+# }}}
+
+# {{{ getRegionCoords*()
+proc getRegionCoords*(l; r,c: Natural): RegionCoords =
+  let regionCol = c div l.regionOpts.regionColumns
+
+  let row = case l.coordOpts.origin
+            of coNorthWest: r
+            of coSouthWest: l.rows-1 - r
+
+  let regionRow = row div l.regionOpts.regionRows
+
+  RegionCoords(row: regionRow, col: regionCol)
+
+  #let regionsPerRow = ceil(l.cols / l.regionOpts.regionColumns).int
 
 # }}}
 

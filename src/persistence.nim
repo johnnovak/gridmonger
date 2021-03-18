@@ -9,6 +9,7 @@ import unicode
 
 import riff
 
+import annotations
 import bitable
 import common
 import drawlevel
@@ -478,7 +479,8 @@ proc readLevel_v1(rr): Level =
   level.coordOpts = readCoordinateOptions_v1(rr, groupChunkId.get)
 
   rr.cursor = regnCursor.get
-  (level.regionOpts, level.regionNames) = readRegions_v1(rr)
+  var (regionOpts, regionNames) = readRegions_v1(rr)
+  level.regionOpts = regionOpts
 
   rr.cursor = cellCursor.get
 
@@ -756,9 +758,10 @@ proc writeRegions_v1(rw; l: Level) =
   rw.write(l.regionOpts.regionRows.uint16)
   rw.write(l.regionOpts.perRegionCoords.uint8)
 
-  rw.write(l.regionNames.len.uint16)
-  for name in l.regionNames:
-    rw.writeBStr(name)
+#  rw.write(l.regionNames.len.uint16)
+#  for name in l.regionNames:
+#    rw.writeBStr(name)
+  rw.write(0.uint16)
 
   rw.endChunk()
 

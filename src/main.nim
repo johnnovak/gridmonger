@@ -65,12 +65,15 @@ const
 
   StatusBarHeight         = 26.0
 
-  LevelTopPad_Coords      = 85.0
+  LevelTopPad_Regions     = 28.0
+  
+  LevelTopPad_Coords      = 85.0 + LevelTopPad_Regions
   LevelRightPad_Coords    = 50.0
   LevelBottomPad_Coords   = 40.0
   LevelLeftPad_Coords     = 50.0
 
-  LevelTopPad_NoCoords    = 65.0
+
+  LevelTopPad_NoCoords    = 65.0 + LevelTopPad_Regions
   LevelRightPad_NoCoords  = 28.0
   LevelBottomPad_NoCoords = 10.0
   LevelLeftPad_NoCoords   = 28.0
@@ -879,17 +882,6 @@ proc createPattern(vg: NVGContext, img: var Image, alpha: float = 1.0,
 
 # {{{ Helpers/utils
 
-# {{{ setCursor()
-proc setCursor(cur: Location; a) =
-  a.ui.cursor = cur
-
-  if a.ui.lastCursor.level != a.ui.cursor.level:
-    a.opts.drawTrail = false
-
-  if a.opts.drawTrail:
-    a.doc.map.setTrail(cur, true)
-
-# }}}
 # {{{ viewRow()
 func viewRow(row: Natural; a): int =
   row - a.ui.drawLevelParams.viewStartRow
@@ -925,6 +917,17 @@ func currLevel(a): common.Level =
 func coordOptsForCurrLevel(a): CoordinateOptions =
   let l = currLevel(a)
   if l.overrideCoordOpts: l.coordOpts else: a.doc.map.coordOpts
+
+# }}}
+# {{{ setCursor()
+proc setCursor(cur: Location; a) =
+  a.ui.cursor = cur
+
+  if a.ui.lastCursor.level != a.ui.cursor.level:
+    a.opts.drawTrail = false
+
+  if a.opts.drawTrail:
+    a.doc.map.setTrail(cur, true)
 
 # }}}
 
@@ -3970,7 +3973,7 @@ proc handleGlobalKeyEvents(a) =
           l.locationName, l.levelName, l.elevation,
           l.rows, l.cols,
           l.overrideCoordOpts, l.coordOpts,
-          l.regionOpts, l.regionNames
+          l.regionOpts
         )
 
         dp.selStartRow = 0
@@ -5581,13 +5584,14 @@ proc renderUI(a) =
     drawEmptyMap(a)
 
   else:
-    let levelItems = a.doc.map.sortedLevelNames
+    let levelNames = a.doc.map.sortedLevelNames
     var sortedLevelIdx = currSortedLevelIdx(a)
 
     vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
 
+    # Level drop-down
     let levelDropDownWidth = round(
-      vg.textWidth(levelItems[sortedLevelIdx]) +
+      vg.textWidth(levelNames[sortedLevelIdx]) +
       a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
     )
 
@@ -5596,7 +5600,7 @@ proc renderUI(a) =
       y = 45.0,
       w = levelDropDownWidth,
       h = 24.0,
-      levelItems,
+      levelNames,
       sortedLevelIdx,
       tooltip = "",
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
@@ -5606,6 +5610,28 @@ proc renderUI(a) =
     var cur = ui.cursor
     cur.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
     setCursor(cur, a)
+
+    # Region drop-down
+    let regionNames = @[
+      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
+      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
+      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
+      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
+      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
+      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
+    ]
+
+    koi.dropDown(
+      x = round((uiWidth - levelDropDownWidth) * 0.5),
+      y = 73.0,
+      w = levelDropDownWidth,
+      h = 24.0,
+      regionNames,
+      sortedLevelIdx,
+      tooltip = "",
+      disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+      style = a.theme.levelDropDownStyle
+    )
 
     renderLevel(a)
 

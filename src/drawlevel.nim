@@ -6,6 +6,7 @@ import glad/gl
 import koi
 import nanovg
 
+import annotations
 import bitable
 import cellgrid
 import common

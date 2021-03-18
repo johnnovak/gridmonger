@@ -669,11 +669,9 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     # TODO region names needs to be updated when resizing the level
     # (search for newRegionNames and update all occurences)
-    let newRegionNames = l.regionNames
-
     var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
                             newRows, newCols, l.overrideCoordOpts, l.coordOpts,
-                            l.regionOpts, newRegionNames)
+                            l.regionOpts)
 
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
     l = newLevel
@@ -725,8 +723,8 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     m.links.addAll(newLinks)
 
     var usd = usd
-    usd.location.col = (usd.location.col.int + colOffs).Natural
-    usd.location.row = (usd.location.row.int + rowOffs).Natural
+    usd.location.col = max(usd.location.col.int + colOffs, 0).Natural
+    usd.location.row = max(usd.location.row.int + rowOffs, 0).Natural
     result = usd
 
 
@@ -767,8 +765,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.cols,
       sb.level.overrideCoordOpts,
       sb.level.coordOpts,
-      sb.level.regionOpts,
-      sb.level.regionNames
+      sb.level.regionOpts
     )
     discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
     m.levels[loc.level] = l
