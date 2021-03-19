@@ -14,9 +14,9 @@ RIFF ('GRDM'          # Gridmonger map file
         LIST ('lvl '  # Level
             'prop'    # Level properties
             'coor'    # Coordinate options
-            'regn'    # Regions
             'cell'    # Level cells
             'note'    # Notes
+            'regn'    # Regions
         )
         ...
     )
@@ -48,15 +48,16 @@ RIFF ('GRDM'          # Gridmonger map file
     UINT16  numColums       (min=1, max=6666)
     UINT8   overrideCoordOpts  (0=off, >0=on)
 
-
 'regn'
     UINT8   enableRegions   (0=off, >0=on)
-    UINT16  regionColumns   (min=2, max=6666)
     UINT16  regionRows      (min=2, max=6666)
+    UINT16  regionColumns   (min=2, max=6666)
     UINT16  numRegions
 
     numRegion times:
-    BSTR    regionName      (minLen=1, maxLen=400, maxRuneLen=100)
+    UINT16  row             (max=0, max=3332)
+    UINT16  column          (min=0, max=3332)
+    BSTR    name            (minLen=1, maxLen=400, maxRuneLen=100)
 
 
 'cell'

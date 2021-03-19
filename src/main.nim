@@ -35,6 +35,7 @@ import links
 import map
 import persistence
 import rect
+import regions
 import selection
 import theme
 import unicode
@@ -66,7 +67,7 @@ const
   StatusBarHeight         = 26.0
 
   LevelTopPad_Regions     = 28.0
-  
+
   LevelTopPad_Coords      = 85.0 + LevelTopPad_Regions
   LevelRightPad_Coords    = 50.0
   LevelBottomPad_Coords   = 40.0
@@ -314,18 +315,19 @@ type
     editNoteDialog:         EditNoteDialogParams
     editLabelDialog:        EditLabelDialogParams
 
+    editRegionPropsDialog:  EditRegionPropsParams
+
 
   AboutDialogParams = object
-    isOpen:        bool
-    logoPaint:     Paint
-    outlinePaint:  Paint
-    shadowPaint:   Paint
-
+    isOpen:       bool
+    logoPaint:    Paint
+    outlinePaint: Paint
+    shadowPaint:  Paint
 
 
   PreferencesDialogParams = object
-    isOpen:       bool
-    activeTab:    Natural
+    isOpen:             bool
+    activeTab:          Natural
     activateFirstTextField: bool
 
     showSplash:         bool
@@ -368,6 +370,7 @@ type
 
   DeleteLevelDialogParams = object
     isOpen:       bool
+
 
   NewLevelDialogParams = object
     isOpen:       bool
@@ -461,6 +464,13 @@ type
     col:          Natural
     text:         string
     color:        Natural
+
+
+  EditRegionPropsParams = object
+    isOpen:       bool
+    activateFirstTextField: bool
+
+    name:         string
 
 
   ThemeEditor = object
@@ -911,6 +921,18 @@ func currSortedLevelIdx(a): Natural =
 # {{{ currLevel()
 func currLevel(a): common.Level =
   a.doc.map.levels[a.ui.cursor.level]
+
+# }}}
+# {{{ currRegion()
+func currRegion(a): Option[Region] =
+  alias(cur, a.ui.cursor)
+
+  let l = currLevel(a)
+  if l.regionOpts.enableRegions:
+    let rc = l.getRegionCoords(cur.row, cur.col)
+    l.getRegion(rc)
+  else:
+    Region.none
 
 # }}}
 # {{{ coordOptsForCurrLevel()
@@ -2126,7 +2148,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
 # }}}
 # {{{ Edit map properties dialog
-proc openMapPropsDialog(a) =
+proc openEditMapPropsDialog(a) =
   alias(dlg, a.dialog.editMapPropsDialog)
   dlg.name = $a.doc.map.name
 
@@ -3186,6 +3208,98 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
 # }}}
 
+# {{{ Edit region properties dialog
+proc openEditRegionPropertiesDialog(a) =
+  alias(dlg, a.dialog.editRegionPropsDialog)
+
+  dlg.name = currRegion(a).get.name
+  dlg.isOpen = true
+
+
+proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
+  const
+    DlgWidth = 430.0
+    DlgHeight = 170.0
+
+  koi.beginDialog(DlgWidth, DlgHeight,
+                  fmt"{IconCommentInv}  Edit Region",
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopNoTabPad
+
+  koi.beginView(x, y, 1000, 1000)
+  koi.initAutoLayout(DialogLayoutParams)
+
+  koi.label("Name", style=a.theme.labelStyle)
+  koi.textField(
+    dlg.name,
+    activate = dlg.activateFirstTextField,
+    constraint = TextFieldConstraint(
+      kind: tckString,
+      minLen: RegionNameLimits.minLen,
+      maxLen: RegionNameLimits.maxRuneLen.some
+    ).some,
+    style = a.theme.textFieldStyle
+  )
+
+  koi.endView()
+
+  dlg.activateFirstTextField = false
+
+
+  proc okAction(dlg: var EditRegionPropsParams; a) =
+    alias(cur, a.ui.cursor)
+
+    setStatusMessage(IconComment, "Region properties updated", a)
+
+    let regionCoords = currLevel(a).getRegionCoords(cur.row, cur.col)
+    let region = Region(name: dlg.name)
+
+    actions.setRegionProperties(a.doc.map, cur, regionCoords, region,
+                                a.doc.undoManager)
+
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  proc cancelAction(dlg: var EditRegionPropsParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
+
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
+                style=a.theme.buttonStyle):
+    okAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
+                style=a.theme.buttonStyle):
+    cancelAction(dlg, a)
+
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
+
 # }}}
 # {{{ Actions
 
@@ -3243,6 +3357,19 @@ proc loadMap(filename: string; a): bool =
 
     let message = fmt"Map '{filename}' loaded in " &
                   fmt"{durationToFloatMillis(dt):.2f} ms"
+
+    # TODO hack begin
+#[    alias(l, a.doc.map.levels[0])
+    let rr = ceil(l.rows / l.regionOpts.regionRows).int
+    let rc = ceil(l.cols / l.regionOpts.regionColumns).int
+    echo rr, " ", rc
+    l.regions = initRegions()
+
+    for r in 0..<rr:
+      for c in 0..<rc:
+        l.setRegion(RegionCoords(row: r, col: c), Region(name: fmt"region {r} {c}"))
+]#
+    # TODO hack end
 
     info(message)
     setStatusMessage(IconFloppy, message, a)
@@ -4069,18 +4196,21 @@ proc handleGlobalKeyEvents(a) =
         openEditLevelPropsDialog(a)
 
       elif ke.isKeyDown(keyP, {mkCtrl, mkAlt}):
-        openMapPropsDialog(a)
+        openEditMapPropsDialog(a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
         openResizeLevelDialog(a)
+
+      elif ke.isKeyDown(keyR, {mkCtrl, mkAlt}):
+        openEditRegionPropertiesDialog(a)
 
       elif ke.isKeyDown(keyO, {mkCtrl}):              openMapAction(a)
       elif ke.isKeyDown(Key.keyS, {mkCtrl}):          saveMapAction(a)
       elif ke.isKeyDown(Key.keyS, {mkCtrl, mkShift}): saveMapAsAction(a)
 
-      elif ke.isKeyDown(keyR, {mkAlt,mkCtrl}):        reloadThemeAction(a)
-      elif ke.isKeyDown(keyPageUp, {mkCtrl}):         prevThemeAction(a)
-      elif ke.isKeyDown(keyPageDown, {mkCtrl}):       nextThemeAction(a)
+      elif ke.isKeyDown(keyHome, {mkCtrl}):     reloadThemeAction(a)
+      elif ke.isKeyDown(keyPageUp, {mkCtrl}):   prevThemeAction(a)
+      elif ke.isKeyDown(keyPageDown, {mkCtrl}): nextThemeAction(a)
 
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
@@ -4505,7 +4635,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     let ke = koi.currEvent()
 
     if   ke.isKeyDown(keyN,        {mkCtrl, mkAlt}):   newMapAction(a)
-    elif ke.isKeyDown(keyP,        {mkCtrl, mkAlt}):   openMapPropsDialog(a)
+    elif ke.isKeyDown(keyP,        {mkCtrl, mkAlt}):   openEditMapPropsDialog(a)
 
     elif ke.isKeyDown(keyO,        {mkCtrl}):          openMapAction(a)
     elif ke.isKeyDown(Key.keyS,    {mkCtrl}):          saveMapAction(a)
@@ -5612,14 +5742,11 @@ proc renderUI(a) =
     setCursor(cur, a)
 
     # Region drop-down
-    let regionNames = @[
-      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
-      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
-      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
-      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
-      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
-      "The Temple", "Dwarven Village", "Abandoned Castle", "Western Mines",
-    ]
+    let l = currLevel(a)
+    var regionNames = l.regionNames()
+    sort(regionNames)
+
+    var sortedRegionIdx = regionNames.find(currRegion(a).get.name)
 
     koi.dropDown(
       x = round((uiWidth - levelDropDownWidth) * 0.5),
@@ -5627,7 +5754,7 @@ proc renderUI(a) =
       w = levelDropDownWidth,
       h = 24.0,
       regionNames,
-      sortedLevelIdx,
+      sortedRegionIdx,
       tooltip = "",
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
       style = a.theme.levelDropDownStyle
@@ -5705,6 +5832,9 @@ proc renderUI(a) =
 
   elif dlg.resizeLevelDialog.isOpen:
     resizeLevelDialog(dlg.resizeLevelDialog, a)
+
+  elif dlg.editRegionPropsDialog.isOpen:
+    editRegionPropsDialog(dlg.editRegionPropsDialog, a)
 
 # }}}
 # {{{ renderFramePre()

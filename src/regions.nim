@@ -16,19 +16,23 @@ proc initRegions*(): Regions =
 # }}}
 
 # {{{ setRegion*()
-proc setRegion*(vr; rc: RegionCoords, region: Region) =
-  vr[rc] = region
+proc setRegion*(vr; rc: RegionCoords, region: Region) = vr[rc] = region
 
 # }}}
 # {{{ getRegion*()
-proc getRegion*(r; rc: RegionCoords): Region =
-  r[rc]
+proc getRegion*(r; rc: RegionCoords): Option[Region] =
+  if r.hasKey(rc): r[rc].some
+  else: Region.none
 
 # }}}
 # {{{ allRegions*()
 iterator allRegions*(r): (RegionCoords, Region) =
   for rc, r in r.pairs:
     yield (rc, r)
+
+# }}}
+# {{{ numRegions*()
+proc numRegions*(r): Natural = r.len
 
 # }}}
 # {{{ regionNames*()

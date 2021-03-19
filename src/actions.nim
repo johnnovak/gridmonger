@@ -850,7 +850,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
   discard action(map)
 
 # }}}
-# {{{ setMapPropertiess*()
+# {{{ setMapProperties*()
 proc setMapProperties*(map; loc: Location, name: string,
                        coordOpts: CoordinateOptions; um) =
 
@@ -868,6 +868,29 @@ proc setMapProperties*(map; loc: Location, name: string,
   var undoAction = proc (m: var Map): UndoStateData =
     m.name = oldName
     m.coordOpts = oldCoordOpts
+    result = usd
+
+  um.storeUndoState(action, undoAction)
+  discard action(map)
+
+# }}}
+# {{{ setRegionProperties*()
+proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
+                          region: Region; um) =
+
+  let usd = UndoStateData(actionName: "Edit region properties", location: loc)
+
+  let action = proc (m: var Map): UndoStateData =
+    alias(l, m.levels[loc.level])
+    l.setRegion(rc, region)
+    result = usd
+
+  alias(l, map.levels[loc.level])
+  let oldRegion = l.getRegion(rc).get
+
+  var undoAction = proc (m: var Map): UndoStateData =
+    alias(l, m.levels[loc.level])
+    l.setRegion(rc, oldRegion)
     result = usd
 
   um.storeUndoState(action, undoAction)

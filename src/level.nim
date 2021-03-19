@@ -203,13 +203,18 @@ proc setRegion*(l; rc: RegionCoords, region: Region) =
 
 # }}}
 # {{{ getRegion*()
-proc getRegion*(l; rc: RegionCoords): Region =
+proc getRegion*(l; rc: RegionCoords): Option[Region] =
   l.regions.getRegion(rc)
 
 # }}}
 # {{{ allRegions*()
 template allRegions*(l): (RegionCoords, Region) =
   l.regions.allRegions()
+
+# }}}
+# {{{ numRegions*()
+proc numRegions*(l): Natural =
+  l.regions.numRegions()
 
 # }}}
 # {{{ regionNames*()

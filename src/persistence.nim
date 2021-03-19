@@ -17,8 +17,9 @@ import fieldlimits
 import icons
 import level
 import map
-import utils
+import regions
 import theme
+import utils
 
 
 # TODO use app version instead?
@@ -36,9 +37,11 @@ const
   LevelRowsLimits*         = intLimits(min=1, max=6666)
   LevelColumnsLimits*      = intLimits(min=1, max=6666)
 
-  RegionNameLimits*        = strLimits(minLen=0, maxLen=400, maxRuneLen=100)
   RegionRowsLimits*        = intLimits(min=2, max=6666)
   RegionColumnsLimits*     = intLimits(min=2, max=6666)
+  RegionRowLimits*         = intLimits(min=0, max=3332)
+  RegionColumnLimits*      = intLimits(min=0, max=3332)
+  RegionNameLimits*        = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
 
   CellFloorColorLimits*    = intLimits(min=0, max=LevelStyle.floorColor.len)
 
@@ -381,7 +384,7 @@ proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
 
 # }}}
 # {{{ readRegions_v1*()
-proc readRegions_v1(rr): (RegionOptions, seq[string]) =
+proc readRegions_v1(rr): (RegionOptions, Regions) =
   info(fmt"Reading regions...")
 
   let enableRegions = rr.read(uint8).bool
@@ -403,13 +406,24 @@ proc readRegions_v1(rr): (RegionOptions, seq[string]) =
 
   let numRegions = rr.read(uint16).Natural
 
-  var regionNames: seq[string] = @[]
-  for i in 0..<numRegions:
-    let name = rr.readBStr()
-    checkStringLength(name, "lvl.regn.regionName", RegionNameLimits)
-    regionNames.add(name)
+  var regions: Regions = initRegions()
 
-  result = (regionOpts, regionNames)
+  for i in 0..<numRegions:
+    let row = rr.read(uint16)
+    checkValueRange(row, "lvl.regn.region.row", RegionRowLimits)
+
+    let col = rr.read(uint16)
+    checkValueRange(col, "lvl.regn.region.column", RegionColumnLimits)
+
+    let name = rr.readBStr()
+    checkStringLength(name, "lvl.regn.region.name", RegionNameLimits)
+
+    regions.setRegion(
+      RegionCoords(row: row, col: col),
+      Region(name: name)
+    )
+
+  result = (regionOpts, regions)
 
 # }}}
 # {{{ readLevel_v1()
@@ -479,8 +493,7 @@ proc readLevel_v1(rr): Level =
   level.coordOpts = readCoordinateOptions_v1(rr, groupChunkId.get)
 
   rr.cursor = regnCursor.get
-  var (regionOpts, regionNames) = readRegions_v1(rr)
-  level.regionOpts = regionOpts
+  (level.regionOpts, level.regions) = readRegions_v1(rr)
 
   rr.cursor = cellCursor.get
 
@@ -754,14 +767,16 @@ proc writeRegions_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_regn)
 
   rw.write(l.regionOpts.enableRegions.uint8)
-  rw.write(l.regionOpts.regionColumns.uint16)
   rw.write(l.regionOpts.regionRows.uint16)
+  rw.write(l.regionOpts.regionColumns.uint16)
   rw.write(l.regionOpts.perRegionCoords.uint8)
 
-#  rw.write(l.regionNames.len.uint16)
-#  for name in l.regionNames:
-#    rw.writeBStr(name)
-  rw.write(0.uint16)
+  rw.write(l.numRegions.uint16)
+
+  for rc, r in l.allRegions:
+    rw.write(rc.row.uint16)
+    rw.write(rc.col.uint16)
+    rw.writeBStr(r.name)
 
   rw.endChunk()
 
