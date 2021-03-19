@@ -22,12 +22,20 @@ proc linkFloorToString*(f: Floor): string =
   elif f in LinkTeleports: return "teleport"
 
 # }}}
-# {{{ hash*(ml: Location)
-proc hash*(ml: Location): Hash =
+# {{{ hash*(l: Location)
+proc hash*(l: Location): Hash =
   var h: Hash = 0
-  h = h !& hash(ml.level)
-  h = h !& hash(ml.row)
-  h = h !& hash(ml.col)
+  h = h !& hash(l.level)
+  h = h !& hash(l.row)
+  h = h !& hash(l.col)
+  result = !$h
+
+# }}}
+# {{{ hash*(rc: RegionCoords)
+proc hash*(rc: RegionCoords): Hash =
+  var h: Hash = 0
+  h = h !& hash(rc.row)
+  h = h !& hash(rc.col)
   result = !$h
 
 # }}}

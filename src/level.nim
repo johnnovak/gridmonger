@@ -1,4 +1,3 @@
-import algorithm
 import options
 import tables
 
@@ -6,6 +5,7 @@ import annotations
 import common
 import cellgrid
 import rect
+import regions
 import selection
 
 
@@ -132,7 +132,6 @@ proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
 
 # }}}
 # }}}
-
 # {{{ Annotations
 # {{{ getAnnotation*()
 proc getAnnotation*(l; r,c: Natural): Option[Annotation] =
@@ -194,6 +193,33 @@ proc getLabel*(l; r,c: Natural): Option[Annotation] =
 # {{{ allLabels*()
 template allLabels*(l): (Natural, Natural, Annotation) =
   l.annotations.allLabels()
+
+# }}}
+# }}}
+# {{{ Regions
+# {{{ setRegion*()
+proc setRegion*(l; rc: RegionCoords, region: Region) =
+  l.regions.setRegion(rc, region)
+
+# }}}
+# {{{ getRegion*()
+proc getRegion*(l; rc: RegionCoords): Region =
+  l.regions.getRegion(rc)
+
+# }}}
+# {{{ allRegions*()
+template allRegions*(l): (RegionCoords, Region) =
+  l.regions.allRegions()
+
+# }}}
+# {{{ regionNames*()
+proc regionNames*(l): seq[string] =
+  l.regions.regionNames()
+
+# }}}
+# {{{ findFirstRegionByName*()
+proc findFirstRegionByName*(l; name: string): Option[(RegionCoords, Region)] =
+  l.regions.findFirstRegionByName(name)
 
 # }}}
 # }}}
@@ -436,8 +462,6 @@ proc getRegionCoords*(l; r,c: Natural): RegionCoords =
   let regionRow = row div l.regionOpts.regionRows
 
   RegionCoords(row: regionRow, col: regionCol)
-
-  #let regionsPerRow = ceil(l.cols / l.regionOpts.regionColumns).int
 
 # }}}
 

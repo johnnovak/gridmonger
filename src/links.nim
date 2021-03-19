@@ -18,6 +18,7 @@ proc initLinks*(): Links =
   result = initBiTable[Location, Location]()
 
 # }}}
+
 # {{{ dump*()
 proc dump*(l) =
   for src, dest in l.pairs:
