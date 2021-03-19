@@ -4079,8 +4079,8 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(Key.keyS, {mkCtrl, mkShift}): saveMapAsAction(a)
 
       elif ke.isKeyDown(keyR, {mkAlt,mkCtrl}):        reloadThemeAction(a)
-      elif ke.isKeyDown(keyPageUp, {mkAlt,mkCtrl}):   prevThemeAction(a)
-      elif ke.isKeyDown(keyPageDown, {mkAlt,mkCtrl}): nextThemeAction(a)
+      elif ke.isKeyDown(keyPageUp, {mkCtrl}):         prevThemeAction(a)
+      elif ke.isKeyDown(keyPageDown, {mkCtrl}):       nextThemeAction(a)
 
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
