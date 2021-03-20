@@ -35,7 +35,6 @@ import links
 import map
 import persistence
 import rect
-import regions
 import selection
 import theme
 import unicode
@@ -68,13 +67,13 @@ const
 
   LevelTopPad_Regions     = 28.0
 
-  LevelTopPad_Coords      = 85.0 + LevelTopPad_Regions
+  LevelTopPad_Coords      = 85.0
   LevelRightPad_Coords    = 50.0
   LevelBottomPad_Coords   = 40.0
   LevelLeftPad_Coords     = 50.0
 
 
-  LevelTopPad_NoCoords    = 65.0 + LevelTopPad_Regions
+  LevelTopPad_NoCoords    = 65.0
   LevelRightPad_NoCoords  = 28.0
   LevelBottomPad_NoCoords = 10.0
   LevelLeftPad_NoCoords   = 28.0
@@ -1050,6 +1049,9 @@ proc updateViewStartAndCursorPosition(a) =
     a.ui.levelRightPad  = LevelRightPad_NoCoords
     a.ui.levelBottomPad = LevelBottomPad_NoCoords
     a.ui.levelLeftPad   = LevelLeftPad_NoCoords
+
+  if l.regionOpts.enabled:
+    a.ui.levelTopPad += LevelTopPad_Regions
 
   dp.startX = ui.levelLeftPad
   dp.startY = TitleBarHeight + ui.levelTopPad
@@ -3392,19 +3394,20 @@ proc loadMap(filename: string; a): bool =
     let message = fmt"Map '{filename}' loaded in " &
                   fmt"{durationToFloatMillis(dt):.2f} ms"
 
-    # TODO hack begin
-#[    alias(l, a.doc.map.levels[0])
-    let rr = ceil(l.rows / l.regionOpts.regionRows).int
-    let rc = ceil(l.cols / l.regionOpts.regionColumns).int
-    echo rr, " ", rc
-    l.regions = initRegions()
+#[
+    # TODO regions hack begin
+    for l in a.doc.map.levels:
+      if l.regionOpts.enabled:
+        let rr = ceil(l.rows / l.regionOpts.regionRows).int
+        let rc = ceil(l.cols / l.regionOpts.regionColumns).int
+        echo rr, " ", rc
+        l.regions = initRegions()
 
-    for r in 0..<rr:
-      for c in 0..<rc:
-        l.setRegion(RegionCoords(row: r, col: c), Region(name: fmt"region {r} {c}"))
-]#
+        for r in 0..<rr:
+          for c in 0..<rc:
+            l.setRegion(RegionCoords(row: r, col: c), Region(name: fmt"region {r} {c}"))
     # TODO hack end
-
+]#
     info(message)
     setStatusMessage(IconFloppy, message, a)
     result = true
@@ -5731,6 +5734,7 @@ proc renderUI(a) =
   alias(ui, a.ui)
   alias(vg, a.vg)
   alias(dlg, a.dialog)
+  alias(map, a.doc.map)
 
   let winHeight = koi.winHeight()
   let uiWidth = drawAreaWidth(a)
@@ -5755,7 +5759,9 @@ proc renderUI(a) =
     drawEmptyMap(a)
 
   else:
-    let levelNames = a.doc.map.sortedLevelNames
+    let l = currLevel(a)
+
+    let levelNames = map.sortedLevelNames
     var sortedLevelIdx = currSortedLevelIdx(a)
     let prevSortedLevelIdx = sortedLevelIdx
 
@@ -5781,37 +5787,36 @@ proc renderUI(a) =
 
     if sortedLevelIdx != prevSortedLevelIdx:
       var cur = ui.cursor
-      cur.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+      cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
       setCursor(cur, a)
 
     # Region drop-down
-    let l = currLevel(a)
+    if l.regionOpts.enabled:
+      var sortedRegionNames = l.regionNames()
+      sort(sortedRegionNames)
 
-    var sortedRegionNames = l.regionNames()
-    sort(sortedRegionNames)
+      var sortedRegionIdx = sortedRegionNames.find(currRegion(a).get.name)
+      let prevSortedRegionIdx = sortedRegionIdx
 
-    var sortedRegionIdx = sortedRegionNames.find(currRegion(a).get.name)
-    let prevSortedRegionIdx = sortedRegionIdx
+      koi.dropDown(
+        x = round((uiWidth - levelDropDownWidth) * 0.5),
+        y = 73.0,
+        w = levelDropDownWidth,
+        h = 24.0,
+        sortedRegionNames,
+        sortedRegionIdx,
+        tooltip = "",
+        disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+        style = a.theme.levelDropDownStyle
+      )
 
-    koi.dropDown(
-      x = round((uiWidth - levelDropDownWidth) * 0.5),
-      y = 73.0,
-      w = levelDropDownWidth,
-      h = 24.0,
-      sortedRegionNames,
-      sortedRegionIdx,
-      tooltip = "",
-      disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-      style = a.theme.levelDropDownStyle
-    )
+      if sortedRegionIdx != prevSortedRegionIdx :
+        let currRegionName = sortedRegionNames[sortedRegionIdx]
+        let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
 
-    if sortedRegionIdx != prevSortedRegionIdx :
-      let currRegionName = sortedRegionNames[sortedRegionIdx]
-      let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
+        let (r, c) = l.getRegionCenterLocation(regionCoords)
 
-      let (r, c) = l.getRegionCenterLocation(regionCoords)
-
-      centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
+        centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
 
     # Render level & panes
     renderLevel(a)
