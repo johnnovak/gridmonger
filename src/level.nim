@@ -26,7 +26,7 @@ const DefaultCoordOpts = CoordinateOptions(
 )
 
 const DefaultRegionOpts = RegionOptions(
-  enableRegions:   false,
+  enabled:         false,
   regionColumns:   2,
   regionRows:      2,
   perRegionCoords: true
@@ -467,6 +467,23 @@ proc getRegionCoords*(l; r,c: Natural): RegionCoords =
   let regionRow = row div l.regionOpts.regionRows
 
   RegionCoords(row: regionRow, col: regionCol)
+
+# }}}
+# {{{ getRegionCenterLocation*()
+proc getRegionCenterLocation*(l; rc: RegionCoords): (Natural, Natural) =
+  let cols = l.regionOpts.regionColumns
+  let rows = l.regionOpts.regionRows
+
+  let c = (rc.col * cols).int
+
+  let r = case l.coordOpts.origin
+          of coNorthWest: rc.row * rows
+          of coSouthWest: (l.rows+1).int - (rc.col+1)*cols
+
+  let centerRow = (r + l.regionOpts.regionRows    div 2).clamp(0, l.rows-1)
+  let centerCol = (c + l.regionOpts.regionColumns div 2).clamp(0, l.cols-1)
+
+  (centerRow.Natural, centerCol.Natural)
 
 # }}}
 

@@ -323,7 +323,7 @@ proc setLevelClippingRect(l: Level; ctx) =
   alias(vg, ctx.vg)
 
   let clipOffs = if dp.lineWidth == lwNormal: 1 else: 0
-  let regionOffs = if dp.regionOpts.enableRegions: 1 else: 0
+  let regionOffs = if dp.regionOpts.enabled: 1 else: 0
 
   var
     x = dp.startX-clipOffs - regionOffs
@@ -2129,7 +2129,7 @@ proc drawWalls(l: Level, viewBuf: Level; ctx) =
 
   for viewRow in 0..dp.viewRows:
     let row = dp.viewStartRow + viewRow
-    let regionBorder = ro.enableRegions and
+    let regionBorder = ro.enabled and
                        row > 0 and row < l.rows and
                        row mod ro.regionRows == 0
     if not regionBorder:
@@ -2137,7 +2137,7 @@ proc drawWalls(l: Level, viewBuf: Level; ctx) =
 
   for viewCol in 0..dp.viewCols:
     let col = dp.viewStartCol + viewCol
-    let regionBorder = ro.enableRegions and
+    let regionBorder = ro.enabled and
                        col > 0 and col < l.cols and
                        col mod ro.regionColumns == 0
     if not regionBorder:
@@ -2420,7 +2420,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   drawWalls(l, viewBuf, ctx)
 
-  if dp.regionOpts.enableRegions:
+  if dp.regionOpts.enabled:
     drawRegionBorders(l, viewBuf, ctx)
 
   drawLabels(viewBuf, ctx)
@@ -2441,7 +2441,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   if dp.drawCellCoords:
     drawCellCoords(l, ctx)
 
-  if dp.regionOpts.enableRegions:
+  if dp.regionOpts.enabled:
     drawRegionBorderEdges(l, viewBuf, ctx)
 
 # }}}

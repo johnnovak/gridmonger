@@ -928,7 +928,7 @@ func currRegion(a): Option[Region] =
   alias(cur, a.ui.cursor)
 
   let l = currLevel(a)
-  if l.regionOpts.enableRegions:
+  if l.regionOpts.enabled:
     let rc = l.getRegionCoords(cur.row, cur.col)
     l.getRegion(rc)
   else:
@@ -1220,6 +1220,18 @@ proc moveCursorTo(loc: Location; a) =
         else: cur
 
   setCursor(cur, a)
+
+# }}}
+# {{{ centerCursorAt()
+proc centerCursorAt(loc: Location; a) =
+  alias(dp, a.ui.drawLevelParams)
+
+  let l = currLevel(a)
+
+  dp.viewStartRow = (loc.row.int - dp.viewRows div 2).clamp(0, l.rows-1)
+  dp.viewStartCol = (loc.col.int - dp.viewCols div 2).clamp(0, l.cols-1)
+
+  moveCursorTo(loc, a)
 
 # }}}
 
@@ -2413,7 +2425,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
     )
 
     let regionOpts = RegionOptions(
-      enableRegions   : dlg.enableRegions,
+      enabled         : dlg.enableRegions,
       regionColumns   : parseInt(dlg.regionColumns),
       regionRows      : parseInt(dlg.regionRows),
       perRegionCoords : dlg.perRegionCoords
@@ -2489,9 +2501,9 @@ proc openEditLevelPropsDialog(a) =
   dlg.columnStart       = $co.columnStart
 
   let ro = l.regionOpts
-  dlg.enableRegions = ro.enableRegions
-  dlg.regionColumns = $ro.regionColumns
-  dlg.regionRows = $ro.regionRows
+  dlg.enableRegions   = ro.enabled
+  dlg.regionColumns   = $ro.regionColumns
+  dlg.regionRows      = $ro.regionRows
   dlg.perRegionCoords = ro.perRegionCoords
 
   dlg.isOpen = true
@@ -2594,7 +2606,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
     )
 
     let regionOpts = RegionOptions(
-      enableRegions   : dlg.enableRegions,
+      enabled         : dlg.enableRegions,
       regionRows      : parseInt(dlg.regionRows),
       regionColumns   : parseInt(dlg.regionColumns),
       perRegionCoords : dlg.perRegionCoords
@@ -4202,7 +4214,14 @@ proc handleGlobalKeyEvents(a) =
         openResizeLevelDialog(a)
 
       elif ke.isKeyDown(keyR, {mkCtrl, mkAlt}):
-        openEditRegionPropertiesDialog(a)
+        if l.regionOpts.enabled:
+          openEditRegionPropertiesDialog(a)
+        else:
+          setStatusMessage(
+            IconWarning,
+            "Cannot edit region properties: regions are not enabled for level",
+            a
+          )
 
       elif ke.isKeyDown(keyO, {mkCtrl}):              openMapAction(a)
       elif ke.isKeyDown(Key.keyS, {mkCtrl}):          saveMapAction(a)
@@ -5716,6 +5735,7 @@ proc renderUI(a) =
   else:
     let levelNames = a.doc.map.sortedLevelNames
     var sortedLevelIdx = currSortedLevelIdx(a)
+    let prevSortedLevelIdx = sortedLevelIdx
 
     vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
 
@@ -5737,29 +5757,41 @@ proc renderUI(a) =
       style = a.theme.levelDropDownStyle
     )
 
-    var cur = ui.cursor
-    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
-    setCursor(cur, a)
+    if sortedLevelIdx != prevSortedLevelIdx:
+      var cur = ui.cursor
+      cur.level = a.doc.map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+      setCursor(cur, a)
 
     # Region drop-down
     let l = currLevel(a)
-    var regionNames = l.regionNames()
-    sort(regionNames)
 
-    var sortedRegionIdx = regionNames.find(currRegion(a).get.name)
+    var sortedRegionNames = l.regionNames()
+    sort(sortedRegionNames)
+
+    var sortedRegionIdx = sortedRegionNames.find(currRegion(a).get.name)
+    let prevSortedRegionIdx = sortedRegionIdx
 
     koi.dropDown(
       x = round((uiWidth - levelDropDownWidth) * 0.5),
       y = 73.0,
       w = levelDropDownWidth,
       h = 24.0,
-      regionNames,
+      sortedRegionNames,
       sortedRegionIdx,
       tooltip = "",
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
       style = a.theme.levelDropDownStyle
     )
 
+    if sortedRegionIdx != prevSortedRegionIdx :
+      let currRegionName = sortedRegionNames[sortedRegionIdx]
+      let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
+
+      let (r, c) = l.getRegionCenterLocation(regionCoords)
+
+      centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
+
+    # Render level & panes
     renderLevel(a)
 
     if a.opts.showNotesPane:

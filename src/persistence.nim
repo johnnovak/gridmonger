@@ -387,7 +387,7 @@ proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
 proc readRegions_v1(rr): (RegionOptions, Regions) =
   info(fmt"Reading regions...")
 
-  let enableRegions = rr.read(uint8).bool
+  let enabled = rr.read(uint8).bool
 
   let regionColumns = rr.read(uint16)
   checkValueRange(regionColumns, "lvl.regn.regionColumns", RegionColumnsLimits)
@@ -398,7 +398,7 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
   let perRegionCoords = rr.read(uint8).bool
 
   let regionOpts = RegionOptions(
-    enableRegions:   enableRegions,
+    enabled:         enabled,
     regionColumns:   regionColumns,
     regionRows:      regionRows,
     perRegionCoords: perRegionCoords
@@ -766,7 +766,7 @@ proc writeCoordinateOptions_v1(rw; co: CoordinateOptions) =
 proc writeRegions_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_regn)
 
-  rw.write(l.regionOpts.enableRegions.uint8)
+  rw.write(l.regionOpts.enabled.uint8)
   rw.write(l.regionOpts.regionRows.uint16)
   rw.write(l.regionOpts.regionColumns.uint16)
   rw.write(l.regionOpts.perRegionCoords.uint8)

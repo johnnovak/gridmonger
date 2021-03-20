@@ -90,7 +90,7 @@ type
 
 
   RegionOptions* = object
-    enableRegions*:   bool
+    enabled*:         bool
     regionColumns*:   Natural
     regionRows*:      Natural
     perRegionCoords*: bool

@@ -76,8 +76,8 @@ proc toLetterCoord*(x: Natural): string =
 proc formatColumnCoord*(col: Natural, numCols: Natural,
                         co: CoordinateOptions, ro: RegionOptions): string =
 
-  let x = co.columnStart + (if ro.enableRegions and ro.perRegionCoords:
-                              col mod ro.regionColumns
+  let x = co.columnStart + (if ro.enabled and ro.perRegionCoords:
+                               col mod ro.regionColumns
                             else: col)
 
   case co.columnStyle
@@ -87,17 +87,18 @@ proc formatColumnCoord*(col: Natural, numCols: Natural,
 # }}}
 # {{{ formatRowCoord*()
 proc formatRowCoord*(row: Natural, numRows: Natural,
-                     co: CoordinateOptions, ro: RegionOptions): string =
+                     coordOpts: CoordinateOptions, regionOpts: RegionOptions): string =
 
-  var x = case co.origin
+  var x = case coordOpts.origin
     of coNorthWest: row
     of coSouthWest: numRows-1 - row
 
-  x = co.rowStart + (if ro.enableRegions and ro.perRegionCoords:
-                       x mod ro.regionRows
-                     else: x)
+  x = coordOpts.rowStart + (if regionOpts.enabled and
+                               regionOpts.perRegionCoords:
+                              x mod regionOpts.regionRows
+                            else: x)
 
-  case co.rowStyle
+  case coordOpts.rowStyle
   of csNumber: $x
   of csLetter: toLetterCoord(x)
 
