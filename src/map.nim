@@ -102,7 +102,7 @@ proc hasLabel*(m; loc: Location): bool {.inline.} =
 # }}}
 # {{{ getLabel*()
 proc getLabel*(m; loc: Location): Option[Annotation] {.inline.} =
-  m.levels[loc.level].getNote(loc.row, loc.col)
+  m.levels[loc.level].getLabel(loc.row, loc.col)
 
 # }}}
 
@@ -246,9 +246,14 @@ proc excavate*(m; loc: Location, floorColor: byte) =
   alias(c, loc.col)
   alias(r, loc.row)
 
+  let label = m.getLabel(loc)
+
   m.eraseCell(loc)
   m.setFloor(loc, fBlank)
   m.setFloorColor(loc, floorColor)
+
+  if label.isSome:
+    l.setAnnotation(loc.row, loc.col, label.get)
 
   if r == 0 or l.isEmpty(r-1, c):
     m.setWall(loc, dirN, wWall)
