@@ -3114,7 +3114,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   const
     DlgWidth = 486.0
-    DlgHeight = 270.0
+    DlgHeight = 285.0
     LabelWidth = 80.0
 
   let h = DlgItemHeight
@@ -3229,9 +3229,15 @@ proc openEditRegionPropertiesDialog(a) =
 
 
 proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
+
   const
     DlgWidth = 430.0
-    DlgHeight = 170.0
+    DlgHeight = 190.0
+    LabelWidth = 80.0
+
+  let h = DlgItemHeight
+
+  let l = currLevel(a)
 
   koi.beginDialog(DlgWidth, DlgHeight,
                   fmt"{IconCommentInv}  Edit Region",
@@ -3243,11 +3249,9 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
   var x = DlgLeftPad
   var y = DlgTopNoTabPad
 
-  koi.beginView(x, y, 1000, 1000)
-  koi.initAutoLayout(DialogLayoutParams)
-
-  koi.label("Name", style=a.theme.labelStyle)
+  koi.label(x, y, LabelWidth, h, "Name", style=a.theme.labelStyle)
   koi.textField(
+    x + LabelWidth, y, w = 294, h,
     dlg.name,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
@@ -3258,9 +3262,27 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     style = a.theme.textFieldStyle
   )
 
-  koi.endView()
-
   dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if dlg.name == "":
+    validationError = mkValidationError("Name is mandatory")
+  else:
+    if dlg.name != currRegion(a).get.name:
+      for name in l.regionNames():
+        if name == dlg.name:
+          validationError = mkValidationError(
+            "A region already exists with the same name"
+          )
+          break
+
+  y += 44
+
+  if validationError != "":
+    koi.label(x, y, DlgWidth, h, validationError,
+              style=a.theme.warningLabelStyle)
+    y += h
 
 
   proc okAction(dlg: var EditRegionPropsParams; a) =
@@ -3268,7 +3290,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
     setStatusMessage(IconComment, "Region properties updated", a)
 
-    let regionCoords = currLevel(a).getRegionCoords(cur.row, cur.col)
+    let regionCoords = l.getRegionCoords(cur.row, cur.col)
     let region = Region(name: dlg.name)
 
     actions.setRegionProperties(a.doc.map, cur, regionCoords, region,
@@ -3286,7 +3308,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                style=a.theme.buttonStyle):
+                disabled=(validationError != ""), style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
