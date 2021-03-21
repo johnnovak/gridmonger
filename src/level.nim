@@ -1,3 +1,4 @@
+import math
 import options
 import tables
 
@@ -15,46 +16,6 @@ const
   # internal IDs, never written to disk
   CopyBufferLevelIndex* = 1_000_000
   MoveBufferLevelIndex* = 1_000_001
-
-# {{{ newLevel*()
-const DefaultCoordOpts = CoordinateOptions(
-  origin:      coNorthWest,
-  rowStyle:    csNumber,
-  columnStyle: csNumber,
-  rowStart:    1,
-  columnStart: 1
-)
-
-const DefaultRegionOpts = RegionOptions(
-  enabled:         false,
-  regionColumns:   2,
-  regionRows:      2,
-  perRegionCoords: true
-)
-
-proc newLevel*(locationName, levelName: string, elevation: int,
-               rows, cols: Natural,
-               overrideCoordOpts: bool = false,
-               coordOpts: CoordinateOptions = DefaultCoordOpts,
-               regionOpts: RegionOptions = DefaultRegionOpts): Level =
-
-  var l = new Level
-  l.locationName = locationName
-  l.levelName = levelName
-  l.elevation = elevation
-
-  l.overrideCoordOpts = overrideCoordOpts
-  l.coordOpts = coordOpts
-
-  l.regionOpts = regionOpts
-  l.regions = initTable[RegionCoords, Region]()
-
-  l.cellGrid = newCellGrid(rows, cols)
-  l.annotations = newAnnotations(rows, cols)
-
-  result = l
-
-# }}}
 
 # {{{ CellGrid
 # {{{ rows*()
@@ -195,6 +156,16 @@ template allLabels*(l): (Natural, Natural, Annotation) =
   l.annotations.allLabels()
 
 # }}}
+#
+# {{{ copyAnnotationsFrom*()
+proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
+                          src: Level, srcRect: Rect[Natural]) =
+  for (r,c, a) in src.annotations.allAnnotations:
+    if srcRect.contains(r,c):
+      l.annotations.setAnnotation(destRow + r - srcRect.r1,
+                                  destCol + c - srcRect.c1, a)
+
+# }}}
 # }}}
 # {{{ Regions
 # {{{ setRegion*()
@@ -225,6 +196,90 @@ proc regionNames*(l): seq[string] =
 # {{{ findFirstRegionByName*()
 proc findFirstRegionByName*(l; name: string): Option[(RegionCoords, Region)] =
   l.regions.findFirstRegionByName(name)
+
+# }}}
+
+# {{{ regionRows*()
+proc regionRows*(l): Natural =
+  ceil(l.rows / l.regionOpts.rowsPerRegion).int
+
+# }}}
+# {{{ regionCols*()
+proc regionCols*(l): Natural =
+  ceil(l.cols / l.regionOpts.colsPerRegion).int
+
+# }}}
+# {{{ getRegionCoords*()
+proc getRegionCoords*(l; r,c: Natural): RegionCoords =
+  let regionCol = c div l.regionOpts.colsPerRegion
+
+  let row = case l.coordOpts.origin
+            of coNorthWest: r
+            of coSouthWest: max((l.rows-1).int - r, 0)
+
+  let regionRow = row div l.regionOpts.rowsPerRegion
+
+  RegionCoords(row: regionRow, col: regionCol)
+
+# }}}
+# {{{ getRegionCenterLocation*()
+proc getRegionCenterLocation*(l; rc: RegionCoords): (Natural, Natural) =
+  let rows = l.regionOpts.rowsPerRegion
+  let cols = l.regionOpts.colsPerRegion
+
+  let c = (rc.col * cols).int
+
+  let r = case l.coordOpts.origin
+          of coNorthWest: rc.row * rows
+          of coSouthWest: (l.rows+1).int - (rc.col+1)*cols
+
+  let centerRow = (r + l.regionOpts.rowsPerRegion    div 2).clamp(0, l.rows-1)
+  let centerCol = (c + l.regionOpts.colsPerRegion div 2).clamp(0, l.cols-1)
+
+  (centerRow.Natural, centerCol.Natural)
+
+# }}}
+# {{{ allRegionCoords*()
+iterator allRegionCoords*(l): RegionCoords =
+  for r in 0..<l.regionRows:
+    for c in 0..<l.regionCols:
+      yield RegionCoords(row: r, col: c)
+
+# }}}
+
+# {{{ initRegionsFrom*()
+proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
+                      rowOffs: int = 0, colOffs: int = 0): Regions =
+
+  # TODO flip, maybe in a separate proc?
+
+  var destRegions = initRegions()
+  var untitledIdx = 1
+
+  echo "------ INIT REGNIS ------"
+  for rc in dest.allRegionCoords:
+    echo "dest.rc ", rc
+    let r = rc.row.int + rowOffs
+    let c = rc.col.int + colOffs
+    echo "  src.r ", r, ", src.c ", c
+
+    let region = if src.isNone or r < 0 or c < 0:
+      Region.none
+    else:
+      src.get.getRegion(RegionCoords(row: r, col: c))
+
+    echo "  src.region ", region
+
+
+    if region.isSome:
+      destRegions.setRegion(rc, region.get)
+    else:
+      destRegions.setRegion(rc, Region(name: "Untitled Region " & $untitledIdx))
+      inc(untitledIdx)
+
+  echo ""
+
+  result = destRegions
 
 # }}}
 # }}}
@@ -274,6 +329,19 @@ proc eraseCell*(l; r,c: Natural) =
 
 # }}}
 
+# {{{ copyCellsAndAnnotationsFrom*(()
+proc copyCellsAndAnnotationsFrom*(l; destRow, destCol: Natural,
+                                  src: Level, srcRect: Rect[Natural]) =
+
+  l.cellGrid.copyFrom(destRow, destCol, src.cellGrid, srcRect)
+
+  l.annotations.delAnnotations(
+    rectN(destRow, destCol, destRow + srcRect.rows, destCol + srcRect.cols)
+  )
+
+  l.copyAnnotationsFrom(destRow, destCol, src, srcRect)
+
+# }}}
 # {{{ paste*()
 proc paste*(l; destRow, destCol: int, src: Level,
             sel: Selection, pasteTrail: bool = false): Option[Rect[Natural]] =
@@ -326,75 +394,6 @@ proc paste*(l; destRow, destCol: int, src: Level,
             l.annotations.setAnnotation(
               r,c, src.annotations.getAnnotation(srcRow, srcCol).get
             )
-
-# }}}
-
-# {{{ copyAnnotationsFrom*()
-proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
-                          src: Level, srcRect: Rect[Natural]) =
-  for (r,c, a) in src.annotations.allAnnotations:
-    if srcRect.contains(r,c):
-      l.annotations.setAnnotation(destRow + r - srcRect.r1,
-                                  destCol + c - srcRect.c1, a)
-
-# }}}
-# {{{ copyCellsAndAnnotationsFrom*(()
-proc copyCellsAndAnnotationsFrom*(l; destRow, destCol: Natural,
-               src: Level, srcRect: Rect[Natural]) =
-
-  l.cellGrid.copyFrom(destRow, destCol, src.cellGrid, srcRect)
-
-  l.annotations.delAnnotations(
-    rectN(destRow, destCol, destRow + srcRect.rows, destCol + srcRect.cols)
-  )
-
-  l.copyAnnotationsFrom(destRow, destCol, src, srcRect)
-
-# }}}
-# {{{ newLevelFrom*()
-proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
-  assert rect.r1 < src.rows
-  assert rect.c1 < src.cols
-  assert rect.r2 <= src.rows
-  assert rect.c2 <= src.cols
-
-  var
-    destRow = 0
-    destCol = 0
-    srcRect = rect
-
-  let r1 = srcRect.r1.int - border
-  if r1 < 0:
-    destRow = -r1
-    srcRect.r1 = 0
-  else:
-    srcRect.r1 = r1
-
-  let c1 = srcRect.c1.int - border
-  if c1 < 0:
-    destCol = -c1
-    srcRect.c1 = 0
-  else:
-    srcRect.c1 = c1
-
-  inc(srcRect.r2, border)
-  inc(srcRect.c2, border)
-
-  # TODO region names needs to be updated when resizing the level
-  # (search for newRegionNames and update all occurences)
-  var dest = newLevel(src.locationName, src.levelName, src.elevation,
-                      rows = rect.rows + border*2,
-                      cols = rect.cols + border*2,
-                      src.overrideCoordOpts, src.coordOpts,
-                      src.regionOpts)
-
-  dest.copyCellsAndAnnotationsFrom(destRow, destCol, src, srcRect)
-
-  result = dest
-
-
-proc newLevelFrom*(l): Level =
-  newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
 
 # }}}
 
@@ -456,34 +455,111 @@ proc isSpecialLevelIndex*(idx: Natural): bool =
 
 # }}}
 
-# {{{ getRegionCoords*()
-proc getRegionCoords*(l; r,c: Natural): RegionCoords =
-  let regionCol = c div l.regionOpts.regionColumns
+# {{{ newLevel*()
+const DefaultCoordOpts = CoordinateOptions(
+  origin:      coNorthWest,
+  rowStyle:    csNumber,
+  columnStyle: csNumber,
+  rowStart:    1,
+  columnStart: 1
+)
 
-  let row = case l.coordOpts.origin
-            of coNorthWest: r
-            of coSouthWest: l.rows-1 - r
+const DefaultRegionOpts = RegionOptions(
+  enabled:         false,
+  rowsPerRegion:   2,
+  colsPerRegion:   2,
+  perRegionCoords: true
+)
 
-  let regionRow = row div l.regionOpts.regionRows
+proc newLevel*(locationName, levelName: string, elevation: int,
+               rows, cols: Natural,
+               overrideCoordOpts: bool = false,
+               coordOpts: CoordinateOptions = DefaultCoordOpts,
+               regionOpts: RegionOptions = DefaultRegionOpts,
+               initRegions: bool = true): Level =
 
-  RegionCoords(row: regionRow, col: regionCol)
+  var l = new Level
+  l.locationName = locationName
+  l.levelName = levelName
+  l.elevation = elevation
+
+  l.overrideCoordOpts = overrideCoordOpts
+  l.coordOpts = coordOpts
+
+  l.cellGrid = newCellGrid(rows, cols)
+  l.annotations = newAnnotations(rows, cols)
+
+  l.regionOpts = regionOpts
+
+  if initRegions and l.regionOpts.enabled:
+    l.regions = initRegionsFrom(dest=l)
+
+  result = l
 
 # }}}
-# {{{ getRegionCenterLocation*()
-proc getRegionCenterLocation*(l; rc: RegionCoords): (Natural, Natural) =
-  let cols = l.regionOpts.regionColumns
-  let rows = l.regionOpts.regionRows
+# {{{ newLevelFrom*()
+proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
+  assert rect.r1 < src.rows
+  assert rect.c1 < src.cols
+  assert rect.r2 <= src.rows
+  assert rect.c2 <= src.cols
 
-  let c = (rc.col * cols).int
+  var
+    destRow, destCol: int
+    srcRect: Rect[Natural]
 
-  let r = case l.coordOpts.origin
-          of coNorthWest: rc.row * rows
-          of coSouthWest: (l.rows+1).int - (rc.col+1)*cols
+  let r1 = rect.r1.int - border
+  if r1 < 0:
+    destRow = -r1
+    srcRect.r1 = 0
+  else:
+    destRow = 0
+    srcRect.r1 = r1
 
-  let centerRow = (r + l.regionOpts.regionRows    div 2).clamp(0, l.rows-1)
-  let centerCol = (c + l.regionOpts.regionColumns div 2).clamp(0, l.cols-1)
+  let c1 = rect.c1.int - border
+  if c1 < 0:
+    destCol = -c1
+    srcRect.c1 = 0
+  else:
+    destCol = 0
+    srcRect.c1 = c1
 
-  (centerRow.Natural, centerCol.Natural)
+  srcRect.r2 = rect.r2 + border
+  srcRect.c2 = rect.c2 + border
+
+  var dest = newLevel(src.locationName, src.levelName, src.elevation,
+                      rows = rect.rows + border*2,
+                      cols = rect.cols + border*2,
+                      src.overrideCoordOpts, src.coordOpts,
+                      src.regionOpts, initRegions=(border == 0))
+
+  dest.copyCellsAndAnnotationsFrom(destRow, destCol, src, srcRect)
+
+  # The border param is only used for creating the internal view buffer when
+  # drawing levels. The regions table is not used for drawing, so ignoring the
+  # border simplifies the region copying a bit.
+  if border == 0 and src.regionOpts.enabled:
+    let rowOffs = case src.coordOpts.origin
+                  of coNorthWest:
+                    srcRect.r1 div src.regionOpts.rowsPerRegion
+                  of coSouthWest:
+                    (src.rows - srcRect.r2) div src.regionOpts.rowsPerRegion
+
+    let colOffs = srcRect.c1 div src.regionOpts.colsPerRegion
+
+    echo "********************************"
+    echo "rowOffs ", rowOffs, ", colOffs ", colOffs
+    echo "********************************"
+    echo " "
+
+    dest.regions = initRegionsFrom(src=src.some, dest=dest,
+                                   rowOffs=rowOffs, colOffs=colOffs)
+
+  result = dest
+
+
+proc newLevelFrom*(l): Level =
+  newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
 
 # }}}
 

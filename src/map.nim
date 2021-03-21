@@ -34,6 +34,13 @@ proc newMap*(name: string): Map =
 
 # }}}
 
+# {{{ coordOptsForLevel*()
+func coordOptsForLevel*(m; level: Natural): CoordinateOptions =
+  let l = m.levels[level]
+  if l.overrideCoordOpts: l.coordOpts else: m.coordOpts
+
+# }}}
+#
 # {{{ findSortedLevelIdxByLevelIdx*()
 proc findSortedLevelIdxByLevelIdx*(m; i: Natural): Natural =
   for sortedLevelIdx, levelIdx in m.sortedLevelIdxToLevelIdx.pairs:

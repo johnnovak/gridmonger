@@ -77,7 +77,7 @@ proc formatColumnCoord*(col: Natural, numCols: Natural,
                         co: CoordinateOptions, ro: RegionOptions): string =
 
   let x = co.columnStart + (if ro.enabled and ro.perRegionCoords:
-                               col mod ro.regionColumns
+                               col mod ro.colsPerRegion
                             else: col)
 
   case co.columnStyle
@@ -95,7 +95,7 @@ proc formatRowCoord*(row: Natural, numRows: Natural,
 
   x = coordOpts.rowStart + (if regionOpts.enabled and
                                regionOpts.perRegionCoords:
-                              x mod regionOpts.regionRows
+                              x mod regionOpts.rowsPerRegion
                             else: x)
 
   case coordOpts.rowStyle

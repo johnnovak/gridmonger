@@ -372,56 +372,56 @@ type
 
 
   NewLevelDialogParams = object
-    isOpen:       bool
-    activeTab:    Natural
+    isOpen:            bool
+    activeTab:         Natural
     activateFirstTextField: bool
 
     # General tab
-    locationName: string
-    levelName:    string
-    elevation:    string
-    rows:         string
-    cols:         string
+    locationName:      string
+    levelName:         string
+    elevation:         string
+    rows:              string
+    cols:              string
 
     # Coordinates tab
     overrideCoordOpts: bool
-    origin:       Natural
-    rowStyle:     Natural
-    columnStyle:  Natural
-    rowStart:     string
-    columnStart:  string
+    origin:            Natural
+    rowStyle:          Natural
+    columnStyle:       Natural
+    rowStart:          string
+    columnStart:       string
 
     # Regions tab
-    enableRegions: bool
-    regionColumns: string
-    regionRows:    string
-    perRegionCoords: bool
+    enableRegions:     bool
+    colsPerRegion:     string
+    rowsPerRegion:     string
+    perRegionCoords:   bool
 
 
   EditLevelPropsParams = object
-    isOpen:       bool
-    activeTab:    Natural
+    isOpen:            bool
+    activeTab:         Natural
     activateFirstTextField: bool
 
     # General tab
-    locationName: string
-    levelName:    string
-    elevation:    string
-    comments:     string
+    locationName:      string
+    levelName:         string
+    elevation:         string
+    comments:          string
 
     # Coordinates tab
     overrideCoordOpts: bool
-    origin:       Natural
-    rowStyle:     Natural
-    columnStyle:  Natural
-    rowStart:     string
-    columnStart:  string
+    origin:            Natural
+    rowStyle:          Natural
+    columnStyle:       Natural
+    rowStart:          string
+    columnStart:       string
 
     # Regions tab
-    enableRegions: bool
-    regionColumns: string
-    regionRows:    string
-    perRegionCoords: bool
+    enableRegions:     bool
+    colsPerRegion:     string
+    rowsPerRegion:     string
+    perRegionCoords:   bool
 
 
   ResizeLevelDialogParams = object
@@ -579,10 +579,10 @@ proc setSwapInterval(a) =
 # }}}
 # {{{ savePreferences()
 proc savePreferences(a) =
-  alias(ui, a.ui)
-  alias(dp, a.ui.drawLevelParams)
   alias(opts, a.opts)
   alias(theme, a.theme)
+
+  let dp = a.ui.drawLevelParams
 
   let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
@@ -923,7 +923,7 @@ func currLevel(a): common.Level =
 
 # }}}
 # {{{ currRegion()
-func currRegion(a): Option[Region] =
+proc currRegion(a): Option[Region] =
   alias(cur, a.ui.cursor)
 
   let l = currLevel(a)
@@ -934,10 +934,9 @@ func currRegion(a): Option[Region] =
     Region.none
 
 # }}}
-# {{{ coordOptsForCurrLevel()
+# {{{
 func coordOptsForCurrLevel(a): CoordinateOptions =
-  let l = currLevel(a)
-  if l.overrideCoordOpts: l.coordOpts else: a.doc.map.coordOpts
+  a.doc.map.coordOptsForLevel(a.ui.cursor.level)
 
 # }}}
 # {{{ setCursor()
@@ -1007,7 +1006,7 @@ proc resetCursorAndViewStart(a) =
 # }}}
 # {{{ updateLastCursorViewCoords()
 proc updateLastCursorViewCoords(a) =
-  alias(dp, a.ui.drawLevelParams)
+  let dp = a.ui.drawLevelParams
 
   a.ui.lastCursorViewX = dp.gridSize * viewCol(a)
   a.ui.lastCursorViewY = dp.gridSize * viewRow(a)
@@ -1088,7 +1087,7 @@ proc updateViewStartAndCursorPosition(a) =
 # }}}
 # {{{ locationAtMouse()
 proc locationAtMouse(a): Option[Location] =
-  alias(dp, a.ui.drawLevelParams)
+  let dp = a.ui.drawLevelParams
 
   let
     mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
@@ -1493,7 +1492,7 @@ template regionFields() =
 
         koi.nextItemWidth(DlgNumberWidth)
         koi.textField(
-          dlg.regionColumns,
+          dlg.colsPerRegion,
           activate = dlg.activateFirstTextField,
           constraint = TextFieldConstraint(
             kind: tckInteger,
@@ -1508,7 +1507,7 @@ template regionFields() =
 
         koi.nextItemWidth(DlgNumberWidth)
         koi.textField(
-          dlg.regionRows,
+          dlg.rowsPerRegion,
           constraint = TextFieldConstraint(
             kind: tckInteger,
             minInt: LevelColumnsLimits.minInt,
@@ -1703,8 +1702,9 @@ proc openAboutDialog(a) =
 
 proc aboutDialog(dlg: var AboutDialogParams; a) =
   alias(al, a.aboutLogo)
-  alias(ts, a.theme.style)
   alias(vg, a.vg)
+
+  let ts = a.theme.style
 
   const
     DlgWidth = 370.0
@@ -2048,14 +2048,14 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
 # {{{ New map dialog
 proc openNewMapDialog(a) =
   alias(dlg, a.dialog.newMapDialog)
-  alias(co, a.doc.map.coordOpts)
 
-  dlg.name        = "Untitled Map"
-  dlg.origin      = co.origin.ord
-  dlg.rowStyle    = co.rowStyle.ord
-  dlg.columnStyle = co.columnStyle.ord
-  dlg.rowStart    = $co.rowStart
-  dlg.columnStart = $co.columnStart
+  with a.doc.map.coordOpts:
+    dlg.name        = "Untitled Map"
+    dlg.origin      = origin.ord
+    dlg.rowStyle    = rowStyle.ord
+    dlg.columnStyle = columnStyle.ord
+    dlg.rowStart    = $rowStart
+    dlg.columnStart = $columnStart
 
   dlg.isOpen = true
 
@@ -2113,12 +2113,12 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     a.doc.filename = ""
     a.doc.map = newMap(dlg.name)
 
-    alias(co, a.doc.map.coordOpts)
-    co.origin      = CoordinateOrigin(dlg.origin)
-    co.rowStyle    = CoordinateStyle(dlg.rowStyle)
-    co.columnStyle = CoordinateStyle(dlg.columnStyle)
-    co.rowStart    = parseInt(dlg.rowStart)
-    co.columnStart = parseInt(dlg.columnStart)
+    with a.doc.map.coordOpts:
+      origin      = CoordinateOrigin(dlg.origin)
+      rowStyle    = CoordinateStyle(dlg.rowStyle)
+      columnStyle = CoordinateStyle(dlg.columnStyle)
+      rowStart    = parseInt(dlg.rowStart)
+      columnStart = parseInt(dlg.columnStart)
 
     initUndoManager(a.doc.undoManager)
 
@@ -2164,14 +2164,15 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 # {{{ Edit map properties dialog
 proc openEditMapPropsDialog(a) =
   alias(dlg, a.dialog.editMapPropsDialog)
+
   dlg.name = $a.doc.map.name
 
-  alias(co, a.doc.map.coordOpts)
-  dlg.origin      = co.origin.ord
-  dlg.rowStyle    = co.rowStyle.ord
-  dlg.columnStyle = co.columnStyle.ord
-  dlg.rowStart    = $co.rowStart
-  dlg.columnStart = $co.columnStart
+  with a.doc.map.coordOpts:
+    dlg.origin      = origin.ord
+    dlg.rowStyle    = rowStyle.ord
+    dlg.columnStyle = columnStyle.ord
+    dlg.rowStart    = $rowStart
+    dlg.columnStart = $columnStart
 
   dlg.isOpen = true
 
@@ -2278,6 +2279,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 # {{{ New level dialog
 proc openNewLevelDialog(a) =
   alias(dlg, a.dialog.newLevelDialog)
+  let map = a.doc.map
 
   var co: CoordinateOptions
 
@@ -2302,7 +2304,7 @@ proc openNewLevelDialog(a) =
     dlg.cols = "16"
     dlg.overrideCoordOpts = false
 
-    co = a.doc.map.coordOpts
+    co = map.coordOpts
 
   dlg.origin      = co.origin.ord
   dlg.rowStyle    = co.rowStyle.ord
@@ -2311,8 +2313,8 @@ proc openNewLevelDialog(a) =
   dlg.columnStart = $co.columnStart
 
   dlg.enableRegions   = false
-  dlg.regionColumns   = "16"
-  dlg.regionRows      = "16"
+  dlg.colsPerRegion   = "16"
+  dlg.rowsPerRegion   = "16"
   dlg.perRegionCoords = true
 
   dlg.isOpen = true
@@ -2428,8 +2430,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
     let regionOpts = RegionOptions(
       enabled         : dlg.enableRegions,
-      regionColumns   : parseInt(dlg.regionColumns),
-      regionRows      : parseInt(dlg.regionRows),
+      colsPerRegion   : parseInt(dlg.colsPerRegion),
+      rowsPerRegion   : parseInt(dlg.rowsPerRegion),
       perRegionCoords : dlg.perRegionCoords
     )
 
@@ -2489,6 +2491,7 @@ proc openEditLevelPropsDialog(a) =
   alias(dlg, a.dialog.editLevelPropsDialog)
 
   let l = currLevel(a)
+
   dlg.locationName = l.locationName
   dlg.levelName = l.levelName
   dlg.elevation = $l.elevation
@@ -2504,8 +2507,8 @@ proc openEditLevelPropsDialog(a) =
 
   let ro = l.regionOpts
   dlg.enableRegions   = ro.enabled
-  dlg.regionColumns   = $ro.regionColumns
-  dlg.regionRows      = $ro.regionRows
+  dlg.colsPerRegion   = $ro.colsPerRegion
+  dlg.rowsPerRegion   = $ro.rowsPerRegion
   dlg.perRegionCoords = ro.perRegionCoords
 
   dlg.isOpen = true
@@ -2609,8 +2612,8 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
     let regionOpts = RegionOptions(
       enabled         : dlg.enableRegions,
-      regionRows      : parseInt(dlg.regionRows),
-      regionColumns   : parseInt(dlg.regionColumns),
+      rowsPerRegion   : parseInt(dlg.rowsPerRegion),
+      colsPerRegion   : parseInt(dlg.colsPerRegion),
       perRegionCoords : dlg.perRegionCoords
     )
 
@@ -2906,7 +2909,7 @@ proc openEditNoteDialog(a) =
 
 
 proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
-  alias(ls, a.doc.levelStyle)
+  let ls = a.doc.levelStyle
 
   const
     DlgWidth = 486.0
@@ -3112,7 +3115,7 @@ proc openEditLabelDialog(a) =
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
-  alias(ls, a.doc.levelStyle)
+  let ls = a.doc.levelStyle
 
   const
     DlgWidth = 486.0
@@ -3288,7 +3291,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
 
   proc okAction(dlg: var EditRegionPropsParams; a) =
-    alias(cur, a.ui.cursor)
+    let cur = a.ui.cursor
 
     setStatusMessage(IconComment, "Region properties updated", a)
 
@@ -3398,8 +3401,8 @@ proc loadMap(filename: string; a): bool =
     # TODO regions hack begin
     for l in a.doc.map.levels:
       if l.regionOpts.enabled:
-        let rr = ceil(l.rows / l.regionOpts.regionRows).int
-        let rc = ceil(l.cols / l.regionOpts.regionColumns).int
+        let rr = ceil(l.rows / l.regionOpts.rowsPerRegion).int
+        let rc = ceil(l.cols / l.regionOpts.colsPerRegion).int
         echo rr, " ", rc
         l.regions = initRegions()
 
@@ -3430,6 +3433,7 @@ proc openMap(a) =
 # {{{ openMapAction()
 proc openMapAction(a) =
   alias(dlg, a.dialog.saveDiscardDialog)
+
   if a.doc.undoManager.isModified:
     dlg.isOpen = true
     dlg.action = openMap
@@ -3439,7 +3443,7 @@ proc openMapAction(a) =
 # }}}
 # {{{ saveMap()
 proc saveMap(filename: string, autosave: bool = false; a) =
-  alias(dp, a.ui.drawLevelParams)
+  let dp = a.ui.drawLevelParams
 
   let cur = a.ui.cursor
 
@@ -3527,9 +3531,9 @@ proc nextLevelAction(a) =
 
 # {{{ centerCursorAfterZoom()
 proc centerCursorAfterZoom(a) =
-  alias(dp, a.ui.drawLevelParams)
-
+  let dp = a.ui.drawLevelParams
   let cur = a.ui.cursor
+
   let viewCol = round(a.ui.lastCursorViewX / dp.gridSize).int
   let viewRow = round(a.ui.lastCursorViewY / dp.gridSize).int
   dp.viewStartCol = max(cur.col - viewCol, 0)
@@ -3625,7 +3629,8 @@ proc nextFloorColorAction(a) =
 # {{{ drawEmptyMap()
 proc drawEmptyMap(a) =
   alias(vg, a.vg)
-  alias(ls, a.doc.levelStyle)
+
+  let ls = a.doc.levelStyle
 
   vg.setFont(size=22)
   vg.fillColor(ls.drawColor)
@@ -3638,7 +3643,8 @@ proc drawEmptyMap(a) =
 proc drawNoteTooltip(x, y: float, note: Annotation, a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
-  alias(dp, a.ui.drawLevelParams)
+
+  let dp = a.ui.drawLevelParams
 
   if note.text != "":
     const PadX = 10
@@ -3687,7 +3693,8 @@ proc drawNoteTooltip(x, y: float, note: Annotation, a) =
 proc drawModeAndOptionIndicators(a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
-  alias(ls, a.doc.levelStyle)
+
+  let ls = a.doc.levelStyle
 
   var x = ui.levelLeftPad
   let y = TitleBarHeight + 32
@@ -3709,7 +3716,8 @@ proc drawModeAndOptionIndicators(a) =
 # {{{ drawStatusBar()
 proc drawStatusBar(y: float, winWidth: float; a) =
   alias(vg, a.vg)
-  alias(s, a.theme.style.statusBar)
+
+  let s = a.theme.style.statusBar
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
@@ -3728,8 +3736,10 @@ proc drawStatusBar(y: float, winWidth: float; a) =
     let
       l = currLevel(a)
       coordOpts = coordOptsForCurrLevel(a)
+
       row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
       col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
+
       cursorPos = fmt"({col}, {row})"
       tw = vg.textWidth(cursorPos)
 
@@ -3850,8 +3860,9 @@ proc handleGlobalKeyEvents(a) =
   alias(ui, a.ui)
   alias(map, a.doc.map)
   alias(um, a.doc.undoManager)
-  alias(dp, a.ui.drawLevelParams)
   alias(opts, a.opts)
+
+  let dp = a.ui.drawLevelParams
 
   var l = currLevel(a)
 
@@ -4894,8 +4905,9 @@ proc specialWallDrawProc(ls: LevelStyle,
 
 proc renderToolsPane(x, y, w, h: float; a) =
   alias(ui, a.ui)
-  alias(ls, a.doc.levelStyle)
-  alias(ts, a.theme.style.toolbarPane)
+
+  let ls = a.doc.levelStyle
+  let ts = a.theme.style.toolbarPane
 
   var
     toolItemsPerColumn = 12
@@ -4961,7 +4973,8 @@ proc renderToolsPane(x, y, w, h: float; a) =
 # {{{ renderNotesPane()
 proc renderNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
-  alias(s, a.theme.style.notesPane)
+
+  let s = a.theme.style.notesPane
 
   let
     l = currLevel(a)
@@ -5028,7 +5041,8 @@ with ThemeEditorAutoLayoutParams:
 # {{{ renderThemeEditorProps()
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
-  alias(ts, a.theme.style)
+
+  let ts = a.theme.style
 
 
   proc handleUndo() =
@@ -5792,31 +5806,39 @@ proc renderUI(a) =
 
     # Region drop-down
     if l.regionOpts.enabled:
-      var sortedRegionNames = l.regionNames()
-      sort(sortedRegionNames)
+      let currRegion = currRegion(a)
+      if currRegion.isSome:
+        var sortedRegionNames = l.regionNames()
+        sort(sortedRegionNames)
 
-      var sortedRegionIdx = sortedRegionNames.find(currRegion(a).get.name)
-      let prevSortedRegionIdx = sortedRegionIdx
+        let currRegionName = currRegion.get.name
+        var sortedRegionIdx = sortedRegionNames.find(currRegionName)
+        let prevSortedRegionIdx = sortedRegionIdx
 
-      koi.dropDown(
-        x = round((uiWidth - levelDropDownWidth) * 0.5),
-        y = 73.0,
-        w = levelDropDownWidth,
-        h = 24.0,
-        sortedRegionNames,
-        sortedRegionIdx,
-        tooltip = "",
-        disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-        style = a.theme.levelDropDownStyle
-      )
+        let regionDropDownWidth = round(
+          vg.textWidth(currRegionName) +
+          a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
+        )
 
-      if sortedRegionIdx != prevSortedRegionIdx :
-        let currRegionName = sortedRegionNames[sortedRegionIdx]
-        let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
+        koi.dropDown(
+          x = round((uiWidth - regionDropDownWidth) * 0.5),
+          y = 73.0,
+          w = regionDropDownWidth,
+          h = 24.0,
+          sortedRegionNames,
+          sortedRegionIdx,
+          tooltip = "",
+          disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+          style = a.theme.levelDropDownStyle
+        )
 
-        let (r, c) = l.getRegionCenterLocation(regionCoords)
+        if sortedRegionIdx != prevSortedRegionIdx :
+          let currRegionName = sortedRegionNames[sortedRegionIdx]
+          let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
 
-        centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
+          let (r, c) = l.getRegionCenterLocation(regionCoords)
+
+          centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
 
     # Render level & panes
     renderLevel(a)
@@ -5986,7 +6008,8 @@ proc renderFrame(a) =
 proc renderFrameSplash(a) =
   alias(s, a.splash)
   alias(vg, s.vg)
-  alias(ts, a.theme.style)
+
+  let ts = a.theme.style
 
   let
     (winWidth, winHeight) = s.win.size
@@ -6227,7 +6250,6 @@ GPU info
 # {{{ initLogger(a)
 proc initLogger(a) =
   discard tryRemoveFile(a.path.logFile)
-  echo a.path.logFile
   var fileLog = newFileLogger(a.path.logFile,
                               fmtStr="[$levelname] $date $time - ",
                               levelThreshold=lvlDebug)
@@ -6317,7 +6339,7 @@ proc initApp(a) =
 # }}}
 # {{{ createSplashWindow()
 proc createSplashWindow(mousePassthru: bool = false; a) =
-  alias(s, g_app.splash)
+  alias(s, a.splash)
 
   var cfg = DefaultOpenglWindowConfig
   cfg.visible = false
@@ -6364,9 +6386,8 @@ proc cleanup(a) =
 
 # {{{ main()
 proc main() =
-  alias(a, g_app)
-
-  a = new AppContext
+  g_app = new AppContext
+  var a = g_app
 
   initPaths(portableMode=true, a)
   initLogger(a)

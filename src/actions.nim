@@ -667,8 +667,6 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
   let action = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
 
-    # TODO region names needs to be updated when resizing the level
-    # (search for newRegionNames and update all occurences)
     var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
                             newRows, newCols, l.overrideCoordOpts, l.coordOpts,
                             l.regionOpts)
@@ -804,7 +802,11 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
   let action = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
 
-    let prevElevation = l.elevation
+    let adjustLinkedStairs = l.elevation != elevation
+
+    let reallocateRegions = l.regionOpts != regionOpts or
+                            l.overrideCoordOpts != overrideCoordOpts or
+                            overrideCoordOpts and l.coordOpts != coordOpts
 
     l.locationName = locationName
     l.levelName = levelName
@@ -813,8 +815,12 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     l.coordOpts = coordOpts
     l.regionOpts = regionOpts
 
-    if prevElevation != elevation:
+    if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
+
+    if reallocateRegions:
+      #l.reallocateRegions(l.regions)
+      discard
 
     m.refreshSortedLevelNames()
     result = usd
@@ -827,11 +833,12 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     oldOverrideCoordOpts = l.overrideCoordOpts
     oldCoordOpts = l.coordOpts
     oldRegionOpts = l.regionOpts
+    oldRegions = l.regions
 
   var undoAction = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
 
-    let prevElevation = l.elevation
+    let adjustLinkedStairs = l.elevation != oldElevation
 
     l.locationName = oldLocationName
     l.levelName = oldLevelName
@@ -839,8 +846,9 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     l.overrideCoordOpts = oldOverrideCoordOpts
     l.coordOpts = oldCoordOpts
     l.regionOpts = oldRegionOpts
+    l.regions = oldRegions
 
-    if prevElevation != oldElevation:
+    if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
 
     m.refreshSortedLevelNames()

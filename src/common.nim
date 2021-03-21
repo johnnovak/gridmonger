@@ -81,6 +81,7 @@ type
     overrideCoordOpts*: bool
     coordOpts*:         CoordinateOptions
 
+    # TODO regionsEnabled flag & move the rest of RegionOptions into Regions
     regionOpts*:        RegionOptions
     regions*:           Regions
 
@@ -91,8 +92,8 @@ type
 
   RegionOptions* = object
     enabled*:         bool
-    regionColumns*:   Natural
-    regionRows*:      Natural
+    colsPerRegion*:   Natural
+    rowsPerRegion*:   Natural
     perRegionCoords*: bool
 
   Regions* = Table[RegionCoords, Region]

@@ -2131,7 +2131,7 @@ proc drawWalls(l: Level, viewBuf: Level; ctx) =
     let row = dp.viewStartRow + viewRow
     let regionBorder = ro.enabled and
                        row > 0 and row < l.rows and
-                       row mod ro.regionRows == 0
+                       row mod ro.rowsPerRegion == 0
     if not regionBorder:
       drawCellWallsNorth(viewBuf, viewRow, regionBorder=false, ctx)
 
@@ -2139,7 +2139,7 @@ proc drawWalls(l: Level, viewBuf: Level; ctx) =
     let col = dp.viewStartCol + viewCol
     let regionBorder = ro.enabled and
                        col > 0 and col < l.cols and
-                       col mod ro.regionColumns == 0
+                       col mod ro.colsPerRegion == 0
     if not regionBorder:
       drawCellWallsWest(viewBuf, viewCol, regionBorder=false, ctx)
 
@@ -2150,7 +2150,7 @@ template drawRegionBorderRows(l: Level; viewBuf: Level; ctx;
                               viewRow, body: untyped) =
   alias(dp, ctx.dp)
 
-  let rr = dp.regionOpts.regionRows
+  let rr = dp.regionOpts.rowsPerRegion
   var startViewRow = (dp.viewStartRow div rr) * rr - dp.viewStartRow
 
   if dp.cellCoordOpts.origin == coSouthWest:
@@ -2170,7 +2170,7 @@ template drawRegionBorderCols(l: Level; viewBuf: Level; ctx;
                               viewCol, body: untyped) =
   alias(dp, ctx.dp)
 
-  let rc = dp.regionOpts.regionColumns
+  let rc = dp.regionOpts.colsPerRegion
 
   var startViewCol = (dp.viewStartCol div rc) * rc - dp.viewStartCol
   if startViewCol < 0:

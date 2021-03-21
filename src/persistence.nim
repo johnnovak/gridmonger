@@ -389,18 +389,18 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
 
   let enabled = rr.read(uint8).bool
 
-  let regionColumns = rr.read(uint16)
-  checkValueRange(regionColumns, "lvl.regn.regionColumns", RegionColumnsLimits)
+  let colsPerRegion = rr.read(uint16)
+  checkValueRange(colsPerRegion, "lvl.regn.colsPerRegion", RegionColumnsLimits)
 
-  let regionRows = rr.read(uint16)
-  checkValueRange(regionRows, "lvl.regn.regionRows", RegionRowsLimits)
+  let rowsPerRegion = rr.read(uint16)
+  checkValueRange(rowsPerRegion, "lvl.regn.rowsPerRegion", RegionRowsLimits)
 
   let perRegionCoords = rr.read(uint8).bool
 
   let regionOpts = RegionOptions(
     enabled:         enabled,
-    regionColumns:   regionColumns,
-    regionRows:      regionRows,
+    colsPerRegion:   colsPerRegion,
+    rowsPerRegion:      rowsPerRegion,
     perRegionCoords: perRegionCoords
   )
 
@@ -767,8 +767,8 @@ proc writeRegions_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_regn)
 
   rw.write(l.regionOpts.enabled.uint8)
-  rw.write(l.regionOpts.regionRows.uint16)
-  rw.write(l.regionOpts.regionColumns.uint16)
+  rw.write(l.regionOpts.rowsPerRegion.uint16)
+  rw.write(l.regionOpts.colsPerRegion.uint16)
   rw.write(l.regionOpts.perRegionCoords.uint8)
 
   rw.write(l.numRegions.uint16)

@@ -6,6 +6,8 @@ BUGS
 
   - drawlevel - pixel level drawing problems (also for regions)
 
+  - column & row offset cannot be set to 0
+
   - switch tab: (shift)+ctrl+tab
 
 
@@ -19,8 +21,11 @@ TESTS
 TODO
 
 v0.9
-  - region parameters (only name for now)
-  - region name reassignment when resizing a level
+  - region name reassignment on:
+    - resize
+    - change level coord origin
+    - change map coord origin (update leves with regions without overrides)
+    - change region size
 
   - align left/right half of the screen buttons
 
@@ -31,9 +36,8 @@ v0.9
   - finalise all themes
   - cascading theme loading (built-in vs user themes)
 
-  - textarea: mouse handling
+  - textarea: mouse handling, scrollwheel
 
-  - store AppState in map
   - attempt to save map on crash
 
   - stack traces in release build?
@@ -45,9 +49,7 @@ v0.9
       - insert new lines after sections when writing
     - rename properties according to theme editor
 
-  - center map to screen?
-  - toggle grid?
-  - show/hide trail?
+  - store AppState in map
 
 
 v1.0
