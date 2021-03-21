@@ -6,8 +6,6 @@ BUGS
 
   - drawlevel - pixel level drawing problems (also for regions)
 
-  - column & row offset cannot be set to 0
-
   - switch tab: (shift)+ctrl+tab
 
 

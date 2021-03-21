@@ -1429,7 +1429,7 @@ template coordinateFields() =
   group:
     let letterLabelX = x + 190
 
-    koi.label("Column offset", style=a.theme.labelStyle)
+    koi.label("Column start", style=a.theme.labelStyle)
     var y = koi.currAutoLayoutY()
 
     koi.nextItemWidth(DlgNumberWidth)
@@ -1438,7 +1438,7 @@ template coordinateFields() =
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
         kind: tckInteger,
-        minInt: LevelColumnsLimits.minInt,
+        minInt: 0,
         maxInt: LevelColumnsLimits.maxInt
       ).some,
       style = a.theme.textFieldStyle
@@ -1452,7 +1452,7 @@ template coordinateFields() =
       except ValueError:
         discard
 
-    koi.label("Row offset", style=a.theme.labelStyle)
+    koi.label("Row start", style=a.theme.labelStyle)
     y = koi.currAutoLayoutY()
 
 
@@ -1461,7 +1461,7 @@ template coordinateFields() =
       dlg.rowStart,
       constraint = TextFieldConstraint(
         kind: tckInteger,
-        minInt: LevelRowsLimits.minInt,
+        minInt: 0,
         maxInt: LevelRowsLimits.maxInt
       ).some,
       style = a.theme.textFieldStyle

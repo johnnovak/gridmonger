@@ -37,6 +37,9 @@ const
   LevelRowsLimits*         = intLimits(min=1, max=6666)
   LevelColumnsLimits*      = intLimits(min=1, max=6666)
 
+  RowStartLimits*          = intLimits(min=0, max=6666)
+  ColumnStartLimits*       = intLimits(min=0, max=6666)
+
   RowsPerRegionLimits*     = intLimits(min=2, max=3333)
   ColumnsPerRegionLimits*  = intLimits(min=2, max=3333)
   RegionRowLimits*         = intLimits(min=0, max=3332)
@@ -372,7 +375,11 @@ proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
   checkEnum(columnStyle, fmt"${parentChunk}.coor.columnStyle", CoordinateStyle)
 
   let rowStart = rr.read(int16)
+  checkValueRange(rowStart, fmt"${parentChunk}.coor.rowStart", RowStartLimits)
+
   let columnStart = rr.read(int16)
+  checkValueRange(columnStart, fmt"${parentChunk}.coor.columnStart",
+                  ColumnStartLimits)
 
   result = CoordinateOptions(
     origin:      origin.CoordinateOrigin,
