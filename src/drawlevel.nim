@@ -1733,7 +1733,7 @@ proc drawEmptyRegionBorderWallHoriz*(x, y: float; ctx) =
   let
     sw = dp.normalStrokeWidth + 1
     xs = snap(x, sw)
-    xe = snap(x + dp.gridSize, sw)
+    xe = snap(x + dp.gridSize-(if dp.lineWidth == lwNormal: 3 else: 2), sw)
     y = snap(y, sw)
 
   vg.lineCap(lcjSquare)
@@ -1770,7 +1770,7 @@ proc drawRegionBorderEdgeHoriz*(x, y: float, color: Color, west: bool; ctx) =
     xs = snap(x, sw)
     xe = xs + EdgeLen
   else:
-    xs = snap(x + dp.gridSize-1, sw)
+    xs = snap(x + dp.gridSize-(if dp.lineWidth == lwNormal: 3 else: 2), sw)
     xe = xs - EdgeLen
 
   vg.lineCap(lcjSquare)

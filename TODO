@@ -6,6 +6,9 @@ BUGS
 
   - drawlevel - pixel level drawing problems (also for regions)
 
+  - allow drawing walls when cursor is in an empty cell, but there is
+    a non-empty cell in the wall draw direction
+
   - switch tab: (shift)+ctrl+tab
 
 
@@ -19,6 +22,8 @@ TESTS
 TODO
 
 v0.9
+  - border around label text?
+
   - region name reassignment on:
     - resize
     - change map coord origin (update levels with regions without overrides)
