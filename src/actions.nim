@@ -8,6 +8,7 @@ import level
 import links
 import map
 import rect
+import regions
 import selection
 import tables
 import utils
@@ -91,7 +92,7 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 proc drawClearFloor*(map; loc: Location, floorColor: byte; um) =
 
   singleCellAction(map, loc, um, fmt"Draw/clear floor", m):
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
     l.delAnnotation(loc.row, loc.col)
 
     m.setFloor(loc, fBlank)
@@ -180,7 +181,7 @@ proc toggleFloorOrientation*(map; loc: Location; um) =
 proc setNote*(map; loc: Location, n: Annotation; um) =
 
   singleCellAction(map, loc, um, "Set note", m):
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
     if n.kind != akComment:
       m.setFloor(loc, fBlank)
 
@@ -191,7 +192,7 @@ proc setNote*(map; loc: Location, n: Annotation; um) =
 proc eraseNote*(map; loc: Location; um) =
 
   singleCellAction(map, loc, um, "Erase note", m):
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
     if m.hasNote(loc):
       l.delAnnotation(loc.row, loc.col)
 
@@ -203,7 +204,7 @@ proc setLabel*(map; loc: Location, n: Annotation; um) =
     if not m.isEmpty(loc):
       m.setFloor(loc, fBlank)
 
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
     l.setAnnotation(loc.row, loc.col, n)
 
 # }}}
@@ -211,7 +212,7 @@ proc setLabel*(map; loc: Location, n: Annotation; um) =
 proc eraseLabel*(map; loc: Location; um) =
 
   singleCellAction(map, loc, um, "Erase label", m):
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
     if m.hasLabel(loc):
       l.delAnnotation(loc.row, loc.col)
 
@@ -477,8 +478,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
   if rect.isSome:
     cellAreaAction(map, undoLoc, rect.get, um, groupWithPrev, actionName, m):
-
-      alias(l, m.levels[pasteLoc.level])
+      let l = m.levels[pasteLoc.level]
 
       let destRect = l.paste(pasteLoc.row, pasteLoc.col,
                              sb.level, sb.selection, pasteTrail)
@@ -669,7 +669,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
                             newRows, newCols, l.overrideCoordOpts, l.coordOpts,
-                            l.regionOpts)
+                            l.regionOpts, initRegions=false)
 
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
     l = newLevel
@@ -763,7 +763,8 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.cols,
       sb.level.overrideCoordOpts,
       sb.level.coordOpts,
-      sb.level.regionOpts
+      sb.level.regionOpts,
+      initRegions=false
     )
     discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
     m.levels[loc.level] = l
@@ -800,13 +801,18 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
   let usd = UndoStateData(actionName: "Edit level properties", location: loc)
 
   let action = proc (m: var Map): UndoStateData =
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
 
     let adjustLinkedStairs = l.elevation != elevation
 
     let reallocateRegions = l.regionOpts != regionOpts or
                             l.overrideCoordOpts != overrideCoordOpts or
                             overrideCoordOpts and l.coordOpts != coordOpts
+
+    let
+      oldCoordOpts = m.coordOptsForLevel(loc.level)
+      oldRegionOpts = l.regionOpts
+      oldRegions = l.regions
 
     l.locationName = locationName
     l.levelName = levelName
@@ -819,13 +825,15 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
       m.normaliseLinkedStairs(loc.level)
 
     if reallocateRegions:
-      #l.reallocateRegions(l.regions)
-      discard
+      m.reallocateRegions(loc.level, oldCoordOpts, oldRegionOpts, oldRegions)
+
+    echo "-----------------------"
+    dump(l.regions)
 
     m.refreshSortedLevelNames()
     result = usd
 
-  alias(l, map.levels[loc.level])
+  let l = map.levels[loc.level]
   let
     oldLocationName = l.locationName
     oldLevelName = l.levelName
@@ -836,7 +844,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     oldRegions = l.regions
 
   var undoAction = proc (m: var Map): UndoStateData =
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
 
     let adjustLinkedStairs = l.elevation != oldElevation
 
@@ -867,6 +875,10 @@ proc setMapProperties*(map; loc: Location, name: string,
   let action = proc (m: var Map): UndoStateData =
     m.name = name
     m.coordOpts = coordOpts
+
+    # TODO reallocate regions in all levels that do not override the
+    # map coordinate opts
+
     result = usd
 
   let
@@ -876,6 +888,9 @@ proc setMapProperties*(map; loc: Location, name: string,
   var undoAction = proc (m: var Map): UndoStateData =
     m.name = oldName
     m.coordOpts = oldCoordOpts
+
+    # TODO restore the regions in changed levels
+
     result = usd
 
   um.storeUndoState(action, undoAction)
@@ -889,15 +904,15 @@ proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
   let usd = UndoStateData(actionName: "Edit region properties", location: loc)
 
   let action = proc (m: var Map): UndoStateData =
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
     l.setRegion(rc, region)
     result = usd
 
-  alias(l, map.levels[loc.level])
+  let l = map.levels[loc.level]
   let oldRegion = l.getRegion(rc).get
 
   var undoAction = proc (m: var Map): UndoStateData =
-    alias(l, m.levels[loc.level])
+    let l = m.levels[loc.level]
     l.setRegion(rc, oldRegion)
     result = usd
 

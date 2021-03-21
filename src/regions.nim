@@ -5,6 +5,8 @@ import common
 import utils
 
 
+const UntitledRegionName* = "Untitled Region"
+
 using
   r: Regions
   vr: var Regions
@@ -12,6 +14,13 @@ using
 # {{{ initRegions*()
 proc initRegions*(): Regions =
   result = initTable[RegionCoords, Region]()
+
+# }}}
+# {{{ dump*()
+proc dump*(r) =
+  for k,v in r.pairs():
+    echo "key: ", k, ", val: ", v
+  echo ""
 
 # }}}
 

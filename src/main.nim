@@ -924,11 +924,9 @@ func currLevel(a): common.Level =
 # }}}
 # {{{ currRegion()
 proc currRegion(a): Option[Region] =
-  alias(cur, a.ui.cursor)
-
   let l = currLevel(a)
   if l.regionOpts.enabled:
-    let rc = l.getRegionCoords(cur.row, cur.col)
+    let rc = a.doc.map.getRegionCoords(a.ui.cursor)
     l.getRegion(rc)
   else:
     Region.none
@@ -3291,14 +3289,15 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
 
   proc okAction(dlg: var EditRegionPropsParams; a) =
+    alias(map, a.doc.map)
     let cur = a.ui.cursor
 
     setStatusMessage(IconComment, "Region properties updated", a)
 
-    let regionCoords = l.getRegionCoords(cur.row, cur.col)
+    let regionCoords = map.getRegionCoords(cur)
     let region = Region(name: dlg.name)
 
-    actions.setRegionProperties(a.doc.map, cur, regionCoords, region,
+    actions.setRegionProperties(map, cur, regionCoords, region,
                                 a.doc.undoManager)
 
     koi.closeDialog()
@@ -5836,7 +5835,8 @@ proc renderUI(a) =
           let currRegionName = sortedRegionNames[sortedRegionIdx]
           let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
 
-          let (r, c) = l.getRegionCenterLocation(regionCoords)
+          let (r, c) = map.getRegionCenterLocation(a.ui.cursor.level,
+                                                   regionCoords)
 
           centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
 

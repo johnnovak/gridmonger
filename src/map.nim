@@ -2,10 +2,12 @@ import algorithm
 import options
 import sequtils
 import strformat
+import strutils
 
 import common
 import level
 import links
+import regions
 import tables
 import utils
 
@@ -34,13 +36,6 @@ proc newMap*(name: string): Map =
 
 # }}}
 
-# {{{ coordOptsForLevel*()
-func coordOptsForLevel*(m; level: Natural): CoordinateOptions =
-  let l = m.levels[level]
-  if l.overrideCoordOpts: l.coordOpts else: m.coordOpts
-
-# }}}
-#
 # {{{ findSortedLevelIdxByLevelIdx*()
 proc findSortedLevelIdxByLevelIdx*(m; i: Natural): Natural =
   for sortedLevelIdx, levelIdx in m.sortedLevelIdxToLevelIdx.pairs:
@@ -190,52 +185,6 @@ proc canSetWall*(m; loc: Location, dir: CardinalDir): bool =
 
 # }}}
 
-# {{{ getLinkedLocation*()
-proc getLinkedLocation*(m; loc: Location): Option[Location] =
-  var other = m.links.getBySrc(loc)
-  if other.isNone:
-    other = m.links.getByDest(loc)
-
-  if other.isSome:
-    if isSpecialLevelIndex(other.get.level):
-      result = Location.none
-    else:
-      result = other
-
-# }}}
-# {{{ normaliseLinkedStairs*()
-proc normaliseLinkedStairs*(m; level: Natural) =
-  alias(l, m.levels[level])
-
-  for r in 0..<l.rows:
-    for c in 0..<l.cols:
-      let f = l.getFloor(r,c)
-
-      if f in LinkStairs:
-        let this = Location(level: level, row: r, col: c)
-        let that = m.getLinkedLocation(this)
-        if that.isSome:
-          let that = that.get
-
-          let thisElevation = m.levels[this.level].elevation
-          let thatElevation = m.levels[that.level].elevation
-
-          proc setFloors(thisFloor, thatFloor: Floor) =
-            m.levels[this.level].setFloor(this.row, this.col, thisFloor)
-            m.levels[that.level].setFloor(that.row, that.col, thatFloor)
-
-          if   thisElevation > thatElevation: setFloors(fStairsDown, fStairsUp)
-          elif thisElevation < thatElevation: setFloors(fStairsUp, fStairsDown)
-
-# }}}
-# {{{ deleteLinksFromOrToLevel*()
-proc deleteLinksFromOrToLevel*(m; level: Natural) =
-  var linksToDelete = m.links.filterByLevel(level)
-  for src in linksToDelete.keys:
-    m.links.delBySrc(src)
-
-# }}}
-
 # {{{ hasTrail*()
 proc hasTrail*(m; loc: Location): bool =
   m.levels[loc.level].hasTrail(loc.row, loc.col)
@@ -281,6 +230,134 @@ proc excavate*(m; loc: Location, floorColor: byte) =
     m.setWall(loc, dirE, wWall)
   else:
     m.setWall(loc, dirE, wNone)
+
+# }}}
+
+# {{{ getLinkedLocation*()
+proc getLinkedLocation*(m; loc: Location): Option[Location] =
+  var other = m.links.getBySrc(loc)
+  if other.isNone:
+    other = m.links.getByDest(loc)
+
+  if other.isSome:
+    if isSpecialLevelIndex(other.get.level):
+      result = Location.none
+    else:
+      result = other
+
+# }}}
+# {{{ normaliseLinkedStairs*()
+proc normaliseLinkedStairs*(m; level: Natural) =
+  let l = m.levels[level]
+
+  for r in 0..<l.rows:
+    for c in 0..<l.cols:
+      let f = l.getFloor(r,c)
+
+      if f in LinkStairs:
+        let this = Location(level: level, row: r, col: c)
+        let that = m.getLinkedLocation(this)
+        if that.isSome:
+          let that = that.get
+
+          let thisElevation = m.levels[this.level].elevation
+          let thatElevation = m.levels[that.level].elevation
+
+          proc setFloors(thisFloor, thatFloor: Floor) =
+            m.levels[this.level].setFloor(this.row, this.col, thisFloor)
+            m.levels[that.level].setFloor(that.row, that.col, thatFloor)
+
+          if   thisElevation > thatElevation: setFloors(fStairsDown, fStairsUp)
+          elif thisElevation < thatElevation: setFloors(fStairsUp, fStairsDown)
+
+# }}}
+# {{{ deleteLinksFromOrToLevel*()
+proc deleteLinksFromOrToLevel*(m; level: Natural) =
+  var linksToDelete = m.links.filterByLevel(level)
+  for src in linksToDelete.keys:
+    m.links.delBySrc(src)
+
+# }}}
+
+# {{{ coordOptsForLevel*()
+func coordOptsForLevel*(m; level: Natural): CoordinateOptions =
+  let l = m.levels[level]
+  if l.overrideCoordOpts: l.coordOpts else: m.coordOpts
+
+# }}}
+# {{{ getRegionCoords*()
+proc getRegionCoords*(m; loc: Location): RegionCoords =
+  let
+    l = m.levels[loc.level]
+    regionCol = loc.col div l.regionOpts.colsPerRegion
+
+    row = case m.coordOptsForLevel(loc.level).origin
+          of coNorthWest: loc.row
+          of coSouthWest: max((l.rows-1).int - loc.row, 0)
+
+    regionRow = row div l.regionOpts.rowsPerRegion
+
+  RegionCoords(row: regionRow, col: regionCol)
+
+# }}}
+# {{{ getRegionCenterLocation*()
+proc getRegionCenterLocation*(m; level: Natural,
+                              rc: RegionCoords): (Natural, Natural) =
+  let
+    l = m.levels[level]
+    rows = l.regionOpts.rowsPerRegion
+    cols = l.regionOpts.colsPerRegion
+
+    c = (rc.col * cols).int
+
+    r = case m.coordOptsForLevel(level).origin
+        of coNorthWest: rc.row * rows
+        of coSouthWest: (l.rows+1).int - (rc.col+1)*cols
+
+    centerRow = (r + l.regionOpts.rowsPerRegion div 2).clamp(0, l.rows-1)
+    centerCol = (c + l.regionOpts.colsPerRegion div 2).clamp(0, l.cols-1)
+
+  (centerRow.Natural, centerCol.Natural)
+
+# }}}
+# {{{ reallocateRegions*()
+proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
+                        oldRegionOpts: RegionOptions, oldRegions: Regions) =
+
+  let
+    l = m.levels[level]
+    coordOpts = m.coordOptsForLevel(level)
+    flipVert = coordOpts.origin != oldCoordOpts.origin
+
+  echo oldCoordOpts
+  echo coordOpts
+  echo flipVert
+
+  var untitledIdx = 1
+
+  proc nextUntitledRegionName(): string =
+    while true:
+      let name = mkUntitledRegionName(untitledIdx)
+      var r = l.findFirstRegionByName(name)
+      if r.isNone: return name
+      inc(untitledIdx)
+
+  l.regions = initRegions()
+
+  echo "****************************"
+  for rc in l.allRegionCoords:
+    let oldRc = if flipVert:
+                  RegionCoords(row: l.regionRows(oldRegionOpts)-1 - rc.row,
+                               col: rc.col)
+                else: rc
+
+    let region = oldRegions.getRegion(oldRc)
+    echo "oldRc: ", oldRc, ", region: ", region, ", rc: ", rc
+
+    if region.isSome and not region.get.name.startsWith(UntitledRegionName):
+      l.setRegion(rc, region.get)
+    else:
+      l.setRegion(rc, Region(name: nextUntitledRegionName()))
 
 # }}}
 

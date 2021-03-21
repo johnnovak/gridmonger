@@ -37,8 +37,8 @@ const
   LevelRowsLimits*         = intLimits(min=1, max=6666)
   LevelColumnsLimits*      = intLimits(min=1, max=6666)
 
-  RegionRowsLimits*        = intLimits(min=2, max=6666)
-  RegionColumnsLimits*     = intLimits(min=2, max=6666)
+  RowsPerRegionLimits*     = intLimits(min=2, max=3333)
+  ColumnsPerRegionLimits*  = intLimits(min=2, max=3333)
   RegionRowLimits*         = intLimits(min=0, max=3332)
   RegionColumnLimits*      = intLimits(min=0, max=3332)
   RegionNameLimits*        = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
@@ -211,7 +211,7 @@ proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
     let dest = readLocation(rr)
     checkValueRange(dest.level, "lnks.destLevel", max=maxLevelIndex)
     checkValueRange(dest.row, "lnks.destRow", max=levels[dest.level].cols-1)
-    checkValueRange(dest.col, "lnks.destColumh", max=levels[dest.level].cols-1)
+    checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.level].cols-1)
 
     result[src] = dest
     dec(numLinks)
@@ -389,22 +389,26 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
 
   let enabled = rr.read(uint8).bool
 
-  let colsPerRegion = rr.read(uint16)
-  checkValueRange(colsPerRegion, "lvl.regn.colsPerRegion", RegionColumnsLimits)
-
   let rowsPerRegion = rr.read(uint16)
-  checkValueRange(rowsPerRegion, "lvl.regn.rowsPerRegion", RegionRowsLimits)
+  checkValueRange(rowsPerRegion, "lvl.regn.rowsPerRegion", RowsPerRegionLimits)
+
+  let colsPerRegion = rr.read(uint16)
+  checkValueRange(colsPerRegion, "lvl.regn.colsPerRegion",
+                                 ColumnsPerRegionLimits)
 
   let perRegionCoords = rr.read(uint8).bool
 
   let regionOpts = RegionOptions(
     enabled:         enabled,
+    rowsPerRegion:   rowsPerRegion,
     colsPerRegion:   colsPerRegion,
-    rowsPerRegion:      rowsPerRegion,
     perRegionCoords: perRegionCoords
   )
 
+  info(fmt"  Regions opts: {regionOpts}")
+
   let numRegions = rr.read(uint16).Natural
+  info(fmt"  Num regions: {numRegions}")
 
   var regions: Regions = initRegions()
 
@@ -417,6 +421,8 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
 
     let name = rr.readBStr()
     checkStringLength(name, "lvl.regn.region.name", RegionNameLimits)
+
+    info(fmt"    row: {row}, col: {col}, name: {name}")
 
     regions.setRegion(
       RegionCoords(row: row, col: col),

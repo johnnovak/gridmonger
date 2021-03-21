@@ -17,8 +17,8 @@ RIFF ('GRDM'          # Gridmonger map file
             'cell'    # Level cells
             'note'    # Notes
             'regn'    # Regions
-        )
-        ...
+            )
+            ...
     )
     'lnks'            # Map links
 
@@ -29,35 +29,35 @@ RIFF ('GRDM'          # Gridmonger map file
 
 'prop' (Map)
     UINT16  version
-    BSTR    name            (minLen=1, maxLen=400, maxRuneLen=100)
+    BSTR    name              (minLen=1, maxLen=400, maxRuneLen=100)
 
 
 'coor'
-    UINT8   origin          (0=northeast, 1=southeast)
-    UINT8   rowStyle        (0=number, 1=letter)
-    UINT8   columnStyle     (0=number, 1=letter)
+    UINT8   origin            (0=northeast, 1=southeast)
+    UINT8   rowStyle          (0=number, 1=letter)
+    UINT8   columnStyle       (0=number, 1=letter)
     INT16   rowStart
     INT16   columnStart
 
 
 'prop' (Level)
-    BSTR    locationName    (minLen=1, maxLen=400, maxRuneLen=100)
-    BSTR    levelName       (minLen=0, maxLen=400, maxRuneLen=100)
-    INT16   elevation       (min=-200, max=200)
-    UINT16  numRows         (min=1, max=6666)
-    UINT16  numColums       (min=1, max=6666)
-    UINT8   overrideCoordOpts  (0=off, >0=on)
+    BSTR    locationName      (minLen=1, maxLen=400, maxRuneLen=100)
+    BSTR    levelName         (minLen=0, maxLen=400, maxRuneLen=100)
+    INT16   elevation         (min=-200, max=200)
+    UINT16  numRows           (min=1, max=6666)
+    UINT16  numColums         (min=1, max=6666)
+    UINT8   overrideCoordOpts (0=off, >0=on)
 
 'regn'
-    UINT8   enableRegions   (0=off, >0=on)
-    UINT16  regionRows      (min=2, max=6666)
-    UINT16  regionColumns   (min=2, max=6666)
+    UINT8   enableRegions     (0=off, >0=on)
+    UINT16  rowsPerRegion     (min=2, max=3333)
+    UINT16  columnsPerRegion  (min=2, max=3333)
     UINT16  numRegions
 
     numRegion times:
-    UINT16  row             (max=0, max=3332)
-    UINT16  column          (min=0, max=3332)
-    BSTR    name            (minLen=1, maxLen=400, maxRuneLen=100)
+    UINT16  row               (max=0, max=3332)
+    UINT16  column            (min=0, max=3332)
+    BSTR    name              (minLen=1, maxLen=400, maxRuneLen=100)
 
 
 'cell'
@@ -72,53 +72,53 @@ RIFF ('GRDM'          # Gridmonger map file
 
 
 'note'
-    UINT16  numNotes        (max=10000)
+    UINT16  numNotes          (max=10000)
 
     numNotes records of:
-    UINT16  row             (max=numRows-1    of the given level)
-    UINT16  column          (max=numColumns-1 of the given level)
+    UINT16  row               (max=numRows-1    of the given level)
+    UINT16  column            (max=numColumns-1 of the given level)
     UINT8   kind
 
     if kind == 0 (comment)
 
     if kind == 1 (indexed)
-        UINT16  index       (max=9999)
-        UINT8   indexColor  (max=3)
+        UINT16  index         (max=9999)
+        UINT8   indexColor    (max=3)
 
     if kind == 2 (icon)
-        UINT8   icon        (max=39)
+        UINT8   icon          (max=39)
 
     if kind == 3 (customId)
-        BSTR    custom ID   (minLen=1, maxLen=2, only alphanumeric)
+        BSTR    custom ID     (minLen=1, maxLen=2, only alphanumeric)
 
     if kind == 4 (label)
-        UINT8   labelColor  (max=3)
+        UINT8   labelColor    (max=3)
 
-    WSTR    text            (minLen=1, maxLen=1600, maxRuneLen=400)
+    WSTR    text              (minLen=1, maxLen=1600, maxRuneLen=400)
 
 
 'lnks'
-    UINT16  numLinks        (max=10000)
+    UINT16  numLinks          (max=10000)
 
     numLinks records of:
 
-    UINT16  srcLevel        (max=numLevels-1)
-    UINT16  srcRow          (max=numRows-1    of the given level)
-    UINT16  srcColumn       (max=numColumns-1 of the given level)
+    UINT16  srcLevel          (max=numLevels-1)
+    UINT16  srcRow            (max=numRows-1    of the given level)
+    UINT16  srcColumn         (max=numColumns-1 of the given level)
 
-    UINT16  destLevel       (max=numLevel-1)
-    UINT16  destRow         (max=numRows-1    of the given level)
-    UINT16  destColumn      (max=numColumns-1 of the given level)
+    UINT16  destLevel         (max=numLevel-1)
+    UINT16  destRow           (max=numRows-1    of the given level)
+    UINT16  destColumn        (max=numColumns-1 of the given level)
 
 
 'disp'
-    UINT8   currLevel       (max=numLevels-1)
-    UINT8   zoomLevel       (min=1, max=20)
-    UINT16  cursorRow       (max=numRows-1    of the given level)
-    UINT16  cursorColumn    (max=numColumns-1 of the given level)
+    UINT8   currLevel         (max=numLevels-1)
+    UINT8   zoomLevel         (min=1, max=20)
+    UINT16  cursorRow         (max=numRows-1    of the given level)
+    UINT16  cursorColumn      (max=numColumns-1 of the given level)
 
     TODO:
-    BSTR    themeName       (minLen=1, maxLen=200, only alphanumeric)
-    UINT8   showCoords      (0 or 1)
+    BSTR    themeName         (minLen=1, maxLen=200, only alphanumeric)
+    UINT8   showCoords        (0 or 1)
     UINT8   gridStyle
 

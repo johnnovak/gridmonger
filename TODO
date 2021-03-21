@@ -23,8 +23,7 @@ TODO
 v0.9
   - region name reassignment on:
     - resize
-    - change level coord origin
-    - change map coord origin (update leves with regions without overrides)
+    - change map coord origin (update levels with regions without overrides)
     - change region size
 
   - align left/right half of the screen buttons

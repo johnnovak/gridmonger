@@ -200,43 +200,17 @@ proc findFirstRegionByName*(l; name: string): Option[(RegionCoords, Region)] =
 # }}}
 
 # {{{ regionRows*()
-proc regionRows*(l): Natural =
-  ceil(l.rows / l.regionOpts.rowsPerRegion).int
+proc regionRows*(l; ro: RegionOptions): Natural =
+  ceil(l.rows / ro.rowsPerRegion).int
+
+proc regionRows*(l): Natural = l.regionRows(l.regionOpts)
 
 # }}}
 # {{{ regionCols*()
-proc regionCols*(l): Natural =
-  ceil(l.cols / l.regionOpts.colsPerRegion).int
+proc regionCols*(l; ro: RegionOptions): Natural =
+  ceil(l.cols / ro.colsPerRegion).int
 
-# }}}
-# {{{ getRegionCoords*()
-proc getRegionCoords*(l; r,c: Natural): RegionCoords =
-  let regionCol = c div l.regionOpts.colsPerRegion
-
-  let row = case l.coordOpts.origin
-            of coNorthWest: r
-            of coSouthWest: max((l.rows-1).int - r, 0)
-
-  let regionRow = row div l.regionOpts.rowsPerRegion
-
-  RegionCoords(row: regionRow, col: regionCol)
-
-# }}}
-# {{{ getRegionCenterLocation*()
-proc getRegionCenterLocation*(l; rc: RegionCoords): (Natural, Natural) =
-  let rows = l.regionOpts.rowsPerRegion
-  let cols = l.regionOpts.colsPerRegion
-
-  let c = (rc.col * cols).int
-
-  let r = case l.coordOpts.origin
-          of coNorthWest: rc.row * rows
-          of coSouthWest: (l.rows+1).int - (rc.col+1)*cols
-
-  let centerRow = (r + l.regionOpts.rowsPerRegion    div 2).clamp(0, l.rows-1)
-  let centerCol = (c + l.regionOpts.colsPerRegion div 2).clamp(0, l.cols-1)
-
-  (centerRow.Natural, centerCol.Natural)
+proc regionCols*(l): Natural = l.regionCols(l.regionOpts)
 
 # }}}
 # {{{ allRegionCoords*()
@@ -247,6 +221,11 @@ iterator allRegionCoords*(l): RegionCoords =
 
 # }}}
 
+# {{{ mkUntitledRegion*()
+proc mkUntitledRegionName*(index: Natural): string =
+  UntitledRegionName & " " & $index
+
+# }}}
 # {{{ initRegionsFrom*()
 proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
                       rowOffs: int = 0, colOffs: int = 0): Regions =
@@ -274,7 +253,9 @@ proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
     if region.isSome:
       destRegions.setRegion(rc, region.get)
     else:
-      destRegions.setRegion(rc, Region(name: "Untitled Region " & $untitledIdx))
+      destRegions.setRegion(
+        rc, Region(name: mkUntitledRegionName(untitledIdx))
+      )
       inc(untitledIdx)
 
   echo ""
