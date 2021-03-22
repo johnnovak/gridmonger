@@ -2273,8 +2273,8 @@ proc drawRegionBorderOverhang(l: Level, viewBuf: Level; ctx) =
   drawRegionBorderRows(l, viewBuf, ctx, viewRow):
     let y = cellY(viewRow, dp)
     let bufRow = viewRow + ViewBufBorder
-    let firstBufCol = ViewBufBorder
-    let lastBufCol = ViewBufBorder + dp.viewCols-1
+    let firstBufCol = ViewBufBorder-1
+    let lastBufCol = ViewBufBorder + dp.viewCols
 
     var color = if viewBuf.getWall(bufRow, firstBufCol, dirN) == wNone:
       ls.regionBorderEmptyColor
@@ -2283,7 +2283,7 @@ proc drawRegionBorderOverhang(l: Level, viewBuf: Level; ctx) =
 
     drawRegionBorderEdgeHoriz(cellX(-1, dp), y, color, west=false, ctx)
 
-    color = if viewBuf.getWall(viewRow, lastBufCol, dirN) == wNone:
+    color = if viewBuf.getWall(bufRow, lastBufCol, dirN) == wNone:
       ls.regionBorderEmptyColor
     else:
       ls.regionBorderColor
@@ -2294,8 +2294,8 @@ proc drawRegionBorderOverhang(l: Level, viewBuf: Level; ctx) =
   drawRegionBorderCols(l, viewBuf, ctx, viewCol):
     let x = cellX(viewCol, dp)
     let bufCol = viewCol + ViewBufBorder
-    let firstBufRow = ViewBufBorder
-    let lastBufRow = ViewBufBorder + dp.viewRows-1
+    let firstBufRow = ViewBufBorder-1
+    let lastBufRow = ViewBufBorder + dp.viewRows
 
     var color = if viewBuf.getWall(firstBufRow, bufCol, dirW) == wNone:
       ls.regionBorderEmptyColor
