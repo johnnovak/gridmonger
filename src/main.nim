@@ -4865,34 +4865,36 @@ proc specialWallDrawProc(ls: LevelStyle,
       dp.setZoomLevel(ls, 4)
       vg.restore()
 
+    let ot = Horiz
+
     case SpecialWalls[buttonIdx]
     of wNone:              discard
-    of wWall:              drawSolidWallHoriz(cx, cy, ctx=ctx)
-    of wIllusoryWall:      drawIllusoryWallHoriz(cx+2, cy, ctx=ctx)
-    of wInvisibleWall:     drawInvisibleWallHoriz(cx-2, cy, ctx=ctx)
-    of wDoor:              drawDoorHoriz(cx, cy, ctx=ctx)
-    of wLockedDoor:        drawLockedDoorHoriz(cx, cy, ctx=ctx)
-    of wArchway:           drawArchwayHoriz(cx, cy, ctx=ctx)
+    of wWall:              drawSolidWallHoriz(cx, cy, ot, ctx=ctx)
+    of wIllusoryWall:      drawIllusoryWallHoriz(cx+2, cy, ot, ctx=ctx)
+    of wInvisibleWall:     drawInvisibleWallHoriz(cx-2, cy, ot, ctx=ctx)
+    of wDoor:              drawDoorHoriz(cx, cy, ot, ctx=ctx)
+    of wLockedDoor:        drawLockedDoorHoriz(cx, cy, ot, ctx=ctx)
+    of wArchway:           drawArchwayHoriz(cx, cy, ot, ctx=ctx)
 
     of wSecretDoor:
-      drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ctx=ctx)
+      drawAtZoomLevel(6):  drawSecretDoorHoriz(cx-2, cy, ot, ctx=ctx)
 
     of wOneWayDoorNE:
-      drawAtZoomLevel(8):  drawOneWayDoorHorizNE(cx-4, cy+1, ctx=ctx)
+      drawAtZoomLevel(8):  drawOneWayDoorHorizNE(cx-4, cy+1, ot, ctx=ctx)
 
     of wLeverSW:
-      drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ctx=ctx)
+      drawAtZoomLevel(6):  drawLeverHorizSW(cx-2, cy+1, ot, ctx=ctx)
 
-    of wNicheSW:           drawNicheHorizSW(cx, cy, floorColor=0, ctx=ctx)
+    of wNicheSW:           drawNicheHorizSW(cx, cy, ot, floorColor=0, ctx=ctx)
 
     of wStatueSW:
-      drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ctx=ctx)
+      drawAtZoomLevel(6):  drawStatueHorizSW(cx-2, cy+2, ot, ctx=ctx)
 
     of wKeyhole:
-      drawAtZoomLevel(6):  drawKeyholeHoriz(cx-2, cy, ctx=ctx)
+      drawAtZoomLevel(6):  drawKeyholeHoriz(cx-2, cy, ot, ctx=ctx)
 
     of wWritingSW:
-      drawAtZoomLevel(12): drawWritingHorizSW(cx-6, cy+4, ctx=ctx)
+      drawAtZoomLevel(12): drawWritingHorizSW(cx-6, cy+4, ot, ctx=ctx)
 
     else: discard
 
@@ -4943,14 +4945,9 @@ proc renderToolsPane(x, y, w, h: float; a) =
 
   # Draw floor colors
   var floorColors = newSeqOfCap[Color](ls.floorColor.len)
-  let
-    bgCol = ls.backgroundColor
-    fc0 = ls.floorColor[0]
 
-  for fc in ls.floorColor:
-    let c = if ls.transparentFloor: fc
-            else: bgCol.withAlpha(1.0).lerp(fc0, fc0.a)
-                                      .lerp(fc, fc.a).withAlpha(1.0)
+  for fc in 0..ls.floorColor.high:
+    let c = calcBlendedFloorColor(fc, ls.transparentFloor, ls)
     floorColors.add(c)
 
   koi.radioButtons(
