@@ -325,14 +325,21 @@ proc setLevelClippingRect(l: Level; ctx) =
   alias(ls, ctx.ls)
   alias(vg, ctx.vg)
 
-  let clipOffs = if dp.lineWidth == lwNormal: 1 else: 0
-  let regionOffs = if dp.regionOpts.enabled: 1 else: 0
+  let (ox, oy, ow, oh) =
+    if dp.regionOpts.enabled:
+      case dp.lineWidth
+      of lwNormal: (-1, -1,  3,  3)
+      of lwThin:   ( 0, -1,  2,  2)
+    else:
+      case dp.lineWidth
+      of lwNormal: (-1, -1,  2,  2)
+      of lwThin:   ( 0,  0,  1,  1)
 
   var
-    x = dp.startX-clipOffs - regionOffs
-    y = dp.startY-clipOffs
-    w = dp.gridSize * dp.viewCols + 1 + clipOffs + regionOffs
-    h = dp.gridSize * dp.viewRows + 1 + clipOffs + regionOffs
+    x = dp.startX + ox
+    y = dp.startY + oy
+    w = dp.gridSize * dp.viewCols + ow
+    h = dp.gridSize * dp.viewRows + oh
 
   if ls.outlineOverscan:
     let
