@@ -1303,8 +1303,9 @@ proc drawIllusoryWallHoriz*(x, y: float, orientation: Orientation,
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
+  let (sw, _, _, _) = setWallStyle()
+
   let
-    sw = dp.normalStrokeWidth
     xs = x
     xe = x + dp.gridSize
     y = snap(y + regionBorderYAdjustment(orientation, regionBorder, ctx), sw)
@@ -1313,8 +1314,6 @@ proc drawIllusoryWallHoriz*(x, y: float, orientation: Orientation,
     pad = 7.0
 
   vg.lineCap(lcjSquare)
-  vg.strokeColor(ls.drawColor)
-  vg.strokeWidth(sw)
 
   var x = xs
   vg.beginPath()
