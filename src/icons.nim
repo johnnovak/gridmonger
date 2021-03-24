@@ -16,7 +16,6 @@ const
   IconCheck* = "\ue900"
   IconCheckboxOff* = "\uea53"
   IconCheckboxOn* = "\uea52"
-  IconCircle* = "\uf10c"
   IconCircleInv* = "\uf111"
   IconClose* = "\ue901"
   IconCog* = "\ue906"
@@ -28,16 +27,12 @@ const
   IconEraser* = "\uf12d"
   IconFile* = "\uf0f6"
   IconFloppy* = "\uf0c7"
-  IconFullscreen* = "\ue989"
-  IconFullscreenExit* = "\ue98a"
   IconHand* = "\uf245"
-  IconInfo* = "\uf05a"
   IconMinus* = "\uea0b"
   IconMouse* = "\ue91d"
   IconNewFile* = "\uf15b"
   IconPaste* = "\uf0ea"
   IconPencil* = "\uf040"
-  IconPin* = "\ue91c"
   IconPlus* = "\uea0a"
   IconQuestion* = "\ue916"
   IconRedo* = "\uf064"
@@ -53,6 +48,8 @@ const
   IconWindowMaximise* = "\uf2d0"
   IconWindowMinimise* = "\uf2d1"
   IconWindowRestore* = "\uf2d2"
+  IconWindowLeft* = "\ue90e"
+  IconWindowRight* = "\ue907"
   IconZoomIn* = "\uf00e"
   IconZoomOut* = "\uf010"
 
@@ -62,7 +59,6 @@ const
   IconBook* = "\ue923"
   IconBox* = "\uf097"
   IconBug* = "\ue909"
-  IconBullseye* = "\uf140"
   IconDiamond* = "\uf219"
   IconDoorEnter* = "\uea13"
   IconDoorExit* = "\uea14"
@@ -85,12 +81,10 @@ const
   IconPower* = "\ue9b5"
   IconShield* = "\uf132"
   IconShip* = "\ue944"
-#  IconSkull* = "\ue902"
   IconSkull* = "\ueaa1"
   IconSpinner* = "\ue910"
   IconStairsDown* = "\ue90c"
   IconStairsUp* = "\ue90d"
-  IconStar* = "\ue907"
   IconTeleport* = "\ue915"
   IconWriting* = "\ue919"
   IconTree1* = "\uf1bb"
@@ -99,21 +93,12 @@ const
   IconYinYang* = "\ue952"
 
   # new
-  IconShovel* = "\ue90e"
   IconAxe* = "\ue917"
-  IconPickAxe* = "\ue90f"
   IconSword* = "\ue946"
   IconCrossedAxes* = "\ue979"
-  IconWand* = "\ue9b6"
-  IconHammer* = "\ue9ee"
   IconHelmet* = "\ue9fe"
-  IconLever* = "\uea29"
-  IconPlayer* = "\uea6f"
-  IconCrown* = "\uea74"
-  IconRadioactive* = "\uea79"
   IconShoePrints* = "\uea98"
   IconFire* = "\ueaa3"
-  IconSunSymbol* = "\ueabc"
   IconSun* = "\ueabd"
   IconTorch* = "\uead1"
   IconTower* = "\uead2"
@@ -142,7 +127,6 @@ const NoteIcons* = @[
   IconEquip,
   IconShield,
   IconTrophy,
-
   IconFlag,
   IconMoney,
   IconDiamond,
@@ -154,7 +138,6 @@ const NoteIcons* = @[
   IconGraduation,
   IconFloppy,
   IconMale,
-
   IconShip,
   IconTree1,
   IconTree2,

@@ -15,9 +15,11 @@ const
   TitleBarFontSize = 14.0
   TitleBarHeight* = 26.0
   TitleBarTitlePosX = 16.0
-  TitleBarButtonWidth = 23.0
+  TitleBarButtonWidth = 22.0
+  TitleBarWindowStandardButtonsLeftPad = 20.0
   TitleBarWindowButtonsRightPad = 6.0
-  TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*3 +
+  TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*5 +
+                                    TitleBarWindowStandardButtonsLeftPad +
                                     TitleBarWindowButtonsRightPad
 
   WindowResizeEdgeWidth = 7.0
@@ -168,6 +170,29 @@ proc oldSize*(win): tuple[w, h: int32] =
 
 # }}}
 
+# {{{ getScreenSize()
+proc getScreenSize(): (int, int) =
+  # TODO This logic needs to be a bit more sophisticated to support
+  # multiple monitors
+  let (_, _, w, h) = getPrimaryMonitor().workArea
+  (w.int, h.int)
+# }}}
+
+# {{{ alignLeft()
+proc alignLeft(win) =
+  let (w, h) = getScreenSize()
+  win.w.pos = (0, 0)
+  win.w.size = (w div 2, h)
+
+# }}}
+# {{{ alignRight()
+proc alignRight(win) =
+  let (w, h) = getScreenSize()
+  let x = w div 2
+  win.w.pos = (x, 0)
+  win.w.size = (w-x, h)
+
+# }}}
 # {{{ restore()
 proc restore(win) =
   win.w.pos = (win.oldPosX, win.oldPosY)
@@ -177,9 +202,7 @@ proc restore(win) =
 # }}}
 # {{{ maximize*()
 proc maximize*(win) =
-  # TODO This logic needs to be a bit more sophisticated to support
-  # multiple monitors
-  let (_, _, w, h) = getPrimaryMonitor().workArea
+  let (w, h) = getScreenSize()
   (win.oldPosX, win.oldPosY) = win.w.pos
   (win.oldWidth, win.oldHeight) = win.w.size
 
@@ -192,6 +215,7 @@ proc maximize*(win) =
   win.maximizing = false
 
 # }}}
+#
 # {{{ renderTitleBar()
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   alias(s, win.style)
@@ -232,12 +256,21 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   koi.setCurrentLayer(layerWindowDecoration)
 
   # Minimise/maximise/close window buttons
-  let x = winWidth - TitleBarWindowButtonsTotalWidth
+  var x = winWidth - TitleBarWindowButtonsTotalWidth
 
+  if koi.button(x, by, bw, bh, IconWindowLeft, style=bs):
+    win.alignLeft()
+
+  x += bw
+  if koi.button(x, by, bw, bh, IconWindowRight, style=bs):
+    win.alignRight()
+
+  x += bw + TitleBarWindowStandardButtonsLeftPad
   if koi.button(x, by, bw, bh, IconWindowMinimise, style=bs):
     win.w.iconify()
 
-  if koi.button(x + bw, by, bw, bh,
+  x += bw
+  if koi.button(x, by, bw, bh,
                 if win.maximized: IconWindowRestore else: IconWindowMaximise,
                 style=bs):
     if not win.maximizing:  # workaround to avoid double-activation
@@ -246,7 +279,8 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
       else:
         win.maximize()
 
-  if koi.button(x + bw*2, by, bw, bh, IconWindowClose, style=bs):
+  x += bw
+  if koi.button(x, by, bw, bh, IconWindowClose, style=bs):
     win.w.shouldClose = true
 
   koi.setCurrentLayer(oldCurrLayer)

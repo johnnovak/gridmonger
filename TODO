@@ -1,10 +1,4 @@
 BUGS
-  - textfields: max length (note, ID field)
-
-  - undo after cut/erase/etc selection should restore cursor to selection to
-    left corner, not bottom right
-
-  - switch tab: (shift)+ctrl+tab
 
 
 TESTS
@@ -17,8 +11,6 @@ TESTS
 TODO
 
 v0.9
-  - border around label text?
-
   - region name reassignment on:
     - resize
     - change map coord origin (update levels with regions without overrides)
@@ -29,6 +21,8 @@ v0.9
   - map/level comments
 
   - bg texture hi-dpi support
+
+  - switch tab: (shift)+ctrl+tab
 
   - finalise all themes
   - cascading theme loading (built-in vs user themes)
@@ -114,6 +108,9 @@ v1.1
 LOW PRIORITY
   - proper multi-window handling in csdwindow
   - better csdwindow separation (e.g. titlebar)
+
+  - undo after cut/erase/etc selection should restore cursor to selection to
+    left corner, not bottom right (too hard?, requires no undo system)
 
   - in paste preview mode, you cannot use "negative" col & row paste
     destination
