@@ -4,9 +4,6 @@ BUGS
   - undo after cut/erase/etc selection should restore cursor to selection to
     left corner, not bottom right
 
-  - allow drawing walls when cursor is in an empty cell, but there is
-    a non-empty cell in the wall draw direction
-
   - switch tab: (shift)+ctrl+tab
 
 

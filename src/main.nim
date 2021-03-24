@@ -25,6 +25,7 @@ import with
 
 import actions
 import appconfig
+import cellgrid
 import common
 import csdwindow
 import drawlevel
@@ -4332,13 +4333,13 @@ proc handleGlobalKeyEvents(a) =
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir; a) =
         let cur = a.ui.cursor
-        if map.isEmpty(cur):
-          setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
+
+        if map.canSetWall(cur, dir):
+          let w = if map.getWall(cur, dir) == wWall: wNone
+                  else: wWall
+          actions.setWall(map, cur, dir, w, um)
         else:
-          if map.canSetWall(cur, dir):
-            let w = if map.getWall(cur, dir) == wWall: wNone
-                    else: wWall
-            actions.setWall(map, cur, dir, w, um)
+          setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
       handleMoveKeys(ke, handleMoveKey)
 
@@ -4370,6 +4371,8 @@ proc handleGlobalKeyEvents(a) =
                   else: curSpecWall
 
           actions.setWall(map, cur, dir, w, um)
+        else:
+          setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
       handleMoveKeys(ke, handleMoveKey)
 
