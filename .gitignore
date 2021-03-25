@@ -4,3 +4,5 @@
 *.grm
 .DS_Store
 ._*
+gridmonger.ini
+*.log
