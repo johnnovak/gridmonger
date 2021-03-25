@@ -626,20 +626,6 @@ proc savePreferences(a) =
   saveAppConfig(cfg, a.path.configFile)
 
 # }}}
-# {{{ loadImage()
-proc loadImage(path: string; a): Option[Paint] =
-  alias(vg, a.vg)
-  try:
-    let img = vg.createImage(path, {ifRepeatX, ifRepeatY})
-
-    let (w, h) = vg.imageSize(img)
-    let paint = vg.imagePattern(0, 0, w.float, h.float, angle=0, img, alpha=1.0)
-    result = paint.some
-
-  except NVGError:
-    result = Paint.none
-
-# }}}
 # {{{ updateWidgetStyles()
 proc updateWidgetStyles(a) =
   alias(s, a.theme.style)
@@ -887,6 +873,20 @@ proc createPattern(vg: NVGContext, img: var Image, alpha: float = 1.0,
   vg.imagePattern(
     ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, img, alpha
   )
+
+# }}}
+# {{{ loadImage()
+proc loadImage(path: string; a): Option[Paint] =
+  alias(vg, a.vg)
+  try:
+    var img = vg.createImage(path, {ifRepeatX, ifRepeatY})
+
+    let (w, h) = vg.imageSize(img)
+    let paint = vg.createPattern(img, scale=1/koi.getPxRatio())
+    result = paint.some
+
+  except NVGError:
+    result = Paint.none
 
 # }}}
 
