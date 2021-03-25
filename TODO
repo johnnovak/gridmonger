@@ -11,14 +11,12 @@ TESTS
 TODO
 
 v0.9
-  - bg texture hi-dpi support
+  - better old paper background
 
   - region name reassignment on:
     - resize
     - change map coord origin (update levels with regions without overrides)
     - change region size
-
-  - align left/right half of the screen buttons
 
   - map/level comments
 
