@@ -11,6 +11,8 @@ TESTS
 TODO
 
 v0.9
+  - bg texture hi-dpi support
+
   - region name reassignment on:
     - resize
     - change map coord origin (update levels with regions without overrides)
@@ -19,8 +21,6 @@ v0.9
   - align left/right half of the screen buttons
 
   - map/level comments
-
-  - bg texture hi-dpi support
 
   - switch tab: (shift)+ctrl+tab
 
