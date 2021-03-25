@@ -273,12 +273,11 @@ type
   Theme = object
     style:                  ThemeStyle
 
-    themeNames:             seq[string]
+    themeNames:             seq[ThemeName]
     currThemeIndex:         Natural
     nextThemeIndex:         Option[Natural]
     themeReloaded:          bool
     reinitDrawLevelParams:  bool
-    userTheme:              bool
 
     buttonStyle:            ButtonStyle
     checkBoxStyle:          CheckboxStyle
@@ -296,6 +295,12 @@ type
 
     levelDropDownStyle:     DropDownStyle
     noteTextAreaStyle:      TextAreaStyle
+
+
+  ThemeName = object
+    name:      string
+    userTheme: bool
+    override:  bool
 
 
   Dialogs = object
@@ -594,7 +599,7 @@ proc savePreferences(a) =
     prefs: a.prefs,
 
     app: AppState(
-      themeName:      theme.themeNames[theme.currThemeIndex],
+      themeName:      theme.themeNames[theme.currThemeIndex].name,
 
       zoomLevel:      dp.getZoomLevel(),
       currLevel:      cur.level,
@@ -1281,68 +1286,82 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 
 # {{{ searchThemes()
 proc searchThemes(a) =
-  proc addThemeNames(names: var seq[string], themesDir: string) =
+  var themeNames: seq[ThemeName] = @[]
+
+  proc findThemeWithName(name: string): int =
+    for i in 0..themeNames.high:
+      if themeNames[i].name == name: return i
+    result = -1
+
+  proc addThemeNames(themesDir: string, userTheme: bool) =
     for path in walkFiles(themesDir / fmt"*.{ThemeExt}"):
       let (_, name, _) = splitFile(path)
-      names.add(name)
+      let idx = findThemeWithName(name)
+      if idx >= 0:
+        themeNames.del(idx)
+        themeNames.add(
+          ThemeName(name: name, userTheme: userTheme, override: true)
+        )
+      else:
+        themeNames.add(
+          ThemeName(name: name, userTheme: userTheme, override: false)
+        )
 
-  var themeNames: seq[string] = @[]
-  themeNames.addThemeNames(a.path.themesDir)
-  themeNames.addThemeNames(a.path.userThemesDir)
+  addThemeNames(a.path.themesDir, userTheme=false)
+  addThemeNames(a.path.userThemesDir, userTheme=true)
 
-  a.theme.themeNames = themeNames.deduplicate()
-  sort(a.theme.themeNames)
+  themeNames.sort(
+    proc (a, b: ThemeName): int = cmp(a.name, b.name)
+  )
+
+  a.theme.themeNames = themeNames
 
 # }}}
 # {{{ findThemeIndex()
 proc findThemeIndex(name: string; a): int =
-  for i, n in a.theme.themeNames:
-    if n == name:
+  for i in 0..a.theme.themeNames.high:
+    if a.theme.themeNames[i].name == name:
       return i
-  return -1
+  result = -1
 
 # }}}
 # {{{ themePath()
-proc themePath(index: Natural, userTheme: bool; a): string =
-  let name = a.theme.themeNames[index]
-  let themeDir = if userTheme: a.path.userThemesDir else: a.path.themesDir
-  themeDir / addFileExt(name, ThemeExt)
+proc themePath(theme: ThemeName; a): string =
+  let themeDir = if theme.userTheme: a.path.userThemesDir
+                 else: a.path.themesDir
+  themeDir / addFileExt(theme.name, ThemeExt)
 
 # }}}
 # {{{ loadTheme()
-proc loadTheme(index: Natural; a) =
-  let name = a.theme.themeNames[index]
-
-  var path = themePath(index, userTheme=true, a)
-  var userTheme = true
-
-  if not fileExists(path):
-    path = themePath(index, userTheme=false, a)
-    userTheme = false
-
-  info(fmt"Loading theme '{name}' from '{path}'")
+proc loadTheme(theme: ThemeName; a) =
+  var path = themePath(theme, a)
+  info(fmt"Loading theme '{theme.name}' from '{path}'")
 
   a.theme.style = loadTheme(path)
-  a.theme.userTheme = userTheme
 
 # }}}
 # {{{ switchTheme()
 proc switchTheme(themeIndex: Natural; a) =
-  loadTheme(themeIndex, a)
+  let theme = a.theme.themeNames[themeIndex]
+  loadTheme(theme, a)
   updateWidgetStyles(a)
 
   let bgImageName = a.theme.style.general.backgroundImage
-  if bgImageName != "":
-    var imgPath = a.path.userThemeImagesDir / bgImageName
-    var image = loadImage(imgPath, a)
-    if image.isNone:
-      info(fmt"Couldn't load background image '{imgPath}'. " &
-           "Attempting to load it from the default theme images directory.")
 
-      imgPath = a.path.themeImagesDir / bgImageName
-      image = loadImage(imgPath, a)
-      if image.isNone:
-        logging.error(fmt"Couldn't load background image '{imgPath}'")
+  proc tryLoadImage(path: string; a): Option[Paint] =
+    var imgPath = path / bgImageName
+    result = loadImage(imgPath, a)
+    if result.isNone:
+      info(fmt"Couldn't load background image '{imgPath}'")
+
+  if bgImageName != "":
+    var image = Paint.none
+    if theme.userTheme:
+      image = tryLoadImage(a.path.userThemeImagesDir, a)
+      info("Attempting to load it from the default theme images directory.")
+
+    if image.isNone:
+      image = tryLoadImage(a.path.themeImagesDir, a)
 
     a.ui.backgroundImage = image
     a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
@@ -5651,7 +5670,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   cx += 60.0
   koi.textField(
     cx, cy, w=225.0, wh,
-    a.theme.themeNames[a.theme.currThemeIndex],
+    a.theme.themeNames[a.theme.currThemeIndex].name,
     disabled=true
   )
 
@@ -5665,8 +5684,8 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
-    let themePath = themePath(a.theme.currThemeIndex,
-                              userTheme=a.theme.userTheme, a)
+    let theme = a.theme.themeNames[a.theme.currThemeIndex]
+    let themePath = themePath(theme, a)
     saveTheme(a.theme.style, themePath)
 
   cx += bw + bp
@@ -5945,7 +5964,7 @@ proc renderFramePre(a) =
 
     except CatchableError as e:
       logError(e)
-      let name = a.theme.themeNames[themeIndex]
+      let name = a.theme.themeNames[themeIndex].name
       setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
       a.theme.nextThemeIndex = Natural.none
 
@@ -5969,7 +5988,7 @@ proc renderFramePre(a) =
 proc renderFrame(a) =
 
   proc displayThemeLoadedMessage(a) =
-    let themeName = a.theme.themeNames[a.theme.currThemeIndex]
+    let themeName = a.theme.themeNames[a.theme.currThemeIndex].name
     if a.theme.themeReloaded:
       setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
     else:
