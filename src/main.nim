@@ -25,7 +25,6 @@ import with
 
 import actions
 import appconfig
-import cellgrid
 import common
 import csdwindow
 import drawlevel
@@ -279,6 +278,7 @@ type
     nextThemeIndex:         Option[Natural]
     themeReloaded:          bool
     reinitDrawLevelParams:  bool
+    userTheme:              bool
 
     buttonStyle:            ButtonStyle
     checkBoxStyle:          CheckboxStyle
@@ -1281,9 +1281,16 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 
 # {{{ searchThemes()
 proc searchThemes(a) =
-  for path in walkFiles(a.path.themesDir / fmt"*.{ThemeExt}"):
-    let (_, name, _) = splitFile(path)
-    a.theme.themeNames.add(name)
+  proc addThemeNames(names: var seq[string], themesDir: string) =
+    for path in walkFiles(themesDir / fmt"*.{ThemeExt}"):
+      let (_, name, _) = splitFile(path)
+      names.add(name)
+
+  var themeNames: seq[string] = @[]
+  themeNames.addThemeNames(a.path.themesDir)
+  themeNames.addThemeNames(a.path.userThemesDir)
+
+  a.theme.themeNames = themeNames.deduplicate()
   sort(a.theme.themeNames)
 
 # }}}
@@ -1296,18 +1303,27 @@ proc findThemeIndex(name: string; a): int =
 
 # }}}
 # {{{ themePath()
-proc themePath(index: Natural; a): string =
+proc themePath(index: Natural, userTheme: bool; a): string =
   let name = a.theme.themeNames[index]
-  a.path.themesDir / addFileExt(name, ThemeExt)
+  let themeDir = if userTheme: a.path.userThemesDir else: a.path.themesDir
+  themeDir / addFileExt(name, ThemeExt)
 
 # }}}
 # {{{ loadTheme()
 proc loadTheme(index: Natural; a) =
   let name = a.theme.themeNames[index]
-  let path = themePath(index, a)
+
+  var path = themePath(index, userTheme=true, a)
+  var userTheme = true
+
+  if not fileExists(path):
+    path = themePath(index, userTheme=false, a)
+    userTheme = false
+
   info(fmt"Loading theme '{name}' from '{path}'")
 
   a.theme.style = loadTheme(path)
+  a.theme.userTheme = userTheme
 
 # }}}
 # {{{ switchTheme()
@@ -1317,13 +1333,13 @@ proc switchTheme(themeIndex: Natural; a) =
 
   let bgImageName = a.theme.style.general.backgroundImage
   if bgImageName != "":
-    var imgPath = a.path.themeImagesDir / bgImageName
+    var imgPath = a.path.userThemeImagesDir / bgImageName
     var image = loadImage(imgPath, a)
     if image.isNone:
       info(fmt"Couldn't load background image '{imgPath}'. " &
-           "Attempting to load it from the user themes images directory now.")
+           "Attempting to load it from the default theme images directory.")
 
-      imgPath = a.path.userThemeImagesDir / bgImageName
+      imgPath = a.path.themeImagesDir / bgImageName
       image = loadImage(imgPath, a)
       if image.isNone:
         logging.error(fmt"Couldn't load background image '{imgPath}'")
@@ -5649,8 +5665,9 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
-    saveTheme(a.theme.style, themePath(a.theme.currThemeIndex, a))
-    discard
+    let themePath = themePath(a.theme.currThemeIndex,
+                              userTheme=a.theme.userTheme, a)
+    saveTheme(a.theme.style, themePath)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):

@@ -23,7 +23,6 @@ v0.9
   - switch tab: (shift)+ctrl+tab
 
   - finalise all themes
-  - cascading theme loading (built-in vs user themes)
 
   - textarea: mouse handling, scrollwheel
 
