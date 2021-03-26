@@ -12,20 +12,17 @@ TODO
 
 v0.9
 
+  - map/level comments
+  - switch tab: (shift)+ctrl+tab
+
   - region name reassignment on:
     - resize
     - change map coord origin (update levels with regions without overrides)
     - change region size
 
-  - map/level comments
-
-  - switch tab: (shift)+ctrl+tab
-
   - finalise all themes
 
   - textarea: mouse handling, scrollwheel
-
-  - attempt to save map on crash
 
   - stack traces in release build?
 

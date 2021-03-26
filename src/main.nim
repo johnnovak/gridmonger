@@ -5775,6 +5775,21 @@ proc handleAutosave(a) =
       a.doc.lastAutosaveTime = getMonoTime()
 
 # }}}
+# {{{ autoSaveOnCrash()
+proc autoSaveOnCrash(a) =
+  var fname: string
+  if a.doc.filename == "":
+    let (path, _, _) = splitFile(a.doc.filename)
+    fname = path
+  else:
+    fname = "."
+
+  fname = fname / addFileExt("crash-autosave", MapFileExt)
+
+  info(fmt"Auto-saving map to '{fname}'")
+  saveMap(fname, autosave=false, a)
+
+# }}}
 
 # {{{ Main render/UI loop
 
@@ -6501,6 +6516,8 @@ proc main() =
     cleanup(a)
 
   except Exception as e:
+    autoSaveOnCrash(a)
+
     fatal("A fatal error has occured, the application will now exit: \n" &
           e.msg & "\n\n" & getStackTrace(e))
 
