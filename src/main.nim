@@ -6283,9 +6283,31 @@ GPU info
   a.vg = vg
 
 # }}}
+# {{{ rollLogFile(a)
+proc rollLogFile(a) =
+  alias(p, a.path)
+
+  let fileNames = @[
+    p.logFile & ".bak3",
+    p.logFile & ".bak2",
+    p.logFile & ".bak1",
+    p.logFile
+  ]
+
+  for i, fname in fileNames:
+    if fileExists(fname):
+      if i == 0:
+        discard tryRemoveFile(fname)
+      else:
+        try:
+          moveFile(fname, fileNames[i-1])
+        except CatchableError:
+          discard
+
+# }}}
 # {{{ initLogger(a)
 proc initLogger(a) =
-  discard tryRemoveFile(a.path.logFile)
+  rollLogFile(a)
   var fileLog = newFileLogger(a.path.logFile,
                               fmtStr="[$levelname] $date $time - ",
                               levelThreshold=lvlDebug)
