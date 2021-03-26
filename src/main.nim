@@ -6294,7 +6294,7 @@ proc initLogger(a) =
 # }}}
 # {{{ initApp()
 proc initApp(a) =
-  let cfg = loadAppConfig(a.path.configFile)
+  let cfg = loadAppConfigOrDefault(a.path.configFile)
   a.prefs = cfg.prefs
 
   loadFonts(a)

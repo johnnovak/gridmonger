@@ -1,5 +1,7 @@
+import logging
 import options
 import parsecfg
+import strformat
 
 import cfghelper
 import common
@@ -158,10 +160,15 @@ const
   LastMapFileNameKey = "lastMapFileName"
 
 
-proc loadAppConfig*(fname: string): AppConfig =
-  var cfg = loadConfig(fname)
-
+proc loadAppConfigOrDefault*(fname: string): AppConfig =
   result = DefaultAppConfig
+
+  var cfg: Config
+  try:
+    cfg = loadConfig(fname)
+  except CatchableError as e:
+    warn(fmt"Couldn't load config file '{fname}', using default config")
+    return result
 
   alias(p, result.prefs)
 
@@ -266,5 +273,9 @@ proc toConfig(ac: AppConfig): Config =
 
 
 proc saveAppConfig*(a: AppConfig, fname: string) =
-  writeConfig(a.toConfig, fname)
+  try:
+    writeConfig(a.toConfig, fname)
+  except CatchableError as e:
+    error(fmt"Couldn't write config file '{fname}'")
+
 
