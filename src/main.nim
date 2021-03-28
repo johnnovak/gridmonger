@@ -12,7 +12,7 @@ import strformat
 import strutils
 import tables
 import times
-
+ 
 import glad/gl
 import glfw
 from glfw/wrapper import IconImageObj
@@ -5823,8 +5823,6 @@ proc renderUI(a) =
     drawEmptyMap(a)
 
   else:
-    let l = currLevel(a)
-
     let levelNames = map.sortedLevelNames
     var sortedLevelIdx = currSortedLevelIdx(a)
     let prevSortedLevelIdx = sortedLevelIdx
@@ -5853,6 +5851,8 @@ proc renderUI(a) =
       var cur = ui.cursor
       cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
       setCursor(cur, a)
+
+    let l = currLevel(a)
 
     # Region drop-down
     if l.regionOpts.enabled:
