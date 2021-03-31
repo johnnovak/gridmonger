@@ -15,7 +15,7 @@
 
 ## License
 
-Copyright © 2020 John Novak <<john@johnnovak.net>>
+Developed by John Novak <<john@johnnovak.net>>, 2020-2021
 
 This work is free. You can redistribute it and/or modify it under the terms of
 the [Do What The Fuck You Want To Public License, Version 2](http://www.wtfpl.net/), as published
