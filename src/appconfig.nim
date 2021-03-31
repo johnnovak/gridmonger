@@ -167,7 +167,10 @@ proc loadAppConfigOrDefault*(fname: string): AppConfig =
   try:
     cfg = loadConfig(fname)
   except CatchableError as e:
-    warn(fmt"Couldn't load config file '{fname}', using default config")
+    warn(
+      fmt"Couldn't load config file '{fname}', using default config. " &
+      fmt"Error message: {e.msg}"
+    )
     return result
 
   alias(p, result.prefs)
@@ -276,6 +279,6 @@ proc saveAppConfig*(a: AppConfig, fname: string) =
   try:
     writeConfig(a.toConfig, fname)
   except CatchableError as e:
-    error(fmt"Couldn't write config file '{fname}'")
+    error(fmt"Couldn't write config file '{fname}'. Error message: {e.msg}")
 
 

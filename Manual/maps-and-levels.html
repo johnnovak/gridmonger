@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+  
+
+  <title>Gridmonger</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger homepage.">
+
+  <link href="_static/css/docs.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <img src="_static/img/gridmonger-logo.png" alt="Gridmonger">
+      <span>Manual</span>
+    </h1>
+
+    <nav class="table-of-contents">
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Map &amp; level basics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#general-concepts">General concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#map-properties">Map properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#level-properties">Level properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#managing-maps-levels">Managing maps &amp;  levels</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+</ul>
+
+
+      <ul>
+        <li ><a href="genindex.html">Index</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <article>
+    <nav class="top">
+      <ul>
+        <li class="prev"><a href="getting-started.html">Getting started</a></li>
+
+        <li class="toc"><a href="contents.html">Table of contents</a></li>
+        <li class="next"><a href="moving-around.html">Moving around</a></li>
+      </ul>
+    </nav>
+
+    
+  <div class="section" id="map-level-basics">
+<h1>Map &amp; level basics<a class="headerlink" href="#map-level-basics" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="general-concepts">
+<h2>General concepts<a class="headerlink" href="#general-concepts" title="Permalink to this headline">¶</a></h2>
+<p>What you usually refer to as a map or an area in an RPG game (typically
+a 16×16 or 32×32 cell grid) is called a <em>level</em> in Gridmonger. A set of
+levels — usually belonging to the same game — is, in turn, called a <em>map</em>.
+The program always operates on a single map: when you start it for the first
+time, you are greeted with an empty map; when you load or save your work,
+you’re always loading or saving a map.</p>
+<p>Let’s load one of the example maps to illustrate these concepts! Start up
+Gridmonger, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">O</kbd></kbd> to bring up the open map dialog, then select
+the file <code class="docutils literal notranslate"><span class="pre">Eye</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">Beholder</span> <span class="pre">I.grm</span></code> from the <code class="docutils literal notranslate"><span class="pre">examples</span></code> folder
+(Gridmonger map files have the <code class="docutils literal notranslate"><span class="pre">.grm</span></code> extension).</p>
+<p>Click on the level name dropdown at the top that currently displays
+<code class="docutils literal notranslate"><span class="pre">Undermountain</span> <span class="pre">–</span> <span class="pre">Upper</span> <span class="pre">Sewers</span> <span class="pre">(-1)</span></code>. The list of all levels that comprise
+this map will appear:</p>
+<ul class="simple">
+<li><p>Undermountain – Upper Sewers (-1)</p></li>
+<li><p>Undermountain – Middle Sewers (-2)</p></li>
+<li><p>Undermountain – Lower Sewers (-3)</p></li>
+<li><p>Undermountain – Upper Level Dwarven Ruins (-4)</p></li>
+<li><p>…</p></li>
+</ul>
+<p>As you can see, the full name of a level consists of three components:</p>
+<p><code class="docutils literal notranslate"><span class="pre">Location</span> <span class="pre">name</span> <span class="pre">–</span> <span class="pre">Level</span> <span class="pre">name</span> <span class="pre">(Elevation)</span></code></p>
+<p><strong>Location name</strong> may refer to a distinct geographical area, a dungeon, or
+a city consisting of one or many levels. In this example, the whole game takes
+place in the Undermountain dungeon deep beneath the city of Waterdeep.</p>
+<p><strong>Level name</strong> is the name of an individual level (or area) within the
+location. It is optional because some locations may contain only a single
+level, or multiple levels but with no unique characteristics. In both cases,
+it would make little sense to name the level.</p>
+<p><strong>Elevation</strong> is the elevation of the level in relation to the ground. An
+elevation of zero means ground level (marked as <code class="docutils literal notranslate"><span class="pre">G</span></code>). Negative values are
+underground (e.g. the levels of a mine), and positive values are above the
+ground (e.g. the floors of a castle or a tower). As this game takes place
+entirely in an underground dungeon, all values are negative.</p>
+<p>The benefit of this naming scheme is that the program can automatically
+organise the levels for you: the level list is sorted by location name first,
+then by elevation, and lastly by level name. Note that elevation is sorted in
+descending order because underground dungeons are just more common in games.</p>
+<p>The important thing to remember is that the <em>full name</em> of every level must be
+unique within a map (the program enforces this).</p>
+</div>
+<div class="section" id="map-properties">
+<h2>Map properties<a class="headerlink" href="#map-properties" title="Permalink to this headline">¶</a></h2>
+<p>Apart from the name, levels have a few other properties too. Some of these can
+be inherited from the map, so let’s examine the map properties first. Bring up
+the <strong>Edit Map Properties</strong> dialog with the <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> shortcut.</p>
+<p>Unsurprisingly, every map has a <strong>Name</strong> too. There’s also a bunch of other
+properties that govern how the cell coordinates are displayed.</p>
+<p><strong>Origin</strong> sets the corner where the coordinates should start from.</p>
+<p>There are two coordinate styles to choose from: number and letter. You can set
+the style separately for rows and columns with <strong>Column style</strong> and <strong>Row
+style</strong>, respectively. The letter style works as follows: <code class="docutils literal notranslate"><span class="pre">A</span></code> corresponds to
+<code class="docutils literal notranslate"><span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">B</span></code> to <code class="docutils literal notranslate"><span class="pre">1</span></code>, and so on, right until <code class="docutils literal notranslate"><span class="pre">Z</span></code> (<code class="docutils literal notranslate"><span class="pre">23</span></code>), then the it
+continues with <code class="docutils literal notranslate"><span class="pre">AA</span></code>, <code class="docutils literal notranslate"><span class="pre">AB</span></code>, <code class="docutils literal notranslate"><span class="pre">AC</span></code>, etc.</p>
+<p>You can specify the coordinate starting values in <strong>Column start</strong> and <strong>Row
+start</strong> fields. You must always enter the start value as a number, even for
+letter style coordinates (in which case the program displays the corresponding
+letter coordinates next to the number).</p>
+</div>
+<div class="section" id="level-properties">
+<h2>Level properties<a class="headerlink" href="#level-properties" title="Permalink to this headline">¶</a></h2>
+<p>Now open the <strong>Edit Level Properties</strong> dialog with the <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> shortcut.</p>
+<p>The <strong>General</strong> tab contains the level name fields discussed previously, plus
+a handy <strong>Comments</strong> field where you can store some notes or comments about
+the level.</p>
+<p>By default, levels use the same coordinate settings as the map. You can
+customise them for the level by ticking <strong>Override map settings</strong> in the
+<strong>Coordinates</strong> tab.</p>
+<p>The <strong>Regions</strong> properties are discussed later in the <a class="reference internal" href="regions.html"><span class="doc">Regions</span></a> chapter.</p>
+</div>
+<div class="style5 big section" id="managing-maps-levels">
+<h2>Managing maps &amp;  levels<a class="headerlink" href="#managing-maps-levels" title="Permalink to this headline">¶</a></h2>
+<p>To add a new level, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> to open the <strong>New Level</strong>
+dialog, then fill out the properties and the dimensions of the
+level. The other difference is that you cannot enter a level comment at
+creation.</p>
+<p>To delete the current level, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">D</kbd></kbd>. If you accidentally deleted
+a level, don’t worry, you can always undo it.</p>
+<p>Similarly, you can create a new map with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd>. Make sure to save
+your current map if you don’t want to lose it, because this action <em>cannot</em> be
+undone!</p>
+</div>
+</div>
+
+
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2019-2021. All wrongs reserved.</p>
+      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+    </footer>
+  </article>
+
+  </body>
+</html>

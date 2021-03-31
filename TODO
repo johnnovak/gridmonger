@@ -1,16 +1,11 @@
 BUGS
 
 
-TESTS
-
-- test ini with invalid values
-- test pasting in various non-image clipboard contents (textfields, color)
-- test with themes / data folder deleted
-
-
 TODO
 
 v0.9
+
+  - installer
 
   - map/level comments
   - switch tab: (shift)+ctrl+tab
@@ -24,6 +19,7 @@ v0.9
 
   - textarea: mouse handling, scrollwheel
 
+
   - stack traces in release build?
 
   - config format:
@@ -34,6 +30,8 @@ v0.9
     - rename properties according to theme editor
 
   - store AppState in map
+
+  - 32 bit version?
 
 
 v1.0

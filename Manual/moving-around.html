@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+  
+
+  <title>Gridmonger</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger homepage.">
+
+  <link href="_static/css/docs.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <img src="_static/img/gridmonger-logo.png" alt="Gridmonger">
+      <span>Manual</span>
+    </h1>
+
+    <nav class="table-of-contents">
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Moving around</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#common-navigation-keys">Common navigation keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#normal-mode">Normal mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#walk-mode">Walk mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wasd-mode">WASD mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wasd-walk-mode">WASD + walk mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#navigating-dialogs">Navigating dialogs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+</ul>
+
+
+      <ul>
+        <li ><a href="genindex.html">Index</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <article>
+    <nav class="top">
+      <ul>
+        <li class="prev"><a href="maps-and-levels.html">Map &amp; level basics</a></li>
+
+        <li class="toc"><a href="contents.html">Table of contents</a></li>
+        <li class="next"><a href="basic-editing.html">Basic editing</a></li>
+      </ul>
+    </nav>
+
+    
+  <div class="section" id="moving-around">
+<h1>Moving around<a class="headerlink" href="#moving-around" title="Permalink to this headline">¶</a></h1>
+<p>Gridmonger is a <a class="reference external" href="https://en.wikipedia.org/wiki/Mode_(user_interface)">modal editor</a>, meaning that one
+keystroke often performs different actions in different <em>modes</em> of the
+program.  There is no great mystery in this, just think of how the state of
+your <kbd class="kbd docutils literal notranslate">NumLock</kbd> key affects how the numeric keypad functions. Modes work
+in a very similar way.</p>
+<p>There are <em>four navigation modes</em>, and as you’ll see, these different modes
+have implications on other shortcuts as well. Then there are some further
+<em>special modes</em> for advanced editing, these are discussed in the
+<a class="reference internal" href="advanced-editing.html"><span class="doc">Advanced editing</span></a> chapter.</p>
+<div class="section" id="common-navigation-keys">
+<h2>Common navigation keys<a class="headerlink" href="#common-navigation-keys" title="Permalink to this headline">¶</a></h2>
+<p>The level-related navigation keys are the same in every mode.</p>
+<p>You can zoom the view in or out with the <kbd class="kbd docutils literal notranslate">=</kbd> and <kbd class="kbd docutils literal notranslate">-</kbd> keys,
+respectively. There are 20 zoom levels in total.</p>
+<p>To switch to a different level, you can use the drop-down above the level, or
+<kbd class="kbd docutils literal notranslate">PgUp</kbd>/<kbd class="kbd docutils literal notranslate">PgDn</kbd>, <kbd class="kbd docutils literal notranslate">Kp-</kbd>/<kbd class="kbd docutils literal notranslate">Kp+</kbd>, or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">-</kbd></kbd>/<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">=</kbd></kbd>
+to go to the previous or next level.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/QWERTY#United_States">US English keyboard layout</a> determines the
+position of keys used in the keyboard shortcuts, regardless of the
+language and keyboard settings of your operating system.</p>
+<p>Normally, the <kbd class="kbd docutils literal notranslate">NumLock</kbd> key is ignored, and the numeric keypad is
+only used for navigation.</p>
+<p>However, when entering text in textfields, the OS-level keyboard settings
+and the <kbd class="kbd docutils literal notranslate">NumLock</kbd> state are in effect.</p>
+</div>
+</div>
+<div class="section" id="normal-mode">
+<h2>Normal mode<a class="headerlink" href="#normal-mode" title="Permalink to this headline">¶</a></h2>
+<p>The program always starts in <em>normal mode</em>; this is what most people will
+use 90% of the time.</p>
+<table class="shortcuts std-move-keys">
+  <thead>
+    <tr>
+      <th>Arrow</th>
+      <th>Keypad</th>
+      <th>Vim</th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody class="no-padding">
+    <tr>
+      <td><kbd>&larr;</kbd></td>
+      <td><kbd>kp 4</kbd></td>
+      <td><kbd>H</kbd></td>
+      <td>Left</td>
+    </tr>
+    <tr>
+      <td><kbd>&rarr;</kbd></td>
+      <td><kbd>kp 6</kbd></td>
+      <td><kbd>L</kbd></td>
+      <td>Right</td>
+    </tr>
+    <tr>
+      <td><kbd>&uarr;</kbd></td>
+      <td><kbd>kp 8</kbd></td>
+      <td><kbd>K</kbd></td>
+      <td>Up</td>
+    </tr>
+    <tr>
+      <td><kbd>&darr;</kbd></td>
+      <td><kbd>kp 2</kbd><kbd>kp 5</kbd></td>
+      <td><kbd>J</kbd></td>
+      <td>Down</td>
+    </tr>
+  </tbody>
+</table><p>You can move in 5-cell jumps by holding down <kbd class="kbd docutils literal notranslate">Ctrl</kbd> while using the
+movement keys. Similarly, you can move (pan) the level instead of the cursor by
+holding down <kbd class="kbd docutils literal notranslate">Shift</kbd>. This can be combined with <kbd class="kbd docutils literal notranslate">Ctrl</kbd> to move the
+level in 5-cell increments.</p>
+<p>One of the defining features of Gridmonger is its <a class="reference external" href="https://en.wikipedia.org/wiki/Vim_(text_editor)">Vim</a>-inspired keyboard
+interface. This means that in addition to the standard cursor keys, you can
+also use Vim-style <code class="docutils literal notranslate"><span class="pre">HJKL</span></code> key navigation to move around. If this doesn’t
+mean anything to you, don’t worry! Just keep using the standard cursor keys or
+the keypad for now. But I recommend you to read the <a class="reference internal" href="#about-vim"><span class="std std-ref">About Vim</span></a> sidenote at the end; you might find it interesting enough to
+explore this topic further.</p>
+</div>
+<div class="section" id="walk-mode">
+<h2>Walk mode<a class="headerlink" href="#walk-mode" title="Permalink to this headline">¶</a></h2>
+<p><em>Walk mode</em> can be toggled with the <kbd class="kbd docutils literal notranslate">`</kbd> key (that’s the <a class="reference external" href="https://en.wikipedia.org/wiki/Grave_accent">grave accent</a> or backtick key, it’s located
+in the top-left corner of the keyboard, left to <kbd class="kbd docutils literal notranslate">1</kbd>). The cursor is
+displayed as a triangle instead of a rectangle in this mode. The triangle
+points to the walking direction and represents your avatar; you can turn,
+strafe, and move forward and backward just like in a classic dungeon crawler.</p>
+<table class="shortcuts std-move-keys">
+  <thead>
+    <tr>
+      <th>Arrow</th>
+      <th>Keypad</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody class="no-padding">
+    <tr>
+      <td><kbd>&larr;</kbd>*</td>
+      <td><kbd>kp 4</kbd>*</td>
+      <td>Strafe left</td>
+    </tr>
+    <tr>
+      <td><kbd>&rarr;</kbd>*</td>
+      <td><kbd>kp 6</kbd>*</td>
+      <td>Strafe right</td>
+    </tr>
+    <tr>
+      <td><kbd>&uarr;</kbd>*</td>
+      <td><kbd>kp 8</kbd>*</td>
+      <td>Forward</td>
+    </tr>
+    <tr>
+      <td><kbd>&darr;</kbd>*</td>
+      <td><kbd>kp 2</kbd><kbd>kp 5</kbd>*</td>
+      <td>Backward</td>
+    </tr>
+    <tr>
+      <td>&ndash;</td>
+      <td><kbd>kp 7</kbd></td>
+      <td>Turn left</td>
+    </tr>
+    <tr>
+      <td>&ndash;</td>
+      <td><kbd>kp 9</kbd></td>
+      <td>Turn right</td>
+    </tr>
+  </tbody>
+</table><p>Vim-navigation is disabled in walk mode (it would be just too confusing).</p>
+</div>
+<div class="section" id="wasd-mode">
+<h2>WASD mode<a class="headerlink" href="#wasd-mode" title="Permalink to this headline">¶</a></h2>
+<p>Certain RPGs, typically blobbers, are best played with your left hand on the
+<a class="reference external" href="https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys">WASD keys</a> for moving
+the party, and your right hand on the mouse for combat and menu navigation.
+Gridmonger’s <em>WASD mode</em> was designed with such players in mind who prefer to
+do the bulk of their mapping with the WASD keys and the mouse while playing
+the game.</p>
+<p><em>WASD mode</em> can be toggled with the <kbd class="kbd docutils literal notranslate">Tab</kbd> key. You will see an indicator
+in the top-left corner of the window when WASD mode is on.</p>
+<p>See <a class="reference internal" href="basic-editing.html#editing-in-wasd-mode"><span class="std std-ref">Editing in WASD mode</span></a> to learn more about editing with
+the mouse in this mode.</p>
+</div>
+<div class="style2 section" id="wasd-walk-mode">
+<h2>WASD + walk mode<a class="headerlink" href="#wasd-walk-mode" title="Permalink to this headline">¶</a></h2>
+<p>If you enable both WASD and walk mode, the controls become a bit more
+interesting:</p>
+<table class="shortcuts std-move-keys">
+  <thead>
+    <tr>
+      <th>Arrow</th>
+      <th>Keypad</th>
+      <th>WASD</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody class="no-padding">
+    <tr>
+      <td><kbd>&larr;</kbd>*</td>
+      <td><kbd>kp 4</kbd>*</td>
+      <td><kbd>A</kbd></td>
+      <td>Strafe left</td>
+    </tr>
+    <tr>
+      <td><kbd>&rarr;</kbd>*</td>
+      <td><kbd>kp 6</kbd>*</td>
+      <td><kbd>D</kbd></td>
+      <td>Strafe right</td>
+    </tr>
+    <tr>
+      <td><kbd>&uarr;</kbd>*</td>
+      <td><kbd>kp 8</kbd>*</td>
+      <td><kbd>W</kbd></td>
+      <td>Forward</td>
+    </tr>
+    <tr>
+      <td><kbd>&darr;</kbd>*</td>
+      <td><kbd>kp 2</kbd><kbd>kp 5</kbd>*</td>
+      <td><kbd>S</kbd></td>
+      <td>Backward</td>
+    </tr>
+    <tr>
+      <td>&ndash;</td>
+      <td><kbd>kp 7</kbd></td>
+      <td><kbd>Q</kbd></td>
+      <td>Turn left</td>
+    </tr>
+    <tr>
+      <td>&ndash;</td>
+      <td><kbd>kp 9</kbd></td>
+      <td><kbd>E</kbd></td>
+      <td>Turn right</td>
+    </tr>
+  </tbody>
+</table><p>Admittedly, this is the most complex mode, and while some people might find it
+really useful, if it doesn’t click with you, that’s fine. Don’t feel compelled
+to use it! In fact, I (the author) pretty much only use normal mode, even when
+playing real-time blobbers…</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In WASD mode, you cannot use the <kbd class="kbd docutils literal notranslate">Ctrl</kbd> movement modifier with the
+<kbd class="kbd docutils literal notranslate">W</kbd><kbd class="kbd docutils literal notranslate">A</kbd><kbd class="kbd docutils literal notranslate">S</kbd><kbd class="kbd docutils literal notranslate">D</kbd> keys for 5-cell jumps because that would
+interfere with other shortcuts. However, all movement modifiers are still
+available with the other movement keys.</p>
+</div>
+</div>
+<div class="style7 big section" id="navigating-dialogs">
+<h2>Navigating dialogs<a class="headerlink" href="#navigating-dialogs" title="Permalink to this headline">¶</a></h2>
+<p>Apart from the usual <kbd class="kbd docutils literal notranslate">Enter</kbd> to accept and <kbd class="kbd docutils literal notranslate">Esc</kbd> to cancel, there
+are a number of other shortcuts you can use in dialogs.</p>
+<p><kbd class="kbd docutils literal notranslate">Tab</kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Tab</kbd></kbd> cycle between the textfields in forward and
+reverse order, respectively.</p>
+<p>You can navigate between tabs by holding <kbd class="kbd docutils literal notranslate">Ctrl</kbd> and pressing the left or
+right navigation keys. To go to the <em>N</em>th dialog, you can use <kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<em>N</em>, where <em>N</em> is a number key.</p>
+<p>In some dialogs, you need to select something from a list of options (e.g. an
+icon or a color). You can use the navigation keys to do that. (You will see
+examples of this later.)</p>
+<p>Finally, you can press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">D</kbd></kbd> to select the <strong>Discard</strong> option.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Hardcore Vim enthusiasts, such as <em>yours truly</em>, remap the quite useless
+<kbd class="kbd docutils literal notranslate">CapsLock</kbd> key to <kbd class="kbd docutils literal notranslate">Ctrl</kbd> with a tool like <a class="reference external" href="https://github.com/randyrants/sharpkeys">SharpKeys</a> for extra efficiency. The
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">[</kbd></kbd> Vim alias for the <kbd class="kbd docutils literal notranslate">Esc</kbd> key is supported by Gridmonger
+for these people (it’s much more efficient to type than reaching out for
+<kbd class="kbd docutils literal notranslate">Esc</kbd> with your left pinky!)</p>
+</div>
+<div class="section style3"></div><div class="sidenote about-vim admonition" id="about-vim">
+<p class="admonition-title">About Vim</p>
+<p>If you’re not a programmer, you’re probably wondering what the heck this
+Vim thing is about! In short, Vim is a programmer’s text-editor for people
+who know how to touch type. One of its most iconic features is to allow
+a typist to move the cursor without lifting their hand from the <a class="reference external" href="https://en.wikipedia.org/wiki/Touch_typing#Home_row">home row</a>  (the <code class="docutils literal notranslate"><span class="pre">ASDF</span></code> and
+<code class="docutils literal notranslate"><span class="pre">JKL;</span></code> keys), and perform most common editing tasks without straying too
+far from this position.</p>
+<p>Ergonomics wise, editing a grid-based RPG map is very similar to editing
+a text file. Having to move one hand back and forth between the
+cursor keys (or the mouse) and the rest of the keyboard thousands of times
+a day is a huge performance killer. No wonder that people who learn how to
+touch type and get a taste of Vim rarely go back to their “old ways”!</p>
+<p>In my opinion, touch typing is an essential skill that anyone working on
+a computer several hours a day should have. If you don’t know how to touch
+type, I encourage you to learn to learn it, and then give the Vim-style
+navigation a go. I almost guarantee that you will be very positively
+surprised!</p>
+<p>There’s tons of free touch typing trainers online, or you can just use the
+completely unattractive but 100% effective <a class="reference external" href="https://www.gnu.org/savannah-checkouts/gnu/gtypist/gtypist.html">GNU Typist</a> like
+I did. I was able to re-train my erratic typing patterns ingrained over 10+
+years of constant computer use in about two short weeks, so if I could do
+it, then anybody can.</p>
+</div>
+</div>
+</div>
+
+
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2019-2021. All wrongs reserved.</p>
+      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+    </footer>
+  </article>
+
+  </body>
+</html>

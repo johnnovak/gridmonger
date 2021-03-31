@@ -12,7 +12,7 @@ import strformat
 import strutils
 import tables
 import times
- 
+
 import glad/gl
 import glfw
 from glfw/wrapper import IconImageObj
@@ -20,7 +20,6 @@ import koi
 import koi/undomanager
 import nanovg
 when not defined(DEBUG): import osdialog
-import simple_parseopt
 import with
 
 import actions
@@ -42,19 +41,19 @@ import utils
 
 
 when defined(windows):
-  {.link: "icons/gridmonger.res".}
+  {.link: "extras/appicons/windows/gridmonger.res".}
 
 const
   BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
   ThemeExt = "cfg"
 
-  BuildOS = if defined(windows): staticExec("ver")
-            else: staticExec("uname -v")
-
 # {{{ logError()
-proc logError(e: ref Exception) =
-  logging.error("Error message: " & e.msg & "\n\nStrack trace:\n" &
-                getStackTrace(e))
+proc logError(e: ref Exception, msgPrefix: string = "") =
+  var msg = "Error message: " & e.msg & "\n\nStack trace:\n" & getStackTrace(e)
+  if msgPrefix != "":
+    msg = msgPrefix & "\n" & msg
+
+  logging.error(msg)
 
 # }}}
 
@@ -95,6 +94,7 @@ const
 
 const
   MapFileExt = "grm"
+  CrashAutosaveFilename = addFileExt("crash-autosave", MapFileExt)
   GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
 
 const
@@ -178,13 +178,17 @@ type
 
 
   Paths = object
-    homeDir:            string
     dataDir:            string
+    userDataDir:        string
+    configDir:          string
+    manualDir:          string
     autosaveDir:        string
+
     themesDir:          string
     themeImagesDir:     string
     userThemesDir:      string
     userThemeImagesDir: string
+
     configFile:         string
     logFile:            string
 
@@ -885,8 +889,6 @@ proc loadImage(path: string; a): Option[Paint] =
   alias(vg, a.vg)
   try:
     var img = vg.createImage(path, {ifRepeatX, ifRepeatY})
-
-    let (w, h) = vg.imageSize(img)
     let paint = vg.createPattern(img, scale=0.5)
     result = paint.some
 
@@ -1309,6 +1311,9 @@ proc searchThemes(a) =
 
   addThemeNames(a.path.themesDir, userTheme=false)
   addThemeNames(a.path.userThemesDir, userTheme=true)
+
+  if themeNames.len == 0:
+    raise newException(IOError, "Could not find any themes, exiting")
 
   themeNames.sort(
     proc (a, b: ThemeName): int = cmp(a.name, b.name)
@@ -1733,6 +1738,9 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 proc openAboutDialog(a) =
   a.dialog.aboutDialog.isOpen = true
 
+proc openUserManualAction(a)
+proc openWebsiteAction(a)
+proc openForumAction(a)
 
 proc aboutDialog(dlg: var AboutDialogParams; a) =
   alias(al, a.aboutLogo)
@@ -1790,17 +1798,17 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   y += 50
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Manual",
                 style=a.theme.buttonStyle):
-    discard
+    openUserManualAction(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Website",
                 style=a.theme.buttonStyle):
-    discard
+    openWebsiteAction(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Forum",
                 style=a.theme.buttonStyle):
-    discard
+    openForumAction(a)
 
   proc closeAction(dlg: var AboutDialogParams; a) =
     a.aboutLogo.updateLogoImage = true
@@ -3377,6 +3385,22 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 # }}}
 # {{{ Actions
 
+# {{{ openUserManualAction()
+proc openUserManualAction(a) =
+  openDefaultBrowser(a.path.manualDir / "index.html")
+
+# }}}
+# {{{ openWebsiteAction()
+proc openWebsiteAction(a) =
+  openDefaultBrowser("https://gridmonger.johnnovak.net")
+
+# }}}
+# {{{ openForumAction()
+proc openForumAction(a) =
+  openDefaultBrowser("https://gridmonger.johnnovak.net")
+
+# }}}
+
 # {{{ undoAction()
 proc undoAction(a) =
   alias(um, a.doc.undoManager)
@@ -3451,7 +3475,7 @@ proc loadMap(filename: string; a): bool =
     result = true
 
   except CatchableError as e:
-    logError(e)
+    logError(e, "Error loading map")
     setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
 
 # }}}
@@ -3501,7 +3525,7 @@ proc saveMap(filename: string, autosave: bool = false; a) =
       setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
 
   except CatchableError as e:
-    logError(e)
+    logError(e, "Error saving map")
     let prefix = if autosave: "Autosave failed: " else: ""
     setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
 
@@ -4324,6 +4348,9 @@ proc handleGlobalKeyEvents(a) =
         map.setTrail(cur, true)
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
+      elif ke.isKeyDown(keyF1):
+        openUserManualAction(a)
+
       elif ke.isKeyDown(keyF12):
         toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
 
@@ -4558,6 +4585,9 @@ proc handleGlobalKeyEvents(a) =
         exitSelectMode(a)
         a.clearStatusMessage()
 
+      elif ke.isKeyDown(keyF1):
+        openUserManualAction(a)
+
     # }}}
     # {{{ emSelectRect
     of emSelectRect:
@@ -4617,6 +4647,9 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
+      elif ke.isKeyDown(keyF1):
+        openUserManualAction(a)
+
     # }}}
     # {{{ emMovePreview
     of emMovePreview:
@@ -4646,6 +4679,9 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
+      elif ke.isKeyDown(keyF1):
+        openUserManualAction(a)
+
     # }}}
     # {{{ emNudgePreview
     of emNudgePreview:
@@ -4669,6 +4705,9 @@ proc handleGlobalKeyEvents(a) =
         map.levels[cur.level] = ui.nudgeBuf.get.level
         ui.nudgeBuf = SelectionBuffer.none
         clearStatusMessage(a)
+
+      elif ke.isKeyDown(keyF1):
+        openUserManualAction(a)
 
     # }}}
     # {{{ emSetCellLink
@@ -4718,6 +4757,9 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
+      elif ke.isKeyDown(keyF1):
+        openUserManualAction(a)
+
     # }}}
 
 # }}}
@@ -4748,6 +4790,9 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
          ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
       redoAction(a)
+
+    elif ke.isKeyDown(keyF1):
+      openUserManualAction(a)
 
 # }}}
 
@@ -5776,7 +5821,7 @@ proc handleAutosave(a) =
 
 # }}}
 # {{{ autoSaveOnCrash()
-proc autoSaveOnCrash(a) =
+proc autoSaveOnCrash(a): string =
   var fname: string
   if a.doc.filename == "":
     let (path, _, _) = splitFile(a.doc.filename)
@@ -5784,10 +5829,12 @@ proc autoSaveOnCrash(a) =
   else:
     fname = "."
 
-  fname = fname / addFileExt("crash-autosave", MapFileExt)
+  fname = fname / CrashAutosaveFilename
 
   info(fmt"Auto-saving map to '{fname}'")
   saveMap(fname, autosave=false, a)
+
+  result = fname
 
 # }}}
 
@@ -5978,7 +6025,7 @@ proc renderFramePre(a) =
       a.theme.themeReloaded = themeIndex == a.theme.currThemeIndex
 
     except CatchableError as e:
-      logError(e)
+      logError(e, "Error loading theme when switching theme")
       let name = a.theme.themeNames[themeIndex].name
       setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
       a.theme.nextThemeIndex = Natural.none
@@ -6157,32 +6204,35 @@ proc renderFrameSplash(a) =
 # {{{ Init & cleanup
 
 # {{{ initPaths()
-proc initPaths(portableMode: bool, a) =
+proc initPaths(a) =
   alias(p, a.path)
 
-  const
-    GridmongerDir = "Gridmonger"
-    DataDir = "Data"
-    ImagesDir = "Images"
+  p.dataDir = "Data"
+
+  const ConfigDir = "Config"
+  let portableMode = dirExists(ConfigDir)
 
   if portableMode:
-    p.homeDir = "."
+    p.userDataDir = "."
   else:
-    p.homeDir = getHomeDir() / GridmongerDir
+    p.userDataDir = getConfigDir() / "Gridmonger"
 
-  p.dataDir = DataDir
-
-  p.logFile = p.homeDir / "gridmonger.log"
-  p.configFile = p.homeDir / "gridmonger.ini"
-
-  p.autosaveDir = p.homeDir / "Autosave"
+  p.manualDir = "Manual"
+  p.autosaveDir = p.userDataDir / "Autosave"
 
   p.themesDir = "Themes"
+  p.userThemesDir = p.userDataDir / "User Themes"
+
+  const ImagesDir = "Images"
   p.themeImagesDir = p.themesDir / ImagesDir
-  p.userThemesDir = p.homeDir / "User Themes"
   p.userThemeImagesDir = p.userThemesDir / ImagesDir
 
-  createDir(p.homeDir)
+  p.logFile = p.userDataDir / "gridmonger.log"
+  p.configDir = p.userDataDir / ConfigDir
+  p.configFile = p.configDir / "gridmonger.cfg"
+
+  createDir(p.userDataDir)
+  createDir(p.configDir)
   createDir(p.autosaveDir)
   createDir(p.userThemesDir)
   createDir(p.userThemeImagesDir)
@@ -6216,16 +6266,22 @@ proc loadAndSetIcon(a) =
 # }}}
 # {{{ loadFonts()
 proc loadFonts(a) =
-  alias(vg, a.vg)
   alias(p, a.path)
 
-  discard vg.createFont("sans", p.dataDir / "Roboto-Regular.ttf")
-  let boldFont = vg.createFont("sans-bold", p.dataDir / "Roboto-Bold.ttf")
-  let blackFont = vg.createFont("sans-black", p.dataDir / "Roboto-Black.ttf")
-  let iconFont = vg.createFont("icon", p.dataDir / "GridmongerIcons.ttf")
+  proc loadFont(fontName: string, filename: string; a): Font =
+    try:
+      a.vg.createFont(fontName, filename)
+    except CatchableError as e:
+      logging.error(fmt"Cannot load font '{filename}'")
+      raise e
 
-  discard addFallbackFont(vg, boldFont, iconFont)
-  discard addFallbackFont(vg, blackFont, iconFont)
+  discard loadFont("sans", p.dataDir / "Roboto-Regular.ttf", a)
+  let boldFont = loadFont("sans-bold", p.dataDir / "Roboto-Bold.ttf", a)
+  let blackFont = loadFont("sans-black", p.dataDir / "Roboto-Black.ttf", a)
+  let iconFont = loadFont("icon", p.dataDir / "GridmongerIcons.ttf", a)
+
+  discard addFallbackFont(a.vg, boldFont, iconFont)
+  discard addFallbackFont(a.vg, blackFont, iconFont)
 
 # }}}
 # {{{ createAlpha()
@@ -6277,8 +6333,8 @@ proc initGfx(a) =
     logging.error("Error initialising OpenGL")
     quit(QuitFailure)
 
-  let version = cast[cstring](glGetString(GL_VERSION))
-  let vendor = cast[cstring](glGetString(GL_VENDOR))
+  let version  = cast[cstring](glGetString(GL_VERSION))
+  let vendor   = cast[cstring](glGetString(GL_VENDOR))
   let renderer = cast[cstring](glGetString(GL_RENDERER))
 
   let msg = fmt"""
@@ -6454,7 +6510,37 @@ proc cleanup(a) =
   info("Cleanup successful, bye!")
 
 # }}}
+# {{{ crashHandler() =
+proc crashHandler(e: ref Exception, a) =
+  let doAutosave = a.doc.filename != ""
+  var crashAutosavePath = ""
 
+  if doAutosave:
+    try:
+      crashAutosavePath = autoSaveOnCrash(a)
+    except Exception as e:
+      logError(e, "Error autosaving map on crash")
+
+  var msg = "A fatal error has occured, Gridmonger will now exit.\n\n"
+
+  if doAutoSave:
+    if crashAutosavePath == "":
+      msg &= fmt"Autosaving the map has been unsuccesful.\n\n"
+    else:
+      msg &= "The map has been successfully autosaved as '" &
+             crashAutosavePath & "'\n\n"
+
+    msg &= "If the problem persists, please refer to the 'Reporting " &
+           "problems' section of the user manual to report the issue."
+
+  when not defined(DEBUG):
+    discard osdialog_message(mblError, mbbOk, msg)
+
+  logError(e, "An unexpected error has occured, the application will now exit")
+
+  quit(QuitFailure)
+
+# }}}
 # }}}
 
 # {{{ main()
@@ -6462,11 +6548,12 @@ proc main() =
   g_app = new AppContext
   var a = g_app
 
-  initPaths(portableMode=true, a)
+  initPaths(a)
   initLogger(a)
 
   info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), " &
        fmt"compiled at {CompileDate} {CompileTime}")
+
   info(fmt"Paths: {a.path}")
 
   try:
@@ -6516,12 +6603,7 @@ proc main() =
     cleanup(a)
 
   except Exception as e:
-    autoSaveOnCrash(a)
-
-    fatal("A fatal error has occured, the application will now exit: \n" &
-          e.msg & "\n\n" & getStackTrace(e))
-
-    quit(QuitFailure)
+    crashHandler(e, a)
 
 # }}}
 
