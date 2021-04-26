@@ -177,6 +177,7 @@ proc toggleFloorOrientation*(map; loc: Location; um) =
     m.setFloorOrientation(loc, newOt)
 
 # }}}
+
 # {{{ setNote*()
 proc setNote*(map; loc: Location, n: Annotation; um) =
 
@@ -217,6 +218,7 @@ proc eraseLabel*(map; loc: Location; um) =
       l.delAnnotation(loc.row, loc.col)
 
 # }}}
+
 # {{{ setLink*()
 proc setLink*(map; src, dest: Location, floorColor: byte; um) =
   let srcFloor = map.getFloor(src)
@@ -872,15 +874,17 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
   discard action(map)
 
 # }}}
+
 # {{{ setMapProperties*()
 proc setMapProperties*(map; loc: Location, name: string,
-                       coordOpts: CoordinateOptions; um) =
+                       coordOpts: CoordinateOptions, notes: string; um) =
 
   let usd = UndoStateData(actionName: "Edit map properties", location: loc)
 
   let action = proc (m: var Map): UndoStateData =
     m.name = name
     m.coordOpts = coordOpts
+    m.notes = notes
 
     # TODO reallocate regions in all levels that do not override the
     # map coordinate opts
@@ -890,10 +894,12 @@ proc setMapProperties*(map; loc: Location, name: string,
   let
     oldName = map.name
     oldCoordOpts = map.coordOpts
+    oldNotes = map.notes
 
   var undoAction = proc (m: var Map): UndoStateData =
     m.name = oldName
     m.coordOpts = oldCoordOpts
+    m.notes = oldNotes
 
     # TODO restore the regions in changed levels
 
@@ -903,6 +909,7 @@ proc setMapProperties*(map; loc: Location, name: string,
   discard action(map)
 
 # }}}
+
 # {{{ setRegionProperties*()
 proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
                           region: Region; um) =

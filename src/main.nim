@@ -355,6 +355,7 @@ type
 
   NewMapDialogParams = object
     isOpen:       bool
+    activeTab:    Natural
     activateFirstTextField: bool
 
     name:         string
@@ -363,10 +364,12 @@ type
     columnStyle:  Natural
     rowStart:     string
     columnStart:  string
+    notes:        string
 
 
   EditMapPropsDialogParams = object
     isOpen:       bool
+    activeTab:    Natural
     activateFirstTextField: bool
 
     name:         string
@@ -375,6 +378,7 @@ type
     columnStyle:  Natural
     rowStart:     string
     columnStart:  string
+    notes:        string
 
 
   DeleteLevelDialogParams = object
@@ -2116,14 +2120,17 @@ proc openNewMapDialog(a) =
     dlg.columnStyle = columnStyle.ord
     dlg.rowStart    = $rowStart
     dlg.columnStart = $columnStart
+    dlg.notes       = ""
 
+  dlg.activeTab = 0
   dlg.isOpen = true
 
 
 proc newMapDialog(dlg: var NewMapDialogParams; a) =
   const
     DlgWidth = 430.0
-    DlgHeight = 375.0
+    DlgHeight = 400.0
+    TabWidth = 370.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Map",
                   x = calcDialogX(DlgWidth, a).some,
@@ -2132,28 +2139,47 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   a.clearStatusMessage()
 
   var x = DlgLeftPad
-  var y = DlgTopNoTabPad
+  var y = DlgTopPad
 
-  koi.beginView(x, y, 1000, 1000)
-  koi.initAutoLayout(DialogLayoutParams)
+  let tabLabels = @["General", "Coordinates", "Notes"]
 
-  koi.label("Name", style=a.theme.labelStyle)
-  koi.textField(
-    dlg.name,
-    activate = dlg.activateFirstTextField,
-    constraint = TextFieldConstraint(
-      kind: tckString,
-      minLen: MapNameLimits.minRuneLen,
-      maxLen: MapNameLimits.maxRuneLen.some
-    ).some,
-    style = a.theme.textFieldStyle
+  koi.radioButtons(
+    (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
+    tabLabels, dlg.activeTab,
+    style = a.theme.radioButtonStyle
   )
 
-  coordinateFields()
+  y += DlgTabBottomPad
+
+  koi.beginView(x, y, 1000, 1000)
+  var lp = DialogLayoutParams
+  lp.labelWidth = 120
+  lp.rowWidth = DlgWidth-90
+  koi.initAutoLayout(lp)
+
+  if dlg.activeTab == 0:  # General
+    group:
+      koi.label("Name", style=a.theme.labelStyle)
+
+      koi.textField(
+        dlg.name,
+        activate = dlg.activateFirstTextField,
+        constraint = TextFieldConstraint(
+          kind: tckString,
+          minLen: MapNameLimits.minRuneLen,
+          maxLen: MapNameLimits.maxRuneLen.some
+        ).some,
+        style = a.theme.textFieldStyle
+      )
+
+  elif dlg.activeTab == 1:  # Coordinates
+    coordinateFields()
+
+  elif dlg.activeTab == 2:  # Notes
+    noteFields(DlgWidth)
 
   koi.endView()
 
-  dlg.activateFirstTextField = false
 
   # Validation
   var validationError = ""
@@ -2161,7 +2187,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     validationError = mkValidationError("Name is mandatory")
 
   if validationError != "":
-    koi.label(x, DlgHeight - 70, DlgWidth, DlgItemHeight, validationError,
+    koi.label(x, DlgHeight - 80, DlgWidth, DlgItemHeight, validationError,
               style=a.theme.warningLabelStyle)
 
 
@@ -2179,6 +2205,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
       columnStyle = CoordinateStyle(dlg.columnStyle)
       rowStart    = parseInt(dlg.rowStart)
       columnStart = parseInt(dlg.columnStart)
+
+    a.doc.map.notes = dlg.notes
 
     initUndoManager(a.doc.undoManager)
 
@@ -2204,10 +2232,14 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
                 style = a.theme.buttonStyle):
     cancelAction(dlg, a)
 
+  dlg.activateFirstTextField = false
+
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
+
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
@@ -2224,23 +2256,26 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 # {{{ Edit map properties dialog
 proc openEditMapPropsDialog(a) =
   alias(dlg, a.dialog.editMapPropsDialog)
+  alias(map, a.doc.map)
 
-  dlg.name = $a.doc.map.name
+  dlg.name = $map.name
 
-  with a.doc.map.coordOpts:
+  with map.coordOpts:
     dlg.origin      = origin.ord
     dlg.rowStyle    = rowStyle.ord
     dlg.columnStyle = columnStyle.ord
     dlg.rowStart    = $rowStart
     dlg.columnStart = $columnStart
 
+  dlg.notes = map.notes
   dlg.isOpen = true
 
 
 proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   const
     DlgWidth = 430.0
-    DlgHeight = 375.0
+    DlgHeight = 400.0
+    TabWidth = 370.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  Edit Map Properties",
                   x = calcDialogX(DlgWidth, a).some,
@@ -2249,28 +2284,46 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   clearStatusMessage(a)
 
   var x = DlgLeftPad
-  var y = DlgTopNoTabPad
+  var y = DlgTopPad
 
-  koi.beginView(x, y, 1000, 1000)
-  koi.initAutoLayout(DialogLayoutParams)
+  let tabLabels = @["General", "Coordinates", "Notes"]
 
-  koi.label("Name", style=a.theme.labelStyle)
-  koi.textField(
-    dlg.name,
-    activate = dlg.activateFirstTextField,
-    constraint = TextFieldConstraint(
-      kind: tckString,
-      minLen: MapNameLimits.minRuneLen,
-      maxLen: MapNameLimits.maxRuneLen.some
-    ).some,
-    style = a.theme.textFieldStyle
+  koi.radioButtons(
+    (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
+    tabLabels, dlg.activeTab,
+    style = a.theme.radioButtonStyle
   )
 
-  coordinateFields()
+  y += DlgTabBottomPad
+
+  koi.beginView(x, y, 1000, 1000)
+  var lp = DialogLayoutParams
+  lp.labelWidth = 120
+  lp.rowWidth = DlgWidth-90
+  koi.initAutoLayout(lp)
+
+  if dlg.activeTab == 0:  # General
+    group:
+      koi.label("Name", style=a.theme.labelStyle)
+      koi.textField(
+        dlg.name,
+        activate = dlg.activateFirstTextField,
+        constraint = TextFieldConstraint(
+          kind: tckString,
+          minLen: MapNameLimits.minRuneLen,
+          maxLen: MapNameLimits.maxRuneLen.some
+        ).some,
+        style = a.theme.textFieldStyle
+      )
+
+  elif dlg.activeTab == 1:  # Coordinates
+    coordinateFields()
+
+  elif dlg.activeTab == 2:  # Notes
+    noteFields(DlgWidth)
 
   koi.endView()
 
-  dlg.activateFirstTextField = false
 
   # Validation
   var validationError = ""
@@ -2294,7 +2347,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     )
 
     actions.setMapProperties(a.doc.map, a.ui.cursor, dlg.name, coordOpts,
-                             a.doc.undoManager)
+                             dlg.notes, a.doc.undoManager)
 
     setStatusMessage(IconFile, "Map properties updated", a)
 
@@ -2318,10 +2371,14 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
                 style=a.theme.buttonStyle):
     cancelAction(dlg, a)
 
+  dlg.activateFirstTextField = false
+
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
+
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
@@ -2377,6 +2434,7 @@ proc openNewLevelDialog(a) =
   dlg.rowsPerRegion   = "16"
   dlg.perRegionCoords = true
 
+  dlg.activeTab = 0
   dlg.isOpen = true
 
 
