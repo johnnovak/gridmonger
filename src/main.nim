@@ -1668,11 +1668,13 @@ proc handleTabNavigation(ke: Event,
                          currTabIndex, maxTabIndex: Natural): Natural =
   result = currTabIndex
 
-  if ke.isKeyDown(MoveKeysCursor.left, {mkCtrl}):
+  if ke.isKeyDown(MoveKeysCursor.left, {mkCtrl}) or
+     ke.isKeyDown(keyTab, {mkCtrl, mkShift}):
     if    currTabIndex > 0: result = currTabIndex - 1
     else: result = maxTabIndex
 
-  elif ke.isKeyDown(MoveKeysCursor.right, {mkCtrl}):
+  elif ke.isKeyDown(MoveKeysCursor.right, {mkCtrl}) or
+       ke.isKeyDown(keyTab, {mkCtrl}):
     if    currTabIndex < maxTabIndex: result = currTabIndex + 1
     else: result = 0
 
