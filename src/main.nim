@@ -94,7 +94,7 @@ const
 
 const
   MapFileExt = "grm"
-  CrashAutosaveFilename = addFileExt("crash-autosave", MapFileExt)
+  CrashAutosaveFilename = addFileExt("Crash Autosave", MapFileExt)
   GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
 
 const
@@ -407,6 +407,9 @@ type
     rowsPerRegion:     string
     perRegionCoords:   bool
 
+    # Notes tab
+    notes:          string
+
 
   EditLevelPropsParams = object
     isOpen:            bool
@@ -417,7 +420,7 @@ type
     locationName:      string
     levelName:         string
     elevation:         string
-    comments:          string
+    notes:          string
 
     # Coordinates tab
     overrideCoordOpts: bool
@@ -1562,6 +1565,22 @@ template regionFields() =
         koi.checkBox(dlg.perRegionCoords, style = a.theme.checkBoxStyle)
 
 # }}}
+# {{{ noteFields()
+template noteFields(dlgWidth: float) =
+  koi.label("Notes", style=a.theme.labelStyle)
+
+  koi.textArea(
+    x=0, y=28, w=dlgWidth-60, h=205,
+    dlg.notes,
+    activate = dlg.activateFirstTextField,
+    # TODO
+#      constraint = TextAreaConstraint(
+#        maxLen: NoteTextLimits.maxRuneLen.some
+#      ).some,
+    style = a.theme.textAreaStyle
+  )
+
+# }}}
 # {{{ levelCommonFields()
 template levelCommonFields() =
   group:
@@ -2360,16 +2379,15 @@ proc openNewLevelDialog(a) =
   dlg.perRegionCoords = true
 
   dlg.isOpen = true
-  dlg.activeTab = 0
 
 
 proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   alias(map, a.doc.map)
 
   const
-    DlgWidth = 430.0
+    DlgWidth = 460.0
     DlgHeight = 436.0
-    TabWidth = 300.0
+    TabWidth = 400.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level",
                   x = calcDialogX(DlgWidth, a).some,
@@ -2380,7 +2398,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  let tabLabels = @["General", "Coordinates", "Regions"]
+  let tabLabels = @["General", "Coordinates", "Regions", "Notes"]
 
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
@@ -2391,10 +2409,11 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   y += DlgTabBottomPad
 
   koi.beginView(x, y, 1000, 1000)
-  koi.initAutoLayout(DialogLayoutParams)
+  var lp = DialogLayoutParams
+  lp.rowWidth = DlgWidth-80
+  koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-
     levelCommonFields()
 
     group:
@@ -2425,7 +2444,6 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
       )
 
   elif dlg.activeTab == 1:  # Coordinates
-
     group:
       koi.label("Override map settings", style=a.theme.labelStyle)
 
@@ -2436,9 +2454,10 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
         coordinateFields()
 
   elif dlg.activeTab == 2:  # Regions
-
     regionFields()
 
+  elif dlg.activeTab == 3:  # Notes
+    noteFields(DlgWidth)
 
   koi.endView()
 
@@ -2460,27 +2479,33 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
     let
       rows = parseInt(dlg.rows)
       cols = parseInt(dlg.cols)
-      elevation = parseInt(dlg.elevation)
-
-    let coordOpts = CoordinateOptions(
-      origin      : CoordinateOrigin(dlg.origin),
-      rowStyle    : CoordinateStyle(dlg.rowStyle),
-      columnStyle : CoordinateStyle(dlg.columnStyle),
-      rowStart    : parseInt(dlg.rowStart),
-      columnStart : parseInt(dlg.columnStart)
-    )
-
-    let regionOpts = RegionOptions(
-      enabled         : dlg.enableRegions,
-      colsPerRegion   : parseInt(dlg.colsPerRegion),
-      rowsPerRegion   : parseInt(dlg.rowsPerRegion),
-      perRegionCoords : dlg.perRegionCoords
-    )
 
     let cur = actions.addNewLevel(
-      a.doc.map, a.ui.cursor, dlg.locationName,
-      dlg.levelName, elevation, rows, cols,
-      dlg.overrideCoordOpts, coordOpts, regionOpts,
+      a.doc.map,
+      a.ui.cursor,
+      locationName = dlg.locationName,
+      levelName = dlg.levelName,
+      elevation = parseInt(dlg.elevation),
+      rows = rows,
+      cols = cols,
+      dlg.overrideCoordOpts,
+
+      coordOpts = CoordinateOptions(
+        origin      : CoordinateOrigin(dlg.origin),
+        rowStyle    : CoordinateStyle(dlg.rowStyle),
+        columnStyle : CoordinateStyle(dlg.columnStyle),
+        rowStart    : parseInt(dlg.rowStart),
+        columnStart : parseInt(dlg.columnStart)
+      ),
+
+      regionOpts = RegionOptions(
+        enabled         : dlg.enableRegions,
+        colsPerRegion   : parseInt(dlg.colsPerRegion),
+        rowsPerRegion   : parseInt(dlg.rowsPerRegion),
+        perRegionCoords : dlg.perRegionCoords
+      ),
+
+      dlg.notes,
       a.doc.undoManager
     )
     setCursor(cur, a)
@@ -2537,7 +2562,7 @@ proc openEditLevelPropsDialog(a) =
   dlg.locationName = l.locationName
   dlg.levelName = l.levelName
   dlg.elevation = $l.elevation
-  dlg.comments = "" # TODO
+  dlg.notes = "" # TODO
 
   let co = coordOptsForCurrLevel(a)
   dlg.overrideCoordOpts = l.overrideCoordOpts
@@ -2553,6 +2578,8 @@ proc openEditLevelPropsDialog(a) =
   dlg.rowsPerRegion   = $ro.rowsPerRegion
   dlg.perRegionCoords = ro.perRegionCoords
 
+  dlg.notes = l.notes
+
   dlg.isOpen = true
 
 
@@ -2560,9 +2587,9 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   alias(map, a.doc.map)
 
   const
-    DlgWidth = 430.0
-    DlgHeight = 450.0
-    TabWidth = 300.0
+    DlgWidth = 460.0
+    DlgHeight = 436.0
+    TabWidth = 400.0
 
   koi.beginDialog(DlgWidth, DlgHeight,
                   fmt"{IconNewFile}  Edit Level Properties",
@@ -2574,7 +2601,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  let tabLabels = @["General", "Coordinates", "Regions"]
+  let tabLabels = @["General", "Coordinates", "Regions", "Notes"]
 
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
@@ -2585,28 +2612,14 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   y += DlgTabBottomPad
 
   koi.beginView(x, y, 1000, 1000)
-  koi.initAutoLayout(DialogLayoutParams)
+  var lp = DialogLayoutParams
+  lp.rowWidth = DlgWidth-80
+  koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-
     levelCommonFields()
 
-    group:
-      koi.label("Comments", style=a.theme.labelStyle)
-
-      koi.textArea(
-        x=0, y=147, w=370, h=92,
-        dlg.comments,
-        activate = dlg.activateFirstTextField,
-        # TODO
-  #      constraint = TextAreaConstraint(
-  #        maxLen: NoteTextLimits.maxRuneLen.some
-  #      ).some,
-        style = a.theme.textAreaStyle
-      )
-
   elif dlg.activeTab == 1:  # Coordinates
-
     koi.label("Override map settings", style=a.theme.labelStyle)
 
     koi.nextItemHeight(DlgCheckBoxSize)
@@ -2616,8 +2629,10 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
       coordinateFields()
 
   elif dlg.activeTab == 2:  # Regions
-
     regionFields()
+
+  elif dlg.activeTab == 3:  # Notes
+    noteFields(DlgWidth)
 
   koi.endView()
 
@@ -2662,6 +2677,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
     actions.setLevelProperties(a.doc.map, a.ui.cursor,
                                dlg.locationName, dlg.levelName, elevation,
                                dlg.overrideCoordOpts, coordOpts, regionOpts,
+                               dlg.notes,
                                a.doc.undoManager)
 
     setStatusMessage(fmt"Level properties updated", a)
@@ -5813,7 +5829,7 @@ proc handleAutosave(a) =
     let dt = getMonoTime() - a.doc.lastAutosaveTime
     if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
       let filename = if a.doc.filename == "":
-                       a.path.autosaveDir / addFileExt("untitled", MapFileExt)
+                       a.path.autosaveDir / addFileExt("Untitled", MapFileExt)
                      else: a.doc.filename
 
       saveMap(filename, autosave=true, a)
@@ -5827,7 +5843,7 @@ proc autoSaveOnCrash(a): string =
     let (path, _, _) = splitFile(a.doc.filename)
     fname = path
   else:
-    fname = "."
+    fname = a.path.autosaveDir
 
   fname = fname / CrashAutosaveFilename
 

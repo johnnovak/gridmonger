@@ -235,7 +235,7 @@ proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
   var destRegions = initRegions()
   var untitledIdx = 1
 
-  echo "------ INIT REGNIS ------"
+  echo "------ INIT REGIONS ------"
   for rc in dest.allRegionCoords:
     echo "dest.rc ", rc
     let r = rc.row.int + rowOffs
@@ -457,6 +457,7 @@ proc newLevel*(locationName, levelName: string, elevation: int,
                overrideCoordOpts: bool = false,
                coordOpts: CoordinateOptions = DefaultCoordOpts,
                regionOpts: RegionOptions = DefaultRegionOpts,
+               notes: string = "",
                initRegions: bool = true): Level =
 
   var l = new Level
@@ -471,6 +472,8 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   l.annotations = newAnnotations(rows, cols)
 
   l.regionOpts = regionOpts
+
+  l.notes = notes
 
   if initRegions and l.regionOpts.enabled:
     l.regions = initRegionsFrom(dest=l)
@@ -512,7 +515,9 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
                       rows = rect.rows + border*2,
                       cols = rect.cols + border*2,
                       src.overrideCoordOpts, src.coordOpts,
-                      src.regionOpts, initRegions=(border == 0))
+                      src.regionOpts,
+                      src.notes,
+                      initRegions=(border == 0))
 
   dest.copyCellsAndAnnotationsFrom(destRow, destCol, src, srcRect)
 

@@ -52,8 +52,10 @@ type
   Map* = ref object
     name*:        string
     levels*:      seq[Level]
-    links*:       Links
     coordOpts*:   CoordinateOptions
+    notes*:       string
+
+    links*:       Links
 
     sortedLevelNames*:         seq[string]
     sortedLevelIdxToLevelIdx*: Table[Natural, Natural]
@@ -80,6 +82,8 @@ type
 
     overrideCoordOpts*: bool
     coordOpts*:         CoordinateOptions
+
+    notes*:             string
 
     # TODO regionsEnabled flag & move the rest of RegionOptions into Regions
     regionOpts*:        RegionOptions

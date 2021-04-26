@@ -3,6 +3,7 @@ BUGS
 
 TODO
 
+
 v0.9
 
   - installer
@@ -10,17 +11,9 @@ v0.9
   - map/level comments
   - switch tab: (shift)+ctrl+tab
 
-  - region name reassignment on:
-    - resize
-    - change map coord origin (update levels with regions without overrides)
-    - change region size
-
   - finalise all themes
 
   - textarea: mouse handling, scrollwheel
-
-
-  - stack traces in release build?
 
   - config format:
     - write own config handler:
@@ -29,9 +22,14 @@ v0.9
       - insert new lines after sections when writing
     - rename properties according to theme editor
 
+  - debug level from config
+
   - store AppState in map
 
-  - 32 bit version?
+  - region name reassignment on:
+    - resize
+    - change map coord origin (update levels with regions without overrides)
+    - change region size
 
 
 v1.0
@@ -109,6 +107,8 @@ LOW PRIORITY
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
 
   - better undo manager
+
+  - 32 bit version?
 
 
 FONTS

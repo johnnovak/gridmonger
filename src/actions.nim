@@ -556,16 +556,22 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 # }}}
 
 # {{{ addNewLevel*()
-proc addNewLevel*(map; loc: Location, locationName, levelName: string,
-                  elevation: int, rows, cols: Natural,
+proc addNewLevel*(map; loc: Location,
+                  locationName, levelName: string, elevation: int,
+                  rows, cols: Natural,
                   overrideCoordOpts: bool, coordOpts: CoordinateOptions,
-                  regionOpts: RegionOptions; um): Location =
+                  regionOpts: RegionOptions,
+                  notes: string;
+                  um): Location =
 
   let usd = UndoStateData(actionName: "New level", location: loc)
 
   let action = proc (m: var Map): UndoStateData =
-    let newLevel = newLevel(locationName, levelName, elevation, rows, cols,
-                            overrideCoordOpts, coordOpts, regionOpts)
+    let newLevel = newLevel(locationName, levelName, elevation,
+                            rows, cols,
+                            overrideCoordOpts, coordOpts,
+                            regionOpts,
+                            notes)
     m.addLevel(newLevel)
 
     var usd = usd
@@ -668,8 +674,11 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     alias(l, m.levels[loc.level])
 
     var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
-                            newRows, newCols, l.overrideCoordOpts, l.coordOpts,
-                            l.regionOpts, initRegions=false)
+                            newRows, newCols,
+                            l.overrideCoordOpts, l.coordOpts,
+                            l.regionOpts,
+                            l.notes,
+                            initRegions=false)
 
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
     l = newLevel
@@ -756,14 +765,11 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   # stored temporarily in the SelectionBuffer
   let action = proc (m: var Map): UndoStateData =
     var l = newLevel(
-      sb.level.locationName,
-      sb.level.levelName,
-      sb.level.elevation,
-      sb.level.rows,
-      sb.level.cols,
-      sb.level.overrideCoordOpts,
-      sb.level.coordOpts,
+      sb.level.locationName, sb.level.levelName, sb.level.elevation,
+      sb.level.rows, sb.level.cols,
+      sb.level.overrideCoordOpts, sb.level.coordOpts,
       sb.level.regionOpts,
+      sb.level.notes,
       initRegions=false
     )
     discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
@@ -796,7 +802,9 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
                          elevation: int, overrideCoordOpts: bool,
                          coordOpts: CoordinateOptions,
-                         regionOpts: RegionOptions; um) =
+                         regionOpts: RegionOptions,
+                         notes: string;
+                         um) =
 
   let usd = UndoStateData(actionName: "Edit level properties", location: loc)
 
@@ -820,15 +828,13 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     l.overrideCoordOpts = overrideCoordOpts
     l.coordOpts = coordOpts
     l.regionOpts = regionOpts
+    l.notes = notes
 
     if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
 
     if reallocateRegions:
       m.reallocateRegions(loc.level, oldCoordOpts, oldRegionOpts, oldRegions)
-
-    echo "-----------------------"
-    dump(l.regions)
 
     m.refreshSortedLevelNames()
     result = usd

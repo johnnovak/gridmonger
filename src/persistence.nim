@@ -29,6 +29,7 @@ const CurrentMapVersion = 1
 
 const
   MapNameLimits*           = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
+  NotesLimits*             = strLimits(minLen=0, maxLen=8000, maxRuneLen=2000)
 
   NumLevelsLimits*         = intLimits(min=0, max=999)
   LevelLocationNameLimits* = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
@@ -187,7 +188,7 @@ proc readLocation(rr): Location =
 # }}}
 # {{{ readDisplayOptions_v1()
 proc readDisplayOptions_v1(rr): MapDisplayOptions =
-  info(fmt"Reading display options...")
+  debug(fmt"Reading display options...")
 
   # TODO
   discard
@@ -196,7 +197,7 @@ proc readDisplayOptions_v1(rr): MapDisplayOptions =
 # }}}
 # {{{ readLinks_v1()
 proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
-  info(fmt"Reading links...")
+  debug(fmt"Reading links...")
 
   var numLinks = rr.read(uint16).int
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
@@ -222,39 +223,44 @@ proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
 # }}}
 # {{{ readLevelProperties_v1()
 proc readLevelProperties_v1(rr): Level =
-  info(fmt"Reading level properties...")
+  debug(fmt"Reading level properties...")
 
   let locationName = rr.readWStr()
-  info(fmt"  locationName: {locationName}")
+  debug(fmt"  locationName: {locationName}")
   checkStringLength(locationName, "lvl.prop.locationName",
                     LevelLocationNameLimits)
 
   let levelName = rr.readWStr()
-  info(fmt"  levelName: {levelName}")
+  debug(fmt"  levelName: {levelName}")
   checkStringLength(levelName, "lvl.prop.levelName", LevelNameLimits)
 
   let elevation = rr.read(int16).int
-  info(fmt"  elevation: {elevation}")
+  debug(fmt"  elevation: {elevation}")
   checkValueRange(elevation, "lvl.prop.elevation", LevelElevationLimits)
 
   let numRows = rr.read(uint16)
-  info(fmt"  numRows: {numRows}")
+  debug(fmt"  numRows: {numRows}")
   checkValueRange(numRows, "lvl.prop.numRows", LevelRowsLimits)
 
   let numColumns = rr.read(uint16)
-  info(fmt"  numColumns: {numColumns}")
+  debug(fmt"  numColumns: {numColumns}")
   checkValueRange(numColumns, "lvl.prop.numColumns", LevelColumnsLimits)
 
   let overrideCoordOpts = rr.read(uint8).bool
-  info(fmt"  overrideCoordOpts: {overrideCoordOpts}")
+  debug(fmt"  overrideCoordOpts: {overrideCoordOpts}")
+
+  let notes = rr.readWStr()
+  debug(fmt"  notes: {notes}")
+  checkStringLength(notes, "lvl.prop.notes", NotesLimits)
 
   result = newLevel(locationName, levelName, elevation, numRows, numColumns)
   result.overrideCoordOpts = overrideCoordOpts
+  result.notes = notes
 
 # }}}
 # {{{ readLevelData_v1()
 proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
-  info(fmt"Reading level data...")
+  debug(fmt"Reading level data...")
 
   var cells: seq[Cell]
   newSeq[Cell](cells, numCells)
@@ -291,10 +297,10 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
 # }}}
 # {{{ readLevelAnnotations_v1()
 proc readLevelAnnotations_v1(rr; l: Level) =
-  info(fmt"Reading annotations...")
+  debug(fmt"Reading annotations...")
 
   let numAnnotations = rr.read(uint16).Natural
-  info(fmt"  numAnnotations: {numAnnotations}")
+  debug(fmt"  numAnnotations: {numAnnotations}")
   checkValueRange(numAnnotations, "lvl.anno.numAnnotations",
                   NumAnnotationsLimits)
 
@@ -363,7 +369,7 @@ proc readLevelAnnotations_v1(rr; l: Level) =
 # }}}
 # {{{ readCoordinateOptions_v1*()
 proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
-  info(fmt"Reading coordinate options...")
+  debug(fmt"Reading coordinate options...")
 
   let origin = rr.read(uint8)
   checkEnum(origin, fmt"${parentChunk}.coor.origin", CoordinateOrigin)
@@ -392,7 +398,7 @@ proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
 # }}}
 # {{{ readRegions_v1*()
 proc readRegions_v1(rr): (RegionOptions, Regions) =
-  info(fmt"Reading regions...")
+  debug(fmt"Reading regions...")
 
   let enabled = rr.read(uint8).bool
 
@@ -412,10 +418,10 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
     perRegionCoords: perRegionCoords
   )
 
-  info(fmt"  Regions opts: {regionOpts}")
+  debug(fmt"  Regions opts: {regionOpts}")
 
   let numRegions = rr.read(uint16).Natural
-  info(fmt"  Num regions: {numRegions}")
+  debug(fmt"  Num regions: {numRegions}")
 
   var regions: Regions = initRegions()
 
@@ -426,10 +432,10 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
     let col = rr.read(uint16)
     checkValueRange(col, "lvl.regn.region.column", RegionColumnLimits)
 
-    let name = rr.readBStr()
+    let name = rr.readWStr()
     checkStringLength(name, "lvl.regn.region.name", RegionNameLimits)
 
-    info(fmt"    row: {row}, col: {col}, name: {name}")
+    debug(fmt"    row: {row}, col: {col}, name: {name}")
 
     regions.setRegion(
       RegionCoords(row: row, col: col),
@@ -441,7 +447,7 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
 # }}}
 # {{{ readLevel_v1()
 proc readLevel_v1(rr): Level =
-  info(fmt"Reading level...")
+  debug(fmt"Reading level...")
 
   let groupChunkId = FourCC_GRDM_lvls.some
   var
@@ -524,7 +530,7 @@ proc readLevel_v1(rr): Level =
 # }}}
 # {{{ readLevelList_v1()
 proc readLevelList_v1(rr): seq[Level] =
-  info(fmt"Reading level list...")
+  debug(fmt"Reading level list...")
 
   var levels = newSeq[Level]()
 
@@ -557,24 +563,29 @@ proc readLevelList_v1(rr): seq[Level] =
 # }}}
 # {{{ readMapProperties_v1()
 proc readMapProperties_v1(rr): Map =
-  info(fmt"Reading map properties...")
+  debug(fmt"Reading map properties...")
 
   # TODO is inside Map the best place for this? or introduce a header chunk?
   let version = rr.read(uint16)
-  info(fmt"  version: {version}")
+  debug(fmt"  version: {version}")
   if version > CurrentMapVersion:
     raiseMapReadError(fmt"Unsupported map file version: {version}")
 
-  let name = rr.readBStr()
-  info(fmt"  name: {name}")
+  let name = rr.readWStr()
+  debug(fmt"  name: {name}")
   checkStringLength(name, "map.prop.name", MapNameLimits)
 
+  let notes = rr.readWStr()
+  debug(fmt"  notes: {notes}")
+  checkStringLength(notes, "map.prop.notes", NotesLimits)
+
   result = newMap(name)
+  result.notes = notes
 
 # }}}
 # {{{ readMap_v1()
 proc readMap_v1(rr): Map =
-  info(fmt"Reading GRDM.map chunk...")
+  debug(fmt"Reading GRDM.map chunk...")
 
   let groupChunkId = FourCC_GRDM_map.some
   var
@@ -635,7 +646,7 @@ proc readMapFile*(filename: string): Map =
         fmt"RIFF formatTypeId: {fourCCToCharStr(riffChunk.formatTypeId)}"
       )
 
-    info(fmt"Map headers OK")
+    debug(fmt"Map headers OK")
 
     var
       mapCursor = Cursor.none
@@ -653,16 +664,16 @@ proc readMapFile*(filename: string): Map =
       if ci.kind == ckGroup:
         case ci.formatTypeId
         of FourCC_INFO:
-          info(fmt"INFO chunk found")
+          debug(fmt"INFO chunk found")
           discard  # TODO
 
         of FourCC_GRDM_map:
-          info(fmt"GRDM.map group chunk found")
+          debug(fmt"GRDM.map group chunk found")
           if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_map)
           mapCursor = rr.cursor.some
 
         of FourCC_GRDM_lvls:
-          info(fmt"GRDM.lvls group chunk found")
+          debug(fmt"GRDM.lvls group chunk found")
           if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lvls)
           levelListCursor = rr.cursor.some
 
@@ -672,17 +683,17 @@ proc readMapFile*(filename: string): Map =
         case ci.id
 
         of FourCC_GRDM_lnks:
-          info(fmt"GRDM.lnks chunk found")
+          debug(fmt"GRDM.lnks chunk found")
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
           linksCursor = rr.cursor.some
 
         of FourCC_GRDM_disp:
-          info(fmt"GRDM.lnks disp found")
+          debug(fmt"GRDM.lnks disp found")
           if displayOptsCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_disp)
           displayOptsCursor = rr.cursor.some
 
         else:
-          info(fmt"Skiping unknown top level chunk, " &
+          debug(fmt"Skiping unknown top level chunk, " &
                fmt"chunkId: {fourCCToCharStr(ci.id)}")
 
       if rr.hasNextChunk():
@@ -789,7 +800,7 @@ proc writeRegions_v1(rw; l: Level) =
   for rc, r in l.allRegions:
     rw.write(rc.row.uint16)
     rw.write(rc.col.uint16)
-    rw.writeBStr(r.name)
+    rw.writeWStr(r.name)
 
   rw.endChunk()
 
@@ -806,6 +817,8 @@ proc writeLevelProperties_v1(rw; l: Level) =
   rw.write(l.cols.uint16)
 
   rw.write(l.overrideCoordOpts.uint8)
+
+  rw.writeWStr(l.notes)
 
   rw.endChunk()
 
@@ -885,7 +898,8 @@ proc writeMapProperties_v1(rw; m: Map) =
   rw.beginChunk(FourCC_GRDM_prop)
 
   rw.write(CurrentMapVersion.uint16)
-  rw.writeBStr(m.name)
+  rw.writeWStr(m.name)
+  rw.writeWStr(m.notes)
 
   rw.endChunk()
 
