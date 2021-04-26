@@ -29,8 +29,8 @@ RIFF ('GRDM'          # Gridmonger map file
 
 'prop' (Map)
     UINT16  version
-    WSTR    name              (minLen=1, maxLen=400, maxRuneLen=100)
-    WSTR    notes             (maxLen=8000, maxRuneLen=2000)
+    WSTR    name              (minRuneLen=1, maxRuneLen=100)
+    WSTR    notes             (maxRuneLen=2000)
 
 
 'coor'
@@ -42,13 +42,13 @@ RIFF ('GRDM'          # Gridmonger map file
 
 
 'prop' (Level)
-    WSTR    locationName      (minLen=1, maxLen=400, maxRuneLen=100)
-    WSTR    levelName         (minLen=0, maxLen=400, maxRuneLen=100)
+    WSTR    locationName      (minRuneLen=1, maxRuneLen=100)
+    WSTR    levelName         (maxRuneLen=100)
     INT16   elevation         (min=-200, max=200)
     UINT16  numRows           (min=1, max=6666)
     UINT16  numColums         (min=1, max=6666)
     UINT8   overrideCoordOpts (0=off, >0=on)
-    WSTR    notes             (maxLen=8000, maxRuneLen=2000)
+    WSTR    notes             (maxRuneLen=2000)
 
 'regn'
     UINT8   enableRegions     (0=off, >0=on)
@@ -59,7 +59,7 @@ RIFF ('GRDM'          # Gridmonger map file
     numRegion times:
     UINT16  row               (max=0, max=3332)
     UINT16  column            (min=0, max=3332)
-    WSTR    name              (minLen=1, maxLen=400, maxRuneLen=100)
+    WSTR    name              (minRuneLen=1, maxRuneLen=100)
 
 
 'cell'
@@ -96,7 +96,7 @@ RIFF ('GRDM'          # Gridmonger map file
     if kind == 4 (label)
         UINT8   labelColor    (max=3)
 
-    WSTR    text              (minLen=1, maxLen=1600, maxRuneLen=400)
+    WSTR    text              (minRuneLen=1, maxRuneLen=400)
 
 
 'lnks'

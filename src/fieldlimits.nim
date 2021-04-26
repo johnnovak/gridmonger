@@ -7,16 +7,15 @@ type
   FieldLimits* = object
     case kind*: FieldLimitsKind
     of fkString:
-      minLen*, maxLen*, maxRuneLen*: Natural
+      minRuneLen*, maxRuneLen*: Natural
     of fkInt:
       minInt*, maxInt*: int
     of fkFloat:
       minFloat*, maxFloat*: float
 
-proc strLimits*(minLen, maxLen, maxRuneLen: Natural): FieldLimits =
+proc strLimits*(minRuneLen, maxRuneLen: Natural): FieldLimits =
   result.kind = fkString
-  result.minLen = minLen
-  result.maxLen = maxLen
+  result.minRuneLen = minRuneLen
   result.maxRuneLen = maxRuneLen
 
 proc intLimits*(min, max: int): FieldLimits =
@@ -30,8 +29,7 @@ proc floatLimits*(min, max: float): FieldLimits =
   result.maxFloat = max
 
 proc check*(s: string, limit: FieldLimits): bool =
-  s.len >= limit.minLen and
-  s.len <= limit.maxLen and
+  s.runeLen >= limit.minRuneLen and
   s.runeLen <= limit.maxRuneLen
 
 proc check*(i: SomeInteger, limit: FieldLimits): bool =
@@ -41,9 +39,8 @@ proc check*(i: SomeFloat, limit: FieldLimits): bool =
   i >= limit.minFloat and i <= limit.maxFloat
 
 proc limit*(s: string, limit: FieldLimits): string =
-  if s.runeLen > limit.maxRuneLen: s.runeSubStr(0, limit.maxRuneLen)
-  elif s.len > limit.maxLen: s.substr(0, limit.maxLen-1)
-  elif s.len < limit.minLen: s.alignLeft(limit.minLen)
+  if   s.runeLen > limit.maxRuneLen: s.runeSubStr(0, limit.maxRuneLen)
+  elif s.runeLen < limit.minRuneLen: s.alignLeft(limit.minRuneLen)
   else: s
 
 proc limit*[T: SomeInteger](i: T, limit: FieldLimits): T =

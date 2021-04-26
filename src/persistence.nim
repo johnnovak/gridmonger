@@ -28,12 +28,12 @@ const CurrentMapVersion = 1
 # {{{ Field limits
 
 const
-  MapNameLimits*           = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
-  NotesLimits*             = strLimits(minLen=0, maxLen=8000, maxRuneLen=2000)
+  MapNameLimits*           = strLimits(minRuneLen=1, maxRuneLen=100)
+  NotesLimits*             = strLimits(minRuneLen=0, maxRuneLen=2000)
 
   NumLevelsLimits*         = intLimits(min=0, max=999)
-  LevelLocationNameLimits* = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
-  LevelNameLimits*         = strLimits(minLen=0, maxLen=400, maxRuneLen=100)
+  LevelLocationNameLimits* = strLimits(minRuneLen=1, maxRuneLen=100)
+  LevelNameLimits*         = strLimits(minRuneLen=0, maxRuneLen=100)
   LevelElevationLimits*    = intLimits(min= -200, max=200)
   LevelRowsLimits*         = intLimits(min=1, max=6666)
   LevelColumnsLimits*      = intLimits(min=1, max=6666)
@@ -45,20 +45,20 @@ const
   ColumnsPerRegionLimits*  = intLimits(min=2, max=3333)
   RegionRowLimits*         = intLimits(min=0, max=3332)
   RegionColumnLimits*      = intLimits(min=0, max=3332)
-  RegionNameLimits*        = strLimits(minLen=1, maxLen=400, maxRuneLen=100)
+  RegionNameLimits*        = strLimits(minRuneLen=1, maxRuneLen=100)
 
   CellFloorColorLimits*    = intLimits(min=0, max=LevelStyle.floorColor.len)
 
   NumAnnotationsLimits*    = intLimits(min=0, max=10_000)
-  NoteTextLimits*          = strLimits(minLen=1, maxLen=1600, maxRuneLen=400)
-  NoteIconTextLimits*      = strLimits(minLen=0, maxLen=1600, maxRuneLen=400)
-  NoteCustomIdLimits*      = strLimits(minLen=1, maxLen=2, maxRuneLen=2)
+  NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=400)
+  NoteIconTextLimits*      = strLimits(minRuneLen=0, maxRuneLen=400)
+  NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
   NoteColorLimits*         = intLimits(min=0, max=LevelStyle.noteIndexBgColor.len)
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
 
   NumLinksLimits*          = intLimits(min=0, max=10_000)
 
-  ThemeNameLimits*         = strLimits(minLen=1, maxLen=200, maxRuneLen=200)
+  ThemeNameLimits*         = strLimits(minRuneLen=1, maxRuneLen=200)
 
   ZoomLevelLimits*         = intLimits(min=MinZoomLevel, max=MaxZoomLevel)
 
@@ -137,16 +137,11 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
 
 # {{{ checkStringLength()
 proc checkStringLength(s: string, name: string, limit: FieldLimits) =
-  if s.len < limit.minLen or s.len > limit.maxLen:
+  if s.runeLen < limit.minRuneLen or s.runeLen > limit.maxRuneLen:
     raiseMapReadError(
-      fmt"The length of {name} must be between {limit.minLen} and " &
-      fmt"{limit.maxLen} bytes, actual length: {s.len}, value: {s}"
-    )
-
-  if s.runeLen > limit.maxRuneLen:
-    raiseMapReadError(
-      fmt"The maximum allowed length of {name} is {limit.maxRuneLen} " &
-      fmt"UTF-8 code points, actual length: {s.runeLen}, value: {s}"
+      fmt"The length of {name} must be between {limit.minRuneLen} and " &
+      fmt"{limit.maxRuneLen} UTF-8 code points, actual length: {s.runeLen}, " &
+      "value: {s}"
     )
 
 # }}}

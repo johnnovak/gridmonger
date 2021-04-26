@@ -1570,13 +1570,12 @@ template noteFields(dlgWidth: float) =
   koi.label("Notes", style=a.theme.labelStyle)
 
   koi.textArea(
-    x=0, y=28, w=dlgWidth-60, h=205,
+    x=0, y=28, w=dlgWidth-60, h=187,
     dlg.notes,
     activate = dlg.activateFirstTextField,
-    # TODO
-#      constraint = TextAreaConstraint(
-#        maxLen: NoteTextLimits.maxRuneLen.some
-#      ).some,
+     constraint = TextAreaConstraint(
+       maxLen: NotesLimits.maxRuneLen.some
+     ).some,
     style = a.theme.textAreaStyle
   )
 
@@ -1591,7 +1590,7 @@ template levelCommonFields() =
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
         kind: tckString,
-        minLen: LevelLocationNameLimits.minLen,
+        minLen: LevelLocationNameLimits.minRuneLen,
         maxLen: LevelLocationNameLimits.maxRuneLen.some
       ).some,
       style = a.theme.textFieldStyle
@@ -1603,7 +1602,7 @@ template levelCommonFields() =
       dlg.levelName,
       constraint = TextFieldConstraint(
         kind: tckString,
-        minLen: LevelNameLimits.minLen,
+        minLen: LevelNameLimits.minRuneLen,
         maxLen: LevelNameLimits.maxRuneLen.some
       ).some,
       style = a.theme.textFieldStyle
@@ -2144,7 +2143,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
-      minLen: MapNameLimits.minLen,
+      minLen: MapNameLimits.minRuneLen,
       maxLen: MapNameLimits.maxRuneLen.some
     ).some,
     style = a.theme.textFieldStyle
@@ -2261,7 +2260,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
-      minLen: MapNameLimits.minLen,
+      minLen: MapNameLimits.minRuneLen,
       maxLen: MapNameLimits.maxRuneLen.some
     ).some,
     style = a.theme.textFieldStyle
@@ -3031,7 +3030,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
       dlg.customId,
       constraint = TextFieldConstraint(
         kind: tckString,
-        minLen: NoteCustomIdLimits.minLen,
+        minLen: NoteCustomIdLimits.minRuneLen,
         maxLen: NoteCustomIdLimits.maxRuneLen.some
       ).some,
       style = a.theme.textFieldStyle
@@ -3319,7 +3318,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
       kind: tckString,
-      minLen: RegionNameLimits.minLen,
+      minLen: RegionNameLimits.minRuneLen,
       maxLen: RegionNameLimits.maxRuneLen.some
     ).some,
     style = a.theme.textFieldStyle
