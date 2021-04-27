@@ -85,7 +85,6 @@ type
 
     notes*:             string
 
-    # TODO regionsEnabled flag & move the rest of RegionOptions into Regions
     regionOpts*:        RegionOptions
     regions*:           Regions
 

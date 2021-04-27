@@ -2621,7 +2621,6 @@ proc openEditLevelPropsDialog(a) =
   dlg.locationName = l.locationName
   dlg.levelName = l.levelName
   dlg.elevation = $l.elevation
-  dlg.notes = "" # TODO
 
   let co = coordOptsForCurrLevel(a)
   dlg.overrideCoordOpts = l.overrideCoordOpts
@@ -3531,20 +3530,6 @@ proc loadMap(filename: string; a): bool =
     let message = fmt"Map '{filename}' loaded in " &
                   fmt"{durationToFloatMillis(dt):.2f} ms"
 
-#[
-    # TODO regions hack begin
-    for l in a.doc.map.levels:
-      if l.regionOpts.enabled:
-        let rr = ceil(l.rows / l.regionOpts.rowsPerRegion).int
-        let rc = ceil(l.cols / l.regionOpts.colsPerRegion).int
-        echo rr, " ", rc
-        l.regions = initRegions()
-
-        for r in 0..<rr:
-          for c in 0..<rc:
-            l.setRegion(RegionCoords(row: r, col: c), Region(name: fmt"region {r} {c}"))
-    # TODO hack end
-]#
     info(message)
     setStatusMessage(IconFloppy, message, a)
     result = true
