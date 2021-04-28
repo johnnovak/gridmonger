@@ -82,7 +82,7 @@ defineTheme:
     drawColor:              Color
     lightDrawColor:         Color
     transparentFloor:       bool
-    floorColor:             array[10, Color]
+    floorcolor:             array[10, Color]
     lineWidth:              LineWidth
 
     bgHatch:                bool

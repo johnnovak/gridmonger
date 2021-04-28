@@ -5695,6 +5695,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         prop("Scroll Bar", notesPane, scrollBarColor):
           koi.color(ts.notesPane.scrollBarColor)
 
+
     if koi.subSectionHeader("Toolbar Pane", te.sectionToolbarPane):
       prop("Button ", toolbarPane, buttonBgColor):
         koi.color(ts.toolbarPane.buttonBgColor)
