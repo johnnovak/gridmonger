@@ -103,27 +103,27 @@ proc handleProperty(
   let fromProp = quote do:
     theme.`sectionNameSym`.`subsectionNameSym`.`propNameSym`
 
-  var parseThemeFrag: NimNode
-  var writeThemeFrag: NimNode
+  var parseThemeFrag = nnkStmtList.newTree
+  var writeThemeFrag = nnkStmtList.newTree
 
   if propType.kind == nnkIdent:
     case propType.strVal
     of "string", "bool", "Color", "float":
       let getter = newIdentNode("get" & propType.strVal.capitalizeAscii())
 
-      parseThemeFrag = quote do:
+      parseThemeFrag.add quote do:
         config.`getter`(`configSectionName`, `propName`, `toProp`)
 
-      writeThemeFrag = quote do:
+      writeThemeFrag.add quote do:
         result.setSectionKey(`configSectionName`, `propName`,
                              $`fromProp`)
 
     else:  # enum
-      parseThemeFrag = quote do:
+      parseThemeFrag.add  quote do:
         getEnum[`propType`](config, `configSectionName`, `propName`,
                             `toProp`)
 
-      writeThemeFrag = quote do:
+      writeThemeFrag.add  quote do:
         result.setSectionKey(`configSectionName`, `propName`,
                              $`fromProp`)
 
@@ -137,11 +137,11 @@ proc handleProperty(
       let propNameN = propName & $i
       let index = newIntLitNode(i-1)
       let theme = newIdentNode("theme")
-      parseThemeFrag = quote do:
+      parseThemeFrag.add  quote do:
         config.getColor(`configSectionName`, `propNameN`,
                         `toProp`[`index`])
 
-      writeThemeFrag = quote do:
+      writeThemeFrag.add quote do:
         result.setSectionKey(
           `configSectionName`, `propNameN`,
            $`fromProp`[`index`]
@@ -245,7 +245,7 @@ macro defineTheme(arg: untyped): untyped =
       result = newConfig()
       `writeThemeBody`
 
-#  echo result.repr
+  echo result.repr
 
 
 include themedef2
