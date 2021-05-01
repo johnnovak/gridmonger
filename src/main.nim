@@ -5180,7 +5180,7 @@ with ThemeEditorAutoLayoutParams:
   leftPad = 14.0
   rightPad = 16.0
 
-#[
+
 # {{{ renderThemeEditorProps()
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
@@ -5191,16 +5191,41 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   proc handleUndo() =
     discard
 
-  macro prop(name: static[string], section: untyped, prop: untyped,
-             widget: untyped): untyped =
+  macro prop(name: static[string], prop: untyped, widget: untyped): untyped =
+
+    # TODO write some helper for this
+    let prevProp = newDotExpr(
+      newDotExpr(
+        newDotExpr(
+          newDotExpr(
+            newIdentNode("te"),
+            newIdentNode("prevState"),
+          ),
+          prop[0][0]
+        ),
+        prop[0][1]
+      ),
+      prop[1]
+    )
+
+    let currProp = newDotExpr(
+      newDotExpr(
+        newDotExpr(
+          newIdentNode("ts"),
+          prop[0][0]
+        ),
+        prop[0][1]
+      ),
+      prop[1]
+    )
 
     result = quote do:
       koi.label(`name`)
       `widget`
-      if te.prevState.`section`.`prop` != ts.`section`.`prop`:
+      if `prevProp` != `currProp`:
         handleUndo()
 
-
+#[
   macro prop(name: static[string],
              section: untyped, prop: untyped, index: static[int],
              widget: untyped): untyped =
@@ -5210,7 +5235,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       `widget`
       if te.prevState.`section`.`prop`[`index`] != ts.`section`.`prop`[`index`]:
         handleUndo()
-
+]#
 
   koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)
 
@@ -5222,36 +5247,36 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
       group:
-        prop("Background", general, backgroundColor):
-          koi.color(ts.general.backgroundColor)
+        prop("Background", ui.window.backgroundColor):
+          koi.color(ts.ui.window.backgroundColor)
 
       group:
-        prop("Title Background", window, backgroundColor):
-          koi.color(ts.window.backgroundColor)
+        prop("Title Background", ui.window.titleBackgroundColor):
+          koi.color(ts.ui.window.titleBackgroundColor)
 
-        prop("Title Background Inactive", window, bgColorUnfocused):
-          koi.color(ts.window.bgColorUnfocused)
+        prop("Title Background Inactive", ui.window.titleBackgroundInactiveColor):
+          koi.color(ts.ui.window.titleBackgroundInactiveColor)
 
-        prop("Title", window, textColor):
-          koi.color(ts.window.textColor)
+        prop("Title", ui.window.titleColor):
+          koi.color(ts.ui.window.titleColor)
 
-        prop("Title Inactive", window, textColorUnfocused):
-          koi.color(ts.window.textColorUnfocused)
+        prop("Title Inactive", ui.window.titleInactiveColor):
+          koi.color(ts.ui.window.titleInactiveColor)
 
-        prop("Modified Flag", window, modifiedFlagColor):
-          koi.color(ts.window.modifiedFlagColor)
+        prop("Modified Flag", ui.window.modifiedFlagColor):
+          koi.color(ts.ui.window.modifiedFlagColor)
 
       group:
-        prop("Button", window, buttonColor):
-          koi.color(ts.window.buttonColor)
+        prop("Button", ui.window.buttonColor):
+          koi.color(ts.ui.window.buttonColor)
 
-        prop("Button Hover", window, buttonColorHover):
-          koi.color(ts.window.buttonColorHover)
+        prop("Button Hover", ui.window.buttonHoverColor):
+          koi.color(ts.ui.window.buttonHoverColor)
 
-        prop("Button Down", window, buttonColorDown):
-          koi.color(ts.window.buttonColorDown)
+        prop("Button Down", ui.window.buttonDownColor):
+          koi.color(ts.ui.window.buttonDownColor)
 
-
+#[
     if koi.subSectionHeader("Dialog", te.sectionDialog):
       group:
         prop("Corner Radius", dialog, cornerRadius):
@@ -5435,8 +5460,10 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         koi.label("Show Splash")
         koi.checkBox(a.splash.show)
+]#
 
   # }}}
+#[
   # {{{ Level section
   if koi.sectionHeader("Level", te.sectionLevel):
     if koi.subSectionHeader("General", te.sectionLevelGeneral):
@@ -5708,7 +5735,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.color(ts.toolbarPane.buttonBgColorHover)
 
   # }}}
-
+]#
   koi.endScrollView()
 
   te.prevState = ts.deepCopy()
@@ -5764,7 +5791,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
             style=titleStyle)
 
   var betaStyle = getDefaultLabelStyle()
-  betaStyle.color = a.theme.style.general.highlightColor
+  betaStyle.color = a.theme.style.ui.widget.backgroundActiveColor
   koi.label(cx + 265, cy, 40, wh, fmt"beta", style=betaStyle)
 
   # Theme name & action buttons
@@ -5796,9 +5823,8 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
     let theme = a.theme.themeNames[a.theme.currThemeIndex]
     let themePath = themePath(theme, a)
-
-#    let theme2 = convertTheme(a.theme.style)
-    saveTheme(theme, themePath)
+    # TODO
+#    saveTheme(theme, themePath)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):
@@ -5827,10 +5853,10 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   a.theme.reinitDrawLevelParams = true
 
-  a.win.setStyle(a.theme.style.window)
+  a.win.setStyle(a.theme.style.ui.window)
 
 # }}}
-]#
+
 # }}}
 
 # {{{ showSplash()
@@ -6043,8 +6069,7 @@ proc renderUI(a) =
       w = ThemePaneWidth
       h = drawAreaHeight(a)
 
-  # TODO(JN)
-#    renderThemeEditorPane(x, y, w, h, a)
+    renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
   if dlg.aboutDialog.isOpen:
