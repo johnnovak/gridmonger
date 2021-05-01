@@ -35,7 +35,6 @@ import map
 import persistence
 import rect
 import selection
-import theme
 import theme2
 import unicode
 import utils
@@ -646,42 +645,43 @@ proc savePreferences(a) =
 # {{{ updateWidgetStyles()
 proc updateWidgetStyles(a) =
   alias(s, a.theme.style)
-  alias(gs, s.general)
-  alias(ws, s.widget)
+  alias(ws, s.ui.widget)
+  alias(ts, s.ui.textField)
+  alias(ds, s.ui.dialog)
 
   # Button
   a.theme.buttonStyle = koi.getDefaultButtonStyle()
 
   with a.theme.buttonStyle:
-    cornerRadius      = gs.cornerRadius
-    fillColor         = ws.bgColor
-    fillColorHover    = ws.bgColorHover
-    fillColorDown     = gs.highlightColor
-    fillColorDisabled = ws.bgColorDisabled
+    cornerRadius      = ws.cornerRadius
+    fillColor         = ws.backgroundColor
+    fillColorHover    = ws.backgroundHoverColor
+    fillColorDown     = ws.backgroundActiveColor
+    fillColorDisabled = ws.backgroundDisabledColor
 
-    label.color            = ws.textColor
-    label.colorHover       = ws.textColor
-    label.colorDown        = ws.textColorActive
-    label.colorActive      = ws.textColorActive
-    label.colorActiveHover = ws.textColorActive
-    label.colorDisabled    = ws.textColorDisabled
+    label.color            = ws.foregroundColor
+    label.colorHover       = ws.foregroundColor
+    label.colorDown        = ws.foregroundActiveColor
+    label.colorActive      = ws.foregroundActiveColor
+    label.colorActiveHover = ws.foregroundActiveColor
+    label.colorDisabled    = ws.foregroundDisabledColor
 
   # Radio button
   a.theme.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
 
   with a.theme.radioButtonStyle:
-    buttonCornerRadius         = gs.cornerRadius
-    buttonFillColor            = ws.bgColor
-    buttonFillColorHover       = ws.bgColorHover
-    buttonFillColorDown        = gs.highlightColor
-    buttonFillColorActive      = gs.highlightColor
-    buttonFillColorActiveHover = gs.highlightColor
+    buttonCornerRadius         = ws.cornerRadius
+    buttonFillColor            = ws.backgroundColor
+    buttonFillColorHover       = ws.backgroundHoverColor
+    buttonFillColorDown        = ws.backgroundActiveColor
+    buttonFillColorActive      = ws.backgroundActiveColor
+    buttonFillColorActiveHover = ws.backgroundActiveColor
 
-    label.color            = ws.textColor
-    label.colorHover       = ws.textColor
-    label.colorDown        = ws.textColorActive
-    label.colorActive      = ws.textColorActive
-    label.colorActiveHover = ws.textColorActive
+    label.color            = ws.foregroundColor
+    label.colorHover       = ws.foregroundColor
+    label.colorDown        = ws.foregroundActiveColor
+    label.colorActive      = ws.foregroundActiveColor
+    label.colorActiveHover = ws.foregroundActiveColor
 
   # Icon radio button
   a.theme.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
@@ -689,18 +689,18 @@ proc updateWidgetStyles(a) =
   with a.theme.iconRadioButtonsStyle:
     buttonPadHoriz             = 4.0
     buttonPadVert              = 4.0
-    buttonFillColor            = ws.bgColor
-    buttonFillColorHover       = ws.bgColorHover
-    buttonFillColorDown        = gs.highlightColor
-    buttonFillColorActive      = gs.highlightColor
-    buttonFillColorActiveHover = gs.highlightColor
+    buttonFillColor            = ws.backgroundColor
+    buttonFillColorHover       = ws.backgroundHoverColor
+    buttonFillColorDown        = ws.backgroundActiveColor
+    buttonFillColorActive      = ws.backgroundActiveColor
+    buttonFillColorActiveHover = ws.backgroundActiveColor
 
     label.fontSize         = 18.0
-    label.color            = ws.textColor
-    label.colorHover       = ws.textColor
-    label.colorDown        = ws.textColorActive
-    label.colorActive      = ws.textColorActive
-    label.colorActiveHover = ws.textColorActive
+    label.color            = ws.foregroundColor
+    label.colorHover       = ws.foregroundColor
+    label.colorDown        = ws.foregroundActiveColor
+    label.colorActive      = ws.foregroundActiveColor
+    label.colorActiveHover = ws.foregroundActiveColor
     label.padHoriz         = 0
     label.padHoriz         = 0
 
@@ -708,40 +708,40 @@ proc updateWidgetStyles(a) =
   a.theme.textFieldStyle = koi.getDefaultTextFieldStyle()
 
   with a.theme.textFieldStyle:
-    bgCornerRadius      = gs.cornerRadius
-    bgFillColor         = ws.bgColor
-    bgFillColorHover    = ws.bgColorHover
-    bgFillColorActive   = s.textField.bgColorActive
-    bgFillColorDisabled = ws.bgColorDisabled
-    textColor           = ws.textColor
-    textColorHover      = ws.textColor
-    textColorActive     = s.textField.textColorActive
-    textColorDisabled   = ws.textColorDisabled
-    cursorColor         = s.textField.cursorColor
-    selectionColor      = s.textField.selectionColor
+    bgCornerRadius      = ws.cornerRadius
+    bgFillColor         = ws.backgroundColor
+    bgFillColorHover    = ws.backgroundHoverColor
+    bgFillColorActive   = ts.editBackgroundColor
+    bgFillColorDisabled = ws.backgroundDisabledColor
+    textColor           = ws.foregroundColor
+    textColorHover      = ws.foregroundColor
+    textColorActive     = ts.editTextColor
+    textColorDisabled   = ws.foregroundDisabledColor
+    cursorColor         = ts.cursorColor
+    selectionColor      = ts.selectionColor
 
   # Text area
   a.theme.textAreaStyle = koi.getDefaultTextAreaStyle()
 
   with a.theme.textAreaStyle:
-    bgCornerRadius    = gs.cornerRadius
-    bgFillColor       = ws.bgColor
-    bgFillColorHover  = lerp(ws.bgColor, ws.bgColorHover, 0.5)
-    bgFillColorActive = s.textField.bgColorActive
-    textColor         = ws.textColor
-    textColorHover    = ws.textColor
-    textColorActive   = s.textField.textColorActive
-    cursorColor       = s.textField.cursorColor
-    selectionColor    = s.textField.selectionColor
+    bgCornerRadius    = ws.cornerRadius
+    bgFillColor       = ws.backgroundColor
+    bgFillColorHover  = lerp(ws.backgroundColor, ws.backgroundHoverColor, 0.5)
+    bgFillColorActive = ts.editBackgroundColor
+    textColor         = ws.foregroundColor
+    textColorHover    = ws.foregroundColor
+    textColorActive   = ts.editTextColor
+    cursorColor       = ts.cursorColor
+    selectionColor    = ts.selectionColor
 
     with scrollBarStyleNormal:
-      let c = s.textField.scrollBarColorNormal
+      let c = ts.scrollBarNormalColor
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
 
     with scrollBarStyleEdit:
-      let c = s.textField.scrollBarColorEdit
+      let c = ts.scrollBarEditColor
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
@@ -750,17 +750,17 @@ proc updateWidgetStyles(a) =
   a.theme.checkBoxStyle = koi.getDefaultCheckBoxStyle()
 
   with a.theme.checkBoxStyle:
-    cornerRadius          = gs.cornerRadius
-    fillColor             = ws.bgColor
-    fillColorHover        = ws.bgColorHover
-    fillColorDown         = gs.highlightColor
-    fillColorActive       = gs.highlightColor
+    cornerRadius          = ws.cornerRadius
+    fillColor             = ws.backgroundColor
+    fillColorHover        = ws.backgroundHoverColor
+    fillColorDown         = ws.backgroundActiveColor
+    fillColorActive       = ws.backgroundActiveColor
     icon.fontSize         = 12.0
-    icon.color            = ws.textColor
-    icon.colorHover       = ws.textColor
-    icon.colorDown        = ws.textColorActive
-    icon.colorActive      = ws.textColorActive
-    icon.colorActiveHover = ws.textColorActive
+    icon.color            = ws.foregroundColor
+    icon.colorHover       = ws.foregroundColor
+    icon.colorDown        = ws.foregroundActiveColor
+    icon.colorActive      = ws.foregroundActiveColor
+    icon.colorActiveHover = ws.foregroundActiveColor
     iconActive            = IconCheck
     iconInactive          = NoIcon
 
@@ -768,22 +768,22 @@ proc updateWidgetStyles(a) =
   a.theme.dialogStyle = koi.getDefaultDialogStyle()
 
   with a.theme.dialogStyle:
-    cornerRadius      = s.dialog.cornerRadius
-    backgroundColor   = s.dialog.backgroundColor
-    titleBarBgColor   = s.dialog.titleBarBgColor
-    titleBarTextColor = s.dialog.titleBarTextColor
+    cornerRadius      = ds.cornerRadius
+    backgroundColor   = ds.backgroundColor
+    titleBarBgColor   = ds.titleBackgroundColor
+    titleBarTextColor = ds.titleColor
 
-    outerBorderColor  = s.dialog.outerBorderColor
-    innerBorderColor  = s.dialog.innerBorderColor
-    outerBorderWidth  = s.dialog.outerBorderWidth
-    innerBorderWidth  = s.dialog.innerBorderWidth
+    outerBorderColor  = ds.outerBorderColor
+    innerBorderColor  = ds.innerBorderColor
+    outerBorderWidth  = ds.outerBorderWidth
+    innerBorderWidth  = ds.innerBorderWidth
 
     with shadow:
-      enabled = s.dialog.shadow
-      xOffset = s.dialog.shadowXOffset
-      yOffset = s.dialog.shadowYOffset
-      feather = s.dialog.shadowFeather
-      color   = s.dialog.shadowColor
+      enabled = ds.shadowEnabled
+      xOffset = ds.shadowXOffset
+      yOffset = ds.shadowYOffset
+      feather = ds.shadowFeather
+      color   = ds.shadowColor
 
   a.theme.aboutDialogStyle = a.theme.dialogStyle.deepCopy()
   a.theme.aboutDialogStyle.drawTitleBar = false
@@ -792,46 +792,46 @@ proc updateWidgetStyles(a) =
   a.theme.labelStyle = koi.getDefaultLabelStyle()
 
   with a.theme.labelStyle:
-    fontSize = 14
-    color = s.dialog.textColor
-    colorDisabled = s.dialog.textColor.lerp(s.dialog.backgroundColor, 0.7)
-    align = haLeft
+    fontSize      = 14
+    color         = ds.labelColor
+    colorDisabled = ds.labelColor.lerp(ds.backgroundColor, 0.7)
+    align         = haLeft
 
   # Warning label
   a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
 
   with a.theme.warningLabelStyle:
-    color = s.dialog.warningTextColor
+    color     = ds.warningColor
     multiLine = true
 
   # Level dropDown
-  alias(lds, s.levelDropDown)
+  alias(lds, s.level.levelDropDown)
 
   a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
 
   with a.theme.levelDropDownStyle:
-    buttonCornerRadius       = gs.cornerRadius
+    buttonCornerRadius       = ws.cornerRadius
     buttonFillColor          = lds.buttonColor
-    buttonFillColorHover     = lds.buttonColorHover
+    buttonFillColorHover     = lds.buttonHoverColor
     buttonFillColorDown      = lds.buttonColor
     buttonFillColorDisabled  = lds.buttonColor
     label.fontSize           = 15.0
-    label.color              = lds.textColor
-    label.colorHover         = lds.textColor
-    label.colorDown          = lds.textColor
-    label.colorActive        = lds.textColor
-    label.colorDisabled      = lds.textColor
+    label.color              = lds.buttonLabelColor
+    label.colorHover         = lds.buttonLabelColor
+    label.colorDown          = lds.buttonLabelColor
+    label.colorActive        = lds.buttonLabelColor
+    label.colorDisabled      = lds.buttonLabelColor
     label.align              = haCenter
     item.align               = haLeft
     item.color               = lds.itemColor
-    item.colorHover          = lds.itemColorHover
-    itemListCornerRadius     = gs.cornerRadius
+    item.colorHover          = lds.itemHoverColor
+    itemListCornerRadius     = ws.cornerRadius
     itemListPadHoriz         = 10.0
-    itemListFillColor        = lds.itemListColor
-    itemBackgroundColorHover = gs.highlightColor
+    itemListFillColor        = lds.itemListBackgroundColor
+    itemBackgroundColorHover = ws.backgroundActiveColor
 
   # About button
-  alias(abs, s.aboutButton)
+  alias(abs, s.ui.aboutButton)
 
   a.theme.aboutButtonStyle = koi.getDefaultButtonStyle()
 
@@ -839,9 +839,9 @@ proc updateWidgetStyles(a) =
     labelOnly        = true
     label.fontSize   = 20.0
     label.padHoriz   = 0
-    label.color      = abs.color
-    label.colorHover = abs.colorHover
-    label.colorDown  = abs.colorActive
+    label.color      = abs.labelColor
+    label.colorHover = abs.labelHoverColor
+    label.colorDown  = abs.labelDownColor
 
   # Note text area
   a.theme.noteTextAreaStyle = koi.getDefaultTextAreaStyle()
@@ -856,10 +856,10 @@ proc updateWidgetStyles(a) =
     textFontSize        = 15.0
     textFontFace        = "sans-bold"
     textLineHeight      = 1.4
-    textColorDisabled   = s.notesPane.textColor
+    textColorDisabled   = s.pane.notes.textColor
 
     with scrollBarStyleNormal:
-      let c = s.notesPane.scrollBarColor
+      let c = s.pane.notes.scrollBarColor
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
@@ -1359,7 +1359,7 @@ proc switchTheme(themeIndex: Natural; a) =
   loadTheme(theme, a)
   updateWidgetStyles(a)
 
-  let bgImageName = a.theme.style.general.backgroundImage
+  let bgImageName = a.theme.style.ui.window.backgroundImage
 
   proc tryLoadImage(path: string; a): Option[Paint] =
     var imgPath = path / bgImageName
@@ -1387,7 +1387,7 @@ proc switchTheme(themeIndex: Natural; a) =
   a.ui.drawLevelParams.initDrawLevelParams(a.doc.levelStyle, a.vg,
                                            koi.getPxRatio())
 
-  a.win.setStyle(a.theme.style.window)
+  a.win.setStyle(a.theme.style.ui.window)
 
   a.theme.currThemeIndex = themeIndex
 
@@ -1793,7 +1793,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   let h = DlgItemHeight
 
   if al.logoImage == NoImage or al.updateLogoImage:
-    colorImage(al.logo, ts.aboutDialog.logoColor)
+    colorImage(al.logo, ts.ui.aboutDialog.logoColor)
     if al.logoImage == NoImage:
       al.logoImage = createImage(al.logo)
     else:
@@ -1803,7 +1803,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   let scale = DlgWidth / al.logo.width
 
   al.logoPaint = createPattern(a.vg, al.logoImage,
-                               alpha=ts.aboutDialog.logoColor.a,
+                               alpha=ts.ui.aboutDialog.logoColor.a,
                                xoffs=dialogX, yoffs=dialogY, scale=scale)
 
 
@@ -3067,7 +3067,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   y += 108
 
-  let NumIndexColors = ls.noteIndexBgColor.len
+  let NumIndexColors = ls.note.indexBackgroundColor.len
   const IconsPerRow = 10
 
   case dlg.kind:
@@ -3075,12 +3075,12 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
     koi.radioButtons(
       x + LabelWidth, y, 28, 28,
-      labels = newSeq[string](ls.noteIndexBgColor.len),
+      labels = newSeq[string](ls.note.indexBackgroundColor.len),
       dlg.indexColor,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc = colorRadioButtonDrawProc(ls.noteIndexBgColor.toSeq,
-                                          ls.cursorColor).some
+      drawProc = colorRadioButtonDrawProc(ls.note.indexBackgroundColor.toSeq,
+                                          ls.general.cursorColor).some
     )
 
   of akCustomId:
@@ -3264,17 +3264,17 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   y += 108
 
-  let NumIndexColors = ls.noteIndexBgColor.len
+  let NumIndexColors = ls.note.indexBackgroundColor.len
 
   koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, 28, 28,
-    labels = newSeq[string](ls.labelColor.len),
+    labels = newSeq[string](ls.label.color.len),
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.labelColor.toSeq,
-                                        ls.cursorColor).some,
+    drawProc = colorRadioButtonDrawProc(ls.label.color.toSeq,
+                                        ls.general.cursorColor).some,
     style = a.theme.radioButtonStyle
   )
 
@@ -3732,12 +3732,12 @@ proc startDrawWallsSpecialAction(a) =
 # {{{ prevFloorColorAction()
 proc prevFloorColorAction(a) =
   if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
-  else: a.ui.currFloorColor = a.doc.levelStyle.floorColor.high.byte
+  else: a.ui.currFloorColor = a.doc.levelStyle.floorColor.color.high.byte
 
 # }}}
 # {{{ nextFloorColorAction()
 proc nextFloorColorAction(a) =
-  if a.ui.currFloorColor < a.doc.levelStyle.floorColor.high.byte:
+  if a.ui.currFloorColor < a.doc.levelStyle.floorColor.color.high.byte:
     inc(a.ui.currFloorColor)
   else: a.ui.currFloorColor = 0
 
@@ -3753,7 +3753,7 @@ proc drawEmptyMap(a) =
   let ls = a.doc.levelStyle
 
   vg.setFont(size=22)
-  vg.fillColor(ls.drawColor)
+  vg.fillColor(ls.general.foregroundColor)
   vg.textAlign(haCenter, vaMiddle)
   var y = drawAreaHeight(a) * 0.5
   discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
@@ -3800,12 +3800,12 @@ proc drawNoteTooltip(x, y: float, note: Annotation, a) =
 
     vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
 
-    vg.fillColor(a.theme.style.level.noteTooltipBgColor)
+    vg.fillColor(a.theme.style.level.note.tooltipBackgroundColor)
     vg.beginPath()
     vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
     vg.fill()
 
-    vg.fillColor(a.theme.style.level.noteTooltipTextColor)
+    vg.fillColor(a.theme.style.level.note.tooltipColor)
     vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
 
 # }}}
@@ -3821,7 +3821,7 @@ proc drawModeAndOptionIndicators(a) =
 
   vg.save()
 
-  vg.fillColor(ls.coordsHighlightColor)
+  vg.fillColor(ls.general.coordinatesHighlightColor)
 
   if a.opts.wasdMode:
     vg.setFont(15)
@@ -3837,7 +3837,7 @@ proc drawModeAndOptionIndicators(a) =
 proc drawStatusBar(y: float, winWidth: float; a) =
   alias(vg, a.vg)
 
-  let s = a.theme.style.statusBar
+  let s = a.theme.style.ui.statusBar
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
@@ -3863,7 +3863,7 @@ proc drawStatusBar(y: float, winWidth: float; a) =
       cursorPos = fmt"({col}, {row})"
       tw = vg.textWidth(cursorPos)
 
-    vg.fillColor(s.coordsColor)
+    vg.fillColor(s.coordinatesColor)
     vg.textAlign(haLeft, vaMiddle)
     discard vg.text(winWidth - tw - 7, ty, cursorPos)
 
@@ -3893,7 +3893,7 @@ proc drawStatusBar(y: float, winWidth: float; a) =
 
       vg.beginPath()
       vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
-      vg.fillColor(s.commandBgColor)
+      vg.fillColor(s.commandBackgroundColor)
       vg.fill()
 
       vg.fillColor(s.commandColor)
@@ -4965,7 +4965,7 @@ proc renderLevel(a) =
 
 # {{{ specialWallDrawProc()
 proc specialWallDrawProc(ls: LevelStyle,
-                         ts: ToolbarPaneStyle,
+                         ts: PaneToolbarStyle,
                          dp: DrawLevelParams): RadioButtonsDrawProc =
 
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
@@ -4973,18 +4973,19 @@ proc specialWallDrawProc(ls: LevelStyle,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
     var col = case state
-              of wsActive:      ls.cursorColor
-              of wsHover:       ts.buttonBgColorHover
-              of wsActiveHover: ls.cursorColor
-              of wsDown:        ls.cursorColor
-              else:             ts.buttonBgColor
+              of wsActive:      ls.general.cursorColor
+              of wsHover:       ts.buttonHoverColor
+              of wsActiveHover: ls.general.cursorColor
+              of wsDown:        ls.general.cursorColor
+              else:             ts.buttonHoverColor
 
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
-    let savedFloorColor = ls.floorColor[0]
+    let savedFloorColor = ls.floorColor.color[0]
     let savedBackgroundImage = dp.backgroundImage
 
-    ls.floorColor[0] = lerp(ls.backgroundColor, col, col.a).withAlpha(1.0)
+    ls.floorColor.color[0] = lerp(ls.general.backgroundColor, col, col.a)
+                               .withAlpha(1.0)
     dp.backgroundImage = Paint.none
 
     const Pad = 5
@@ -5043,7 +5044,7 @@ proc specialWallDrawProc(ls: LevelStyle,
     else: discard
 
     # ...aaaaand restore it!
-    ls.floorColor[0] = savedFloorColor
+    ls.floorColor.color[0] = savedFloorColor
     dp.backgroundImage = savedBackgroundImage
 
 # }}}
@@ -5052,7 +5053,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
   alias(ui, a.ui)
 
   let ls = a.doc.levelStyle
-  let ts = a.theme.style.toolbarPane
+  let ts = a.theme.style.pane.toolbar
 
   var
     toolItemsPerColumn = 12
@@ -5088,10 +5089,10 @@ proc renderToolsPane(x, y, w, h: float; a) =
   )
 
   # Draw floor colors
-  var floorColors = newSeqOfCap[Color](ls.floorColor.len)
+  var floorColors = newSeqOfCap[Color](ls.floorColor.color.len)
 
-  for fc in 0..ls.floorColor.high:
-    let c = calcBlendedFloorColor(fc, ls.transparentFloor, ls)
+  for fc in 0..ls.floorColor.color.high:
+    let c = calcBlendedFloorColor(fc, ls.floorColor.transparentFloor, ls)
     floorColors.add(c)
 
   koi.radioButtons(
@@ -5099,14 +5100,15 @@ proc renderToolsPane(x, y, w, h: float; a) =
     y = colorY,
     w = 30,
     h = 30,
-    labels = newSeq[string](ls.floorColor.len),
+    labels = newSeq[string](ls.floorColor.color.len),
     ui.currFloorColor,
     tooltips = @[],
 
     layout = RadioButtonsLayout(kind: rblGridVert,
                                 itemsPerColumn: colorItemsPerColum),
 
-    drawProc = colorRadioButtonDrawProc(floorColors, ls.cursorColor).some
+    drawProc = colorRadioButtonDrawProc(floorColors,
+                                        ls.general.cursorColor).some
   )
 
 # }}}
@@ -5114,7 +5116,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
 proc renderNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
 
-  let s = a.theme.style.notesPane
+  let s = a.theme.style.pane.notes
 
   let
     l = currLevel(a)
@@ -5130,7 +5132,7 @@ proc renderNotesPane(x, y, w, h: float; a) =
     case note.kind
     of akIndexed:
       drawIndexedNote(x, y-12, note.index, 36,
-                      bgColor=s.indexBgColor[note.indexColor],
+                      bgColor=s.indexBackgroundColor[note.indexColor],
                       fgColor=s.indexColor, vg)
 
     of akCustomId:
@@ -5178,6 +5180,7 @@ with ThemeEditorAutoLayoutParams:
   leftPad = 14.0
   rightPad = 16.0
 
+#[
 # {{{ renderThemeEditorProps()
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
@@ -5794,8 +5797,8 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
     let theme = a.theme.themeNames[a.theme.currThemeIndex]
     let themePath = themePath(theme, a)
 
-    let theme2 = convertTheme(a.theme.style)
-    saveTheme2(theme2, themePath)
+#    let theme2 = convertTheme(a.theme.style)
+    saveTheme(theme, themePath)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):
@@ -5827,7 +5830,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   a.win.setStyle(a.theme.style.window)
 
 # }}}
-
+]#
 # }}}
 
 # {{{ showSplash()
@@ -5921,7 +5924,7 @@ proc renderUI(a) =
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
   else:
-    vg.fillColor(a.theme.style.general.backgroundColor)
+    vg.fillColor(a.theme.style.ui.window.backgroundColor)
 
   vg.fill()
 
@@ -6040,7 +6043,8 @@ proc renderUI(a) =
       w = ThemePaneWidth
       h = drawAreaHeight(a)
 
-    renderThemeEditorPane(x, y, w, h, a)
+  # TODO(JN)
+#    renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
   if dlg.aboutDialog.isOpen:
@@ -6185,7 +6189,7 @@ proc renderFrameSplash(a) =
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
 
   if s.logoImage == NoImage or s.updateLogoImage:
-    colorImage(s.logo, ts.splashImage.logoColor)
+    colorImage(s.logo, ts.ui.splashImage.logoColor)
     if s.logoImage == NoImage:
       s.logoImage = createImage(s.logo)
     else:
@@ -6193,7 +6197,7 @@ proc renderFrameSplash(a) =
     s.updateLogoImage = false
 
   if s.outlineImage == NoImage or s.updateOutlineImage:
-    colorImage(s.outline, ts.splashImage.outlineColor)
+    colorImage(s.outline, ts.ui.splashImage.outlineColor)
     if s.outlineImage == NoImage:
       s.outlineImage = createImage(s.outline)
     else:
@@ -6216,7 +6220,8 @@ proc renderFrameSplash(a) =
   s.outlinePaint = createPattern(vg, s.outlineImage, scale=scale)
 
   s.shadowPaint = createPattern(vg, s.shadowImage,
-                                alpha=ts.splashImage.shadowAlpha, scale=scale)
+                                alpha=ts.ui.splashImage.shadowAlpha,
+                                scale=scale)
 
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, winHeight.float)

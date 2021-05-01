@@ -11,7 +11,7 @@ import cfghelper
 import fieldlimits
 import macros
 import strutils
-import theme
+#import theme
 
 
 proc `$`(c: Color): string =
@@ -25,7 +25,7 @@ proc `$`(c: Color): string =
 
 
 proc styleClassName(name: string): string =
-  name.capitalizeAscii() & "Style2"
+  name.capitalizeAscii() & "Style"
 
 proc mkPublicName(name: string): NimNode =
   nnkPostfix.newTree(
@@ -153,7 +153,7 @@ proc handleProperty(
   result = (propName, propType, parseThemeFrag, writeThemeFrag)
 
 
-macro defineTheme2(arg: untyped): untyped =
+macro defineTheme(arg: untyped): untyped =
   arg.expectKind nnkStmtList
 
   var typeSection = nnkTypeSection.newTree
@@ -228,7 +228,7 @@ macro defineTheme2(arg: untyped): untyped =
     )
 
   typeSection.add(
-    mkRefObjectTypeDef("ThemeStyle2", themeStyleRecList)
+    mkRefObjectTypeDef("ThemeStyle", themeStyleRecList)
   )
 
   let config = newIdentNode("config")
@@ -237,11 +237,11 @@ macro defineTheme2(arg: untyped): untyped =
   result = quote do:
     `typeSection`
 
-    proc parseTheme(`config`: Config): ThemeStyle2 =
-      result = new ThemeStyle2
+    proc parseTheme(`config`: Config): ThemeStyle =
+      result = new ThemeStyle
       `parseThemeBody`
 
-    proc writeTheme(`theme`: ThemeStyle2): Config =
+    proc writeTheme(`theme`: ThemeStyle): Config =
       result = newConfig()
       `writeThemeBody`
 
@@ -251,7 +251,7 @@ macro defineTheme2(arg: untyped): untyped =
 include themedef2
 
 
-#[
+
 const
   WidgetCornerRadiusLimits*  = floatLimits(min =   0.0, max = 12.0)
 
@@ -267,9 +267,9 @@ const
 
   LevelOutlineWidthLimits*   = floatLimits(min =   0.0, max = 1.0)
   LevelShadowWidthLimits*    = floatLimits(min =   0.0, max = 1.0)
-]#
 
-proc loadTheme2*(filename: string): ThemeStyle2 =
+
+proc loadTheme*(filename: string): ThemeStyle =
   var cfg = loadConfig(filename)
   result = parseTheme(cfg)
 
@@ -299,11 +299,12 @@ proc loadTheme2*(filename: string): ThemeStyle2 =
     outerWidthFactor = outerWidthFactor.limit(LevelShadowWidthLimits)
 
 
-proc saveTheme2*(theme: ThemeStyle2, filename: string) =
+proc saveTheme*(theme: ThemeStyle, filename: string) =
   let config = writeTheme(theme)
   config.writeConfig(filename)
 
 
+#[
 proc convertTheme*(theme: ThemeStyle): ThemeStyle2 =
   var t = new ThemeStyle2
 
@@ -480,3 +481,4 @@ proc convertTheme*(theme: ThemeStyle): ThemeStyle2 =
   t.pane.toolbar.buttonHoverColor = theme.toolbarPane.buttonBgColorHover
 
   result = t
+]#

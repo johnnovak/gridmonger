@@ -1,7 +1,8 @@
-defineTheme2:
+defineTheme:
   ui:
     window:
       backgroundColor:              Color  # general.backgroundColor
+      backgroundImage:              string
       titleBackgroundColor:         Color  # window.backgroundColor
       titleBackgroundInactiveColor: Color  # window.bgColorUnfocused
       titleColor:                   Color  # window.textColor
@@ -35,8 +36,8 @@ defineTheme2:
       backgroundActiveColor:        Color  # general.highlightColor
       backgroundDisabledColor:      Color  # widget.bgColorDisabled
       foregroundColor:              Color  # widget.textColor
-      foregroundActive:             Color  # widget.textColorActive
-      foregroundDisabled:           Color  # widget.textColorDisabled
+      foregroundActiveColor:        Color  # widget.textColorActive
+      foregroundDisabledColor:      Color  # widget.textColorDisabled
 
     textField:
       editBackgroundColor:          Color  # textField.bgColorActive
@@ -88,10 +89,12 @@ defineTheme2:
       color:                        Color  # level.bgHatchColor
       width:                        float  # level.bgHatchStrokeWidth
       spacingFactor:                float  # level.bgHatchSpacingFactor
-      backgroundGridStyle:          GridStyle # level.gridStyleBackground
-      backgroundGridColor:          Color  # level.gridColorBackground
-      floorGridStyle:               GridStyle # level.gridStyleFloor
-      floorGridColor:               Color  # level.gridColorFloor
+
+    grid:
+      backgroundStyle:              GridStyle # level.gridStyleBackground
+      backgroundGridColor:          Color     # level.gridColorBackground
+      floorStyle:                   GridStyle # level.gridStyleFloor
+      floorGridColor:               Color     # level.gridColorFloor
 
     outline:
       style:                        OutlineStyle # level.outlineStyle

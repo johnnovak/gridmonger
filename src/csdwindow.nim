@@ -8,7 +8,7 @@ import with
 
 import common
 import utils
-import theme
+import theme2
 
 
 const
@@ -29,7 +29,7 @@ const
 type
   CSDWindow* = ref object
     modified*: bool
-    style*:    WindowStyle
+    style*:    UiWindowStyle
 
     w: Window  # the wrapper GLFW window
 
@@ -61,23 +61,23 @@ using win: CSDWindow
 
 # {{{ Default style
 # TODO will be removed
-var DefaultCSDWindowStyle = new WindowStyle
+var DefaultCSDWindowStyle = new UiWindowStyle
 
 with DefaultCSDWindowStyle:
-  backgroundColor    = gray(0.2)
-  bgColorUnfocused   = gray(0.1)
-  textColor          = gray(1.0, 0.7)
-  textColorUnfocused = gray(1.0, 0.4)
-  buttonColor        = gray(1.0, 0.45)
-  buttonColorHover   = gray(1.0, 0.7)
-  buttonColorDown    = gray(1.0, 0.9)
-  modifiedFlagColor  = gray(1.0, 0.45)
+  titleBackgroundColor         = gray(0.2)
+  titleBackgroundInactiveColor = gray(0.1)
+  titleColor                   = gray(1.0, 0.7)
+  titleInactiveColor           = gray(1.0, 0.4)
+  buttonColor                  = gray(1.0, 0.45)
+  buttonHoverColor             = gray(1.0, 0.7)
+  buttonDownColor              = gray(1.0, 0.9)
+  modifiedFlagColor            = gray(1.0, 0.45)
 
-proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
+proc getDefaultCSDWindowStyle*(): UiWindowStyle = DefaultCSDWindowStyle.deepCopy()
 
 # }}}
 # # {{{ setStyle()
-proc setStyle*(win; s: WindowStyle) =
+proc setStyle*(win; s: UiWindowStyle) =
   win.style = s
 
   alias(bs, win.buttonStyle)
@@ -86,8 +86,8 @@ proc setStyle*(win; s: WindowStyle) =
   bs.labelOnly        = true
   bs.label.padHoriz   = 0
   bs.label.color      = s.buttonColor
-  bs.label.colorHover = s.buttonColorHover
-  bs.label.colorDown  = s.buttonColorDown
+  bs.label.colorHover = s.buttonHoverColor
+  bs.label.colorDown  = s.buttonDownColor
 
 # }}}
 # {{{ newCSDWindow*()
@@ -221,9 +221,9 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   alias(s, win.style)
 
   let (bgColor, textColor) = if win.w.focused:
-    (s.backgroundColor, s.textColor)
+    (s.titleBackgroundColor, s.titleColor)
   else:
-    (s.bgColorUnfocused, s.textColorUnfocused)
+    (s.titleBackgroundInactiveColor, s.titleInactiveColor)
 
   let
     bw = TitleBarButtonWidth
