@@ -3,6 +3,8 @@ BUGS
 
 TODO
 
+  - log memory access crashes? (or division by zero)
+
 
 v0.9
 

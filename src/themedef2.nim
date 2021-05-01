@@ -71,7 +71,7 @@ defineTheme2:
       backgroundColor:              Color  # level.backgroundColor
       foregroundColor:              Color  # level.drawColor
       foregroundLightColor:         Color  # level.lightDrawColor
-      lineWidthColor:               Color  # ts.level.lineWidth
+      lineWidth:                    LineWidth # level.lineWidth
       coordinatesColor:             Color  # level.coordsColor
       coordinatesHighlightColor:    Color  # level.coordsHighlightColor
       cursorColor:                  Color  # level.cursorColor
@@ -85,32 +85,32 @@ defineTheme2:
 
     backgroundHatch:
       enabled:                      bool   # level.bgHatch
-      hatchColor:                   Color  # level.bgHatchColor
-      hatchStrokeWidth:             float  # level.bgHatchStrokeWidth
-      hatchSpacing:                 float  # level.bgHatchSpacingFactor
-      backgroundGridStyle:          string # level.gridStyleBackground
+      color:                        Color  # level.bgHatchColor
+      width:                        float  # level.bgHatchStrokeWidth
+      spacingFactor:                float  # level.bgHatchSpacingFactor
+      backgroundGridStyle:          GridStyle # level.gridStyleBackground
       backgroundGridColor:          Color  # level.gridColorBackground
-      floorGridStyle:               string # level.gridStyleFloor
+      floorGridStyle:               GridStyle # level.gridStyleFloor
       floorGridColor:               Color  # level.gridColorFloor
 
     outline:
-      style:                        string # level.outlineStyle
-      fillStyle:                    string # level.outlineFillStyle
+      style:                        OutlineStyle # level.outlineStyle
+      fillStyle:                    OutlineFillStyle # level.outlineFillStyle
       color:                        Color  # level.outlineColor
-      width:                        float  # level.outlineWidthFactor
+      widthFactor:                  float  # level.outlineWidthFactor
       overscanEnabled:              bool   # level.outlineOverscan
 
     shadow:
-      innerShadowColor:             Color  # level.innerShadowColor
-      innerShadowWidth:             float  # level.innerShadowWidthFactor
-      outerShadowColor:             Color  # level.outerShadowColor
-      outerShadowWidth:             float  # level.outerShadowWidthFactor
+      innerColor:                   Color  # level.innerShadowColor
+      innerWidthFactor:             float  # level.innerShadowWidthFactor
+      outerColor:                   Color  # level.outerShadowColor
+      outerWidthFactor:             float  # level.outerShadowWidthFactor
 
-    floorColors:
-      transparentColor:             Color  # level.transparentFloor
+    floorColor:
+      transparentFloor:             bool   # level.transparentFloor
       color:                        array[10, Color]  # level.floorColor[0]
 
-    notes:
+    note:
       markerColor:                  Color  # level.noteMarkerColor
       commentColor:                 Color  # level.noteCommentColor
       indexBackgroundColor:         array[4, Color]  # level.noteIndexBgColor[0]
@@ -118,7 +118,7 @@ defineTheme2:
       tooltipBackgroundColor:       Color  # level.noteTooltipBgColor
       tooltipColor:                 Color  # level.noteTooltipTextColor
 
-    labels:
+    label:
       color:                        array[4, Color] # level.labelColor[0]
 
     levelDropDown:
@@ -129,14 +129,14 @@ defineTheme2:
       itemColor:                    Color  # leveldropDown.itemColor
       itemHoverColor:               Color  # leveldropDown.itemColorHover
 
-  panes:
-    notesPane:
+  pane:
+    notes:
       textColor:                    Color  # notesPane.textColor
       indexBackgroundColor:         array[4, Color] # notesPane.indexBgColor[0]
       indexColor:                   Color  # notesPane.indexColor
       scrollBarColor:               Color  # notesPane.scrollBarColor
 
-    toolbarPane:
+    toolbar:
       buttonColor:                  Color  # toolbarPane.buttonBgColor
       buttonHoverColor:             Color  # toolbarPane.buttonBgColorHover
 

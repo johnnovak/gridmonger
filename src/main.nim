@@ -36,6 +36,7 @@ import persistence
 import rect
 import selection
 import theme
+import theme2
 import unicode
 import utils
 
@@ -5792,7 +5793,9 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
     let theme = a.theme.themeNames[a.theme.currThemeIndex]
     let themePath = themePath(theme, a)
-    saveTheme(a.theme.style, themePath)
+
+    let theme2 = convertTheme(a.theme.style)
+    saveTheme2(theme2, themePath)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):
