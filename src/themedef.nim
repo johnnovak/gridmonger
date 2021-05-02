@@ -1,144 +1,145 @@
 defineTheme:
-  general:
-    cornerRadius:       float
-    backgroundColor:    Color
-    backgroundImage:    string
-    highlightColor:     Color
+  ui:
+    window:
+      backgroundColor:              Color  # general.backgroundColor
+      backgroundImage:              string
+      titleBackgroundColor:         Color  # window.backgroundColor
+      titleBackgroundInactiveColor: Color  # window.bgColorUnfocused
+      titleColor:                   Color  # window.textColor
+      titleInactiveColor:           Color  # window.textColorUnfocused
+      modifiedFlagColor:            Color  # window.modifiedFlagColor
+      buttonColor:                  Color  # window.buttonColor
+      buttonHoverColor:             Color  # window.buttonColorHover
+      buttonDownColor:              Color  # window.buttonColorDown
 
-  widget:
-    bgColor:            Color
-    bgColorHover:       Color
-    bgColorDisabled:    Color
-    textColor:          Color
-    textColorActive:    Color
-    textColorDisabled:  Color
+    dialog:
+      cornerRadius:                 float  # dialog.cornerRadius
+      titleBackgroundColor:         Color  # dialog.titleBarBgColor
+      titleColor:                   Color  # dialog.titleBarTextColor
+      backgroundColor:              Color  # dialog.backgroundColor
+      labelColor:                   Color  # dialog.textColor
+      warningColor:                 Color  # dialog.warningTextColor
+      outerBorderColor:             Color  # dialog.outerBorderColor
+      outerBorderWidth:             float  # dialog.outerBorderWidth
+      innerBorderColor:             Color  # dialog.innerBorderColor
+      innerBorderWidth:             float  # dialog.innerBorderWidth
+      shadowEnabled:                bool   # dialog.shadow
+      shadowXOffset:                float  # dialog.shadowXOffset
+      shadowYOffset:                float  # dialog.shadowYOffset
+      shadowFeather:                float  # dialog.shadowFeather
+      shadowColor:                  Color  # dialog.shadowColor
 
-  textField:
-    bgColorActive:        Color
-    textColorActive:      Color
-    cursorColor:          Color
-    selectionColor:       Color
-    scrollBarColorNormal: Color
-    scrollBarColorEdit:   Color
+    widget:
+      cornerRadius:                 float  # general.cornerRadius
+      backgroundColor:              Color  # widget.bgColor
+      backgroundHoverColor:         Color  # widget.bgColorHover
+      backgroundActiveColor:        Color  # general.highlightColor
+      backgroundDisabledColor:      Color  # widget.bgColorDisabled
+      foregroundColor:              Color  # widget.textColor
+      foregroundActiveColor:        Color  # widget.textColorActive
+      foregroundDisabledColor:      Color  # widget.textColorDisabled
 
-  dialog:
-    cornerRadius:       float
-    titleBarBgColor:    Color
-    titleBarTextColor:  Color
-    backgroundColor:    Color
-    textColor:          Color
-    warningTextColor:   Color
-    outerBorderColor:   Color
-    innerBorderColor:   Color
-    outerBorderWidth:   float
-    innerBorderWidth:   float
+    textField:
+      editBackgroundColor:          Color  # textField.bgColorActive
+      editTextColor:                Color  # textField.textColorActive
+      cursorColor:                  Color  # textField.cursorColor
+      selectionColor:               Color  # textField.selectionColor
+      scrollBarNormalColor:         Color  # textField.scrollBarColorNormal
+      scrollBarEditColor:           Color  # textField.scrollBarColorEdit
 
-    shadow:             bool
-    shadowXOffset:      float
-    shadowYOffset:      float
-    shadowFeather:      float
-    shadowColor:        Color
+    statusBar:
+      backgroundColor:              Color  # statusBar.backgroundColor
+      textColor:                    Color  # statusBar.textColor
+      commandBackgroundColor:       Color  # statusBar.commandBgColor
+      commandColor:                 Color  # statusBar.commandColor
+      coordinatesColor:             Color  # statusBar.coordsColor
 
-  window:
-    backgroundColor:    Color
-    bgColorUnfocused:   Color
-    textColor:          Color
-    textColorUnfocused: Color
-    buttonColor:        Color
-    buttonColorHover:   Color
-    buttonColorDown:    Color
-    modifiedFlagColor:  Color
+    aboutButton:
+      labelColor:                   Color  # aboutButton.color
+      labelHoverColor:              Color  # aboutButton.colorHover
+      labelDownColor:               Color  # aboutButton.colorActive
 
-  statusBar:
-    backgroundColor:    Color
-    textColor:          Color
-    commandBgColor:     Color
-    commandColor:       Color
-    coordsColor:        Color
+    aboutDialog:
+      logoColor:                    Color  # aboutDialog.logoColor
 
-  levelDropdown:
-    buttonColor:        Color
-    buttonColorHover:   Color
-    textColor:          Color
-    itemListColor:      Color
-    itemColor:          Color
-    itemColorHover:     Color
-
-  aboutButton:
-    color:              Color
-    colorHover:         Color
-    colorActive:        Color
-
-  aboutDialog:
-    logoColor:          Color
-
-  splashImage:
-    logoColor:          Color
-    outlineColor:       Color
-    shadowAlpha:        float
+    splashImage:
+      logoColor:                    Color  # splashImage.logoColor
+      outlineColor:                 Color  # splashImage.outlineColor
+      shadowAlpha:                  float  # splashImage.shadowAlpha
 
   level:
-    backgroundColor:        Color
-    drawColor:              Color
-    lightDrawColor:         Color
-    transparentFloor:       bool
-    floorcolor:             array[10, Color]
-    lineWidth:              LineWidth
+    general:
+      backgroundColor:              Color  # level.backgroundColor
+      foregroundColor:              Color  # level.drawColor
+      foregroundLightColor:         Color  # level.lightDrawColor
+      lineWidth:                    LineWidth # level.lineWidth
+      coordinatesColor:             Color  # level.coordsColor
+      coordinatesHighlightColor:    Color  # level.coordsHighlightColor
+      cursorColor:                  Color  # level.cursorColor
+      cursorGuidesColor:            Color  # level.cursorGuideColor
+      selectionColor:               Color  # level.selectionColor
+      pastePreviewColor:            Color  # level.pastePreviewColor
+      linkMarkerColor:              Color  # level.linkMarkerColor
+      trailColor:                   Color  # level.trailColor
+      regionBorderColor:            Color  # level.regionBorderColor
+      regionBorderEmptyColor:       Color  # level.regionBorderEmptyColor
 
-    bgHatch:                bool
-    bgHatchColor:           Color
-    bgHatchStrokeWidth:     float
-    bgHatchSpacingFactor:   float
+    backgroundHatch:
+      enabled:                      bool   # level.bgHatch
+      color:                        Color  # level.bgHatchColor
+      width:                        float  # level.bgHatchStrokeWidth
+      spacingFactor:                float  # level.bgHatchSpacingFactor
 
-    coordsColor:            Color
-    coordsHighlightColor:   Color
+    grid:
+      backgroundStyle:              GridStyle # level.gridStyleBackground
+      backgroundGridColor:          Color     # level.gridColorBackground
+      floorStyle:                   GridStyle # level.gridStyleFloor
+      floorGridColor:               Color     # level.gridColorFloor
 
-    cursorColor:            Color
-    cursorGuideColor:       Color
+    outline:
+      style:                        OutlineStyle # level.outlineStyle
+      fillStyle:                    OutlineFillStyle # level.outlineFillStyle
+      color:                        Color  # level.outlineColor
+      widthFactor:                  float  # level.outlineWidthFactor
+      overscanEnabled:              bool   # level.outlineOverscan
 
-    gridStyleBackground:    GridStyle
-    gridStyleFloor:         GridStyle
-    gridColorBackground:    Color
-    gridColorFloor:         Color
+    shadow:
+      innerColor:                   Color  # level.innerShadowColor
+      innerWidthFactor:             float  # level.innerShadowWidthFactor
+      outerColor:                   Color  # level.outerShadowColor
+      outerWidthFactor:             float  # level.outerShadowWidthFactor
 
-    outlineStyle:           OutlineStyle
-    outlineFillStyle:       OutlineFillStyle
-    outlineOverscan:        bool
-    outlineColor:           Color
-    outlineWidthFactor:     float
+    floorColor:
+      transparentFloor:             bool   # level.transparentFloor
+      color:                        array[10, Color]  # level.floorColor[0]
 
-    innerShadowColor:       Color
-    innerShadowWidthFactor: float
-    outerShadowColor:       Color
-    outerShadowWidthFactor: float
+    note:
+      markerColor:                  Color  # level.noteMarkerColor
+      commentColor:                 Color  # level.noteCommentColor
+      indexBackgroundColor:         array[4, Color]  # level.noteIndexBgColor[0]
+      indexColor:                   Color  # level.noteIndexColor
+      tooltipBackgroundColor:       Color  # level.noteTooltipBgColor
+      tooltipColor:                 Color  # level.noteTooltipTextColor
 
-    pastePreviewColor:      Color
-    selectionColor:         Color
+    label:
+      color:                        array[4, Color] # level.labelColor[0]
 
-    noteMarkerColor:        Color
-    noteCommentColor:       Color
-    noteIndexColor:         Color
-    noteIndexBgColor:       array[4, Color]
+    levelDropDown:
+      buttonColor:                  Color  # leveldropDown.buttonColor
+      buttonHoverColor:             Color  # leveldropDown.buttonColorHover
+      buttonLabelColor:             Color  # leveldropDown.textColor
+      itemListBackgroundColor:      Color  # leveldropDown.itemListColor
+      itemColor:                    Color  # leveldropDown.itemColor
+      itemHoverColor:               Color  # leveldropDown.itemColorHover
 
-    noteTooltipBgColor:     Color
-    noteTooltipTextColor:   Color
+  pane:
+    notes:
+      textColor:                    Color  # notesPane.textColor
+      indexBackgroundColor:         array[4, Color] # notesPane.indexBgColor[0]
+      indexColor:                   Color  # notesPane.indexColor
+      scrollBarColor:               Color  # notesPane.scrollBarColor
 
-    labelColor:             array[4, Color]
-
-    linkMarkerColor:        Color
-
-    trailColor:             Color
-
-    regionBorderColor:      Color
-    regionBorderEmptyColor: Color
-
-  notesPane:
-    textColor:          Color
-    indexColor:         Color
-    indexBgColor:       array[4, Color]
-    scrollBarColor:     Color
-
-  toolbarPane:
-    buttonBgColor:      Color
-    buttonBgColorHover: Color
+    toolbar:
+      buttonColor:                  Color  # toolbarPane.buttonBgColor
+      buttonHoverColor:             Color  # toolbarPane.buttonBgColorHover
 

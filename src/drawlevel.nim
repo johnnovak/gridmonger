@@ -15,7 +15,7 @@ import level
 import links
 import rect
 import selection
-import theme2
+import theme
 import utils
 
 

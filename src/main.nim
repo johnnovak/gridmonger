@@ -35,7 +35,7 @@ import map
 import persistence
 import rect
 import selection
-import theme2
+import theme
 import unicode
 import utils
 
@@ -5384,7 +5384,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.checkBox(a.splash.show)
 
   # }}}
-
   # {{{ Level section
   if koi.sectionHeader("Level", te.sectionLevel):
     if koi.subSectionHeader("General", te.sectionLevelGeneral):

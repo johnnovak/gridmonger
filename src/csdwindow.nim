@@ -8,7 +8,7 @@ import with
 
 import common
 import utils
-import theme2
+import theme
 
 
 const

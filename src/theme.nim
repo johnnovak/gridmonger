@@ -4,13 +4,13 @@ import parsecfg
 import strformat
 
 import nanovg
+import with
 
 import common
 import cfghelper
 import fieldlimits
 import macros
 import strutils
-import with
 
 
 proc `$`(c: Color): string =
@@ -23,8 +23,8 @@ proc `$`(c: Color): string =
   fmt"rgba({r}, {g}, {b}, {a})"
 
 
-proc sectionClassName(sectionName: string): string =
-  sectionName.capitalizeAscii() & "Style"
+proc styleClassName(name: string): string =
+  name.capitalizeAscii() & "Style"
 
 proc mkPublicName(name: string): NimNode =
   nnkPostfix.newTree(
@@ -50,8 +50,7 @@ proc mkRefObjectTypeDef(name: string, recList: NimNode): NimNode =
     )
   )
 
-proc makeSectionTypeDef(sectionName: string,
-                        props: seq[(string, NimNode)]): NimNode =
+proc makeStyleTypeDef(name: string, props: seq[(string, NimNode)]): NimNode =
   var recList = nnkRecList.newTree
   for (propName, propType) in props:
     recList.add(
@@ -59,9 +58,97 @@ proc makeSectionTypeDef(sectionName: string,
     )
 
   result = mkRefObjectTypeDef(
-    sectionClassName(sectionName),
+    styleClassName(name),
     recList
   )
+
+proc handleProperty(
+  prop: NimNode,
+  configSectionName: string,
+  sectionNameSym, subsectionNameSym: NimNode
+): (string, NimNode, NimNode, NimNode) =
+
+  prop[0].expectKind nnkIdent
+  let propName = prop[0].strVal
+
+  let propParamsStmt = prop[1]
+
+  var propType: NimNode
+  case propParamsStmt[0].kind:
+  of nnkIdent:  # no default provided
+    propType = propParamsStmt[0]
+
+  of nnkBracketExpr:  # no default provided
+    propType = propParamsStmt[0]
+    assert propType[0] == newIdentNode("array")
+    assert propType[2] == newIdentNode("Color")
+
+  of nnkInfix:  # default provided
+    let propParams = propParamsStmt[0]
+    propParams.expectLen 3
+
+    assert propParams[0] == newIdentNode("|")
+    propType = propParams[1]
+
+  else:
+    error("Invalid property definition: " & $propParamsStmt[0].kind)
+
+  # Append loader statement
+  let propNameSym = newIdentNode(propName)
+
+  let toProp = quote do:
+    result.`sectionNameSym`.`subsectionNameSym`.`propNameSym`
+
+  let fromProp = quote do:
+    theme.`sectionNameSym`.`subsectionNameSym`.`propNameSym`
+
+  var parseThemeFrag = nnkStmtList.newTree
+  var writeThemeFrag = nnkStmtList.newTree
+
+  if propType.kind == nnkIdent:
+    case propType.strVal
+    of "string", "bool", "Color", "float":
+      let getter = newIdentNode("get" & propType.strVal.capitalizeAscii())
+
+      parseThemeFrag.add quote do:
+        config.`getter`(`configSectionName`, `propName`, `toProp`)
+
+      writeThemeFrag.add quote do:
+        result.setSectionKey(`configSectionName`, `propName`,
+                             $`fromProp`)
+
+    else:  # enum
+      parseThemeFrag.add  quote do:
+        getEnum[`propType`](config, `configSectionName`, `propName`,
+                            `toProp`)
+
+      writeThemeFrag.add  quote do:
+        result.setSectionKey(`configSectionName`, `propName`,
+                             $`fromProp`)
+
+  elif propType.kind == nnkBracketExpr:
+    let propType = propParamsStmt[0]
+    assert propType[0] == newIdentNode("array")
+    assert propType[2] == newIdentNode("Color")
+    let numColors = propType[1].intVal
+
+    for i in 1..numColors:
+      let propNameN = propName & $i
+      let index = newIntLitNode(i-1)
+      parseThemeFrag.add  quote do:
+        config.getColor(`configSectionName`, `propNameN`,
+                        `toProp`[`index`])
+
+      writeThemeFrag.add quote do:
+        result.setSectionKey(
+          `configSectionName`, `propNameN`,
+           $`fromProp`[`index`]
+         )
+
+  else:
+    error("Invalid property type: " & $propType.kind)
+
+  result = (propName, propType, parseThemeFrag, writeThemeFrag)
 
 
 macro defineTheme(arg: untyped): untyped =
@@ -72,6 +159,7 @@ macro defineTheme(arg: untyped): untyped =
   var parseThemeBody = nnkStmtList.newTree
   var writeThemeBody = nnkStmtList.newTree
 
+  # Sections
   for section in arg:
     section.expectKind nnkCall
     section.expectLen 2
@@ -80,95 +168,61 @@ macro defineTheme(arg: untyped): untyped =
     let sectionName = section[0].strVal
 
     let sectionNameSym = newIdentNode(sectionName)
-    let styleClassName = newIdentNode(sectionClassName(sectionName))
+    let sectionClassNameSym = newIdentNode(styleClassName(sectionName))
 
     parseThemeBody.add quote do:
-      result.`sectionNameSym` = new `styleClassName`
+      result.`sectionNameSym` = new `sectionClassNameSym`
 
-    var propsToAdd = newSeq[(string, NimNode)]()
+    section[1].expectKind nnkStmtList
 
-    let propsList = section[1]
-    for prop in propsList:
-      prop[0].expectKind nnkIdent
-      let propName = prop[0].strVal
+    var sectionPropsToAdd = newSeq[(string, NimNode)]()
 
-      let propParamsStmt = prop[1]
+    # Sub-sections
+    for subsection in section[1]:
+      subsection.expectKind nnkCall
+      subsection.expectLen 2
 
-      var propType: NimNode
-      case propParamsStmt[0].kind:
-      of nnkIdent:   # no default provided
-        propType = propParamsStmt[0]
+      subsection[0].expectKind nnkIdent
+      let subsectionName = subsection[0].strVal
+      let subsectionNameSym = newIdentNode(subsectionName)
+
+      let prefixedSubsectionName = sectionName & subsectionName.capitalizeAscii()
+      let subsectionClassNameSym = newIdentNode(styleClassName(prefixedSubsectionName))
+
+      let propsList = subsection[1]
+
+      var propsToAdd = newSeq[(string, NimNode)]()
+
+      let configSectionName = sectionName & "." & subsectionName
+
+      parseThemeBody.add quote do:
+        result.`sectionNameSym`.`subsectionNameSym` = new `subsectionClassNameSym`
+
+
+      # Properties
+      for prop in propsList:
+        let (propName, propType, parseThemeFrag, writeThemeFrag) = handleProperty(
+          prop,
+          configSectionName,
+          sectionNameSym, subsectionNameSym
+        )
         propsToAdd.add((propName, propType))
+        parseThemeBody.add(parseThemeFrag)
+        writeThemeBody.add(writeThemeFrag)
 
-      of nnkBracketExpr:   # no default provided
-        propType = propParamsStmt[0]
-        assert propType[0] == newIdentNode("array")
-        assert propType[2] == newIdentNode("Color")
+      typeSection.add(
+        makeStyleTypeDef(prefixedSubsectionName, propsToAdd)
+      )
 
-        propsToAdd.add((propName, propType))
-
-      of nnkInfix:   # default provided
-        let propParams = propParamsStmt[0]
-        propParams.expectLen 3
-
-        assert propParams[0] == newIdentNode("|")
-        propType = propParams[1]
-
-        propsToAdd.add((propName, propType))
-
-      else:
-        error("Invalid property definition: " & $propParamsStmt[0].kind)
-
-      # Append loader statement
-      let propNameSym = newIdentNode(propName)
-
-      if propType.kind == nnkIdent:
-        case propType.strVal
-        of "string", "bool", "Color", "float":
-          let getter = newIdentNode("get" & propType.strVal.capitalizeAscii())
-          parseThemeBody.add quote do:
-            config.`getter`(`sectionName`, `propName`,
-                            result.`sectionNameSym`.`propNameSym`)
-
-          writeThemeBody.add quote do:
-            result.setSectionKey(`sectionName`, `propName`,
-                                 $theme.`sectionNameSym`.`propNameSym`)
-
-        else: # enum
-          parseThemeBody.add quote do:
-            getEnum[`propType`](config, `sectionName`, `propName`,
-                                result.`sectionNameSym`.`propNameSym`)
-
-          writeThemeBody.add quote do:
-            result.setSectionKey(`sectionName`, `propName`,
-                                 $theme.`sectionNameSym`.`propNameSym`)
-
-      elif propType.kind == nnkBracketExpr:
-        let propType = propParamsStmt[0]
-        assert propType[0] == newIdentNode("array")
-        assert propType[2] == newIdentNode("Color")
-        let numColors = propType[1].intVal
-
-        for i in 1..numColors:
-          let propNameN = propName & $i
-          let index = newIntLitNode(i-1)
-          let theme = newIdentNode("theme")
-          parseThemeBody.add quote do:
-            config.getColor(`sectionName`, `propNameN`,
-                            result.`sectionNameSym`.`propNameSym`[`index`])
-
-          writeThemeBody.add quote do:
-            result.setSectionKey(
-              `sectionName`, `propNameN`,
-               $`theme`.`sectionNameSym`.`propNameSym`[`index`]
-             )
+      let sectionPropType = newIdentNode(styleClassName(prefixedSubsectionName))
+      sectionPropsToAdd.add((subsectionName, sectionPropType))
 
     typeSection.add(
-      makeSectionTypeDef(sectionName, propsToAdd)
+      makeStyleTypeDef(sectionName, sectionPropsToAdd)
     )
 
     themeStyleRecList.add(
-      mkProperty(sectioNName, newIdentNode(sectionClassName(sectionName)))
+      mkProperty(sectionName, newIdentNode(styleClassName(sectionName)))
     )
 
   typeSection.add(
@@ -178,7 +232,7 @@ macro defineTheme(arg: untyped): untyped =
   let config = newIdentNode("config")
   let theme = newIdentNode("theme")
 
-  quote do:
+  result = quote do:
     `typeSection`
 
     proc parseTheme(`config`: Config): ThemeStyle =
@@ -189,59 +243,64 @@ macro defineTheme(arg: untyped): untyped =
       result = newConfig()
       `writeThemeBody`
 
+#  echo result.repr
+
 
 include themedef
 
 
 const
-  WidgetCornerRadiusLimits*  = floatLimits(min =   0.0, max = 12.0)
+  UiDialogCornerRadiusLimits*     = floatLimits(min=   0.0, max=20.0)
+  UiDialogOuterBorderWidthLimits* = floatLimits(min=   0.0, max=30.0)
+  UiDialogInnerBorderWidthLimits* = floatLimits(min=   0.0, max=30.0)
+  UiDialogShadowXOffsetLimits*    = floatLimits(min= -10.0, max=10.0)
+  UiDialogShadowYOffsetLimits*    = floatLimits(min= -10.0, max=10.0)
+  UiDialogShadowFeatherLimits*    = floatLimits(min=   0.0, max=50.0)
 
-  DialogCornerRadiusLimits*  = floatLimits(min =   0.0, max = 20.0)
-  DialogBorderWidthLimits*   = floatLimits(min =   0.0, max = 30.0)
-  DialogShadowOffsetLimits*  = floatLimits(min = -10.0, max = 10.0)
-  DialogShadowFeatherLimits* = floatLimits(min =   0.0, max = 50.0)
+  UiWidgetCornerRadiusLimits* = floatLimits(min=0.0, max=12.0)
 
-  AlphaLimits*               = floatLimits(min =   0.0, max = 1.0)
+  LevelBackgroundHatchWidthLimits*         = floatLimits(min=0.5, max=10.0)
+  LevelBackgroundHatchSpacingFactorLimits* = floatLimits(min=1.0, max=10.0)
 
-  HatchStrokeWidthLimits*    = floatLimits(min =   0.5, max = 10.0)
-  HatchSpacingLimits*        = floatLimits(min =   1.0, max = 10.0)
+  LevelOutlineWidthFactorLimits*     = floatLimits(min=0.0, max=1.0)
+  LevelShadowInnerWidthFactorLimits* = floatLimits(min=0.0, max=1.0)
+  LevelShadowOuterWidthFactorLimits* = floatLimits(min=0.0, max=1.0)
 
-  LevelOutlineWidthLimits*   = floatLimits(min =   0.0, max = 1.0)
-  LevelShadowWidthLimits*    = floatLimits(min =   0.0, max = 1.0)
+  AlphaLimits* = floatLimits(min=0.0, max=1.0)
 
 
 proc loadTheme*(filename: string): ThemeStyle =
   var cfg = loadConfig(filename)
   result = parseTheme(cfg)
 
-  with result.general:
-    cornerRadius = cornerRadius.limit(WidgetCornerRadiusLimits)
+  # TODO these checks could be generated by the macro
+  with result.ui.dialog:
+    cornerRadius     = cornerRadius.limit(UiDialogCornerRadiusLimits)
+    outerBorderWidth = outerBorderWidth.limit(UiDialogOuterBorderWidthLimits)
+    innerBorderWidth = innerBorderWidth.limit(UiDialogInnerBorderWidthLimits)
+    shadowXOffset    = shadowXOffset.limit(UiDialogShadowXOffsetLimits)
+    shadowYOffset    = shadowYOffset.limit(UiDialogShadowYOffsetLimits)
+    shadowFeather    = shadowFeather.limit(UiDialogShadowFeatherLimits)
 
-  with result.dialog:
-    cornerRadius = cornerRadius.limit(DialogCornerRadiusLimits)
-    outerBorderWidth = outerBorderWidth.limit(DialogBorderWidthLimits)
-    innerBorderWidth = innerBorderWidth.limit(DialogBorderWidthLimits)
-    shadowXOffset = shadowXOffset.limit(DialogShadowOffsetLimits)
-    shadowYOffset = shadowYOffset.limit(DialogShadowOffsetLimits)
-    shadowFeather = shadowFeather.limit(DialogShadowFeatherLimits)
+  with result.ui.widget:
+    cornerRadius = cornerRadius.limit(UiWidgetCornerRadiusLimits)
 
-  with result.splashImage:
+  with result.ui.splashImage:
     shadowAlpha = shadowAlpha.limit(AlphaLimits)
 
-  with result.level:
-    bgHatchStrokeWidth = bgHatchStrokeWidth.limit(HatchStrokeWidthLimits)
-    bgHatchSpacingFactor = bgHatchSpacingFactor.limit(HatchSpacingLimits)
-    outlineWidthFactor = outlineWidthFactor.limit(LevelOutlineWidthLimits)
+  with result.level.backgroundHatch:
+    width         = width.limit(LevelBackgroundHatchWidthLimits)
+    spacingFactor = spacingFactor.limit(LevelBackgroundHatchSpacingFactorLimits)
 
-    innerShadowWidthFactor =
-      innerShadowWidthFactor.limit(LevelShadowWidthLimits)
+  with result.level.outline:
+    widthFactor = widthFactor.limit(LevelOutlineWidthFactorLimits)
 
-    outerShadowWidthFactor =
-      outerShadowWidthFactor.limit(LevelShadowWidthLimits)
+  with result.level.shadow:
+    innerWidthFactor = innerWidthFactor.limit(LevelShadowInnerWidthFactorLimits)
+    outerWidthFactor = outerWidthFactor.limit(LevelShadowOuterWidthFactorLimits)
 
 
 proc saveTheme*(theme: ThemeStyle, filename: string) =
-
   let config = writeTheme(theme)
   config.writeConfig(filename)
 
