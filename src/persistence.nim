@@ -798,6 +798,7 @@ proc writeRegions_v1(rw; l: Level) =
     rw.write(rc.row.uint16)
     rw.write(rc.col.uint16)
     rw.writeWStr(r.name)
+    rw.writeWStr(r.notes)
 
   rw.endChunk()
 

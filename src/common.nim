@@ -105,7 +105,8 @@ type
     row*, col*: Natural
 
   Region* = object
-    name*: string
+    name*:  string
+    notes*: string
 
 
   Annotations* = ref object

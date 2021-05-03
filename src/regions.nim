@@ -25,7 +25,8 @@ proc dump*(r) =
 # }}}
 
 # {{{ setRegion*()
-proc setRegion*(vr; rc: RegionCoords, region: Region) = vr[rc] = region
+proc setRegion*(vr; rc: RegionCoords, region: Region) =
+  vr[rc] = region
 
 # }}}
 # {{{ getRegion*()

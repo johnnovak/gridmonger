@@ -57,9 +57,12 @@ RIFF ('GRDM'          # Gridmonger map file
     UINT16  numRegions
 
     numRegion times:
-    UINT16  row               (max=0, max=3332)
-    UINT16  column            (min=0, max=3332)
+    UINT16  row*              (max=0, max=3332)
+    UINT16  column*           (min=0, max=3332)
     WSTR    name              (minRuneLen=1, maxRuneLen=100)
+    WSTR    notes             (maxRuneLen=2000)
+
+    * row & column are not cell, but region coordinates
 
 
 'cell'
@@ -77,6 +80,7 @@ RIFF ('GRDM'          # Gridmonger map file
     UINT16  numNotes          (max=10000)
 
     numNotes records of:
+
     UINT16  row               (max=numRows-1    of the given level)
     UINT16  column            (max=numColumns-1 of the given level)
     UINT8   kind

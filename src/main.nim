@@ -487,6 +487,7 @@ type
     activateFirstTextField: bool
 
     name:         string
+    notes:        string
 
 
   ThemeEditor = object
@@ -1900,14 +1901,14 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   )
 
   y += DlgTabBottomPad
-  koi.beginView(x, y, 1000, 1000)
+
+  koi.beginView(x, y, w=1000, h=1000)
 
   var lp = DialogLayoutParams
   lp.labelWidth = 220
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-
     group:
       koi.label("Show splash image", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
@@ -1950,7 +1951,6 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 
   elif dlg.activeTab == 1:  # General
-
     group:
       let autosaveDisabled = not dlg.autosave
 
@@ -2154,7 +2154,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
   y += DlgTabBottomPad
 
-  koi.beginView(x, y, 1000, 1000)
+  koi.beginView(x, y, w=1000, h=1000)
+
   var lp = DialogLayoutParams
   lp.labelWidth = 120
   lp.rowWidth = DlgWidth-90
@@ -2299,7 +2300,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   y += DlgTabBottomPad
 
-  koi.beginView(x, y, 1000, 1000)
+  koi.beginView(x, y, w=1000, h=1000)
+
   var lp = DialogLayoutParams
   lp.labelWidth = 120
   lp.rowWidth = DlgWidth-90
@@ -2468,7 +2470,8 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   y += DlgTabBottomPad
 
-  koi.beginView(x, y, 1000, 1000)
+  koi.beginView(x, y, w=1000, h=1000)
+
   var lp = DialogLayoutParams
   lp.rowWidth = DlgWidth-80
   koi.initAutoLayout(lp)
@@ -2670,7 +2673,8 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   y += DlgTabBottomPad
 
-  koi.beginView(x, y, 1000, 1000)
+  koi.beginView(x, y, w=1000, h=1000)
+
   var lp = DialogLayoutParams
   lp.rowWidth = DlgWidth-80
   koi.initAutoLayout(lp)
@@ -2812,7 +2816,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   koi.label(x, y, LabelWidth, h, "Columns", style=a.theme.labelStyle)
   koi.textField(
-    x + LabelWidth, y, w = DlgNumberWidth, h,
+    x + LabelWidth, y, w=DlgNumberWidth, h,
     dlg.cols,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
@@ -2826,7 +2830,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   y += PadYSmall
   koi.label(x, y, LabelWidth, h, "Rows", style=a.theme.labelStyle)
   koi.textField(
-    x + LabelWidth, y, w = DlgNumberWidth, h,
+    x + LabelWidth, y, w=DlgNumberWidth, h,
     dlg.rows,
     constraint = TextFieldConstraint(
       kind: tckInteger,
@@ -3048,7 +3052,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   koi.label(x, y, LabelWidth, h, "Marker", style=a.theme.labelStyle)
   koi.radioButtons(
-    x + LabelWidth, y, 296, h,
+    x + LabelWidth, y, w=296, h,
     labels = @["None", "Number", "ID", "Icon"],
     dlg.kind,
     style = a.theme.radioButtonStyle
@@ -3057,7 +3061,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   y += 40
   koi.label(x, y, LabelWidth, h, "Text", style=a.theme.labelStyle)
   koi.textArea(
-    x + LabelWidth, y, w = 346, h = 92, dlg.text,
+    x + LabelWidth, y, w=346, h=92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
       maxLen: NoteTextLimits.maxRuneLen.some
@@ -3086,7 +3090,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   of akCustomId:
     koi.label(x, y, LabelWidth, h, "ID", style=a.theme.labelStyle)
     koi.textField(
-      x + LabelWidth, y, w = DlgNumberWidth, h,
+      x + LabelWidth, y, w=DlgNumberWidth, h,
       dlg.customId,
       constraint = TextFieldConstraint(
         kind: tckString,
@@ -3236,7 +3240,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   const
     DlgWidth = 486.0
-    DlgHeight = 285.0
+    DlgHeight = 288.0
     LabelWidth = 80.0
 
   let h = DlgItemHeight
@@ -3254,7 +3258,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   koi.label(x, y, LabelWidth, h, "Text", style=a.theme.labelStyle)
   koi.textArea(
-    x + LabelWidth, y, w = 346, h = 92, dlg.text,
+    x + LabelWidth, y, w=346, h=92, dlg.text,
     activate = dlg.activateFirstTextField,
     constraint = TextAreaConstraint(
       maxLen: NoteTextLimits.maxRuneLen.some
@@ -3268,7 +3272,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
   koi.radioButtons(
-    x + LabelWidth, y, 28, 28,
+    x + LabelWidth, y, w=28, h=28,
     labels = newSeq[string](ls.label.color.len),
     dlg.color,
     tooltips = @[],
@@ -3346,15 +3350,16 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 proc openEditRegionPropertiesDialog(a) =
   alias(dlg, a.dialog.editRegionPropsDialog)
 
-  dlg.name = currRegion(a).get.name
+  let region = currRegion(a).get
+  dlg.name  = region.name
+  dlg.notes = region.notes
   dlg.isOpen = true
 
 
 proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
-
   const
-    DlgWidth = 430.0
-    DlgHeight = 190.0
+    DlgWidth = 486.0
+    DlgHeight = 348.0
     LabelWidth = 80.0
 
   let h = DlgItemHeight
@@ -3373,7 +3378,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
   koi.label(x, y, LabelWidth, h, "Name", style=a.theme.labelStyle)
   koi.textField(
-    x + LabelWidth, y, w = 294, h,
+    x + LabelWidth, y, w=294, h,
     dlg.name,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
@@ -3382,6 +3387,18 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
       maxLen: RegionNameLimits.maxRuneLen.some
     ).some,
     style = a.theme.textFieldStyle
+  )
+
+  y += 40
+  koi.label(x, y, LabelWidth, h, "Notes", style=a.theme.labelStyle)
+  koi.textArea(
+    x + LabelWidth, y, w=346, h=149,
+    dlg.notes,
+    activate = dlg.activateFirstTextField,
+     constraint = TextAreaConstraint(
+       maxLen: NotesLimits.maxRuneLen.some
+     ).some,
+    style = a.theme.textAreaStyle
   )
 
   dlg.activateFirstTextField = false
@@ -3399,7 +3416,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
           )
           break
 
-  y += 44
+  y += 172
 
   if validationError != "":
     koi.label(x, y, DlgWidth, h, validationError,
@@ -3414,7 +3431,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     setStatusMessage(IconComment, "Region properties updated", a)
 
     let regionCoords = map.getRegionCoords(cur)
-    let region = Region(name: dlg.name)
+    let region = Region(name: dlg.name, notes: dlg.notes)
 
     actions.setRegionProperties(map, cur, regionCoords, region,
                                 a.doc.undoManager)
@@ -5724,7 +5741,7 @@ proc renderUI(a) =
   vg.fill()
 
   # About button
-  if button(x = uiWidth - 55, y = 45, w = 20, h = DlgItemHeight, IconQuestion,
+  if button(x = uiWidth-55, y=45, w=20, h=DlgItemHeight, IconQuestion,
             style = a.theme.aboutButtonStyle, tooltip = "About"):
     openAboutDialog(a)
 
