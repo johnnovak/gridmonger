@@ -1,5 +1,7 @@
 BUGS
 
+  - undoing all changes should clear modified flag
+
 
 TODO
 
