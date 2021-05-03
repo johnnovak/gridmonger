@@ -1879,7 +1879,7 @@ proc openPreferencesDialog(a) =
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
     DlgWidth = 370.0
-    DlgHeight = 375.0
+    DlgHeight = 296.0
     TabWidth = 180.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
@@ -2132,7 +2132,7 @@ proc openNewMapDialog(a) =
 proc newMapDialog(dlg: var NewMapDialogParams; a) =
   const
     DlgWidth = 430.0
-    DlgHeight = 400.0
+    DlgHeight = 382.0
     TabWidth = 370.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Map",
@@ -2190,7 +2190,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     validationError = mkValidationError("Name is mandatory")
 
   if validationError != "":
-    koi.label(x, DlgHeight - 80, DlgWidth, DlgItemHeight, validationError,
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
               style=a.theme.warningLabelStyle)
 
 
@@ -2277,7 +2277,7 @@ proc openEditMapPropsDialog(a) =
 proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   const
     DlgWidth = 430.0
-    DlgHeight = 400.0
+    DlgHeight = 382.0
     TabWidth = 370.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  Edit Map Properties",
@@ -2334,7 +2334,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     validationError = mkValidationError("Name is mandatory")
 
   if validationError != "":
-    koi.label(x, DlgHeight - 70, DlgWidth, DlgItemHeight, validationError,
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
               style=a.theme.warningLabelStyle)
 
 
@@ -3030,7 +3030,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   const
     DlgWidth = 486.0
-    DlgHeight = 410.0
+    DlgHeight = 401.0
     LabelWidth = 80.0
 
   let h = DlgItemHeight
@@ -3044,7 +3044,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   clearStatusMessage(a)
 
   var x = DlgLeftPad
-  var y = DlgTopNoTabPad
+  var y = DlgTopPad
 
   koi.label(x, y, LabelWidth, h, "Marker", style=a.theme.labelStyle)
   koi.radioButtons(
@@ -3130,7 +3130,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
           )
           break
 
-  y += 44
+  y += 45
 
   for err in validationErrors:
     koi.label(x, y, DlgWidth, h, err, style=a.theme.warningLabelStyle)
@@ -3362,7 +3362,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
   let l = currLevel(a)
 
   koi.beginDialog(DlgWidth, DlgHeight,
-                  fmt"{IconCommentInv}  Edit Region",
+                  fmt"{IconCommentInv}  Edit Region Properties",
                   x = calcDialogX(DlgWidth, a).some,
                   style = a.theme.dialogStyle)
 
@@ -4387,6 +4387,12 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyPageUp, {mkCtrl}):   prevThemeAction(a)
       elif ke.isKeyDown(keyPageDown, {mkCtrl}): nextThemeAction(a)
 
+      elif ke.isKeyDown(keyF1):
+        openUserManualAction(a)
+
+      elif ke.isKeyDown(keyA, {mkCtrl}):
+        openAboutDialog(a)
+
       # Toggle options
       elif ke.isKeyDown(keyC, {mkAlt}):
         toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
@@ -4408,9 +4414,6 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyT):
         map.setTrail(cur, true)
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
-
-      elif ke.isKeyDown(keyF1):
-        openUserManualAction(a)
 
       elif ke.isKeyDown(keyF12):
         toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
