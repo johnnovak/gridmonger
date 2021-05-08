@@ -688,13 +688,20 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
-    let regionOffs = m.getRegionCoords(Location(level: loc.level,
-                                                row: copyRect.r1,
-                                                col: copyRect.c1))
+    let rc = m.getRegionCoords(Location(level: loc.level,
+                                        row: copyRect.r1, col: copyRect.c1))
+
+    let regionOffsRow = if destRow == 0: rc.row.int
+                        else: -(destRow div l.regionOpts.rowsPerRegion) # TODO
+
+    let regionOffsCol = if destCol == 0: rc.col.int
+                        else: -(destCol div l.regionOpts.colsPerRegion) # TODO
+
+    echo regionOffsRow, " ", regionOffsCol
+
 
     newLevel.regions = initRegionsFrom(src=l.some, dest=newLevel,
-                                       rowOffs=regionOffs.row,
-                                       colOffs=regionOffs.col)
+                                       regionOffsRow, regionOffsCol)
     l = newLevel
 
     var usd = usd
@@ -728,6 +735,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
   let
     oldLinks = map.links.filterByLevel(loc.level)
+    oldRegions = map.levels[loc.level].regions
 
     newLevelRect = rectI(0, 0, cropRect.rows, cropRect.cols)
     rowOffs = -cropRect.r1
@@ -735,9 +743,6 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
     newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
                                           newLevelRect)
-
-
-
 
   let action = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = newLevelFrom(m.levels[loc.level], cropRect)

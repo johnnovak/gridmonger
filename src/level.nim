@@ -230,15 +230,13 @@ proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
   var index = 1
 
   for destCoord in dest.allRegionCoords:
-    let srcCoord = RegionCoords(
-      row: destCoord.row.int + rowOffs,
-      col: destCoord.col.int + colOffs
-    )
+    let srcRow = destCoord.row.int + rowOffs
+    let srcCol = destCoord.col.int + colOffs
 
-    let region = if src.isNone or srcCoord.row < 0 or srcCoord.col < 0:
+    let region = if src.isNone or srcRow < 0 or srcCol < 0:
       Region.none
     else:
-      src.get.getRegion(srcCoord)
+      src.get.getRegion(RegionCoords(row: srcRow, col: srcCol))
 
     if region.isSome and not region.get.isUntitledRegion():
       destRegions.setRegion(destCoord, region.get)
