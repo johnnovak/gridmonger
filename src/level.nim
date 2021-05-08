@@ -236,25 +236,26 @@ proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
   var untitledIdx = 1
 
   echo "------ INIT REGIONS ------"
-  for rc in dest.allRegionCoords:
-    echo "dest.rc ", rc
-    let r = rc.row.int + rowOffs
-    let c = rc.col.int + colOffs
-    echo "  src.r ", r, ", src.c ", c
+  for destCoord in dest.allRegionCoords:
+    echo "destCoord ", destCoord
+    let srcCoord = RegionCoords(
+      row: destCoord.row.int + rowOffs,
+      col: destCoord.col.int + colOffs
+    )
+    echo "  srcCoord: ", srcCoord
 
-    let region = if src.isNone or r < 0 or c < 0:
+    let region = if src.isNone or srcCoord.row < 0 or srcCoord.col < 0:
       Region.none
     else:
-      src.get.getRegion(RegionCoords(row: r, col: c))
+      src.get.getRegion(srcCoord)
 
     echo "  src.region ", region
 
-
     if region.isSome:
-      destRegions.setRegion(rc, region.get)
+      destRegions.setRegion(destCoord, region.get)
     else:
       destRegions.setRegion(
-        rc, Region(name: mkUntitledRegionName(untitledIdx))
+        destCoord, Region(name: mkUntitledRegionName(untitledIdx))
       )
       inc(untitledIdx)
 
@@ -514,8 +515,7 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
   var dest = newLevel(src.locationName, src.levelName, src.elevation,
                       rows = rect.rows + border*2,
                       cols = rect.cols + border*2,
-                      src.overrideCoordOpts, src.coordOpts,
-                      src.regionOpts,
+                      src.overrideCoordOpts, src.coordOpts,src.regionOpts,
                       src.notes,
                       initRegions=(border == 0))
 

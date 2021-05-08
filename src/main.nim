@@ -3230,7 +3230,6 @@ proc openEditLabelDialog(a) =
   else:
     dlg.editMode = false
     dlg.text = ""
-    dlg.color = 0
 
   dlg.isOpen = true
 

@@ -432,11 +432,14 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
     let name = rr.readWStr()
     checkStringLength(name, "lvl.regn.region.name", RegionNameLimits)
 
-    debug(fmt"    row: {row}, col: {col}, name: {name}")
+    let notes = rr.readWStr()
+    checkStringLength(notes, "lvl.regn.region.notes", NotesLimits)
+
+    debug(fmt"    row: {row}, col: {col}, name: {name}, notes: {notes}")
 
     regions.setRegion(
       RegionCoords(row: row, col: col),
-      Region(name: name)
+      Region(name: name, notes: notes)
     )
 
   result = (regionOpts, regions)
