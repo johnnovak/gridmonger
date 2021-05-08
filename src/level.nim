@@ -1,5 +1,6 @@
 import math
 import options
+import strutils
 import tables
 
 import annotations
@@ -221,45 +222,30 @@ iterator allRegionCoords*(l): RegionCoords =
 
 # }}}
 
-# {{{ mkUntitledRegion*()
-proc mkUntitledRegionName*(index: Natural): string =
-  UntitledRegionName & " " & $index
-
-# }}}
 # {{{ initRegionsFrom*()
 proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
                       rowOffs: int = 0, colOffs: int = 0): Regions =
 
-  # TODO flip, maybe in a separate proc?
-
   var destRegions = initRegions()
-  var untitledIdx = 1
+  var index = 1
 
-  echo "------ INIT REGIONS ------"
   for destCoord in dest.allRegionCoords:
-    echo "destCoord ", destCoord
     let srcCoord = RegionCoords(
       row: destCoord.row.int + rowOffs,
       col: destCoord.col.int + colOffs
     )
-    echo "  srcCoord: ", srcCoord
 
     let region = if src.isNone or srcCoord.row < 0 or srcCoord.col < 0:
       Region.none
     else:
       src.get.getRegion(srcCoord)
 
-    echo "  src.region ", region
-
-    if region.isSome:
+    if region.isSome and not region.get.isUntitledRegion():
       destRegions.setRegion(destCoord, region.get)
     else:
       destRegions.setRegion(
-        destCoord, Region(name: mkUntitledRegionName(untitledIdx))
+        destCoord, Region(name: dest.regions.nextUntitledRegionName(index))
       )
-      inc(untitledIdx)
-
-  echo ""
 
   result = destRegions
 
@@ -390,7 +376,7 @@ proc guessFloorOrientation*(l; r,c: Natural): Orientation =
 # }}}
 # {{{ calcResizeParams*()
 proc calcResizeParams*(
-  l; newRows, newCols: Natural, align: Direction
+  l; newRows, newCols: Natural, anchor: Direction
  ): tuple[destRow, destCol: Natural, copyRect: Rect[Natural]] =
 
   var srcRect = rectI(0, 0, l.rows, l.cols)
@@ -403,14 +389,14 @@ proc calcResizeParams*(
     r.r1 += d
     r.r2 += d
 
-  if dirE in align:
+  if dirE in anchor:
     srcRect.shiftHoriz(newCols - l.cols)
-  elif {dirE, dirW} * align == {}:
+  elif {dirE, dirW} * anchor == {}:
     srcRect.shiftHoriz((newCols - l.cols) div 2)
 
-  if dirS in align:
+  if dirS in anchor:
     srcRect.shiftVert(newRows - l.rows)
-  elif {dirS, dirN} * align == {}:
+  elif {dirS, dirN} * anchor == {}:
     srcRect.shiftVert((newRows - l.rows) div 2)
 
   let destRect = rectI(0, 0, newRows, newCols)
@@ -533,10 +519,10 @@ proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
 
     let colOffs = srcRect.c1 div src.regionOpts.colsPerRegion
 
-    echo "********************************"
-    echo "rowOffs ", rowOffs, ", colOffs ", colOffs
-    echo "********************************"
-    echo " "
+#    echo "********************************"
+#    echo "rowOffs ", rowOffs, ", colOffs ", colOffs
+#    echo "********************************"
+#    echo " "
 
     dest.regions = initRegionsFrom(src=src.some, dest=dest,
                                    rowOffs=rowOffs, colOffs=colOffs)

@@ -1,11 +1,10 @@
 import options
+import strutils
 import tables
 
 import common
 import utils
 
-
-const UntitledRegionName* = "Untitled Region"
 
 using
   r: Regions
@@ -52,12 +51,33 @@ proc regionNames*(r): seq[string] =
     result.add(r.name)
 
 # }}}
+
 # {{{ findFirstRegionByName*()
 proc findFirstRegionByName*(r; name: string): Option[(RegionCoords, Region)] =
   for rc, r in r.pairs:
     if r.name == name:
       return (rc, r).some
   result = (RegionCoords, Region).none
+
+# }}}
+# {{{ isUntitledRegion*()
+const UntitledRegionName = "Untitled Region"
+
+proc isUntitledRegion*(r: Region): bool =
+  r.name.startsWith(UntitledRegionName)
+
+# }}}
+# {{{ nextUntitledRegionName*()
+proc nextUntitledRegionName*(r; index: var int): string =
+
+  proc mkUntitledRegionName(index: var int): string =
+    result = UntitledRegionName & " " & $index
+    inc(index)
+
+  while true:
+    let name = mkUntitledRegionName(index)
+    var region = r.findFirstRegionByName(name)
+    if region.isNone: return name
 
 # }}}
 

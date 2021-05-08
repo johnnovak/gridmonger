@@ -655,15 +655,16 @@ proc deleteLevel*(map; loc: Location; um): Location =
 # }}}
 # {{{ resizeLevel*()
 proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
-                  align: Direction; um): Location =
+                  anchor: Direction; um): Location =
 
   let usd = UndoStateData(actionName: "Resize level", location: loc)
 
   let
     oldLinks = map.links.filterByLevel(loc.level)
+    oldRegions = map.levels[loc.level].regions
 
     (destRow, destCol, copyRect) =
-      map.levels[loc.level].calcResizeParams(newRows, newCols, align)
+      map.levels[loc.level].calcResizeParams(newRows, newCols, anchor)
 
     newLevelRect = rectI(0, 0, newRows, newCols)
     rowOffs = destRow.int - copyRect.r1
@@ -683,10 +684,18 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                             initRegions=false)
 
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
-    l = newLevel
 
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
+
+    let regionOffs = m.getRegionCoords(Location(level: loc.level,
+                                                row: copyRect.r1,
+                                                col: copyRect.c1))
+
+    newLevel.regions = initRegionsFrom(src=l.some, dest=newLevel,
+                                       rowOffs=regionOffs.row,
+                                       colOffs=regionOffs.col)
+    l = newLevel
 
     var usd = usd
     let loc = usd.location
@@ -702,6 +711,9 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
+
+    m.levels[loc.level].regions = oldRegions
+
     result = usd
 
 
@@ -723,6 +735,8 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
     newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
                                           newLevelRect)
+
+
 
 
   let action = proc (m: var Map): UndoStateData =

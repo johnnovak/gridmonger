@@ -291,6 +291,8 @@ proc getRegionCoords*(m; loc: Location): RegionCoords =
     l = m.levels[loc.level]
     regionCol = loc.col div l.regionOpts.colsPerRegion
 
+    # The origin (0,0) is always at the top-left corner, regardless of the
+    # cell coordinates origin
     row = case m.coordOptsForLevel(loc.level).origin
           of coNorthWest: loc.row
           of coSouthWest: max((l.rows-1).int - loc.row, 0)
@@ -329,22 +331,10 @@ proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
     coordOpts = m.coordOptsForLevel(level)
     flipVert = coordOpts.origin != oldCoordOpts.origin
 
-  echo oldCoordOpts
-  echo coordOpts
-  echo flipVert
-
-  var untitledIdx = 1
-
-  proc nextUntitledRegionName(): string =
-    while true:
-      let name = mkUntitledRegionName(untitledIdx)
-      var r = l.findFirstRegionByName(name)
-      if r.isNone: return name
-      inc(untitledIdx)
+  var index = 1
 
   l.regions = initRegions()
 
-  echo "****************************"
   for rc in l.allRegionCoords:
     let oldRc = if flipVert:
                   RegionCoords(row: l.regionRows(oldRegionOpts)-1 - rc.row,
@@ -352,12 +342,11 @@ proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
                 else: rc
 
     let region = oldRegions.getRegion(oldRc)
-    echo "oldRc: ", oldRc, ", region: ", region, ", rc: ", rc
 
-    if region.isSome and not region.get.name.startsWith(UntitledRegionName):
+    if region.isSome and not region.get.isUntitledRegion():
       l.setRegion(rc, region.get)
     else:
-      l.setRegion(rc, Region(name: nextUntitledRegionName()))
+      l.setRegion(rc, Region(name: l.regions.nextUntitledRegionName(index)))
 
 # }}}
 
