@@ -230,16 +230,17 @@ proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
   var index = 1
 
   for destCoord in dest.allRegionCoords:
+    # TODO change to Natural?
     let srcRow = destCoord.row.int + rowOffs
     let srcCol = destCoord.col.int + colOffs
 
-    let region = if src.isNone or srcRow < 0 or srcCol < 0:
+    let srcRegion = if src.isNone or srcRow < 0 or srcCol < 0:
       Region.none
     else:
       src.get.getRegion(RegionCoords(row: srcRow, col: srcCol))
 
-    if region.isSome and not region.get.isUntitledRegion():
-      destRegions.setRegion(destCoord, region.get)
+    if srcRegion.isSome and not srcRegion.get.isUntitledRegion():
+      destRegions.setRegion(destCoord, srcRegion.get)
     else:
       destRegions.setRegion(
         destCoord, Region(name: dest.regions.nextUntitledRegionName(index))
@@ -375,7 +376,7 @@ proc guessFloorOrientation*(l; r,c: Natural): Orientation =
 # {{{ calcResizeParams*()
 proc calcResizeParams*(
   l; newRows, newCols: Natural, anchor: Direction
- ): tuple[destRow, destCol: Natural, copyRect: Rect[Natural]] =
+ ): tuple[copyRect: Rect[Natural], destRow, destCol: Natural] =
 
   var srcRect = rectI(0, 0, l.rows, l.cols)
 
@@ -412,7 +413,7 @@ proc calcResizeParams*(
   copyRect.r2 = copyRect.r1 + intRect.rows
   copyRect.c2 = copyRect.c1 + intRect.cols
 
-  result = (destRow.Natural, destCol.Natural, copyRect)
+  result = (copyRect, destRow.Natural, destCol.Natural)
 
 # }}}
 # {{{ isSpecialLevelIndex*()
@@ -466,70 +467,60 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   result = l
 
 # }}}
-# {{{ newLevelFrom*()
-proc newLevelFrom*(src: Level, rect: Rect[Natural], border: Natural=0): Level =
-  assert rect.r1 < src.rows
-  assert rect.c1 < src.cols
-  assert rect.r2 <= src.rows
-  assert rect.c2 <= src.cols
+# {{{ calcNewLevelFromParams*()
+proc calcNewLevelFromParams*(
+  src: Level, srcRect: Rect[Natural], border: Natural = 0
+): tuple[copyRect: Rect[Natural], destRow, destCol: Natural] =
+
+  assert srcRect.r1 < src.rows
+  assert srcRect.c1 < src.cols
+  assert srcRect.r2 <= src.rows
+  assert srcRect.c2 <= src.cols
 
   var
+    copyRect: Rect[Natural]
     destRow, destCol: int
-    srcRect: Rect[Natural]
 
-  let r1 = rect.r1.int - border
+  let r1 = srcRect.r1.int - border
   if r1 < 0:
     destRow = -r1
-    srcRect.r1 = 0
+    copyRect.r1 = 0
   else:
     destRow = 0
-    srcRect.r1 = r1
+    copyRect.r1 = r1
 
-  let c1 = rect.c1.int - border
+  let c1 = srcRect.c1.int - border
   if c1 < 0:
     destCol = -c1
-    srcRect.c1 = 0
+    copyRect.c1 = 0
   else:
     destCol = 0
-    srcRect.c1 = c1
+    copyRect.c1 = c1
 
-  srcRect.r2 = rect.r2 + border
-  srcRect.c2 = rect.c2 + border
+  copyRect.r2 = srcRect.r2 + border
+  copyRect.c2 = srcRect.c2 + border
 
-  var dest = newLevel(src.locationName, src.levelName, src.elevation,
-                      rows = rect.rows + border*2,
-                      cols = rect.cols + border*2,
-                      src.overrideCoordOpts, src.coordOpts,src.regionOpts,
-                      src.notes,
-                      initRegions=(border == 0))
+  result = (copyRect, destRow.Natural, destCol.Natural)
 
-  dest.copyCellsAndAnnotationsFrom(destRow, destCol, src, srcRect)
+# }}}
+# {{{ newLevelFrom*()
 
-  # The border param is only used for creating the internal view buffer when
-  # drawing levels. The regions table is not used for drawing, so ignoring the
-  # border simplifies the region copying a bit.
-  if border == 0 and src.regionOpts.enabled:
-    let rowOffs = case src.coordOpts.origin
-                  of coNorthWest:
-                    srcRect.r1 div src.regionOpts.rowsPerRegion
-                  of coSouthWest:
-                    (src.rows - srcRect.r2) div src.regionOpts.rowsPerRegion
+# NOTE: This method doesn't copy the regions.
 
-    let colOffs = srcRect.c1 div src.regionOpts.colsPerRegion
+proc newLevelFrom*(src: Level, srcRect: Rect[Natural],
+                   border: Natural = 0): Level =
 
-#    echo "********************************"
-#    echo "rowOffs ", rowOffs, ", colOffs ", colOffs
-#    echo "********************************"
-#    echo " "
+  let (copyRect, destRow, destCol) = calcNewLevelFromParams(src, srcRect,
+                                                            border)
 
-    dest.regions = initRegionsFrom(src=src.some, dest=dest,
-                                   rowOffs=rowOffs, colOffs=colOffs)
+  result = newLevel(src.locationName, src.levelName, src.elevation,
+                    rows = srcRect.rows + border*2,
+                    cols = srcRect.cols + border*2,
+                    src.overrideCoordOpts, src.coordOpts, src.regionOpts,
+                    src.notes,
+                    initRegions = false)
 
-  result = dest
-
-
-proc newLevelFrom*(l): Level =
-  newLevelFrom(l, rectN(0, 0, l.rows, l.cols))
+  result.copyCellsAndAnnotationsFrom(destRow, destCol, src, copyRect)
 
 # }}}
 

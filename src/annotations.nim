@@ -6,8 +6,7 @@ import common
 import rect
 
 
-using
-  a: Annotations
+using a: Annotations
 
 # {{{ newAnnotations*()
 proc newAnnotations*(rows, cols: Natural): Annotations =

@@ -40,7 +40,7 @@ template cellAreaAction(map; loc: Location, rect: Rect[Natural];
 
   var oldLinks = map.links.filterByInRect(loc.level, rect)
 
-  let undoLevel = newLevelFrom(map.levels[loc.level], rect)
+  let undoLevel = map.newLevelFrom(loc.level, rect)
 
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level].copyCellsAndAnnotationsFrom(
@@ -272,7 +272,7 @@ proc setLink*(map; src, dest: Location, floorColor: byte; um) =
     c = dest.col
     rect = rectN(r, c, r+1, c+1)  # single cell
 
-  let undoLevel = newLevelFrom(map.levels[dest.level], rect)
+  let undoLevel = map.newLevelFrom(dest.level, rect)
 
   var oldLinks = initLinks()
 
@@ -629,10 +629,10 @@ proc deleteLevel*(map; loc: Location; um): Location =
     result = usd
 
 
-  let undoLevel = newLevelFrom(map.levels[loc.level])
+  let undoLevel = map.levels[loc.level].deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    let restoredLevel = newLevelFrom(undoLevel)
+    let restoredLevel = undoLevel.deepCopy
 
     if loc.level > m.levels.high:
       m.levels.add(restoredLevel)
@@ -663,7 +663,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     oldLinks = map.links.filterByLevel(loc.level)
     oldRegions = map.levels[loc.level].regions
 
-    (destRow, destCol, copyRect) =
+    (copyRect, destRow, destCol) =
       map.levels[loc.level].calcResizeParams(newRows, newCols, anchor)
 
     newLevelRect = rectI(0, 0, newRows, newCols)
@@ -688,17 +688,14 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
-    let rc = m.getRegionCoords(Location(level: loc.level,
-                                        row: copyRect.r1, col: copyRect.c1))
+    let rcRow = copyRect.r1 div l.regionOpts.rowsPerRegion
+    let rcCol = copyRect.c1 div l.regionOpts.colsPerRegion
 
-    let regionOffsRow = if destRow == 0: rc.row.int
+    let regionOffsRow = if destRow == 0: rcRow.int
                         else: -(destRow div l.regionOpts.rowsPerRegion) # TODO
 
-    let regionOffsCol = if destCol == 0: rc.col.int
+    let regionOffsCol = if destCol == 0: rcCol.int
                         else: -(destCol div l.regionOpts.colsPerRegion) # TODO
-
-    echo regionOffsRow, " ", regionOffsCol
-
 
     newLevel.regions = initRegionsFrom(src=l.some, dest=newLevel,
                                        regionOffsRow, regionOffsCol)
@@ -711,10 +708,10 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     result = usd
 
 
-  let undoLevel = newLevelFrom(map.levels[loc.level])
+  let undoLevel = map.levels[loc.level].deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = newLevelFrom(undoLevel)
+    m.levels[loc.level] = undoLevel
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
@@ -745,7 +742,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
                                           newLevelRect)
 
   let action = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = newLevelFrom(m.levels[loc.level], cropRect)
+    m.levels[loc.level] = m.newLevelFrom(loc.level, cropRect)
 
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
@@ -756,10 +753,10 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     result = usd
 
 
-  let undoLevel = newLevelFrom(map.levels[loc.level])
+  let undoLevel = map.levels[loc.level].deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = newLevelFrom(undoLevel)
+    m.levels[loc.level] = undoLevel
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
@@ -805,10 +802,10 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     result = usd
 
 
-  let undoLevel = newLevelFrom(sb.level)
+  let undoLevel = sb.level.deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = newLevelFrom(undoLevel)
+    m.levels[loc.level] = undoLevel
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)

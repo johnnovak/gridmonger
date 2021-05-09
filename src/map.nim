@@ -7,6 +7,7 @@ import strutils
 import common
 import level
 import links
+import rect
 import regions
 import tables
 import utils
@@ -289,17 +290,13 @@ func coordOptsForLevel*(m; level: Natural): CoordinateOptions =
 proc getRegionCoords*(m; loc: Location): RegionCoords =
   let
     l = m.levels[loc.level]
-    regionCol = loc.col div l.regionOpts.colsPerRegion
 
-    # The origin (0,0) is always at the top-left corner, regardless of the
-    # cell coordinates origin
     row = case m.coordOptsForLevel(loc.level).origin
           of coNorthWest: loc.row
           of coSouthWest: max((l.rows-1).int - loc.row, 0)
 
-    regionRow = row div l.regionOpts.rowsPerRegion
-
-  RegionCoords(row: regionRow, col: regionCol)
+  result.row = row     div l.regionOpts.rowsPerRegion
+  result.col = loc.col div l.regionOpts.colsPerRegion
 
 # }}}
 # {{{ getRegionCenterLocation*()
@@ -347,6 +344,28 @@ proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
       l.setRegion(rc, region.get)
     else:
       l.setRegion(rc, Region(name: l.regions.nextUntitledRegionName(index)))
+
+# }}}
+
+# {{{ newLevelFrom*()
+proc newLevelFrom*(m; srcLevel: Natural, srcRect: Rect[Natural]): Level =
+  let src = m.levels[srcLevel]
+  alias(ro, src.regionOpts)
+
+  var dest = newLevelFrom(src, srcRect)
+
+  # Copy regions
+  let (copyRect, destRow, destCol) = calcNewLevelFromParams(src, srcRect)
+
+  let
+    rowOffs = (case m.coordOptsForLevel(srcLevel).origin
+               of coNorthWest: copyRect.r1
+               of coSouthWest: src.rows-1 - copyRect.r2) div ro.rowsPerRegion
+
+    colOffs = copyRect.c1 div ro.colsPerRegion
+
+  dest.regions = initRegionsFrom(src.some, dest, rowOffs, colOffs)
+  result = dest
 
 # }}}
 
