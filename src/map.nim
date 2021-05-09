@@ -2,7 +2,6 @@ import algorithm
 import options
 import sequtils
 import strformat
-import strutils
 
 import common
 import level
@@ -11,6 +10,7 @@ import rect
 import regions
 import tables
 import utils
+import with
 
 
 using m: Map
@@ -299,22 +299,39 @@ proc getRegionCoords*(m; loc: Location): RegionCoords =
   result.col = loc.col div l.regionOpts.colsPerRegion
 
 # }}}
+# {{{ getRegionRect*()
+proc getRegionRect*(m; level: Natural, rc: RegionCoords): Rect[Natural] =
+  let l = m.levels[level]
+  var r: Rect[Natural]
+
+  with l.regionOpts:
+    r.c1 = rc.col * colsPerRegion
+    r.c2 = min(r.c1 + colsPerRegion, l.cols)
+
+    case m.coordOptsForLevel(level).origin
+    of coNorthWest:
+      r.r1 = rc.row * rowsPerRegion
+      r.r2 = min(r.r1 + rowsPerRegion, l.rows)
+
+    of coSouthWest:
+      r.r2 = max(l.rows - rc.row*rowsPerRegion, 0)
+      r.r1 = max(r.r2.int - rowsPerRegion, 0)
+
+  result = r
+
+# }}}
 # {{{ getRegionCenterLocation*()
 proc getRegionCenterLocation*(m; level: Natural,
                               rc: RegionCoords): (Natural, Natural) =
   let
     l = m.levels[level]
-    rows = l.regionOpts.rowsPerRegion
-    cols = l.regionOpts.colsPerRegion
+    r = m.getRegionRect(level, rc)
 
-    c = (rc.col * cols).int
+  echo r
 
-    r = case m.coordOptsForLevel(level).origin
-        of coNorthWest: rc.row * rows
-        of coSouthWest: (l.rows+1).int - (rc.col+1)*cols
-
-    centerRow = (r + l.regionOpts.rowsPerRegion div 2).clamp(0, l.rows-1)
-    centerCol = (c + l.regionOpts.colsPerRegion div 2).clamp(0, l.cols-1)
+  let
+    centerRow = min(r.r1 + (r.r2-r.r1-1) div 2, l.rows-1)
+    centerCol = min(r.c1 + (r.c2-r.c1-1) div 2, l.cols-1)
 
   (centerRow.Natural, centerCol.Natural)
 
@@ -323,12 +340,15 @@ proc getRegionCenterLocation*(m; level: Natural,
 proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
                         oldRegionOpts: RegionOptions, oldRegions: Regions) =
 
+  echo "*** reallocateRegions ***"
   let
     l = m.levels[level]
     coordOpts = m.coordOptsForLevel(level)
     flipVert = coordOpts.origin != oldCoordOpts.origin
 
   var index = 1
+
+  echo "flipVert: ", flipVert
 
   l.regions = initRegions()
 
@@ -355,7 +375,7 @@ proc newLevelFrom*(m; srcLevel: Natural, srcRect: Rect[Natural]): Level =
   var dest = newLevelFrom(src, srcRect)
 
   # Copy regions
-  let (copyRect, destRow, destCol) = calcNewLevelFromParams(src, srcRect)
+  let (copyRect, _, _) = calcNewLevelFromParams(src, srcRect)
 
   let
     rowOffs = (case m.coordOptsForLevel(srcLevel).origin

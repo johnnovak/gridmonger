@@ -30,7 +30,6 @@ import drawlevel
 import fieldlimits
 import icons
 import level
-import links
 import map
 import persistence
 import rect

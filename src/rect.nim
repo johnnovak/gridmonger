@@ -68,4 +68,14 @@ proc expand*[T: RectType](a: var Rect[T], r,c: T) =
   elif c >= a.c2: a.c2 = c+1
 
 
+proc shiftHoriz*[T: RectType](a: var Rect[T], d: int) =
+  a.c1 += d
+  a.c2 += d
+
+
+proc shiftVert*[T: RectType](a: var Rect[T], d: int) =
+  a.r1 += d
+  a.r2 += d
+
+
 # vim: et:ts=2:sw=2:fdm=marker

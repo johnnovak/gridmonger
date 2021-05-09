@@ -8,7 +8,6 @@ import level
 import links
 import map
 import rect
-import regions
 import selection
 import tables
 import utils
@@ -20,7 +19,6 @@ type UndoStateData* = object
 
 using
   map: var Map
-  m:   var Map
   um:  var UndoManager[Map, UndoStateData]
 
 # {{{ cellAreaAction()
@@ -733,6 +731,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
   let
     oldLinks = map.links.filterByLevel(loc.level)
     oldRegions = map.levels[loc.level].regions
+    # TODO
 
     newLevelRect = rectI(0, 0, cropRect.rows, cropRect.cols)
     rowOffs = -cropRect.r1

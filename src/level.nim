@@ -1,7 +1,5 @@
 import math
 import options
-import strutils
-import tables
 
 import annotations
 import common
@@ -380,33 +378,29 @@ proc calcResizeParams*(
 
   var srcRect = rectI(0, 0, l.rows, l.cols)
 
-  proc shiftHoriz(r: var Rect[int], d: int) =
-    r.c1 += d
-    r.c2 += d
+  srcRect.shiftHoriz(
+    if    dirE in anchor:              newCols - l.cols
+    elif {dirE, dirW} * anchor == {}: (newCols - l.cols) div 2
+    else:                              0
+  )
 
-  proc shiftVert(r: var Rect[int], d: int) =
-    r.r1 += d
-    r.r2 += d
+  srcRect.shiftVert(
+    if    dirS in anchor:              newRows - l.rows
+    elif {dirS, dirN} * anchor == {}: (newRows - l.rows) div 2
+    else:                              0
+  )
 
-  if dirE in anchor:
-    srcRect.shiftHoriz(newCols - l.cols)
-  elif {dirE, dirW} * anchor == {}:
-    srcRect.shiftHoriz((newCols - l.cols) div 2)
+  let
+    destRect = rectI(0, 0, newRows, newCols)
+    intRect = srcRect.intersect(destRect).get
 
-  if dirS in anchor:
-    srcRect.shiftVert(newRows - l.rows)
-  elif {dirS, dirN} * anchor == {}:
-    srcRect.shiftVert((newRows - l.rows) div 2)
+  var
+    copyRect: Rect[Natural]
+    destRow, destCol: int
 
-  let destRect = rectI(0, 0, newRows, newCols)
-  var intRect = srcRect.intersect(destRect).get
-
-  var copyRect: Rect[Natural]
-  var destRow = 0
   if srcRect.r1 < 0: copyRect.r1 = -srcRect.r1
   else: destRow = srcRect.r1
 
-  var destCol = 0
   if srcRect.c1 < 0: copyRect.c1 = -srcRect.c1
   else: destCol = srcRect.c1
 
@@ -414,6 +408,39 @@ proc calcResizeParams*(
   copyRect.c2 = copyRect.c1 + intRect.cols
 
   result = (copyRect, destRow.Natural, destCol.Natural)
+
+# }}}
+# {{{ calcRegionResizeParams*()
+proc calcRegionResizeParams*(
+  l; newRows, newCols: Natural, anchor: Direction
+ ): tuple[rowOffs, colOffs: int] =
+
+  var srcRect = rectI(0, 0, l.rows, l.cols)
+  let destRect = rectI(0, 0, newRows, newCols)
+
+  # Align srcRect to destRect
+  srcRect.shiftHoriz(
+    if    dirE in anchor:              newCols - l.cols
+    elif {dirE, dirW} * anchor == {}: (newCols - l.cols) div 2
+    else:                              0
+  )
+
+  srcRect.shiftVert(
+    if    dirS in anchor:              newRows - l.rows
+    elif {dirS, dirN} * anchor == {}: (newRows - l.rows) div 2
+    else:                              0
+  )
+
+  let intRect = srcRect.intersect(destRect).get
+
+  var rowOffs, colOffs: int
+
+  colOffs = -srcRect.c1 div l.regionOpts.colsPerRegion
+  rowOffs = case l.coordOpts.origin
+            of coNorthWest: -srcRect.r1
+            of coSouthWest: newRows - srcRect.r2
+
+  result = (rowOffs, colOffs)
 
 # }}}
 # {{{ isSpecialLevelIndex*()
