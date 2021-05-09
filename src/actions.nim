@@ -686,14 +686,9 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
-    let rcRow = copyRect.r1 div l.regionOpts.rowsPerRegion
-    let rcCol = copyRect.c1 div l.regionOpts.colsPerRegion
-
-    let regionOffsRow = if destRow == 0: rcRow.int
-                        else: -(destRow div l.regionOpts.rowsPerRegion) # TODO
-
-    let regionOffsCol = if destCol == 0: rcCol.int
-                        else: -(destCol div l.regionOpts.colsPerRegion) # TODO
+    let (regionOffsRow, regionOffsCol) = calcRegionResizeOffsets(
+      m, loc.level, newRows, newCols, anchor
+    )
 
     newLevel.regions = initRegionsFrom(src=l.some, dest=newLevel,
                                        regionOffsRow, regionOffsCol)

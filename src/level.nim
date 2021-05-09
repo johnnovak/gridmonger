@@ -371,13 +371,14 @@ proc guessFloorOrientation*(l; r,c: Natural): Orientation =
     Horiz
 
 # }}}
-# {{{ calcResizeParams*()
-proc calcResizeParams*(
+# {{{ getSrcRectAlignedToDestRect*()
+proc getSrcRectAlignedToDestRect*(
   l; newRows, newCols: Natural, anchor: Direction
- ): tuple[copyRect: Rect[Natural], destRow, destCol: Natural] =
+): Rect[int] =
 
   var srcRect = rectI(0, 0, l.rows, l.cols)
 
+  # Align srcRect to destRect
   srcRect.shiftHoriz(
     if    dirE in anchor:              newCols - l.cols
     elif {dirE, dirW} * anchor == {}: (newCols - l.cols) div 2
@@ -390,7 +391,16 @@ proc calcResizeParams*(
     else:                              0
   )
 
+  result = srcRect
+
+# }}}
+# {{{ calcResizeParams*()
+proc calcResizeParams*(
+  l; newRows, newCols: Natural, anchor: Direction
+): tuple[copyRect: Rect[Natural], destRow, destCol: Natural] =
+
   let
+    srcRect = getSrcRectAlignedToDestRect(l, newRows, newCols, anchor)
     destRect = rectI(0, 0, newRows, newCols)
     intRect = srcRect.intersect(destRect).get
 
@@ -408,39 +418,6 @@ proc calcResizeParams*(
   copyRect.c2 = copyRect.c1 + intRect.cols
 
   result = (copyRect, destRow.Natural, destCol.Natural)
-
-# }}}
-# {{{ calcRegionResizeParams*()
-proc calcRegionResizeParams*(
-  l; newRows, newCols: Natural, anchor: Direction
- ): tuple[rowOffs, colOffs: int] =
-
-  var srcRect = rectI(0, 0, l.rows, l.cols)
-  let destRect = rectI(0, 0, newRows, newCols)
-
-  # Align srcRect to destRect
-  srcRect.shiftHoriz(
-    if    dirE in anchor:              newCols - l.cols
-    elif {dirE, dirW} * anchor == {}: (newCols - l.cols) div 2
-    else:                              0
-  )
-
-  srcRect.shiftVert(
-    if    dirS in anchor:              newRows - l.rows
-    elif {dirS, dirN} * anchor == {}: (newRows - l.rows) div 2
-    else:                              0
-  )
-
-  let intRect = srcRect.intersect(destRect).get
-
-  var rowOffs, colOffs: int
-
-  colOffs = -srcRect.c1 div l.regionOpts.colsPerRegion
-  rowOffs = case l.coordOpts.origin
-            of coNorthWest: -srcRect.r1
-            of coSouthWest: newRows - srcRect.r2
-
-  result = (rowOffs, colOffs)
 
 # }}}
 # {{{ isSpecialLevelIndex*()

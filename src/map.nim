@@ -327,8 +327,6 @@ proc getRegionCenterLocation*(m; level: Natural,
     l = m.levels[level]
     r = m.getRegionRect(level, rc)
 
-  echo r
-
   let
     centerRow = min(r.r1 + (r.r2-r.r1-1) div 2, l.rows-1)
     centerCol = min(r.c1 + (r.c2-r.c1-1) div 2, l.cols-1)
@@ -340,15 +338,12 @@ proc getRegionCenterLocation*(m; level: Natural,
 proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
                         oldRegionOpts: RegionOptions, oldRegions: Regions) =
 
-  echo "*** reallocateRegions ***"
   let
     l = m.levels[level]
     coordOpts = m.coordOptsForLevel(level)
     flipVert = coordOpts.origin != oldCoordOpts.origin
 
   var index = 1
-
-  echo "flipVert: ", flipVert
 
   l.regions = initRegions()
 
@@ -364,6 +359,22 @@ proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
       l.setRegion(rc, region.get)
     else:
       l.setRegion(rc, Region(name: l.regions.nextUntitledRegionName(index)))
+
+# }}}
+# {{{ calcRegionResizeOffsets*()
+proc calcRegionResizeOffsets*(
+  m; level: Natural, newRows, newCols: Natural, anchor: Direction
+ ): tuple[rowOffs, colOffs: int] =
+
+  let l = m.levels[level]
+  let srcRect = getSrcRectAlignedToDestRect(l, newRows, newCols, anchor)
+
+  with l.regionOpts:
+    result.colOffs = -srcRect.c1 div colsPerRegion
+
+    result.rowOffs = (case m.coordOptsForLevel(level).origin
+                      of coNorthWest: -srcRect.r1
+                      of coSouthWest: -(newRows - srcRect.r2)) div rowsPerRegion
 
 # }}}
 
