@@ -711,7 +711,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
   let undoLevel = map.levels[loc.level].deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel
+    m.levels[loc.level] = undoLevel.deepCopy
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
@@ -756,7 +756,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
   let undoLevel = map.levels[loc.level].deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel
+    m.levels[loc.level] = undoLevel.deepCopy
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
@@ -805,7 +805,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   let undoLevel = sb.level.deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel
+    m.levels[loc.level] = undoLevel.deepCopy
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
