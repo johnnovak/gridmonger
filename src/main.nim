@@ -44,7 +44,7 @@ when defined(windows):
 
 const
   BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
-  ThemeExt = "cfg"
+  ThemeExt = "gmtheme"
 
 # {{{ logError()
 proc logError(e: ref Exception, msgPrefix: string = "") =
@@ -92,7 +92,7 @@ const
   ThemePaneWidth          = 316.0
 
 const
-  MapFileExt = "grm"
+  MapFileExt = "gmm"
   CrashAutosaveFilename = addFileExt("Crash Autosave", MapFileExt)
   GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
 
@@ -411,7 +411,7 @@ type
     perRegionCoords:   bool
 
     # Notes tab
-    notes:          string
+    notes:              string
 
 
   EditLevelPropsParams = object
@@ -423,7 +423,7 @@ type
     locationName:      string
     levelName:         string
     elevation:         string
-    notes:          string
+    notes:             string
 
     # Coordinates tab
     overrideCoordOpts: bool
@@ -725,7 +725,7 @@ proc currRegion(a): Option[Region] =
     Region.none
 
 # }}}
-# {{{
+# {{{ coordOptsForCurrLevel()
 func coordOptsForCurrLevel(a): CoordinateOptions =
   a.doc.map.coordOptsForLevel(a.ui.cursor.level)
 
@@ -1413,6 +1413,7 @@ func isKeyDown(ev: Event, key: Key,
 
 func isKeyUp(ev: Event, keys: set[Key]): bool =
   ev.action == kaUp and ev.key in keys
+
 
 proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
   let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
