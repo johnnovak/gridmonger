@@ -1,6 +1,8 @@
 BUGS
 
   - undoing all changes should clear modified flag
+  - saving theme should never overwrite built-in themes but create a new user
+    theme
 
 
 TODO

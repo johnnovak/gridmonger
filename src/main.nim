@@ -5608,8 +5608,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
     let theme = a.theme.themeNames[a.theme.currThemeIndex]
     let themePath = themePath(theme, a)
-    # TODO
-#    saveTheme(theme, themePath)
+    saveTheme(a.theme.style, themePath)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):

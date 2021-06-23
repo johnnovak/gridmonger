@@ -1,6 +1,7 @@
 import math
 import options
 import parsecfg
+import streams
 import strformat
 
 import nanovg
@@ -20,7 +21,7 @@ proc `$`(c: Color): string =
     b = round(c.b * 255).int
     a = round(c.a * 255).int
 
-  fmt"rgba({r}, {g}, {b}, {a})"
+  fmt"#{r:02x}{g:02x}{b:02x}{a:02x}"
 
 
 proc styleClassName(name: string): string =
@@ -302,5 +303,9 @@ proc loadTheme*(filename: string): ThemeStyle =
 
 proc saveTheme*(theme: ThemeStyle, filename: string) =
   let config = writeTheme(theme)
-  config.writeConfig(filename)
+  var ss = newStringStream()
+  config.writeConfig(ss)
+
+  let prettyConfig = ss.data.replace("[", "\n[")
+  writeFile(filename, prettyConfig)
 
