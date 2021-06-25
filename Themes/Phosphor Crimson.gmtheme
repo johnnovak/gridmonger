@@ -1,121 +1,158 @@
 [ui.window]
-backgroundColor="rgba(8, 0, 2, 255)"
-titleBackgroundColor="rgba(45, 0, 13, 255)"
-titleBackgroundInactiveColor="rgba(25, 3, 0, 255)"
-titleColor="rgba(255, 45, 106, 237)"
-titleInactiveColor="rgba(132, 37, 65, 255)"
-modifiedFlagColor="rgba(255, 72, 126, 100)"
-buttonColor="rgba(180, 0, 53, 200)"
-buttonHoverColor="rgba(210, 0, 61, 200)"
-buttonDownColor="rgba(240, 0, 70, 232)"
+backgroundColor = "#080002ff"
+backgroundImage
+titleBackgroundColor = "#2d000dff"
+titleBackgroundInactiveColor = "#190300ff"
+titleColor = "#ff2d6aed"
+titleInactiveColor = "#842541ff"
+modifiedFlagColor = "#ff487e64"
+buttonColor = "#b40035c8"
+buttonHoverColor = "#d2003dc8"
+buttonDownColor = "#f00046e8"
+
 [ui.dialog]
-cornerRadius=0.0
-titleBackgroundColor="rgba(202, 0, 60, 255)"
-titleColor="rgba(0, 0, 0, 204)"
-backgroundColor="rgba(23, 0, 7, 255)"
-labelColor="rgba(224, 0, 66, 255)"
-warningColor="rgba(255, 75, 125, 255)"
-outerBorderColor="rgba(15, 0, 4, 255)"
-outerBorderWidth=6.0
-innerBorderColor="rgba(202, 0, 60, 255)"
-innerBorderWidth=2.0
-shadowEnabled=false
-shadowXOffset=0.0
-shadowYOffset=0.0
-shadowFeather=0.0
-shadowColor="rgba(0, 0, 0, 0)"
+cornerRadius = 0.0
+titleBackgroundColor = "#ca003cff"
+titleColor = "#000000cc"
+backgroundColor = "#170007ff"
+labelColor = "#e00042ff"
+warningColor = "#ff4b7dff"
+outerBorderColor = "#0f0004ff"
+outerBorderWidth = 6.0
+innerBorderColor = "#ca003cff"
+innerBorderWidth = 2.0
+shadowEnabled = false
+shadowXOffset = 0.0
+shadowYOffset = 0.0
+shadowFeather = 0.0
+shadowColor = "#00000000"
+
 [ui.widget]
-cornerRadius=3.0
-backgroundColor="rgba(164, 0, 48, 39)"
-backgroundHoverColor="rgba(255, 0, 75, 60)"
-backgroundActiveColor="rgba(255, 0, 75, 111)"
-backgroundDisabledColor="rgba(164, 0, 48, 42)"
-foregroundColor="rgba(255, 0, 75, 255)"
-foregroundActiveColor="rgba(255, 69, 122, 255)"
-foregroundDisabledColor="rgba(164, 0, 48, 128)"
+cornerRadius = 3.0
+backgroundColor = "#a4003027"
+backgroundHoverColor = "#ff004b3c"
+backgroundActiveColor = "#ff004b6f"
+backgroundDisabledColor = "#a400302a"
+foregroundColor = "#ff004bff"
+foregroundActiveColor = "#ff457aff"
+foregroundDisabledColor = "#a4003080"
+
 [ui.textField]
-editBackgroundColor="rgba(255, 0, 75, 30)"
-editTextColor="rgba(245, 97, 140, 240)"
-cursorColor="rgba(255, 190, 0, 255)"
-selectionColor="rgba(255, 62, 119, 45)"
-scrollBarNormalColor="rgba(255, 0, 75, 30)"
-scrollBarEditColor="rgba(193, 76, 110, 240)"
+editBackgroundColor = "#ff004b1e"
+editTextColor = "#f5618cf0"
+cursorColor = "#ffbe00ff"
+selectionColor = "#ff3e772d"
+scrollBarNormalColor = "#ff004b1e"
+scrollBarEditColor = "#c14c6ef0"
+
 [ui.statusBar]
-backgroundColor="rgba(45, 0, 13, 255)"
-textColor="rgba(255, 45, 106, 220)"
-commandBackgroundColor="rgba(209, 51, 95, 226)"
-commandColor="rgba(25, 3, 0, 255)"
-coordinatesColor="rgba(255, 45, 106, 180)"
+backgroundColor = "#2d000dff"
+textColor = "#ff2d6adc"
+commandBackgroundColor = "#d1335fe2"
+commandColor = "#190300ff"
+coordinatesColor = "#ff2d6ab4"
+
 [ui.aboutButton]
-labelColor="rgba(200, 70, 0, 255)"
-labelHoverColor="rgba(235, 100, 0, 255)"
-labelDownColor="rgba(245, 180, 0, 255)"
+labelColor = "#c84600ff"
+labelHoverColor = "#eb6400ff"
+labelDownColor = "#f5b400ff"
+
 [ui.aboutDialog]
-logoColor="rgba(255, 45, 106, 180)"
+logoColor = "#ff2d6ab4"
+
 [ui.splashImage]
-logoColor="rgba(10, 0, 3, 255)"
-outlineColor="rgba(224, 0, 63, 255)"
-shadowAlpha=1.0
+logoColor = "#0a0003ff"
+outlineColor = "#e0003fff"
+shadowAlpha = 1.0
+
 [level.general]
-backgroundColor="rgba(8, 0, 2, 255)"
-foregroundColor="rgba(224, 0, 63, 255)"
-foregroundLightColor="rgba(100, 0, 29, 255)"
-lineWidth=Thin
-coordinatesColor="rgba(109, 0, 31, 255)"
-coordinatesHighlightColor="rgba(255, 0, 73, 255)"
-cursorColor="rgba(255, 179, 0, 110)"
-cursorGuidesColor="rgba(255, 180, 201, 44)"
-selectionColor="rgba(169, 93, 42, 102)"
-pastePreviewColor="rgba(87, 137, 218, 105)"
-linkMarkerColor="rgba(243, 136, 0, 255)"
-trailColor="rgba(224, 0, 63, 109)"
-regionBorderColor="rgba(255, 145, 176, 255)"
-regionBorderEmptyColor="rgba(255, 145, 176, 94)"
+backgroundColor = "#080002ff"
+foregroundColor = "#e0003fff"
+foregroundLightColor = "#64001dff"
+lineWidth = Thin
+coordinatesColor = "#6d001fff"
+coordinatesHighlightColor = "#ff0049ff"
+cursorColor = "#ffb3006e"
+cursorGuidesColor = "#ffb4c92c"
+selectionColor = "#a95d2a66"
+pastePreviewColor = "#5789da69"
+linkMarkerColor = "#f38800ff"
+trailColor = "#e0003f6d"
+regionBorderColor = "#ff91b0ff"
+regionBorderEmptyColor = "#ff91b05e"
+
 [level.backgroundHatch]
-enabled=true
-color="rgba(32, 0, 9, 255)"
-width=2.0
-spacingFactor=4.0
+enabled = true
+color = "#200009ff"
+width = 2.0
+spacingFactor = 4.0
+
 [level.grid]
-backgroundStyle=None
-backgroundGridColor="rgba(0, 0, 0, 0)"
-floorStyle=Loose
-floorGridColor="rgba(81, 0, 22, 255)"
+backgroundStyle = None
+backgroundGridColor = "#00000000"
+floorStyle = Loose
+floorGridColor = "#510016ff"
+
 [level.outline]
-style=Cell
-fillStyle=Solid
-color="rgba(32, 0, 9, 255)"
-widthFactor=0.0
-overscanEnabled=false
+style = Cell
+fillStyle = Solid
+color = "#200009ff"
+widthFactor = 0.0
+overscanEnabled = false
+
 [level.shadow]
-innerColor="rgba(0, 0, 0, 0)"
-innerWidthFactor=0.0
-outerColor="rgba(0, 0, 0, 0)"
-outerWidthFactor=0.0
+innerColor = "#00000000"
+innerWidthFactor = 0.0
+outerColor = "#00000000"
+outerWidthFactor = 0.0
+
 [level.floorColor]
-transparentFloor=false
-color10="rgba(0, 0, 0, 0)"
+transparentFloor = false
+color1 = "#080002ff"
+color2 = "#335ca242"
+color3 = "#3d8be750"
+color4 = "#6c39ac42"
+color5 = "#895fe94c"
+color6 = "#97006142"
+color7 = "#d9289e48"
+color8 = "#308d9a37"
+color9 = "#36b8a649"
+color10 = "#00000000"
+
 [level.note]
-markerColor="rgba(255, 30, 93, 255)"
-commentColor="rgba(255, 146, 176, 236)"
-indexBackgroundColor4="rgba(182, 87, 0, 255)"
-indexColor="rgba(0, 0, 0, 242)"
-tooltipBackgroundColor="rgba(68, 56, 35, 240)"
-tooltipColor="rgba(230, 203, 153, 250)"
+markerColor = "#ff1e5dff"
+commentColor = "#ff92b0ec"
+indexBackgroundColor1 = "#9dcc00ff"
+indexBackgroundColor2 = "#397500ff"
+indexBackgroundColor3 = "#cc8000ff"
+indexBackgroundColor4 = "#b65700ff"
+indexColor = "#000000f2"
+tooltipBackgroundColor = "#443823f0"
+tooltipColor = "#e6cb99fa"
+
 [level.label]
-color4="rgba(255, 182, 53, 228)"
+color1 = "#5d513cff"
+color2 = "#ffe7bedd"
+color3 = "#9c632dff"
+color4 = "#ffb635e4"
+
 [level.levelDropDown]
-buttonColor="rgba(0, 0, 0, 0)"
-buttonHoverColor="rgba(58, 9, 0, 255)"
-buttonLabelColor="rgba(224, 71, 0, 255)"
-itemListBackgroundColor="rgba(65, 19, 0, 255)"
-itemColor="rgba(255, 111, 0, 255)"
-itemHoverColor="rgba(0, 0, 0, 204)"
+buttonColor = "#00000000"
+buttonHoverColor = "#3a0900ff"
+buttonLabelColor = "#e04700ff"
+itemListBackgroundColor = "#411300ff"
+itemColor = "#ff6f00ff"
+itemHoverColor = "#000000cc"
+
 [pane.notes]
-textColor="rgba(224, 0, 63, 255)"
-indexBackgroundColor4="rgba(182, 87, 0, 255)"
-indexColor="rgba(0, 0, 0, 242)"
-scrollBarColor="rgba(164, 0, 48, 128)"
+textColor = "#e0003fff"
+indexBackgroundColor1 = "#9dcc00ff"
+indexBackgroundColor2 = "#397500ff"
+indexBackgroundColor3 = "#cc8000ff"
+indexBackgroundColor4 = "#b65700ff"
+indexColor = "#000000f2"
+scrollBarColor = "#a4003080"
+
 [pane.toolbar]
-buttonColor="rgba(0, 0, 0, 0)"
-buttonHoverColor="rgba(70, 12, 0, 255)"
+buttonColor = "#00000000"
+buttonHoverColor = "#460c00ff"
