@@ -20,7 +20,7 @@ proc durationToFloatMillis*(d: Duration): float64 =
 proc writePrettyConfig*(c: Config, filename: string) =
   var ss = newStringStream()
   c.writeConfig(ss)
-  let prettyConfig = ss.data.replace("[", "\n[").replace("=", " = ")[1..^1]
+  let prettyConfig = ss.data.replace("\n[", "\n\n[").replace("=", " = ")
   writeFile(filename, prettyConfig)
 
 # }}}
