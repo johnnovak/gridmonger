@@ -9,6 +9,7 @@ import fieldlimits
 import drawlevel
 import utils
 
+# {{{ Limits
 const
   SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
   AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
@@ -16,6 +17,8 @@ const
   WindowWidthLimits*       = intLimits(WindowMinWidth, max=20_000)
   WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
 
+# }}}
+# {{{ Types
 type
   AppConfig* = object
     prefs*: Preferences
@@ -62,8 +65,9 @@ type
 
   MiscState* = object
     lastMapFileName*: string
+# }}}
 
-
+# {{{ DefaultAppConfig
 const DefaultAppConfig = AppConfig(
   prefs: Preferences(
     showSplash: true,
@@ -108,10 +112,9 @@ const DefaultAppConfig = AppConfig(
     lastMapFileName: ""
   )
 )
-
-
+# }}}
+# {{{ Constants
 const
-  # --------------------------------------
   PreferencesSection = "preferences"
 
   ShowSplashKey = "showSplash"
@@ -158,8 +161,9 @@ const
   MiscStateSection = "miscState"
 
   LastMapFileNameKey = "lastMapFileName"
+# }}}
 
-
+# {{{ loadAppConfigOrDefault*()
 proc loadAppConfigOrDefault*(fname: string): AppConfig =
   result = DefaultAppConfig
 
@@ -223,15 +227,16 @@ proc loadAppConfigOrDefault*(fname: string): AppConfig =
 
   cfg.getString(MiscStateSection, LastMapFileNameKey, m.lastMapFileName)
 
-
-proc toOnOff(b: bool): string =
-  if b: "on" else: "off"
-
-proc toYesNo(b: bool): string =
-  if b: "yes" else: "no"
-
-
+# }}}
+# {{{ toConfig()
 proc toConfig(ac: AppConfig): Config =
+
+  proc toOnOff(b: bool): string =
+    if b: "on"  else: "off"
+
+  proc toYesNo(b: bool): string =
+    if b: "yes" else: "no"
+
   var cfg = newConfig()
 
   alias(p, ac.prefs)
@@ -273,12 +278,14 @@ proc toConfig(ac: AppConfig): Config =
   cfg.setSectionKey(MiscStateSection, LastMapFileNameKey, m.lastMapFileName)
 
   result = cfg
-
-
-proc saveAppConfig*(a: AppConfig, fname: string) =
+# }}}
+# {{{ saveAppConfig*()
+proc saveAppConfig*(a: AppConfig, filename: string) =
   try:
-    writeConfig(a.toConfig, fname)
+    writePrettyConfig(a.toConfig, filename)
   except CatchableError as e:
-    error(fmt"Couldn't write config file '{fname}'. Error message: {e.msg}")
+    error(fmt"Couldn't write config file '{filename}'. Error message: {e.msg}")
 
+# }}}
 
+# vim: et:ts=2:sw=2:fdm=marker

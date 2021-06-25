@@ -1,4 +1,7 @@
 import hashes
+import parsecfg
+import streams
+import strutils
 import times
 
 import common
@@ -11,6 +14,14 @@ template alias*(newName: untyped, call: untyped) =
 # {{{ durationToFloatMillis*()
 proc durationToFloatMillis*(d: Duration): float64 =
   inNanoseconds(d).float64 * 1e-6
+
+# }}}
+# {{{ writePrettyConfig*()
+proc writePrettyConfig*(c: Config, filename: string) =
+  var ss = newStringStream()
+  c.writeConfig(ss)
+  let prettyConfig = ss.data.replace("[", "\n[").replace("=", " = ")[1..^1]
+  writeFile(filename, prettyConfig)
 
 # }}}
 

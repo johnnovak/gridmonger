@@ -1,3 +1,4 @@
+# TODO remove comments
 defineTheme:
   ui:
     window:

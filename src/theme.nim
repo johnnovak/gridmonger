@@ -1,7 +1,6 @@
 import math
 import options
 import parsecfg
-import streams
 import strformat
 
 import nanovg
@@ -12,6 +11,7 @@ import cfghelper
 import fieldlimits
 import macros
 import strutils
+import utils
 
 
 proc `$`(c: Color): string =
@@ -303,9 +303,5 @@ proc loadTheme*(filename: string): ThemeStyle =
 
 proc saveTheme*(theme: ThemeStyle, filename: string) =
   let config = writeTheme(theme)
-  var ss = newStringStream()
-  config.writeConfig(ss)
-
-  let prettyConfig = ss.data.replace("[", "\n[")
-  writeFile(filename, prettyConfig)
+  writePrettyConfig(config, filename)
 
