@@ -4006,6 +4006,19 @@ proc handleLevelMouseEvents(a) =
 
 # }}}
 # {{{ handleGlobalKeyEvents()
+
+proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
+  opt = not opt
+  let state = if opt: on else: off
+  setStatusMessage(icon, fmt"{msg} {state}", a)
+
+proc toggleShowOption(opt: var bool, icon, msg: string; a) =
+  toggleOption(opt, icon, msg, on="shown", off="hidden", a)
+
+proc toggleOnOffOption(opt: var bool, icon, msg: string; a) =
+  toggleOption(opt, icon, msg, on="on", off="off", a)
+
+
 # TODO separate into level events and global events?
 proc handleGlobalKeyEvents(a) =
   alias(ui, a.ui)
@@ -4052,17 +4065,6 @@ proc handleGlobalKeyEvents(a) =
 
   proc turnRight(dir: CardinalDir): CardinalDir =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
-
-  proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
-    opt = not opt
-    let state = if opt: on else: off
-    setStatusMessage(icon, fmt"{msg} {state}", a)
-
-  proc toggleShowOption(opt: var bool, icon, msg: string; a) =
-    toggleOption(opt, icon, msg, on="shown", off="hidden", a)
-
-  proc toggleOnOffOption(opt: var bool, icon, msg: string; a) =
-    toggleOption(opt, icon, msg, on="on", off="off", a)
 
 
   proc handleMoveWalk(ke: Event; a) =
@@ -4410,12 +4412,12 @@ proc handleGlobalKeyEvents(a) =
             a
           )
 
-      elif ke.isKeyDown(keyO, {mkCtrl}):              openMapAction(a)
+      elif ke.isKeyDown(keyO,     {mkCtrl}):          openMapAction(a)
       elif ke.isKeyDown(Key.keyS, {mkCtrl}):          saveMapAction(a)
       elif ke.isKeyDown(Key.keyS, {mkCtrl, mkShift}): saveMapAsAction(a)
 
-      elif ke.isKeyDown(keyHome, {mkCtrl}):     reloadThemeAction(a)
-      elif ke.isKeyDown(keyPageUp, {mkCtrl}):   prevThemeAction(a)
+      elif ke.isKeyDown(keyHome,     {mkCtrl}): reloadThemeAction(a)
+      elif ke.isKeyDown(keyPageUp,   {mkCtrl}): prevThemeAction(a)
       elif ke.isKeyDown(keyPageDown, {mkCtrl}): nextThemeAction(a)
 
       elif ke.isKeyDown(keyF1):
@@ -4860,6 +4862,8 @@ proc handleGlobalKeyEvents(a) =
 # }}}
 # {{{ handleGlobalKeyEvents_NoLevels()
 proc handleGlobalKeyEvents_NoLevels(a) =
+  alias(opts, a.opts)
+
   if hasKeyEvent():
     let ke = koi.currEvent()
 
@@ -4872,9 +4876,9 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
     elif ke.isKeyDown(keyN,        {mkCtrl}):          openNewLevelDialog(a)
 
-    elif ke.isKeyDown(keyR,        {mkCtrl, mkAlt}):   reloadThemeAction(a)
-    elif ke.isKeyDown(keyPageUp,   {mkCtrl, mkAlt}):   prevThemeAction(a)
-    elif ke.isKeyDown(keyPageDown, {mkCtrl, mkAlt}):   nextThemeAction(a)
+    elif ke.isKeyDown(keyHome,     {mkCtrl}):          reloadThemeAction(a)
+    elif ke.isKeyDown(keyPageUp,   {mkCtrl}):          prevThemeAction(a)
+    elif ke.isKeyDown(keyPageDown, {mkCtrl}):          nextThemeAction(a)
 
     elif ke.isKeyDown(keyU,        {mkCtrl, mkAlt}):   openPreferencesDialog(a)
 
@@ -4888,6 +4892,13 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
     elif ke.isKeyDown(keyF1):
       openUserManualAction(a)
+
+    elif ke.isKeyDown(keyA, {mkCtrl}):
+      openAboutDialog(a)
+
+    # Toggle options
+    elif ke.isKeyDown(keyF12):
+      toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
 
 # }}}
 
@@ -5934,8 +5945,8 @@ proc renderFramePre(a) =
 
   proc loadPendingTheme(themeIndex: Natural, a) =
     try:
-      switchTheme(themeIndex, a)
       a.theme.themeReloaded = (themeIndex == a.theme.currThemeIndex)
+      switchTheme(themeIndex, a)
 
     except CatchableError as e:
       logError(e, "Error loading theme when switching theme")
@@ -5966,8 +5977,9 @@ proc renderFrame(a) =
     let themeName = a.currThemeName.name
     if a.theme.themeReloaded:
       setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+      a.theme.themeReloaded = false
     else:
-      setStatusMessage(fmt"Switched to '{themeName}' theme", a)
+      setStatusMessage(fmt"Theme '{themeName}' loaded", a)
 
   if a.theme.nextThemeIndex.isSome:
     displayThemeLoadedMessage(a)
