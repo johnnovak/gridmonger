@@ -562,14 +562,47 @@ using a: var AppContext
 type MoveKeys = object
   left, right, up, down: set[Key]
 
-const MoveKeysCursor = MoveKeys(
-  left  : {keyLeft,     keyH, keyKp4},
-  right : {keyRight,    keyL, keyKp6},
-  up    : {keyUp,       keyK, keyKp8},
-  down  : {Key.keyDown, keyJ, keyKp2, keyKp5}
-)
+const
+  MoveKeysCursor = MoveKeys(
+    left  : {keyLeft,     keyH, keyKp4},
+    right : {keyRight,    keyL, keyKp6},
+    up    : {keyUp,       keyK, keyKp8},
+    down  : {Key.keyDown, keyJ, keyKp2, keyKp5}
+  )
+
+  MoveKeysWasd = MoveKeys(
+    left  : MoveKeysCursor.left  + {keyA},
+    right : MoveKeysCursor.right + {keyD},
+    up    : MoveKeysCursor.up    + {keyW},
+    down  : MoveKeysCursor.down  + {Key.keyS}
+  )
+
+
+type WalkKeys = object
+  forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
+
+const
+  WalkKeysCursor = WalkKeys(
+    forward     : {keyKp8, keyUp},
+    backward    : {keyKp2, keyKp5, Key.keyDown},
+    strafeLeft  : {keyKp4, keyLeft},
+    strafeRight : {keyKp6, keyRight},
+    turnLeft    : {keyKp7},
+    turnRight   : {keyKp9}
+  )
+
+  WalkKeysWasd = WalkKeys(
+    forward     : WalkKeysCursor.forward     + {keyW},
+    backward    : WalkKeysCursor.backward    + {Key.keyS},
+    strafeLeft  : WalkKeysCursor.strafeLeft  + {keyA},
+    strafeRight : WalkKeysCursor.strafeRight + {keyD},
+    turnLeft    : WalkKeysCursor.turnLeft    + {keyQ},
+    turnRight   : WalkKeysCursor.turnRight   + {keyE}
+  )
+
 
 type AppShortcut = enum
+  # General
   scNextTextField,
   scAccept,
   scCancel,
@@ -577,22 +610,88 @@ type AppShortcut = enum
   scUndo,
   scRedo,
 
-  scShowAboutDialog,
-  scOpenUserManual,
-  scToggleThemeEditor,
-
+  # Maps
   scNewMap,
   scOpenMap,
   scSaveMap,
   scSaveMapAs,
   scEditMapProperties,
-  scNewLevel,
 
+  # Levels
+  scNewLevel,
+  scDeleteLevel,
+  scEditLevelProperties,
+  scNudgeLevel,
+  scResizeLevel,
+
+  # Regions
+  scEditRegionProperties,
+
+  # Themes
   scReloadTheme,
   scPreviousTheme,
   scNextTheme,
 
-  scEditPreferences
+  # Editing
+  scCycleFloorGroup1Forward,
+  scCycleFloorGroup2Forward,
+  scCycleFloorGroup3Forward,
+  scCycleFloorGroup4Forward,
+  scCycleFloorGroup5Forward,
+  scCycleFloorGroup6Forward,
+
+  scCycleFloorGroup1Backward,
+  scCycleFloorGroup2Backward,
+  scCycleFloorGroup3Backward,
+  scCycleFloorGroup4Backward,
+  scCycleFloorGroup5Backward,
+  scCycleFloorGroup6Backward,
+
+  scExcavate,
+  scEraseCell,
+  scDrawClearFloor,
+  scToggleFloorOrientation,
+  scSetFloorColor,
+  scPickFloorColor,
+
+  scDrawWalls,
+  scDrawSpecialWalls,
+
+  scEraseTrail,
+  scExcavateTrail,
+  scClearTrail,
+
+  scJumpToLinkedCell,
+  scLinkCell,
+
+  scPreviousSpecialWall,
+  scNextSpecialWall,
+
+  scPreviousLevel,
+  scNextLevel,
+
+  scPreviousFloorColor,
+  scNextFloorColor,
+
+  scZoomIn,
+  scZoomOut,
+
+  scMarkSelection,
+  scPaste,
+
+  scEditNote,
+  scEraseNote,
+  scEditLabel,
+  scEraseLabel,
+
+  scShowNoteTooltip,
+
+  # Misc
+  scShowAboutDialog,
+  scOpenUserManual,
+  scToggleThemeEditor,
+  scEditPreferences,
+
 
 
 # TODO some shortcuts win/mac specific?
@@ -1017,7 +1116,6 @@ proc setSwapInterval(a) =
 # {{{ savePreferences()
 proc savePreferences(a) =
   alias(opts, a.opts)
-  alias(theme, a.theme)
 
   let dp = a.ui.drawLevelParams
 
@@ -1451,6 +1549,7 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 # }}}
 
 # {{{ Key handling
+
 proc hasKeyEvent(): bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
 
@@ -3734,14 +3833,14 @@ proc centerCursorAfterZoom(a) =
   dp.viewStartRow = max(cur.row - viewRow, 0)
 
 # }}}
-# {{{ incZoomLevelAction()
-proc incZoomLevelAction(a) =
+# {{{ zoomInAction()
+proc zoomInAction(a) =
   incZoomLevel(a.doc.levelStyle, a.ui.drawLevelParams)
   centerCursorAfterZoom(a)
 
 # }}}
-# {{{ decZoomLevelAction()
-proc decZoomLevelAction(a) =
+# {{{ zoomOutAction()
+proc zoomOutAction(a) =
   decZoomLevel(a.doc.levelStyle, a.ui.drawLevelParams)
   centerCursorAfterZoom(a)
 
@@ -3816,7 +3915,11 @@ proc nextFloorColorAction(a) =
   else: a.ui.currFloorColor = 0
 
 # }}}
+# {{{ pickFloorColorAction()
+proc pickFloorColorAction(a) =
+  a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor).byte
 
+# }}}
 # }}}
 # {{{ Drawing
 
@@ -4073,36 +4176,6 @@ proc handleGlobalKeyEvents(a) =
 
   var l = currLevel(a)
 
-  type
-    WalkKeys = object
-      forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
-
-  const
-    MoveKeysWasd = MoveKeys(
-      left  : MoveKeysCursor.left  + {keyA},
-      right : MoveKeysCursor.right + {keyD},
-      up    : MoveKeysCursor.up    + {keyW},
-      down  : MoveKeysCursor.down  + {Key.keyS}
-    )
-
-    WalkKeysCursor = WalkKeys(
-      forward     : {keyKp8, keyUp},
-      backward    : {keyKp2, keyKp5, Key.keyDown},
-      strafeLeft  : {keyKp4, keyLeft},
-      strafeRight : {keyKp6, keyRight},
-      turnLeft    : {keyKp7},
-      turnRight   : {keyKp9}
-    )
-
-    WalkKeysWasd = WalkKeys(
-      forward     : WalkKeysCursor.forward     + {keyW},
-      backward    : WalkKeysCursor.backward    + {Key.keyS},
-      strafeLeft  : WalkKeysCursor.strafeLeft  + {keyA},
-      strafeRight : WalkKeysCursor.strafeRight + {keyD},
-      turnLeft    : WalkKeysCursor.turnLeft    + {keyQ},
-      turnRight   : WalkKeysCursor.turnRight   + {keyE}
-    )
-
   proc turnLeft(dir: CardinalDir): CardinalDir =
     CardinalDir(floorMod(ord(dir) - 1, ord(CardinalDir.high) + 1))
 
@@ -4297,9 +4370,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
       elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
-
-      elif ke.isKeyDown(keyI):
-        a.ui.currFloorColor = map.getFloorColor(cur).byte
+      elif ke.isKeyDown(keyI): pickFloorColorAction(a)
 
       elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
       elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
@@ -4369,12 +4440,12 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconWarning, "Cannot link current cell", a)
 
       elif ke.isKeyDown(keyEqual, repeat=true):
-        incZoomLevelAction(a)
+        zoomInAction(a)
         setStatusMessage(IconZoomIn,
           fmt"Zoomed in – level {dp.getZoomLevel()}", a)
 
       elif ke.isKeyDown(keyMinus, repeat=true):
-        decZoomLevelAction(a)
+        zoomOutAction(a)
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
@@ -4390,6 +4461,9 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconEraser, "Note erased", a)
         else:
           setStatusMessage(IconWarning, "No note to erase in cell", a)
+
+      elif ke.isKeyDown(keyT, {mkCtrl}):
+        openEditLabelDialog(a)
 
       elif ke.isKeyDown(keyT, {mkShift}):
         if map.hasLabel(cur):
@@ -4408,9 +4482,6 @@ proc handleGlobalKeyEvents(a) =
               location = cur
               mx = koi.mx()
               my = koi.my()
-
-      elif ke.isKeyDown(keyT, {mkCtrl}):
-        openEditLabelDialog(a)
 
       elif ke.isShortcutDown(scEditPreferences): openPreferencesDialog(a)
 
@@ -4706,11 +4777,12 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped level to selection", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
+      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
 
       elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
       elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
+      elif ke.isKeyDown(keyI): pickFloorColorAction(a)
 
       elif ke.isShortcutDown(scCancel):
         exitSelectMode(a)
@@ -4771,8 +4843,8 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
+      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
@@ -4803,8 +4875,8 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
+      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
@@ -4820,8 +4892,8 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = a.ui.cursor
 
-      if   ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
+      if   ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
 
       elif ke.isKeyDown(keyEnter):
         let newCur = actions.nudgeLevel(map, cur,
@@ -4881,8 +4953,8 @@ proc handleGlobalKeyEvents(a) =
                            fmt"{capitalizeAscii(linkType)} link destination set",
                            a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
+      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
+      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
@@ -5257,9 +5329,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
 
   let ts = a.theme.style
-
-  proc handleUndo() =
-    discard
 
   macro prop(label: static[string], path: untyped): untyped =
 
