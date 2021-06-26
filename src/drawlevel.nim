@@ -1406,6 +1406,7 @@ proc drawDoorHoriz*(x, y: float, orientation: Orientation,
       vg.rect(x1+1, y1-1, x2-x1, y2-y1+2+1)
     else:
       vg.rect(snap(x1, sw), snap(y1-2, sw), x2-x1+1, y2-y1+4)
+    vg.fillColor(white())
     vg.fill()
   else:
     vg.rect(snap(x1+1, sw), snap(y1-1, sw), x2-x1-1, y2-y1+2)

@@ -3,6 +3,14 @@ BUGS
   - undoing all changes should clear modified flag
   - saving theme should never overwrite built-in themes but create a new user
     theme
+  - ctrl-[ (ESC) doesn't work in
+    - paste preview
+    - nudge
+    - set link mode
+    - selection
+
+  - cancelling move should put cut area back
+  - warn of unsaved changes when switching theme
 
 
 TODO

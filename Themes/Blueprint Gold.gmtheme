@@ -77,7 +77,7 @@ cursorGuidesColor = "#ffb46f3c"
 selectionColor = "#ff808066"
 pastePreviewColor = "#3399ff66"
 linkMarkerColor = "#00b3c8ff"
-trailColor = "#e8b20e61"
+trailColor = "#ff8c135a"
 regionBorderColor = "#6b8ce9ff"
 regionBorderEmptyColor = "#7090e956"
 

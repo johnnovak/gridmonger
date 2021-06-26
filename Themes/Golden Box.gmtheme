@@ -108,33 +108,33 @@ outerWidthFactor = 0.0
 
 [level.floorColor]
 transparentFloor = false
-color1 = "#a28251ff"
-color2 = "#335ca242"
-color3 = "#3d8be750"
-color4 = "#6c39ac42"
-color5 = "#895fe94c"
-color6 = "#97006142"
-color7 = "#d9289e48"
-color8 = "#308d9a37"
-color9 = "#3680b856"
-color10 = "#00000000"
+color1="rgba(162, 130, 81, 255)"
+color2="rgba(51, 92, 162, 66)"
+color3="rgba(61, 139, 231, 80)"
+color4="rgba(108, 57, 172, 66)"
+color5="rgba(137, 95, 233, 76)"
+color6="rgba(151, 0, 97, 66)"
+color7="rgba(217, 40, 158, 72)"
+color8="rgba(48, 141, 154, 55)"
+color9="rgba(54, 128, 184, 86)"
+color10="rgba(0, 0, 0, 0)"
 
 [level.note]
 markerColor = "#3c2c1cbe"
 commentColor = "#ff3300cc"
-indexBackgroundColor1 = "#697582ff"
-indexBackgroundColor2 = "#8b805bff"
-indexBackgroundColor3 = "#746c65ff"
-indexBackgroundColor4 = "#72535cff"
+indexBackgroundColor1="rgba(105, 117, 130, 255)"
+indexBackgroundColor2="rgba(139, 128, 91, 255)"
+indexBackgroundColor3="rgba(116, 108, 101, 255)"
+indexBackgroundColor4="rgba(114, 83, 92, 255)"
 indexColor = "#ffffffb3"
 tooltipBackgroundColor = "#443823f0"
 tooltipColor = "#e6cb99fa"
 
 [level.label]
-color1 = "#5d513cff"
-color2 = "#ffe7bedd"
-color3 = "#9c632dff"
-color4 = "#ffb635e4"
+color1="rgba(93, 81, 60, 255)"
+color2="rgba(255, 231, 190, 221)"
+color3="rgba(156, 99, 45, 255)"
+color4="rgba(255, 182, 53, 228)"
 
 [level.levelDropDown]
 buttonColor = "#ffffff00"
@@ -146,10 +146,10 @@ itemHoverColor = "#3c3422e6"
 
 [pane.notes]
 textColor = "#000000af"
-indexBackgroundColor1 = "#64707dff"
-indexBackgroundColor2 = "#70643fff"
-indexBackgroundColor3 = "#746c65ff"
-indexBackgroundColor4 = "#72535cff"
+indexBackgroundColor1="rgba(100, 112, 125, 255)"
+indexBackgroundColor2="rgba(112, 100, 63, 255)"
+indexBackgroundColor3="rgba(116, 108, 101, 255)"
+indexBackgroundColor4="rgba(114, 83, 92, 255)"
 indexColor = "#ffffffcc"
 scrollBarColor = "#d3c5b8ff"
 
