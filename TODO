@@ -16,6 +16,14 @@ BUGS
 TODO
 
   - log memory access crashes? (or division by zero)
+  - inactive button color in titlebar
+  - tooltip roundness & shadow opacity
+  - level dropdown roundness & shadow opacity
+
+  - thick wall style (for Companion style)
+  - indexed notes: option to use rectangles (with larger font) 
+  - optionally use color for ID notes
+
 
 
 v0.9
