@@ -16,45 +16,20 @@ proc invalidValueError(section, key, valueType, value: string) =
 proc getValue*(cfg: Config, section, key: string): string =
   cfg.getSectionValue(section, key)
 
-proc parseColor*(s: string): Option[Color] =
-  result = Color.none
-  block:
-    var r, g, b, a: int
-    if scanf(s, "gray($i)$.", g):
-      result = gray(g).some
-    elif scanf(s, "gray($i,$s$i)$.", g, a):
-      result = gray(g, a).some
-    elif scanf(s, "rgb($i,$s$i,$s$i)$.", r, g, b):
-      result = rgb(r, g, b).some
-    elif scanf(s, "rgba($i,$s$i,$s$i,$s$i)$.", r, g, b, a):
-      result = rgba(r, g, b, a).some
-    else:
-      if s.len == 9 and s[0] == '#':
-        try:
-          let r = s[1..2].parseHexInt()
-          let g = s[3..4].parseHexInt()
-          let b = s[5..6].parseHexInt()
-          let a = s[7..8].parseHexInt()
-          result = rgba(r/255, g/255, b/255, a/255).some
-        except ValueError:
-          discard
-
-  if result.isSome: return
-
-  block:
-    var r, g, b, a: float
-    if scanf(s, "gray($f)$.", g):
-      result = gray(g).some
-    elif scanf(s, "gray($f,$s$f)$.", g, a):
-      result = gray(g, a).some
-    elif scanf(s, "rgb($f,$s$f,$s$f)$.", r, g, b):
-      result = rgb(r, g, b).some
-    elif scanf(s, "rgba($f,$s$f,$s$f,$s$f)$.", r, g, b, a):
-      result = rgba(r, g, b, a).some
-
-
 proc getString*(cfg: Config, section, key: string, s: var string) =
   s = getValue(cfg, section, key)
+
+proc parseColor(s: string): Option[Color] =
+  result = Color.none
+  if s.len == 9 and s[0] == '#':
+    try:
+      let r = s[1..2].parseHexInt()
+      let g = s[3..4].parseHexInt()
+      let b = s[5..6].parseHexInt()
+      let a = s[7..8].parseHexInt()
+      result = rgba(r/255, g/255, b/255, a/255).some
+    except ValueError:
+      discard
 
 proc getColor*(cfg: Config, section, key: string, c: var Color) =
   let v = getValue(cfg, section, key)
