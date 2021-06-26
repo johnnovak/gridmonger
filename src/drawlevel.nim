@@ -179,9 +179,9 @@ proc setZoomLevel*(dp; ls; zl: Natural) =
 
   elif zl < 3 or dp.lineWidth == lwNormal:
     dp.thinStrokeWidth = 2.0
-    dp.normalStrokeWidth = 3.0
-    dp.vertTransformXOffs = 1.0
-    dp.vertRegionBorderYOffs = 0.0
+    dp.normalStrokeWidth = 2.0
+    dp.vertTransformXOffs = 0.0
+    dp.vertRegionBorderYOffs = -1.0
 
   dp.cellCoordsFontSize = if   zl <= 2:   9.0
                           elif zl <= 3:  10.0
@@ -862,10 +862,10 @@ proc drawIndexedNote*(x, y: float, i: Natural, size: float,
                       bgColor, fgColor: Color, vg: NVGContext) =
   vg.fillColor(bgColor)
   vg.beginPath()
-  vg.rect(x, y, size, size)
+  vg.circle(x + size*0.5, y + size*0.5, size*0.35)
   vg.fill()
 
-  vg.setFont((size*0.5).float)
+  vg.setFont((size*0.4).float)
   vg.fillColor(fgColor)
   vg.textAlign(haCenter, vaMiddle)
   discard vg.text(x + size*0.51, y + size*0.54, $i)

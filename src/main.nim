@@ -574,20 +574,63 @@ type AppShortcut = enum
   scAccept,
   scCancel,
   scDiscard,
+  scUndo,
+  scRedo,
+
+  scShowAboutDialog,
+  scOpenUserManual,
+  scToggleThemeEditor,
+
+  scNewMap,
+  scOpenMap,
+  scSaveMap,
+  scSaveMapAs,
+  scEditMapProperties,
+  scNewLevel,
+
+  scReloadTheme,
+  scPreviousTheme,
+  scNextTheme,
+
+  scEditPreferences
+
 
 # TODO some shortcuts win/mac specific?
 # TODO introduce shortcuts for everything
 let g_appShortcuts = {
 
-  scNextTextField:    @[mkKeyShortcut(keyTab,           {})],
+  scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
 
-  scAccept:           @[mkKeyShortcut(keyEnter,         {}),
-                        mkKeyShortcut(keyKpEnter,       {})],
+  scAccept:             @[mkKeyShortcut(keyEnter,         {}),
+                          mkKeyShortcut(keyKpEnter,       {})],
 
-  scCancel:           @[mkKeyShortcut(keyEscape,        {}),
-                        mkKeyShortcut(keyLeftBracket,   {mkCtrl})],
+  scCancel:             @[mkKeyShortcut(keyEscape,        {}),
+                          mkKeyShortcut(keyLeftBracket,   {mkCtrl})],
 
-  scDiscard:          @[mkKeyShortcut(keyD,             {mkAlt})],
+  scDiscard:            @[mkKeyShortcut(keyD,             {mkAlt})],
+
+  scUndo:               @[mkKeyShortcut(keyZ,             {mkCtrl}),
+                          mkKeyShortcut(keyU,             {})],
+
+  scRedo:               @[mkKeyShortcut(keyY,             {mkCtrl}),
+                          mkKeyShortcut(keyR,             {mkCtrl})],
+
+  scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
+  scOpenUserManual:     @[mkKeyShortcut(keyF1,            {})],
+  scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
+
+  scNewMap:             @[mkKeyShortcut(keyN,             {mkCtrl, mkAlt})],
+  scOpenMap:            @[mkKeyShortcut(keyO,             {mkCtrl})],
+  scSaveMap:            @[mkKeyShortcut(Key.keyS,         {mkCtrl})],
+  scSaveMapAs:          @[mkKeyShortcut(Key.keyS,         {mkCtrl, mkShift})],
+  scEditMapProperties:  @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
+  scNewLevel:           @[mkKeyShortcut(keyN,             {mkCtrl})],
+
+  scReloadTheme:        @[mkKeyShortcut(keyHome,          {mkCtrl})],
+  scPreviousTheme:      @[mkKeyShortcut(keyPageUp,        {mkCtrl})],
+  scNextTheme:          @[mkKeyShortcut(keyPageDown,      {mkCtrl})],
+
+  scEditPreferences:    @[mkKeyShortcut(keyU,             {mkCtrl, mkAlt})]
 
 }.toTable
 
@@ -4258,13 +4301,8 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyI):
         a.ui.currFloorColor = map.getFloorColor(cur).byte
 
-      elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
-           ke.isKeyDown(keyU, repeat=true):
-        undoAction(a)
-
-      elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
-           ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
-        redoAction(a)
+      elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
+      elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
 
       elif ke.isKeyDown(keyM):
         enterSelectMode(a)
@@ -4374,8 +4412,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyT, {mkCtrl}):
         openEditLabelDialog(a)
 
-      elif ke.isKeyDown(keyU, {mkCtrl, mkAlt}):
-        openPreferencesDialog(a)
+      elif ke.isShortcutDown(scEditPreferences): openPreferencesDialog(a)
 
       elif ke.isKeyDown(keyN, {mkCtrl}):
         if map.levels.len < NumLevelsLimits.maxInt:
@@ -4390,14 +4427,11 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyD, {mkCtrl}):
         openDeleteLevelDialog(a)
 
-      elif ke.isKeyDown(keyN, {mkCtrl, mkAlt}):
-        newMapAction(a)
+      elif ke.isShortcutDown(scNewMap): newMapAction(a)
+      elif ke.isShortcutDown(scEditMapProperties): openEditMapPropsDialog(a)
 
       elif ke.isKeyDown(keyP, {mkCtrl}):
         openEditLevelPropsDialog(a)
-
-      elif ke.isKeyDown(keyP, {mkCtrl, mkAlt}):
-        openEditMapPropsDialog(a)
 
       elif ke.isKeyDown(keyE, {mkCtrl}):
         openResizeLevelDialog(a)
@@ -4412,18 +4446,18 @@ proc handleGlobalKeyEvents(a) =
             a
           )
 
-      elif ke.isKeyDown(keyO,     {mkCtrl}):          openMapAction(a)
-      elif ke.isKeyDown(Key.keyS, {mkCtrl}):          saveMapAction(a)
-      elif ke.isKeyDown(Key.keyS, {mkCtrl, mkShift}): saveMapAsAction(a)
+      elif ke.isShortcutDown(scOpenMap):           openMapAction(a)
+      elif ke.isShortcutDown(scSaveMap):           saveMapAction(a)
+      elif ke.isShortcutDown(scSaveMapAs):         saveMapAsAction(a)
 
-      elif ke.isKeyDown(keyHome,     {mkCtrl}): reloadThemeAction(a)
-      elif ke.isKeyDown(keyPageUp,   {mkCtrl}): prevThemeAction(a)
-      elif ke.isKeyDown(keyPageDown, {mkCtrl}): nextThemeAction(a)
+      elif ke.isShortcutDown(scReloadTheme):       reloadThemeAction(a)
+      elif ke.isShortcutDown(scPreviousTheme):     prevThemeAction(a)
+      elif ke.isShortcutDown(scNextTheme):         nextThemeAction(a)
 
-      elif ke.isKeyDown(keyF1):
+      elif ke.isShortcutDown(scOpenUserManual):
         openUserManualAction(a)
 
-      elif ke.isKeyDown(keyA, {mkCtrl}):
+      elif ke.isShortcutDown(scShowAboutDialog):
         openAboutDialog(a)
 
       # Toggle options
@@ -4448,7 +4482,7 @@ proc handleGlobalKeyEvents(a) =
         map.setTrail(cur, true)
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
-      elif ke.isKeyDown(keyF12):
+      elif ke.isShortcutDown(scToggleThemeEditor):
         toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
 
     # }}}
@@ -4682,7 +4716,7 @@ proc handleGlobalKeyEvents(a) =
         exitSelectMode(a)
         a.clearStatusMessage()
 
-      elif ke.isKeyDown(keyF1):
+      elif ke.isShortcutDown(scOpenUserManual):
         openUserManualAction(a)
 
     # }}}
@@ -4744,7 +4778,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isKeyDown(keyF1):
+      elif ke.isShortcutDown(scOpenUserManual):
         openUserManualAction(a)
 
     # }}}
@@ -4776,7 +4810,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isKeyDown(keyF1):
+      elif ke.isShortcutDown(scOpenUserManual):
         openUserManualAction(a)
 
     # }}}
@@ -4803,7 +4837,7 @@ proc handleGlobalKeyEvents(a) =
         ui.nudgeBuf = SelectionBuffer.none
         clearStatusMessage(a)
 
-      elif ke.isKeyDown(keyF1):
+      elif ke.isShortcutDown(scOpenUserManual):
         openUserManualAction(a)
 
     # }}}
@@ -4854,7 +4888,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isKeyDown(keyF1):
+      elif ke.isShortcutDown(scOpenUserManual):
         openUserManualAction(a)
 
     # }}}
@@ -4867,37 +4901,29 @@ proc handleGlobalKeyEvents_NoLevels(a) =
   if hasKeyEvent():
     let ke = koi.currEvent()
 
-    if   ke.isKeyDown(keyN,        {mkCtrl, mkAlt}):   newMapAction(a)
-    elif ke.isKeyDown(keyP,        {mkCtrl, mkAlt}):   openEditMapPropsDialog(a)
+    if   ke.isShortcutDown(scNewMap):            newMapAction(a)
+    elif ke.isShortcutDown(scEditMapProperties): openEditMapPropsDialog(a)
 
-    elif ke.isKeyDown(keyO,        {mkCtrl}):          openMapAction(a)
-    elif ke.isKeyDown(Key.keyS,    {mkCtrl}):          saveMapAction(a)
-    elif ke.isKeyDown(Key.keyS,    {mkCtrl, mkShift}): saveMapAsAction(a)
+    elif ke.isShortcutDown(scOpenMap):           openMapAction(a)
+    elif ke.isShortcutDown(scSaveMap):           saveMapAction(a)
+    elif ke.isShortcutDown(scSaveMapAs):         saveMapAsAction(a)
 
-    elif ke.isKeyDown(keyN,        {mkCtrl}):          openNewLevelDialog(a)
+    elif ke.isShortcutDown(scNewLevel):          openNewLevelDialog(a)
 
-    elif ke.isKeyDown(keyHome,     {mkCtrl}):          reloadThemeAction(a)
-    elif ke.isKeyDown(keyPageUp,   {mkCtrl}):          prevThemeAction(a)
-    elif ke.isKeyDown(keyPageDown, {mkCtrl}):          nextThemeAction(a)
+    elif ke.isShortcutDown(scReloadTheme):       reloadThemeAction(a)
+    elif ke.isShortcutDown(scPreviousTheme):     prevThemeAction(a)
+    elif ke.isShortcutDown(scNextTheme):         nextThemeAction(a)
 
-    elif ke.isKeyDown(keyU,        {mkCtrl, mkAlt}):   openPreferencesDialog(a)
+    elif ke.isShortcutDown(scEditPreferences):   openPreferencesDialog(a)
 
-    elif ke.isKeyDown(keyZ, {mkCtrl}, repeat=true) or
-         ke.isKeyDown(keyU, repeat=true):
-      undoAction(a)
+    elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
+    elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
 
-    elif ke.isKeyDown(keyY, {mkCtrl}, repeat=true) or
-         ke.isKeyDown(keyR, {mkCtrl}, repeat=true):
-      redoAction(a)
-
-    elif ke.isKeyDown(keyF1):
-      openUserManualAction(a)
-
-    elif ke.isKeyDown(keyA, {mkCtrl}):
-      openAboutDialog(a)
+    elif ke.isShortcutDown(scOpenUserManual):    openUserManualAction(a)
+    elif ke.isShortcutDown(scShowAboutDialog):   openAboutDialog(a)
 
     # Toggle options
-    elif ke.isKeyDown(keyF12):
+    elif ke.isShortcutDown(scToggleThemeEditor):
       toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
 
 # }}}
