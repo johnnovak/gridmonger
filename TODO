@@ -1,12 +1,6 @@
 BUGS
 
   - undoing all changes should clear modified flag
-  - ctrl-[ (ESC) doesn't work in
-    - paste preview
-    - nudge
-    - set link mode
-    - selection
-
   - cancelling move should put cut area back
   - warn of unsaved changes when switching theme
 

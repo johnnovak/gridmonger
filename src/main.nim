@@ -4678,7 +4678,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
       elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
 
-      elif ke.isKeyDown(keyEscape):
+      elif ke.isShortcutDown(scCancel):
         exitSelectMode(a)
         a.clearStatusMessage()
 
@@ -4740,7 +4740,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
-      elif ke.isKeyDown(keyEscape):
+      elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -4772,7 +4772,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
-      elif ke.isKeyDown(keyEscape):
+      elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -4797,7 +4797,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
-      elif ke.isKeyDown(keyEscape):
+      elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
         map.levels[cur.level] = ui.nudgeBuf.get.level
         ui.nudgeBuf = SelectionBuffer.none
@@ -4850,7 +4850,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyEqual, repeat=true): incZoomLevelAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): decZoomLevelAction(a)
 
-      elif ke.isKeyDown(keyEscape):
+      elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 

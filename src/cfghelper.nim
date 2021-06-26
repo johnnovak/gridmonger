@@ -10,7 +10,8 @@ import nanovg
 
 
 proc invalidValueError(section, key, valueType, value: string) =
-  let msg = fmt"Invalid {valueType} value in section='{section}', key='{key}': {value}"
+  let msg = fmt"Invalid {valueType} value in section='{section}', " &
+            fmt"key='{key}': {value}"
   error(msg)
 
 proc getValue*(cfg: Config, section, key: string): string =
