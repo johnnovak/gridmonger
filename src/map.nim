@@ -197,8 +197,8 @@ proc setTrail*(m; loc: Location, t: bool) =
 
 # }}}
 
-# {{{ excavate*()
-proc excavate*(m; loc: Location, floorColor: byte) =
+# {{{ excavateTunnel*()
+proc excavateTunnel*(m; loc: Location, floorColor: byte) =
   alias(l, m.levels[loc.level])
   alias(c, loc.col)
   alias(r, loc.row)

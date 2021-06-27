@@ -128,10 +128,10 @@ proc eraseCell*(map; loc: Location; um) =
     m.eraseCell(loc)
 
 # }}}
-# {{{ excavate*()
-proc excavate*(map; loc: Location, floorColor: byte; um) =
+# {{{ excavateTunnel*()
+proc excavateTunnel*(map; loc: Location, floorColor: byte; um) =
   singleCellAction(map, loc, um, "Excavate tunnel", m):
-    m.excavate(loc, floorColor)
+    m.excavateTunnel(loc, floorColor)
 
 # }}}
 # {{{ excavateTrail*()
@@ -147,7 +147,7 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural], floorColor: byte;
         loc.col = c
         if m.hasTrail(loc):
           if m.isEmpty(loc):
-            m.excavate(loc, floorColor)
+            m.excavateTunnel(loc, floorColor)
           else:
             m.setFloorColor(loc, floorColor)
 

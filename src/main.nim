@@ -263,18 +263,18 @@ type
 
   EditMode = enum
     emNormal,
-    emExcavate,
+    emColorFloor,
+    emDrawClearFloor,
+    emDrawSpecialWall,
     emDrawWall,
-    emDrawWallSpecial,
     emEraseCell,
     emEraseTrail,
-    emDrawClearFloor,
-    emColorFloor,
-    emSelect,
-    emSelectRect
-    emPastePreview,
+    emExcavateTunnel,
     emMovePreview,
     emNudgePreview,
+    emPastePreview,
+    emSelect,
+    emSelectRect
     emSetCellLink
 
   Theme = object
@@ -647,15 +647,15 @@ type AppShortcut = enum
   scCycleFloorGroup5Backward,
   scCycleFloorGroup6Backward,
 
-  scExcavate,
+  scExcavateTunnel,
   scEraseCell,
   scDrawClearFloor,
   scToggleFloorOrientation,
   scSetFloorColor,
   scPickFloorColor,
 
-  scDrawWalls,
-  scDrawSpecialWalls,
+  scDrawWall,
+  scDrawSpecialWall,
 
   scEraseTrail,
   scExcavateTrail,
@@ -693,11 +693,10 @@ type AppShortcut = enum
   scEditPreferences,
 
 
-
 # TODO some shortcuts win/mac specific?
 # TODO introduce shortcuts for everything
 let g_appShortcuts = {
-
+  # General
   scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
 
   scAccept:             @[mkKeyShortcut(keyEnter,         {}),
@@ -714,22 +713,86 @@ let g_appShortcuts = {
   scRedo:               @[mkKeyShortcut(keyY,             {mkCtrl}),
                           mkKeyShortcut(keyR,             {mkCtrl})],
 
-  scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
-  scOpenUserManual:     @[mkKeyShortcut(keyF1,            {})],
-  scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
-
+  # Maps
   scNewMap:             @[mkKeyShortcut(keyN,             {mkCtrl, mkAlt})],
   scOpenMap:            @[mkKeyShortcut(keyO,             {mkCtrl})],
   scSaveMap:            @[mkKeyShortcut(Key.keyS,         {mkCtrl})],
   scSaveMapAs:          @[mkKeyShortcut(Key.keyS,         {mkCtrl, mkShift})],
   scEditMapProperties:  @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
+
+  # Levels
   scNewLevel:           @[mkKeyShortcut(keyN,             {mkCtrl})],
 
+  # Regions
+  # TODO
+
+  # Themes
   scReloadTheme:        @[mkKeyShortcut(keyHome,          {mkCtrl})],
   scPreviousTheme:      @[mkKeyShortcut(keyPageUp,        {mkCtrl})],
   scNextTheme:          @[mkKeyShortcut(keyPageDown,      {mkCtrl})],
 
+  # Editing
+  # TODO
+  scCycleFloorGroup1Forward:   @[mkKeyShortcut(key1,      {})],
+  scCycleFloorGroup2Forward:   @[mkKeyShortcut(key2,      {})],
+  scCycleFloorGroup3Forward:   @[mkKeyShortcut(key3,      {})],
+  scCycleFloorGroup4Forward:   @[mkKeyShortcut(key4,      {})],
+  scCycleFloorGroup5Forward:   @[mkKeyShortcut(key5,      {})],
+  scCycleFloorGroup6Forward:   @[mkKeyShortcut(key6,      {})],
+
+  scCycleFloorGroup1Backward:  @[mkKeyShortcut(key1,      {mkShift})],
+  scCycleFloorGroup2Backward:  @[mkKeyShortcut(key2,      {mkShift})],
+  scCycleFloorGroup3Backward:  @[mkKeyShortcut(key3,      {mkShift})],
+  scCycleFloorGroup4Backward:  @[mkKeyShortcut(key4,      {mkShift})],
+  scCycleFloorGroup5Backward:  @[mkKeyShortcut(key5,      {mkShift})],
+  scCycleFloorGroup6Backward:  @[mkKeyShortcut(key6,      {mkShift})],
+
+  scExcavateTunnel:            @[mkKeyShortcut(keyD,      {})],
+  scEraseCell:                 @[mkKeyShortcut(keyE,      {})],
+  scDrawClearFloor:            @[mkKeyShortcut(keyF,      {})],
+  scToggleFloorOrientation:    @[mkKeyShortcut(keyO,      {})],
+
+  scSetFloorColor:             @[mkKeyShortcut(keyC,      {})],
+  scPickFloorColor:            @[mkKeyShortcut(keyI,      {})],
+  scPreviousFloorColor:        @[mkKeyShortcut(keyComma,  {})],
+  scNextFloorColor:            @[mkKeyShortcut(keyPeriod, {})],
+
+  scDrawWall:                  @[mkKeyShortcut(keyW,            {})],
+  scDrawSpecialWall:           @[mkKeyShortcut(keyR,            {})],
+  scPreviousSpecialWall:       @[mkKeyShortcut(keyLeftBracket,  {})],
+  scNextSpecialWall:           @[mkKeyShortcut(keyRightBracket, {})],
+
+  scEraseTrail:                @[mkKeyShortcut(keyX,      {})],
+  scExcavateTrail:             @[mkKeyShortcut(keyX,      {})],
+  scClearTrail:                @[mkKeyShortcut(keyX,      {})],
+
+#[
+  scJumpToLinkedCell,
+  scLinkCell,
+
+  scPreviousLevel,
+  scNextLevel,
+
+  scZoomIn,
+  scZoomOut,
+
+  scMarkSelection,
+  scPaste,
+
+  scEditNote,
+  scEraseNote,
+  scEditLabel,
+  scEraseLabel,
+
+  scShowNoteTooltip,
+]#
+
+  # Misc
+  scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
+  scOpenUserManual:     @[mkKeyShortcut(keyF1,            {})],
+  scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
   scEditPreferences:    @[mkKeyShortcut(keyU,             {mkCtrl, mkAlt})]
+
 
 }.toTable
 
@@ -1570,11 +1633,28 @@ func isKeyUp(ev: Event, keys: set[Key]): bool =
   ev.action == kaUp and ev.key in keys
 
 
+proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
+                   actions: set[KeyAction]): bool =
+  if ev.kind == ekKey:
+    if ev.action in actions:
+      let currShortcut = mkKeyShortcut(ev.key, ev.mods)
+      for sc in shortcuts:
+        if currShortcut in g_appShortcuts[sc]:
+          return true
+
+proc isShortcutsDown(ev: Event, shortcuts: set[AppShortcut],
+                     repeat=false): bool =
+  let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
+  checkShortcut(ev, shortcuts, actions)
+
 proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
-  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  if ev.kind == ekKey and ev.action in a:
-    let sc = mkKeyShortcut(ev.key, ev.mods)
-    result = sc in g_appShortcuts[shortcut]
+  isShortcutsDown(ev, {shortcut}, repeat)
+
+proc isShortcutsUp(ev: Event, shortcuts: set[AppShortcut]): bool =
+  checkShortcut(ev, shortcuts, actions={kaUp})
+
+proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
+  isShortcutsUp(ev, {shortcut})
 
 # }}}
 # {{{ Dialogs
@@ -3871,10 +3951,10 @@ proc setOrCycleFloorAction(floors: seq[Floor], forward: bool; a) =
     setStatusMessage(IconWarning, "Cannot set floor type of an empty cell", a)
 
 # }}}
-# {{{ startExcavateAction()
-proc startExcavateAction(a) =
-  actions.excavate(a.doc.map, a.ui.cursor, a.ui.currFloorColor,
-                   a.doc.undoManager)
+# {{{ startExcavateTunnelAction()
+proc startExcavateTunnelAction(a) =
+  actions.excavateTunnel(a.doc.map, a.ui.cursor, a.ui.currFloorColor,
+                         a.doc.undoManager)
 
   setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll,
                    "excavate"], a)
@@ -3892,14 +3972,14 @@ proc startEraseTrailAction(a) =
   setStatusMessage(IconEraser, "Erase trail", @[IconArrowsAll, "erase"], a)
 
 # }}}
-# {{{ startDrawWallsAction()
-proc startDrawWallsAction(a) =
-  setStatusMessage("", "Draw walls", @[IconArrowsAll, "set/clear"], a)
+# {{{ startDrawWallAction()
+proc startDrawWallAction(a) =
+  setStatusMessage("", "Draw wall", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
-# {{{ startDrawWallsSpecialAction()
-proc startDrawWallsSpecialAction(a) =
-  setStatusMessage("", "Draw walls special", @[IconArrowsAll, "set/clear"], a)
+# {{{ startDrawSpecialWallAction()
+proc startDrawSpecialWallAction(a) =
+  setStatusMessage("", "Draw wall special", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
 # {{{ prevFloorColorAction()
@@ -4104,18 +4184,18 @@ proc handleLevelMouseEvents(a) =
   if opts.wasdMode:
     if ui.editMode == emNormal:
       if koi.mbLeftDown():
-        ui.editMode = emExcavate
-        startExcavateAction(a)
+        ui.editMode = emExcavateTunnel
+        startExcavateTunnelAction(a)
 
       elif koi.mbRightDown():
         ui.editMode = emDrawWall
-        startDrawWallsAction(a)
+        startDrawWallAction(a)
 
       elif koi.mbMiddleDown():
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
-    elif ui.editMode == emExcavate:
+    elif ui.editMode == emExcavateTunnel:
       if not koi.mbLeftDown():
         ui.editMode = emNormal
         clearStatusMessage(a)
@@ -4126,17 +4206,17 @@ proc handleLevelMouseEvents(a) =
         clearStatusMessage(a)
       else:
         if koi.mbLeftDown():
-          ui.editMode = emDrawWallSpecial
-          startDrawWallsSpecialAction(a)
+          ui.editMode = emDrawSpecialWall
+          startDrawSpecialWallAction(a)
 
-    elif ui.editMode == emDrawWallSpecial:
+    elif ui.editMode == emDrawSpecialWall:
       if not koi.mbRightDown():
         ui.editMode = emNormal
         clearStatusMessage(a)
       else:
         if not koi.mbLeftDown():
           ui.editMode = emDrawWall
-          startDrawWallsAction(a)
+          startDrawWallAction(a)
 
     elif ui.editMode == emEraseCell:
       if not koi.mbMiddleDown():
@@ -4281,21 +4361,22 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = a.ui.cursor
 
-      if not opts.wasdMode and ke.isKeyDown(keyD):
-        ui.editMode = emExcavate
-        startExcavateAction(a)
+      if not opts.wasdMode and ke.isShortcutDown(scExcavateTunnel):
+        ui.editMode = emExcavateTunnel
+        startExcavateTunnelAction(a)
 
-      elif not (opts.wasdMode and opts.walkMode) and ke.isKeyDown(keyE):
+      elif not (opts.wasdMode and opts.walkMode) and
+           ke.isShortcutDown(scEraseCell):
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
-      elif ke.isKeyDown(keyF):
+      elif ke.isShortcutDown(scDrawClearFloor):
         ui.editMode = emDrawClearFloor
         setStatusMessage(IconEraser, "Draw/clear floor",
                          @[IconArrowsAll, "draw/clear"], a)
         actions.drawClearFloor(map, cur, ui.currFloorColor, um)
 
-      elif ke.isKeyDown(keyO):
+      elif ke.isShortcutDown(scToggleFloorOrientation):
         actions.toggleFloorOrientation(map, cur, um)
         if map.getFloorOrientation(cur) == Horiz:
           setStatusMessage(IconArrowsHoriz,
@@ -4304,7 +4385,7 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconArrowsVert,
                            "Floor orientation set to vertical", a)
 
-      elif ke.isKeyDown(keyC):
+      elif ke.isShortcutDown(scSetFloorColor):
         ui.editMode = emColorFloor
         setStatusMessage(IconEraser, "Set floor color",
                          @[IconArrowsAll, "set color"], a)
@@ -4312,41 +4393,59 @@ proc handleGlobalKeyEvents(a) =
         if not map.isEmpty(cur):
           actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
-      elif not opts.wasdMode and ke.isKeyDown(keyW):
+      elif not opts.wasdMode and ke.isShortcutDown(scDrawWall):
         ui.editMode = emDrawWall
-        startDrawWallsAction(a)
+        startDrawWallAction(a)
 
-      elif ke.isKeyDown(keyR):
-        ui.editMode = emDrawWallSpecial
-        startDrawWallsSpecialAction(a)
+      elif ke.isShortcutDown(scDrawSpecialWall):
+        ui.editMode = emDrawSpecialWall
+        startDrawSpecialWallAction(a)
 
-      elif ke.isKeyDown(key1) or ke.isKeyDown(key1, {mkShift}):
-        setOrCycleFloorAction(FloorsKey1, forward=not koi.shiftDown(), a)
+      elif ke.isShortcutDown(scCycleFloorGroup1Forward):
+        setOrCycleFloorAction(FloorsKey1, forward=true, a)
 
-      elif ke.isKeyDown(key2) or ke.isKeyDown(key2, {mkShift}):
-        setOrCycleFloorAction(FloorsKey2, forward=not koi.shiftDown(), a)
+      elif ke.isShortcutDown(scCycleFloorGroup2Forward):
+        setOrCycleFloorAction(FloorsKey2, forward=true, a)
 
-      elif ke.isKeyDown(key3) or ke.isKeyDown(key3, {mkShift}):
-        setOrCycleFloorAction(FloorsKey3, forward=not koi.shiftDown(), a)
+      elif ke.isShortcutDown(scCycleFloorGroup3Forward):
+        setOrCycleFloorAction(FloorsKey3, forward=true, a)
 
-      elif ke.isKeyDown(key4) or ke.isKeyDown(key4, {mkShift}):
-        setOrCycleFloorAction(FloorsKey4, forward=not koi.shiftDown(), a)
+      elif ke.isShortcutDown(scCycleFloorGroup4Forward):
+        setOrCycleFloorAction(FloorsKey4, forward=true, a)
 
-      elif ke.isKeyDown(key5) or ke.isKeyDown(key5, {mkShift}):
-        setOrCycleFloorAction(FloorsKey5, forward=not koi.shiftDown(), a)
+      elif ke.isShortcutDown(scCycleFloorGroup5Forward):
+        setOrCycleFloorAction(FloorsKey5, forward=true, a)
 
-      elif ke.isKeyDown(key6) or ke.isKeyDown(key6, {mkShift}):
-        setOrCycleFloorAction(FloorsKey6, forward=not koi.shiftDown(), a)
+      elif ke.isShortcutDown(scCycleFloorGroup6Forward):
+        setOrCycleFloorAction(FloorsKey6, forward=true, a)
 
-      elif ke.isKeyDown(keyLeftBracket, repeat=true):
+      elif ke.isShortcutDown(scCycleFloorGroup1Backward):
+        setOrCycleFloorAction(FloorsKey1, forward=false, a)
+
+      elif ke.isShortcutDown(scCycleFloorGroup2Backward):
+        setOrCycleFloorAction(FloorsKey2, forward=false, a)
+
+      elif ke.isShortcutDown(scCycleFloorGroup3Backward):
+        setOrCycleFloorAction(FloorsKey3, forward=false, a)
+
+      elif ke.isShortcutDown(scCycleFloorGroup4Backward):
+        setOrCycleFloorAction(FloorsKey4, forward=false, a)
+
+      elif ke.isShortcutDown(scCycleFloorGroup5Backward):
+        setOrCycleFloorAction(FloorsKey5, forward=false, a)
+
+      elif ke.isShortcutDown(scCycleFloorGroup6Backward):
+        setOrCycleFloorAction(FloorsKey6, forward=false, a)
+
+      elif ke.isShortcutDown(scPreviousSpecialWall, repeat=true):
         if ui.currSpecialWall > 0: dec(ui.currSpecialWall)
         else: ui.currSpecialWall = SpecialWalls.high
 
-      elif ke.isKeyDown(keyRightBracket, repeat=true):
+      elif ke.isShortcutDown(scNextSpecialWall, repeat=true):
         if ui.currSpecialWall < SpecialWalls.high: inc(ui.currSpecialWall)
         else: ui.currSpecialWall = 0
 
-      elif ke.isKeyDown(keyX):
+      elif ke.isShortcutDown(scEraseTrail):
         ui.editMode = emEraseTrail
         startEraseTrailAction(a)
 
@@ -4368,9 +4467,13 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "No trail to clear", a)
 
-      elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
-      elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
-      elif ke.isKeyDown(keyI): pickFloorColorAction(a)
+      elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
+        prevFloorColorAction(a)
+
+      elif ke.isShortcutDown(scNextFloorColor, repeat=true):
+        nextFloorColorAction(a)
+
+      elif ke.isShortcutDown(scPickFloorColor): pickFloorColorAction(a)
 
       elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
       elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
@@ -4557,8 +4660,8 @@ proc handleGlobalKeyEvents(a) =
         toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
 
     # }}}
-    # {{{ emExcavate, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
-    of emExcavate, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
+    # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
+    of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
@@ -4568,8 +4671,8 @@ proc handleGlobalKeyEvents(a) =
       let cur = a.ui.cursor
 
       if cur != a.ui.lastCursor:
-        if   ui.editMode == emExcavate:
-          actions.excavate(map, cur, ui.currFloorColor, um)
+        if   ui.editMode == emExcavateTunnel:
+          actions.excavateTunnel(map, cur, ui.currFloorColor, um)
 
         elif ui.editMode == emEraseCell:
           actions.eraseCell(map, cur, um)
@@ -4584,11 +4687,12 @@ proc handleGlobalKeyEvents(a) =
           if not map.isEmpty(cur):
             actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
-      if not opts.wasdMode and ke.isKeyUp({keyD}):
+      if not opts.wasdMode and ke.isShortcutUp(scExcavateTunnel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      if ke.isKeyUp({keyC, keyE, keyF, keyX}):
+      if ke.isShortcutsUp({scEraseCell, scDrawClearFloor, scEraseTrail,
+                           scSetFloorColor}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -4607,13 +4711,13 @@ proc handleGlobalKeyEvents(a) =
 
       handleMoveKeys(ke, handleMoveKey)
 
-      if not opts.wasdMode and ke.isKeyUp({keyW}):
+      if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
     # }}}
-    # {{{ emDrawWallSpecial
-    of emDrawWallSpecial:
+    # {{{ emDrawSpecialWall
+    of emDrawSpecialWall:
       proc handleMoveKey(dir: CardinalDir; a) =
         let cur = a.ui.cursor
 
@@ -4640,7 +4744,7 @@ proc handleGlobalKeyEvents(a) =
 
       handleMoveKeys(ke, handleMoveKey)
 
-      if ke.isKeyUp({keyR}):
+      if ke.isShortcutUp(scDrawSpecialWall):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -4780,9 +4884,13 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
       elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
 
-      elif ke.isKeyDown(keyComma,  repeat=true): prevFloorColorAction(a)
-      elif ke.isKeyDown(keyPeriod, repeat=true): nextFloorColorAction(a)
-      elif ke.isKeyDown(keyI): pickFloorColorAction(a)
+      elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
+        prevFloorColorAction(a)
+
+      elif ke.isShortcutDown(scNextFloorColor, repeat=true):
+        nextFloorColorAction(a)
+
+      elif ke.isShortcutDown(scPickFloorColor): pickFloorColorAction(a)
 
       elif ke.isShortcutDown(scCancel):
         exitSelectMode(a)
@@ -5043,7 +5151,8 @@ proc renderLevel(a) =
 
     dp.cursorOrient = CardinalDir.none
     if opts.walkMode and
-       ui.editMode in {emNormal, emExcavate, emEraseCell, emDrawClearFloor}:
+       ui.editMode in {emNormal, emExcavateTunnel, emEraseCell,
+                       emDrawClearFloor}:
       dp.cursorOrient = ui.cursorOrient.some
 
     dp.selection = ui.selection
