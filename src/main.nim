@@ -766,16 +766,21 @@ let g_appShortcuts = {
   scExcavateTrail:             @[mkKeyShortcut(keyX,      {})],
   scClearTrail:                @[mkKeyShortcut(keyX,      {})],
 
+  scJumpToLinkedCell:          @[mkKeyShortcut(keyG,      {})],
+  scLinkCell:                  @[mkKeyShortcut(keyG,      {mkShift})],
+
+  scPreviousLevel:             @[mkKeyShortcut(keyPageDown,   {}),
+                                 mkKeyShortcut(keyKpAdd,      {}),
+                                 mkKeyShortcut(keyEqual,      {mkCtrl})],
+
+  scNextLevel:                 @[mkKeyShortcut(keyPageUp,     {}),
+                                 mkKeyShortcut(keyKpSubtract, {}),
+                                 mkKeyShortcut(keyMinus,      {mkCtrl})],
+
+  scZoomIn:                    @[mkKeyShortcut(keyEqual,  {})],
+  scZoomOut:                   @[mkKeyShortcut(keyMinus,  {})],
+
 #[
-  scJumpToLinkedCell,
-  scLinkCell,
-
-  scPreviousLevel,
-  scNextLevel,
-
-  scZoomIn,
-  scZoomOut,
-
   scMarkSelection,
   scPaste,
 
@@ -4351,13 +4356,8 @@ proc handleGlobalKeyEvents(a) =
         if handleMoveCursor(ke, moveKeys, a):
           setStatusMessage("moved", a)
 
-      if ke.isKeyDown({keyPageUp, keyKpSubtract}, repeat=true) or
-         ke.isKeyDown(keyMinus, {mkCtrl}, repeat=true):
-        prevLevelAction(a)
-
-      elif ke.isKeyDown({keyPageDown, keyKpAdd}, repeat=true) or
-           ke.isKeyDown(keyEqual, {mkCtrl}, repeat=true):
-        nextLevelAction(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true): prevLevelAction(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true): nextLevelAction(a)
 
       let cur = a.ui.cursor
 
@@ -4526,14 +4526,14 @@ proc handleGlobalKeyEvents(a) =
                          "Enter", "confirm", "Esc", "exit"], a)
 
 
-      elif ke.isKeyDown(keyG):
+      elif ke.isShortcutDown(scJumpToLinkedCell):
         let otherLoc = map.getLinkedLocation(cur)
         if otherLoc.isSome:
           moveCursorTo(otherLoc.get, a)
         else:
           setStatusMessage(IconWarning, "Not a linked cell", a)
 
-      elif ke.isKeyDown(keyG, {mkShift}):
+      elif ke.isShortcutDown(scLinkCell):
         let floor = map.getFloor(cur)
         if floor in LinkSources:
           ui.linkSrcLocation = cur
@@ -4542,12 +4542,12 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "Cannot link current cell", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true):
+      elif ke.isShortcutDown(scZoomIn, repeat=true):
         zoomInAction(a)
         setStatusMessage(IconZoomIn,
           fmt"Zoomed in – level {dp.getZoomLevel()}", a)
 
-      elif ke.isKeyDown(keyMinus, repeat=true):
+      elif ke.isShortcutDown(scZoomOut, repeat=true):
         zoomOutAction(a)
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
@@ -4881,8 +4881,8 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped level to selection", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
         prevFloorColorAction(a)
@@ -4951,8 +4951,8 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
@@ -4983,8 +4983,8 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
@@ -5000,8 +5000,8 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = a.ui.cursor
 
-      if   ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
+      if   ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
 
       elif ke.isKeyDown(keyEnter):
         let newCur = actions.nudgeLevel(map, cur,
@@ -5061,8 +5061,8 @@ proc handleGlobalKeyEvents(a) =
                            fmt"{capitalizeAscii(linkType)} link destination set",
                            a)
 
-      elif ke.isKeyDown(keyEqual, repeat=true): zoomInAction(a)
-      elif ke.isKeyDown(keyMinus, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
@@ -5365,6 +5365,42 @@ proc renderToolsPane(x, y, w, h: float; a) =
 
 # }}}
 # {{{ renderNotesPane()
+
+# {{{ drawIndexedNote()
+proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
+                     shape: NoteBackgroundShape; index: Natural; a) =
+  alias(vg, a.vg)
+
+  vg.fillColor(bgColor)
+  vg.beginPath()
+
+  case shape
+  of nbsCircle:
+    vg.circle(x + size*0.5, y + size*0.5, size*0.38)
+  of nbsRectangle:
+    let pad = 4.0
+    vg.rect(x+pad, y+pad, size-pad*2, size-pad*2)
+
+  vg.fill()
+
+  # TODO debug
+  let index = if index < 5: index
+              elif index < 10: index * 5
+              else: index * 10
+  # TODO debug
+
+  var fontSizeFactor = if   index <  10: 0.4
+                       elif index < 100: 0.37
+                       else:             0.32
+
+  vg.setFont((size*fontSizeFactor).float)
+  vg.fillColor(fgColor)
+  vg.textAlign(haCenter, vaMiddle)
+
+  discard vg.text(x + size*0.51, y + size*0.54, $index)
+
+# }}}
+
 proc renderNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
 
@@ -5383,9 +5419,11 @@ proc renderNotesPane(x, y, w, h: float; a) =
 
     case note.kind
     of akIndexed:
-      drawIndexedNote(x, y-12, note.index, 36,
+      drawIndexedNote(x, y-12, size=36,
                       bgColor=s.indexBackgroundColor[note.indexColor],
-                      fgColor=s.indexColor, vg)
+                      fgColor=s.indexColor,
+                      a.theme.style.level.note.backgroundShape,
+                      note.index, a)
 
     of akCustomId:
       vg.fillColor(s.textColor)
@@ -5595,9 +5633,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         prop("Coordinates",        ui.statusBar.coordinatesColor)
 
     if koi.subSectionHeader("About Button", te.sectionAboutButton):
-      prop("Color", ui.aboutButton.labelColor)
-      prop("Hover", ui.aboutButton.labelHoverColor)
-      prop("Down",  ui.aboutButton.labelDownColor)
+      prop("Button", ui.aboutButton.labelColor)
+      prop("Button Hover", ui.aboutButton.labelHoverColor)
+      prop("Button Down", ui.aboutButton.labelDownColor)
 
 
     if koi.subSectionHeader("About Dialog", te.sectionAboutDialog):
@@ -5704,21 +5742,22 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         prop("Marker",             level.note.markerColor)
         prop("Comment",            level.note.commentColor)
       group:
-        prop("Index Background 1", level.note.indexBackgroundColor[0])
-        prop("Index Background 2", level.note.indexBackgroundColor[1])
-        prop("Index Background 3", level.note.indexBackgroundColor[2])
-        prop("Index Background 4", level.note.indexBackgroundColor[3])
+        prop("Background Shape",   level.note.backgroundShape)
+        prop("Background 1",       level.note.indexBackgroundColor[0])
+        prop("Background 2",       level.note.indexBackgroundColor[1])
+        prop("Background 3",       level.note.indexBackgroundColor[2])
+        prop("Background 4",       level.note.indexBackgroundColor[3])
         prop("Index",              level.note.indexColor)
       group:
         prop("Tooltip Background", level.note.tooltipBackgroundColor)
-        prop("Tooltip",            level.note.tooltipColor)
+        prop("Tooltip Text",       level.note.tooltipColor)
 
     if koi.subSectionHeader("Labels", te.sectionLabels):
       group:
-        prop("Label Color 1", level.label.color[0])
-        prop("Label Color 2", level.label.color[1])
-        prop("Label Color 3", level.label.color[2])
-        prop("Label Color 4", level.label.color[3])
+        prop("Label 1", level.label.color[0])
+        prop("Label 2", level.label.color[1])
+        prop("Label 3", level.label.color[2])
+        prop("Label 4", level.label.color[3])
 
     if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
       group:
@@ -5746,7 +5785,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         prop("Scroll Bar",         pane.notes.scrollBarColor)
 
     if koi.subSectionHeader("Toolbar Pane", te.sectionToolbarPane):
-      prop("Button ",      pane.toolbar.buttonColor)
+      prop("Button",      pane.toolbar.buttonColor)
       prop("Button Hover", pane.toolbar.buttonHoverColor)
 
   # }}}

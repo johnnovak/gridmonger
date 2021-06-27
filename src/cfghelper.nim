@@ -3,7 +3,6 @@ import logging except Level
 import options
 import parsecfg
 import strformat
-import strscans
 import strutils
 
 import nanovg

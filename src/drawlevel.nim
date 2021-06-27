@@ -857,27 +857,47 @@ template drawIcon(x, y, ox, oy: float, icon: string; ctx) =
           DefaultIconFontSizeFactor, ctx.vg)
 
 # }}}
-# {{{ drawIndexedNote*()
-proc drawIndexedNote*(x, y: float, i: Natural, size: float,
-                      bgColor, fgColor: Color, vg: NVGContext) =
-  vg.fillColor(bgColor)
-  vg.beginPath()
-  vg.circle(x + size*0.5, y + size*0.5, size*0.35)
-  vg.fill()
-
-  vg.setFont((size*0.4).float)
-  vg.fillColor(fgColor)
-  vg.textAlign(haCenter, vaMiddle)
-  discard vg.text(x + size*0.51, y + size*0.54, $i)
-
-proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural; ctx) =
+# {{{ drawIndexedNote()
+proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural,
+                     isCursorActive: bool; ctx) =
   alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawIndexedNote(x, y, index, dp.gridSize,
-                  bgColor=ls.note.indexBackgroundColor[colorIdx],
-                  fgColor=ls.note.indexColor, vg)
+  let size = ctx.dp.gridSize
+
+  let shape = ls.note.backgroundShape
+  let bgColor = if isCursorActive and shape == nbsRectangle:
+                  ls.general.cursorColor
+                else: ls.note.indexBackgroundColor[colorIdx]
+
+  vg.fillColor(bgColor)
+  vg.beginPath()
+
+  case shape:
+  of nbsCircle:
+    vg.circle(x + size*0.5, y + size*0.5, size*0.35)
+  of nbsRectangle:
+    vg.rect(x, y, size, size)
+
+  vg.fill()
+
+  # TODO debug
+  let index = if index < 5: index
+              elif index < 10: index * 5
+              else: index * 10
+  # TODO debug
+
+  var fontSizeFactor = if   index <  10: 0.43
+                       elif index < 100: 0.4
+                       else:             0.35
+
+  if shape == nbsRectangle: fontSizeFactor *= 1.1
+
+  vg.setFont((size*fontSizeFactor).float)
+  vg.fillColor(ls.note.indexColor)
+  vg.textAlign(haCenter, vaMiddle)
+
+  discard vg.text(x + size*0.51, y + size*0.54, $index)
 
 # }}}
 # {{{ drawCustomIdNote()
@@ -895,14 +915,15 @@ proc drawCustomIdNote(x, y: float, s: string; ctx) =
 
 # }}}
 # {{{ drawNote()
-proc drawNote(x, y: float, note: Annotation; ctx) =
+proc drawNote(x, y: float, note: Annotation, isCursorActive: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
   case note.kind
   of akComment:  discard
-  of akIndexed:  drawIndexedNote(x, y, note.index, note.indexColor, ctx)
+  of akIndexed:  drawIndexedNote(x, y, note.index, note.indexColor,
+                                 isCursorActive, ctx)
   of akCustomId: drawCustomIdNote(x, y, note.customId, ctx)
 
   of akIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
@@ -2066,7 +2087,7 @@ proc drawNotes(viewBuf: Level; ctx) =
         x = cellX(viewCol, dp)
         y = cellY(viewRow, dp)
 
-      drawNote(x, y, note, ctx)
+      drawNote(x, y, note, isCursorActive(viewRow, viewCol, dp), ctx)
 
 # }}}
 

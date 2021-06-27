@@ -231,6 +231,10 @@ type
     ofsSolid    = (0, "Solid")
     ofsHatched  = (1, "Hatched")
 
+  NoteBackgroundShape* = enum
+    nbsCircle    = (0, "Circle")
+    nbsRectangle = (1, "Rectangle")
+
 
 const
   LinkPitSources*      = {fClosedPit, fOpenPit, fHiddenPit}

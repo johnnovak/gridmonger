@@ -117,6 +117,7 @@ defineTheme:
     note:
       markerColor:                  Color  # level.noteMarkerColor
       commentColor:                 Color  # level.noteCommentColor
+      backgroundShape:              NoteBackgroundShape
       indexBackgroundColor:         array[4, Color]  # level.noteIndexBgColor[0]
       indexColor:                   Color  # level.noteIndexColor
       tooltipBackgroundColor:       Color  # level.noteTooltipBgColor
