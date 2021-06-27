@@ -109,15 +109,15 @@ outerWidthFactor = 0.125
 [level.floorColor]
 transparentFloor = false
 color1 = "#f2f2eeff"
-color2 = "#6f000097"
-color3 = "#ff290074"
-color4 = "#ffb30080"
-color5 = "#7c652192"
-color6 = "#709a0092"
-color7 = "#a6c41e63"
-color8 = "#00a36c6f"
-color9 = "#1c6fac83"
-color10 = "#9c559fa6"
+color2 = "#6f00008f"
+color3 = "#ff290067"
+color4 = "#ffb30062"
+color5 = "#59481890"
+color6 = "#709a008d"
+color7 = "#8cc41e56"
+color8 = "#20a09345"
+color9 = "#276c9f90"
+color10 = "#9c559f72"
 
 [level.note]
 markerColor = "#555252ff"
