@@ -274,7 +274,9 @@ type
     emNudgePreview,
     emPastePreview,
     emSelect,
-    emSelectRect
+    emSelectDraw,
+    emSelectErase,
+    emSelectRect,
     emSetCellLink
 
   Theme = object
@@ -615,17 +617,16 @@ type AppShortcut = enum
   scOpenMap,
   scSaveMap,
   scSaveMapAs,
-  scEditMapProperties,
+  scEditMapProps,
 
   # Levels
   scNewLevel,
   scDeleteLevel,
-  scEditLevelProperties,
-  scNudgeLevel,
+  scEditLevelProps,
   scResizeLevel,
 
   # Regions
-  scEditRegionProperties,
+  scEditRegionProps,
 
   # Themes
   scReloadTheme,
@@ -678,6 +679,9 @@ type AppShortcut = enum
 
   scMarkSelection,
   scPaste,
+  scPastePreview,
+  scNudgePreview,
+  scPasteAccept,
 
   scEditNote,
   scEraseNote,
@@ -686,10 +690,34 @@ type AppShortcut = enum
 
   scShowNoteTooltip,
 
+  # Select mode
+  scSelectionDraw,
+  scSelectionErase,
+  scSelectionAll,
+  scSelectionNone,
+  scSelectionAddRect,
+  scSelectionSubRect,
+  scSelectionCopy,
+  scSelectionCut,
+  scSelectionMove,
+  scSelectionEraseArea,
+  scSelectionFillArea,
+  scSelectionSurroundArea,
+  scSelectionSetFloorColorArea,
+  scSelectionCropArea,
+ 
+  # Options
+  scToggleCellCoords,
+  scToggleNotesPane,
+  scToggleToolsPane,
+  scToggleWalkMode,
+  scToggleWasdMode,
+  scToggleDrawTrail,
+  scToggleThemeEditor,
+  
   # Misc
   scShowAboutDialog,
   scOpenUserManual,
-  scToggleThemeEditor,
   scEditPreferences,
 
 
@@ -718,13 +746,16 @@ let g_appShortcuts = {
   scOpenMap:            @[mkKeyShortcut(keyO,             {mkCtrl})],
   scSaveMap:            @[mkKeyShortcut(Key.keyS,         {mkCtrl})],
   scSaveMapAs:          @[mkKeyShortcut(Key.keyS,         {mkCtrl, mkShift})],
-  scEditMapProperties:  @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
+  scEditMapProps:       @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
 
   # Levels
   scNewLevel:           @[mkKeyShortcut(keyN,             {mkCtrl})],
+  scDeleteLevel:        @[mkKeyShortcut(keyD,             {mkCtrl})],
+  scEditLevelProps:     @[mkKeyShortcut(keyP,             {mkCtrl})],
+  scResizeLevel:        @[mkKeyShortcut(keyE,             {mkCtrl})],
 
   # Regions
-  # TODO
+  scEditRegionProps:    @[mkKeyShortcut(keyR,             {mkCtrl, mkAlt})],
 
   # Themes
   scReloadTheme:        @[mkKeyShortcut(keyHome,          {mkCtrl})],
@@ -763,8 +794,8 @@ let g_appShortcuts = {
   scNextSpecialWall:           @[mkKeyShortcut(keyRightBracket, {})],
 
   scEraseTrail:                @[mkKeyShortcut(keyX,      {})],
-  scExcavateTrail:             @[mkKeyShortcut(keyX,      {})],
-  scClearTrail:                @[mkKeyShortcut(keyX,      {})],
+  scExcavateTrail:             @[mkKeyShortcut(keyD,      {mkCtrl, mkAlt})],
+  scClearTrail:                @[mkKeyShortcut(keyX,      {mkCtrl, mkAlt})],
 
   scJumpToLinkedCell:          @[mkKeyShortcut(keyG,      {})],
   scLinkCell:                  @[mkKeyShortcut(keyG,      {mkShift})],
@@ -777,25 +808,56 @@ let g_appShortcuts = {
                                  mkKeyShortcut(keyKpSubtract, {}),
                                  mkKeyShortcut(keyMinus,      {mkCtrl})],
 
-  scZoomIn:                    @[mkKeyShortcut(keyEqual,  {})],
-  scZoomOut:                   @[mkKeyShortcut(keyMinus,  {})],
+  scZoomIn:                    @[mkKeyShortcut(keyEqual,      {})],
+  scZoomOut:                   @[mkKeyShortcut(keyMinus,      {})],
 
-#[
-  scMarkSelection,
-  scPaste,
+  scMarkSelection:             @[mkKeyShortcut(keyM,          {})],
+  scPaste:                     @[mkKeyShortcut(keyP,          {})],
+  scPastePreview:              @[mkKeyShortcut(keyP,          {mkShift})],
+  scNudgePreview:              @[mkKeyShortcut(keyG,          {mkCtrl})],
 
-  scEditNote,
-  scEraseNote,
-  scEditLabel,
-  scEraseLabel,
+  scPasteAccept:               @[mkKeyShortcut(keyP,          {}),
+                                 mkKeyShortcut(keyEnter,      {}),
+                                 mkKeyShortcut(keyKpEnter,    {})],
 
-  scShowNoteTooltip,
-]#
+  scEditNote:                  @[mkKeyShortcut(keyN,          {})],
+  scEraseNote:                 @[mkKeyShortcut(keyN,          {mkShift})],
+  scEditLabel:                 @[mkKeyShortcut(keyT,          {mkCtrl})],
+  scEraseLabel:                @[mkKeyShortcut(keyT,          {mkShift})],
+
+  scShowNoteTooltip:           @[mkKeyShortcut(keySpace,      {})],
+
+  # Select mode
+  scSelectionDraw:               @[mkKeyShortcut(keyD,        {})],
+  scSelectionErase:              @[mkKeyShortcut(keyE,        {})],
+  scSelectionAll:                @[mkKeyShortcut(keyA,        {})],
+  scSelectionNone:               @[mkKeyShortcut(keyU,        {})],
+  scSelectionAddRect:            @[mkKeyShortcut(keyR,        {})],
+  scSelectionSubRect:            @[mkKeyShortcut(Key.keyS,    {})],
+
+  scSelectionCopy:               @[mkKeyShortcut(keyC,        {}),
+                                   mkKeyShortcut(keyY,        {})],
+
+  scSelectionCut:                @[mkKeyShortcut(keyX,        {})],
+  scSelectionMove:               @[mkKeyShortcut(keyM,        {mkCtrl})],
+  scSelectionEraseArea:          @[mkKeyShortcut(keyE,        {mkCtrl})],
+  scSelectionFillArea:           @[mkKeyShortcut(keyF,        {mkCtrl})],
+  scSelectionSurroundArea:       @[mkKeyShortcut(Key.keyS,    {mkCtrl})],
+  scSelectionSetFloorColorArea:  @[mkKeyShortcut(keyC,        {mkCtrl})],
+  scSelectionCropArea:           @[mkKeyShortcut(keyR,        {mkCtrl})],
+ 
+  # Options
+  scToggleCellCoords:   @[mkKeyShortcut(keyC,             {mkAlt})],
+  scToggleNotesPane:    @[mkKeyShortcut(keyN,             {mkAlt})],
+  scToggleToolsPane:    @[mkKeyShortcut(keyT,             {mkAlt})],
+  scToggleWalkMode:     @[mkKeyShortcut(keyGraveAccent,   {})],
+  scToggleWasdMode:     @[mkKeyShortcut(keyTab,           {})],
+  scToggleDrawTrail:    @[mkKeyShortcut(keyT,             {})],
+  scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
 
   # Misc
   scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
   scOpenUserManual:     @[mkKeyShortcut(keyF1,            {})],
-  scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
   scEditPreferences:    @[mkKeyShortcut(keyU,             {mkCtrl, mkAlt})]
 
 
@@ -1633,9 +1695,6 @@ func isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
 func isKeyDown(ev: Event, key: Key,
                mods: set[ModifierKey] = {}, repeat=false): bool =
   isKeyDown(ev, {key}, mods, repeat)
-
-func isKeyUp(ev: Event, keys: set[Key]): bool =
-  ev.action == kaUp and ev.key in keys
 
 
 proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
@@ -4343,6 +4402,7 @@ proc handleGlobalKeyEvents(a) =
     case ui.editMode:
     # {{{ emNormal
     of emNormal:
+      # TODO revisit tooltip reset logic
       # Reset tooltip display on certain keypresses only
       if not (ke.key == keySpace) and
          not (ke.action == kaUp) and
@@ -4449,7 +4509,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emEraseTrail
         startEraseTrailAction(a)
 
-      elif ke.isKeyDown(keyD, {mkCtrl, mkAlt}):
+      elif ke.isShortcutDown(scExcavateTrail):
         let bbox = l.calcTrailBoundingBox()
         if bbox.isSome:
           actions.excavateTrail(map, cur, bbox.get, ui.currFloorColor, um)
@@ -4459,7 +4519,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "No trail to excavate", a)
 
-      elif ke.isKeyDown(keyX, {mkCtrl, mkAlt}):
+      elif ke.isShortcutDown(scClearTrail):
         let bbox = l.calcTrailBoundingBox()
         if bbox.isSome:
           actions.clearTrail(map, cur, bbox.get, um)
@@ -4478,10 +4538,10 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
       elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
 
-      elif ke.isKeyDown(keyM):
+      elif ke.isShortcutDown(scMarkSelection):
         enterSelectMode(a)
 
-      elif ke.isKeyDown(keyP):
+      elif ke.isShortcutDown(scPaste):
         if ui.copyBuf.isSome:
           actions.pasteSelection(map, cur, ui.copyBuf.get,
                                  pasteBufferLevelIndex=CopyBufferLevelIndex,
@@ -4492,7 +4552,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
 
-      elif ke.isKeyDown(keyP, {mkShift}):
+      elif ke.isShortcutDown(scPastePreview):
         if ui.copyBuf.isSome:
           dp.selStartRow = cur.row
           dp.selStartCol = cur.col
@@ -4501,11 +4561,11 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emPastePreview
           setStatusMessage(IconTiles, "Paste preview",
                            @[IconArrowsAll, "placement",
-                           "Enter/P", "paste", "Esc", "exit"], a)
+                           "Enter/P", "paste", "Esc", "cancel"], a)
         else:
           setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
 
-      elif ke.isKeyDown(keyG, {mkCtrl}):
+      elif ke.isShortcutDown(scNudgePreview):
         let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
         ui.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
@@ -4523,7 +4583,7 @@ proc handleGlobalKeyEvents(a) =
         opts.drawTrail = false
         setStatusMessage(IconArrowsAll, "Nudge preview",
                          @[IconArrowsAll, "nudge",
-                         "Enter", "confirm", "Esc", "exit"], a)
+                         "Enter", "confirm", "Esc", "cancel"], a)
 
 
       elif ke.isShortcutDown(scJumpToLinkedCell):
@@ -4552,30 +4612,30 @@ proc handleGlobalKeyEvents(a) =
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
-      elif ke.isKeyDown(keyN):
+      elif ke.isShortcutDown(scEditNote):
         if map.isEmpty(cur):
           setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
         else:
           openEditNoteDialog(a)
 
-      elif ke.isKeyDown(keyN, {mkShift}):
+      elif ke.isShortcutDown(scEraseNote):
         if map.hasNote(cur):
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
         else:
           setStatusMessage(IconWarning, "No note to erase in cell", a)
 
-      elif ke.isKeyDown(keyT, {mkCtrl}):
+      elif ke.isShortcutDown(scEditLabel):
         openEditLabelDialog(a)
 
-      elif ke.isKeyDown(keyT, {mkShift}):
+      elif ke.isShortcutDown(scEraseLabel):
         if map.hasLabel(cur):
           actions.eraseLabel(map, cur, um)
           setStatusMessage(IconEraser, "Label erased", a)
         else:
           setStatusMessage(IconWarning, "No label to erase in cell", a)
 
-      elif ke.isKeyDown(keySpace):
+      elif ke.isShortcutDown(scShowNoteTooltip):
         if ui.manualNoteTooltipState.show:
           resetManualNoteTooltip(a)
         else:
@@ -4588,7 +4648,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scEditPreferences): openPreferencesDialog(a)
 
-      elif ke.isKeyDown(keyN, {mkCtrl}):
+      elif ke.isShortcutDown(scNewLevel):
         if map.levels.len < NumLevelsLimits.maxInt:
           openNewLevelDialog(a)
         else:
@@ -4598,19 +4658,19 @@ proc handleGlobalKeyEvents(a) =
             fmt"({NumLevelsLimits.maxInt})", a
           )
 
-      elif ke.isKeyDown(keyD, {mkCtrl}):
+      elif ke.isShortcutDown(scDeleteLevel):
         openDeleteLevelDialog(a)
 
       elif ke.isShortcutDown(scNewMap): newMapAction(a)
-      elif ke.isShortcutDown(scEditMapProperties): openEditMapPropsDialog(a)
+      elif ke.isShortcutDown(scEditMapProps): openEditMapPropsDialog(a)
 
-      elif ke.isKeyDown(keyP, {mkCtrl}):
+      elif ke.isShortcutDown(scEditLevelProps):
         openEditLevelPropsDialog(a)
 
-      elif ke.isKeyDown(keyE, {mkCtrl}):
+      elif ke.isShortcutDown(scResizeLevel):
         openResizeLevelDialog(a)
 
-      elif ke.isKeyDown(keyR, {mkCtrl, mkAlt}):
+      elif ke.isShortcutDown(scEditRegionProps):
         if l.regionOpts.enabled:
           openEditRegionPropertiesDialog(a)
         else:
@@ -4635,24 +4695,24 @@ proc handleGlobalKeyEvents(a) =
         openAboutDialog(a)
 
       # Toggle options
-      elif ke.isKeyDown(keyC, {mkAlt}):
+      elif ke.isShortcutDown(scToggleCellCoords):
         toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
 
-      elif ke.isKeyDown(keyN, {mkAlt}):
+      elif ke.isShortcutDown(scToggleNotesPane):
         toggleShowOption(opts.showNotesPane, NoIcon, "Notes pane", a)
 
-      elif ke.isKeyDown(keyT, {mkAlt}):
+      elif ke.isShortcutDown(scToggleToolsPane):
         toggleShowOption(opts.showToolsPane, NoIcon, "Tools pane", a)
 
-      elif ke.isKeyDown(keyGraveAccent):
+      elif ke.isShortcutDown(scToggleWalkMode):
         opts.walkMode = not opts.walkMode
         let msg = if opts.walkMode: "Walk mode" else: "Normal mode"
         setStatusMessage(msg, a)
 
-      elif ke.isKeyDown(keyTab):
+      elif ke.isShortcutDown(scToggleWasdMode):
         toggleOnOffOption(opts.wasdMode, IconMouse, "WASD mode", a)
 
-      elif ke.isKeyDown(keyT):
+      elif ke.isShortcutDown(scToggleDrawTrail):
         map.setTrail(cur, true)
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
@@ -4755,31 +4815,31 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = a.ui.cursor
 
-      if koi.ctrlDown(): setSelectModeActionMessage(a)
-      else:              setSelectModeSelectMessage(a)
+      if   koi.ctrlDown(): setSelectModeActionMessage(a)
+      else:                setSelectModeSelectMessage(a)
 
-      if   koi.isKeyDown(keyD): ui.selection.get[cur.row, cur.col] = true
-      elif koi.isKeyDown(keyE): ui.selection.get[cur.row, cur.col] = false
+      if   ke.isShortcutDown(scSelectionDraw):  ui.editMode = emSelectDraw
+      elif ke.isShortcutDown(scSelectionErase): ui.editMode = emSelectErase
 
-      if   ke.isKeyDown(keyA): ui.selection.get.fill(true)
-      elif ke.isKeyDown(keyU): ui.selection.get.fill(false)
+      elif ke.isShortcutDown(scSelectionAll):  ui.selection.get.fill(true)
+      elif ke.isShortcutDown(scSelectionNone): ui.selection.get.fill(false)
 
-      if ke.isKeyDown({keyR, Key.keyS}):
+      elif ke.isShortcutsDown({scSelectionAddRect, scSelectionSubRect}):
         ui.editMode = emSelectRect
         ui.selRect = some(SelectionRect(
           startRow: cur.row,
           startCol: cur.col,
           rect: rectN(cur.row, cur.col, cur.row+1, cur.col+1),
-          selected: ke.isKeyDown(keyR)
+          selected: ke.isShortcutDown(scSelectionAddRect)
         ))
 
-      elif ke.isKeyDown({keyC, keyY}):
+      elif ke.isShortcutDown(scSelectionCopy):
         let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           exitSelectMode(a)
           setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
-      elif ke.isKeyDown(keyX):
+      elif ke.isShortcutDown(scSelectionCut):
         let selection = ui.selection.get
 
         # delete links from a previous cut to buffer operation if it hasn't
@@ -4807,7 +4867,7 @@ proc handleGlobalKeyEvents(a) =
 
           setStatusMessage(IconCut, "Cut selection to buffer", a)
 
-      elif ke.isKeyDown(keyM, {mkCtrl}):
+      elif ke.isShortcutDown(scSelectionMove):
         let selection = ui.selection.get
         let bbox = copySelection(ui.nudgeBuf, a)
         if bbox.isSome:
@@ -4837,7 +4897,7 @@ proc handleGlobalKeyEvents(a) =
                            @[IconArrowsAll, "placement",
                            "Enter/P", "confirm", "Esc", "cancel"], a)
 
-      elif ke.isKeyDown(keyE, {mkCtrl}):
+      elif ke.isShortcutDown(scSelectionEraseArea):
         let selection = ui.selection.get
         let bbox = selection.boundingBox()
         if bbox.isSome:
@@ -4845,7 +4905,7 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconEraser, "Erased selection", a)
 
-      elif ke.isKeyDown(keyF, {mkCtrl}):
+      elif ke.isShortcutDown(scSelectionFillArea):
         let selection = ui.selection.get
         let bbox = selection.boundingBox()
         if bbox.isSome:
@@ -4854,7 +4914,7 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Filled selection", a)
 
-      elif ke.isKeyDown(Key.keyS, {mkCtrl}):
+      elif ke.isShortcutDown(scSelectionSurroundArea):
         let selection = ui.selection.get
         let bbox = selection.boundingBox()
         if bbox.isSome:
@@ -4863,16 +4923,16 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Surrounded selection with walls", a)
 
-      elif ke.isKeyDown(Key.keyC, {mkCtrl}):
+      elif ke.isShortcutDown(scSelectionSetFloorColorArea):
         let selection = ui.selection.get
         let bbox = selection.boundingBox()
         if bbox.isSome:
           actions.setSelectionFloorColor(map, cur.level, selection,
                                          bbox.get, ui.currFloorColor, um)
           exitSelectMode(a)
-          setStatusMessage(IconPencil, "Surrounded selection with walls", a)
+          setStatusMessage(IconPencil, "Set floor color of selection", a)
 
-      elif ke.isKeyDown(keyR, {mkCtrl}):
+      elif ke.isShortcutDown(scSelectionCropArea):
         let sel = ui.selection.get
         let bbox = sel.boundingBox()
         if bbox.isSome:
@@ -4900,6 +4960,17 @@ proc handleGlobalKeyEvents(a) =
         openUserManualAction(a)
 
     # }}}
+    # {{{ emSelectDraw, emSelectErase
+    of emSelectDraw, emSelectErase:
+      discard handleMoveCursor(ke, MoveKeysCursor, a)
+
+      let cur = a.ui.cursor
+      ui.selection.get[cur.row, cur.col] = ui.editMode == emSelectDraw
+
+      if ke.isShortcutsUp({scSelectionDraw, scSelectionErase}):
+        ui.editMode = emSelect
+
+    # }}}
     # {{{ emSelectRect
     of emSelectRect:
       discard handleMoveCursor(ke, MoveKeysCursor, a)
@@ -4923,7 +4994,7 @@ proc handleGlobalKeyEvents(a) =
 
       ui.selRect.get.rect = rectN(r1,c1, r2,c2)
 
-      if ke.isKeyUp({keyR, Key.keyS}):
+      if ke.isShortcutsUp({scSelectionAddRect, scSelectionSubRect}):
         ui.selection.get.fill(ui.selRect.get.rect, ui.selRect.get.selected)
         ui.selRect = SelectionRect.none
         ui.editMode = emSelect
@@ -4941,7 +5012,7 @@ proc handleGlobalKeyEvents(a) =
       a.ui.drawLevelParams.selStartRow = cur.row
       a.ui.drawLevelParams.selStartCol = cur.col
 
-      if ke.isKeyDown({keyEnter, keyP}):
+      if ke.isShortcutDown(scPasteAccept):
         actions.pasteSelection(map, cur, ui.copyBuf.get,
                                pasteBufferLevelIndex=CopyBufferLevelIndex,
                                undoLoc=cur, um, pasteTrail=true)
@@ -4974,7 +5045,7 @@ proc handleGlobalKeyEvents(a) =
       a.ui.drawLevelParams.selStartRow = cur.row
       a.ui.drawLevelParams.selStartCol = cur.col
 
-      if ke.isKeyDown({keyEnter, keyP}):
+      if ke.isShortcutDown(scPasteAccept):
         actions.pasteSelection(map, cur, ui.nudgeBuf.get,
                                pasteBufferLevelIndex=MoveBufferLevelIndex,
                                undoLoc=ui.moveUndoLocation, um,
@@ -5003,7 +5074,7 @@ proc handleGlobalKeyEvents(a) =
       if   ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
 
-      elif ke.isKeyDown(keyEnter):
+      elif ke.isShortcutDown(scAccept):
         let newCur = actions.nudgeLevel(map, cur,
                                         dp.selStartRow, dp.selStartCol,
                                         ui.nudgeBuf.get, um)
@@ -5028,13 +5099,8 @@ proc handleGlobalKeyEvents(a) =
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
-      if ke.isKeyDown({keyPageUp, keyKpSubtract}, repeat=true) or
-         ke.isKeyDown(keyMinus, {mkCtrl}, repeat=true):
-        prevLevelAction(a)
-
-      elif ke.isKeyDown({keyPageDown, keyKpAdd}, repeat=true) or
-           ke.isKeyDown(keyEqual, {mkCtrl}, repeat=true):
-        nextLevelAction(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true): prevLevelAction(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true): nextLevelAction(a)
 
       let cur = a.ui.cursor
 
@@ -5042,7 +5108,7 @@ proc handleGlobalKeyEvents(a) =
         let floor = map.getFloor(ui.linkSrcLocation)
         setSetLinkDestinationMessage(floor, a)
 
-      if ke.isKeyDown(keyEnter):
+      if ke.isShortcutDown(scAccept):
         if map.isEmpty(cur):
           setStatusMessage(IconWarning,
                            "Cannot set link destination to an empty cell", a)
@@ -5082,7 +5148,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     let ke = koi.currEvent()
 
     if   ke.isShortcutDown(scNewMap):            newMapAction(a)
-    elif ke.isShortcutDown(scEditMapProperties): openEditMapPropsDialog(a)
+    elif ke.isShortcutDown(scEditMapProps):      openEditMapPropsDialog(a)
 
     elif ke.isShortcutDown(scOpenMap):           openMapAction(a)
     elif ke.isShortcutDown(scSaveMap):           saveMapAction(a)
@@ -6360,8 +6426,7 @@ proc renderFrameSplash(a) =
       w.isKeyDown(keyKpEnter) or
       w.mouseButtonDown(mbLeft) or
       w.mouseButtonDown(mbRight) or
-      w.mouseButtonDown(mbMiddle) or
-      autoClose
+      w.mouseButtonDown(mbMiddle) or autoClose
 
   if shouldCloseSplash(a):
     closeSplash(a)
