@@ -6837,7 +6837,8 @@ proc main() =
     cleanup(a)
 
   except Exception as e:
-    crashHandler(e, a)
+    when defined(DEBUG): raise e
+    else: crashHandler(e, a)
 
 # }}}
 
