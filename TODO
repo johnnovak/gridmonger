@@ -1,9 +1,9 @@
 BUGS
 
+  - region drawing bug: eob1, upper sewers -1 -> horiz walls missing
   - undoing all changes should clear modified flag
   - cancelling move should put cut area back
   - warn of unsaved changes when switching theme
-  - region drawing bug: eob1, upper sewers -1 -> horiz walls missing
 
 
 TODO
@@ -14,13 +14,7 @@ TODO
   - level dropdown roundness & shadow opacity
 
   - thick wall style (for Companion style)
-  - indexed notes:
-      option to use rectangles (with larger font) (don't draw bg when cursor is
-      in cell)
-
   - optionally use color for ID notes
-
-  - introduce shortcuts for everything (g_appShortcuts)
 
 
 
