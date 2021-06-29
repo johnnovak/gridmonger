@@ -2228,10 +2228,15 @@ proc drawWalls(l: Level, viewBuf: Level; ctx) =
   alias(ro, dp.regionOpts)
 
   for viewRow in 0..dp.viewRows:
-    let row = dp.viewStartRow + viewRow
-    let regionBorder = ro.enabled and
-                       row > 0 and row < l.rows and
-                       row mod ro.rowsPerRegion == 0
+    let row = case dp.cellCoordOpts.origin
+              of coNorthWest: dp.viewStartRow + viewRow
+              of coSouthWest: (l.rows - (dp.viewStartRow + viewRow))
+
+    let regionBorder =
+        ro.enabled and
+        row > 0 and row < l.rows and
+        row mod ro.rowsPerRegion == 0
+
     if not regionBorder:
       drawCellWallsNorth(viewBuf, viewRow, regionBorder=false, ctx)
 

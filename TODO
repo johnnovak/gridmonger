@@ -1,6 +1,5 @@
 BUGS
 
-  - region drawing bug: eob1, upper sewers -1 -> horiz walls missing
   - undoing all changes should clear modified flag
   - cancelling move should put cut area back
   - warn of unsaved changes when switching theme
