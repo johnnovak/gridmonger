@@ -391,7 +391,7 @@ proc newLevelFrom*(m; srcLevel: Natural, srcRect: Rect[Natural]): Level =
   let
     rowOffs = (case m.coordOptsForLevel(srcLevel).origin
                of coNorthWest: copyRect.r1
-               of coSouthWest: src.rows-1 - copyRect.r2) div ro.rowsPerRegion
+               of coSouthWest: src.rows - copyRect.r2) div ro.rowsPerRegion
 
     colOffs = copyRect.c1 div ro.colsPerRegion
 
