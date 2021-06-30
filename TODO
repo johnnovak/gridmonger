@@ -1,6 +1,5 @@
 BUGS
 
-  - undoing all changes should clear modified flag
   - cancelling move should put cut area back
   - warn of unsaved changes when switching theme
 
@@ -13,7 +12,7 @@ TODO
   - level dropdown roundness & shadow opacity
 
   - thick wall style (for Companion style)
-  - optionally use color for ID notes
+  - (optionally use color for ID notes?)
 
 
 
