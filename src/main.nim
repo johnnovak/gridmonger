@@ -5058,6 +5058,8 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
 
       elif ke.isShortcutDown(scCancel):
+        undoAction(a)
+        a.doc.undoManager.truncateUndoState()
         ui.editMode = emNormal
         clearStatusMessage(a)
 

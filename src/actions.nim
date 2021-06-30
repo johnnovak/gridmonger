@@ -154,8 +154,8 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural], floorColor: byte;
 # }}}
 # {{{ clearTrail*()
 proc clearTrail*(map; loc: Location, bbox: Rect[Natural]; um;
-                 groupWithPrev: bool = false;
-                 actionName: string = "Clear trail") =
+                 groupWithPrev = false;
+                 actionName = "Clear trail") =
 
   cellAreaAction(map, loc, bbox, um, groupWithPrev, actionName, m):
     var loc = loc
@@ -459,9 +459,9 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 # {{{ pasteSelection*()
 proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
                      pasteBufferLevelIndex: Natural, undoLoc: Location; um;
-                     groupWithPrev: bool = false,
-                     pasteTrail: bool = false,
-                     actionName: string = "Pasted buffer") =
+                     groupWithPrev = false,
+                     pasteTrail = false,
+                     actionName = "Pasted buffer") =
 
   let rect = rectN(
     pasteLoc.row,
