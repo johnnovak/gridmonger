@@ -1,43 +1,41 @@
 BUGS
 
-  - warn of unsaved changes when switching theme
 
 
-TODO
+TODO for v0.9
 
-  - log memory access crashes? (or division by zero)
+  - warn of unsaved theme changes when switching theme
+
   - inactive button color in titlebar
   - tooltip roundness & shadow opacity
-  - level dropdown roundness & shadow opacity
+  - level dropdown shadow opacity
 
   - thick wall style (for Companion style)
   - (optionally use color for ID notes?)
-
-
-
-v0.9
-
-  - installer
-
-  - finalise all themes
-
-  - textarea: mouse handling, scrollwheel
-
-  - config format:
-    - write own config handler:
-      - experiment with toml again
-      - get rid of quotation marks
-      - insert new lines after sections when writing
-    - rename properties according to theme editor
-
-  - debug level from config
-
-  - store AppState in map
 
   - region name reassignment on:
     - resize
     - change map coord origin (update levels with regions without overrides)
     - change region size
+
+  - installer:
+    - script for building installer
+    - add file extension association option
+    - new gui?
+ 
+  - finalise all themes
+
+  - store AppState in map
+
+  - config format:
+    - rename properties according to theme editor (in progress)
+    - check all attributes, rename a few for consistency
+
+  - textarea: mouse handling, scrollwheel
+
+  - debug level from config
+
+  - log memory access crashes? (or division by zero)
 
 
 v1.0
