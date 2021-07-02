@@ -4,8 +4,6 @@ BUGS
 
 TODO for v0.9
 
-  - warn of unsaved theme changes when switching theme
-
   - inactive button color in titlebar
   - tooltip roundness & shadow opacity
   - level dropdown shadow opacity

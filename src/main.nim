@@ -206,11 +206,12 @@ type
   Options = object
     showNotesPane:     bool
     showToolsPane:     bool
-    showThemePane:     bool
 
     drawTrail:         bool
     walkMode:          bool
     wasdMode:          bool
+
+    showThemeEditor:   bool
 
 
   UIState = object
@@ -316,7 +317,7 @@ type
     aboutDialog:            AboutDialogParams
     preferencesDialog:      PreferencesDialogParams
 
-    saveDiscardDialog:      SaveDiscardDialogParams
+    saveDiscardMapDialog:   SaveDiscardMapDialogParams
 
     newMapDialog:           NewMapDialogParams
     editMapPropsDialog:     EditMapPropsDialogParams
@@ -330,6 +331,8 @@ type
     editLabelDialog:        EditLabelDialogParams
 
     editRegionPropsDialog:  EditRegionPropsParams
+
+    saveDiscardThemeDialog: SaveDiscardThemeDialogParams
 
 
   AboutDialogParams = object
@@ -353,7 +356,7 @@ type
     autosaveFreqMins:   string
 
 
-  SaveDiscardDialogParams = object
+  SaveDiscardMapDialogParams = object
     isOpen:       bool
     action:       proc (a: var AppContext)
 
@@ -495,8 +498,14 @@ type
     notes:        string
 
 
+  SaveDiscardThemeDialogParams = object
+    isOpen:       bool
+    action:       proc (a: var AppContext)
+
+
   ThemeEditor = object
     prevState:               ThemeStyle
+    modified:                bool
 
     sectionUserInterface:    bool
     sectionWidget:           bool
@@ -1196,6 +1205,18 @@ proc loadTheme(theme: ThemeName; a) =
   a.theme.style = loadTheme(path)
 
 # }}}
+# {{{ saveTheme(a)
+proc saveTheme(a) =
+  with a.theme.themeNames[a.theme.currThemeIndex]:
+    userTheme = true
+    override = true
+
+  let themePath = themePath(a.currThemeName, a)
+  saveTheme(a.theme.style, themePath)
+
+  a.themeEditor.modified = false
+
+# }}}
 # {{{ switchTheme()
 proc switchTheme(themeIndex: Natural; a) =
   let theme = a.theme.themeNames[themeIndex]
@@ -1233,6 +1254,9 @@ proc switchTheme(themeIndex: Natural; a) =
   a.win.setStyle(a.theme.style.ui.window)
 
   a.theme.currThemeIndex = themeIndex
+
+  a.themeEditor.modified = false
+  a.themeEditor.prevState = a.theme.style.deepCopy()
 
 # }}}
 
@@ -1414,7 +1438,7 @@ proc updateLastCursorViewCoords(a) =
 # }}}
 # {{{ drawAreaWidth()
 proc drawAreaWidth(a): float =
-  if a.opts.showThemePane: koi.winWidth() - ThemePaneWidth
+  if a.opts.showThemeEditor: koi.winWidth() - ThemePaneWidth
   else: koi.winWidth()
 
 # }}}
@@ -2143,7 +2167,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 
 
   # HACK, HACK, HACK!
-  if not a.opts.showThemePane:
+  if not a.opts.showThemeEditor:
     if not koi.hasHotItem() and koi.hasEvent():
       let ev = koi.currEvent()
       if ev.kind == ekMouseButton and ev.button == mbLeft and ev.pressed:
@@ -2336,11 +2360,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   koi.endDialog()
 
 # }}}
-# {{{ Save/discard changes dialog
+# {{{ Save/discard map changes dialog
 
 proc saveMapAction(a)
 
-proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
+proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   const
     DlgWidth = 350.0
     DlgHeight = 160.0
@@ -2365,18 +2389,18 @@ proc saveDiscardDialog(dlg: var SaveDiscardDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc saveAction(dlg: var SaveDiscardDialogParams; a) =
+  proc saveAction(dlg: var SaveDiscardMapDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
     saveMapAction(a)
     dlg.action(a)
 
-  proc discardAction(dlg: var SaveDiscardDialogParams; a) =
+  proc discardAction(dlg: var SaveDiscardMapDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
     dlg.action(a)
 
-  proc cancelAction(dlg: var SaveDiscardDialogParams; a) =
+  proc cancelAction(dlg: var SaveDiscardMapDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -3774,6 +3798,80 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
 # }}}
 
+# {{{ Save/discard theme changes dialog
+
+proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
+  const
+    DlgWidth = 350.0
+    DlgHeight = 160.0
+
+  let h = DlgItemHeight
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Theme?",
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopPad
+
+  koi.label(x, y, DlgWidth, h, "You have made changes to the theme.",
+            style=a.theme.labelStyle)
+
+  y += h
+  koi.label(
+    x, y, DlgWidth, h, "Do you want to save the theme first?",
+    style=a.theme.labelStyle
+  )
+
+  proc saveAction(dlg: var SaveDiscardThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+    saveTheme(a)
+    dlg.action(a)
+
+  proc discardAction(dlg: var SaveDiscardThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+    dlg.action(a)
+
+  proc cancelAction(dlg: var SaveDiscardThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
+
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Save",
+                style = a.theme.buttonStyle):
+    saveAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconTrash} Discard",
+                style = a.theme.buttonStyle):
+    discardAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
+                style = a.theme.buttonStyle):
+    cancelAction(dlg, a)
+
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
+    elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
+    elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
+
 # }}}
 # {{{ Actions
 
@@ -3821,10 +3919,11 @@ proc redoAction(a) =
 
 # {{{ newMapAction()
 proc newMapAction(a) =
+  alias(dlg, a.dialog.saveDiscardMapDialog)
+
   if a.doc.undoManager.isModified:
-    a.dialog.saveDiscardDialog.isOpen = true
-    a.dialog.saveDiscardDialog.action = proc (a: var AppContext) =
-      openNewMapDialog(a)
+    dlg.isOpen = true
+    dlg.action = openNewMapDialog
   else:
     openNewMapDialog(a)
 
@@ -3869,7 +3968,7 @@ proc openMap(a) =
 # }}}
 # {{{ openMapAction()
 proc openMapAction(a) =
-  alias(dlg, a.dialog.saveDiscardDialog)
+  alias(dlg, a.dialog.saveDiscardMapDialog)
 
   if a.doc.undoManager.isModified:
     dlg.isOpen = true
@@ -3926,24 +4025,57 @@ proc saveMapAction(a) =
 
 # }}}
 
-# {{{ reloadThemeAction()
-proc reloadThemeAction(a) =
+# {{{ reloadTheme()
+proc reloadTheme(a) =
   a.theme.nextThemeIndex = a.theme.currThemeIndex.some
 
 # }}}
-# {{{ prevThemeAction()
-proc prevThemeAction(a) =
+# {{{ reloadThemeAction()
+proc reloadThemeAction(a) =
+  alias(dlg, a.dialog.saveDiscardThemeDialog)
+
+  if a.themeEditor.modified:
+    dlg.isOpen = true
+    dlg.action = reloadTheme
+  else:
+    reloadTheme(a)
+
+# }}}
+# {{{ prevTheme()
+proc prevTheme(a) =
   var i = a.theme.currThemeIndex
   if i == 0: i = a.theme.themeNames.high else: dec(i)
   a.theme.nextThemeIndex = i.some
 
 # }}}
-# {{{ nextThemeAction()
-proc nextThemeAction(a) =
+# {{{ prevThemeAction()
+proc prevThemeAction(a) =
+  alias(dlg, a.dialog.saveDiscardThemeDialog)
+
+  if a.themeEditor.modified:
+    dlg.isOpen = true
+    dlg.action = prevTheme
+  else:
+    prevTheme(a)
+
+# }}}
+# {{{ nextTheme()
+proc nextTheme(a) =
   var i = a.theme.currThemeIndex
   inc(i)
   if i > a.theme.themeNames.high: i = 0
   a.theme.nextThemeIndex = i.some
+
+# }}}
+# {{{ nextThemeAction()
+proc nextThemeAction(a) =
+  alias(dlg, a.dialog.saveDiscardThemeDialog)
+
+  if a.themeEditor.modified:
+    dlg.isOpen = true
+    dlg.action = nextTheme
+  else:
+    nextTheme(a)
 
 # }}}
 
@@ -4717,7 +4849,7 @@ proc handleGlobalKeyEvents(a) =
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
       elif ke.isShortcutDown(scToggleThemeEditor):
-        toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
+        toggleShowOption(opts.showThemeEditor, NoIcon, "Theme editor pane", a)
 
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
@@ -5172,7 +5304,8 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
     # Toggle options
     elif ke.isShortcutDown(scToggleThemeEditor):
-      toggleShowOption(opts.showThemePane, NoIcon, "Theme editor pane", a)
+      toggleShowOption(opts.showThemeEditor, NoIcon,
+                       "Theme editor pane", a)
 
 # }}}
 
@@ -5619,10 +5752,11 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 #    echo result.repr
 
-#[
-    if te.prevState.`section`.`prop`[`index`] != ts.`section`.`prop`[`index`]:
-      handleUndo()
-]#
+    let prevFullPath = parseExpr("te.prevState." & pathStr)
+
+    result.add quote do:
+      if `prevFullPath` != `fullPath`:
+        te.modified = true
 
 
   koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)
@@ -5962,19 +6096,15 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
-    with a.theme.themeNames[a.theme.currThemeIndex]:
-      userTheme = true
-      override = true
-    let themePath = themePath(a.currThemeName, a)
-    saveTheme(a.theme.style, themePath)
+    saveTheme(a)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):
-    discard
+    discard # TODO
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=true):
-    discard
+    discard # TODO
 
   # Scroll view with properties
 
@@ -6013,7 +6143,7 @@ proc showSplash(a) =
   s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
   s.win.show()
 
-  if not a.opts.showThemePane:
+  if not a.opts.showThemeEditor:
     koi.setFocusCaptured(true)
 
 # }}}
@@ -6037,7 +6167,7 @@ proc closeSplash(a) =
 
   s.show = false
 
-  if not a.opts.showThemePane:
+  if not a.opts.showThemeEditor:
     koi.setFocusCaptured(false)
 
 # }}}
@@ -6204,7 +6334,7 @@ proc renderUI(a) =
   # XXX hack, we need to render the theme editor before the dialogs, so
   # that keyboard shortcuts in the the theme editor take precedence (e.g.
   # when pressing ESC to close the colorpicker, the dialog should not close)
-  if a.opts.showThemePane:
+  if a.opts.showThemeEditor:
     let
       x = uiWidth
       y = TitleBarHeight
@@ -6220,8 +6350,8 @@ proc renderUI(a) =
   elif dlg.preferencesDialog.isOpen:
     preferencesDialog(dlg.preferencesDialog, a)
 
-  elif dlg.saveDiscardDialog.isOpen:
-    saveDiscardDialog(dlg.saveDiscardDialog, a)
+  elif dlg.saveDiscardMapDialog.isOpen:
+    saveDiscardMapDialog(dlg.saveDiscardMapDialog, a)
 
   elif dlg.newMapDialog.isOpen:
     newMapDialog(dlg.newMapDialog, a)
@@ -6249,6 +6379,9 @@ proc renderUI(a) =
 
   elif dlg.editRegionPropsDialog.isOpen:
     editRegionPropsDialog(dlg.editRegionPropsDialog, a)
+
+  elif dlg.saveDiscardThemeDialog.isOpen:
+    saveDiscardThemeDialog(dlg.saveDiscardThemeDialog, a)
 
 # }}}
 # {{{ renderFramePre()
@@ -6306,8 +6439,9 @@ proc renderFrame(a) =
     else:
       if not koi.isDialogOpen():
         if a.doc.undoManager.isModified:
-          a.dialog.saveDiscardDialog.isOpen = true
-          a.dialog.saveDiscardDialog.action = proc (a) = saveConfigAndExit(a)
+          alias(dlg, a.dialog.saveDiscardMapDialog)
+          dlg.isOpen = true
+          dlg.action = saveConfigAndExit
         else:
           saveConfigAndExit(a)
 
@@ -6315,7 +6449,7 @@ proc renderFrame(a) =
   # XXX HACK: If the theme pane is shown, widgets are handled first, then
   # the global shortcuts, so widget-specific shorcuts can take precedence
   var uiRendered = false
-  if a.opts.showThemePane:
+  if a.opts.showThemeEditor:
     renderUI(a)
     uiRendered = true
 
@@ -6324,13 +6458,13 @@ proc renderFrame(a) =
     else:               handleGlobalKeyEvents_NoLevels(a)
 
   else:
-    if not a.opts.showThemePane and a.win.glfwWin.focused:
+    if not a.opts.showThemeEditor and a.win.glfwWin.focused:
       glfw.makeContextCurrent(a.splash.win)
       closeSplash(a)
       glfw.makeContextCurrent(a.win.glfwWin)
       a.win.focus()
 
-  if not a.opts.showThemePane or not uiRendered:
+  if not a.opts.showThemeEditor or not uiRendered:
     renderUI(a)
 
   if a.win.shouldClose:
@@ -6406,17 +6540,17 @@ proc renderFrameSplash(a) =
   vg.endFrame()
 
 
-  if not a.opts.showThemePane and a.splash.win.shouldClose:
+  if not a.opts.showThemeEditor and a.splash.win.shouldClose:
     a.shouldClose = true
 
   proc shouldCloseSplash(a): bool =
     alias(w, a.splash.win)
 
-    if a.opts.showThemePane:
+    if a.opts.showThemeEditor:
       not a.splash.show
     else:
       let autoClose =
-        if not a.opts.showThemePane and a.prefs.autoCloseSplash:
+        if not a.opts.showThemeEditor and a.prefs.autoCloseSplash:
           let dt = getMonoTime() - a.splash.t0
           koi.setFramesLeft()
           dt > initDuration(seconds = a.prefs.splashTimeoutSecs)
@@ -6808,13 +6942,13 @@ proc main() =
 
       # Render splash
       if a.splash.win == nil and a.splash.show:
-        createSplashWindow(mousePassthru = a.opts.showThemePane, a)
+        createSplashWindow(mousePassthru = a.opts.showThemeEditor, a)
         glfw.makeContextCurrent(a.splash.win)
 
         if a.splash.logo.data == nil:
           loadSplashImages(a)
         showSplash(a)
-        if a.opts.showThemePane:
+        if a.opts.showThemeEditor:
           a.win.focus()
 
       if a.splash.win != nil:
