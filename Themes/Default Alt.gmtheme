@@ -122,6 +122,7 @@ color10 = "#9c559fa6"
 [level.note]
 markerColor = "#1a1a1ab3"
 commentColor = "#ff3300cc"
+backgroundShape = Circle
 indexBackgroundColor1 = "#f75c4aff"
 indexBackgroundColor2 = "#ff9c6aff"
 indexBackgroundColor3 = "#00b3c8ff"

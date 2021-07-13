@@ -108,33 +108,34 @@ outerWidthFactor = 0.0
 
 [level.floorColor]
 transparentFloor = false
-color1="rgba(162, 130, 81, 255)"
-color2="rgba(51, 92, 162, 66)"
-color3="rgba(61, 139, 231, 80)"
-color4="rgba(108, 57, 172, 66)"
-color5="rgba(137, 95, 233, 76)"
-color6="rgba(151, 0, 97, 66)"
-color7="rgba(217, 40, 158, 72)"
-color8="rgba(48, 141, 154, 55)"
-color9="rgba(54, 128, 184, 86)"
-color10="rgba(0, 0, 0, 0)"
+color1 = "#00000000"
+color2 = "#00000000"
+color3 = "#00000000"
+color4 = "#00000000"
+color5 = "#00000000"
+color6 = "#00000000"
+color7 = "#00000000"
+color8 = "#00000000"
+color9 = "#00000000"
+color10 = "#00000000"
 
 [level.note]
 markerColor = "#3c2c1cbe"
 commentColor = "#ff3300cc"
-indexBackgroundColor1="rgba(105, 117, 130, 255)"
-indexBackgroundColor2="rgba(139, 128, 91, 255)"
-indexBackgroundColor3="rgba(116, 108, 101, 255)"
-indexBackgroundColor4="rgba(114, 83, 92, 255)"
+backgroundShape = Circle
+indexBackgroundColor1 = "#00000000"
+indexBackgroundColor2 = "#00000000"
+indexBackgroundColor3 = "#00000000"
+indexBackgroundColor4 = "#00000000"
 indexColor = "#ffffffb3"
 tooltipBackgroundColor = "#443823f0"
 tooltipColor = "#e6cb99fa"
 
 [level.label]
-color1="rgba(93, 81, 60, 255)"
-color2="rgba(255, 231, 190, 221)"
-color3="rgba(156, 99, 45, 255)"
-color4="rgba(255, 182, 53, 228)"
+color1 = "#00000000"
+color2 = "#00000000"
+color3 = "#00000000"
+color4 = "#00000000"
 
 [level.levelDropDown]
 buttonColor = "#ffffff00"
@@ -146,10 +147,10 @@ itemHoverColor = "#3c3422e6"
 
 [pane.notes]
 textColor = "#000000af"
-indexBackgroundColor1="rgba(100, 112, 125, 255)"
-indexBackgroundColor2="rgba(112, 100, 63, 255)"
-indexBackgroundColor3="rgba(116, 108, 101, 255)"
-indexBackgroundColor4="rgba(114, 83, 92, 255)"
+indexBackgroundColor1 = "#00000000"
+indexBackgroundColor2 = "#00000000"
+indexBackgroundColor3 = "#00000000"
+indexBackgroundColor4 = "#00000000"
 indexColor = "#ffffffcc"
 scrollBarColor = "#d3c5b8ff"
 

@@ -28,13 +28,13 @@ shadowFeather = 0.0
 shadowColor = "#00000000"
 
 [ui.widget]
-cornerRadius = 5.0
+cornerRadius = 4.0
 backgroundColor = "#ffffff80"
 backgroundHoverColor = "#ffffffa1"
 backgroundActiveColor = "#ffa600ff"
 backgroundDisabledColor = "#ffffff33"
 foregroundColor = "#000000b3"
-foregroundActiveColor = "#00000000"
+foregroundActiveColor = "#0000009a"
 foregroundDisabledColor = "#00000059"
 
 [ui.textField]
