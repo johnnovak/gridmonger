@@ -9,3 +9,4 @@ gridmonger.ini
 *.log.bak?
 Autosave
 Config
+dist
