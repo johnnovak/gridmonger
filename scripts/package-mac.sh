@@ -26,8 +26,8 @@ cp -R gridmonger.icns $RESOURCES_DIR
 strip -S $MACOS_DIR/$EXE
 xattr -cr $MACOS_DIR/$EXE
 
-#codesign --verbose --sign "Developer ID Application: Andrew Belt (VRF26934X5)" --options runtime --entitlements Entitlements.plist --deep dist/Gridmonger.app
+#codesign --verbose --sign "Developer ID Application: John Novak (VRF26934X5)" --options runtime --entitlements Entitlements.plist --deep dist/Gridmonger.app
 #codesign --verify --deep --strict --verbose=2 dist/Gridmonger.app
 
-# Make ZIP
+# Make distribution ZIP file
 cd dist && zip -q -9 -r $DIST_NAME.zip Gridmonger.app
