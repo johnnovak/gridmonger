@@ -1,12 +1,13 @@
 *~
-*.swp
-*.exe
-*.grm
 .DS_Store
 ._*
+*.swp
+*.exe
+*.gmm
 gridmonger.ini
 *.log
 *.log.bak?
 Autosave
 Config
 dist
+User Themes
