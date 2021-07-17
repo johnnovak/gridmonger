@@ -62,7 +62,7 @@
         </array>
 
         <key>CFBundleTypeIconFile</key>
-        <string>icon.icns</string>
+        <string>gridmonger.icns</string>
 
         <key>CFBundleTypeName</key>
         <string>Gridmonger Map</string>
