@@ -1,54 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
-	<key>CFBundleName</key>
-	<string>Gridmonger</string>
-	<key>CFBundleDisplayName</key>
-	<string>Gridmonger</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.gridmonger</string>
-	<key>CFBundleVersion</key>
-	<string>1.0</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleSignature</key>
-	<string>Gridmonger</string>
-	<key>CFBundleExecutable</key>
-	<string>Gridmonger</string>
-	<key>CFBundleIconFile</key>
-	<string>icon</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © John Novak</string>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
-	<key>NSHighResolutionCapable</key>
-	<string>YES</string>
+  <dict>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.9.0</string>
 
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-		<key>CFBundleTypeExtensions</key>
-		<array>
-			<string>gmm</string>
-		</array>
-		<key>CFBundleTypeIconFile</key>
-		<string>icon.icns</string>
-		<key>CFBundleTypeName</key>
-		<string>Gridmonger Map</string>
-		<key>CFBundleTypeOSTypes</key>
-		<array>
-			<string>GRIDMONGER</string>
-		</array>
-		<key>CFBundleTypeRole</key>
-		<string>Editor</string>
-		</dict>
-	</array>
-</dict>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+
+    <key>CFBundleName</key>
+    <string>Gridmonger</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Gridmonger</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>net.johnnovak.gridmonger</string>
+
+    <key>CFBundleVersion</key>
+    <string>{VERSION}</string>
+
+    <key>CFBundleGetInfoString</key>
+    <string>{VERSION}, John Novak</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleSignature</key>
+    <string>Gridmonger</string>
+
+    <key>CFBundleExecutable</key>
+    <string>Gridmonger</string>
+
+    <key>CFBundleIconFile</key>
+    <string>icon</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>{VERSION}</string>
+
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © John Novak</string>
+
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>gmm</string>
+        </array>
+
+        <key>CFBundleTypeIconFile</key>
+        <string>icon.icns</string>
+
+        <key>CFBundleTypeName</key>
+        <string>Gridmonger Map</string>
+
+        <key>CFBundleTypeOSTypes</key>
+        <array>
+          <string>GRMM</string>
+        </array>
+
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+
+      	<key>LSIsAppleDefaultForType</key>
+        <true/>
+      </dict>
+    </array>
+  </dict>
 </plist>
