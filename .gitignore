@@ -5,9 +5,10 @@
 *.exe
 *.gmm
 gridmonger.ini
+gridmonger
 *.log
 *.log.bak?
 Autosave
 Config
 dist
-User Themes
+ser Themes

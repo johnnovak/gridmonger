@@ -36,7 +36,7 @@
     <string>Gridmonger</string>
 
     <key>CFBundleIconFile</key>
-    <string>icon</string>
+    <string>gridmonger.icns</string>
 
     <key>CFBundleShortVersionString</key>
     <string>{VERSION}</string>
