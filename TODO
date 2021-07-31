@@ -4,6 +4,8 @@ BUGS
 
 TODO for v0.9
 
+  - finish OS X package
+
   - inactive button color in titlebar
   - tooltip roundness & shadow opacity
   - level dropdown shadow opacity
@@ -58,8 +60,6 @@ v1.1
   - export map as PNG
   - full screen borderless
   - map selector dialog
-
-  - create OS X package
 
   - more themes:
       emerald-theme.psd

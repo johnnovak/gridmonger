@@ -772,7 +772,6 @@ let g_appShortcuts = {
   scNextTheme:          @[mkKeyShortcut(keyPageDown,      {mkCtrl})],
 
   # Editing
-  # TODO
   scCycleFloorGroup1Forward:   @[mkKeyShortcut(key1,      {})],
   scCycleFloorGroup2Forward:   @[mkKeyShortcut(key2,      {})],
   scCycleFloorGroup3Forward:   @[mkKeyShortcut(key3,      {})],
@@ -868,7 +867,6 @@ let g_appShortcuts = {
   scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
   scOpenUserManual:     @[mkKeyShortcut(keyF1,            {})],
   scEditPreferences:    @[mkKeyShortcut(keyU,             {mkCtrl, mkAlt})]
-
 
 }.toTable
 
