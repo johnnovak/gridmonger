@@ -82,7 +82,7 @@ const
 
 type MapReadError* = object of IOError
 
-proc raiseMapReadError(s: string) =
+proc raiseMapReadError(s: string) {.noReturn.} =
   raise newException(MapReadError, s)
 
 

@@ -61,12 +61,167 @@ type
   Token = object
     case kind: TokenKind
     of tkString: str: string
-    of tkNumber: num: float64
+    of tkNumber: num: string
     else: discard
+    line, column: Natural
 
   Tokeniser = object
     scanner: UnicodeScanner
     line, column: Natural
+
+  TokeniserError* = object of IOError
+
+
+proc `==`*(a, b: Token): bool =
+  if a.kind == b.kind and
+     a.line == b.line and
+     a.column == b.column:
+    case a.kind
+    of tkString: a.str == b.str
+    of tkNumber: a.num == b.num
+    else: true
+  else:
+    false
+
+
+let validQuotedStringRuneRange = 0x0020..0x10fff
+
+let whitespaceRunes = @[
+  Rune(0x0020), Rune(0x00a0), Rune(0x1680), Rune(0x2000),
+  Rune(0x2001), Rune(0x2002), Rune(0x2003), Rune(0x2004),
+  Rune(0x2005), Rune(0x2006), Rune(0x2007), Rune(0x2008),
+  Rune(0x2009), Rune(0x200a), Rune(0x202f), Rune(0x205f),
+  Rune(0x3000), # space separators (Zs) (incl. non-breaking spaces)
+
+  Rune(0xfeff), # byte-order-marker (BOM)
+  Rune(0x2028), # line separators (Zl)
+  Rune(0x2029), # paragraph separators (Zp)
+  Rune('\t'),   # tab
+  Rune(0x000b), # vertical tab
+  Rune('\f'),   # form feed
+  Rune('\r'),   # carriage return
+  Rune(0x001c), # file separator
+  Rune(0x001d), # group separator
+  Rune(0x001e), # record separator
+  Rune(0x001f)  # unit separator
+]
+
+let forbiddenUnquotedStringRunes = @[
+  Rune('$'), Rune('"'), Rune('{'), Rune('}'), Rune('['), Rune(']'), Rune(':'),
+  Rune('='), Rune(','), Rune('+'), Rune('#'), Rune('`'), Rune('^'), Rune('?'),
+  Rune('!'), Rune('@'), Rune('*'), Rune('&'), Rune('\\')
+]
+
+
+using t: var Tokeniser
+
+proc initTokeniser(stream: Stream): Tokeniser =
+  result.scanner = initUnicodeScanner(stream)
+  result.line = 1
+  result.column = 0
+
+
+proc raiseTokeniserError(t; msg, details: string,
+                         line = t.line, column = t.column) {.noReturn.} =
+  raise newException(TokeniserError,
+    fmt"{msg} at line {line}, column: {column}: {details}"
+  )
+
+proc readRune(t): Rune =
+  inc(t.column)
+  t.scanner.readRune()
+
+proc readEscape(t; line, col: Natural): Rune =
+  let rune = t.readRune()
+  case rune
+  of Rune('"'):  Rune('"')
+  of Rune('\\'): Rune('\\')
+  of Rune('/'):  Rune('/')
+  of Rune('b'):  Rune('\b')
+  of Rune('f'):  Rune('\f')
+  of Rune('n'):  Rune('\n')
+  of Rune('r'):  Rune('\r')
+  of Rune('t'):  Rune('\t')
+  of Rune('u'):
+    let hexStr = $t.readRune() & $t.readRune() & $t.readRune() & $t.readRune()
+    try:
+      Rune(fromHex[int32](hexStr))
+    except ValueError:
+      t.raiseTokeniserError(
+        msg = "Invalid Unicode escape sequence", details = fmt"\u{hexStr}",
+        line = line, column = col
+      )
+  else:
+    t.raiseTokeniserError(
+      msg = "Invalid escape sequence", details = fmt"\{rune} (\u{rune.ord:04x})",
+      line = line, column = col
+    )
+
+proc readQuotedString(t; line, col: Natural): Token =
+  var str = ""
+  let rune = t.readRune()
+
+  while rune != Rune('"'):
+    if rune.ord notin validQuotedStringRuneRange:
+      t.raiseTokeniserError(
+        msg = "Invalid quoted string character",
+        details = fmt"{rune} (\u{rune.ord:04x})" # TODO
+      )
+    elif rune == Rune('\\'):
+      str &= t.readEscape(t.line, t.column)
+    else:
+      str &= rune
+
+  Token(kind: tkString, str: str, line: line, column: col)
+
+
+proc readUnquotedStringOrBooleanOrNull(t; rune: Rune,
+                                       line, col: Natural): Token =
+  var str = ""
+  var rune = rune
+
+  while true:
+    str &= rune
+    case str
+    of "true":  return Token(kind: tkTrue,  line: line, column: col)
+    of "false": return Token(kind: tkFalse, line: line, column: col)
+    of "null":  return Token(kind: tkNull,  line: line, column: col)
+    else:
+      rune = t.scanner.peekRune()
+      if rune in whitespaceRunes or
+         rune in forbiddenUnquotedStringRunes: break
+      else:
+        rune = t.readRune()
+
+  Token(kind: tkString, str: str, line: line, column: col)
+
+
+
+proc next(t): Token =
+  var rune = t.readRune()
+  while rune in whitespaceRunes:
+    rune = t.readRune()
+
+  case rune
+  of Rune('{'): Token(kind: tkLeftBrace,    line: t.line, column: t.column)
+  of Rune('}'): Token(kind: tkRightBrace,   line: t.line, column: t.column)
+  of Rune('['): Token(kind: tkLeftBracket,  line: t.line, column: t.column)
+  of Rune(']'): Token(kind: tkRightBracket, line: t.line, column: t.column)
+  of Rune(','): Token(kind: tkComma,        line: t.line, column: t.column)
+  of Rune(':'): Token(kind: tkColon,        line: t.line, column: t.column)
+  of Rune('='): Token(kind: tkEquals,       line: t.line, column: t.column)
+
+  of Rune('\n'):
+    inc(t.line)
+    t.column = 0
+    Token(kind: tkNewLine, line: t.line, column: t.column)
+
+#  of Rune('0')..Rune('9'), Rune('-'): t.readNumber()
+
+  of Rune('"'): t.readQuotedString(t.line, t.column)
+
+  else:
+    t.readUnquotedStringOrBooleanOrNull(rune, t.line, t.column)
 
 # }}}
 
@@ -93,7 +248,8 @@ when isMainModule:
     try:
       discard s.readRune()
       assert false
-    except IOError: discard
+    except IOError:
+      discard
 
   block: # peek test
     var s = initUnicodeScanner(newStringStream(testString))
@@ -117,7 +273,8 @@ when isMainModule:
     try:
       discard s.peekRune(5)
       assert false
-    except IOError: discard
+    except IOError:
+      discard
 
     assert s.readRune()  == rune2
     assert s.readRune()  == rune3
@@ -127,7 +284,27 @@ when isMainModule:
     try:
       discard s.peekRune()
       assert false
-    except IOError: discard
+    except IOError:
+      discard
+
+  block: # tokeniser test 1
+    let testString = "{foo:bar}"
+    var s = initTokeniser(newStringStream(testString))
+
+    assert s.next() == Token(kind: tkLeftBrace, line: 1, column: 1)
+    assert s.next() == Token(kind: tkString, str: "foo", line: 1, column: 2)
+    assert s.next() == Token(kind: tkColon, line: 1, column: 5)
+    assert s.next() == Token(kind: tkString, str: "bar", line: 1, column: 6)
+    assert s.next() == Token(kind: tkRightBrace, line: 1, column: 9)
+
+  block: # tokeniser test 2
+    let testString = """{
+      array: [a, b]
+      "quoted": null
+      "concat": falseSTRING
+    }
+    """
+    var s = initTokeniser(newStringStream(testString))
 
 
 # vim: et:ts=2:sw=2:fdm=marker

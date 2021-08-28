@@ -1,0 +1,241 @@
+ui {
+  window {
+    background = "#666666ff"
+    title {
+      background {
+        normal = "#2e2e2eff"
+        inactive = "#1a1a1aff"
+      }
+      text {
+        normal = "#ffffff80"
+        inactive = "#ffffff66"
+      }
+    }
+    modified-flag = "#ffffff40"
+    button {
+      normal = "#ffffff73"
+      hover = "#ffffffb3"
+      down = "#ffffffe6"
+    }
+  }
+
+  dialog {
+    corner-radius = 6.0
+    background = "#4d4d4dff"
+    label = "#ffffffb3"
+    warning = "#ff6464ff"
+
+    title {
+      background = "#1a1a1aff"
+      text = "#d9d9d9ff"
+    }
+    outer-border {
+      color = "#00000000"
+      width = 0.0
+    }
+    inner-border {
+      color = "#00000000"
+      width = 0.0
+    }
+    shadow {
+      enabled = yes
+      feather = 24.0
+      fill = "#000000a8"
+      x-offset = 2.0
+      y-offset = 3.0
+    }
+  }
+
+  widget {
+    corner-radius = 4.0
+    background {
+      normal = "#ffffff80"
+      hover = "#ffffffa1"
+      active = "#ffa600ff"
+      disabled = "#ffffff33"
+    }
+    foreground {
+      normal = "#000000b3"
+      active = "#0000009e"
+      disabled = "#00000059"
+    }
+  }
+
+  text-field {
+    edit {
+      background = "#ffffff33"
+      text = "#ffffffcc"
+    }
+    cursor = "#ffbe00ff"
+    selection = "#c8820078"
+    scroll-bar {
+      normal = "#00000000"
+      edit = "#ffffffcc"
+    }
+  }
+
+  status-bar {
+    background = "#262626ff"
+    coordinates = "#999999ff"
+    text = "#d1d1d1ff"
+    command {
+      background = "#ffa600e9"
+      text = "#333333ff"
+    }
+  }
+
+  about-button {
+    label {
+      down = "#ffffffd9"
+      hover = "#ffffffb3"
+      normal = "#ffffff80"
+    }
+  }
+
+  about-dialog {
+    logo = "#e6e6e6ff"
+  }
+
+  splash-image {
+    logo = "#202020ff"
+    outline = "#e6e6e6ff"
+    shadow-alpha = 1.0
+  }
+}
+
+level {
+  general {
+    background = "#666666ff"
+    cursor = "#ffa600ff"
+    cursor-guides = "#ffa60033"
+    link-marker = "#00b3c8ff"
+    selection = "#ff808066"
+    trail = "#00000062"
+    paste-preview = "#3399ff66"
+    foreground {
+      normal = "#1a1a1aff"
+      light = "#1a1a1a46"
+    }
+    coordinates {
+      normal = "#e6e6e6ff"
+      highlight = "#ffbf00ff"
+    }
+    region-border {
+      normal = "#ff8080ff"
+      empty = "#ff808066"
+    }
+  }
+
+  background-hatch {
+    enabled = yes
+    color = "#00000066"
+    width = 1.0
+    spacing-factor = 2.0
+  }
+
+  grid {
+    background {
+      style = solid
+      grid = "#0000001a"
+    }
+    floor {
+      style = solid
+      grid = "#33333368"
+    }
+  }
+
+  outline {
+    style = cell
+    fill-style = solid
+    color = "#3d3d3dff"
+    width-factor = 0.5
+    overscan = off
+  }
+
+  shadow {
+    inner {
+      color = "#0000001a"
+      width-factor = 0.0
+    }
+    outer {
+      color = "#0000001a"
+      width-factor = 0.0
+    }
+  }
+
+  floor {
+    transparent = off
+    background = [
+      "#f2f2eeff"
+      "#6f000097"
+      "#ff290074"
+      "#ffb30080"
+      "#7c652192"
+      "#709a0092"
+      "#a6c41e63"
+      "#0c9ce047"
+      "#1c6fac83"
+      "#9c559fa6"
+    ]
+  }
+
+  note {
+    marker = "#1a1a1ab3"
+    comment = "#ff3300cc"
+    background-shape = circle
+    index-background = [
+      "#f75c4aff"
+      "#ff9c6aff"
+      "#00b3c8ff"
+      "#13837fff"
+    ]
+    index = "#ffffffff"
+    tooltip {
+      background = "#0d0d0dff"
+      text = "#e6e6e6ff"
+    }
+  }
+
+  label {
+    text = [
+      "#353232ff"
+      "#ffffffff"
+      "#f75c4aff"
+      "#00b3c8ff"
+    ]
+  }
+
+  level-drop-down {
+    button {
+      normal = "#00000000"
+      hover = "#00000047"
+      label = "#ffffffe6"
+    }
+    item-list-background = "#333333ff"
+    item {
+      normal = "#ffffffcc"
+      hover = "#000000b3"
+    }
+  }
+}
+
+pane {
+  notes {
+    text = "#e6e6e6ff"
+    index-background = [
+      "#f75c4aff"
+      "#fa8d64ff"
+      "#00b3c8ff"
+      "#1d8d89ff"
+    ]
+    index = "#ffffffff"
+    scroll-bar = "#e6e6e6ff"
+  }
+
+  toolbar {
+    button {
+      normal = "#e6e6e6ff"
+      hover = "#ffffffff"
+    }
+  }
+}
