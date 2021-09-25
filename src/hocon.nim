@@ -457,6 +457,60 @@ proc get(n: HoconNode, path: string): HoconNode =
   result = curr
 
 
+proc write(node: HoconNode, stream: Stream,
+           writeRootObjectBraces: bool = false,
+           newlineBeforeObjectDepthLimit: Natural = 1) =
+
+  proc go(curr: HoconNode, parent: HoconNode; depth, indent: int) =
+    case curr.kind
+    of hnkArray:
+      stream.write(" = [\n")
+      for val in curr.elems:
+        stream.write(" ".repeat((indent+1) * 2))
+        go(val, curr, depth+1, indent+1)
+        stream.write("\n")
+      stream.write(" ".repeat((indent) * 2))
+      stream.write("]")
+
+    of hnkObject:
+      let writeBraces = depth > 0 or (depth == 0 and writeRootObjectBraces)
+      if writeBraces:
+        if depth > 0: stream.write(" ")
+        stream.write("{\n")
+
+      for key, val in curr.fields:
+        if depth <= newlineBeforeObjectDepthLimit and
+           val.kind == hnkObject:
+          stream.write("\n")
+
+        stream.write(" ".repeat((indent+1) * 2) & key)
+        go(val, curr, depth+1, indent+1)
+        stream.write("\n")
+
+      if writeBraces:
+        stream.write(" ".repeat((indent) * 2))
+        stream.write("}")
+
+    of hnkNull:
+      if (parent.kind != hnkArray): stream.write(" = ")
+      stream.write("null")
+
+    of hnkString:
+      if (parent.kind != hnkArray): stream.write(" = ")
+      stream.write("\"" & $curr.str & "\"")
+
+    of hnkNumber:
+      if (parent.kind != hnkArray): stream.write(" = ")
+      stream.write($curr.num)
+
+    of hnkBool:
+      if (parent.kind != hnkArray): stream.write(" = ")
+      stream.write($curr.bool)
+
+  let startIndent = if writeRootObjectBraces: 0 else: -1
+  go(node, nil, depth=0, indent=startIndent)
+
+
 # {{{ Tests
 when isMainModule:
   let testString = "\u0024\u00a2\u0939\u20ac\ud5cc"
@@ -717,6 +771,10 @@ when isMainModule:
     let root = p.parse()
     printTree(root)
 
+    var st = newStringStream()
+    echo "--------------"
+    root.write(st)
+    echo st.data
 
   # }}}
 
