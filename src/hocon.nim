@@ -299,7 +299,6 @@ type
   HoconNode = ref HoconNodeObj
 
   HoconNodeObj = object
-    key: string
     case kind: HoconNodeKind
     of hnkNull:   discard
     of hnkString: str:    string
@@ -356,14 +355,31 @@ proc eatNewLinesOrSingleComma(p): bool =
     true
   else: newLinesRead
 
-proc parseValue(p): HoconNode =
-  new HoconNode
+
+proc parseObject(p): HoconNode
+proc parseArray(p): HoconNode
+
+proc parseNode(p): HoconNode =
+  let token = p.eatToken()
+  case token.kind:
+  of tkString:      HoconNode(kind: hnkString, str: token.str)
+  of tkNumber:      HoconNode(kind: hnkNumber, num: parseFloat(token.num))
+  of tkTrue:        HoconNode(kind: hnkBool,   bool: true)
+  of tkFalse:       HoconNode(kind: hnkBool,   bool: false)
+  of tkNull:        HoconNode(kind: hnkNull)
+  of tkLeftBrace:   p.parseObject()
+  of tkLeftBracket: p.parseArray()
+  else:
+    p.raiseUnexpectedTokenError(token)
+
 
 proc parseObject(p): HoconNode =
   discard p.eatEither(tkLeftBrace)
   discard p.eatNewLines()
 
-  var separator = true
+  result = HoconNode(kind: hnkObject)
+
+  var sepa = true
   while true:
     let token = p.peekToken()
     case token.kind
@@ -372,7 +388,7 @@ proc parseObject(p): HoconNode =
       break
 
     of tkString:
-      if not separator:
+      if not sepa:
         p.raiseUnexpectedTokenError(token)
 
       let key = token.str
@@ -380,18 +396,20 @@ proc parseObject(p): HoconNode =
       discard p.eatEither(tkColon, tkEquals)
       discard p.eatNewLines()
 
-      let value = p.parseValue()
-      separator = p.eatNewLinesOrSingleComma()
-      # TODO key-value
+      let node = p.parseNode()
+      result.fields.add(key, node)
+      sepa = p.eatNewLinesOrSingleComma()
 
     else: p.raiseUnexpectedTokenError(token)
 
-  new HoconNode
 
 proc parseArray(p): HoconNode =
-  new HoconNode
+  HoconNode(kind: hnkArray, elems: @[])
+
 
 proc parse(p): HoconNode =
+  discard p.eatNewLines()
+
   let token = p.peekToken()
   case token.kind
   of tkLeftBrace: p.parseObject()
@@ -414,7 +432,8 @@ when isMainModule:
     rune4 = Rune(0x20ac)
     rune5 = Rune(0xd5cc)
 
-  block: # read test
+  # {{{ scanner test - read
+  block:
     var s = initUnicodeScanner(newStringStream(testString))
     assert s.eatRune() == rune1
     assert s.eatRune() == rune2
@@ -428,7 +447,9 @@ when isMainModule:
     except IOError:
       discard
 
-  block: # peek test
+  # }}}
+  # {{{ scanner test - peek
+  block:
     var s = initUnicodeScanner(newStringStream(testString))
     assert s.peekRune()  == rune1
     assert s.peekRune()  == rune1
@@ -464,7 +485,9 @@ when isMainModule:
     except IOError:
       discard
 
-  block: # tokeniser test - simple
+  # }}}
+  # {{{ tokeniser test - simple
+  block:
     let testString = "{foo:bar}"
     var t = initTokeniser(newStringStream(testString))
 
@@ -474,7 +497,9 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkString, str: "bar", line: 1, column: 6)
     assert t.eatToken() == Token(kind: tkRightBrace, line: 1, column: 9)
 
-  block: # tokeniser test - complex
+  # }}}
+  # {{{ tokeniser test - complex
+  block:
     let testString = """
 {
   array: [a, b]
@@ -518,7 +543,9 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkNewline, line: 7, column: 23)
     assert t.eatToken() == Token(kind: tkRightBrace, line: 8, column: 1)
 
-  block: # tokeniser test - numbers
+  # }}}
+  # {{{ tokeniser test - numbers
+  block:
     let testString = """
 0 01 1 -1
 1. 1.0123 .4
@@ -545,6 +572,48 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkNumber, num: "1.e-5", line: 4, column: 1)
     assert t.eatToken() == Token(kind: tkNumber, num: "1.234e-5", line: 4, column: 7)
     assert t.eatToken() == Token(kind: tkNewline, line: 4, column: 15)
+
+  # }}}
+  # {{{ parser test
+  block:
+    let testString = """
+
+{
+  obj1 {
+    foo = "fooval"
+    bar = 1234.5
+
+    obj2 {
+      true_key = true
+      null_key = null
+
+      arr = [
+        1, 2
+        3
+      ]
+
+      obj3 {
+        a = "b"
+      }
+    }
+  }
+  c = "d"
+}
+"""
+
+    let testString2 = """
+{
+  a {
+    b = "c"
+    d = 5
+  }
+}
+"""
+
+    var p = initParser(newStringStream(testString2))
+    let root = p.parse()
+
+  # }}}
 
 # }}}
 
