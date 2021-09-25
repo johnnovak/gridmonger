@@ -55,7 +55,7 @@ type
   TokenKind = enum
     tkLeftBrace, tkRightBrace,
     tkLeftBracket, tkRightBracket,
-    tkComma, tkNewline,
+    tkComma, tkNewline, # TODO tkWhitespace
     tkColon, tkEquals,
     tkString,
     tkNumber,
@@ -313,28 +313,12 @@ using p: var HoconParser
 proc initParser(stream: Stream): HoconParser =
   result.tokeniser = initTokeniser(stream)
 
-
 proc raiseUnexpectedTokenError(p; token: Token) {.noReturn.} =
-  raise newException(HoconParsingError,
-    fmt"Unexpected token {token.kind} " &
-    fmt"at line {token.line}, column {token.column})"
-  )
-
-
-#    of tkRightBrace:
-#    of tkRightBracket:
-#    of tkComma:
-#    of tkNewline:
-#    of tkColon:
-#    of tkEquals:
-#    of tkString:
-#    of tkNumber:
-#    of tkTrue:
-#    of tkFalse:
-#    of tkNull:
+  raise newException(HoconParsingError, fmt"Unexpected token: {token}")
 
 proc peekToken(p): Token = p.tokeniser.peekToken()
 proc eatToken(p):  Token = p.tokeniser.eatToken()
+
 
 proc eatEither(p; kinds: varargs[TokenKind]): Token =
   let token = p.tokeniser.eatToken()
@@ -345,13 +329,14 @@ proc eatEither(p; kinds: varargs[TokenKind]): Token =
 proc eatNewLines(p): bool =
   var token = p.peekToken()
   while token.kind == tkNewLine:
+    result = true
     discard p.eatToken()
     token = p.peekToken()
 
 proc eatNewLinesOrSingleComma(p): bool =
   var newlinesRead = p.eatNewLines()
   if p.peekToken().kind == tkComma:
-    discard p.eatNewLines()
+    discard p.eatToken()
     true
   else: newLinesRead
 
@@ -360,13 +345,28 @@ proc parseObject(p): HoconNode
 proc parseArray(p): HoconNode
 
 proc parseNode(p): HoconNode =
-  let token = p.eatToken()
+  let token = p.peekToken()
   case token.kind:
-  of tkString:      HoconNode(kind: hnkString, str: token.str)
-  of tkNumber:      HoconNode(kind: hnkNumber, num: parseFloat(token.num))
-  of tkTrue:        HoconNode(kind: hnkBool,   bool: true)
-  of tkFalse:       HoconNode(kind: hnkBool,   bool: false)
-  of tkNull:        HoconNode(kind: hnkNull)
+  of tkString:
+    discard p.eatToken()
+    HoconNode(kind: hnkString, str: token.str)
+
+  of tkNumber:
+    discard p.eatToken()
+    HoconNode(kind: hnkNumber, num: parseFloat(token.num))
+
+  of tkTrue:
+    discard p.eatToken()
+    HoconNode(kind: hnkBool, bool: true)
+
+  of tkFalse:
+    discard p.eatToken()
+    HoconNode(kind: hnkBool, bool: false)
+
+  of tkNull:
+    discard p.eatToken()
+    HoconNode(kind: hnkNull)
+
   of tkLeftBrace:   p.parseObject()
   of tkLeftBracket: p.parseArray()
   else:
@@ -390,21 +390,48 @@ proc parseObject(p): HoconNode =
     of tkString:
       if not sepa:
         p.raiseUnexpectedTokenError(token)
-
-      let key = token.str
-      discard p.eatNewLines()
-      discard p.eatEither(tkColon, tkEquals)
+      let key = p.eatToken().str
       discard p.eatNewLines()
 
-      let node = p.parseNode()
-      result.fields.add(key, node)
+      let node = if p.peekToken().kind == tkLeftBrace:
+        p.parseObject()
+      else:
+        discard p.eatEither(tkColon, tkEquals)
+        discard p.eatNewLines()
+        p.parseNode()
+
+      result.fields[key] = node
       sepa = p.eatNewLinesOrSingleComma()
 
-    else: p.raiseUnexpectedTokenError(token)
+    else:
+      p.raiseUnexpectedTokenError(token)
 
 
 proc parseArray(p): HoconNode =
-  HoconNode(kind: hnkArray, elems: @[])
+  discard p.eatEither(tkLeftBracket)
+  discard p.eatNewLines()
+
+  result = HoconNode(kind: hnkArray)
+
+  var sepa = true
+  while true:
+    let token = p.peekToken()
+    case token.kind
+    of tkRightBracket:
+      discard p.eatToken()
+      break
+    else:
+      if not sepa:
+        p.raiseUnexpectedTokenError(token)
+      discard p.eatNewLines()
+
+      let node = if p.peekToken().kind == tkLeftBrace:
+        p.parseObject()
+      else:
+        p.parseNode()
+
+      result.elems.add(node)
+      sepa = p.eatNewLinesOrSingleComma()
 
 
 proc parse(p): HoconNode =
@@ -417,6 +444,17 @@ proc parse(p): HoconNode =
   else: p.raiseUnexpectedTokenError(token)
 
 # }}}
+
+type HoconPathError* = object of CatchableError
+
+proc get(n: HoconNode, path: string): HoconNode =
+  var curr = n
+  for key in path.split('.'):
+    if curr.kind == hnkObject and curr.fields.hasKey(key):
+      curr = curr.fields[key]
+    else:
+      raise newException(HoconPathError, "")
+  result = curr
 
 
 # {{{ Tests
@@ -498,6 +536,28 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkRightBrace, line: 1, column: 9)
 
   # }}}
+  # {{{ tokeniser test - booleans & null
+  block:
+    let testString = """
+{
+  true_ = 1
+  false2 = 2
+  nulltrue = 3
+  falsenull = 4
+}
+"""
+    var t = initTokeniser(newStringStream(testString))
+
+    # TODO
+#    assert t.eatToken() == Token(kind: tkLeftBrace, line: 1, column: 1)
+
+#    assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 2)
+#    assert t.eatToken() == Token(kind: tkString, str: "true_", line: 2, column: 3)
+#    assert t.eatToken() == Token(kind: tkEquals, line: 2, column: 9)
+#    assert t.eatToken() == Token(kind: tkNumber, num: "1", line: 2, column: 11)
+#    assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 12)
+
+  # }}}
   # {{{ tokeniser test - complex
   block:
     let testString = """
@@ -514,6 +574,7 @@ when isMainModule:
 
     assert t.eatToken() == Token(kind: tkLeftBrace, line: 1, column: 1)
     assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 2)
+
     assert t.eatToken() == Token(kind: tkString, str: "array", line: 2, column: 3)
     assert t.eatToken() == Token(kind: tkColon, line: 2, column: 8)
     assert t.eatToken() == Token(kind: tkLeftBracket, line: 2, column: 10)
@@ -522,25 +583,30 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkString, str: "b", line: 2, column: 14)
     assert t.eatToken() == Token(kind: tkRightBracket, line: 2, column: 15)
     assert t.eatToken() == Token(kind: tkNewline, line: 2, column: 16)
+
     assert t.eatToken() == Token(kind: tkString, str: "quoted", line: 3, column: 3)
     assert t.eatToken() == Token(kind: tkColon, line: 3, column: 11)
     assert t.eatToken() == Token(kind: tkNull, line: 3, column: 13)
     assert t.eatToken() == Token(kind: tkComma, line: 3, column: 17)
     assert t.eatToken() == Token(kind: tkNewline, line: 3, column: 18)
+
     assert t.eatToken() == Token(kind: tkString, str: "t", line: 4, column: 3)
     assert t.eatToken() == Token(kind: tkEquals, line: 4, column: 5)
     assert t.eatToken() == Token(kind: tkTrue, line: 4, column: 7)
     assert t.eatToken() == Token(kind: tkNewline, line: 4, column: 11)
+
     assert t.eatToken() == Token(kind: tkString, str: "f", line: 5, column: 3)
     assert t.eatToken() == Token(kind: tkEquals, line: 5, column: 5)
     assert t.eatToken() == Token(kind: tkFalse, line: 5, column: 7)
     assert t.eatToken() == Token(kind: tkNewline, line: 5, column: 12)
     assert t.eatToken() == Token(kind: tkNewline, line: 6, column: 1)
+
     assert t.eatToken() == Token(kind: tkString, str: "concat", line: 7, column: 3)
     assert t.eatToken() == Token(kind: tkColon, line: 7, column: 11)
     assert t.eatToken() == Token(kind: tkFalse, line: 7, column: 12)
     assert t.eatToken() == Token(kind: tkString, str: "STRING", line: 7, column: 17)
     assert t.eatToken() == Token(kind: tkNewline, line: 7, column: 23)
+
     assert t.eatToken() == Token(kind: tkRightBrace, line: 8, column: 1)
 
   # }}}
@@ -559,22 +625,69 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkNumber, num: "1", line: 1, column: 6)
     assert t.eatToken() == Token(kind: tkNumber, num: "-1", line: 1, column: 8)
     assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 10)
+
     assert t.eatToken() == Token(kind: tkNumber, num: "1.", line: 2, column: 1)
     assert t.eatToken() == Token(kind: tkNumber, num: "1.0123", line: 2, column: 4)
     assert t.eatToken() == Token(kind: tkNumber, num: ".4", line: 2, column: 11)
     assert t.eatToken() == Token(kind: tkNewline, line: 2, column: 13)
+
     assert t.eatToken() == Token(kind: tkNumber, num: "1e5", line: 3, column: 1)
     assert t.eatToken() == Token(kind: tkNumber, num: "00e5", line: 3, column: 5)
     assert t.eatToken() == Token(kind: tkNumber, num: "1e-5", line: 3, column: 10)
     assert t.eatToken() == Token(kind: tkNumber, num: "1e04", line: 3, column: 15)
     assert t.eatToken() == Token(kind: tkNumber, num: "-1.e-005", line: 3, column: 20)
     assert t.eatToken() == Token(kind: tkNewline, line: 3, column: 28)
+
     assert t.eatToken() == Token(kind: tkNumber, num: "1.e-5", line: 4, column: 1)
     assert t.eatToken() == Token(kind: tkNumber, num: "1.234e-5", line: 4, column: 7)
     assert t.eatToken() == Token(kind: tkNewline, line: 4, column: 15)
 
   # }}}
   # {{{ parser test
+
+  proc printTree(node: HoconNode, depth: int = 0) =
+    let indent = " ".repeat(depth * 2)
+    case node.kind
+    of hnkArray:
+      echo ""
+      for val in node.elems:
+        stdout.write indent
+        printTree(val, depth+1)
+    of hnkObject:
+      echo ""
+      for key, val in node.fields:
+        stdout.write indent & key & ": "
+        printTree(val, depth+1)
+    of hnkNull:   echo "null"
+    of hnkString: echo "\"" & $node.str & "\""
+    of hnkNumber: echo $node.num
+    of hnkBool:   echo $node.bool
+
+
+  block:
+    let testString = """
+{
+  a {
+    b = "c"
+    aa {
+      foo = false
+    }
+    d = 5
+  }
+  b = 123
+}
+"""
+
+    var p = initParser(newStringStream(testString))
+    let root = p.parse()
+    printTree(root)
+
+    echo root.get("a.b")[]
+    echo root.get("a.aa.foo")[]
+    echo root.get("a.d")[]
+    echo root.get("b")[]
+
+
   block:
     let testString = """
 
@@ -584,8 +697,8 @@ when isMainModule:
     bar = 1234.5
 
     obj2 {
-      true_key = true
-      null_key = null
+      key1 = true
+      key2 = null
 
       arr = [
         1, 2
@@ -600,18 +713,10 @@ when isMainModule:
   c = "d"
 }
 """
-
-    let testString2 = """
-{
-  a {
-    b = "c"
-    d = 5
-  }
-}
-"""
-
-    var p = initParser(newStringStream(testString2))
+    var p = initParser(newStringStream(testString))
     let root = p.parse()
+    printTree(root)
+
 
   # }}}
 
