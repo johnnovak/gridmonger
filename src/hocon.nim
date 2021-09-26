@@ -23,11 +23,14 @@ proc initUnicodeScanner(stream: Stream): UnicodeScanner =
   result.peekBuf = initDeque[Rune]()
 
 proc readNextRune(s): Rune =
+  proc raiseEOFError() =
+    raise newException(IOError, "Unexpected end of file")
+
+  if s.stream.atEnd: raiseEOFError()
   s.readBuf[0] = cast[char](s.stream.readUint8())
   let runeLen = s.readBuf.runeLenAt(0)
   let bytesRead = s.stream.readDataStr(s.readBuf, 1..(1 + runeLen-2))
-  if bytesRead + 1 != runeLen:
-    raise newException(IOError, "Unexpected end of file")
+  if bytesRead + 1 != runeLen: raiseEOFError()
   s.readBuf.runeAt(0)
 
 proc peekRune(s; lookahead: Natural = 1): Rune =
@@ -48,7 +51,6 @@ proc close(s) =
   s.stream = nil
 
 # }}}
-
 # {{{ Tokeniser
 
 type
@@ -133,8 +135,8 @@ proc raiseTokeniserError(t; msg, details: string,
     fmt"{msg} at line {line}, column {column}: {details}"
   )
 
-proc peekRune(t): Rune =
-  t.scanner.peekRune()
+proc peekRune(t; lookahead: Natural = 1): Rune =
+  t.scanner.peekRune(lookahead)
 
 proc eatRune(t): Rune =
   inc(t.column)
@@ -235,6 +237,13 @@ proc readNumberOrString(t): Token =
     Token(kind: tkString, str: str, line: line, column: col)
 
 
+proc skipComment(t) =
+  while true:
+    let rune = t.peekRune()
+    if rune == Rune('\n'): return
+    discard t.eatRune()
+
+
 proc readNextToken(t): Token =
 
   proc mkSimpleToken(t; kind: TokenKind): Token =
@@ -266,6 +275,18 @@ proc readNextToken(t): Token =
 
   of Rune('"'):
     t.readQuotedString()
+
+  of Rune('#'):
+    t.skipComment()
+    t.readNextToken()
+
+  of Rune('/'):
+    if t.peekRune(2) == Rune('/'):
+      t.skipComment()
+      t.readNextToken()
+    else:
+      t.readUnquotedStringOrBooleanOrNull()
+
   else:
     t.readUnquotedStringOrBooleanOrNull()
 
@@ -285,8 +306,8 @@ proc atEnd(t): bool =
 
 
 # }}}
-
 # {{{ HoconParser
+
 type
   HoconParser = object
     tokeniser: Tokeniser
@@ -373,8 +394,9 @@ proc parseNode(p): HoconNode =
     p.raiseUnexpectedTokenError(token)
 
 
-proc parseObject(p): HoconNode =
-  discard p.eatEither(tkLeftBrace)
+proc parseObject(p; skipOpeningBrace: bool = false): HoconNode =
+  if not skipOpeningBrace:
+    discard p.eatEither(tkLeftBrace)
   discard p.eatNewLines()
 
   result = HoconNode(kind: hnkObject)
@@ -439,23 +461,13 @@ proc parse(p): HoconNode =
 
   let token = p.peekToken()
   case token.kind
-  of tkLeftBrace: p.parseObject()
+  of tkLeftBrace:   p.parseObject()
   of tkLeftBracket: p.parseArray()
-  else: p.raiseUnexpectedTokenError(token)
+  else:             p.raiseUnexpectedTokenError(token)
 
 # }}}
 
-type HoconPathError* = object of CatchableError
-
-proc get(n: HoconNode, path: string): HoconNode =
-  var curr = n
-  for key in path.split('.'):
-    if curr.kind == hnkObject and curr.fields.hasKey(key):
-      curr = curr.fields[key]
-    else:
-      raise newException(HoconPathError, "")
-  result = curr
-
+# {{{ Writer
 
 proc write(node: HoconNode, stream: Stream,
            writeRootObjectBraces: bool = false,
@@ -510,6 +522,21 @@ proc write(node: HoconNode, stream: Stream,
   let startIndent = if writeRootObjectBraces: 0 else: -1
   go(node, nil, depth=0, indent=startIndent)
 
+# }}}
+# {{{ Helpers
+
+type HoconPathError* = object of CatchableError
+
+proc get(n: HoconNode, path: string): HoconNode =
+  var curr = n
+  for key in path.split('.'):
+    if curr.kind == hnkObject and curr.fields.hasKey(key):
+      curr = curr.fields[key]
+    else:
+      raise newException(HoconPathError, "")
+  result = curr
+
+# }}}
 
 # {{{ Tests
 when isMainModule:
@@ -745,27 +772,23 @@ when isMainModule:
   block:
     let testString = """
 
-{
-  obj1 {
-    foo = "fooval"
-    bar = 1234.5
-
-    obj2 {
-      key1 = true
-      key2 = null
-
-      arr = [
-        1, 2
-        3
-      ]
-
-      obj3 {
-        a = "b"
-      }
-    }
-  }
-  c = "d"
+obj1 { # comment }=;./23!@#//##{
+  foo = "fooval"//blah
+  bar
+    =1234.5
+  # line comment
+  // line comment
+  obj2
+  {
+    key1 = true, key2 = null
+    arr = [//
+      1, 2#
+      3#
+    ]#
+    //}
+    obj3{a:"b"}}
 }
+c = "d"
 """
     var p = initParser(newStringStream(testString))
     let root = p.parse()
