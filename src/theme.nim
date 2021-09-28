@@ -1,6 +1,7 @@
 import math
 import options
 import parsecfg
+import streams
 import strformat
 
 import nanovg
@@ -8,7 +9,9 @@ import with
 
 import common
 import cfghelper
+import cfghelperhocon
 import fieldlimits
+import hocon
 import macros
 import strutils
 import utils
@@ -304,4 +307,104 @@ proc loadTheme*(filename: string): ThemeStyle =
 proc saveTheme*(theme: ThemeStyle, filename: string) =
   let config = writeTheme(theme)
   writePrettyConfig(config, filename)
+
+
+
+proc limit(config: HoconNode, key: string, limits: FieldLimits) =
+  var v = config.get(key)
+  v.num = v.num.limit(limits)
+
+
+proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
+  alias(s, result)
+
+  var p = "level.general."
+  s.backgroundColor           = cfg.getColorHocon(p & "background")
+  s.cursorColor               = cfg.getColorHocon(p & "cursor")
+  s.cursorGuidesColor         = cfg.getColorHocon(p & "cursor-guides")
+  s.linkMarkerColor           = cfg.getColorHocon(p & "link-marker")
+  s.selectionColor            = cfg.getColorHocon(p & "selection")
+  s.trailColor                = cfg.getColorHocon(p & "trail")
+  s.pastePreviewColor         = cfg.getColorHocon(p & "paste-preview")
+  s.foregroundNormalColor     = cfg.getColorHocon(p & "foreground.normal")
+  s.foregroundLightColor      = cfg.getColorHocon(p & "foreground.light")
+  s.coordinatesNormalColor    = cfg.getColorHocon(p & "coordinates.normal")
+  s.coordinatesHighlightColor = cfg.getColorHocon(p & "coordinates.highlight")
+  s.regionBorderNormalColor   = cfg.getColorHocon(p & "region-border.normal")
+  s.regionBorderEmptyColor    = cfg.getColorHocon(p & "region-border.empty")
+
+  p = "level.background-hatch."
+  s.bgHatchEnabled       = cfg.getBoolHocon(p & "enabled")
+  s.bgHatchColor         = cfg.getColorHocon(p & "color")
+  s.bgHatchWidth         = cfg.getFloatHocon(p & "width")
+  s.bgHatchSpacingFactor = cfg.getFloatHocon(p & "spacing-factor")
+
+  p = "level.grid."
+  s.gridBackgroundStyle     = cfg.getEnumHocon(p & "background.style", GridStyle)
+  s.gridBackgroundGridColor = cfg.getColorHocon(p & "background.grid")
+  s.gridFloorStyle          = cfg.getEnumHocon(p & "floor.style", GridStyle)
+  s.gridFloorGridColor      = cfg.getColorHocon(p & "floor.grid")
+
+  p = "level.outline."
+  s.outlineStyle       = cfg.getEnumHocon(p & "style", OutlineStyle)
+  s.outlineFillStyle   = cfg.getEnumHocon(p & "fill-style", OutlineFillStyle)
+  s.outlineColor       = cfg.getColorHocon(p & "color")
+  s.outlineWidthFactor = cfg.getFloatHocon(p & "width-factor")
+  s.outlineOverscan    = cfg.getBoolHocon(p & "overscan")
+
+  p = "level.shadow."
+  s.shadowInnerColor  = cfg.getColorHocon(p & "inner.color")
+  s.shadowWidthFactor = cfg.getFloatHocon(p & "inner.width-factor")
+  s.outerColor        = cfg.getColorHocon(p & "outer.color")
+  s.outerWidthFactor  = cfg.getFloatHocon(p & "outer.width-factor")
+
+  p = "level.floor."
+  s.floorTransparent = cfg.getBoolHocon(p & "transparent")
+
+  var color = cfg.get(p & "background")
+  for i in 0..s.floorBackgroundColor.high:
+    s.floorBackgroundColor[i] = parseColor(color.elems[i].str)
+
+  p = "level.note."
+  s.noteMarkerColor     = cfg.getColorHocon(p & "marker")
+  s.noteCommentColor    = cfg.getColorHocon(p & "comment")
+  s.noteBackgroundShape = cfg.getEnumHocon(p & "background-shape", NoteBackgroundShape)
+
+  color = cfg.get(p & "index-background")
+  for i in 0..s.noteIndexBackgroundColor.high:
+    s.noteIndexBackgroundColor[i] = color.elems[i]
+
+  s.noteIndexColor             = cfg.getColorHocon(p & "index")
+  s.noteTooltipBackgroundColor = cfg.getColorHocon(p & "tooltip.background")
+  s.noteTooltipTextColor       = cfg.getColorHocon(p & "tooltip.text")
+
+  color = cfg.get("level.label.text")
+  for i in 0..s.labelTextColor.high:
+    s.labelTextColor[i] = color.elems[i]
+
+
+proc loadThemeHocon*(filename: string): HoconNode =
+  var p = initHoconParser(newFileStream(filename))
+  let cfg = p.parse()
+
+  cfg.limit("ui.dialog.corner-radius",      UiDialogCornerRadiusLimits)
+  cfg.limit("ui.dialog.outer-border.width", UiDialogOuterBorderWidthLimits)
+  cfg.limit("ui.dialog.inner-border.width", UiDialogInnerBorderWidthLimits)
+  cfg.limit("ui.dialog.shadow.feather",     UiDialogShadowFeatherLimits)
+  cfg.limit("ui.dialog.shadow.x-offset",    UiDialogShadowXOffsetLimits)
+  cfg.limit("ui.dialog.shadow.y-offset",    UiDialogShadowYOffsetLimits)
+
+  cfg.limit("ui.widget.corner-radius",      UiWidgetCornerRadiusLimits)
+
+  cfg.limit("ui.splash-image.shadow-alpha", AlphaLimits)
+
+  cfg.limit("level.background-hatch.width",          LevelBackgroundHatchWidthLimits)
+  cfg.limit("level.background-hatch.spacing-factor", LevelBackgroundHatchSpacingFactorLimits)
+
+  cfg.limit("level.outline.width-factor", LevelOutlineWidthFactorLimits)
+
+  cfg.limit("level.shadow.inner.width-factor", LevelShadowInnerWidthFactorLimits)
+  cfg.limit("level.shadow.outer.width-factor", LevelShadowOuterWidthFactorLimits)
+
+  result = cfg
 

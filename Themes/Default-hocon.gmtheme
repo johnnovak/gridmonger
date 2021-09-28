@@ -1,6 +1,7 @@
 ui {
   window {
     background = "#666666ff"
+
     title {
       background {
         normal = "#2e2e2eff"
@@ -12,6 +13,7 @@ ui {
       }
     }
     modified-flag = "#ffffff40"
+
     button {
       normal = "#ffffff73"
       hover = "#ffffffb3"
@@ -48,6 +50,7 @@ ui {
 
   widget {
     corner-radius = 4.0
+
     background {
       normal = "#ffffff80"
       hover = "#ffffffa1"
@@ -78,6 +81,7 @@ ui {
     background = "#262626ff"
     coordinates = "#999999ff"
     text = "#d1d1d1ff"
+
     command {
       background = "#ffa600e9"
       text = "#333333ff"
@@ -112,6 +116,7 @@ level {
     selection = "#ff808066"
     trail = "#00000062"
     paste-preview = "#3399ff66"
+
     foreground {
       normal = "#1a1a1aff"
       light = "#1a1a1a46"
@@ -190,6 +195,7 @@ level {
       "#13837fff"
     ]
     index = "#ffffffff"
+
     tooltip {
       background = "#0d0d0dff"
       text = "#e6e6e6ff"
@@ -212,6 +218,7 @@ level {
       label = "#ffffffe6"
     }
     item-list-background = "#333333ff"
+
     item {
       normal = "#ffffffcc"
       hover = "#000000b3"

@@ -249,54 +249,54 @@ const
 
 
 type
-  LevelStyle2 = ref object
-    background:            Color
-    cursor:                Color
-    cursorGuides:          Color
-    linkMarker:            Color
-    selection:             Color
-    trail:                 Color
-    pastePreview:          Color
-    foregroundNormal:      Color
-    foregroundLight:       Color
-    coordinatesNormal:     Color
-    coordiantesHighlight:  Color
-    regionBorderNormal:    Color
-    regionBorderEmpty:     Color
+  LevelStyle2* = ref object
+    backgroundColor*:            Color
+    cursorColor*:                Color
+    cursorGuidesColor*:          Color
+    linkMarkerColor*:            Color
+    selectionColor*:             Color
+    trailColor*:                 Color
+    pastePreviewColor*:          Color
+    foregroundNormalColor*:      Color
+    foregroundLightColor*:       Color
+    coordinatesNormalColor*:     Color
+    coordinatesHighlightColor*:  Color
+    regionBorderNormalColor*:    Color
+    regionBorderEmptyColor*:     Color
 
-    bgHatchEnabled:        bool
-    bgHatchColor:          Color
-    bgHatchWidth:          float
-    bgHatchSpacingFactor:  float
+    bgHatchEnabled*:             bool
+    bgHatchColor*:               Color
+    bgHatchWidth*:               float
+    bgHatchSpacingFactor*:       float
 
-    gridBackgroundStyle:   GridStyle
-    gridBackgroundGrid:    Color
-    gridFloorStyle:        GridStyle
-    gridFloorGrid:         Color
+    gridBackgroundStyle*:        GridStyle
+    gridBackgroundGridColor*:    Color
+    gridFloorStyle*:             GridStyle
+    gridFloorGridColor*:         Color
 
-    outlineStyle:          OutlineStyle
-    outlineFillStyle:      OutlineFillStyle
-    outlineColor:          Color
-    outlineWidthFactor:    float
-    outlineOverscan:       bool
+    outlineStyle*:               OutlineStyle
+    outlineFillStyle*:           OutlineFillStyle
+    outlineColor*:               Color
+    outlineWidthFactor*:         float
+    outlineOverscan*:            bool
 
-    shadowInnerColor:      Color
-    shadowWidthFactor:     float
-    outerColor:            Color
-    outerWidthFactor:      float
+    shadowInnerColor*:           Color
+    shadowWidthFactor*:          float
+    outerColor*:                 Color
+    outerWidthFactor*:           float
 
-    floorTransparent:      bool
-    floorBackground:       Color
+    floorTransparent*:           bool
+    floorBackgroundColor*:       array[10, Color]
 
-    noteMarker:            Color
-    noteComment:           Color
-    noteBackgroundShape:   NoteBackgroundShape
-    noteIndexBackground:   array[4, Color]
-    noteIndex:             Color
-    noteTooltipBackground: Color
-    noteTooltipText:       Color
+    noteMarkerColor*:            Color
+    noteCommentColor*:           Color
+    noteBackgroundShape*:        NoteBackgroundShape
+    noteIndexBackgroundColor*:   array[4, Color]
+    noteIndexColor*:             Color
+    noteTooltipBackgroundColor*: Color
+    noteTooltipTextColor*:       Color
 
-    labelText:             array[4, Color]
+    labelTextColor*:             array[4, Color]
 
 
 # vim: et:ts=2:sw=2:fdm=marker

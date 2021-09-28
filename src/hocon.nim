@@ -309,29 +309,29 @@ proc atEnd(t): bool =
 # {{{ HoconParser
 
 type
-  HoconParser = object
+  HoconParser* = object
     tokeniser: Tokeniser
 
   HoconParsingError* = object of IOError
 
-  HoconNodeKind = enum
+  HoconNodeKind* = enum
     hnkNull, hnkString, hnkNumber, hnkBool, hnkObject, hnkArray
 
-  HoconNode = ref HoconNodeObj
+  HoconNode* = ref HoconNodeObj
 
-  HoconNodeObj = object
-    case kind: HoconNodeKind
+  HoconNodeObj* = object
+    case kind*: HoconNodeKind
     of hnkNull:   discard
-    of hnkString: str:    string
-    of hnkNumber: num:    float64
-    of hnkBool:   bool:   bool
-    of hnkObject: fields: OrderedTable[string, HoconNode]
-    of hnkArray:  elems:  seq[HoconNode]
+    of hnkString: str*:    string
+    of hnkNumber: num*:    float64
+    of hnkBool:   bool*:   bool
+    of hnkObject: fields*: OrderedTable[string, HoconNode]
+    of hnkArray:  elems*:  seq[HoconNode]
 
 
 using p: var HoconParser
 
-proc initParser(stream: Stream): HoconParser =
+proc initHoconParser*(stream: Stream): HoconParser =
   result.tokeniser = initTokeniser(stream)
 
 proc raiseUnexpectedTokenError(p; token: Token) {.noReturn.} =
@@ -481,7 +481,7 @@ proc parseArray(p): HoconNode =
       sepa = p.eatNewLinesOrSingleComma()
 
 
-proc parse(p): HoconNode =
+proc parse*(p): HoconNode =
   discard p.eatNewLines()
 
   let token = p.peekToken()
@@ -494,9 +494,9 @@ proc parse(p): HoconNode =
 
 # {{{ Writer
 
-proc write(node: HoconNode, stream: Stream,
-           writeRootObjectBraces: bool = false,
-           newlineBeforeObjectDepthLimit: Natural = 1) =
+proc write*(node: HoconNode, stream: Stream,
+            writeRootObjectBraces: bool = false,
+            newlineBeforeObjectDepthLimit: Natural = 1) =
 
   proc go(curr: HoconNode, parent: HoconNode; depth, indent: int) =
     case curr.kind
@@ -552,13 +552,25 @@ proc write(node: HoconNode, stream: Stream,
 
 type HoconPathError* = object of CatchableError
 
-proc get(n: HoconNode, path: string): HoconNode =
+proc get*(n: HoconNode, path: string): HoconNode =
+  proc hasOnlyDigits(s: string): bool =
+    for c in s:
+      if not c.isDigit(): return false
+    true
+
   var curr = n
   for key in path.split('.'):
-    if curr.kind == hnkObject and curr.fields.hasKey(key):
-      curr = curr.fields[key]
+    if key.hasOnlyDigits():
+      let idx = parseInt(key)
+      if curr.kind == hnkArray and idx >= 0 and idx <= curr.elems.high:
+        curr = curr.elems[idx]
+      else:
+        raise newException(HoconPathError, "") # TODO
     else:
-      raise newException(HoconPathError, "")
+      if curr.kind == hnkObject and curr.fields.hasKey(key):
+        curr = curr.fields[key]
+      else:
+        raise newException(HoconPathError, "") # TODO
   result = curr
 
 # }}}
@@ -779,18 +791,22 @@ when isMainModule:
       foo = false
     }
     d = 5
+    e = [1,2,3]
   }
   b = 123
 }
 """
 
-    var p = initParser(newStringStream(testString))
+    var p = initHoconParser(newStringStream(testString))
     let root = p.parse()
     printTree(root)
 
     echo root.get("a.b")[]
     echo root.get("a.aa.foo")[]
     echo root.get("a.d")[]
+    echo root.get("a.e.0")[]
+    echo root.get("a.e.1")[]
+    echo root.get("a.e.2")[]
     echo root.get("b")[]
 
 
@@ -815,7 +831,7 @@ obj1 { # comment }=;./23!@#//##{
 }
 c = "d"
 """
-    var p = initParser(newStringStream(testString))
+    var p = initHoconParser(newStringStream(testString))
     let root = p.parse()
 
     echo '-'.repeat(40)
