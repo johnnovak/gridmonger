@@ -348,21 +348,23 @@ proc eatEither(p; kinds: varargs[TokenKind]): Token =
   else: token
 
 proc eatNewLines(p): bool =
+  if p.tokeniser.atEnd(): return
   var token = p.peekToken()
   while token.kind == tkNewLine:
     result = true
     discard p.eatToken()
+    if p.tokeniser.atEnd(): return
     token = p.peekToken()
 
 proc eatNewLinesOrSingleComma(p): bool =
   var newlinesRead = p.eatNewLines()
+  if p.tokeniser.atEnd(): return
   if p.peekToken().kind == tkComma:
     discard p.eatToken()
     true
   else: newLinesRead
 
-
-proc parseObject(p): HoconNode
+proc parseObject(p; allowImplicitBraces: bool = false): HoconNode
 proc parseArray(p): HoconNode
 
 proc parseNode(p): HoconNode =
@@ -394,20 +396,43 @@ proc parseNode(p): HoconNode =
     p.raiseUnexpectedTokenError(token)
 
 
-proc parseObject(p; skipOpeningBrace: bool = false): HoconNode =
-  if not skipOpeningBrace:
-    discard p.eatEither(tkLeftBrace)
-  discard p.eatNewLines()
+proc parseObject(p; allowImplicitBraces: bool = false): HoconNode =
+  var implicitBraces = false
+  var skipFirstPeek = false
+
+  var token = p.peekToken()
+  if token.kind == tkLeftBrace:
+    discard p.eatToken()
+    discard p.eatNewLines()
+  else:
+    if allowImplicitBraces:
+      implicitBraces = true
+      if token.kind == tkNewLine:
+        discard p.eatToken()
+        discard p.eatNewLines()
+      else:
+        skipFirstPeek = true
+    else:
+      p.raiseUnexpectedTokenError(token)
 
   result = HoconNode(kind: hnkObject)
 
   var sepa = true
   while true:
-    let token = p.peekToken()
+    if implicitBraces and p.tokeniser.atEnd():
+      break
+
+    if not skipFirstPeek:
+      token = p.peekToken()
+    skipFirstPeek = false
+
     case token.kind
     of tkRightBrace:
-      discard p.eatToken()
-      break
+      if implicitBraces:
+        p.raiseUnexpectedTokenError(token)
+      else:
+        discard p.eatToken()
+        break
 
     of tkString:
       if not sepa:
@@ -460,10 +485,10 @@ proc parse(p): HoconNode =
   discard p.eatNewLines()
 
   let token = p.peekToken()
-  case token.kind
-  of tkLeftBrace:   p.parseObject()
-  of tkLeftBracket: p.parseArray()
-  else:             p.raiseUnexpectedTokenError(token)
+  if token.kind == tkLeftBracket:
+    p.parseArray()
+  else:
+    p.parseObject(allowImplicitBraces=true)
 
 # }}}
 
@@ -792,10 +817,12 @@ c = "d"
 """
     var p = initParser(newStringStream(testString))
     let root = p.parse()
+
+    echo '-'.repeat(40)
     printTree(root)
 
     var st = newStringStream()
-    echo "--------------"
+    echo '-'.repeat(40)
     root.write(st)
     echo st.data
 

@@ -1,5 +1,7 @@
 import tables
 
+import nanovg
+
 import bitable
 import rect
 
@@ -244,6 +246,57 @@ const
   LinkDoors*           = {fEntranceDoor, fExitDoor}
 
   LinkSources* = LinkPitSources + LinkTeleports + LinkStairs + LinkDoors
+
+
+type
+  LevelStyle2 = ref object
+    background:            Color
+    cursor:                Color
+    cursorGuides:          Color
+    linkMarker:            Color
+    selection:             Color
+    trail:                 Color
+    pastePreview:          Color
+    foregroundNormal:      Color
+    foregroundLight:       Color
+    coordinatesNormal:     Color
+    coordiantesHighlight:  Color
+    regionBorderNormal:    Color
+    regionBorderEmpty:     Color
+
+    bgHatchEnabled:        bool
+    bgHatchColor:          Color
+    bgHatchWidth:          float
+    bgHatchSpacingFactor:  float
+
+    gridBackgroundStyle:   GridStyle
+    gridBackgroundGrid:    Color
+    gridFloorStyle:        GridStyle
+    gridFloorGrid:         Color
+
+    outlineStyle:          OutlineStyle
+    outlineFillStyle:      OutlineFillStyle
+    outlineColor:          Color
+    outlineWidthFactor:    float
+    outlineOverscan:       bool
+
+    shadowInnerColor:      Color
+    shadowWidthFactor:     float
+    outerColor:            Color
+    outerWidthFactor:      float
+
+    floorTransparent:      bool
+    floorBackground:       Color
+
+    noteMarker:            Color
+    noteComment:           Color
+    noteBackgroundShape:   NoteBackgroundShape
+    noteIndexBackground:   array[4, Color]
+    noteIndex:             Color
+    noteTooltipBackground: Color
+    noteTooltipText:       Color
+
+    labelText:             array[4, Color]
 
 
 # vim: et:ts=2:sw=2:fdm=marker
