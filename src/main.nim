@@ -30,6 +30,7 @@ import common
 import csdwindow
 import drawlevel
 import fieldlimits
+import hocon
 import icons
 import level
 import map
@@ -281,7 +282,10 @@ type
     emSetCellLink
 
   Theme = object
+    # TODO remove
     style:                  ThemeStyle
+
+    config:                 HoconNode
 
     themeNames:             seq[ThemeName]
     currThemeIndex:         Natural
@@ -305,6 +309,8 @@ type
 
     levelDropDownStyle:     DropDownStyle
     noteTextAreaStyle:      TextAreaStyle
+
+    levelStyle:             LevelStyle2
 
 
   ThemeName = object
@@ -1200,7 +1206,7 @@ proc loadTheme(theme: ThemeName; a) =
   var path = themePath(theme, a)
   info(fmt"Loading theme '{theme.name}' from '{path}'")
 
-  a.theme.style = loadTheme(path)
+  a.theme.config = loadThemeHocon(path)
 
 # }}}
 # {{{ saveTheme(a)
@@ -5762,6 +5768,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   ThemeEditorAutoLayoutParams.rowWidth = w
   initAutoLayout(ThemeEditorAutoLayoutParams)
 
+#[
   # {{{ User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
@@ -5989,7 +5996,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       prop("Button Hover", pane.toolbar.buttonHoverColor)
 
   # }}}
-
+]#
   koi.endScrollView()
 
   te.prevState = ts.deepCopy()

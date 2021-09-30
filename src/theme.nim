@@ -361,26 +361,23 @@ proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
   p = "level.floor."
   s.floorTransparent = cfg.getBoolHocon(p & "transparent")
 
-  var color = cfg.get(p & "background")
   for i in 0..s.floorBackgroundColor.high:
-    s.floorBackgroundColor[i] = parseColor(color.elems[i].str)
+    s.floorBackgroundColor[i] = cfg.getColorHocon(p & "background." & $i)
 
   p = "level.note."
   s.noteMarkerColor     = cfg.getColorHocon(p & "marker")
   s.noteCommentColor    = cfg.getColorHocon(p & "comment")
   s.noteBackgroundShape = cfg.getEnumHocon(p & "background-shape", NoteBackgroundShape)
 
-  color = cfg.get(p & "index-background")
   for i in 0..s.noteIndexBackgroundColor.high:
-    s.noteIndexBackgroundColor[i] = color.elems[i]
+    s.noteIndexBackgroundColor[i] = cfg.getColorHocon(p & "index-background." & $i)
 
   s.noteIndexColor             = cfg.getColorHocon(p & "index")
   s.noteTooltipBackgroundColor = cfg.getColorHocon(p & "tooltip.background")
   s.noteTooltipTextColor       = cfg.getColorHocon(p & "tooltip.text")
 
-  color = cfg.get("level.label.text")
   for i in 0..s.labelTextColor.high:
-    s.labelTextColor[i] = color.elems[i]
+    s.labelTextColor[i] = cfg.getColorHocon(p & "level.label.text." & $i)
 
 
 proc loadThemeHocon*(filename: string): HoconNode =
@@ -394,7 +391,7 @@ proc loadThemeHocon*(filename: string): HoconNode =
   cfg.limit("ui.dialog.shadow.x-offset",    UiDialogShadowXOffsetLimits)
   cfg.limit("ui.dialog.shadow.y-offset",    UiDialogShadowYOffsetLimits)
 
-  cfg.limit("ui.widget.corner-radius",      UiWidgetCornerRadiusLimits)
+  cfg.limit("ui.widget.corner-radius", UiWidgetCornerRadiusLimits)
 
   cfg.limit("ui.splash-image.shadow-alpha", AlphaLimits)
 
