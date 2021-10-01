@@ -250,6 +250,7 @@ const
 
 type
   LevelStyle2* = ref object
+    lineWidth*:                  LineWidth
     backgroundColor*:            Color
     cursorColor*:                Color
     cursorGuidesColor*:          Color
@@ -264,10 +265,10 @@ type
     regionBorderNormalColor*:    Color
     regionBorderEmptyColor*:     Color
 
-    bgHatchEnabled*:             bool
-    bgHatchColor*:               Color
-    bgHatchWidth*:               float
-    bgHatchSpacingFactor*:       float
+    backgroundHatchEnabled*:       bool
+    backgroundHatchColor*:         Color
+    backgroundHatchWidth*:         float
+    backgroundHatchSpacingFactor*: float
 
     gridBackgroundStyle*:        GridStyle
     gridBackgroundGridColor*:    Color
@@ -281,9 +282,9 @@ type
     outlineOverscan*:            bool
 
     shadowInnerColor*:           Color
-    shadowWidthFactor*:          float
-    outerColor*:                 Color
-    outerWidthFactor*:           float
+    shadowInnerWidthFactor*:     float
+    shadowOuterColor*:           Color
+    shadowOuterWidthFactor*:     float
 
     floorTransparent*:           bool
     floorBackgroundColor*:       array[10, Color]
@@ -298,5 +299,15 @@ type
 
     labelTextColor*:             array[4, Color]
 
+type
+  WindowStyle* = ref object
+    titleBackgroundColor*:         Color
+    titleBackgroundInactiveColor*: Color
+    titleColor*:                   Color
+    titleInactiveColor*:           Color
+    buttonColor*:                  Color
+    buttonHoverColor*:             Color
+    buttonDownColor*:              Color
+    modifiedFlagColor*:            Color
 
 # vim: et:ts=2:sw=2:fdm=marker

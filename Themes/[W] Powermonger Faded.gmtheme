@@ -1,31 +1,48 @@
-[ui.window]
-backgroundColor = "#584e44ff"
-backgroundImage
-titleBackgroundColor = "#2e2e2eff"
-titleBackgroundInactiveColor = "#1a1a1aff"
-titleColor = "#ffffff80"
-titleInactiveColor = "#ffffff66"
-modifiedFlagColor = "#ffffff40"
-buttonColor = "#ffffff73"
-buttonHoverColor = "#ffffffb3"
-buttonDownColor = "#ffffffe6"
+ui {
+  window {
+    backgroundColor = "#584e44ff"
+    backgroundImage
 
-[ui.dialog]
-cornerRadius = 8.0
-titleBackgroundColor = "#1a1a1aff"
-titleColor = "#d9d9d9ff"
-backgroundColor = "#404040ff"
-labelColor = "#ffffffb3"
-warningColor = "#ff6464ff"
-outerBorderColor = "#00000000"
-outerBorderWidth = 0.0
-innerBorderColor = "#00000000"
-innerBorderWidth = 0.0
-shadowEnabled = false
-shadowXOffset = 0.0
-shadowYOffset = 0.0
-shadowFeather = 0.0
-shadowColor = "#00000000"
+  title {
+    normal = "#2e2e2eff"
+    inactive = "#1a1a1aff"
+  }
+  text {
+    color = "#ffffff80"
+    inactive = "#ffffff66"
+  }
+  modifiedFlagColor = "#ffffff40"
+
+  button {
+    normal = "#ffffff73"
+    hover = "#ffffffb3"
+    down = "#ffffffe6"
+  }
+
+  dialog {
+    corner-radius = 8.0
+    background = "#404040ff"
+    labelColor = "#ffffffb3"
+    warningColor = "#ff6464ff"
+
+    title {
+      backgroundColor = "#1a1a1aff"
+      color = "#d9d9d9ff"
+    }
+    outer-border {
+      color = "#00000000"
+      width = 0.0
+    inner-border {
+      color = "#00000000"
+      width = 0.0
+    }
+    shadow {
+      enabled = false
+      x-offset = 0.0
+      y-Offset = 0.0
+      feather = 0.0
+      color = "#00000000"
+    }
 
 [ui.widget]
 cornerRadius = 5.0

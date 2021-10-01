@@ -1,69 +1,107 @@
-[ui.window]
-backgroundColor = "#292929ff"
-backgroundImage
-titleBackgroundColor = "#0d0d0dff"
-titleBackgroundInactiveColor = "#1a1a1aff"
-titleColor = "#ffffff80"
-titleInactiveColor = "#ffffff66"
-modifiedFlagColor = "#ffffff4d"
-buttonColor = "#ffffff59"
-buttonHoverColor = "#ffffff80"
-buttonDownColor = "#ffffff99"
+ui {
+  window {
+    backgroundColor = "#292929ff"
+    backgroundImage
 
-[ui.dialog]
-cornerRadius = 7.0
-titleBackgroundColor = "#141414ff"
-titleColor = "#d9d9d9ff"
-backgroundColor = "#404040ff"
-labelColor = "#ffffffb3"
-warningColor = "#ff6464ff"
-outerBorderColor = "#00000000"
-outerBorderWidth = 0.0
-innerBorderColor = "#00000000"
-innerBorderWidth = 0.0
-shadowEnabled = true
-shadowXOffset = 2.0
-shadowYOffset = 3.0
-shadowFeather = 20.0
-shadowColor = "#00000077"
+  title {
+    normal = "#0d0d0dff"
+    inactive = "#1a1a1aff"
+  }
+  text {
+    color = "#ffffff80"
+    inactive = "#ffffff66"
+  }
+  modifiedFlagColor = "#ffffff4d"
 
-[ui.widget]
-cornerRadius = 5.0
-backgroundColor = "#ffffff80"
-backgroundHoverColor = "#ffffffa1"
-backgroundActiveColor = "#ffa600ff"
-backgroundDisabledColor = "#ffffff33"
-foregroundColor = "#000000b3"
-foregroundActiveColor = "#000000b3"
-foregroundDisabledColor = "#00000059"
+  button {
+    normal = "#ffffff59"
+    hover = "#ffffff80"
+    down = "#ffffff99"
+  }
 
-[ui.textField]
-editBackgroundColor = "#ffffff33"
-editTextColor = "#ffffffb3"
-cursorColor = "#ffbe00ff"
-selectionColor = "#c8820078"
-scrollBarNormalColor = "#00000000"
-scrollBarEditColor = "#ffffff00"
+  dialog {
+    corner-radius = 7.0
+    background = "#404040ff"
+    labelColor = "#ffffffb3"
+    warningColor = "#ff6464ff"
 
-[ui.statusBar]
-backgroundColor = "#1a1a1aff"
-textColor = "#898989ff"
-commandBackgroundColor = "#b7b7b7ff"
-commandColor = "#1a1a1aff"
-coordinatesColor = "#737373ff"
+    title {
+      backgroundColor = "#141414ff"
+      color = "#d9d9d9ff"
+    }
+    outer-border {
+      color = "#00000000"
+      width = 0.0
+    inner-border {
+      color = "#00000000"
+      width = 0.0
+    }
+    shadow {
+      enabled = true
+      x-offset = 2.0
+      y-offset = 3.0
+      feather = 20.0
+      fill = "#00000077"
+    }
 
-[ui.aboutButton]
-labelColor = "#ffffff66"
-labelHoverColor = "#ffffff80"
-labelDownColor = "#ffffffb3"
+  widget {
+    corner-radius = 5.0
+    background {
+      normal = "#ffffff80"
+      hoverColor = "#ffffffa1"
+      activeColor = "#ffa600ff"
+      disabledColor = "#ffffff33"
+    }
+    foreground {
+      normal = "#000000b3"
+      activeColor = "#000000b3"
+      disabledColor = "#00000059"
+    }
+  }
 
-[ui.aboutDialog]
-logoColor = "#e8e8e8ff"
+  text-field {
+    edit {
+      background = "#ffffff33"
+      text = "#ffffffb3"
+    }
+    cursorColor = "#ffbe00ff"
+    selectionColor = "#c8820078"
 
-[ui.splashImage]
-logoColor = "#292929ff"
-outlineColor = "#e8e8e8ff"
-shadowAlpha = 1.0
+    scroll-bar {
+      normalColor = "#00000000"
+      editColor = "#ffffff00"
+    }
+  }
+
+  status-bar {
+    background = "#1a1a1aff"
+    coordinatesColor = "#737373ff"
+    textColor = "#898989ff"
+
+    command { 
+      backgroundColor = "#b7b7b7ff"
+      commandColor = "#1a1a1aff"
+    }
+  }
+
+  about-button {
+    label {
+      normal = "#ffffff66"
+      hoverColor = "#ffffff80"
+      downColor = "#ffffffb3"
+    }
+  }
+
+  about-dialog {
+    logoColor = "#e8e8e8ff"
+  }
+
+  splash-image {
+    logoColor = "#292929ff"
+    outlineColor = "#e8e8e8ff"
+    shadow-alpha = 1.0
+  }
+}
 
 [level.general]
 backgroundColor = "#292929ff"

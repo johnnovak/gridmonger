@@ -90,7 +90,7 @@ const DefaultAppConfig = AppConfig(
   ),
 
   app: AppState(
-    themeName: "default",
+    themeName: "Default",
 
     zoomLevel: 9,
     currLevel: 0,

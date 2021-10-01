@@ -52,7 +52,7 @@ const
 # {{{ Types
 type
   DrawLevelContext* = object
-    ls*: LevelStyle
+    ls*: LevelStyle2
     dp*: DrawLevelParams
     vg*: NVGContext
 
@@ -143,7 +143,7 @@ const
   ViewBufBorder = MaxLabelWidthInCells
 
 using
-  ls:  LevelStyle
+  ls:  LevelStyle2
   dp:  DrawLevelParams
   ctx: DrawLevelContext
 
@@ -169,7 +169,7 @@ proc setZoomLevel*(dp; ls; zl: Natural) =
   dp.zoomLevel = zl
   dp.gridSize = MinGridSize + zl*ZoomStep
 
-  dp.lineWidth = ls.general.lineWidth
+  dp.lineWidth = ls.lineWidth
 
   if dp.lineWidth == lwThin:
     dp.thinStrokeWidth = 1.0
@@ -301,20 +301,20 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, ls.general.foregroundColor)
+  renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalColor)
 
   dp.setZoomLevel(ls, dp.zoomLevel)
 
 # }}}
 # {{{ calcBlendedFloorColor*()
 func calcBlendedFloorColor*(floorColor: Natural, transparentFloor: bool = false;
-                            ls: LevelStyle): Color =
-  let fc = ls.floorColor.color[floorColor]
+                            ls: LevelStyle2): Color =
+  let fc = ls.floorBackgroundColor[floorColor]
 
   if transparentFloor: fc
   else:
-    let fc0 = ls.floorColor.color[0]
-    let baseBg = lerp(ls.general.backgroundColor.withAlpha(1.0),
+    let fc0 = ls.floorBackgroundColor[0]
+    let baseBg = lerp(ls.backgroundColor.withAlpha(1.0),
                       fc0.withAlpha(1.0),
                       fc0.a)
     lerp(baseBg, fc, fc.a)
@@ -342,7 +342,7 @@ proc setLevelClippingRect(l: Level; ctx) =
     w = dp.gridSize * dp.viewCols + ow
     h = dp.gridSize * dp.viewRows + oh
 
-  if ls.outline.overscanEnabled:
+  if ls.outlineOverscan:
     let
       gs = dp.gridSize
       viewEndRow = dp.viewStartRow + dp.viewRows-1
@@ -379,7 +379,7 @@ proc drawBackground(ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  vg.fillColor(ls.general.backgroundColor)
+  vg.fillColor(ls.backgroundColor)
 
   let
     w = dp.gridSize * dp.viewCols + 1
@@ -396,18 +396,18 @@ proc drawBackgroundHatch(ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let sw = ls.backgroundHatch.width
+  let sw = ls.backgroundHatchWidth
 
   vg.save()
 
-  vg.strokeColor(ls.backgroundHatch.color)
+  vg.strokeColor(ls.backgroundHatchColor)
   vg.strokeWidth(sw)
 
   let
     w = dp.gridSize * dp.viewCols + 1
     h = dp.gridSize * dp.viewRows + 1
     offs = max(w, h)
-    lineSpacing = sw * ls.backgroundHatch.spacingFactor
+    lineSpacing = sw * ls.backgroundHatchSpacingFactor
 
   let startX = snap(dp.startX, sw)
   let startY = snap(dp.startY, sw)
@@ -445,10 +445,10 @@ proc drawCellCoords(l: Level; ctx) =
   proc setTextHighlight(on: bool) =
     if on:
       vg.fontFace("sans-bold")
-      vg.fillColor(ls.general.coordinatesHighlightColor)
+      vg.fillColor(ls.coordinatesHighlightColor)
     else:
       vg.fontFace("sans")
-      vg.fillColor(ls.general.coordinatesColor)
+      vg.fillColor(ls.coordinatesNormalColor)
 
   let endX = dp.startX + dp.gridSize * dp.viewCols
   let endY = dp.startY + dp.gridSize * dp.viewRows
@@ -456,7 +456,7 @@ proc drawCellCoords(l: Level; ctx) =
   let fontSize = dp.cellCoordsFontSize
 
   var x1f, x2f, y1f, y2f: float
-  if ls.outline.overscanEnabled:
+  if ls.outlineOverscan:
     x1f = 1.7
     x2f = 1.8
     y1f = 1.5
@@ -512,8 +512,8 @@ proc drawCellOutlines(l: Level; ctx) =
   let sw = UltrathinStrokeWidth
 
   vg.strokeWidth(sw)
-  vg.fillColor(ls.outline.color)
-  vg.strokeColor(ls.outline.color)
+  vg.fillColor(ls.outlineColor)
+  vg.strokeColor(ls.outlineColor)
   vg.beginPath()
 
   forAllViewCells_CellCoords:
@@ -556,7 +556,7 @@ proc drawCursor(ctx) =
       a = dp.gridSize
       a2 = a*0.5
 
-    vg.fillColor(ls.general.cursorColor)
+    vg.fillColor(ls.cursorColor)
     vg.beginPath()
 
     if dp.cursorOrient.isSome:
@@ -598,8 +598,8 @@ proc drawCursorGuides(ctx) =
     w = dp.gridSize * dp.viewCols
     h = dp.gridSize * dp.viewRows
 
-  vg.fillColor(ls.general.cursorGuidesColor)
-  vg.strokeColor(ls.general.cursorGuidesColor)
+  vg.fillColor(ls.cursorGuidesColor)
+  vg.strokeColor(ls.cursorGuidesColor)
   let sw = UltrathinStrokeWidth
   vg.strokeWidth(sw)
 
@@ -620,8 +620,8 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  case ls.outline.fillStyle
-  of ofsSolid:   vg.fillColor(ls.outline.color)
+  case ls.outlineFillStyle
+  of ofsSolid:   vg.fillColor(ls.outlineColor)
   of ofsHatched: vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
 
   proc draw(r,c: int, cell: OutlineCell) =
@@ -629,7 +629,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
       x = cellX(c, dp)
       y = cellY(r, dp)
       gs = dp.gridSize
-      w  = dp.gridSize * ls.outline.widthFactor + 1
+      w  = dp.gridSize * ls.outlineWidthFactor + 1
       x1 = x
       x2 = x + gs
       y1 = y
@@ -684,10 +684,10 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
     proc drawFilled() =
       vg.rect(x1, y1, gs, gs)
 
-    if ls.outline.style == osRoundedEdges:
+    if ls.outlineStyle == osRoundedEdges:
         drawRoundedEdges()
 
-    elif ls.outline.style == osRoundedEdgesFilled:
+    elif ls.outlineStyle == osRoundedEdgesFilled:
       if cell == {olNW, olNE, olSW, olSE} or
          cell == {olNW, olNE, olS} or
          cell == {olSW, olSE, olN} or
@@ -701,7 +701,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
       else:
         drawRoundedEdges()
 
-    elif ls.outline.style == osSquareEdges:
+    elif ls.outlineStyle == osSquareEdges:
       drawSquareEdges()
 
 
@@ -713,7 +713,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
     endBufRow   = ob.rows - ViewBufBorder-1
     endBufCol   = ob.cols - ViewBufBorder-1
 
-  if ls.outline.overscanEnabled:
+  if ls.outlineOverscan:
     if dp.viewstartrow == 0: dec(startBufRow)
     if dp.viewStartCol == 0: dec(startBufCol)
 
@@ -743,7 +743,7 @@ proc drawFloorBg(x, y: float, color: Color; ctx) =
   vg.beginPath()
   vg.rect(x, y, dp.gridSize, dp.gridSize)
 
-  vg.fillColor(ls.general.backgroundColor)
+  vg.fillColor(ls.backgroundColor)
   vg.fill()
   vg.fillColor(color)
   vg.fill()
@@ -770,7 +770,7 @@ proc drawTrail(x, y: float; ctx) =
 
   let a = dp.gridSize - 2*offs + sw
 
-  vg.fillColor(ls.general.trailColor)
+  vg.fillColor(ls.trailColor)
   vg.beginPath()
   vg.rect(x1, y1, a, a)
   vg.fill()
@@ -853,7 +853,7 @@ proc drawIcon(x, y, ox, oy: float, icon: string,
                   y + gridSize*oy + gridSize*0.58, icon)
 
 template drawIcon(x, y, ox, oy: float, icon: string; ctx) =
-  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ls.general.foregroundColor,
+  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize, ctx.ls.foregroundNormalColor,
           DefaultIconFontSizeFactor, ctx.vg)
 
 # }}}
@@ -865,10 +865,10 @@ proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural,
 
   let size = ctx.dp.gridSize
 
-  let shape = ls.note.backgroundShape
+  let shape = ls.noteBackgroundShape
   let bgColor = if isCursorActive and shape == nbsRectangle:
-                  ls.general.cursorColor
-                else: ls.note.indexBackgroundColor[colorIdx]
+                  ls.cursorColor
+                else: ls.noteIndexBackgroundColor[colorIdx]
 
   vg.fillColor(bgColor)
   vg.beginPath()
@@ -894,7 +894,7 @@ proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural,
   if shape == nbsRectangle: fontSizeFactor *= 1.1
 
   vg.setFont((size*fontSizeFactor).float)
-  vg.fillColor(ls.note.indexColor)
+  vg.fillColor(ls.noteIndexColor)
   vg.textAlign(haCenter, vaMiddle)
 
   discard vg.text(x + size*0.51, y + size*0.54, $index)
@@ -907,7 +907,7 @@ proc drawCustomIdNote(x, y: float, s: string; ctx) =
   alias(vg, ctx.vg)
 
   vg.setFont((dp.gridSize * 0.48).float)
-  vg.fillColor(ls.note.markerColor)
+  vg.fillColor(ls.noteMarkerColor)
   vg.textAlign(haCenter, vaMiddle)
 
   discard vg.text(x + dp.gridSize*0.52,
@@ -927,7 +927,7 @@ proc drawNote(x, y: float, note: Annotation, isCursorActive: bool; ctx) =
   of akCustomId: drawCustomIdNote(x, y, note.customId, ctx)
 
   of akIcon:     drawIcon(x, y, 0, 0, NoteIcons[note.icon],
-                          dp.gridSize, ls.note.markerColor,
+                          dp.gridSize, ls.noteMarkerColor,
                           DefaultIconFontSizeFactor, vg)
 
   of akLabel:    discard
@@ -935,7 +935,7 @@ proc drawNote(x, y: float, note: Annotation, isCursorActive: bool; ctx) =
   if note.kind != akIndexed:
     let w = dp.gridSize*0.3
 
-    vg.fillColor(ls.note.commentColor)
+    vg.fillColor(ls.noteCommentColor)
     vg.beginPath()
     vg.moveTo(x + dp.gridSize - w, y)
     vg.lineTo(x + dp.gridSize + 1, y + w+1)
@@ -959,7 +959,7 @@ proc drawLabel(x, y: float, label: Annotation; ctx) =
   vg.beginPath()
 
   vg.setFont((dp.gridSize * 0.48).float)
-  vg.fillColor(ls.label.color[label.labelColor])
+  vg.fillColor(ls.labelTextColor[label.labelColor])
   vg.textAlign(haLeft, vaMiddle)
   vg.textLineHeight(1.2)
 
@@ -981,7 +981,7 @@ proc drawLinkMarker(x, y: float; ctx) =
 
   let w = dp.gridSize*0.3
 
-  vg.fillColor(ls.general.linkMarkerColor)
+  vg.fillColor(ls.linkMarkerColor)
   vg.beginPath()
   vg.moveTo(x,   y + dp.gridSize - w)
   vg.lineTo(x,   y + dp.gridSize)
@@ -1011,10 +1011,10 @@ proc drawInnerShadows(viewBuf: Level; ctx) =
   alias(ls, ctx.ls)
   alias(vg, ctx.vg)
 
-  vg.fillColor(ls.shadow.innerColor)
+  vg.fillColor(ls.shadowInnerColor)
   vg.beginPath()
 
-  let shadowWidth = dp.gridSize * ls.shadow.innerWidthFactor
+  let shadowWidth = dp.gridSize * ls.shadowInnerWidthFactor
 
   drawShadows_IterateViewBuf:
     if not viewBuf.isEmpty(bufRow, bufCol):
@@ -1042,10 +1042,10 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
   alias(ls, ctx.ls)
   alias(vg, ctx.vg)
 
-  vg.fillColor(ls.shadow.outerColor)
+  vg.fillColor(ls.shadowOuterColor)
   vg.beginPath()
 
-  let shadowWidth = dp.gridSize * ls.shadow.outerWidthFactor
+  let shadowWidth = dp.gridSize * ls.shadowOuterWidthFactor
 
   drawShadows_IterateViewBuf:
     if viewBuf.isEmpty(bufRow, bufCol):
@@ -1089,7 +1089,7 @@ proc drawSecretDoorBlock(x, y: float, isCursorActive: bool,
 
   var bgCol = calcBlendedFloorColor(floorColor, ls=ctx.ls)
   if isCursorActive:
-    bgCol = lerp(bgCol, ls.general.cursorColor, ls.general.cursorColor.a)
+    bgCol = lerp(bgCol, ls.cursorColor, ls.cursorColor.a)
               .withAlpha(1.0)
 
   let o = if dp.zoomLevel > 11: 3 else: 2
@@ -1099,7 +1099,7 @@ proc drawSecretDoorBlock(x, y: float, isCursorActive: bool,
   drawIcon(x, y-o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
   drawIcon(x, y+o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
 
-  drawIcon(x, y, 0, 0, icon, gs, ls.general.foregroundColor, fontSizeFactor, vg)
+  drawIcon(x, y, 0, 0, icon, gs, ls.foregroundNormalColor, fontSizeFactor, vg)
 
 # }}}
 # {{{ drawPressurePlate()
@@ -1114,7 +1114,7 @@ proc drawPressurePlate(x, y: float; ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ls.general.foregroundColor)
+  vg.strokeColor(ls.foregroundNormalColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -1134,7 +1134,7 @@ proc drawHiddenPressurePlate(x, y: float; ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ls.general.foregroundLightColor)
+  vg.strokeColor(ls.foregroundLightColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -1170,12 +1170,12 @@ proc drawOpenPitWithColor(x, y: float, color: Color; ctx) =
 # }}}
 # {{{ drawOpenPit()
 proc drawOpenPit(x, y: float; ctx) =
-  drawOpenPitWithColor(x, y, ctx.ls.general.foregroundColor, ctx)
+  drawOpenPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
 
 # }}}
 # {{{ drawCeilingPit()
 proc drawCeilingPit(x, y: float; ctx) =
-  drawOpenPitWithColor(x, y, ctx.ls.general.foregroundLightColor, ctx)
+  drawOpenPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
 
 # }}}
 # {{{ drawClosedPitWithColor()
@@ -1207,12 +1207,12 @@ proc drawClosedPitWithColor(x, y: float, color: Color; ctx) =
 # }}}
 # {{{ drawClosedPit()
 proc drawClosedPit(x, y: float; ctx) =
-  drawClosedPitWithColor(x, y, ctx.ls.general.foregroundColor, ctx)
+  drawClosedPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
 
 # }}}
 # {{{ drawHiddenPit()
 proc drawHiddenPit(x, y: float; ctx) =
-  drawClosedPitWithColor(x, y, ctx.ls.general.foregroundLightColor, ctx)
+  drawClosedPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
 
 # }}}
 # {{{ drawStairsDown()
@@ -1228,14 +1228,14 @@ proc drawStairsUp(x, y: float; ctx) =
 # {{{ drawDoorEnter()
 proc drawDoorEnter(x, y: float; ctx) =
   drawIcon(x, y, 0.05, 0, IconDoorEnter, ctx.dp.gridSize,
-           ctx.ls.general.foregroundColor,
+           ctx.ls.foregroundNormalColor,
            fontSizeFactor=0.6, ctx.vg)
 
 # }}}
 # {{{ drawDoorExit()
 proc drawDoorExit(x, y: float; ctx) =
   drawIcon(x, y, 0.05, 0, IconDoorExit, ctx.dp.gridSize,
-           ctx.ls.general.foregroundColor,
+           ctx.ls.foregroundNormalColor,
            fontSizeFactor=0.6, ctx.vg)
 
 # }}}
@@ -1247,21 +1247,21 @@ proc drawSpinner(x, y: float; ctx) =
 # {{{ drawTeleportSource()
 proc drawTeleportSource(x, y: float; ctx) =
   drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
-           ctx.ls.general.foregroundColor,
+           ctx.ls.foregroundNormalColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
 # {{{ drawTeleportDestination()
 proc drawTeleportDestination(x, y: float; ctx) =
   drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
-           ctx.ls.general.foregroundLightColor,
+           ctx.ls.foregroundLightColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
 # {{{ drawInvisibleBarrier()
 proc drawInvisibleBarrier(x, y: float; ctx) =
   drawIcon(x, y, 0, 0.015, IconBarrier, ctx.dp.gridSize,
-           ctx.ls.general.foregroundLightColor,
+           ctx.ls.foregroundLightColor,
            fontSizeFactor=1.0, ctx.vg)
 
 # }}}
@@ -1271,22 +1271,22 @@ proc drawInvisibleBarrier(x, y: float; ctx) =
 # {{{ setWallStyle()
 template setWallStyle(): untyped =
   let (sw, color, lineCap, xoffs) = if regionBorder:
-    (dp.normalStrokeWidth + 1, ls.general.regionBorderColor, lcjSquare, 1)
+    (dp.normalStrokeWidth + 1, ls.regionBorderNormalColor, lcjSquare, 1)
   else:
-    (dp.normalStrokeWidth, ls.general.foregroundColor, lcjRound, 0)
+    (dp.normalStrokeWidth, ls.foregroundNormalColor, lcjRound, 0)
 
   vg.strokeWidth(sw)
   vg.strokeColor(color)
   vg.lineCap(linecap)
 
   let xsOffs = if regionBorder:
-                 case ctx.ls.general.lineWidth:
+                 case ctx.ls.lineWidth:
                  of lwThin: 1
                  of lwNormal: 0
                else: 0
 
   let xeOffs = if regionBorder:
-                 case ctx.ls.general.lineWidth:
+                 case ctx.ls.lineWidth:
                  of lwThin: 0
                  of lwNormal: -1
                else: 0
@@ -1369,7 +1369,7 @@ proc drawInvisibleWallHoriz*(x, y: float, orientation: Orientation,
     pad = sw*2
 
   vg.lineCap(lcjSquare)
-  vg.strokeColor(ls.general.foregroundLightColor)
+  vg.strokeColor(ls.foregroundLightColor)
   vg.strokeWidth(sw)
 
   var x = xs
@@ -1416,8 +1416,8 @@ proc drawDoorHoriz*(x, y: float, orientation: Orientation,
   # Door
   sw = dp.thinStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.general.foregroundColor)
-  vg.fillColor(ls.general.foregroundColor)
+  vg.strokeColor(ls.foregroundNormalColor)
+  vg.fillColor(ls.foregroundNormalColor)
   vg.lineCap(lcjSquare)
 
   vg.beginPath()
@@ -1469,7 +1469,7 @@ proc drawSecretDoorHoriz*(x, y: float, orientation: Orientation,
   vg.stroke()
 
   drawIcon(x, y-dp.gridSize*0.5, 0.01, -0.04, "S", dp.gridSize,
-           ls.general.foregroundColor,
+           ls.foregroundNormalColor,
            fontSizeFactor=0.43, ctx.vg)
 
 # }}}
@@ -1510,7 +1510,7 @@ proc drawArchwayHoriz*(x, y: float, orientation: Orientation,
   # Door opening
   sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.general.foregroundColor)
+  vg.strokeColor(ls.foregroundNormalColor)
   vg.lineCap(lcjSquare)
 
   if drawOpening:
@@ -1565,7 +1565,7 @@ proc drawOneWayDoorHoriz*(x, y: float, orientation: Orientation,
     oy = 0.02
 
   drawIcon(x, y-dp.gridSize*0.5, ox, oy, icon,
-           dp.gridSize, ls.general.foregroundColor, fontSizeFactor=0.46, ctx.vg)
+           dp.gridSize, ls.foregroundNormalColor, fontSizeFactor=0.46, ctx.vg)
 
 
 proc drawOneWayDoorHorizNE*(x, y: float, orientation: Orientation,
@@ -1599,7 +1599,7 @@ proc drawLeverHoriz*(x, y: float, orientation: Orientation,
     lx = snap(x + (dp.gridSize-lw)*0.5 + 0.5, sw)
     ly = if northEast: y else: y-lw
 
-  vg.fillColor(ls.general.foregroundColor)
+  vg.fillColor(ls.foregroundNormalColor)
   vg.beginPath()
   vg.rect(lx, ly, lw, lw)
   vg.fill()
@@ -1644,10 +1644,10 @@ proc drawNicheHoriz*(x, y: float, orientation: Orientation,
   if dp.backgroundImage.isSome:
     vg.fillPaint(dp.backgroundImage.get)
   else:
-    vg.fillColor(ls.general.backgroundColor)
+    vg.fillColor(ls.backgroundColor)
 
   vg.fill()
-  vg.fillColor(ls.floorColor.color[floorColor])
+  vg.fillColor(ls.floorBackgroundColor[floorColor])
   vg.fill()
 
   # Wall
@@ -1667,7 +1667,7 @@ proc drawNicheHoriz*(x, y: float, orientation: Orientation,
   sw = dp.normalStrokeWidth
 
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.general.foregroundColor)
+  vg.strokeColor(ls.foregroundNormalColor)
   vg.lineCap(lcjRound)
 
   vg.beginPath()
@@ -1697,7 +1697,7 @@ proc drawStatueHoriz*(x, y: float, orientation: Orientation,
   # Statue
   let sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.general.foregroundColor)
+  vg.strokeColor(ls.foregroundNormalColor)
 
   const da = 1.3
   let
@@ -1708,7 +1708,7 @@ proc drawStatueHoriz*(x, y: float, orientation: Orientation,
     a1 = ca-da
     a2 = ca+da
 
-  vg.fillColor(ls.general.foregroundColor)
+  vg.fillColor(ls.foregroundNormalColor)
   vg.beginPath()
   vg.arc(cx, cy, dp.gridSize*0.27, a1, a2, pwCW)
   vg.fill()
@@ -1761,7 +1761,7 @@ proc drawKeyholeHoriz*(x, y: float, orientation: Orientation,
     kl = boxLen.float
 
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.general.foregroundColor)
+  vg.strokeColor(ls.foregroundNormalColor)
   vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.rect(kx, ky, kl, kl)
@@ -1769,7 +1769,7 @@ proc drawKeyholeHoriz*(x, y: float, orientation: Orientation,
   if dp.backgroundImage.isSome:
     vg.fillPaint(dp.backgroundImage.get)
   else:
-    vg.fillColor(ls.floorColor.color[0])
+    vg.fillColor(ls.floorBackgroundColor[0])
 
   vg.fill()
   vg.stroke()
@@ -1784,7 +1784,7 @@ proc drawKeyholeHoriz*(x, y: float, orientation: Orientation,
     h = kl-6
 
   if h >= 2:
-    vg.fillColor(ls.general.foregroundColor)
+    vg.fillColor(ls.foregroundNormalColor)
     vg.beginPath()
     vg.rect(kx+i, ky+i, h, h)
     vg.fill()
@@ -1802,7 +1802,7 @@ proc drawWritingHoriz*(x, y: float, orientation: Orientation,
   let oy = if northEast: -0.33 else: -0.72
 
   drawIcon(x, y, 0, oy, IconWriting,
-                        dp.gridSize, ls.general.foregroundColor,
+                        dp.gridSize, ls.foregroundNormalColor,
                         fontSizeFactor=0.7, vg)
 
 proc drawWritingHorizNE*(x, y: float, orientation: Orientation,
@@ -1834,7 +1834,7 @@ proc drawEmptyRegionBorderWallHoriz*(x, y: float; ctx) =
   vg.lineCap(lcjSquare)
   vg.beginPath()
 
-  vg.strokeColor(ls.general.regionBorderEmptyColor)
+  vg.strokeColor(ls.regionBorderEmptyColor)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
@@ -1911,7 +1911,7 @@ proc drawBackgroundGrid(viewBuf: Level; ctx) =
       if viewBuf.isEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        drawGrid(x, y, ls.grid.backgroundGridColor, ls.grid.backgroundStyle,
+        drawGrid(x, y, ls.gridBackgroundGridColor, ls.gridBackgroundStyle,
                  ctx)
 
   vg.restore()
@@ -1932,11 +1932,11 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level; ctx) =
         let y = cellY(viewRow, dp)
         let floorColor = calcBlendedFloorColor(
           viewBuf.getFloorColor(bufRow, bufCol),
-          ls.floorColor.transparentFloor,
+          ls.floorTransparent,
           ctx.ls
         )
         drawFloorBg(x, y, floorColor, ctx)
-        drawGrid(x, y, ls.grid.floorGridColor, ls.grid.floorStyle, ctx)
+        drawGrid(x, y, ls.gridFloorGridColor, ls.gridFloorStyle, ctx)
 
 # }}}
 # {{{ drawCellFloor()
@@ -2312,16 +2312,16 @@ proc drawRegionBorderOverhang(l: Level, viewBuf: Level; ctx) =
     let lastBufCol = ViewBufBorder + dp.viewCols
 
     var color = if viewBuf.getWall(bufRow, firstBufCol, dirN) == wNone:
-      ls.general.regionBorderEmptyColor
+      ls.regionBorderEmptyColor
     else:
-      ls.general.regionBorderColor
+      ls.regionBorderNormalColor
 
     drawRegionBorderEdgeHoriz(cellX(-1, dp), y, color, west=false, ctx)
 
     color = if viewBuf.getWall(bufRow, lastBufCol, dirN) == wNone:
-      ls.general.regionBorderEmptyColor
+      ls.regionBorderEmptyColor
     else:
-      ls.general.regionBorderColor
+      ls.regionBorderNormalColor
 
     drawRegionBorderEdgeHoriz(cellX(dp.viewCols, dp), y, color, west=true, ctx)
 
@@ -2333,16 +2333,16 @@ proc drawRegionBorderOverhang(l: Level, viewBuf: Level; ctx) =
     let lastBufRow = ViewBufBorder + dp.viewRows
 
     var color = if viewBuf.getWall(firstBufRow, bufCol, dirW) == wNone:
-      ls.general.regionBorderEmptyColor
+      ls.regionBorderEmptyColor
     else:
-      ls.general.regionBorderColor
+      ls.regionBorderNormalColor
 
     drawRegionBorderEdgeVert(x, cellY(-1, dp), color, north=false, ctx)
 
     color = if viewBuf.getWall(lastBufRow, bufCol, dirW) == wNone:
-      ls.general.regionBorderEmptyColor
+      ls.regionBorderEmptyColor
     else:
-      ls.general.regionBorderColor
+      ls.regionBorderNormalColor
 
     drawRegionBorderEdgeVert(x, cellY(dp.viewRows, dp), color, north=true,
                              ctx)
@@ -2355,7 +2355,7 @@ proc drawSelection(ctx) =
 
   let
     sel = dp.selection.get
-    color = ctx.ls.general.selectionColor
+    color = ctx.ls.selectionColor
     viewEndRow = dp.viewStartRow + dp.viewRows - 1
     viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
@@ -2393,7 +2393,7 @@ proc drawSelectionHighlight(ctx) =
         let x = cellX(viewSelStartCol + c, dp)
         let y = cellY(viewSelStartRow + r, dp)
 
-        drawCellHighlight(x, y, ls.general.pastePreviewColor, ctx)
+        drawCellHighlight(x, y, ls.pastePreviewColor, ctx)
 
 # }}}
 
@@ -2484,13 +2484,13 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   setLevelClippingRect(l, ctx)
 
-  if ls.backgroundHatch.enabled:
+  if ls.backgroundHatchEnabled:
     drawBackgroundHatch(ctx)
   else:
     drawBackground(ctx)
 
   # outlineBuf has the same dimensions as viewBuf
-  let outlineBuf = if ls.outline.style >= osSquareEdges:
+  let outlineBuf = if ls.outlineStyle >= osSquareEdges:
     renderEdgeOutlines(viewBuf).some
   else:
     OutlineBuf.none
@@ -2499,7 +2499,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   drawBackgroundGrid(viewBuf, ctx)
 
-  if ls.outline.style == osCell:
+  if ls.outlineStyle == osCell:
     drawCellOutlines(l, ctx)
   elif outlineBuf.isSome:
     drawEdgeOutlines(l, outlineBuf.get, ctx)
@@ -2517,10 +2517,10 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   if not drawSelectionBuffer:
     drawLinkMarkers(map, level, ctx)
 
-  if ls.shadow.innerWidthFactor > 0:
+  if ls.shadowInnerWidthFactor > 0:
     drawInnerShadows(viewBuf, ctx)
 
-  if ls.shadow.outerWidthFactor > 0:
+  if ls.shadowOuterWidthFactor > 0:
     drawOuterShadows(viewBuf, ctx)
 
   drawWalls(l, viewBuf, ctx)

@@ -1,0 +1,158 @@
+[ui.window]
+backgroundColor = "#00000000"
+backgroundImage = old-paper.jpg
+titleBackgroundColor = "#30281bff"
+titleBackgroundInactiveColor = "#1a1a1aff"
+titleColor = "#d2b686d2"
+titleInactiveColor = "#ffffff77"
+modifiedFlagColor = "#e29c2258"
+buttonColor = "#d2c1a45e"
+buttonHoverColor = "#d2ba9179"
+buttonDownColor = "#d2b583a0"
+
+[ui.dialog]
+cornerRadius = 8.0
+titleBackgroundColor = "#201e1bff"
+titleColor = "#ffe2b0ab"
+backgroundColor = "#4b4335ff"
+labelColor = "#f2e4cfa9"
+warningColor = "#ff6a3dff"
+outerBorderColor = "#00000000"
+outerBorderWidth = 0.0
+innerBorderColor = "#00000000"
+innerBorderWidth = 0.0
+shadowEnabled = true
+shadowXOffset = 2.0
+shadowYOffset = 3.0
+shadowFeather = 15.0
+shadowColor = "#00000054"
+
+[ui.widget]
+cornerRadius = 5.0
+backgroundColor = "#c5b79eb7"
+backgroundHoverColor = "#c5b69be0"
+backgroundActiveColor = "#ffa600ff"
+backgroundDisabledColor = "#c5b79f63"
+foregroundColor = "#000000b1"
+foregroundActiveColor = "#00000098"
+foregroundDisabledColor = "#00000063"
+
+[ui.textField]
+editBackgroundColor = "#ffffff33"
+editTextColor = "#fff1dacb"
+cursorColor = "#ffbe00ff"
+selectionColor = "#ffa60037"
+scrollBarNormalColor = "#00000000"
+scrollBarEditColor = "#fff1da00"
+
+[ui.statusBar]
+backgroundColor = "#3e3428ff"
+textColor = "#dacbb0d2"
+commandBackgroundColor = "#9a793aff"
+commandColor = "#3e3428ff"
+coordinatesColor = "#ad9964eb"
+
+[ui.aboutButton]
+labelColor = "#00000066"
+labelHoverColor = "#00000080"
+labelDownColor = "#00000099"
+
+[ui.aboutDialog]
+logoColor = "#dacbb0cf"
+
+[ui.splashImage]
+logoColor = "#4b4439ff"
+outlineColor = "#d2bd9800"
+shadowAlpha = 0.4903846153846154
+
+[level.general]
+backgroundColor = "#aa8d5a00"
+foregroundColor = "#5d513cff"
+foregroundLightColor = "#00000033"
+lineWidth = Normal
+coordinatesColor = "#00000066"
+coordinatesHighlightColor = "#00000099"
+cursorColor = "#ffb300cc"
+cursorGuidesColor = "#ffb30033"
+selectionColor = "#ff808066"
+pastePreviewColor = "#3399ff66"
+linkMarkerColor = "#0000004d"
+trailColor = "#2f2f2f51"
+regionBorderColor = "#c8641eff"
+regionBorderEmptyColor = "#c8641e65"
+
+[level.backgroundHatch]
+enabled = false
+color = "#00000000"
+width = 0.5
+spacingFactor = 1.0
+
+[level.grid]
+backgroundStyle = None
+backgroundGridColor = "#00000000"
+floorStyle = Loose
+floorGridColor = "#00000031"
+
+[level.outline]
+style = "Rounded Edges"
+fillStyle = Hatched
+color = "#9a9c9cff"
+widthFactor = 0.22
+overscanEnabled = true
+
+[level.shadow]
+innerColor = "#00000000"
+innerWidthFactor = 0.0
+outerColor = "#0000001f"
+outerWidthFactor = 0.125
+
+[level.floorColor]
+transparentFloor = true
+color1 = "#ffffff29"
+color2 = "#71000041"
+color3 = "#ff290042"
+color4 = "#ffb30035"
+color5 = "#2d250c37"
+color6 = "#6d90003c"
+color7 = "#bde8123e"
+color8 = "#009c5838"
+color9 = "#0067b33d"
+color10 = "#84008a23"
+
+[level.note]
+markerColor = "#0000006e"
+commentColor = "#d94000ba"
+indexBackgroundColor1 = "#cc6600ff"
+indexBackgroundColor2 = "#c88720ff"
+indexBackgroundColor3 = "#78822aff"
+indexBackgroundColor4 = "#765e1cff"
+indexColor = "#ffffffd9"
+tooltipBackgroundColor = "#443823e4"
+tooltipColor = "#e6cb99fa"
+
+[level.label]
+color1 = "#5d513cff"
+color2 = "#ffe7bedd"
+color3 = "#9c632dff"
+color4 = "#ffb635e4"
+
+[level.levelDropDown]
+buttonColor = "#ffffff00"
+buttonHoverColor = "#ffffff26"
+buttonLabelColor = "#00000099"
+itemListBackgroundColor = "#3c3422ee"
+itemColor = "#e6cb99fa"
+itemHoverColor = "#3c3422e6"
+
+[pane.notes]
+textColor = "#00000099"
+indexBackgroundColor1 = "#ba5400ff"
+indexBackgroundColor2 = "#b4730fff"
+indexBackgroundColor3 = "#78822aff"
+indexBackgroundColor4 = "#765e1cff"
+indexColor = "#ffffffb3"
+scrollBarColor = "#715f2cff"
+
+[pane.toolbar]
+buttonColor = "#ffffff42"
+buttonHoverColor = "#ffffff66"

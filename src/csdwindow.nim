@@ -29,7 +29,7 @@ const
 type
   CSDWindow* = ref object
     modified*: bool
-    style*:    UiWindowStyle
+    style*:    WindowStyle
 
     w: Window  # the wrapper GLFW window
 
@@ -61,7 +61,7 @@ using win: CSDWindow
 
 # {{{ Default style
 # TODO will be removed
-var DefaultCSDWindowStyle = new UiWindowStyle
+var DefaultCSDWindowStyle = new WindowStyle
 
 with DefaultCSDWindowStyle:
   titleBackgroundColor         = gray(0.2)
@@ -73,11 +73,11 @@ with DefaultCSDWindowStyle:
   buttonDownColor              = gray(1.0, 0.9)
   modifiedFlagColor            = gray(1.0, 0.45)
 
-proc getDefaultCSDWindowStyle*(): UiWindowStyle = DefaultCSDWindowStyle.deepCopy()
+proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
 
 # }}}
 # # {{{ setStyle()
-proc setStyle*(win; s: UiWindowStyle) =
+proc setStyle*(win; s: WindowStyle) =
   win.style = s
 
   alias(bs, win.buttonStyle)

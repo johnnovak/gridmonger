@@ -317,8 +317,10 @@ proc limit(config: HoconNode, key: string, limits: FieldLimits) =
 
 proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
   alias(s, result)
+  s = new LevelStyle2
 
   var p = "level.general."
+  s.lineWidth                 = cfg.getEnumHocon(p & "line-width", LineWidth)
   s.backgroundColor           = cfg.getColorHocon(p & "background")
   s.cursorColor               = cfg.getColorHocon(p & "cursor")
   s.cursorGuidesColor         = cfg.getColorHocon(p & "cursor-guides")
@@ -334,10 +336,10 @@ proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
   s.regionBorderEmptyColor    = cfg.getColorHocon(p & "region-border.empty")
 
   p = "level.background-hatch."
-  s.bgHatchEnabled       = cfg.getBoolHocon(p & "enabled")
-  s.bgHatchColor         = cfg.getColorHocon(p & "color")
-  s.bgHatchWidth         = cfg.getFloatHocon(p & "width")
-  s.bgHatchSpacingFactor = cfg.getFloatHocon(p & "spacing-factor")
+  s.backgroundHatchEnabled       = cfg.getBoolHocon(p & "enabled")
+  s.backgroundHatchColor         = cfg.getColorHocon(p & "color")
+  s.backgroundHatchWidth         = cfg.getFloatHocon(p & "width")
+  s.backgroundHatchSpacingFactor = cfg.getFloatHocon(p & "spacing-factor")
 
   p = "level.grid."
   s.gridBackgroundStyle     = cfg.getEnumHocon(p & "background.style", GridStyle)
@@ -353,10 +355,10 @@ proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
   s.outlineOverscan    = cfg.getBoolHocon(p & "overscan")
 
   p = "level.shadow."
-  s.shadowInnerColor  = cfg.getColorHocon(p & "inner.color")
-  s.shadowWidthFactor = cfg.getFloatHocon(p & "inner.width-factor")
-  s.outerColor        = cfg.getColorHocon(p & "outer.color")
-  s.outerWidthFactor  = cfg.getFloatHocon(p & "outer.width-factor")
+  s.shadowInnerColor        = cfg.getColorHocon(p & "inner.color")
+  s.shadowInnerWidthFactor  = cfg.getFloatHocon(p & "inner.width-factor")
+  s.shadowOuterColor        = cfg.getColorHocon(p & "outer.color")
+  s.shadowOuterWidthFactor  = cfg.getFloatHocon(p & "outer.width-factor")
 
   p = "level.floor."
   s.floorTransparent = cfg.getBoolHocon(p & "transparent")
@@ -378,6 +380,21 @@ proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
 
   for i in 0..s.labelTextColor.high:
     s.labelTextColor[i] = cfg.getColorHocon(p & "level.label.text." & $i)
+
+
+proc toWindowStyle*(cfg: HoconNode): WindowStyle =
+  alias(s, result)
+  s = new WindowStyle
+
+  var p = "ui.window."
+  s.modifiedFlagColor            = cfg.getColorHocon(p & "modified-flag")
+  s.titleBackgroundColor         = cfg.getColorHocon(p & "title.background.normal")
+  s.titleBackgroundInactiveColor = cfg.getColorHocon(p & "title.background.inactive")
+  s.titleColor                   = cfg.getColorHocon(p & "title.text.normal")
+  s.titleInactiveColor           = cfg.getColorHocon(p & "title.text.inactive")
+  s.buttonColor                  = cfg.getColorHocon(p & "button.normal")
+  s.buttonHoverColor             = cfg.getColorHocon(p & "button.hover")
+  s.buttonDownColor              = cfg.getColorHocon(p & "button.down")
 
 
 proc loadThemeHocon*(filename: string): HoconNode =

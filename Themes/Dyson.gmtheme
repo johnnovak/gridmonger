@@ -1,85 +1,112 @@
-[ui.window]
-backgroundColor = "#b6b8b8ff"
-backgroundImage
-titleBackgroundColor = "#2e2e2eff"
-titleBackgroundInactiveColor = "#1a1a1aff"
-titleColor = "#ffffff80"
-titleInactiveColor = "#ffffff66"
-modifiedFlagColor = "#ffffff40"
-buttonColor = "#ffffff73"
-buttonHoverColor = "#ffffffb3"
-buttonDownColor = "#ffffffe6"
+ui {
+  window {
+    background = "#b6b8b8ff"
+
+    title {
+      background {
+        normal = "#2e2e2eff"
+        inactive = "#1a1a1aff"
+      }
+      text {
+        normal = "#ffffff80"
+        title = "#ffffff66"
+    }
+    modified-flag = "#ffffff40"
+    button {
+      normal = "#ffffff73"
+      hover = "#ffffffb3"
+      down = "#ffffffe6"
+    }
+  }
 
 [ui.dialog]
 cornerRadius = 8.0
-titleBackgroundColor = "#1a1a1aff"
-titleColor = "#d9d9d9ff"
-backgroundColor = "#464646ff"
-labelColor = "#ffffffb3"
-warningColor = "#ff6464ff"
-outerBorderColor = "#b6b8b8ff"
+titleBackground = "#1a1a1aff"
+title = "#d9d9d9ff"
+background = "#464646ff"
+label = "#ffffffb3"
+warning = "#ff6464ff"
+outerBorder = "#b6b8b8ff"
 outerBorderWidth = 6.0
-innerBorderColor = "#00000000"
+innerBorder = "#00000000"
 innerBorderWidth = 0.0
 shadowEnabled = false
 shadowXOffset = 2.0
 shadowYOffset = 3.0
 shadowFeather = 18.0
-shadowColor = "#0000004f"
+shadow = "#0000004f"
 
-[ui.widget]
-cornerRadius = 5.0
-backgroundColor = "#ffffff80"
-backgroundHoverColor = "#ffffffa1"
-backgroundActiveColor = "#ffb300ff"
-backgroundDisabledColor = "#ffffff33"
-foregroundColor = "#000000b3"
-foregroundActiveColor = "#000000b3"
-foregroundDisabledColor = "#00000059"
+  widget {
+    corner-radius = 5.0
+    background {
+      normal "#ffffff80"
+      hover = "#ffffffa1"
+      active = "#ffb300ff"
+      disabled = "#ffffff33"
+    }
+    foreg { 
+      normal = "#000000b3"
+      active = "#000000b3"
+      disabled = "#00000059"
+    }
 
-[ui.textField]
-editBackgroundColor = "#ffffff33"
-editTextColor = "#ffffffb3"
-cursorColor = "#ffbe00ff"
-selectionColor = "#c8820078"
-scrollBarNormalColor = "#00000000"
-scrollBarEditColor = "#ffffff00"
+  text-field {
+    cursor = "#ffbe00ff"
+    selection = "#c8820078"
+    edit {
+      background = "#ffffff33"
+      text = "#ffffffb3"
+    }
+    scroll-bar {
+      normal = "#00000000"
+      edit = "#ffffff00"
+    }
+  }
 
-[ui.statusBar]
-backgroundColor = "#333333ff"
-textColor = "#ccccccff"
-commandBackgroundColor = "#838383ff"
-commandColor = "#232323ff"
-coordinatesColor = "#999999ff"
+  status-bar {
+    background = "#333333ff"
+    text = "#ccccccff"
+    coordinates = "#999999ff"
+    command {
+      background = "#838383ff"
+       = "#232323ff"
+    }
+  }
 
-[ui.aboutButton]
-labelColor = "#0000004d"
-labelHoverColor = "#00000066"
-labelDownColor = "#000000b3"
+  about-button {
+    label {
+      normal= "#0000004d"
+      hover = "#00000066"
+      down = "#000000b3"
+    }
+  }
 
-[ui.aboutDialog]
-logoColor = "#eaeaeaff"
+  about-dialog {
+    logo = "#eaeaeaff"
+  }
 
-[ui.splashImage]
-logoColor = "#32323200"
-outlineColor = "#dfdfdf00"
-shadowAlpha = 0.7980769230769231
+  splash-image {
+    logo = "#32323200"
+    outline = "#dfdfdf00"
+    shadow-alpha = 0.7980769230769231
+  }
+}
 
 [level.general]
-backgroundColor = "#b6b8b8ff"
-foregroundColor = "#353232ff"
-foregroundLightColor = "#2d2a2a3c"
+background = "#b6b8b8ff"
+foreground = "#353232ff"
+foregroundLight = "#2d2a2a3c"
 lineWidth = Normal
-coordinatesColor = "#222020ff"
-coordinatesHighlightColor = "#222020ff"
-cursorColor = "#ffb300ff"
-cursorGuidesColor = "#ffb30033"
-selectionColor = "#ff808080"
-pastePreviewColor = "#3399ff80"
-linkMarkerColor = "#00b3c8ff"
-trailColor = "#00000050"
-regionBorderColor = "#fd7675ff"
-regionBorderEmptyColor = "#fd49483b"
+coordinates = "#222020ff"
+coordinatesHighlight = "#222020ff"
+cursor = "#ffb300ff"
+cursorGuides = "#ffb30033"
+selection = "#ff808080"
+pastePreview = "#3399ff80"
+linkMarker = "#00b3c8ff"
+trail = "#00000050"
+regionBorder = "#fd7675ff"
+regionBorderEmpty = "#fd49483b"
 
 [level.backgroundHatch]
 enabled = false
@@ -89,9 +116,9 @@ spacingFactor = 1.0
 
 [level.grid]
 backgroundStyle = None
-backgroundGridColor = "#00000000"
+backgroundGrid = "#00000000"
 floorStyle = Loose
-floorGridColor = "#00000042"
+floorGrid = "#00000042"
 
 [level.outline]
 style = "Rounded Edges"
@@ -101,9 +128,9 @@ widthFactor = 0.25
 overscanEnabled = true
 
 [level.shadow]
-innerColor = "#00000000"
+inner = "#00000000"
 innerWidthFactor = 0.0
-outerColor = "#00000026"
+outer = "#00000026"
 outerWidthFactor = 0.125
 
 [level.floorColor]
@@ -120,15 +147,15 @@ color9 = "#276c9f90"
 color10 = "#9c559f72"
 
 [level.note]
-markerColor = "#555252ff"
-commentColor = "#ff3300cc"
+marker = "#555252ff"
+comment = "#ff3300cc"
 indexBackgroundColor1 = "#fd4948ff"
 indexBackgroundColor2 = "#32b6e5ff"
 indexBackgroundColor3 = "#a0a2a2ff"
 indexBackgroundColor4 = "#4c4e4eff"
-indexColor = "#ffffffff"
-tooltipBackgroundColor = "#0a0a0ae8"
-tooltipColor = "#ffffffe6"
+index = "#ffffffff"
+tooltipBackground = "#0a0a0ae8"
+tooltip = "#ffffffe6"
 
 [level.label]
 color1 = "#353232ff"
@@ -137,22 +164,22 @@ color3 = "#fd4948ff"
 color4 = "#32b6e5ff"
 
 [level.levelDropDown]
-buttonColor = "#00000000"
-buttonHoverColor = "#0000001a"
-buttonLabelColor = "#000000b3"
-itemListBackgroundColor = "#404040ff"
-itemColor = "#ffffffcc"
-itemHoverColor = "#000000b3"
+button = "#00000000"
+buttonHover = "#0000001a"
+buttonLabel = "#000000b3"
+itemListBackground = "#404040ff"
+item = "#ffffffcc"
+itemHover = "#000000b3"
 
 [pane.notes]
-textColor = "#2d2a2aff"
+text = "#2d2a2aff"
 indexBackgroundColor1 = "#fd4948ff"
 indexBackgroundColor2 = "#1e98c7ff"
 indexBackgroundColor3 = "#878989ff"
 indexBackgroundColor4 = "#4c4e4eff"
-indexColor = "#ffffffff"
-scrollBarColor = "#51515100"
+index = "#ffffffff"
+scrollBar = "#51515100"
 
 [pane.toolbar]
-buttonColor = "#f2f2eeff"
-buttonHoverColor = "#fffffcff"
+button = "#f2f2eeff"
+buttonHover = "#fffffcff"

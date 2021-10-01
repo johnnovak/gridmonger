@@ -565,12 +565,12 @@ proc get*(n: HoconNode, path: string): HoconNode =
       if curr.kind == hnkArray and idx >= 0 and idx <= curr.elems.high:
         curr = curr.elems[idx]
       else:
-        raise newException(HoconPathError, "") # TODO
+        raise newException(HoconPathError, path) # TODO
     else:
       if curr.kind == hnkObject and curr.fields.hasKey(key):
         curr = curr.fields[key]
       else:
-        raise newException(HoconPathError, "") # TODO
+        raise newException(HoconPathError, path) # TODO
   result = curr
 
 # }}}
