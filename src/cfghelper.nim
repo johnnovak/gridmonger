@@ -7,19 +7,19 @@ import strutils
 
 import nanovg
 
+import hocon
 
-proc invalidValueError(section, key, valueType, value: string) =
-  let msg = fmt"Invalid {valueType} value in section='{section}', " &
-            fmt"key='{key}': {value}"
+
+using cfg: HoconNode
+
+proc invalidValueError(key, valueType, value: string) =
+  let msg = fmt"Invalid {valueType} value for key '{key}': {value}"
   error(msg)
 
-proc getValue*(cfg: Config, section, key: string): string =
-  cfg.getSectionValue(section, key)
+proc getString*(cfg; key: string): string =
+  cfg.get(key).str
 
-proc getString*(cfg: Config, section, key: string, s: var string) =
-  s = getValue(cfg, section, key)
-
-proc parseColor(s: string): Option[Color] =
+proc parseColor*(s: string): Option[Color] =
   result = Color.none
   if s.len == 9 and s[0] == '#':
     try:
@@ -31,70 +31,57 @@ proc parseColor(s: string): Option[Color] =
     except ValueError:
       discard
 
-proc getColor*(cfg: Config, section, key: string, c: var Color) =
-  let v = getValue(cfg, section, key)
+proc getColor*(cfg; key: string): Color =
+  let v = cfg.get(key).str
   if v != "":
     let col = parseColor(v)
     if col.isNone:
-      invalidValueError(section, key, "color", v)
+      invalidValueError(key, "color", v)
     else:
-      c = col.get
+      result = col.get
 
-proc getBool*(cfg: Config, section, key: string, b: var bool) =
-  let v = getValue(cfg, section, key)
+proc getBool*(cfg; key: string): bool =
+  let v = cfg.get(key).str
   if v != "":
     try:
-      b = parseBool(v)
+      result = parseBool(v)
     except ValueError:
-      invalidValueError(section, key, "bool", v)
+      invalidValueError(key, "bool", v)
 
-proc getFloat*(cfg: Config, section, key: string, f: var float) =
-  let v = getValue(cfg, section, key)
-  if v != "":
-    try:
-      f = parseFloat(v)
-    except ValueError:
-      invalidValueError(section, key, "float", v)
+proc getFloat*(cfg; key: string): float =
+  cfg.get(key).num
 
-proc getInt*(cfg: Config, section, key: string, i: var int) =
-  let v = getValue(cfg, section, key)
-  if v != "":
-    try:
-      i = parseInt(v)
-    except ValueError:
-      invalidValueError(section, key, "int", v)
+proc getInt*(cfg; key: string): int =
+  cfg.get(key).num.int
 
-proc getNatural*(cfg: Config, section, key: string, n: var int) =
-  var i: int
-  getInt(cfg, section, key, i)
+proc getNatural*(cfg; key: string): Natural =
+  var i = cfg.getInt(key)
   if i >= 0:
-    n = i.Natural
+    result = i.Natural
   else:
-    invalidValueError(section, key, "natural", $i)
+    invalidValueError(key, "natural", $i)
 
 
-proc getNatural*(cfg: Config, section, key: string, n: var int,
-                 limits: FieldLimits) =
+proc getNatural*(cfg; key: string, limits: FieldLimits): Natural =
   var i: int
-
   case limits.kind:
   of fkInt:
-    getInt(cfg, section, key, i)
-    i = i.limit(limits)
+    i = cfg.getInt(key)
+    result = i.limit(limits)
   else:
     error(fmt"Invalid FieldLimits for Natural type: {limits}")
 
   if i >= 0:
-    n = i.Natural
+    result = i.Natural
   else:
-    invalidValueError(section, key, "natural", $i)
+    invalidValueError(key, "natural", $i)
 
 
-proc getEnum*[T: enum](cfg: Config, section, key: string, e: var T) =
-  let v = getValue(cfg, section, key)
+proc getEnum*(cfg; key: string, T: typedesc[enum]): T =
+  let v = cfg.get(key).str
   if v != "":
     try:
-      e = parseEnum[T](v)
+      result = parseEnum[T](v.toUpper())
     except ValueError:
-      invalidValueError(section, key, "enum", v)
+      invalidValueError(key, "enum", v)
 

@@ -51,7 +51,7 @@ const
 # {{{ Types
 type
   DrawLevelContext* = object
-    ls*: LevelStyle2
+    ls*: LevelStyle
     dp*: DrawLevelParams
     vg*: NVGContext
 
@@ -142,7 +142,7 @@ const
   ViewBufBorder = MaxLabelWidthInCells
 
 using
-  ls:  LevelStyle2
+  ls:  LevelStyle
   dp:  DrawLevelParams
   ctx: DrawLevelContext
 
@@ -307,7 +307,7 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
 # }}}
 # {{{ calcBlendedFloorColor*()
 func calcBlendedFloorColor*(floorColor: Natural, transparentFloor: bool = false;
-                            ls: LevelStyle2): Color =
+                            ls: LevelStyle): Color =
   let fc = ls.floorBackgroundColor[floorColor]
 
   if transparentFloor: fc

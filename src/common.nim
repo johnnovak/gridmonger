@@ -279,7 +279,7 @@ type
     buttonHoverColor*:       Color
 
 
-  LevelStyle2* = ref object
+  LevelStyle* = ref object
     lineWidth*:                  LineWidth
     backgroundColor*:            Color
     cursorColor*:                Color
