@@ -81,7 +81,7 @@ proc getEnumHocon*(cfg; key: string, T: typedesc[enum]): T =
   let v = cfg.get(key).str
   if v != "":
     try:
-      result = parseEnum[T](v)
+      result = parseEnum[T](v.toUpper())
     except ValueError:
       invalidValueError(key, "enum", v)
 

@@ -249,6 +249,36 @@ const
 
 
 type
+  WindowStyle* = ref object
+    modifiedFlagColor*:            Color
+    backgroundColor*:              Color
+    backgroundImage*:              string
+    titleBackgroundColor*:         Color
+    titleBackgroundInactiveColor*: Color
+    titleColor*:                   Color
+    titleInactiveColor*:           Color
+    buttonColor*:                  Color
+    buttonHoverColor*:             Color
+    buttonDownColor*:              Color
+
+  StatusBarStyle* = ref object
+    backgroundColor*:        Color
+    textColor*:              Color
+    coordinatesColor*:       Color
+    commandBackgroundColor*: Color
+    commandTextColor*:       Color
+
+  NotesPaneStyle* = ref object
+    textColor*:              Color
+    scrollBarColor*:         Color
+    indexColor*:             Color
+    indexBackgroundColor*:   array[4, Color]
+
+  ToolbarPaneStyle* = ref object
+    buttonNormalColor*:      Color
+    buttonHoverColor*:       Color
+
+
   LevelStyle2* = ref object
     lineWidth*:                  LineWidth
     backgroundColor*:            Color
@@ -298,16 +328,5 @@ type
     noteTooltipTextColor*:       Color
 
     labelTextColor*:             array[4, Color]
-
-type
-  WindowStyle* = ref object
-    titleBackgroundColor*:         Color
-    titleBackgroundInactiveColor*: Color
-    titleColor*:                   Color
-    titleInactiveColor*:           Color
-    buttonColor*:                  Color
-    buttonHoverColor*:             Color
-    buttonDownColor*:              Color
-    modifiedFlagColor*:            Color
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -238,6 +238,7 @@ type
     currSpecialWall:   Natural
     currFloorColor:    byte
 
+
     manualNoteTooltipState: ManualNoteTooltipState
 
     levelTopPad:       float
@@ -310,6 +311,10 @@ type
     levelDropDownStyle:     DropDownStyle
     noteTextAreaStyle:      TextAreaStyle
 
+    windowStyle:            WindowStyle
+    statusBarStyle:         StatusBarStyle
+    notesPaneStyle:         NotesPaneStyle
+    toolbarPaneStyle:       ToolbarPaneStyle
     levelStyle:             LevelStyle2
 
 
@@ -1221,7 +1226,7 @@ proc saveTheme(a) =
     override = true
 
   let themePath = themePath(a.currThemeName, a)
-  saveTheme(a.theme.style, themePath)
+  saveTheme(a.theme.config, themePath)
 
   a.themeEditor.modified = false
 
@@ -1234,7 +1239,13 @@ proc switchTheme(themeIndex: Natural; a) =
   loadTheme(theme, a)
   updateWidgetStyles(a)
 
-  let bgImageName = cfg.getStringHocon("ui.window.background.image")
+  a.theme.windowStyle = cfg.get("ui.window").toWindowStyle()
+  a.theme.statusBarStyle = cfg.get("ui.status-bar").toStatusBarStyle()
+  a.theme.toolbarPaneStyle = cfg.get("pane.toolbar").toToolbarPaneStyle()
+  a.theme.notesPaneStyle = cfg.get("pane.notes").toNotesPaneStyle()
+  a.theme.levelStyle = cfg.get("level").toLevelStyle()
+
+  let bgImageName = a.theme.windowStyle.backgroundImage
 
   proc tryLoadImage(path: string; a): Option[Paint] =
     var imgPath = path / bgImageName
@@ -1257,12 +1268,10 @@ proc switchTheme(themeIndex: Natural; a) =
     a.ui.backgroundImage = Paint.none
     a.ui.drawLevelParams.backgroundImage = Paint.none
 
-  a.theme.levelStyle = cfg.get("level").toLevelStyle()
-
   a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
                                            koi.getPxRatio())
 
-  a.win.setStyle(cfg.get("ui.window").toWindowStyle())
+  a.win.setStyle(a.theme.windowStyle)
 
   a.theme.currThemeIndex = themeIndex
 
@@ -2108,8 +2117,6 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   alias(al, a.aboutLogo)
   alias(vg, a.vg)
 
-  let ts = a.theme.style
-
   const
     DlgWidth = 370.0
     DlgHeight = 440.0
@@ -2117,6 +2124,8 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   let
     dialogX = floor(calcDialogX(DlgWidth, a))
     dialogY = floor((koi.winHeight() - DlgHeight) * 0.5)
+
+  let logoColor = a.theme.config.getColorHocon("a.ui.about-dialog.logo")
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconQuestion}  About Gridmonger",
                   x=dialogX.some, y=dialogY.some,
@@ -2130,7 +2139,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   let h = DlgItemHeight
 
   if al.logoImage == NoImage or al.updateLogoImage:
-    colorImage(al.logo, ts.ui.aboutDialog.logoColor)
+    colorImage(al.logo, logoColor)
     if al.logoImage == NoImage:
       al.logoImage = createImage(al.logo)
     else:
@@ -2139,8 +2148,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 
   let scale = DlgWidth / al.logo.width
 
-  al.logoPaint = createPattern(a.vg, al.logoImage,
-                               alpha=ts.ui.aboutDialog.logoColor.a,
+  al.logoPaint = createPattern(a.vg, al.logoImage, alpha=logoColor.a,
                                xoffs=dialogX, yoffs=dialogY, scale=scale)
 
 
@@ -3408,7 +3416,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   y += 108
 
-  let NumIndexColors = ls.note.indexBackgroundColor.len
+  let NumIndexColors = ls.noteIndexBackgroundColor.len
   const IconsPerRow = 10
 
   case dlg.kind:
@@ -3416,12 +3424,12 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
     koi.radioButtons(
       x + LabelWidth, y, 28, 28,
-      labels = newSeq[string](ls.note.indexBackgroundColor.len),
+      labels = newSeq[string](ls.noteIndexBackgroundColor.len),
       dlg.indexColor,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc = colorRadioButtonDrawProc(ls.note.indexBackgroundColor.toSeq,
-                                          ls.general.cursorColor).some
+      drawProc = colorRadioButtonDrawProc(ls.noteIndexBackgroundColor.toSeq,
+                                          ls.cursorColor).some
     )
 
   of akCustomId:
@@ -3604,17 +3612,17 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   y += 108
 
-  let NumIndexColors = ls.note.indexBackgroundColor.len
+  let NumIndexColors = ls.noteIndexBackgroundColor.len
 
   koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, w=28, h=28,
-    labels = newSeq[string](ls.label.color.len),
+    labels = newSeq[string](ls.labelTextColor.len),
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.label.color.toSeq,
-                                        ls.general.cursorColor).some,
+    drawProc = colorRadioButtonDrawProc(ls.labelTextColor.toSeq,
+                                        ls.cursorColor).some,
     style = a.theme.radioButtonStyle
   )
 
@@ -4193,12 +4201,12 @@ proc startDrawSpecialWallAction(a) =
 # {{{ prevFloorColorAction()
 proc prevFloorColorAction(a) =
   if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
-  else: a.ui.currFloorColor = a.theme.levelStyle.floorColor.color.high.byte
+  else: a.ui.currFloorColor = a.theme.levelStyle.floorBackgroundColor.high.byte
 
 # }}}
 # {{{ nextFloorColorAction()
 proc nextFloorColorAction(a) =
-  if a.ui.currFloorColor < a.theme.levelStyle.floorColor.color.high.byte:
+  if a.ui.currFloorColor < a.theme.levelStyle.floorBackgroundColor.high.byte:
     inc(a.ui.currFloorColor)
   else: a.ui.currFloorColor = 0
 
@@ -4218,7 +4226,7 @@ proc drawEmptyMap(a) =
   let ls = a.theme.levelStyle
 
   vg.setFont(size=22)
-  vg.fillColor(ls.general.foregroundColor)
+  vg.fillColor(ls.foregroundNormalColor)
   vg.textAlign(haCenter, vaMiddle)
   var y = drawAreaHeight(a) * 0.5
   discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
@@ -4265,12 +4273,12 @@ proc drawNoteTooltip(x, y: float, note: Annotation, a) =
 
     vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
 
-    vg.fillColor(a.theme.style.level.note.tooltipBackgroundColor)
+    vg.fillColor(a.theme.levelStyle.noteTooltipBackgroundColor)
     vg.beginPath()
     vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
     vg.fill()
 
-    vg.fillColor(a.theme.style.level.note.tooltipColor)
+    vg.fillColor(a.theme.levelStyle.noteTooltipTextColor)
     vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
 
 # }}}
@@ -4286,7 +4294,7 @@ proc drawModeAndOptionIndicators(a) =
 
   vg.save()
 
-  vg.fillColor(ls.general.coordinatesHighlightColor)
+  vg.fillColor(ls.coordinatesHighlightColor)
 
   if a.opts.wasdMode:
     vg.setFont(15)
@@ -4302,7 +4310,7 @@ proc drawModeAndOptionIndicators(a) =
 proc drawStatusBar(y: float, winWidth: float; a) =
   alias(vg, a.vg)
 
-  let s = a.theme.style.ui.statusBar
+  let s = a.theme.statusBarStyle
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
@@ -4361,7 +4369,7 @@ proc drawStatusBar(y: float, winWidth: float; a) =
       vg.fillColor(s.commandBackgroundColor)
       vg.fill()
 
-      vg.fillColor(s.commandColor)
+      vg.fillColor(s.commandTextColor)
       discard vg.text(x + 5, ty, label)
       x += w + CommandLabelPadX
     else:
@@ -5430,7 +5438,7 @@ proc renderLevel(a) =
 
 # {{{ specialWallDrawProc()
 proc specialWallDrawProc(ls: LevelStyle2,
-                         ts: PaneToolbarStyle,
+                         ts: ToolbarPaneStyle,
                          dp: DrawLevelParams): RadioButtonsDrawProc =
 
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
@@ -5438,19 +5446,19 @@ proc specialWallDrawProc(ls: LevelStyle2,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
     var col = case state
-              of wsActive:      ls.general.cursorColor
+              of wsActive:      ls.cursorColor
               of wsHover:       ts.buttonHoverColor
-              of wsActiveHover: ls.general.cursorColor
-              of wsDown:        ls.general.cursorColor
-              else:             ts.buttonColor
+              of wsActiveHover: ls.cursorColor
+              of wsDown:        ls.cursorColor
+              else:             ts.buttonNormalColor
 
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
-    let savedFloorColor = ls.floorColor.color[0]
+    let savedFloorColor = ls.floorBackgroundColor[0]
     let savedBackgroundImage = dp.backgroundImage
 
-    ls.floorColor.color[0] = lerp(ls.general.backgroundColor, col, col.a)
-                               .withAlpha(1.0)
+    ls.floorBackgroundColor[0] = lerp(ls.backgroundColor, col, col.a)
+                                 .withAlpha(1.0)
     dp.backgroundImage = Paint.none
 
     const Pad = 5
@@ -5509,16 +5517,14 @@ proc specialWallDrawProc(ls: LevelStyle2,
     else: discard
 
     # ...aaaaand restore it!
-    ls.floorColor.color[0] = savedFloorColor
+    ls.floorBackgroundColor[0] = savedFloorColor
     dp.backgroundImage = savedBackgroundImage
 
 # }}}
 
 proc renderToolsPane(x, y, w, h: float; a) =
   alias(ui, a.ui)
-
-  let ls = a.theme.levelStyle
-  let ts = a.theme.style.pane.toolbar
+  alias(ls, a.theme.levelStyle)
 
   var
     toolItemsPerColumn = 12
@@ -5550,14 +5556,16 @@ proc renderToolsPane(x, y, w, h: float; a) =
     layout = RadioButtonsLayout(kind: rblGridVert,
                                 itemsPerColumn: toolItemsPerColumn),
 
-    drawProc = specialWallDrawProc(ls, ts, ui.toolbarDrawParams).some
+    drawProc = specialWallDrawProc(
+      a.theme.levelStyle, a.theme.toolbarPaneStyle, ui.toolbarDrawParams
+    ).some
   )
 
   # Draw floor colors
-  var floorColors = newSeqOfCap[Color](ls.floorColor.color.len)
+  var floorColors = newSeqOfCap[Color](ls.floorBackgroundColor.len)
 
-  for fc in 0..ls.floorColor.color.high:
-    let c = calcBlendedFloorColor(fc, ls.floorColor.transparentFloor, ls)
+  for fc in 0..ls.floorBackgroundColor.high:
+    let c = calcBlendedFloorColor(fc, ls.floorTransparent, ls)
     floorColors.add(c)
 
   koi.radioButtons(
@@ -5565,7 +5573,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     y = colorY,
     w = 30,
     h = 30,
-    labels = newSeq[string](ls.floorColor.color.len),
+    labels = newSeq[string](ls.floorBackgroundColor.len),
     ui.currFloorColor,
     tooltips = @[],
 
@@ -5573,7 +5581,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
                                 itemsPerColumn: colorItemsPerColum),
 
     drawProc = colorRadioButtonDrawProc(floorColors,
-                                        ls.general.cursorColor).some
+                                        ls.cursorColor).some
   )
 
 # }}}
@@ -5617,7 +5625,7 @@ proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
 proc renderNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
 
-  let s = a.theme.style.pane.notes
+  let s = a.theme.notesPaneStyle
 
   let
     l = currLevel(a)
@@ -5635,7 +5643,7 @@ proc renderNotesPane(x, y, w, h: float; a) =
       drawIndexedNote(x, y-12, size=36,
                       bgColor=s.indexBackgroundColor[note.indexColor],
                       fgColor=s.indexColor,
-                      a.theme.style.level.note.backgroundShape,
+                      a.theme.levelStyle.notebackgroundShape,
                       note.index, a)
 
     of akCustomId:
@@ -6238,7 +6246,7 @@ proc renderUI(a) =
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
   else:
-    vg.fillColor(a.theme.style.ui.window.backgroundColor)
+    vg.fillColor(a.theme.windowStyle.backgroundColor)
 
   vg.fill()
 
@@ -6494,7 +6502,7 @@ proc renderFrameSplash(a) =
   alias(s, a.splash)
   alias(vg, s.vg)
 
-  let ts = a.theme.style
+  let cfg = a.theme.config
 
   let
     (winWidth, winHeight) = s.win.size
@@ -6508,7 +6516,7 @@ proc renderFrameSplash(a) =
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
 
   if s.logoImage == NoImage or s.updateLogoImage:
-    colorImage(s.logo, ts.ui.splashImage.logoColor)
+    colorImage(s.logo, cfg.getColorHocon("ui.splash-image.logo"))
     if s.logoImage == NoImage:
       s.logoImage = createImage(s.logo)
     else:
@@ -6516,7 +6524,7 @@ proc renderFrameSplash(a) =
     s.updateLogoImage = false
 
   if s.outlineImage == NoImage or s.updateOutlineImage:
-    colorImage(s.outline, ts.ui.splashImage.outlineColor)
+    colorImage(s.outline, cfg.getColorHocon("ui.splash-image.outline"))
     if s.outlineImage == NoImage:
       s.outlineImage = createImage(s.outline)
     else:
@@ -6538,9 +6546,11 @@ proc renderFrameSplash(a) =
 
   s.outlinePaint = createPattern(vg, s.outlineImage, scale=scale)
 
-  s.shadowPaint = createPattern(vg, s.shadowImage,
-                                alpha=ts.ui.splashImage.shadowAlpha,
-                                scale=scale)
+  s.shadowPaint = createPattern(
+    vg, s.shadowImage,
+    alpha=cfg.getFloatHocon("ui.splash-image.shadow-alpha"),
+    scale=scale
+  )
 
   vg.beginPath()
   vg.rect(0, 0, winWidth.float, winHeight.float)

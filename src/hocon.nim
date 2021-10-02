@@ -552,6 +552,11 @@ proc write*(node: HoconNode, stream: Stream,
 
 type HoconPathError* = object of CatchableError
 
+proc raiseHoconPathError(path, message: string) {.noReturn.} =
+  raise newException(HoconPathError,
+                     fmt"Invalid object path: {path}, {message}")
+
+
 proc get*(n: HoconNode, path: string): HoconNode =
   proc hasOnlyDigits(s: string): bool =
     for c in s:
@@ -562,15 +567,23 @@ proc get*(n: HoconNode, path: string): HoconNode =
   for key in path.split('.'):
     if key.hasOnlyDigits():
       let idx = parseInt(key)
-      if curr.kind == hnkArray and idx >= 0 and idx <= curr.elems.high:
-        curr = curr.elems[idx]
-      else:
-        raise newException(HoconPathError, path) # TODO
+      if curr.kind != hnkArray:
+        raiseHoconPathError(path, fmt"'{key}' is not an array")
+
+      if not (idx >= 0 and idx <= curr.elems.high):
+        raiseHoconPathError(path, fmt"invalid array index: {idx}")
+
+      curr = curr.elems[idx]
+
     else:
-      if curr.kind == hnkObject and curr.fields.hasKey(key):
-        curr = curr.fields[key]
-      else:
-        raise newException(HoconPathError, path) # TODO
+      if curr.kind != hnkObject:
+        raiseHoconPathError(path, fmt"'{key}' is not an object")
+
+      if not curr.fields.hasKey(key):
+        raiseHoconPathError(path, fmt"key '{key}' not found")
+
+      curr = curr.fields[key]
+
   result = curr
 
 # }}}

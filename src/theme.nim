@@ -304,9 +304,8 @@ proc loadTheme*(filename: string): ThemeStyle =
     outerWidthFactor = outerWidthFactor.limit(LevelShadowOuterWidthFactorLimits)
 
 
-proc saveTheme*(theme: ThemeStyle, filename: string) =
-  let config = writeTheme(theme)
-  writePrettyConfig(config, filename)
+proc saveTheme*(config: HoconNode, filename: string) =
+  config.write(newFileStream(filename, fmWrite))
 
 
 
@@ -314,12 +313,16 @@ proc limit(config: HoconNode, key: string, limits: FieldLimits) =
   var v = config.get(key)
   v.num = v.num.limit(limits)
 
+proc getColorArray(cfg: HoconNode, key: string, colors: var openArray[Color]) =
+  for i in 0..colors.high:
+    colors[i] = cfg.getColorHocon(fmt"{key}.{i}")
 
-proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
+
+proc toLevelStyle*(cfg: HoconNode): LevelStyle2 =
   alias(s, result)
   s = new LevelStyle2
 
-  var p = "level.general."
+  var p = "general."
   s.lineWidth                 = cfg.getEnumHocon(p & "line-width", LineWidth)
   s.backgroundColor           = cfg.getColorHocon(p & "background")
   s.cursorColor               = cfg.getColorHocon(p & "cursor")
@@ -335,66 +338,94 @@ proc toLevelStyle(cfg: HoconNode): LevelStyle2 =
   s.regionBorderNormalColor   = cfg.getColorHocon(p & "region-border.normal")
   s.regionBorderEmptyColor    = cfg.getColorHocon(p & "region-border.empty")
 
-  p = "level.background-hatch."
+  p = "background-hatch."
   s.backgroundHatchEnabled       = cfg.getBoolHocon(p & "enabled")
   s.backgroundHatchColor         = cfg.getColorHocon(p & "color")
   s.backgroundHatchWidth         = cfg.getFloatHocon(p & "width")
   s.backgroundHatchSpacingFactor = cfg.getFloatHocon(p & "spacing-factor")
 
-  p = "level.grid."
+  p = "grid."
   s.gridBackgroundStyle     = cfg.getEnumHocon(p & "background.style", GridStyle)
   s.gridBackgroundGridColor = cfg.getColorHocon(p & "background.grid")
   s.gridFloorStyle          = cfg.getEnumHocon(p & "floor.style", GridStyle)
   s.gridFloorGridColor      = cfg.getColorHocon(p & "floor.grid")
 
-  p = "level.outline."
+  p = "outline."
   s.outlineStyle       = cfg.getEnumHocon(p & "style", OutlineStyle)
   s.outlineFillStyle   = cfg.getEnumHocon(p & "fill-style", OutlineFillStyle)
   s.outlineColor       = cfg.getColorHocon(p & "color")
   s.outlineWidthFactor = cfg.getFloatHocon(p & "width-factor")
   s.outlineOverscan    = cfg.getBoolHocon(p & "overscan")
 
-  p = "level.shadow."
+  p = "shadow."
   s.shadowInnerColor        = cfg.getColorHocon(p & "inner.color")
   s.shadowInnerWidthFactor  = cfg.getFloatHocon(p & "inner.width-factor")
   s.shadowOuterColor        = cfg.getColorHocon(p & "outer.color")
   s.shadowOuterWidthFactor  = cfg.getFloatHocon(p & "outer.width-factor")
 
-  p = "level.floor."
+  p = "floor."
   s.floorTransparent = cfg.getBoolHocon(p & "transparent")
 
-  for i in 0..s.floorBackgroundColor.high:
-    s.floorBackgroundColor[i] = cfg.getColorHocon(p & "background." & $i)
+  cfg.getColorArray(p & "background", s.floorBackgroundColor)
 
-  p = "level.note."
+  p = "note."
   s.noteMarkerColor     = cfg.getColorHocon(p & "marker")
   s.noteCommentColor    = cfg.getColorHocon(p & "comment")
   s.noteBackgroundShape = cfg.getEnumHocon(p & "background-shape", NoteBackgroundShape)
 
-  for i in 0..s.noteIndexBackgroundColor.high:
-    s.noteIndexBackgroundColor[i] = cfg.getColorHocon(p & "index-background." & $i)
+  cfg.getColorArray(p & "index-background", s.noteIndexBackgroundColor)
 
   s.noteIndexColor             = cfg.getColorHocon(p & "index")
   s.noteTooltipBackgroundColor = cfg.getColorHocon(p & "tooltip.background")
   s.noteTooltipTextColor       = cfg.getColorHocon(p & "tooltip.text")
 
-  for i in 0..s.labelTextColor.high:
-    s.labelTextColor[i] = cfg.getColorHocon(p & "level.label.text." & $i)
+  cfg.getColorArray("label.text", s.labelTextColor)
 
 
 proc toWindowStyle*(cfg: HoconNode): WindowStyle =
   alias(s, result)
   s = new WindowStyle
 
-  var p = "ui.window."
-  s.modifiedFlagColor            = cfg.getColorHocon(p & "modified-flag")
-  s.titleBackgroundColor         = cfg.getColorHocon(p & "title.background.normal")
-  s.titleBackgroundInactiveColor = cfg.getColorHocon(p & "title.background.inactive")
-  s.titleColor                   = cfg.getColorHocon(p & "title.text.normal")
-  s.titleInactiveColor           = cfg.getColorHocon(p & "title.text.inactive")
-  s.buttonColor                  = cfg.getColorHocon(p & "button.normal")
-  s.buttonHoverColor             = cfg.getColorHocon(p & "button.hover")
-  s.buttonDownColor              = cfg.getColorHocon(p & "button.down")
+  s.modifiedFlagColor            = cfg.getColorHocon("modified-flag")
+  s.backgroundColor              = cfg.getColorHocon("background.color")
+  s.backgroundImage              = cfg.getStringHocon("background.image")
+  s.titleBackgroundColor         = cfg.getColorHocon("title.background.normal")
+  s.titleBackgroundInactiveColor = cfg.getColorHocon("title.background.inactive")
+  s.titleColor                   = cfg.getColorHocon("title.text.normal")
+  s.titleInactiveColor           = cfg.getColorHocon("title.text.inactive")
+  s.buttonColor                  = cfg.getColorHocon("button.normal")
+  s.buttonHoverColor             = cfg.getColorHocon("button.hover")
+  s.buttonDownColor              = cfg.getColorHocon("button.down")
+
+
+proc toStatusBarStyle*(cfg: HoconNode): StatusBarStyle =
+  alias(s, result)
+  s = new StatusBarStyle
+
+  s.backgroundColor        = cfg.getColorHocon("background")
+  s.textColor              = cfg.getColorHocon("text")
+  s.coordinatesColor       = cfg.getColorHocon("coordinates")
+  s.commandBackgroundColor = cfg.getColorHocon("command.background")
+  s.commandTextColor       = cfg.getColorHocon("command.text")
+
+
+proc toNotesPaneStyle*(cfg: HoconNode): NotesPaneStyle =
+  alias(s, result)
+  s = new NotesPaneStyle
+
+  s.textColor      = cfg.getColorHocon("text")
+  s.scrollBarColor = cfg.getColorHocon("scroll-bar")
+  s.indexColor     = cfg.getColorHocon("index")
+
+  cfg.getColorArray("index-background", s.indexBackgroundColor)
+
+
+proc toToolbarPaneStyle*(cfg: HoconNode): ToolbarPaneStyle =
+  alias(s, result)
+  s = new ToolbarPaneStyle
+
+  s.buttonNormalColor = cfg.getColorHocon("button.normal")
+  s.buttonHoverColor  = cfg.getColorHocon("button.hover")
 
 
 proc loadThemeHocon*(filename: string): HoconNode =
