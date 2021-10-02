@@ -552,18 +552,21 @@ proc write*(node: HoconNode, stream: Stream,
 
 type HoconPathError* = object of CatchableError
 
+proc newHoconObject(): HoconNode = HoconNode(kind: hnkObject)
+proc newHoconArray(): HoconNode = HoconNode(kind: hnkArray)
+
 proc raiseHoconPathError(path, message: string) {.noReturn.} =
   raise newException(HoconPathError,
                      fmt"Invalid object path: {path}, {message}")
 
+proc hasOnlyDigits(s: string): bool =
+  for c in s:
+    if not c.isDigit(): return false
+  true
 
-proc get*(n: HoconNode, path: string): HoconNode =
-  proc hasOnlyDigits(s: string): bool =
-    for c in s:
-      if not c.isDigit(): return false
-    true
-
-  var curr = n
+# {{{ get
+proc get*(node: HoconNode, path: string): HoconNode =
+  var curr = node
   for key in path.split('.'):
     if key.hasOnlyDigits():
       let idx = parseInt(key)
@@ -586,6 +589,41 @@ proc get*(n: HoconNode, path: string): HoconNode =
 
   result = curr
 
+# }}}
+# {{{ set
+template setValue*(node: HoconNode, path: string, body: untyped) =
+  var curr {.inject.} = node
+  let pathElems = path.split('.')
+
+  for i, key {.inject.} in pathElems.pairs:
+    if curr.kind != hnkObject:
+      raiseHoconPathError(path, fmt"'{key}' is not an object")
+
+    let isLast = i == pathElems.high
+    if isLast: body
+    else:
+      if not curr.fields.hasKey(key):
+        curr.fields[key] = newHoconObject()
+      curr = curr.fields[key]
+
+
+proc set*(node: HoconNode, path: string, str: string) =
+  node.setValue(path):
+    curr.fields[key] = HoconNode(kind: hnkString, str: str)
+
+proc set*(node: HoconNode, path: string, num: SomeNumber) =
+  node.setValue(path):
+    curr.fields[key] = HoconNode(kind: hnkNumber, num: num.float)
+
+proc set*(node: HoconNode, path: string, flag: bool) =
+  node.setValue(path):
+    curr.fields[key] = HoconNode(kind: hnkBool, bool: flag)
+
+proc setNull*(node: HoconNode, path: string) =
+  node.setValue(path):
+    curr.fields[key] = HoconNode(kind: hnkNull)
+
+# }}}
 # }}}
 
 # {{{ Tests

@@ -1296,38 +1296,41 @@ proc savePreferences(a) =
 
   let cur = a.ui.cursor
 
-  let cfg = AppConfig(
-    prefs: a.prefs,
+  var cfg = newHoconObject()
 
-    app: AppState(
-      themeName:      a.currThemeName.name,
+  var p = "preferences."
+  cfg.set(p & "load-last-map",                  a.prefs.loadLastMap)
+  cfg.set(p & "splash.show-at-startup",         a.prefs.showSplash)
+  cfg.set(p & "splash.auto-close",              a.prefs.autoCloseSplash)
+  cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
+  cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
+  cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
+  cfg.set(p & "video.vsync",                    a.prefs.enableVsync)
 
-      zoomLevel:      dp.getZoomLevel(),
-      currLevel:      cur.level,
-      cursorRow:      cur.row,
-      cursorCol:      cur.col,
-      viewStartRow:   dp.viewStartRow,
-      viewStartCol:   dp.viewStartCol,
+  p = "last-state"
+  cfg.set(p & "last-document", a.doc.filename)
 
-      showCellCoords: dp.drawCellCoords,
-      showToolsPane:  opts.showToolsPane,
-      showNotesPane:  opts.showNotesPane,
+  p = "last-state.ui"
+  cfg.set(p & "theme-name",              a.currThemeName.name)
+  cfg.set(p & "zoom-level",              dp.getZoomLevel())
+  cfg.set(p & "current-level",           cur.level)
+  cfg.set(p & "cursor.row",              cur.row)
+  cfg.set(p & "cursor.column",           cur.col)
+  cfg.set(p & "view-start.row",          dp.viewStartRow)
+  cfg.set(p & "view-start.column",       dp.viewStartCol)
+  cfg.set(p & "option.show-cell-coords", dp.drawCellCoords)
+  cfg.set(p & "option.show-tools-pane",  opts.showToolsPane)
+  cfg.set(p & "option.show-notes-pane",  opts.showNotesPane)
+  cfg.set(p & "option.wasd-mode",        opts.wasdMode)
+  cfg.set(p & "option.walk-mode",        opts.walkMode)
+  cfg.set(p & "option.draw-trail",       opts.drawTrail)
 
-      wasdMode:       opts.wasdMode,
-      walkMode:       opts.walkMode,
-      drawTrail:      opts.drawTrail
-    ),
-    win: WindowState(
-      maximized: a.win.maximized,
-      xpos:      xpos,
-      ypos:      ypos,
-      width:     width,
-      height:    height
-    ),
-    misc: MiscState(
-      lastMapFileName: a.doc.filename
-    )
-  )
+  p = "last-state.window"
+  cfg.set(p & "maximized",  a.win.maximized)
+  cfg.set(p & "x-position", xpos)
+  cfg.set(p & "y-position", ypos)
+  cfg.set(p & "width",      width)
+  cfg.set(p & "height",     height)
 
   saveAppConfig(cfg, a.path.configFile)
 
