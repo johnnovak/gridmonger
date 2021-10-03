@@ -48,14 +48,14 @@ const
   RegionNameLimits*        = strLimits(minRuneLen=1, maxRuneLen=100)
 
   CellFloorColorLimits*    = intLimits(min=0,
-                                       max=LevelStyle.floorColor.color.len)
+                                       max=LevelStyle.floorBackgroundColor.len)
 
   NumAnnotationsLimits*    = intLimits(min=0, max=10_000)
   NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=400)
   NoteIconTextLimits*      = strLimits(minRuneLen=0, maxRuneLen=400)
   NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
   NoteColorLimits*         = intLimits(min=0,
-                                       max=PaneStyle.notes.indexBackgroundColor.len)
+                                       max=NotesPaneStyle.indexBackgroundColor.len)
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
 
   NumLinksLimits*          = intLimits(min=0, max=10_000)

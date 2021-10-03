@@ -17,6 +17,9 @@ type
 using s: var UnicodeScanner
 
 proc initUnicodeScanner(stream: Stream): UnicodeScanner =
+  if stream == nil:
+    raise newException(IOError, "Stream is not initialised")
+
   result.stream = stream
   result.readBuf = newStringOfCap(4)
   result.readBuf.setLen(4)
@@ -47,22 +50,29 @@ proc atEnd(s): bool =
   s.stream.atEnd()
 
 proc close(s) =
-  s.stream.close()
-  s.stream = nil
+  if s.stream != nil:
+    s.stream.close()
+    s.stream = nil
 
 # }}}
 # {{{ Tokeniser
 
 type
   TokenKind = enum
-    tkLeftBrace, tkRightBrace,
-    tkLeftBracket, tkRightBracket,
-    tkComma, tkNewline, # TODO tkWhitespace
-    tkColon, tkEquals,
-    tkString,
-    tkNumber,
-    tkTrue, tkFalse,
-    tkNull
+    tkLeftBrace    = (0,  "left brace ('{')"),
+    tkRightBrace   = (1,  "right brace ('}')"),
+    tkLeftBracket  = (2,  "left bracket ('[')"),
+    tkRightBracket = (3,  "right bracket (']')"),
+    tkComma        = (4,  "comma (',')"),
+    tkNewline      = (5,  "newline"),
+    # TODO tkWhitespace
+    tkColon        = (6,  "colon (':')"),
+    tkEquals       = (7,  "equals sign ('=')"),
+    tkString       = (8,  "string"),
+    tkNumber       = (9,  "number"),
+    tkTrue         = (10, "true"),
+    tkFalse        = (11, "false"),
+    tkNull         = (12, "null")
 
   Token = object
     case kind: TokenKind
@@ -76,7 +86,7 @@ type
     line, column: Natural
     peekBuf:      Deque[Token]
 
-  TokeniserError* = object of IOError
+  HoconTokeniserError* = object of IOError
 
 
 proc `==`(a, b: Token): bool =
@@ -131,7 +141,8 @@ proc initTokeniser(stream: Stream): Tokeniser =
 
 proc raiseTokeniserError(t; msg, details: string,
                          line = t.line, column = t.column) {.noReturn.} =
-  raise newException(TokeniserError,
+  t.scanner.close()
+  raise newException(HoconTokeniserError,
     fmt"{msg} at line {line}, column {column}: {details}"
   )
 
@@ -304,6 +315,8 @@ proc eatToken(t): Token =
 proc atEnd(t): bool =
   t.scanner.atEnd()
 
+proc close(t) =
+  t.scanner.close()
 
 # }}}
 # {{{ HoconParser
@@ -312,10 +325,15 @@ type
   HoconParser* = object
     tokeniser: Tokeniser
 
-  HoconParsingError* = object of IOError
+  HoconParseError* = object of IOError
 
   HoconNodeKind* = enum
-    hnkNull, hnkString, hnkNumber, hnkBool, hnkObject, hnkArray
+    hnkNull   = (0, "null"),
+    hnkString = (1, "string"),
+    hnkNumber = (2, "number"),
+    hnkBool   = (3, "bool"),
+    hnkObject = (4, "object"),
+    hnkArray  = (5, "array")
 
   HoconNode* = ref HoconNodeObj
 
@@ -335,7 +353,8 @@ proc initHoconParser*(stream: Stream): HoconParser =
   result.tokeniser = initTokeniser(stream)
 
 proc raiseUnexpectedTokenError(p; token: Token) {.noReturn.} =
-  raise newException(HoconParsingError, fmt"Unexpected token: {token}")
+  p.tokeniser.close()
+  raise newException(HoconParseError, fmt"Unexpected token: {token}")
 
 proc peekToken(p): Token = p.tokeniser.peekToken()
 proc eatToken(p):  Token = p.tokeniser.eatToken()
@@ -485,10 +504,12 @@ proc parse*(p): HoconNode =
   discard p.eatNewLines()
 
   let token = p.peekToken()
-  if token.kind == tkLeftBracket:
+  result = if token.kind == tkLeftBracket:
     p.parseArray()
   else:
     p.parseObject(allowImplicitBraces=true)
+
+  p.tokeniser.close()
 
 # }}}
 
@@ -550,14 +571,22 @@ proc write*(node: HoconNode, stream: Stream,
 # }}}
 # {{{ Helpers
 
-type HoconPathError* = object of CatchableError
+type
+  HoconPathError* = object of KeyError
+  HoconValueError* = object of ValueError
 
-proc newHoconObject(): HoconNode = HoconNode(kind: hnkObject)
-proc newHoconArray(): HoconNode = HoconNode(kind: hnkArray)
+proc newHoconObject*(): HoconNode = HoconNode(kind: hnkObject)
+proc newHoconArray*():  HoconNode = HoconNode(kind: hnkArray)
 
-proc raiseHoconPathError(path, message: string) {.noReturn.} =
+proc raiseHoconPathError*(path, message: string) {.noReturn.} =
   raise newException(HoconPathError,
                      fmt"Invalid object path: {path}, {message}")
+
+
+proc raiseHoconValueError*(src, target: HoconNodeKind,
+                           path: string) {.noReturn.} =
+  raise newException(HoconPathError,
+                     fmt"Cannot read {src} as {target}, path: {path}")
 
 proc hasOnlyDigits(s: string): bool =
   for c in s:
@@ -588,6 +617,57 @@ proc get*(node: HoconNode, path: string): HoconNode =
       curr = curr.fields[key]
 
   result = curr
+
+
+proc getString*(node: HoconNode; path: string): string =
+  let v = node.get(path)
+  case v.kind
+  of hnkString: v.str
+  of hnkNumber: $v.num
+  of hnkBool:   $v.bool
+  else:
+    raiseHoconValueError(v.kind, hnkString, path)
+
+proc getBool*(node: HoconNode; path: string): bool =
+  let v = node.get(path)
+  case v.kind
+  of hnkBool: v.bool
+  of hnkString:
+    case v.str
+    of "true",  "yes", "on":  true
+    of "false", "no",  "off": false
+    else:
+      raiseHoconValueError(v.kind, hnkBool, path)
+  else:
+    raiseHoconValueError(v.kind, hnkBool, path)
+
+
+proc doGetFloat(n: HoconNode, path: string): float =
+  case n.kind
+  of hnkNumber: n.num
+  of hnkString:
+    try:
+      parseFloat(n.str)
+    except ValueError:
+      raiseHoconValueError(n.kind, hnkNumber, path)
+  else:
+    raiseHoconValueError(n.kind, hnkNumber, path)
+
+proc getFloat*(node: HoconNode, path: string): float =
+  let v = node.get(path)
+  v.doGetFloat(path)
+
+proc getInt*(node: HoconNode, path: string): int =
+  node.doGetFloat(path).int
+
+proc getNatural*(node: HoconNode, path: string): Natural =
+  let n = node.get(path)
+  let v = n.doGetFloat(path)
+  if v >= 0:
+    result = v.Natural
+  else:
+    raiseHoconValueError(n.kind, hnkNumber, path)
+
 
 # }}}
 # {{{ set
@@ -860,6 +940,11 @@ when isMainModule:
     echo root.get("a.e.2")[]
     echo root.get("b")[]
 
+    echo root.getString("a.b")
+    echo root.getBool("a.aa.foo")
+    echo root.getNatural("a.d")
+    echo root.getFloat("a.e.0")
+    echo root.getString("b")
 
   block:
     let testString = """

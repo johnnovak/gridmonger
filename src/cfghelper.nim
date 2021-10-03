@@ -1,7 +1,6 @@
 import fieldlimits
 import logging except Level
 import options
-import parsecfg
 import strformat
 import strutils
 
@@ -12,12 +11,28 @@ import hocon
 
 using cfg: HoconNode
 
-proc invalidValueError(key, valueType, value: string) =
-  let msg = fmt"Invalid {valueType} value for key '{key}': {value}"
+proc getObjectOrEmpty*(cfg; path: string): HoconNode =
+  try:
+    let n = cfg.get(path)
+    if n.kind != hnkObject:
+      result = newHoconObject()
+    else:
+      result = n
+  except CatchableError:
+    result = newHoconObject()
+
+proc invalidValueError(path, valueType, value: string) =
+  let msg = fmt"Invalid {valueType} value for path '{path}': {value}"
   error(msg)
 
-proc getString*(cfg; key: string): string =
-  cfg.get(key).str
+
+proc getString*(cfg; path: string, default: string): string =
+  result = default
+  try:
+    result = cfg.getString(path)
+  except CatchableError as e:
+    error(e.msg)
+
 
 proc parseColor*(s: string): Option[Color] =
   result = Color.none
@@ -31,57 +46,73 @@ proc parseColor*(s: string): Option[Color] =
     except ValueError:
       discard
 
-proc getColor*(cfg; key: string): Color =
-  let v = cfg.get(key).str
-  if v != "":
-    let col = parseColor(v)
-    if col.isNone:
-      invalidValueError(key, "color", v)
+proc getColor*(cfg; path: string, default: Color = black()): Color =
+  result = default
+  try:
+    let v = cfg.getString(path)
+    if v != "":
+      let col = parseColor(v)
+      if col.isNone:
+        invalidValueError(path, "color", v)
+      else:
+        result = col.get
+  except CatchableError as e:
+    error(e.msg)
+
+
+proc getBool*(cfg; path: string, default: bool): bool =
+  result = default
+  try:
+    result = cfg.getBool(path)
+  except CatchableError as e:
+    error(e.msg)
+
+
+proc getFloat*(cfg; path: string, default: float): float =
+  result = default
+  try:
+    result = cfg.getFloat(path)
+  except CatchableError as e:
+    error(e.msg)
+
+proc getInt*(cfg; path: string, default: int): int =
+  result = default
+  try:
+    result = cfg.getInt(path)
+  except CatchableError as e:
+    error(e.msg)
+
+proc getNatural*(cfg; path: string, default: Natural): Natural =
+  result = default
+  try:
+    result = cfg.getNatural(path)
+  except CatchableError as e:
+    error(e.msg)
+
+proc getNatural*(cfg; path: string, limits: FieldLimits,
+                 default: Natural): Natural =
+  try:
+    result = default
+    var i: int
+    case limits.kind:
+    of fkInt:
+      i = cfg.getNatural(path)
+      result = i.limit(limits)
     else:
-      result = col.get
-
-proc getBool*(cfg; key: string): bool =
-  let v = cfg.get(key).str
-  if v != "":
-    try:
-      result = parseBool(v)
-    except ValueError:
-      invalidValueError(key, "bool", v)
-
-proc getFloat*(cfg; key: string): float =
-  cfg.get(key).num
-
-proc getInt*(cfg; key: string): int =
-  cfg.get(key).num.int
-
-proc getNatural*(cfg; key: string): Natural =
-  var i = cfg.getInt(key)
-  if i >= 0:
-    result = i.Natural
-  else:
-    invalidValueError(key, "natural", $i)
+      error(fmt"Invalid FieldLimits for Natural type: {limits}")
+  except CatchableError as e:
+    error(e.msg)
 
 
-proc getNatural*(cfg; key: string, limits: FieldLimits): Natural =
-  var i: int
-  case limits.kind:
-  of fkInt:
-    i = cfg.getInt(key)
-    result = i.limit(limits)
-  else:
-    error(fmt"Invalid FieldLimits for Natural type: {limits}")
+proc getEnum*(cfg; path: string, T: typedesc[enum], default = T.low): T =
+  try:
+    let v = cfg.getString(path)
+    if v != "":
+      try:
+        result = parseEnum[T](v.toUpper())
+      except ValueError:
+        invalidValueError(path, "enum", v)
+  except CatchableError as e:
+    error(e.msg)
 
-  if i >= 0:
-    result = i.Natural
-  else:
-    invalidValueError(key, "natural", $i)
-
-
-proc getEnum*(cfg; key: string, T: typedesc[enum]): T =
-  let v = cfg.get(key).str
-  if v != "":
-    try:
-      result = parseEnum[T](v.toUpper())
-    except ValueError:
-      invalidValueError(key, "enum", v)
-
+# vim: et:ts=2:sw=2:fdm=marker

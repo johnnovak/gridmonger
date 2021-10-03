@@ -10,6 +10,7 @@ import options
 import os
 import sequtils
 import std/monotimes
+import streams
 import strformat
 import strutils
 import tables
@@ -25,7 +26,6 @@ when not defined(DEBUG): import osdialog
 import with
 
 import actions
-import appconfig
 import cfghelper
 import common
 import csdwindow
@@ -50,6 +50,13 @@ when defined(windows):
 const
   BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
   ThemeExt = "gmtheme"
+
+const
+  SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
+  AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
+  ZoomLevelLimits*         = intLimits(MinZoomLevel, MaxZoomLevel)
+  WindowWidthLimits*       = intLimits(WindowMinWidth, max=20_000)
+  WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
 
 # {{{ logError()
 proc logError(e: ref Exception, msgPrefix: string = "") =
@@ -180,6 +187,18 @@ type
     aboutLogo:   AboutLogo
 
     shouldClose: bool
+
+
+  Preferences = object
+    showSplash:         bool
+    autoCloseSplash:    bool
+    splashTimeoutSecs:  Natural
+
+    loadLastMap:        bool
+    vsync:              bool
+
+    autosave*:          bool
+    autosaveFreqMins:   Natural
 
 
   Paths = object
@@ -359,7 +378,7 @@ type
     autoCloseSplash:    bool
     splashTimeoutSecs:  string
     loadLastMap:        bool
-    disableVSync:       bool
+    vsync:              bool
     autosave:           bool
     autosaveFreqMins:   string
 
@@ -1282,11 +1301,14 @@ proc switchTheme(themeIndex: Natural; a) =
 
 # {{{ setSwapInterval()
 proc setSwapInterval(a) =
-  glfw.swapInterval(if a.prefs.disableVSync: 0 else: 1)
+  glfw.swapInterval(if a.prefs.vsync: 1 else: 0)
 
 # }}}
-# {{{ savePreferences()
-proc savePreferences(a) =
+# {{{ saveAppConfig()
+
+proc saveAppConfig(cfg: HoconNode, filename: string)
+
+proc saveAppConfig(a) =
   alias(opts, a.opts)
 
   let dp = a.ui.drawLevelParams
@@ -1305,12 +1327,12 @@ proc savePreferences(a) =
   cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
   cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
-  cfg.set(p & "video.vsync",                    a.prefs.enableVsync)
+  cfg.set(p & "video.vsync",                    a.prefs.vsync)
 
-  p = "last-state"
+  p = "last-state."
   cfg.set(p & "last-document", a.doc.filename)
 
-  p = "last-state.ui"
+  p = "last-state.ui."
   cfg.set(p & "theme-name",              a.currThemeName.name)
   cfg.set(p & "zoom-level",              dp.getZoomLevel())
   cfg.set(p & "current-level",           cur.level)
@@ -1325,7 +1347,7 @@ proc savePreferences(a) =
   cfg.set(p & "option.walk-mode",        opts.walkMode)
   cfg.set(p & "option.draw-trail",       opts.drawTrail)
 
-  p = "last-state.window"
+  p = "last-state.window."
   cfg.set(p & "maximized",  a.win.maximized)
   cfg.set(p & "x-position", xpos)
   cfg.set(p & "y-position", ypos)
@@ -2214,7 +2236,7 @@ proc openPreferencesDialog(a) =
   dlg.autoCloseSplash = a.prefs.autoCloseSplash
   dlg.splashTimeoutSecs = $a.prefs.splashTimeoutSecs
   dlg.loadLastMap = a.prefs.loadLastMap
-  dlg.disableVSync = a.prefs.disableVSync
+  dlg.vsync = a.prefs.vsync
   dlg.autosave = a.prefs.autosave
   dlg.autosaveFreqMins = $a.prefs.autosaveFreqMins
 
@@ -2321,10 +2343,10 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       )
 
     group:
-      koi.label("Disable vertical sync", style=a.theme.labelStyle)
+      koi.label("Enable vertical sync", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.disableVSync, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.vsync, style = a.theme.checkBoxStyle)
 
   koi.endView()
 
@@ -2334,11 +2356,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.autoCloseSplash   = dlg.autoCloseSplash
     a.prefs.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
     a.prefs.loadLastMap       = dlg.loadLastMap
-    a.prefs.disableVSync      = dlg.disableVSync
+    a.prefs.vsync             = dlg.vsync
     a.prefs.autosave          = dlg.autosave
     a.prefs.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
 
-    savePreferences(a)
+    saveAppConfig(a)
     setSwapInterval(a)
 
     koi.closeDialog()
@@ -6456,7 +6478,7 @@ proc renderFrame(a) =
 
   proc handleWindowClose(a) =
     proc saveConfigAndExit(a) =
-      savePreferences(a)
+      saveAppConfig(a)
       a.shouldClose = true
 
     when defined(NO_QUIT_DIALOG):
@@ -6600,41 +6622,39 @@ proc renderFrameSplash(a) =
 # }}}
 # {{{ Init & cleanup
 
-# {{{ initPaths()
-proc initPaths(a) =
-  alias(p, a.path)
-
-  p.dataDir = "Data"
-
-  const ConfigDir = "Config"
-  let portableMode = dirExists(ConfigDir)
-
-  if portableMode:
-    p.userDataDir = "."
-  else:
-    p.userDataDir = getConfigDir() / "Gridmonger"
-
-  p.manualDir = "Manual"
-  p.autosaveDir = p.userDataDir / "Autosave"
-
-  p.themesDir = "Themes"
-  p.userThemesDir = p.userDataDir / "User Themes"
-
-  const ImagesDir = "Images"
-  p.themeImagesDir = p.themesDir / ImagesDir
-  p.userThemeImagesDir = p.userThemesDir / ImagesDir
-
-  p.logFile = p.userDataDir / "gridmonger.log"
-  p.configDir = p.userDataDir / ConfigDir
-  p.configFile = p.configDir / "gridmonger.cfg"
-
-  createDir(p.userDataDir)
-  createDir(p.configDir)
-  createDir(p.autosaveDir)
-  createDir(p.userThemesDir)
-  createDir(p.userThemeImagesDir)
+# {{{ createAlpha()
+proc createAlpha(d: var ImageData) =
+  for i in 0..<(d.width * d.height):
+    # copy the R component to the alpha channel
+    d.data[i*4+3] = d.data[i*4]
 
 # }}}
+# {{{ createSplashWindow()
+proc createSplashWindow(mousePassthru: bool = false; a) =
+  alias(s, a.splash)
+
+  var cfg = DefaultOpenglWindowConfig
+  cfg.visible = false
+  cfg.resizable = false
+  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
+  cfg.nMultiSamples = 4
+  cfg.transparentFramebuffer = true
+  cfg.decorated = false
+  cfg.floating = true
+
+  when defined(windows):
+    cfg.hideFromTaskbar = true
+    cfg.mousePassthru = mousePassthru
+  else:
+    cfg.version = glv32
+    cfg.forwardCompat = true
+    cfg.profile = opCoreProfile
+
+  s.win = newWindow(cfg)
+  s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
+
+# }}}
+
 # {{{ loadAndSetIcon()
 proc loadAndSetIcon(a) =
   alias(p, a.path)
@@ -6681,13 +6701,6 @@ proc loadFonts(a) =
   discard addFallbackFont(a.vg, blackFont, iconFont)
 
 # }}}
-# {{{ createAlpha()
-proc createAlpha(d: var ImageData) =
-  for i in 0..<(d.width * d.height):
-    # copy the R component to the alpha channel
-    d.data[i*4+3] = d.data[i*4]
-
-# }}}
 # {{{ loadSplashmages()
 proc loadSplashImages(a) =
   alias(s, a.splash)
@@ -6710,6 +6723,7 @@ proc loadAboutLogoImage(a) =
   createAlpha(al.logo)
 
 # }}}
+
 # {{{ setDefaultWidgetStyles()
 proc setDefaultWidgetStyles(a) =
   var s = koi.getDefaultCheckBoxStyle()
@@ -6751,6 +6765,7 @@ GPU info
   a.vg = vg
 
 # }}}
+
 # {{{ rollLogFile(a)
 proc rollLogFile(a) =
   alias(p, a.path)
@@ -6782,10 +6797,99 @@ proc initLogger(a) =
   addHandler(fileLog)
 
 # }}}
+
+# {{{ loadAppConfigOrDefault()
+proc loadAppConfigOrDefault(filename: string): HoconNode =
+  var s: FileStream
+  try:
+    s = newFileStream(filename)
+    var p = initHoconParser(s)
+    result = p.parse()
+  except CatchableError as e:
+    logging.warn(
+      fmt"Couldn't load config file '{filename}', using default config. " &
+      fmt"Error message: {e.msg}"
+    )
+    result = newHoconObject()
+  finally:
+    if s != nil: s.close()
+
+# }}}
+# {{{ saveAppConfig()
+proc saveAppConfig(cfg: HoconNode, filename: string) =
+  var s: FileStream
+  try:
+    s = newFileStream(filename, fmWrite)
+    cfg.write(s)
+  except CatchableError as e:
+    logging.error(
+      fmt"Couldn't write config file '{filename}'. Error message: {e.msg}"
+    )
+  finally:
+    if s != nil: s.close()
+
+# }}}
+#
+# {{{ initPaths()
+proc initPaths(a) =
+  alias(p, a.path)
+
+  p.dataDir = "Data"
+
+  const ConfigDir = "Config"
+  let portableMode = dirExists(ConfigDir)
+
+  if portableMode:
+    p.userDataDir = "."
+  else:
+    p.userDataDir = getConfigDir() / "Gridmonger"
+
+  p.manualDir = "Manual"
+  p.autosaveDir = p.userDataDir / "Autosave"
+
+  p.themesDir = "Themes"
+  p.userThemesDir = p.userDataDir / "User Themes"
+
+  const ImagesDir = "Images"
+  p.themeImagesDir = p.themesDir / ImagesDir
+  p.userThemeImagesDir = p.userThemesDir / ImagesDir
+
+  p.logFile = p.userDataDir / "gridmonger.log"
+  p.configDir = p.userDataDir / ConfigDir
+  p.configFile = p.configDir / "gridmonger.cfg"
+
+  createDir(p.userDataDir)
+  createDir(p.configDir)
+  createDir(p.autosaveDir)
+  createDir(p.userThemesDir)
+  createDir(p.userThemeImagesDir)
+
+# }}}
+# {{{ initPreferences()
+proc initPreferences(cfg: HoconNode; a) =
+  let prefs = cfg.getObjectOrEmpty("preferences")
+
+  with a.prefs:
+    showSplash        = cfg.getBool("splash.show-at-startup", default=true)
+    autoCloseSplash   = cfg.getBool("splash.auto-close", default=false)
+
+    splashTimeoutSecs = cfg.getNatural("splash.auto-close-timeout-secs",
+                                       default=3)
+                           .limit(SplashTimeoutSecsLimits)
+
+    loadLastMap       = cfg.getBool("load-last-map", default=true)
+    vsync             = cfg.getBool("video.vsync",   default=true)
+
+    autosave          = cfg.getBool("auto-save.enabled", default=true)
+
+    autosaveFreqMins  = cfg.getNatural("auto-save.frequency-mins", default=2)
+                           .limit(AutosaveFreqMinsLimits)
+
+# }}}
 # {{{ initApp()
 proc initApp(a) =
   let cfg = loadAppConfigOrDefault(a.path.configFile)
-  a.prefs = cfg.prefs
+  initPreferences(cfg, a)
 
   loadFonts(a)
   loadAndSetIcon(a)
@@ -6795,21 +6899,31 @@ proc initApp(a) =
   a.ui.drawLevelParams = newDrawLevelParams()
 
   searchThemes(a)
-  var themeIndex = findThemeIndex(cfg.app.themeName, a)
+
+  let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
+
+  var themeIndex = findThemeIndex(uiCfg.getString("theme-name",
+                                                  default="Default"), a)
   if themeIndex == -1: themeIndex = 0
   switchTheme(themeIndex, a)
 
-  a.opts.showNotesPane = cfg.app.showNotesPane
-  a.opts.showToolsPane = cfg.app.showToolsPane
-  a.opts.drawTrail = cfg.app.drawTrail
-  a.opts.walkMode = cfg.app.walkMode
-  a.opts.wasdMode = cfg.app.wasdMode
+  with a.opts:
+    showNotesPane = uiCfg.getBool("option.show-notes-pane", default=true)
+    showToolsPane = uiCfg.getBool("option.show-tools-pane", default=true)
+    drawTrail     = uiCfg.getBool("option.draw-trail",      default=false)
+    walkMode      = uiCfg.getBool("option.walk-mode",       default=false)
+    wasdMode      = uiCfg.getBool("option.wasd-mode",       default=false)
 
-  a.ui.drawLevelParams.drawCellCoords = cfg.app.showCellCoords
-  a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, cfg.app.zoomLevel)
+  a.ui.drawLevelParams.drawCellCoords = uiCfg.getBool(
+    "option.show-cell-coords", default=true
+  )
+  a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle,
+                                    uiCfg.getNatural("zoom-level", default=9))
 
-  if a.prefs.loadLastMap and cfg.misc.lastMapFileName != "":
-    if not loadMap(cfg.misc.lastMapFileName, a):
+  let lastMapFileName = cfg.getString("last-state.last-document", default="")
+
+  if a.prefs.loadLastMap and lastMapFileName != "":
+    if not loadMap(lastMapFileName, a):
       a.doc.map = newMap("Untitled Map")
   else:
     a.doc.map = newMap("Untitled Map")
@@ -6818,17 +6932,22 @@ proc initApp(a) =
   # TODO check values?
   # TODO timestamp check to determine whether to read the DISP info from the
   # conf or from the file
-  a.ui.drawLevelParams.viewStartRow = cfg.app.viewStartRow
-  a.ui.drawLevelParams.viewStartCol = cfg.app.viewStartCol
+  with a.ui.drawLevelParams:
+    viewStartRow = uiCfg.getNatural("view-start.row",    default=0)
+    viewStartCol = uiCfg.getNatural("view-start.column", default=0)
 
-  if cfg.app.currLevel > a.doc.map.levels.high:
-    a.ui.cursor.level = 0
-    a.ui.cursor.row = 0
-    a.ui.cursor.col = 0
-  else:
-    a.ui.cursor.level = cfg.app.currLevel
-    a.ui.cursor.row = cfg.app.cursorRow
-    a.ui.cursor.col = cfg.app.cursorCol
+  with a.ui.cursor:
+    let currLevel = uiCfg.getNatural("current-level", default=0)
+                         .limit(ZoomLevelLimits)
+
+    if currLevel > a.doc.map.levels.high:
+      level = 0
+      row   = 0
+      col   = 0
+    else:
+      level = currLevel
+      row   = uiCfg.getNatural("cursor.row",    default=0)
+      col   = uiCfg.getNatural("cursor.column", default=0)
 
   updateLastCursorViewCoords(a)
 
@@ -6845,47 +6964,27 @@ proc initApp(a) =
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
 
-  let width  = cfg.win.width
-  let height = cfg.win.height
+  let winCfg = cfg.getObjectOrEmpty("last-state.window")
 
-  var xpos = cfg.win.xpos
+  let width  = winCfg.getNatural("width", default=700)
+                     .limit(WindowWidthLimits)
+
+  let height = winCfg.getNatural("height", default=800)
+                     .limit(WindowWidthLimits)
+
+  var xpos = winCfg.getInt("x-position", default = -1)
   if xpos < 0: xpos = (maxWidth - width) div 2
 
-  var ypos = cfg.win.ypos
+  var ypos = winCfg.getInt("y-position", default = -1)
   if ypos < 0: ypos = (maxHeight - height) div 2
 
   a.win.size = (width.int, height.int)
   a.win.pos = (xpos, ypos)
 
-  if cfg.win.maximized:
+  if winCfg.getBool("maximized", default=false):
     a.win.maximize()
 
   a.win.show()
-
-# }}}
-# {{{ createSplashWindow()
-proc createSplashWindow(mousePassthru: bool = false; a) =
-  alias(s, a.splash)
-
-  var cfg = DefaultOpenglWindowConfig
-  cfg.visible = false
-  cfg.resizable = false
-  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
-  cfg.nMultiSamples = 4
-  cfg.transparentFramebuffer = true
-  cfg.decorated = false
-  cfg.floating = true
-
-  when defined(windows):
-    cfg.hideFromTaskbar = true
-    cfg.mousePassthru = mousePassthru
-  else:
-    cfg.version = glv32
-    cfg.forwardCompat = true
-    cfg.profile = opCoreProfile
-
-  s.win = newWindow(cfg)
-  s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
 
 # }}}
 # {{{ cleanup()
@@ -6907,6 +7006,7 @@ proc cleanup(a) =
   info("Cleanup successful, bye!")
 
 # }}}
+
 # {{{ crashHandler() =
 proc crashHandler(e: ref Exception, a) =
   let doAutosave = a.doc.filename != ""
@@ -6938,6 +7038,7 @@ proc crashHandler(e: ref Exception, a) =
   quit(QuitFailure)
 
 # }}}
+
 # }}}
 
 # {{{ main()
