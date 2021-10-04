@@ -6870,20 +6870,20 @@ proc initPreferences(cfg: HoconNode; a) =
   let prefs = cfg.getObjectOrEmpty("preferences")
 
   with a.prefs:
-    showSplash        = cfg.getBool("splash.show-at-startup", default=true)
-    autoCloseSplash   = cfg.getBool("splash.auto-close", default=false)
+    showSplash        = prefs.getBool("splash.show-at-startup", default=true)
+    autoCloseSplash   = prefs.getBool("splash.auto-close", default=false)
 
-    splashTimeoutSecs = cfg.getNatural("splash.auto-close-timeout-secs",
+    splashTimeoutSecs = prefs.getNatural("splash.auto-close-timeout-secs",
                                        default=3)
-                           .limit(SplashTimeoutSecsLimits)
+                             .limit(SplashTimeoutSecsLimits)
 
-    loadLastMap       = cfg.getBool("load-last-map", default=true)
-    vsync             = cfg.getBool("video.vsync",   default=true)
+    loadLastMap       = prefs.getBool("load-last-map", default=true)
+    vsync             = prefs.getBool("video.vsync",   default=true)
 
-    autosave          = cfg.getBool("auto-save.enabled", default=true)
+    autosave          = prefs.getBool("auto-save.enabled", default=true)
 
-    autosaveFreqMins  = cfg.getNatural("auto-save.frequency-mins", default=2)
-                           .limit(AutosaveFreqMinsLimits)
+    autosaveFreqMins  = prefs.getNatural("auto-save.frequency-mins", default=2)
+                             .limit(AutosaveFreqMinsLimits)
 
 # }}}
 # {{{ initApp()

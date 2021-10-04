@@ -101,9 +101,9 @@ proc `==`(a, b: Token): bool =
     false
 
 
-let validQuotedStringRuneRange = 0x0020..0x10fff
+const validQuotedStringRuneRange = 0x0020..0x10fff
 
-let whitespaceRunes = @[
+const whitespaceRunes = @[
   Rune(0x0020), Rune(0x00a0), Rune(0x1680), Rune(0x2000),
   Rune(0x2001), Rune(0x2002), Rune(0x2003), Rune(0x2004),
   Rune(0x2005), Rune(0x2006), Rune(0x2007), Rune(0x2008),
@@ -123,7 +123,7 @@ let whitespaceRunes = @[
   Rune(0x001f)  # unit separator
 ]
 
-let forbiddenRunes = @[
+const forbiddenRunes = @[
   Rune('$'), Rune('"'), Rune('{'), Rune('}'), Rune('['), Rune(']'), Rune(':'),
   Rune('='), Rune(','), Rune('+'), Rune('#'), Rune('`'), Rune('^'), Rune('?'),
   Rune('!'), Rune('@'), Rune('*'), Rune('&'), Rune('\\')
@@ -198,7 +198,8 @@ proc readQuotedString(t): Token =
       str &= t.readEscape(t.line, t.column)
     else:
       str &= rune
-      rune = t.eatRune()
+
+    rune = t.eatRune()
 
   Token(kind: tkString, str: str, line: line, column: col)
 
@@ -517,7 +518,8 @@ proc parse*(p): HoconNode =
 
 proc write*(node: HoconNode, stream: Stream,
             writeRootObjectBraces: bool = false,
-            newlineBeforeObjectDepthLimit: Natural = 1) =
+            newlineBeforeObjectDepthLimit: Natural = 1,
+            yesNoBool: bool = true) =
 
   proc go(curr: HoconNode, parent: HoconNode; depth, indent: int) =
     case curr.kind
@@ -555,7 +557,15 @@ proc write*(node: HoconNode, stream: Stream,
 
     of hnkString:
       if (parent.kind != hnkArray): stream.write(" = ")
-      stream.write("\"" & $curr.str & "\"")
+
+      var escape = false
+      for r in curr.str.runes:
+        if r in whitespaceRunes or r in forbiddenRunes:
+          escape = true
+          break
+
+      if escape: stream.write(curr.str.escape())
+      else:      stream.write(curr.str)
 
     of hnkNumber:
       if (parent.kind != hnkArray): stream.write(" = ")
@@ -563,7 +573,11 @@ proc write*(node: HoconNode, stream: Stream,
 
     of hnkBool:
       if (parent.kind != hnkArray): stream.write(" = ")
-      stream.write($curr.bool)
+      if yesNoBool:
+        let val = if curr.bool: "yes" else: "no"
+        stream.write(val)
+      else:
+        stream.write($curr.bool)
 
   let startIndent = if writeRootObjectBraces: 0 else: -1
   go(node, nil, depth=0, indent=startIndent)
@@ -572,7 +586,7 @@ proc write*(node: HoconNode, stream: Stream,
 # {{{ Helpers
 
 type
-  HoconPathError* = object of KeyError
+  HoconPathError*  = object of KeyError
   HoconValueError* = object of ValueError
 
 proc newHoconObject*(): HoconNode = HoconNode(kind: hnkObject)
@@ -658,7 +672,7 @@ proc getFloat*(node: HoconNode, path: string): float =
   v.doGetFloat(path)
 
 proc getInt*(node: HoconNode, path: string): int =
-  node.doGetFloat(path).int
+  node.getFloat(path).int
 
 proc getNatural*(node: HoconNode, path: string): Natural =
   let n = node.get(path)
@@ -783,6 +797,16 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkColon, line: 1, column: 5)
     assert t.eatToken() == Token(kind: tkString, str: "bar", line: 1, column: 6)
     assert t.eatToken() == Token(kind: tkRightBrace, line: 1, column: 9)
+
+  # }}}
+  # {{{ tokeniser test - strings
+  block:
+    let testString = """
+"C:\\AUTOEXEC.BAT"
+"""
+    var t = initTokeniser(newStringStream(testString))
+
+    assert t.eatToken() == Token(kind: tkString, str: "C:\\AUTOEXEC.BAT", line: 1, column: 1)
 
   # }}}
   # {{{ tokeniser test - booleans & null
