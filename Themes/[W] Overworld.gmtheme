@@ -223,7 +223,6 @@ level {
       hover = "#0000001a"
       label = "#ffe6beb4"
     }
-
     item {
       normal = "#ffffffcc"
       hover = "#000000b3"
@@ -234,7 +233,7 @@ level {
 pane {
   notes {
     text = "#ffeeeed4"
-    scrollBar = "#00000000"
+    scroll-bar = "#00000000"
     index = "#ffffffff"
 
     index-background = [
@@ -245,6 +244,10 @@ pane {
     ]
   }
 
-  button = "#ffe6b496"
-  buttonHover = "#fffffcff"
+  toolbar {
+    button {
+      normal = "#ffe6b496"
+      hover = "#fffffcff"
+    }
+  }
 }

@@ -1,7 +1,7 @@
 ui {
   window {
     backgroundColor = "#000000ff"
-    backgroundImage
+    backgroundImage = ""
 
   title {
     normal = "#1a1a1aff"
@@ -52,7 +52,7 @@ ui {
       active = "#ffa600ff"
       disabled = "#ffffff33"
     }
-    foreground { 
+    foreground {
       normal = "#000000b3"
       active = "#000000b3"
       disabled = "#00000059"
@@ -61,6 +61,7 @@ ui {
   text-field {
     cursorColor = "#ffbe00ff"
     selectionColor = "#c882005f"
+
     edit {
       backgroundColor = "#ffffff33"
       textColor = "#ffffffca"
@@ -154,40 +155,67 @@ color8 = "#308d9a37"
 color9 = "#36b8a661"
 color10 = "#a9b46832"
 
-[level.note]
-markerColor = "#ffffff61"
-commentColor = "#ff3300ff"
-indexBackgroundColor1 = "#f75c4aff"
-indexBackgroundColor2 = "#ff9c6aff"
-indexBackgroundColor3 = "#00b3c8ff"
-indexBackgroundColor4 = "#13837fff"
-indexColor = "#000000ff"
-tooltipBackgroundColor = "#000000f7"
-tooltipColor = "#fffffff5"
+  note {
+    markerColor = "#ffffff61"
+    commentColor = "#ff3300ff"
+    background-shape = cirle
+    indexColor = "#000000ff"
 
-[level.label]
-color1 = "#999999ff"
-color2 = "#9999996f"
-color3 = "#f75c4aff"
-color4 = "#13837fff"
+    index-background = [
+      "#f75c4aff"
+      "#ff9c6aff"
+      "#00b3c8ff"
+      "#13837fff"
+    ]
+    tooltip {
+      background = "#000000f7"
+      text = "#fffffff5"
+    }
+  }
 
-[level.levelDropDown]
-buttonColor = "#00000000"
-buttonHoverColor = "#ffffff1a"
-buttonLabelColor = "#ffffff80"
-itemListBackgroundColor = "#292929ff"
-itemColor = "#ffffff99"
-itemHoverColor = "#000000cc"
+  label {
+    text = [
+      "#999999ff"
+      "#9999996f"
+      "#f75c4aff"
+      "#13837fff"
+    ]
+  }
 
-[pane.notes]
-textColor = "#808080ff"
-indexBackgroundColor1 = "#f75c4aff"
-indexBackgroundColor2 = "#fa8d64ff"
-indexBackgroundColor3 = "#00b3c8ff"
-indexBackgroundColor4 = "#1d8d89ff"
-indexColor = "#000000ff"
-scrollBarColor = "#56565600"
+  level-drop-down {
+    item-list-background = "#292929ff"
 
-[pane.toolbar]
-buttonColor = "#000000ff"
-buttonHoverColor = "#262626ff"
+    button {
+      normal = "#00000000"
+      hover = "#ffffff1a"
+      label = "#ffffff80"
+    }
+    item {
+      normal = "#ffffff99"
+      hover = "#000000cc"
+    }
+  }
+}
+
+pane {
+  notes {
+    textColor = "#808080ff"
+    scroll-barColor = "#56565600"
+    indexColor = "#000000ff"
+
+    index-background = [
+      "#f75c4aff"
+      "#fa8d64ff"
+      "#00b3c8ff"
+      "#1d8d89ff"
+    }
+  }
+
+  toolbar {
+    button {
+      normal = "#000000ff"
+      hover = "#262626ff"
+    }
+  }
+}
+

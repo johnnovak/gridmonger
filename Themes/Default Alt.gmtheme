@@ -100,46 +100,60 @@ ui {
   }
 }
 
-[level.general]
-backgroundColor = "#666666ff"
-foregroundColor = "#1a1a1aff"
-foregroundLightColor = "#1a1a1a46"
-lineWidth = Normal
-coordinatesColor = "#e6e6e6ff"
-coordinatesHighlightColor = "#ffbf00ff"
-cursorColor = "#ffa600ff"
-cursorGuidesColor = "#ffa60033"
-selectionColor = "#ff808066"
-pastePreviewColor = "#3399ff66"
-linkMarkerColor = "#00b3c8ff"
-trailColor = "#00000062"
-regionBorderColor = "#ff8080ff"
-regionBorderEmptyColor = "#ff808048"
+level {
+  general {
+    backgroundColor = "#666666ff"
+    line-width = normal
+    cursorColor = "#ffa600ff"
+    cursor-guidesColor = "#ffa60033"
+    link-markerColor = "#00b3c8ff"
+    selectionColor = "#ff808066"
+    trailColor = "#00000062"
+    paste-previewColor = "#3399ff66"
 
-[level.backgroundHatch]
-enabled = true
-color = "#00000066"
-width = 1.0
-spacingFactor = 3.0
+    foreground {
+      normal = "#1a1a1aff"
+      highlight = "#1a1a1a46"
+    }
+    coordinates {
+      normal = "#e6e6e6ff"
+      highlight = "#ffbf00ff"
+    }
+    region-border {
+      normal = "#ff8080ff"
+      empty = "#ff808048"
+    }
 
-[level.grid]
-backgroundStyle = None
-backgroundGridColor = "#00000000"
-floorStyle = Solid
-floorGridColor = "#33333368"
+    background-hatch {
+      enabled = true
+      color = "#00000066"
+      width = 1.0
+      spacing-factor = 3.0
+    }
 
-[level.outline]
-style = None
-fillStyle = Solid
-color = "#00000000"
-widthFactor = 0.0
-overscanEnabled = false
+    grid {
+      background {
+        style = none
+        grid = "#00000000"
+      }
+      floor {
+        style = solid
+        grid = "#33333368"
+      }
+    }
 
-[level.shadow]
-innerColor = "#00000000"
-innerWidthFactor = 0.0
-outerColor = "#00000000"
-outerWidthFactor = 0.0
+    [level.outline]
+    style = None
+    fillStyle = Solid
+    color = "#00000000"
+    widthFactor = 0.0
+    overscanEnabled = false
+
+    [level.shadow]
+    innerColor = "#00000000"
+    innerWidthFactor = 0.0
+    outerColor = "#00000000"
+    outerWidthFactor = 0.0
 
 [level.floorColor]
 transparentFloor = false
@@ -180,15 +194,25 @@ itemListBackgroundColor = "#333333ff"
 itemColor = "#ffffffcc"
 itemHoverColor = "#000000b3"
 
-[pane.notes]
-textColor = "#e6e6e6ff"
-indexBackgroundColor1 = "#f75c4aff"
-indexBackgroundColor2 = "#fa8d64ff"
-indexBackgroundColor3 = "#00b3c8ff"
-indexBackgroundColor4 = "#1d8d89ff"
-indexColor = "#ffffffff"
-scrollBarColor = "#e6e6e6ff"
+pane {
+  notes {
+    textColor = "#e6e6e6ff"
+    scroll-barColor = "#e6e6e6ff"
+    indexColor = "#ffffffff"
 
-[pane.toolbar]
-buttonColor = "#bababaff"
-buttonHoverColor = "#ccccccff"
+    index-background = [
+      "#f75c4aff"
+      "#fa8d64ff"
+      "#00b3c8ff"
+      "#1d8d89ff"
+    }
+  }
+
+  toolbar {
+    button {
+      normal = "#bababaff"
+      hover = "#ccccccff"
+    }
+  }
+}
+

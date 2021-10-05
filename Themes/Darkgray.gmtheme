@@ -100,94 +100,147 @@ ui {
   }
 }
 
-[level.general]
-backgroundColor = "#25282fff"
-foregroundColor = "#babfc3ff"
-foregroundLightColor = "#babfc34f"
-lineWidth = Normal
-coordinatesColor = "#ffffff4d"
-coordinatesHighlightColor = "#ffffffcc"
-cursorColor = "#eab60052"
-cursorGuidesColor = "#eaba101e"
-selectionColor = "#a151515a"
-pastePreviewColor = "#4574a35a"
-linkMarkerColor = "#0dabb5ff"
-trailColor = "#ffffff30"
-regionBorderColor = "#eab600ff"
-regionBorderEmptyColor = "#eab6004e"
+level {
+  general {
+    backgroundColor = "#25282fff"
+    line-width = normal
+    cursorColor = "#eab60052"
+    cursor-guidesColor = "#eaba101e"
+    link-markerColor = "#0dabb5ff"
+    selectionColor = "#a151515a"
+    trailColor = "#ffffff30"
+    paste-previewColor = "#4574a35a"
 
-[level.backgroundHatch]
-enabled = false
-color = "#00000000"
-width = 0.5
-spacingFactor = 1.0
+    foreground {
+      normal = "#babfc3ff"
+      highlight = "#babfc34f"
+    }
+    coordinates {
+      normal = "#ffffff4d"
+      highlight = "#ffffffcc"
+    }
+    region-border {
+      normal = "#eab600ff"
+      empty = "#eab6004e"
+    }
+  }
 
-[level.grid]
-backgroundStyle = Solid
-backgroundGridColor = "#0000001a"
-floorStyle = Solid
-floorGridColor = "#00000041"
+  background-hatch {
+    enabled = false
+    color = "#00000000"
+    width = 0.5
+    spacingF-Actor = 1.0
+  }
 
-[level.outline]
-style = None
-fillStyle = Solid
-color = "#00000000"
-widthFactor = 0.0
-overscanEnabled = false
+  grid {
+    background {
+      style = solid
+      gridColor = "#0000001a"
+    }
+    floor {
+      style = Solid
+      grid = "#00000041"
+    }
+  }
 
-[level.shadow]
-innerColor = "#00000000"
-innerWidthFactor = 0.0
-outerColor = "#00000000"
-outerWidthFactor = 0.0
+  outline {
+    style = none
+    fill-style = solid
+    color = "#00000000"
+    width-factor = 0.0
+    overscan = false
+  }
 
-[level.floorColor]
-transparentFloor = false
-color1 = "#353c44ff"
-color2 = "#6f000097"
-color3 = "#ff290074"
-color4 = "#ffb30080"
-color5 = "#7c652192"
-color6 = "#679f1f92"
-color7 = "#d2ed3a80"
-color8 = "#00a36c6f"
-color9 = "#1c6fac83"
-color10 = "#9c559fa6"
+  shadow {
+    inner {
+      color = "#00000000"
+      width-factor = 0.0
+    }
+    outer {
+      color = "#00000000"
+      width-factor = 0.0
+    }
+  }
 
-[level.note]
-markerColor = "#babfc3c8"
-commentColor = "#ff3300cc"
-indexBackgroundColor1 = "#257479ff"
-indexBackgroundColor2 = "#565d90ff"
-indexBackgroundColor3 = "#845b73ff"
-indexBackgroundColor4 = "#796b25ff"
-indexColor = "#ffffffcc"
-tooltipBackgroundColor = "#15171bff"
-tooltipColor = "#ffffffd4"
+  floor {
+    transparent = false
 
-[level.label]
-color1 = "#babfc3ff"
-color2 = "#f5e3c5a1"
-color3 = "#d18bb4fa"
-color4 = "#9ca6f4f2"
+    background = [
+      "#353c44ff"
+      "#6f000097"
+      "#ff290074"
+      "#ffb30080"
+      "#7c652192"
+      "#679f1f92"
+      "#d2ed3a80"
+      "#00a36c6f"
+      "#1c6fac83"
+      "#9c559fa6"
+    ]
+  }
 
-[level.levelDropDown]
-buttonColor = "#00000000"
-buttonHoverColor = "#ffffff15"
-buttonLabelColor = "#ffffffd8"
-itemListBackgroundColor = "#404550ff"
-itemColor = "#ffffffcc"
-itemHoverColor = "#000000b3"
+  note {
+    markerColor = "#babfc3c8"
+    commentColor = "#ff3300cc"
+    background-shape cirle
 
-[pane.notes]
-textColor = "#babfc3ff"
-indexBackgroundColor1 = "#257479ff"
-indexBackgroundColor2 = "#565d90ff"
-indexBackgroundColor3 = "#845b73ff"
-indexBackgroundColor4 = "#796b25ff"
-indexColor = "#babfc3ff"
-scrollBarColor = "#babfc3ff"
+    indexColor = "#ffffffcc"
+    
+    index-background = [
+      "#257479ff"
+      "#565d90ff"
+      "#845b73ff"
+      "#796b25ff"
+    ]
+    tooltip {
+      background = "#15171bff"
+      text = "#ffffffd4"
+    }
+  }
 
-[pane.toolbar]
-buttonColor = "#353c44ff"
-buttonHoverColor = "#495058ff"
+  label {
+    text = [
+      "#babfc3ff"
+      "#f5e3c5a1"
+      "#d18bb4fa"
+      "#9ca6f4f2"
+    ]
+  }
+
+  level-drop-down {
+    item-list-background = "#404550ff"
+
+    button {
+      normal = "#00000000"
+      hover = "#ffffff15"
+      label = "#ffffffd8"
+    }
+    item {
+      normal = "#ffffffcc"
+      hover = "#000000b3"
+    }
+  }
+}
+
+pane {
+  notes {
+    textColor = "#babfc3ff"
+    scroll-barColor = "#babfc3ff"
+    indexColor = "#babfc3ff"
+
+    index-background = [
+      "#257479ff"
+      "#565d90ff"
+      "#845b73ff"
+      "#796b25ff"
+    }
+  }
+
+  toolbar {
+    button {
+      normal = "#353c44ff"
+      hover = "#495058ff"
+    }
+  }
+}
+

@@ -1,7 +1,11 @@
 ui {
   window {
-    background = "#b6b8b8ff"
-
+    modified-flag = "#ffffff40"
+    
+    background {
+      color = "#b6b8b8ff"
+      image = ""
+    }
     title {
       background {
         normal = "#2e2e2eff"
@@ -10,8 +14,8 @@ ui {
       text {
         normal = "#ffffff80"
         title = "#ffffff66"
+      }
     }
-    modified-flag = "#ffffff40"
     button {
       normal = "#ffffff73"
       hover = "#ffffffb3"
@@ -19,25 +23,36 @@ ui {
     }
   }
 
-[ui.dialog]
-cornerRadius = 8.0
-titleBackground = "#1a1a1aff"
-title = "#d9d9d9ff"
-background = "#464646ff"
-label = "#ffffffb3"
-warning = "#ff6464ff"
-outerBorder = "#b6b8b8ff"
-outerBorderWidth = 6.0
-innerBorder = "#00000000"
-innerBorderWidth = 0.0
-shadowEnabled = false
-shadowXOffset = 2.0
-shadowYOffset = 3.0
-shadowFeather = 18.0
-shadow = "#0000004f"
+  dialog {
+    corner-radius = 8.0
+    background = "#464646ff"
+    label = "#ffffffb3"
+    warning = "#ff6464ff"
+
+    title {
+      background = "#1a1a1aff"
+      text = "#d9d9d9ff"
+    }
+    outer-border {
+      color = "#b6b8b8ff"
+      width = 6.0
+    }
+    inner-border {
+      color = "#00000000"
+      width = 0.0
+    }
+    shadow {
+      enabled = false
+      color = "#0000004f"
+      feather = 18.0
+      x-offset = 2.0
+      y-offset = 3.0
+    }
+  }
 
   widget {
     corner-radius = 5.0
+
     background {
       normal "#ffffff80"
       hover = "#ffffffa1"
@@ -49,10 +64,12 @@ shadow = "#0000004f"
       active = "#000000b3"
       disabled = "#00000059"
     }
+  }
 
   text-field {
     cursor = "#ffbe00ff"
     selection = "#c8820078"
+
     edit {
       background = "#ffffff33"
       text = "#ffffffb3"
@@ -67,6 +84,7 @@ shadow = "#0000004f"
     background = "#333333ff"
     text = "#ccccccff"
     coordinates = "#999999ff"
+
     command {
       background = "#838383ff"
        = "#232323ff"
@@ -92,94 +110,146 @@ shadow = "#0000004f"
   }
 }
 
-[level.general]
-background = "#b6b8b8ff"
-foreground = "#353232ff"
-foregroundLight = "#2d2a2a3c"
-lineWidth = Normal
-coordinates = "#222020ff"
-coordinatesHighlight = "#222020ff"
-cursor = "#ffb300ff"
-cursorGuides = "#ffb30033"
-selection = "#ff808080"
-pastePreview = "#3399ff80"
-linkMarker = "#00b3c8ff"
-trail = "#00000050"
-regionBorder = "#fd7675ff"
-regionBorderEmpty = "#fd49483b"
+level {
+  general {
+    background = "#b6b8b8ff"
+    line-width = normal
+    cursor = "#ffb300ff"
+    cursor-guides = "#ffb30033"
+    link-marker = "#00b3c8ff"
+    selection = "#ff808080"
+    trail = "#00000050"
+    paste-preview = "#3399ff80"
 
-[level.backgroundHatch]
-enabled = false
-color = "#00000000"
-width = 0.5
-spacingFactor = 1.0
+    foreground {
+      normal = "#353232ff"
+      highlight = "#2d2a2a3c"
+    }
+    coordinates {
+      normal = "#222020ff"
+      highlight = "#222020ff"
+    }
+    region-border {
+      normal = "#fd7675ff"
+      empty = "#fd49483b"
+    }
+  }
 
-[level.grid]
-backgroundStyle = None
-backgroundGrid = "#00000000"
-floorStyle = Loose
-floorGrid = "#00000042"
+  background-hatch {
+    enabled = false
+    color = "#00000000"
+    width = 0.5
+    spacing-factor = 1.0
+  }
 
-[level.outline]
-style = "Rounded Edges"
-fillStyle = Hatched
-color = "#9a9c9cff"
-widthFactor = 0.25
-overscanEnabled = true
+  grid {
+    background {
+      style = none
+      grid = "#00000000"
+    }
+    floor {
+      style = loose
+      grid = "#00000042"
+    }
+  }
 
-[level.shadow]
-inner = "#00000000"
-innerWidthFactor = 0.0
-outer = "#00000026"
-outerWidthFactor = 0.125
+  outline {
+    style = "rounded edges"
+    fill-style = hatched
+    color = "#9a9c9cff"
+    width-factor = 0.25
+    overscan = true
+  }
 
-[level.floorColor]
-transparentFloor = false
-color1 = "#f2f2eeff"
-color2 = "#6f00008f"
-color3 = "#ff290067"
-color4 = "#ffb30062"
-color5 = "#59481890"
-color6 = "#709a008d"
-color7 = "#8cc41e56"
-color8 = "#20a09345"
-color9 = "#276c9f90"
-color10 = "#9c559f72"
+  shadow {
+    inner {
+      color = "#00000000"
+      width-factor = 0.0
+    }
+    outer {
+      color = "#00000026"
+      width-factor = 0.125
+    }
+  }
 
-[level.note]
-marker = "#555252ff"
-comment = "#ff3300cc"
-indexBackgroundColor1 = "#fd4948ff"
-indexBackgroundColor2 = "#32b6e5ff"
-indexBackgroundColor3 = "#a0a2a2ff"
-indexBackgroundColor4 = "#4c4e4eff"
-index = "#ffffffff"
-tooltipBackground = "#0a0a0ae8"
-tooltip = "#ffffffe6"
+  level {
+    transparent = false
 
-[level.label]
-color1 = "#353232ff"
-color2 = "#ffffffff"
-color3 = "#fd4948ff"
-color4 = "#32b6e5ff"
+    background = [
+      "#f2f2eeff"
+      "#6f00008f"
+      "#ff290067"
+      "#ffb30062"
+      "#59481890"
+      "#709a008d"
+      "#8cc41e56"
+      "#20a09345"
+      "#276c9f90"
+      "#9c559f72"
+    ]
+  }
 
-[level.levelDropDown]
-button = "#00000000"
-buttonHover = "#0000001a"
-buttonLabel = "#000000b3"
-itemListBackground = "#404040ff"
-item = "#ffffffcc"
-itemHover = "#000000b3"
+  note {
+    marker = "#555252ff"
+    comment = "#ff3300cc"
+    background-shapde = circle
+    index = "#ffffffff"
 
-[pane.notes]
-text = "#2d2a2aff"
-indexBackgroundColor1 = "#fd4948ff"
-indexBackgroundColor2 = "#1e98c7ff"
-indexBackgroundColor3 = "#878989ff"
-indexBackgroundColor4 = "#4c4e4eff"
-index = "#ffffffff"
-scrollBar = "#51515100"
+    index-background = [
+      "#fd4948ff"
+      "#32b6e5ff"
+      "#a0a2a2ff"
+      "#4c4e4eff"
+    ]
+    tooltip {
+      background = "#0a0a0ae8"
+      text = "#ffffffe6"
+    }
+  }
 
-[pane.toolbar]
-button = "#f2f2eeff"
-buttonHover = "#fffffcff"
+  label {
+    text = [
+      "#353232ff"
+      "#ffffffff"
+      "#fd4948ff"
+      "#32b6e5ff"
+    ]
+  }
+
+  level-drop-down {
+    item-list-background = "#404040ff"
+
+    button {
+      normal = "#00000000"
+      hover = "#0000001a"
+      label = "#000000b3"
+    }
+    item {
+      normal = "#ffffffcc"
+      hover = "#000000b3"
+    }
+  }
+}
+
+pane {
+  notes {
+    text = "#2d2a2aff"
+    scroll-bar = "#51515100"
+    index = "#ffffffff"
+
+    index-background = [
+      "#fd4948ff"
+      "#1e98c7ff"
+      "#878989ff"
+      "#4c4e4eff"
+    ]
+  }
+
+  toolbar {
+    button {
+      normal = "#f2f2eeff"
+      hover = "#fffffcff"
+    }
+  }
+}
+
