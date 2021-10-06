@@ -54,7 +54,7 @@ ui {
     corner-radius = 5.0
 
     background {
-      normal "#ffffff80"
+      normal = "#ffffff80"
       hover = "#ffffffa1"
       active = "#ffb300ff"
       disabled = "#ffffff33"
@@ -87,7 +87,7 @@ ui {
 
     command {
       background = "#838383ff"
-       = "#232323ff"
+      text = "#232323ff"
     }
   }
 
@@ -123,7 +123,7 @@ level {
 
     foreground {
       normal = "#353232ff"
-      highlight = "#2d2a2a3c"
+      light = "#2d2a2a3c"
     }
     coordinates {
       normal = "#222020ff"
@@ -172,7 +172,7 @@ level {
     }
   }
 
-  level {
+  floor {
     transparent = false
 
     background = [
