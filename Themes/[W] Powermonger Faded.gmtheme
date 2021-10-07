@@ -1,6 +1,6 @@
 ui {
   window {
-    modifiedFlag = "#ffffff40"
+    modified-flag = "#ffffff40"
 
     background {
       color = "#584e44ff"
@@ -12,7 +12,7 @@ ui {
         inactive = "#1a1a1aff"
       }
       text {
-        color = "#ffffff80"
+        normal = "#ffffff80"
         inactive = "#ffffff66"
       }
     }
@@ -31,7 +31,7 @@ ui {
 
     title {
       background = "#1a1a1aff"
-      color = "#d9d9d9ff"
+      text = "#d9d9d9ff"
     }
     outer-border {
       color = "#00000000"

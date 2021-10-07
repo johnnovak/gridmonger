@@ -13,7 +13,7 @@ ui {
       }
       text {
         normal = "#ffffff80"
-        title = "#ffffff66"
+        inactive = "#ffffff66"
       }
     }
     button {

@@ -1,122 +1,129 @@
 ui {
   window {
-    backgroundColor = "#292929ff"
-    backgroundImage
+    modified-flag = "#ffffff4d"
 
-  title {
-    normal = "#0d0d0dff"
-    inactive = "#1a1a1aff"
-  }
-  text {
-    color = "#ffffff80"
-    inactive = "#ffffff66"
-  }
-  modifiedFlagColor = "#ffffff4d"
-
-  button {
-    normal = "#ffffff59"
-    hover = "#ffffff80"
-    down = "#ffffff99"
+    background {
+      color = "#292929ff"
+      image = ""
+    }
+    title {
+      background {
+        normal = "#0d0d0dff"
+        inactive = "#1a1a1aff"
+      }
+      text {
+        normal = "#ffffff80"
+        inactive = "#ffffff66"
+      }
+    }
+    button {
+      normal = "#ffffff59"
+      hover = "#ffffff80"
+      down = "#ffffff99"
+    }
   }
 
   dialog {
     corner-radius = 7.0
     background = "#404040ff"
-    labelColor = "#ffffffb3"
-    warningColor = "#ff6464ff"
+    label = "#ffffffb3"
+    warning = "#ff6464ff"
 
     title {
-      backgroundColor = "#141414ff"
-      color = "#d9d9d9ff"
+      background = "#141414ff"
+      text = "#d9d9d9ff"
     }
     outer-border {
       color = "#00000000"
       width = 0.0
+    }
     inner-border {
       color = "#00000000"
       width = 0.0
     }
     shadow {
       enabled = true
+      color = "#00000077"
+      feather = 20.0
       x-offset = 2.0
       y-offset = 3.0
-      feather = 20.0
-      fill = "#00000077"
     }
+  }
 
   widget {
     corner-radius = 5.0
+
     background {
       normal = "#ffffff80"
-      hoverColor = "#ffffffa1"
-      activeColor = "#ffa600ff"
-      disabledColor = "#ffffff33"
+      hover = "#ffffffa1"
+      active = "#ffa600ff"
+      disabled = "#ffffff33"
     }
     foreground {
       normal = "#000000b3"
-      activeColor = "#000000b3"
-      disabledColor = "#00000059"
+      active = "#000000b3"
+      disabled = "#00000059"
     }
   }
 
   text-field {
+    cursor = "#ffbe00ff"
+    selection = "#c8820078"
+
     edit {
       background = "#ffffff33"
       text = "#ffffffb3"
     }
-    cursorColor = "#ffbe00ff"
-    selectionColor = "#c8820078"
-
     scroll-bar {
-      normalColor = "#00000000"
-      editColor = "#ffffff00"
+      normal = "#00000000"
+      edit = "#ffffff00"
     }
   }
 
   status-bar {
     background = "#1a1a1aff"
-    coordinatesColor = "#737373ff"
-    textColor = "#898989ff"
+    coordinates = "#737373ff"
+    text = "#898989ff"
 
-    command { 
-      backgroundColor = "#b7b7b7ff"
-      commandColor = "#1a1a1aff"
+    command {
+      background = "#b7b7b7ff"
+      text = "#1a1a1aff"
     }
   }
 
   about-button {
     label {
       normal = "#ffffff66"
-      hoverColor = "#ffffff80"
-      downColor = "#ffffffb3"
+      hover = "#ffffff80"
+      down = "#ffffffb3"
     }
   }
 
   about-dialog {
-    logoColor = "#e8e8e8ff"
+    logo = "#e8e8e8ff"
   }
 
   splash-image {
-    logoColor = "#292929ff"
-    outlineColor = "#e8e8e8ff"
+    logo = "#292929ff"
+    outline = "#e8e8e8ff"
     shadow-alpha = 1.0
   }
 }
 
 level {
   general {
-    backgroundColor = "#292929ff"
+    background = "#292929ff"
     line-width = normal
-    cursorColor = "#ffa600ff"
-    cursor-guidesColor = "#ffa60033"
-    link-markerColor = "#00b3c8ff"
-    selectionColor = "#ff808066"
-    trailColor = "#5b5b5bda"
-    paste-previewColor = "#3399ff66"
+    cursor = "#ffa600ff"
+    cursor-guides = "#ffa60033"
+    link-marker = "#00b3c8ff"
+    selection = "#ff808066"
+    trail = "#5b5b5bda"
+    paste-preview = "#3399ff66"
 
     foreground {
       normal = "#292929ff"
-      highlight = "#2929294f"
+      light = "#2929294f"
     }
     coordinates {
       normal = "#808080ff"
@@ -132,16 +139,16 @@ level {
     enabled = false
     color = "#00000000"
     width = 0.5
-    spacingF-Actor = 1.0
+    spacing-factor = 1.0
   }
 
   grid {
     background {
       style = none
-      gridColor = "#00000000"
+      grid = "#00000000"
     }
     floor {
-      style = Solid
+      style = solid
       grid = "#00000069"
     }
   }
@@ -183,12 +190,11 @@ level {
   }
 
   note {
-    markerColor = "#1a1a1ab3"
-    commentColor = "#ff3300cc"
-    background-shape cirle
+    marker = "#1a1a1ab3"
+    comment = "#ff3300cc"
+    background-shape = circle
+    index = "#ffffffff"
 
-    indexColor = "#ffffffff"
-    
     index-background = [
       "#f75c4aff"
       "#ff9c6aff"
@@ -227,16 +233,16 @@ level {
 
 pane {
   notes {
-    textColor = "#ccccccff"
-    scroll-barColor = "#ccccccff"
-    indexColor = "#ffffffff"
+    text = "#ccccccff"
+    scroll-bar = "#ccccccff"
+    index = "#ffffffff"
 
     index-background = [
       "#f75c4aff"
       "#fa8d64ff"
       "#00b3c8ff"
       "#1d8d89ff"
-    }
+    ]
   }
 
   toolbar {

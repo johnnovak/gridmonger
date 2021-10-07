@@ -12,11 +12,10 @@ ui {
         inactive = "#1a1a1aff"
       }
       text {
-        color = "#ffffff80"
+        normal = "#ffffff80"
         inactive = "#ffffff66"
       }
     }
-
     button {
       normal = "#ffffff73"
       hover = "#ffffffb3"
@@ -60,7 +59,7 @@ ui {
       active = "#ffb300ff"
       disabled = "#ffffff33"
     }
-    foreground { 
+    foreground {
       normal = "#000000b3"
       active = "#000000a7"
       disabled = "#00000059"
@@ -88,7 +87,7 @@ ui {
 
     command {
       background = "#808080ff"
-      color = "#262626ff"
+      text = "#262626ff"
     }
   }
 
@@ -149,7 +148,7 @@ level {
       grid = "#00000000"
     }
     floor {
-      style = Solid
+      style = solid
       grid = "#66006629"
     }
   }
@@ -193,9 +192,8 @@ level {
   note {
     marker = "#191616b4"
     comment = "#ff3300cc"
-    background-shape = cirle
+    background-shape = circle
     index = "#ffffffff"
-    
     index-background = [
       "#fd4948ff"
       "#32b6e5ff"
@@ -243,7 +241,7 @@ pane {
       "#1e98c7ff"
       "#878989ff"
       "#4c4e4eff"
-    }
+    ]
   }
 
   toolbar {

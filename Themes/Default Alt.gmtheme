@@ -1,6 +1,6 @@
 ui {
   window {
-    modifiedFlag = "#ffffff40"
+    modified-flag = "#ffffff40"
 
     background  {
       color = "#666666ff"
@@ -31,7 +31,7 @@ ui {
 
     title {
       background = "#0d0d0dff"
-      color = "#d9d9d9ff"
+      text = "#d9d9d9ff"
     }
     outer-border {
       color = "#666666ff"
@@ -87,7 +87,7 @@ ui {
 
     command {
       background = "#ffa600e9"
-      color = "#262626ff"
+      text = "#262626ff"
     }
   }
 

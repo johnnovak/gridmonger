@@ -83,7 +83,7 @@ ui {
 
     command {
       backgroundColor = "#9a793aff"
-      color = "#3e3428ff"
+      text = "#3e3428ff"
     }
   }
 

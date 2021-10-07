@@ -78,7 +78,7 @@ ui {
     coordinatesColor = "#ffffff6a"
     command {
       backgroundColor = "#777a83ff"
-      color = "#202228ff"
+      text = "#202228ff"
     }
   }
 

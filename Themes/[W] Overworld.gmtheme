@@ -31,7 +31,7 @@ ui {
 
     title {
       background = "#1a1a1aff"
-      color = "#d9d9d9ff"
+      text = "#d9d9d9ff"
     }
     outer-border {
       color = "#00000000"
@@ -87,7 +87,7 @@ ui {
 
     command {
       background = "#808080ff"
-      color = "#262626ff"
+      text = "#262626ff"
     }
   }
 
