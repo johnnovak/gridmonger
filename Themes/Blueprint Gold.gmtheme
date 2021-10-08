@@ -7,12 +7,14 @@ ui {
       image = ""
     }
     title {
-      normal = "#2e2e2eff"
-      inactive = "#1a1a1aff"
-    }
-    text {
-      color = "#ffffff80"
-      inactive = "#ffffff66"
+      background {
+        normal = "#2e2e2eff"
+        inactive = "#1a1a1aff"
+      }
+      text {
+        normal = "#ffffff80"
+        inactive = "#ffffff66"
+      }
     }
     button {
       normal = "#ffffff73"
@@ -29,7 +31,7 @@ ui {
 
     title {
       background = "#0d0d0dff"
-      color = "#d9d9d9ff"
+      text = "#d9d9d9ff"
     }
     outer-border {
       color = "#00000000"
@@ -41,10 +43,10 @@ ui {
     }
     shadow {
       enabled = false
-      x-offset = 0.0
-      y-Offset = 0.0
-      feather = 0.0
       color = "#00000000"
+      feather = 0.0
+      x-offset = 0.0
+      y-offset = 0.0
     }
   }
 
@@ -121,7 +123,7 @@ level {
 
     foreground {
       normal = "#e8b20eff"
-      highlight = "#e8b20e48"
+      light = "#e8b20e48"
     }
     coordinates {
       normal = "#ffffff4d"
@@ -137,7 +139,7 @@ level {
     enabled = false
     color = "#00000000"
     width = 0.5
-    spacingF-Actor = 1.0
+    spacing-factor = 1.0
   }
 
   grid {
@@ -146,7 +148,7 @@ level {
       grid = "#0000001a"
     }
     floor {
-      style = Solid
+      style = solid
       grid = "#00000033"
     }
   }
@@ -190,7 +192,7 @@ level {
   note {
     marker = "#e8b20eff"
     comment = "#ff3300cc"
-    background-shape = cirle
+    background-shape = circle
     index = "#e8b20eff"
 
     index-background = [
@@ -240,7 +242,7 @@ pane {
       "#1d2851ff"
       "#45623fff"
       "#312847ff"
-    }
+    ]
   }
 
   toolbar {

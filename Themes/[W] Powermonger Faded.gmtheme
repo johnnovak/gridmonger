@@ -44,14 +44,14 @@ ui {
     shadow {
       enabled = false
       x-offset = 0.0
-      y-Offset = 0.0
+      y-offset = 0.0
       feather = 0.0
       color = "#00000000"
     }
   }
 
   widget {
-    cornerRadius = 5.0
+    corner-radius = 5.0
 
     background {
       normal = "#ffffff80"
@@ -66,7 +66,7 @@ ui {
     }
   }
 
-  textfield {
+  text-field {
     cursor = "#ffbe00ff"
     selection = "#c8820078"
 
@@ -123,7 +123,7 @@ level {
 
     foreground {
       normal = "#222022ff"
-      highlight = "#2d2a2a48"
+      light = "#2d2a2a48"
     }
     coordinates {
       normal = "#ffe69996"
@@ -139,7 +139,7 @@ level {
     enabled = false
     color = "#00000000"
     width = 0.5
-    spacingF-Actor = 1.0
+    spacing-factor = 1.0
   }
 
   grid {
@@ -148,7 +148,7 @@ level {
       grid = "#00000000"
     }
     floor {
-      style = Solid
+      style = solid
       grid = "#66006629"
     }
   }
@@ -242,7 +242,7 @@ pane {
       "#1e98c7ff"
       "#878989ff"
       "#4c4e4eff"
-    }
+    ]
   }
 
   toolbar {

@@ -123,7 +123,7 @@ level {
 
     foreground {
       normal = "#00d0e0ff"
-      highlight = "#005f66ff"
+      light = "#005f66ff"
     }
     coordinates {
       normal = "#00656dff"

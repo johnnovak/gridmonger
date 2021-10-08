@@ -7,12 +7,14 @@ ui {
       image = ""
     }
     title {
-      normal = "#232332ff"
-      inactive = "#191919ff"
-    }
-    text {
-      color = "#ffffff99"
-      inactive = "#ffffff66"
+      background {
+        normal = "#232332ff"
+        inactive = "#191919ff"
+      }
+      text {
+        normal = "#ffffff99"
+        inactive = "#ffffff66"
+      }
     }
     button {
       normal = "#ffffff73"
@@ -29,7 +31,7 @@ ui {
 
     title {
       background = "#131317ff"
-      color = "#fffcfce6"
+      text = "#fffcfce6"
     }
     outer-border {
       color = "#00000000"
@@ -41,15 +43,15 @@ ui {
     }
     shadow {
       enabled = true
-      x-offset = 1.0
-      y-Offset = 1.0
-      feather = 12.0
       color = "#00000041"
+      feather = 12.0
+      x-offset = 1.0
+      y-offset = 1.0
     }
   }
 
   widget {
-    cornerRadius = 5.0
+    corner-radius = 5.0
 
     background {
       normal = "#fff3f380"
@@ -64,7 +66,7 @@ ui {
     }
   }
 
-  textfield {
+  text-field {
     cursor = "#ffbe00ff"
     selection = "#c96e0f6f"
 
@@ -121,7 +123,7 @@ level {
 
     foreground {
       normal = "#282841ff"
-      highlight = "#1818a159"
+      light = "#1818a159"
     }
     coordinates {
       normal = "#ffffff66"
@@ -137,7 +139,7 @@ level {
     enabled = false
     color = "#00000000"
     width = 0.5
-    spacingF-Actor = 1.0
+    spacing-factor = 1.0
   }
 
   grid {
@@ -241,7 +243,7 @@ pane {
       "#a389d7ff"
       "#5c98d2ff"
       "#83838cff"
-    }
+    ]
   }
 
   toolbar {

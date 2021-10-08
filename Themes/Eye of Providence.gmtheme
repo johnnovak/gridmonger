@@ -1,6 +1,6 @@
 ui {
   window {
-    modified-flat = "#d2c3a978"
+    modified-flag = "#d2c3a978"
 
     background {
       color = "#a2843dff"

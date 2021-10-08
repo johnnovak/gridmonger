@@ -1,6 +1,6 @@
 ui {
   window {
-    modifiedFlag = "#d2c3a978"
+    modified-flag = "#d2c3a978"
 
     background {
       color = "#987c63ff"
@@ -31,7 +31,7 @@ ui {
 
     title {
       background = "#0d0d0dff"
-      color = "#d9d9d9ff"
+      text = "#d9d9d9ff"
     }
     outer-border {
       color = "#00000000"

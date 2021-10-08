@@ -31,7 +31,7 @@ ui {
 
     title {
       background = "#201e1bff"
-      color = "#ffe2b0ab"
+      text = "#ffe2b0ab"
     }
     outer-border {
       color = "#00000000"

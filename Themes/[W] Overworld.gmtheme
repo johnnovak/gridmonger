@@ -4,7 +4,7 @@ ui {
 
     background {
       color = "#62584eff"
-      image = null
+      image = ""
     }
     title {
       background {

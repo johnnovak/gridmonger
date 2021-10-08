@@ -218,7 +218,7 @@ level {
   }
 
   level-drop-down {
-    item-list-backgroundcolor = "#3c3422f0"
+    item-list-background = "#3c3422f0"
 
     button {
       normal = "#ffffff00"

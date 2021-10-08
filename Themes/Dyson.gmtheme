@@ -59,7 +59,7 @@ ui {
       active = "#ffb300ff"
       disabled = "#ffffff33"
     }
-    foreg { 
+    foreground { 
       normal = "#000000b3"
       active = "#000000b3"
       disabled = "#00000059"
@@ -192,7 +192,7 @@ level {
   note {
     marker = "#555252ff"
     comment = "#ff3300cc"
-    background-shapde = circle
+    background-shape = circle
     index = "#ffffffff"
 
     index-background = [

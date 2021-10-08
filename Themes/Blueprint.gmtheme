@@ -1,35 +1,37 @@
 ui {
-  modifiedFlagColor = "#ffffff40"
-
   window {
-    backgroundColor = "#123e87ff"
-    backgroundImage = ""
-  }
+    modified-flag = "#ffffff40"
 
-  title {
-    normal = "#2e2e2eff"
-    inactive = "#1a1a1aff"
-  }
-  text {
-    color = "#ffffff80"
-    inactive = "#ffffff66"
-  }
-
-  button {
-    normal = "#ffffff73"
-    hover = "#ffffffb3"
-    down = "#ffffffe6"
+    background {
+      color = "#123e87ff"
+      image = ""
+    }
+    title {
+      background {
+        normal = "#2e2e2eff"
+        inactive = "#1a1a1aff"
+      }
+      text {
+        normal = "#ffffff80"
+        inactive = "#ffffff66"
+      }
+    }
+    button {
+      normal = "#ffffff73"
+      hover = "#ffffffb3"
+      down = "#ffffffe6"
+    }
   }
 
   dialog {
     corner-radius = 8.0
     background = "#4d4d4dff"
-    labelColor = "#ffffffb3"
-    warningColor = "#ff6464ff"
+    label = "#ffffffb3"
+    warning = "#ff6464ff"
 
     title {
-      backgroundColor = "#1a1a1aff"
-      color = "#d9d9d9ff"
+      background = "#1a1a1aff"
+      text = "#d9d9d9ff"
     }
     outer-border {
       color = "#00000000"
@@ -41,10 +43,10 @@ ui {
     }
     shadow {
       enabled = true
-      x-offset = 2.0
-      y-Offset = 3.0
-      feather = 25.0
       color = "#0000008f"
+      feather = 25.0
+      x-offset = 2.0
+      y-offset = 3.0
     }
   }
 
@@ -65,12 +67,12 @@ ui {
   }
 
   text-field {
-    cursorColor = "#ffbe00ff"
-    selectionColor = "#c8820078"
+    cursor = "#ffbe00ff"
+    selection = "#c8820078"
 
     edit {
-      backgroundColor = "#ffffff33"
-      textColor = "#ffffffb3"
+      background = "#ffffff33"
+      text = "#ffffffb3"
     }
     scroll-bar {
       normal = "#00000000"
@@ -79,12 +81,12 @@ ui {
   }
 
   status-bar {
-    backgroundColor = "#262626ff"
-    textColor = "#ccccccff"
-    coordinatesColor = "#999999ff"
+    background = "#262626ff"
+    text = "#ccccccff"
+    coordinates = "#999999ff"
 
     command {
-      backgroundColor = "#808080ff"
+      background = "#808080ff"
       text = "#333333ff"
     }
   }
@@ -92,36 +94,36 @@ ui {
   about-button {
     label {
       normal = "#ffffff80"
-      hoverColor = "#ffffffb3"
-      downColor = "#ffffffd9"
+      hover = "#ffffffb3"
+      down = "#ffffffd9"
     }
   }
 
   about-dialog {
-    logoColor = "#eaeaeaff"
+    logo = "#eaeaeaff"
   }
 
   splash-image {
-    logoColor = "#1c3662ff"
-    outlineColor = "#dde3f050"
+    logo = "#1c3662ff"
+    outline = "#dde3f050"
     shadow-alpha = 0.5384615384615384
   }
 }
 
 level {
   general {
-    backgroundColor = "#123e87ff"
+    background = "#123e87ff"
     line-width = normal
-    cursorColor = "#ffbe00ff"
-    cursor-guidesColor = "#ffb46f3c"
-    link-markerColor = "#00b3c8ff"
-    selectionColor = "#ff808066"
-    trailColor = "#ffffff36"
-    paste-previewColor = "#3399ff66"
+    cursor = "#ffbe00ff"
+    cursor-guides = "#ffb46f3c"
+    link-marker = "#00b3c8ff"
+    selection = "#ff808066"
+    trail = "#ffffff36"
+    paste-preview = "#3399ff66"
 
     foreground {
       normal = "#d9e5ffff"
-      highlight = "#d9e5ff3e"
+      light = "#d9e5ff3e"
     }
     coordinates {
       normal = "#ffffff80"
@@ -137,13 +139,13 @@ level {
     enabled = false
     color = "#00000000"
     width = 0.5
-    spacingF-Actor = 1.0
+    spacing-factor = 1.0
   }
 
   grid {
     background {
       style = loose
-      gridColor = "#00000026"
+      grid = "#00000026"
     }
     floor {
       style = Loose
@@ -188,10 +190,10 @@ level {
   }
 
   note {
-    markerColor = "#c5d1e1ff"
-    commentColor = "#ff3300cc"
-    background-shape = cirle
-    indexColor = "#ffffffe6"
+    marker = "#c5d1e1ff"
+    comment = "#ff3300cc"
+    background-shape = circle
+    index = "#ffffffe6"
 
     index-background = [
       "#d2336aff"
@@ -231,16 +233,16 @@ level {
 
 pane {
   notes {
-    textColor = "#ffffffe6"
-    scroll-barColor = "#bebebeff"
-    indexColor = "#ffffffff"
+    text = "#ffffffe6"
+    scroll-bar = "#bebebeff"
+    index = "#ffffffff"
 
     index-background = [
       "#d2336aff"
       "#238bcdff"
       "#946e5cff"
       "#202864ff"
-    }
+    ]
   }
 
   toolbar {
