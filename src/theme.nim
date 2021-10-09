@@ -1,4 +1,3 @@
-import math
 import streams
 import strformat
 
@@ -13,35 +12,23 @@ import utils
 
 # {{{ Limits
 const
-  UiDialogCornerRadiusLimits*     = floatLimits(min=   0.0, max=20.0)
-  UiDialogOuterBorderWidthLimits* = floatLimits(min=   0.0, max=30.0)
-  UiDialogInnerBorderWidthLimits* = floatLimits(min=   0.0, max=30.0)
-  UiDialogShadowXOffsetLimits*    = floatLimits(min= -10.0, max=10.0)
-  UiDialogShadowYOffsetLimits*    = floatLimits(min= -10.0, max=10.0)
-  UiDialogShadowFeatherLimits*    = floatLimits(min=   0.0, max=50.0)
+  DialogCornerRadiusLimits* = floatLimits(min=   0.0, max=20.0)
+  DialogBorderWidthLimits*  = floatLimits(min=   0.0, max=30.0)
+  ShadowOffsetLimits*       = floatLimits(min= -10.0, max=10.0)
+  ShadowFeatherLimits*      = floatLimits(min=   0.0, max=50.0)
 
-  UiWidgetCornerRadiusLimits* = floatLimits(min=0.0, max=12.0)
+  WidgetCornerRadiusLimits* = floatLimits(min=0.0, max=12.0)
 
-  LevelBackgroundHatchWidthLimits*         = floatLimits(min=0.5, max=10.0)
-  LevelBackgroundHatchSpacingFactorLimits* = floatLimits(min=1.0, max=10.0)
+  BackgroundHatchWidthLimits*         = floatLimits(min=0.5, max=10.0)
+  BackgroundHatchSpacingFactorLimits* = floatLimits(min=1.0, max=10.0)
 
-  LevelOutlineWidthFactorLimits*     = floatLimits(min=0.0, max=1.0)
-  LevelShadowInnerWidthFactorLimits* = floatLimits(min=0.0, max=1.0)
-  LevelShadowOuterWidthFactorLimits* = floatLimits(min=0.0, max=1.0)
+  OutlineWidthFactorLimits* = floatLimits(min=0.0, max=1.0)
+  ShadowWidthFactorLimits*  = floatLimits(min=0.0, max=1.0)
 
   AlphaLimits* = floatLimits(min=0.0, max=1.0)
 # }}}
 
 # {{{ Helpers
-proc `$`(c: Color): string =
-  let
-    r = round(c.r * 255).int
-    g = round(c.g * 255).int
-    b = round(c.b * 255).int
-    a = round(c.a * 255).int
-
-  fmt"#{r:02x}{g:02x}{b:02x}{a:02x}"
-
 proc limit(config: HoconNode, key: string, limits: FieldLimits) =
   var v = config.get(key)
   v.num = v.num.limit(limits)
@@ -171,24 +158,24 @@ proc loadTheme*(filename: string): HoconNode =
   var p = initHoconParser(newFileStream(filename))
   let cfg = p.parse()
 
-  cfg.limit("ui.dialog.corner-radius",      UiDialogCornerRadiusLimits)
-  cfg.limit("ui.dialog.outer-border.width", UiDialogOuterBorderWidthLimits)
-  cfg.limit("ui.dialog.inner-border.width", UiDialogInnerBorderWidthLimits)
-  cfg.limit("ui.dialog.shadow.feather",     UiDialogShadowFeatherLimits)
-  cfg.limit("ui.dialog.shadow.x-offset",    UiDialogShadowXOffsetLimits)
-  cfg.limit("ui.dialog.shadow.y-offset",    UiDialogShadowYOffsetLimits)
+  cfg.limit("ui.dialog.corner-radius",      DialogCornerRadiusLimits)
+  cfg.limit("ui.dialog.outer-border.width", DialogBorderWidthLimits)
+  cfg.limit("ui.dialog.inner-border.width", DialogBorderWidthLimits)
+  cfg.limit("ui.dialog.shadow.feather",     ShadowFeatherLimits)
+  cfg.limit("ui.dialog.shadow.x-offset",    ShadowOffsetLimits)
+  cfg.limit("ui.dialog.shadow.y-offset",    ShadowOffsetLimits)
 
-  cfg.limit("ui.widget.corner-radius", UiWidgetCornerRadiusLimits)
+  cfg.limit("ui.widget.corner-radius",      WidgetCornerRadiusLimits)
 
   cfg.limit("ui.splash-image.shadow-alpha", AlphaLimits)
 
-  cfg.limit("level.background-hatch.width",          LevelBackgroundHatchWidthLimits)
-  cfg.limit("level.background-hatch.spacing-factor", LevelBackgroundHatchSpacingFactorLimits)
+  cfg.limit("level.background-hatch.width",          BackgroundHatchWidthLimits)
+  cfg.limit("level.background-hatch.spacing-factor", BackgroundHatchSpacingFactorLimits)
 
-  cfg.limit("level.outline.width-factor", LevelOutlineWidthFactorLimits)
+  cfg.limit("level.outline.width-factor",   OutlineWidthFactorLimits)
 
-  cfg.limit("level.shadow.inner.width-factor", LevelShadowInnerWidthFactorLimits)
-  cfg.limit("level.shadow.outer.width-factor", LevelShadowOuterWidthFactorLimits)
+  cfg.limit("level.shadow.inner.width-factor", ShadowWidthFactorLimits)
+  cfg.limit("level.shadow.outer.width-factor", ShadowWidthFactorLimits)
 
   result = cfg
 

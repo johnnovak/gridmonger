@@ -1,4 +1,7 @@
+import math
+
 import fieldlimits
+import hocon
 import logging except Level
 import options
 import strformat
@@ -6,10 +9,20 @@ import strutils
 
 import nanovg
 
-import hocon
 
 
 using cfg: HoconNode
+
+
+proc `$`*(c: Color): string =
+  let
+    r = round(c.r * 255).int
+    g = round(c.g * 255).int
+    b = round(c.b * 255).int
+    a = round(c.a * 255).int
+
+  fmt"#{r:02x}{g:02x}{b:02x}{a:02x}"
+
 
 proc getObjectOrEmpty*(cfg; path: string): HoconNode =
   try:

@@ -308,7 +308,7 @@ type
     currThemeIndex:         Natural
     nextThemeIndex:         Option[Natural]
     themeReloaded:          bool
-    reinitDrawLevelParams:  bool
+    updateThemeStyles:      bool
 
     buttonStyle:            ButtonStyle
     checkBoxStyle:          CheckboxStyle
@@ -5725,8 +5725,13 @@ with ThemeEditorAutoLayoutParams:
   rightPad = 16.0
 
 # {{{ renderThemeEditorProps()
+
+type PropertyKind = enum
+  pkColor, pkString #, pkBool, pkFloat, pkEnum
+
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
+  alias(cfg, a.theme.config)
 
 #[
   let ts = a.theme.style
@@ -5813,89 +5818,144 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
 ]#
 
+  template prop(label: string, path: string, body: untyped)  =
+    block:
+      koi.label(label)
+      koi.setNextId(path)
+      body
+
+  template colorProp(label: string, path: string) =
+    prop(label, path):
+      var n = cfg.get(path)
+      var val = parseColor(n.str).get
+      koi.color(val)
+      n.str = $val
+
+  template boolProp(label: string, path: string) =
+    prop(label, path):
+      var val = cfg.getBool(path)
+      koi.checkBox(val)
+      cfg.set(path, val)
+
+  template floatProp(label: string, path: string, limits: FieldLimits) =
+    prop(label, path):
+      var n = cfg.get(path)
+      koi.horizSlider(startVal=limits.minFloat,
+                      endVal=limits.maxFloat,
+                      n.num,
+                      style=ThemeEditorSliderStyle)
+
+  template enumProp(label: string, path: string, T: typedesc[enum]) =
+    prop(label, path):
+      var val = cfg.getEnum(path, T)
+      koi.dropDown(val)
+      cfg.set(path, $val)
+
+
   koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)
 
   ThemeEditorAutoLayoutParams.rowWidth = w
   initAutoLayout(ThemeEditorAutoLayoutParams)
 
+  var p: string
+
   # {{{ User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
-#[      group:
-        prop("Background",                ui.window.backgroundColor)
+      p = "ui.window."
       group:
-        prop("Title Background",          ui.window.titleBackgroundColor)
-        prop("Title Background Inactive", ui.window.titleBackgroundInactiveColor)
-        prop("Title",                     ui.window.titleColor)
-        prop("Title Inactive",            ui.window.titleInactiveColor)
-        prop("Modified Flag",             ui.window.modifiedFlagColor)
+        colorProp("Modified Flag",    p & "modified-flag")
+
       group:
-        prop("Button",                    ui.window.buttonColor)
-        prop("Button Hover",              ui.window.buttonHoverColor)
-        prop("Button Down",               ui.window.buttonDownColor)
-]#
-      discard
-#[
+        colorProp("Background",       p & "background.color")
+#        prop("Background Image", p & "background.image", pkString)
+
+      group:
+        p = "ui.window.title."
+        colorProp("Title Background Normal",   p & "background.normal")
+        colorProp("Title Background Inactive", p & "background.inactive")
+        colorProp("Title Text Normal",         p & "text.normal")
+        colorProp("Title Text Inactive",       p & "text.inactive")
+
+      group:
+        p = "ui.window.button."
+        colorProp("Button Normal", p & "normal")
+        colorProp("Button Hover",  p & "hover")
+        colorProp("Button Down",   p & "down")
+
     if koi.subSectionHeader("Dialog", te.sectionDialog):
+      p = "ui.dialog."
       group:
-        prop("Corner Radius",      ui.dialog.cornerRadius)
-        prop("Title Background",   ui.dialog.titleBackgroundColor)
-        prop("Title",              ui.dialog.titleColor)
-        prop("Background",         ui.dialog.backgroundColor)
-        prop("Label",              ui.dialog.labelColor)
-        prop("Warning",            ui.dialog.warningColor)
+        let CRLimits = DialogCornerRadiusLimits
+        floatProp("Corner Radius",      p & "corner-radius", CRLimits)
+        colorProp("Background",         p & "background")
+        colorProp("Label",              p & "label")
+        colorProp("Warning",            p & "warning")
+
       group:
-        prop("Outer Border",       ui.dialog.outerBorderColor)
-        prop("Outer Border Width", ui.dialog.outerBorderWidth)
-        prop("Inner Border",       ui.dialog.innerBorderColor)
-        prop("Inner Border Width", ui.dialog.innerBorderWidth)
+        colorProp("Title Background",   p & "title.background")
+        colorProp("Title Text",         p & "title.text")
+
       group:
-        prop("Shadow?",            ui.dialog.shadowEnabled)
-        prop("Shadow X Offset",    ui.dialog.shadowXOffset)
-        prop("Shadow Y Offset",    ui.dialog.shadowYOffset)
-        prop("Shadow Feather",     ui.dialog.shadowFeather)
-        prop("Shadow Color",       ui.dialog.shadowColor)
+        let BWLimits = DialogBorderWidthLimits
+        colorProp("Outer Border",       p & "outer-border.color")
+        floatProp("Outer Border Width", p & "outer-border.width", BWLimits)
+        colorProp("Inner Border",       p & "inner-border.color")
+        floatProp("Inner Border Width", p & "inner-border.width", BWLimits)
+
+      group:
+        boolProp( "Shadow?",         p & "shadow.enabled")
+        colorProp("Shadow Color",    p & "shadow.color")
+        floatProp("Shadow Feather",  p & "shadow.feather",  ShadowFeatherLimits)
+        floatProp("Shadow X Offset", p & "shadow.x-offset", ShadowOffsetLimits)
+        floatProp("Shadow Y Offset", p & "shadow.y-offset", ShadowOffsetLimits)
 
     if koi.subSectionHeader("Widget", te.sectionWidget):
+      p = "ui.widget."
       group:
-        prop("Corner Radius",       ui.widget.cornerRadius)
+        let WCRLimits = WidgetCornerRadiusLimits
+        floatProp("Corner Radius",       p & "corner-radius", WCRLimits)
       group:
-        prop("Background",          ui.widget.backgroundColor)
-        prop("Background Hover",    ui.widget.backgroundHoverColor)
-        prop("Background Active",   ui.widget.backgroundActiveColor)
-        prop("Background Disabled", ui.widget.backgroundDisabledColor)
+        colorProp("Background Normal",   p & "background.normal")
+        colorProp("Background Hover",    p & "background.hover")
+        colorProp("Background Active",   p & "background.active")
+        colorProp("Background Disabled", p & "background.disabled")
       group:
-        prop("Foreground",          ui.widget.foregroundColor)
-        prop("Foreground Active",   ui.widget.foregroundActiveColor)
-        prop("Foreground Disabled", ui.widget.foregroundDisabledColor)
+        colorProp("Foreground Normal",   p & "foreground.normal")
+        colorProp("Foreground Active",   p & "foreground.active")
+        colorProp("Foreground Disabled", p & "foreground.disabled")
 
     if koi.subSectionHeader("Text Field", te.sectionTextField):
+      p = "ui.text-field."
       group:
-        prop("Edit Background",   ui.textField.editBackgroundColor)
-        prop("Edit Text",         ui.textField.editTextColor)
+        colorProp("Cursor",            p & "cursor")
+        colorProp("Selection",         p & "selection")
       group:
-        prop("Cursor",            ui.textField.cursorColor)
-        prop("Selection",         ui.textField.selectionColor)
+        colorProp("Edit Background",   p & "edit.background")
+        colorProp("Edit Text",         p & "edit.text")
       group:
-        prop("Scroll Bar Normal", ui.textField.scrollBarNormalColor)
-        prop("Scroll Bar Edit",   ui.textField.scrollBarEditColor)
+        colorProp("Scroll Bar Normal", p & "scroll-bar.normal")
+        colorProp("Scroll Bar Edit",   p & "scroll-bar.edit")
 
     if koi.subSectionHeader("Status Bar", te.sectionStatusBar):
+      p = "ui.status-bar."
       group:
-        prop("Background",         ui.statusBar.backgroundColor)
-        prop("Text",               ui.statusBar.textColor)
+        colorProp("Background",        p & "background")
+        colorProp("Text",              p & "text")
+        colorProp("Coordinates",       p & "coordinates")
       group:
-        prop("Command Background", ui.statusBar.commandBackgroundColor)
-        prop("Command",            ui.statusBar.commandColor)
-        prop("Coordinates",        ui.statusBar.coordinatesColor)
+        colorProp("Command Background",p & "command.background")
+        colorProp("Command",           p & "command.text")
 
     if koi.subSectionHeader("About Button", te.sectionAboutButton):
-      prop("Button", ui.aboutButton.labelColor)
-      prop("Button Hover", ui.aboutButton.labelHoverColor)
-      prop("Button Down", ui.aboutButton.labelDownColor)
+      p = "ui.about-button."
+      colorProp("Label Normal",        p & "label.normal")
+      colorProp("Label Hover",         p & "label.hover")
+      colorProp("Label Down",          p & "label.down")
 
-
+  # TODO
+#[
     if koi.subSectionHeader("About Dialog", te.sectionAboutDialog):
       koi.label("Logo")
       koi.color(ts.ui.aboutDialog.logoColor)
@@ -5929,126 +5989,148 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.checkBox(a.splash.show)
 ]#
   # }}}
-#[
   # {{{ Level section
   if koi.sectionHeader("Level", te.sectionLevel):
     if koi.subSectionHeader("General", te.sectionLevelGeneral):
+      p = "level.general."
       group:
-        prop("Background",            level.general.backgroundColor)
+        colorProp("Background",            p & "background")
       group:
-        prop("Foreground",            level.general.foregroundColor)
-        prop("Foreground Light",      level.general.foregroundLightColor)
-        prop("Line Width",            level.general.lineWidth)
+        enumProp( "Line Width",            p & "line-width", LineWidth)
       group:
-        prop("Coordinates",           level.general.coordinatesColor)
-        prop("Coordinates Highlight", level.general.coordinatesHighlightColor)
+        colorProp("Foreground Normal",     p & "foreground.normal")
+        colorProp("Foreground Light",      p & "foreground.light")
       group:
-        prop("Cursor",                level.general.cursorColor)
-        prop("Cursor Guides",         level.general.cursorGuidesColor)
+        colorProp("Link Marker",           p & "link-marker")
       group:
-        prop("Selection",             level.general.selectionColor)
-        prop("Paste Preview",         level.general.pastePreviewColor)
+        colorProp("Trail",                 p & "trail")
       group:
-        prop("Link Marker",           level.general.linkMarkerColor)
+        colorProp("Cursor",                p & "cursor")
+        colorProp("Cursor Guides",         p & "cursor-guides")
       group:
-        prop("Trail",                 level.general.trailColor)
+        colorProp("Selection",             p & "selection")
+        colorProp("Paste Preview",         p & "paste-preview")
       group:
-        prop("Region Border",         level.general.regionBorderColor)
-        prop("Region Border Empty",   level.general.regionBorderEmptyColor)
+        colorProp("Coordinates Normal",    p & "coordinates.normal")
+        colorProp("Coordinates Highlight", p & "coordinates.highlight")
+      group:
+        colorProp("Region Border Normal",  p & "region-border.normal")
+        colorProp("Region Border Empty",   p & "region-border.empty")
 
     if koi.subSectionHeader("Background Hatch", te.sectionBackgroundHatch):
-      prop("Background Hatch?",  level.backgroundHatch.enabled)
-      prop("Hatch",              level.backgroundHatch.color)
-      prop("Hatch Stroke Width", level.backgroundHatch.width)
-      prop("Hatch Spacing",      level.backgroundHatch.spacingFactor)
+      let WidthLimits = BackgroundHatchWidthLimits
+      let SpacingLimits = BackgroundHatchSpacingFactorLimits
+
+      p = "level.background-hatch."
+      boolProp("Background Hatch?",     p & "enabled")
+      colorProp("Hatch Color",          p & "color")
+      floatProp("Hatch Stroke Width",   p & "width",          WidthLimits)
+      floatProp("Hatch Spacing Factor", p & "spacing-factor", SpacingLimits)
 
     if koi.subSectionHeader("Grid", te.sectionGrid):
-      prop("Background Grid Style", level.grid.backgroundStyle)
-      prop("Background Grid",       level.grid.backgroundGridColor)
-      prop("Floor Grid Style",      level.grid.floorStyle)
-      prop("Floor Grid",            level.grid.floorGridColor)
+      p = "level.grid."
+      group:
+        colorProp("Background Grid",       p & "background.grid")
+        enumProp( "Background Grid Style", p & "background.style", GridStyle)
+      group:
+        colorProp("Floor Grid",            p & "floor.grid")
+        enumProp( "Floor Grid Style",      p & "floor.style",      GridStyle)
 
     if koi.subSectionHeader("Outline", te.sectionOutline):
-      prop("Style",         level.outline.style)
-      prop("Fill Style",    level.outline.fillStyle)
-      prop("Outline",       level.outline.color)
-      prop("Outline Width", level.outline.widthFactor)
-      prop("Overscan",      level.outline.overscanEnabled)
+      p = "level.outline."
+      enumProp( "Style",         p & "style",        OutlineStyle)
+      enumProp( "Fill Style",    p & "fill-style",   OutlineFillStyle)
+      colorProp("Outline",       p & "color")
+      floatProp("Width",         p & "width-factor", OutlineWidthFactorLimits)
+      boolProp( "Overscan",      p & "overscan")
 
     if koi.subSectionHeader("Shadow", te.sectionShadow):
+      let SWLimits = ShadowWidthFactorLimits
+      p = "level.shadow."
       group:
-        prop("Inner Shadow",       level.shadow.innerColor)
-        prop("Inner Shadow Width", level.shadow.innerWidthFactor)
+        colorProp("Inner Shadow",       p & "inner.color")
+        floatProp("Inner Shadow Width", p & "inner.width-factor", SWLimits)
       group:
-        prop("Outer Shadow",       level.shadow.outerColor)
-        prop("Outer Shadow Width", level.shadow.outerWidthFactor)
+        colorProp("Outer Shadow",       p & "outer.color")
+        floatProp("Outer Shadow Width", p & "outer.width-factor", SWLimits)
 
     if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
-      prop("Transparent Floor", level.floorColor.transparentFloor)
-      prop("Floor 1",           level.floorColor.color[0])
-      prop("Floor 2",           level.floorColor.color[1])
-      prop("Floor 3",           level.floorColor.color[2])
-      prop("Floor 4",           level.floorColor.color[3])
-      prop("Floor 5",           level.floorColor.color[4])
-      prop("Floor 6",           level.floorColor.color[5])
-      prop("Floor 7",           level.floorColor.color[6])
-      prop("Floor 8",           level.floorColor.color[7])
-      prop("Floor 9",           level.floorColor.color[8])
-      prop("Floor 10",          level.floorColor.color[9])
+      p = "level.floor."
+      boolProp("Transparent?", p & "transparent")
+
+      colorProp("Color 1",  p & "background.0")
+      colorProp("Color 2",  p & "background.1")
+      colorProp("Color 3",  p & "background.2")
+      colorProp("Color 4",  p & "background.3")
+      colorProp("Color 5",  p & "background.4")
+      colorProp("Color 6",  p & "background.5")
+      colorProp("Color 7",  p & "background.6")
+      colorProp("Color 8",  p & "background.7")
+      colorProp("Color 9",  p & "background.8")
+      colorProp("Color 10", p & "background.9")
 
     if koi.subSectionHeader("Notes", te.sectionNotes):
+      p = "level.note."
       group:
-        prop("Marker",             level.note.markerColor)
-        prop("Comment",            level.note.commentColor)
+        colorProp("Marker",             p & "marker")
+        colorProp("Comment",            p & "comment")
       group:
-        prop("Background Shape",   level.note.backgroundShape)
-        prop("Background 1",       level.note.indexBackgroundColor[0])
-        prop("Background 2",       level.note.indexBackgroundColor[1])
-        prop("Background 3",       level.note.indexBackgroundColor[2])
-        prop("Background 4",       level.note.indexBackgroundColor[3])
-        prop("Index",              level.note.indexColor)
+        enumProp( "Background Shape",   p & "background-shape",
+                  NoteBackgroundShape)
+
+        colorProp("Background 1",       p & "index-background.0")
+        colorProp("Background 2",       p & "index-background.1")
+        colorProp("Background 3",       p & "index-background.2")
+        colorProp("Background 4",       p & "index-background.3")
+        colorProp("Index",              p & "index")
+
       group:
-        prop("Tooltip Background", level.note.tooltipBackgroundColor)
-        prop("Tooltip Text",       level.note.tooltipColor)
+        colorProp("Tooltip Background", p & "tooltip.background")
+        colorProp("Tooltip Text",       p & "tooltip.text")
 
     if koi.subSectionHeader("Labels", te.sectionLabels):
+      p = "level.label."
       group:
-        prop("Label 1", level.label.color[0])
-        prop("Label 2", level.label.color[1])
-        prop("Label 3", level.label.color[2])
-        prop("Label 4", level.label.color[3])
+        colorProp("Label 1", p & "text.0")
+        colorProp("Label 2", p & "text.1")
+        colorProp("Label 3", p & "text.2")
+        colorProp("Label 4", p & "text.3")
 
     if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
+      p = "level.level-drop-down."
       group:
-        prop("Button",               level.levelDropDown.buttonColor)
-        prop("Button Hover",         level.levelDropDown.buttonHoverColor)
-        prop("Button Label",         level.levelDropDown.buttonLabelColor)
+        colorprop("Button Normal",        p & "button.normal")
+        colorprop("Button Hover",         p & "button.hover")
+        colorprop("Button Label",         p & "button.label")
       group:
-        prop("Item List Background", level.levelDropDown.itemListBackgroundColor)
-        prop("Item",                 level.levelDropDown.itemColor)
-        prop("Item Hover",           level.levelDropDown.itemHoverColor)
+        colorprop("Item List Background", p & "item-list-background")
+        colorprop("Item Normal",          p & "item.normal")
+        colorprop("Item Hover",           p & "item.hover")
 
   # }}}
   # {{{ Panes section
+
   if koi.sectionHeader("Panes", te.sectionPanes):
     if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
+      p = "pane.notes."
       group:
-        prop("Text",               pane.notes.textColor)
+        colorProp("Text",               p & "text")
       group:
-        prop("Index Background 1", pane.notes.indexBackgroundColor[0])
-        prop("Index Background 2", pane.notes.indexBackgroundColor[1])
-        prop("Index Background 3", pane.notes.indexBackgroundColor[2])
-        prop("Index Background 4", pane.notes.indexBackgroundColor[3])
-        prop("Index",              pane.notes.indexColor)
+        colorProp("Index Background 1", p & "index-background.0")
+        colorProp("Index Background 2", p & "index-background.1")
+        colorProp("Index Background 3", p & "index-background.2")
+        colorProp("Index Background 4", p & "index-background.3")
+        colorProp("Index",              p & "index")
       group:
-        prop("Scroll Bar",         pane.notes.scrollBarColor)
+        colorProp("Scroll Bar",         p & "scroll-bar")
 
     if koi.subSectionHeader("Toolbar Pane", te.sectionToolbarPane):
-      prop("Button",      pane.toolbar.buttonColor)
-      prop("Button Hover", pane.toolbar.buttonHoverColor)
+      p = "pane.toolbar."
+      colorProp("Button",       p & "button.normal")
+      colorProp("Button Hover", p & "button.hover")
 
   # }}}
-]#
+
   koi.endScrollView()
 
   # TODO
@@ -6176,15 +6258,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   g_themeEditorPropsFocusCaptured = koi.focusCaptured()
   koi.setFocusCaptured(fc)
 
-  # TODO ultimately we'll do most of switchTheme here (extract etc),
-  # but at the end of the frame and lazily somehow (only if something has
-  # changed), because sometimes we need to precalc stuff when the style
-  # changes
-  updateWidgetStyles(a)
-
-  a.theme.reinitDrawLevelParams = true
-
-  a.win.setStyle(a.theme.windowStyle)
+  a.theme.updateThemeStyles = true
 
 # }}}
 
@@ -6400,8 +6474,7 @@ proc renderUI(a) =
       w = ThemePaneWidth
       h = drawAreaHeight(a)
 
-    # TODO
-#    renderThemeEditorPane(x, y, w, h, a)
+    renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
   if dlg.aboutDialog.isOpen:
@@ -6468,10 +6541,11 @@ proc renderFramePre(a) =
   a.win.title = a.doc.map.name
   a.win.modified = a.doc.undoManager.isModified
 
-  if a.theme.reinitDrawLevelParams:
-    a.theme.reinitDrawLevelParams = false
-    a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
-                                             koi.getPxRatio())
+  if a.theme.updateThemeStyles:
+    a.theme.updateThemeStyles = false
+    updateThemeStyles(a)
+#    a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
+#                                             koi.getPxRatio())
 
 # }}}
 # {{{ renderFrame()
