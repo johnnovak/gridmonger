@@ -1247,47 +1247,58 @@ proc saveTheme(a) =
   a.themeEditor.modified = false
 
 # }}}
+# {{{ loadThemeImage()
+proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
+  if userTheme:
+    let imgPath = a.path.userThemeImagesDir / imageName
+    result = loadImage(imgPath, a)
+    if result.isNone:
+      info("Couldn't load image from user theme images directory: " &
+           fmt"'{imgPath}'. Attempting default theme images directory.")
+
+  let imgPath = a.path.themeImagesDir / imageName
+  result = loadImage(imgPath, a)
+  if result.isNone:
+    logging.error(
+      "Couldn't load image from default theme images directory: '{imgPath}'"
+    )
+
+# }}}
+# {{{ updateThemeStyles()
+proc updateThemeStyles(a) =
+  alias(cfg, a.theme.config)
+
+  updateWidgetStyles(a)
+
+  a.theme.windowStyle      = cfg.get("ui.window").toWindowStyle()
+  a.theme.statusBarStyle   = cfg.get("ui.status-bar").toStatusBarStyle()
+  a.theme.toolbarPaneStyle = cfg.get("pane.toolbar").toToolbarPaneStyle()
+  a.theme.notesPaneStyle   = cfg.get("pane.notes").toNotesPaneStyle()
+  a.theme.levelStyle       = cfg.get("level").toLevelStyle()
+
+  a.win.setStyle(a.theme.windowStyle)
+
+  a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
+                                           koi.getPxRatio())
+
+# }}}
 # {{{ switchTheme()
 proc switchTheme(themeIndex: Natural; a) =
   alias(cfg, a.theme.config)
 
   let theme = a.theme.themeNames[themeIndex]
   loadTheme(theme, a)
-  updateWidgetStyles(a)
 
-  a.theme.windowStyle = cfg.get("ui.window").toWindowStyle()
-  a.theme.statusBarStyle = cfg.get("ui.status-bar").toStatusBarStyle()
-  a.theme.toolbarPaneStyle = cfg.get("pane.toolbar").toToolbarPaneStyle()
-  a.theme.notesPaneStyle = cfg.get("pane.notes").toNotesPaneStyle()
-  a.theme.levelStyle = cfg.get("level").toLevelStyle()
+  updateThemeStyles(a)
 
   let bgImageName = a.theme.windowStyle.backgroundImage
 
-  proc tryLoadImage(path: string; a): Option[Paint] =
-    var imgPath = path / bgImageName
-    result = loadImage(imgPath, a)
-    if result.isNone:
-      info(fmt"Couldn't load background image '{imgPath}'")
-
   if bgImageName != "":
-    var image = Paint.none
-    if theme.userTheme:
-      image = tryLoadImage(a.path.userThemeImagesDir, a)
-      info("Attempting to load it from the default theme images directory.")
-
-    if image.isNone:
-      image = tryLoadImage(a.path.themeImagesDir, a)
-
-    a.ui.backgroundImage = image
+    a.ui.backgroundImage = loadThemeImage(bgImageName, theme.userTheme, a)
     a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
   else:
     a.ui.backgroundImage = Paint.none
     a.ui.drawLevelParams.backgroundImage = Paint.none
-
-  a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
-                                           koi.getPxRatio())
-
-  a.win.setStyle(a.theme.windowStyle)
 
   a.theme.currThemeIndex = themeIndex
 
@@ -5713,12 +5724,11 @@ with ThemeEditorAutoLayoutParams:
   leftPad = 14.0
   rightPad = 16.0
 
-# TODO
-#[
 # {{{ renderThemeEditorProps()
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
 
+#[
   let ts = a.theme.style
 
   macro prop(label: static[string], path: untyped): untyped =
@@ -5801,18 +5811,18 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       if `prevFullPath` != `fullPath`:
         te.modified = true
 
+]#
 
   koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)
 
   ThemeEditorAutoLayoutParams.rowWidth = w
   initAutoLayout(ThemeEditorAutoLayoutParams)
 
-#[
   # {{{ User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
-      group:
+#[      group:
         prop("Background",                ui.window.backgroundColor)
       group:
         prop("Title Background",          ui.window.titleBackgroundColor)
@@ -5824,7 +5834,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         prop("Button",                    ui.window.buttonColor)
         prop("Button Hover",              ui.window.buttonHoverColor)
         prop("Button Down",               ui.window.buttonDownColor)
-
+]#
+      discard
+#[
     if koi.subSectionHeader("Dialog", te.sectionDialog):
       group:
         prop("Corner Radius",      ui.dialog.cornerRadius)
@@ -5915,8 +5927,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         koi.label("Show Splash")
         koi.checkBox(a.splash.show)
-
+]#
   # }}}
+#[
   # {{{ Level section
   if koi.sectionHeader("Level", te.sectionLevel):
     if koi.subSectionHeader("General", te.sectionLevelGeneral):
@@ -6040,6 +6053,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   # TODO
 #  te.prevState = ts.deepCopy()
+  discard
 
 # }}}
 # {{{ renderThemeEditorPane()
@@ -6170,10 +6184,9 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   a.theme.reinitDrawLevelParams = true
 
-  a.win.setStyle(a.theme.style.ui.window)
+  a.win.setStyle(a.theme.windowStyle)
 
 # }}}
-]#
 
 # }}}
 
