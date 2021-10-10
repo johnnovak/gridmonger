@@ -583,7 +583,7 @@ proc write*(node: HoconNode, stream: Stream,
     of hnkString:
       if (parent.kind != hnkArray): stream.write(" = ")
 
-      var escape = false
+      var escape = curr.str == ""
       for r in curr.str.runes:
         if r in whitespaceRunes or r in forbiddenRunes:
           escape = true

@@ -182,7 +182,12 @@ proc loadTheme*(filename: string): HoconNode =
 # }}}
 # {{{ saveTheme*()
 proc saveTheme*(config: HoconNode, filename: string) =
-  config.write(newFileStream(filename, fmWrite))
+  var s: FileStream
+  try:
+    s = newFileStream(filename, fmWrite)
+    config.write(s)
+  finally:
+    if s != nil: s.close()
 
 # }}}
 #
