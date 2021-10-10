@@ -188,6 +188,8 @@ type
 
     shouldClose: bool
 
+    logFile:     File
+
 
   Preferences = object
     showSplash:         bool
@@ -1234,6 +1236,7 @@ proc loadTheme(theme: ThemeName; a) =
   info(fmt"Loading theme '{theme.name}' from '{path}'")
 
   a.theme.config = loadTheme(path)
+  a.logfile.flushFile()
 
 # }}}
 # {{{ saveTheme(a)
@@ -1246,6 +1249,7 @@ proc saveTheme(a) =
   saveTheme(a.theme.config, themePath)
 
   a.themeEditor.modified = false
+  a.logFile.flushFile()
 
 # }}}
 # {{{ loadThemeImage()
@@ -4007,6 +4011,8 @@ proc loadMap(filename: string; a): bool =
   except CatchableError as e:
     logError(e, "Error loading map")
     setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
+  finally:
+    a.logFile.flushFile()
 
 # }}}
 # {{{ openMap()
@@ -4058,6 +4064,8 @@ proc saveMap(filename: string, autosave: bool = false; a) =
     logError(e, "Error saving map")
     let prefix = if autosave: "Autosave failed: " else: ""
     setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
+  finally:
+    a.logFile.flushFile()
 
 # }}}
 # {{{ saveMapAsAction()
@@ -6872,7 +6880,8 @@ proc rollLogFile(a) =
 # {{{ initLogger(a)
 proc initLogger(a) =
   rollLogFile(a)
-  var fileLog = newFileLogger(a.path.logFile,
+  a.logFile = open(a.path.logFile, fmWrite)
+  var fileLog = newFileLogger(a.logFile,
                               fmtStr="[$levelname] $date $time - ",
                               levelThreshold=lvlDebug)
   addHandler(fileLog)
@@ -7085,6 +7094,9 @@ proc cleanup(a) =
   glfw.terminate()
 
   info("Cleanup successful, bye!")
+
+  if a.logFile != nil:
+    a.logFile.close()
 
 # }}}
 

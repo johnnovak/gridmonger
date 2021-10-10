@@ -43,8 +43,8 @@ ui {
     }
     shadow {
       enabled = false
-      feather = 0.0
       color = "#00000000"
+      feather = 0.0
       x-offset = 0.0
       y-offset = 0.0
     }

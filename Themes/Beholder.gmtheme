@@ -192,7 +192,7 @@ level {
   note {
     marker = "#404e7fe6"
     comment = "#ff3300cc"
-    background-shape = cirle
+    background-shape = circle
 
     index = "#e6e6e6ff"
 
