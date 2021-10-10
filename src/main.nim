@@ -303,6 +303,7 @@ type
 
   Theme = object
     config:                 HoconNode
+    prevConfig:             HoconNode
 
     themeNames:             seq[ThemeName]
     currThemeIndex:         Natural
@@ -1303,8 +1304,7 @@ proc switchTheme(themeIndex: Natural; a) =
   a.theme.currThemeIndex = themeIndex
 
   a.themeEditor.modified = false
-  # TODO
-#  a.themeEditor.prevState = a.theme.style.deepCopy()
+  a.theme.prevConfig = a.theme.config.deepCopy()
 
 # }}}
 
@@ -2158,7 +2158,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
     dialogX = floor(calcDialogX(DlgWidth, a))
     dialogY = floor((koi.winHeight() - DlgHeight) * 0.5)
 
-  let logoColor = a.theme.config.getColor("a.ui.about-dialog.logo")
+  let logoColor = a.theme.config.getColor("ui.about-dialog.logo")
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconQuestion}  About Gridmonger",
                   x=dialogX.some, y=dialogY.some,
@@ -5823,6 +5823,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label(label)
       koi.setNextId(path)
       body
+      if a.theme.prevConfig.get(path) != cfg.get(path):
+        te.modified = true
 
   template colorProp(label: string, path: string) =
     prop(label, path):
@@ -5954,40 +5956,34 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       colorProp("Label Hover",         p & "label.hover")
       colorProp("Label Down",          p & "label.down")
 
-  # TODO
-#[
     if koi.subSectionHeader("About Dialog", te.sectionAboutDialog):
-      koi.label("Logo")
-      koi.color(ts.ui.aboutDialog.logoColor)
-      if ts.ui.aboutDialog.logoColor != te.prevState.ui.aboutDialog.logoColor:
+      let path = "ui.about-dialog.logo"
+      colorProp("Logo", path)
+      if cfg.get(path) != a.theme.prevConfig.get(path):
         a.aboutLogo.updateLogoImage = true
-
 
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
       group:
-        koi.label("Logo")
-        koi.color(ts.ui.splashImage.logoColor)
-        if ts.ui.splashImage.logoColor != te.prevState.ui.splashImage.logoColor:
+        p = "ui.splash-image."
+        var path = p & "logo"
+        colorProp("Logo", path)
+        if cfg.get(path) != a.theme.prevConfig.get(path):
           a.splash.updateLogoImage = true
 
-        koi.label("Outline")
-        koi.color(ts.ui.splashImage.outlineColor)
-        if ts.ui.splashImage.outlineColor != te.prevState.ui.splashImage.outlineColor:
+        path = p & "outline"
+        colorProp("Logo", path)
+        if cfg.get(path) != a.theme.prevConfig.get(path):
           a.splash.updateOutlineImage = true
 
-        koi.label("Shadow Alpha")
-        koi.horizSlider(startVal=AlphaLimits.minFloat,
-                        endVal=AlphaLimits.maxFloat,
-                        ts.ui.splashImage.shadowAlpha,
-                        style=ThemeEditorSliderStyle)
-
-        if ts.ui.splashImage.shadowAlpha != te.prevState.ui.splashImage.shadowAlpha:
+        path = p & "shadow-alpha"
+        floatProp("Shadow Alpha", path, AlphaLimits)
+        if cfg.get(path) != a.theme.prevConfig.get(path):
           a.splash.updateShadowImage = true
 
       group:
         koi.label("Show Splash")
         koi.checkBox(a.splash.show)
-]#
+
   # }}}
   # {{{ Level section
   if koi.sectionHeader("Level", te.sectionLevel):
@@ -6133,9 +6129,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   koi.endScrollView()
 
-  # TODO
-#  te.prevState = ts.deepCopy()
-  discard
+  a.theme.prevConfig = cfg.deepCopy()
 
 # }}}
 # {{{ renderThemeEditorPane()

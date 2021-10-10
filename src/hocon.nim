@@ -212,19 +212,22 @@ proc readUnquotedStringOrBooleanOrNull(t): Token =
 
   while true:
     str &= rune
-    case str
-    of "true":  return Token(kind: tkTrue,  line: line, column: col)
-    of "false": return Token(kind: tkFalse, line: line, column: col)
-    of "null":  return Token(kind: tkNull,  line: line, column: col)
+    rune = t.peekRune()
+    if rune == Rune('\n') or
+       rune in whitespaceRunes or
+       rune in forbiddenRunes: break
     else:
-      rune = t.peekRune()
-      if rune == Rune('\n') or
-         rune in whitespaceRunes or
-         rune in forbiddenRunes: break
-      else:
-        rune = t.eatRune()
+      rune = t.eatRune()
 
-  Token(kind: tkString, str: str, line: line, column: col)
+  case str
+  of "true", "yes", "on":
+    return Token(kind: tkTrue,  line: line, column: col)
+  of "false", "no",  "off":
+    return Token(kind: tkFalse, line: line, column: col)
+  of "null":
+    return Token(kind: tkNull,  line: line, column: col)
+  else:
+    Token(kind: tkString, str: str, line: line, column: col)
 
 
 proc readNumberOrString(t): Token =
@@ -346,6 +349,28 @@ type
     of hnkBool:   bool*:   bool
     of hnkObject: fields*: OrderedTable[string, HoconNode]
     of hnkArray:  elems*:  seq[HoconNode]
+
+
+proc `==`*(a: HoconNode, b: HoconNode): bool =
+  if a.kind != b.kind: return false
+  case a.kind
+  of hnkNull:   true
+  of hnkString: a.str == b.str
+  of hnkNumber: a.num == b.num
+  of hnkBool:   a.bool == b.bool
+
+  of hnkObject:
+    if a.fields.len != b.fields.len: return false
+    for k,v in a.fields.pairs:
+      if not b.fields.hasKey(k): return false
+      if v != b.fields[k]: return false
+    true
+
+  of hnkArray:
+    if a.elems.len != b.elems.len: return false
+    for i,v in a.elems.pairs:
+      if v != b.elems[i]: return false
+    true
 
 
 using p: var HoconParser
@@ -700,22 +725,21 @@ template setValue*(node: HoconNode, path: string, body: untyped) =
         curr.fields[key] = newHoconObject()
       curr = curr.fields[key]
 
-
-proc set*(node: HoconNode, path: string, str: string) =
+proc set*(node: HoconNode, path: string, n: HoconNode) =
   node.setValue(path):
-    curr.fields[key] = HoconNode(kind: hnkString, str: str)
-
-proc set*(node: HoconNode, path: string, num: SomeNumber) =
-  node.setValue(path):
-    curr.fields[key] = HoconNode(kind: hnkNumber, num: num.float)
-
-proc set*(node: HoconNode, path: string, flag: bool) =
-  node.setValue(path):
-    curr.fields[key] = HoconNode(kind: hnkBool, bool: flag)
+    curr.fields[key] = n
 
 proc setNull*(node: HoconNode, path: string) =
-  node.setValue(path):
-    curr.fields[key] = HoconNode(kind: hnkNull)
+  node.set(path, HoconNode(kind: hnkNull))
+
+proc set*(node: HoconNode, path: string, str: string) =
+  node.set(path, HoconNode(kind: hnkString, str: str))
+
+proc set*(node: HoconNode, path: string, num: SomeNumber) =
+  node.set(path, HoconNode(kind: hnkNumber, num: num.float))
+
+proc set*(node: HoconNode, path: string, flag: bool) =
+  node.set(path, HoconNode(kind: hnkBool, bool: flag))
 
 # }}}
 # }}}
@@ -876,8 +900,7 @@ when isMainModule:
 
     assert t.eatToken() == Token(kind: tkString, str: "concat", line: 7, column: 3)
     assert t.eatToken() == Token(kind: tkColon, line: 7, column: 11)
-    assert t.eatToken() == Token(kind: tkFalse, line: 7, column: 12)
-    assert t.eatToken() == Token(kind: tkString, str: "STRING", line: 7, column: 17)
+    assert t.eatToken() == Token(kind: tkString, str: "falseSTRING", line: 7, column: 12)
     assert t.eatToken() == Token(kind: tkNewline, line: 7, column: 23)
 
     assert t.eatToken() == Token(kind: tkRightBrace, line: 8, column: 1)
@@ -1003,6 +1026,37 @@ c = "d"
     echo st.data
 
   # }}}
+
+  block:
+    let n1 = HoconNode(kind: hnkBool, bool: true)
+    assert n1 == n1.deepCopy()
+
+    let n2 = HoconNode(kind: hnkString, str: "foo")
+    assert n2 == n2.deepCopy()
+
+    let n3 = HoconNode(kind: hnkNull)
+    assert n3 == n3.deepCopy()
+
+    let n4 = HoconNode(kind: hnkNumber, num: 123.456)
+    assert n4 == n4.deepCopy()
+
+    var arr = newHoconArray()
+    arr.elems.add(n1)
+    arr.elems.add(n2)
+    arr.elems.add(n3)
+    assert arr == arr.deepCopy()
+
+    var obj = newHoconObject()
+    obj.set("a", true)
+    obj.set("b", 42)
+    obj.set("c", "foo")
+    assert obj == obj.deepCopy()
+
+    var obj2 = newHoconObject()
+    obj.set("o2", obj.deepCopy())
+    obj.set("a", arr.deepCopy())
+    assert obj2 == obj2.deepCopy()
+
 
 # }}}
 
