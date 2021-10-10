@@ -901,478 +901,6 @@ let g_appShortcuts = {
 
 # }}}
 
-# {{{ Graphics utils
-
-# {{{ colorImage()
-proc colorImage(d: var ImageData, color: Color) =
-  for i in 0..<(d.width * d.height):
-    d.data[i*4]   = (color.r * 255).byte
-    d.data[i*4+1] = (color.g * 255).byte
-    d.data[i*4+2] = (color.b * 255).byte
-
-# }}}
-# {{{ createImage()
-template createImage(d: var ImageData): Image =
-  vg.createImageRGBA(
-    d.width, d.height,
-    data = toOpenArray(d.data, 0, d.size()-1)
-  )
-
-# }}}
-# {{{ createPattern()
-proc createPattern(vg: NVGContext, img: var Image, alpha: float = 1.0,
-                   xoffs: float = 0, yoffs: float = 0,
-                   scale: float = 1.0): Paint =
-
-  let (w, h) = vg.imageSize(img)
-  vg.imagePattern(
-    ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, img, alpha
-  )
-
-# }}}
-# {{{ loadImage()
-proc loadImage(path: string; a): Option[Paint] =
-  alias(vg, a.vg)
-  try:
-    var img = vg.createImage(path, {ifRepeatX, ifRepeatY})
-    let paint = vg.createPattern(img, scale=0.5)
-    result = paint.some
-
-  except NVGError:
-    result = Paint.none
-
-# }}}
-# }}}
-# {{{ Theme handling
-
-# {{{ currThemeName()
-proc currThemeName(a): var ThemeName =
-  a.theme.themeNames[a.theme.currThemeIndex]
-
-# }}}
-# {{{ updateWidgetStyles()
-proc updateWidgetStyles(a) =
-  alias(cfg, a.theme.config)
-
-  # Button
-  a.theme.buttonStyle = koi.getDefaultButtonStyle()
-
-  let w = cfg.get("ui.widget")
-
-  with a.theme.buttonStyle:
-    cornerRadius      = w.getFloat("corner-radius")
-    fillColor         = w.getColor("background.normal")
-    fillColorHover    = w.getColor("background.hover")
-    fillColorDown     = w.getColor("background.active")
-    fillColorDisabled = w.getColor("background.disabled")
-
-    label.color            = w.getColor("foreground.normal")
-    label.colorHover       = w.getColor("foreground.normal")
-    label.colorDown        = w.getColor("foreground.active")
-    label.colorActive      = w.getColor("foreground.active")
-    label.colorActiveHover = w.getColor("foreground.active")
-    label.colorDisabled    = w.getColor("foreground.disabled")
-
-  # Radio button
-  a.theme.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
-
-  with a.theme.radioButtonStyle:
-    buttonCornerRadius         = w.getFloat("corner-radius")
-    buttonFillColor            = w.getColor("background.normal")
-    buttonFillColorHover       = w.getColor("background.hover")
-    buttonFillColorDown        = w.getColor("background.active")
-    buttonFillColorActive      = w.getColor("background.active")
-    buttonFillColorActiveHover = w.getColor("background.active")
-
-    label.color            = w.getColor("foreground.normal")
-    label.colorHover       = w.getColor("foreground.normal")
-    label.colorDown        = w.getColor("foreground.active")
-    label.colorActive      = w.getColor("foreground.active")
-    label.colorActiveHover = w.getColor("foreground.active")
-
-  # Icon radio button
-  a.theme.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
-
-  with a.theme.iconRadioButtonsStyle:
-    buttonPadHoriz             = 4.0
-    buttonPadVert              = 4.0
-    buttonFillColor            = w.getColor("background.normal")
-    buttonFillColorHover       = w.getColor("background.hover")
-    buttonFillColorDown        = w.getColor("background.active")
-    buttonFillColorActive      = w.getColor("background.active")
-    buttonFillColorActiveHover = w.getColor("background.active")
-
-    label.fontSize         = 18.0
-    label.color            = w.getColor("foreground.normal")
-    label.colorHover       = w.getColor("foreground.normal")
-    label.colorDown        = w.getColor("foreground.active")
-    label.colorActive      = w.getColor("foreground.active")
-    label.colorActiveHover = w.getColor("foreground.active")
-    label.padHoriz         = 0
-    label.padHoriz         = 0
-
-  # Text field
-  a.theme.textFieldStyle = koi.getDefaultTextFieldStyle()
-
-  let t = cfg.get("ui.text-field")
-
-  with a.theme.textFieldStyle:
-    bgCornerRadius      = w.getFloat("corner-radius")
-    bgFillColor         = w.getColor("background.normal")
-    bgFillColorHover    = w.getColor("background.hover")
-    bgFillColorActive   = t.getColor("edit.background")
-    bgFillColorDisabled = w.getColor("background.disabled")
-    textColor           = w.getColor("foreground.normal")
-    textColorHover      = w.getColor("foreground.normal")
-    textColorActive     = t.getColor("edit.text")
-    textColorDisabled   = w.getColor("foreground.disabled")
-    cursorColor         = t.getColor("cursor")
-    selectionColor      = t.getColor("selection")
-
-  # Text area
-  a.theme.textAreaStyle = koi.getDefaultTextAreaStyle()
-
-  with a.theme.textAreaStyle:
-    bgCornerRadius    = w.getFloat("corner-radius")
-    bgFillColor       = w.getColor("background.normal")
-    bgFillColorHover  = lerp(bgFillColor, w.getColor("background.hover"), 0.5)
-    bgFillColorActive = t.getColor("edit.background")
-    textColor         = w.getColor("foreground.normal")
-    textColorHover    = w.getColor("foreground.normal")
-    textColorActive   = t.getColor("edit.text")
-    cursorColor       = t.getColor("cursor")
-    selectionColor    = t.getColor("selection")
-
-    with scrollBarStyleNormal:
-      let c = t.getColor("scroll-bar.normal")
-      thumbFillColor      = c.withAlpha(0.4)
-      thumbFillColorHover = c.withAlpha(0.5)
-      thumbFillColorDown  = c.withAlpha(0.6)
-
-    with scrollBarStyleEdit:
-      let c = t.getColor("scroll-bar.edit")
-      thumbFillColor      = c.withAlpha(0.4)
-      thumbFillColorHover = c.withAlpha(0.5)
-      thumbFillColorDown  = c.withAlpha(0.6)
-
-  # Check box
-  a.theme.checkBoxStyle = koi.getDefaultCheckBoxStyle()
-
-  with a.theme.checkBoxStyle:
-    cornerRadius          = w.getFloat("corner-radius")
-    fillColor             = w.getColor("background.normal")
-    fillColorHover        = w.getColor("background.hover")
-    fillColorDown         = w.getColor("background.active")
-    fillColorActive       = w.getColor("background.active")
-    icon.fontSize         = 12.0
-    icon.color            = w.getColor("foreground.normal")
-    icon.colorHover       = w.getColor("foreground.normal")
-    icon.colorDown        = w.getColor("foreground.active")
-    icon.colorActive      = w.getColor("foreground.active")
-    icon.colorActiveHover = w.getColor("foreground.active")
-    iconActive            = IconCheck
-    iconInactive          = NoIcon
-
-  # Dialog style
-  a.theme.dialogStyle = koi.getDefaultDialogStyle()
-
-  let d = cfg.get("ui.dialog")
-
-  with a.theme.dialogStyle:
-    cornerRadius      = d.getFloat("corner-radius")
-    backgroundColor   = d.getColor("background")
-    titleBarBgColor   = d.getColor("title.background")
-    titleBarTextColor = d.getColor("title.text")
-
-    outerBorderColor  = d.getColor("outer-border.color")
-    innerBorderColor  = d.getColor("inner-border.color")
-    outerBorderWidth  = d.getFloat("outer-border.width")
-    innerBorderWidth  = d.getFloat("inner-border.width")
-
-    with shadow:
-      enabled = d.getBool("shadow.enabled")
-      xOffset = d.getFloat("shadow.x-offset")
-      yOffset = d.getFloat("shadow.y-offset")
-      feather = d.getFloat("shadow.feather")
-      color   = d.getColor("shadow.color")
-
-  a.theme.aboutDialogStyle = a.theme.dialogStyle.deepCopy()
-  a.theme.aboutDialogStyle.drawTitleBar = false
-
-  # Label
-  a.theme.labelStyle = koi.getDefaultLabelStyle()
-
-  with a.theme.labelStyle:
-    fontSize      = 14
-    color         = d.getColor("label")
-    colorDisabled = color.lerp(d.getColor("background"), 0.7)
-    align         = haLeft
-
-  # Warning label
-  a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
-
-  with a.theme.warningLabelStyle:
-    color     = d.getColor("warning")
-    multiLine = true
-
-  # Level dropDown
-  let ld = cfg.get("level.level-drop-down")
-
-  a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
-
-  with a.theme.levelDropDownStyle:
-    buttonCornerRadius       = w.getFloat("corner-radius")
-    buttonFillColor          = ld.getColor("button.normal")
-    buttonFillColorHover     = ld.getColor("button.hover")
-    buttonFillColorDown      = ld.getColor("button.normal")
-    buttonFillColorDisabled  = ld.getColor("button.normal")
-    label.fontSize           = 15.0
-    label.color              = ld.getColor("button.label")
-    label.colorHover         = ld.getColor("button.label")
-    label.colorDown          = ld.getColor("button.label")
-    label.colorActive        = ld.getColor("button.label")
-    label.colorDisabled      = ld.getColor("button.label")
-    label.align              = haCenter
-    item.align               = haLeft
-    item.color               = ld.getColor("item.normal")
-    item.colorHover          = ld.getColor("item.hover")
-    itemListCornerRadius     = w.getFloat("corner-radius")
-    itemListPadHoriz         = 10.0
-    itemListFillColor        = ld.getColor("item-list-background")
-    itemBackgroundColorHover = w.getColor("background.normal")
-
-  # About button
-  let ab = cfg.get("ui.about-button")
-
-  a.theme.aboutButtonStyle = koi.getDefaultButtonStyle()
-
-  with a.theme.aboutButtonStyle:
-    labelOnly        = true
-    label.fontSize   = 20.0
-    label.padHoriz   = 0
-    label.color      = ab.getColor("label.normal")
-    label.colorHover = ab.getColor("label.hover")
-    label.colorDown  = ab.getColor("label.down")
-
-  # Note text area
-  let pn = cfg.get("pane.notes")
-
-  a.theme.noteTextAreaStyle = koi.getDefaultTextAreaStyle()
-
-  with a.theme.noteTextAreaStyle:
-    bgFillColor         = black(0)
-    bgFillColorHover    = black(0)
-    bgFillColorActive   = black(0)
-    bgFillColorDisabled = black(0)
-
-    textPadHoriz        = 0.0
-    textPadVert         = 0.0
-    textFontSize        = 15.0
-    textFontFace        = "sans-bold"
-    textLineHeight      = 1.4
-    textColorDisabled   = pn.getColor("text")
-
-    with scrollBarStyleNormal:
-      let c = pn.getColor("scroll-bar")
-      thumbFillColor      = c.withAlpha(0.4)
-      thumbFillColorHover = c.withAlpha(0.5)
-      thumbFillColorDown  = c.withAlpha(0.6)
-
-# }}}
-# {{{ searchThemes()
-proc searchThemes(a) =
-  var themeNames: seq[ThemeName] = @[]
-
-  proc findThemeWithName(name: string): int =
-    for i in 0..themeNames.high:
-      if themeNames[i].name == name: return i
-    result = -1
-
-  proc addThemeNames(themesDir: string, userTheme: bool) =
-    for path in walkFiles(themesDir / fmt"*.{ThemeExt}"):
-      let (_, name, _) = splitFile(path)
-      let idx = findThemeWithName(name)
-      if idx >= 0:
-        themeNames.del(idx)
-        themeNames.add(
-          ThemeName(name: name, userTheme: userTheme, override: true)
-        )
-      else:
-        themeNames.add(
-          ThemeName(name: name, userTheme: userTheme, override: false)
-        )
-
-  addThemeNames(a.path.themesDir, userTheme=false)
-  addThemeNames(a.path.userThemesDir, userTheme=true)
-
-  if themeNames.len == 0:
-    raise newException(IOError, "Could not find any themes, exiting")
-
-  themeNames.sort(
-    proc (a, b: ThemeName): int = cmp(a.name, b.name)
-  )
-
-  a.theme.themeNames = themeNames
-
-# }}}
-# {{{ findThemeIndex()
-proc findThemeIndex(name: string; a): int =
-  for i in 0..a.theme.themeNames.high:
-    if a.theme.themeNames[i].name == name:
-      return i
-  result = -1
-
-# }}}
-# {{{ themePath()
-proc themePath(theme: ThemeName; a): string =
-  let themeDir = if theme.userTheme: a.path.userThemesDir
-                 else: a.path.themesDir
-  themeDir / addFileExt(theme.name, ThemeExt)
-
-# }}}
-# {{{ loadTheme()
-proc loadTheme(theme: ThemeName; a) =
-  var path = themePath(theme, a)
-  info(fmt"Loading theme '{theme.name}' from '{path}'")
-
-  a.theme.config = loadTheme(path)
-  a.logfile.flushFile()
-
-# }}}
-# {{{ saveTheme(a)
-proc saveTheme(a) =
-  with a.theme.themeNames[a.theme.currThemeIndex]:
-    userTheme = true
-    override = true
-
-  let themePath = themePath(a.currThemeName, a)
-  saveTheme(a.theme.config, themePath)
-
-  a.themeEditor.modified = false
-  a.logFile.flushFile()
-
-# }}}
-# {{{ loadThemeImage()
-proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
-  if userTheme:
-    let imgPath = a.path.userThemeImagesDir / imageName
-    result = loadImage(imgPath, a)
-    if result.isNone:
-      info("Couldn't load image from user theme images directory: " &
-           fmt"'{imgPath}'. Attempting default theme images directory.")
-
-  let imgPath = a.path.themeImagesDir / imageName
-  result = loadImage(imgPath, a)
-  if result.isNone:
-    logging.error(
-      "Couldn't load image from default theme images directory: '{imgPath}'"
-    )
-
-# }}}
-# {{{ updateThemeStyles()
-proc updateThemeStyles(a) =
-  alias(cfg, a.theme.config)
-
-  updateWidgetStyles(a)
-
-  a.theme.windowStyle      = cfg.get("ui.window").toWindowStyle()
-  a.theme.statusBarStyle   = cfg.get("ui.status-bar").toStatusBarStyle()
-  a.theme.toolbarPaneStyle = cfg.get("pane.toolbar").toToolbarPaneStyle()
-  a.theme.notesPaneStyle   = cfg.get("pane.notes").toNotesPaneStyle()
-  a.theme.levelStyle       = cfg.get("level").toLevelStyle()
-
-  a.win.setStyle(a.theme.windowStyle)
-
-  a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
-                                           koi.getPxRatio())
-
-# }}}
-# {{{ switchTheme()
-proc switchTheme(themeIndex: Natural; a) =
-  alias(cfg, a.theme.config)
-
-  let theme = a.theme.themeNames[themeIndex]
-  loadTheme(theme, a)
-
-  updateThemeStyles(a)
-
-  let bgImageName = a.theme.windowStyle.backgroundImage
-
-  if bgImageName != "":
-    a.ui.backgroundImage = loadThemeImage(bgImageName, theme.userTheme, a)
-    a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
-  else:
-    a.ui.backgroundImage = Paint.none
-    a.ui.drawLevelParams.backgroundImage = Paint.none
-
-  a.theme.currThemeIndex = themeIndex
-
-  a.themeEditor.modified = false
-  a.theme.prevConfig = a.theme.config.deepCopy()
-
-# }}}
-
-# }}}
-
-# {{{ setSwapInterval()
-proc setSwapInterval(a) =
-  glfw.swapInterval(if a.prefs.vsync: 1 else: 0)
-
-# }}}
-# {{{ saveAppConfig()
-
-proc saveAppConfig(cfg: HoconNode, filename: string)
-
-proc saveAppConfig(a) =
-  alias(opts, a.opts)
-
-  let dp = a.ui.drawLevelParams
-
-  let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
-  let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
-
-  let cur = a.ui.cursor
-
-  var cfg = newHoconObject()
-
-  var p = "preferences."
-  cfg.set(p & "load-last-map",                  a.prefs.loadLastMap)
-  cfg.set(p & "splash.show-at-startup",         a.prefs.showSplash)
-  cfg.set(p & "splash.auto-close",              a.prefs.autoCloseSplash)
-  cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
-  cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
-  cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
-  cfg.set(p & "video.vsync",                    a.prefs.vsync)
-
-  p = "last-state."
-  cfg.set(p & "last-document", a.doc.filename)
-
-  p = "last-state.ui."
-  cfg.set(p & "theme-name",              a.currThemeName.name)
-  cfg.set(p & "zoom-level",              dp.getZoomLevel())
-  cfg.set(p & "current-level",           cur.level)
-  cfg.set(p & "cursor.row",              cur.row)
-  cfg.set(p & "cursor.column",           cur.col)
-  cfg.set(p & "view-start.row",          dp.viewStartRow)
-  cfg.set(p & "view-start.column",       dp.viewStartCol)
-  cfg.set(p & "option.show-cell-coords", dp.drawCellCoords)
-  cfg.set(p & "option.show-tools-pane",  opts.showToolsPane)
-  cfg.set(p & "option.show-notes-pane",  opts.showNotesPane)
-  cfg.set(p & "option.wasd-mode",        opts.wasdMode)
-  cfg.set(p & "option.walk-mode",        opts.walkMode)
-  cfg.set(p & "option.draw-trail",       opts.drawTrail)
-
-  p = "last-state.window."
-  cfg.set(p & "maximized",  a.win.maximized)
-  cfg.set(p & "x-position", xpos)
-  cfg.set(p & "y-position", ypos)
-  cfg.set(p & "width",      width)
-  cfg.set(p & "height",     height)
-
-  saveAppConfig(cfg, a.path.configFile)
-
-# }}}
-
 # {{{ UI helpers
 
 # {{{ viewRow()
@@ -1757,6 +1285,485 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   result = bbox
 
 # }}}
+
+# }}}
+
+# {{{ Graphics utils
+
+# {{{ colorImage()
+proc colorImage(d: var ImageData, color: Color) =
+  for i in 0..<(d.width * d.height):
+    d.data[i*4]   = (color.r * 255).byte
+    d.data[i*4+1] = (color.g * 255).byte
+    d.data[i*4+2] = (color.b * 255).byte
+
+# }}}
+# {{{ createImage()
+template createImage(d: var ImageData): Image =
+  vg.createImageRGBA(
+    d.width, d.height,
+    data = toOpenArray(d.data, 0, d.size()-1)
+  )
+
+# }}}
+# {{{ createPattern()
+proc createPattern(vg: NVGContext, img: var Image, alpha: float = 1.0,
+                   xoffs: float = 0, yoffs: float = 0,
+                   scale: float = 1.0): Paint =
+
+  let (w, h) = vg.imageSize(img)
+  vg.imagePattern(
+    ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, img, alpha
+  )
+
+# }}}
+# {{{ loadImage()
+proc loadImage(path: string; a): Option[Paint] =
+  alias(vg, a.vg)
+  try:
+    var img = vg.createImage(path, {ifRepeatX, ifRepeatY})
+    let paint = vg.createPattern(img, scale=0.5)
+    result = paint.some
+
+  except NVGError:
+    result = Paint.none
+
+# }}}
+# }}}
+# {{{ Theme handling
+
+# {{{ currThemeName()
+proc currThemeName(a): var ThemeName =
+  a.theme.themeNames[a.theme.currThemeIndex]
+
+# }}}
+# {{{ updateWidgetStyles()
+proc updateWidgetStyles(a) =
+  alias(cfg, a.theme.config)
+
+  # Button
+  a.theme.buttonStyle = koi.getDefaultButtonStyle()
+
+  let w = cfg.get("ui.widget")
+
+  with a.theme.buttonStyle:
+    cornerRadius      = w.getFloat("corner-radius")
+    fillColor         = w.getColor("background.normal")
+    fillColorHover    = w.getColor("background.hover")
+    fillColorDown     = w.getColor("background.active")
+    fillColorDisabled = w.getColor("background.disabled")
+
+    label.color            = w.getColor("foreground.normal")
+    label.colorHover       = w.getColor("foreground.normal")
+    label.colorDown        = w.getColor("foreground.active")
+    label.colorActive      = w.getColor("foreground.active")
+    label.colorActiveHover = w.getColor("foreground.active")
+    label.colorDisabled    = w.getColor("foreground.disabled")
+
+  # Radio button
+  a.theme.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
+
+  with a.theme.radioButtonStyle:
+    buttonCornerRadius         = w.getFloat("corner-radius")
+    buttonFillColor            = w.getColor("background.normal")
+    buttonFillColorHover       = w.getColor("background.hover")
+    buttonFillColorDown        = w.getColor("background.active")
+    buttonFillColorActive      = w.getColor("background.active")
+    buttonFillColorActiveHover = w.getColor("background.active")
+
+    label.color            = w.getColor("foreground.normal")
+    label.colorHover       = w.getColor("foreground.normal")
+    label.colorDown        = w.getColor("foreground.active")
+    label.colorActive      = w.getColor("foreground.active")
+    label.colorActiveHover = w.getColor("foreground.active")
+
+  # Icon radio button
+  a.theme.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
+
+  with a.theme.iconRadioButtonsStyle:
+    buttonPadHoriz             = 4.0
+    buttonPadVert              = 4.0
+    buttonFillColor            = w.getColor("background.normal")
+    buttonFillColorHover       = w.getColor("background.hover")
+    buttonFillColorDown        = w.getColor("background.active")
+    buttonFillColorActive      = w.getColor("background.active")
+    buttonFillColorActiveHover = w.getColor("background.active")
+
+    label.fontSize         = 18.0
+    label.color            = w.getColor("foreground.normal")
+    label.colorHover       = w.getColor("foreground.normal")
+    label.colorDown        = w.getColor("foreground.active")
+    label.colorActive      = w.getColor("foreground.active")
+    label.colorActiveHover = w.getColor("foreground.active")
+    label.padHoriz         = 0
+    label.padHoriz         = 0
+
+  # Text field
+  a.theme.textFieldStyle = koi.getDefaultTextFieldStyle()
+
+  let t = cfg.get("ui.text-field")
+
+  with a.theme.textFieldStyle:
+    bgCornerRadius      = w.getFloat("corner-radius")
+    bgFillColor         = w.getColor("background.normal")
+    bgFillColorHover    = w.getColor("background.hover")
+    bgFillColorActive   = t.getColor("edit.background")
+    bgFillColorDisabled = w.getColor("background.disabled")
+    textColor           = w.getColor("foreground.normal")
+    textColorHover      = w.getColor("foreground.normal")
+    textColorActive     = t.getColor("edit.text")
+    textColorDisabled   = w.getColor("foreground.disabled")
+    cursorColor         = t.getColor("cursor")
+    selectionColor      = t.getColor("selection")
+
+  # Text area
+  a.theme.textAreaStyle = koi.getDefaultTextAreaStyle()
+
+  with a.theme.textAreaStyle:
+    bgCornerRadius    = w.getFloat("corner-radius")
+    bgFillColor       = w.getColor("background.normal")
+    bgFillColorHover  = lerp(bgFillColor, w.getColor("background.hover"), 0.5)
+    bgFillColorActive = t.getColor("edit.background")
+    textColor         = w.getColor("foreground.normal")
+    textColorHover    = w.getColor("foreground.normal")
+    textColorActive   = t.getColor("edit.text")
+    cursorColor       = t.getColor("cursor")
+    selectionColor    = t.getColor("selection")
+
+    with scrollBarStyleNormal:
+      let c = t.getColor("scroll-bar.normal")
+      thumbFillColor      = c.withAlpha(0.4)
+      thumbFillColorHover = c.withAlpha(0.5)
+      thumbFillColorDown  = c.withAlpha(0.6)
+
+    with scrollBarStyleEdit:
+      let c = t.getColor("scroll-bar.edit")
+      thumbFillColor      = c.withAlpha(0.4)
+      thumbFillColorHover = c.withAlpha(0.5)
+      thumbFillColorDown  = c.withAlpha(0.6)
+
+  # Check box
+  a.theme.checkBoxStyle = koi.getDefaultCheckBoxStyle()
+
+  with a.theme.checkBoxStyle:
+    cornerRadius          = w.getFloat("corner-radius")
+    fillColor             = w.getColor("background.normal")
+    fillColorHover        = w.getColor("background.hover")
+    fillColorDown         = w.getColor("background.active")
+    fillColorActive       = w.getColor("background.active")
+    icon.fontSize         = 12.0
+    icon.color            = w.getColor("foreground.normal")
+    icon.colorHover       = w.getColor("foreground.normal")
+    icon.colorDown        = w.getColor("foreground.active")
+    icon.colorActive      = w.getColor("foreground.active")
+    icon.colorActiveHover = w.getColor("foreground.active")
+    iconActive            = IconCheck
+    iconInactive          = NoIcon
+
+  # Dialog style
+  a.theme.dialogStyle = koi.getDefaultDialogStyle()
+
+  let d = cfg.get("ui.dialog")
+
+  with a.theme.dialogStyle:
+    cornerRadius      = d.getFloat("corner-radius")
+    backgroundColor   = d.getColor("background")
+    titleBarBgColor   = d.getColor("title.background")
+    titleBarTextColor = d.getColor("title.text")
+
+    outerBorderColor  = d.getColor("outer-border.color")
+    innerBorderColor  = d.getColor("inner-border.color")
+    outerBorderWidth  = d.getFloat("outer-border.width")
+    innerBorderWidth  = d.getFloat("inner-border.width")
+
+    with shadow:
+      enabled = d.getBool("shadow.enabled")
+      xOffset = d.getFloat("shadow.x-offset")
+      yOffset = d.getFloat("shadow.y-offset")
+      feather = d.getFloat("shadow.feather")
+      color   = d.getColor("shadow.color")
+
+  a.theme.aboutDialogStyle = a.theme.dialogStyle.deepCopy()
+  a.theme.aboutDialogStyle.drawTitleBar = false
+
+  # Label
+  a.theme.labelStyle = koi.getDefaultLabelStyle()
+
+  with a.theme.labelStyle:
+    fontSize      = 14
+    color         = d.getColor("label")
+    colorDisabled = color.lerp(d.getColor("background"), 0.7)
+    align         = haLeft
+
+  # Warning label
+  a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
+
+  with a.theme.warningLabelStyle:
+    color     = d.getColor("warning")
+    multiLine = true
+
+  # Level dropDown
+  let ld = cfg.get("level.level-drop-down")
+
+  a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
+
+  with a.theme.levelDropDownStyle:
+    buttonCornerRadius       = w.getFloat("corner-radius")
+    buttonFillColor          = ld.getColor("button.normal")
+    buttonFillColorHover     = ld.getColor("button.hover")
+    buttonFillColorDown      = ld.getColor("button.normal")
+    buttonFillColorDisabled  = ld.getColor("button.normal")
+    label.fontSize           = 15.0
+    label.color              = ld.getColor("button.label")
+    label.colorHover         = ld.getColor("button.label")
+    label.colorDown          = ld.getColor("button.label")
+    label.colorActive        = ld.getColor("button.label")
+    label.colorDisabled      = ld.getColor("button.label")
+    label.align              = haCenter
+    item.align               = haLeft
+    item.color               = ld.getColor("item.normal")
+    item.colorHover          = ld.getColor("item.hover")
+    itemListCornerRadius     = w.getFloat("corner-radius")
+    itemListPadHoriz         = 10.0
+    itemListFillColor        = ld.getColor("item-list-background")
+    itemBackgroundColorHover = w.getColor("background.normal")
+
+  # About button
+  let ab = cfg.get("ui.about-button")
+
+  a.theme.aboutButtonStyle = koi.getDefaultButtonStyle()
+
+  with a.theme.aboutButtonStyle:
+    labelOnly        = true
+    label.fontSize   = 20.0
+    label.padHoriz   = 0
+    label.color      = ab.getColor("label.normal")
+    label.colorHover = ab.getColor("label.hover")
+    label.colorDown  = ab.getColor("label.down")
+
+  # Note text area
+  let pn = cfg.get("pane.notes")
+
+  a.theme.noteTextAreaStyle = koi.getDefaultTextAreaStyle()
+
+  with a.theme.noteTextAreaStyle:
+    bgFillColor         = black(0)
+    bgFillColorHover    = black(0)
+    bgFillColorActive   = black(0)
+    bgFillColorDisabled = black(0)
+
+    textPadHoriz        = 0.0
+    textPadVert         = 0.0
+    textFontSize        = 15.0
+    textFontFace        = "sans-bold"
+    textLineHeight      = 1.4
+    textColorDisabled   = pn.getColor("text")
+
+    with scrollBarStyleNormal:
+      let c = pn.getColor("scroll-bar")
+      thumbFillColor      = c.withAlpha(0.4)
+      thumbFillColorHover = c.withAlpha(0.5)
+      thumbFillColorDown  = c.withAlpha(0.6)
+
+# }}}
+# {{{ searchThemes()
+proc searchThemes(a) =
+  var themeNames: seq[ThemeName] = @[]
+
+  proc findThemeWithName(name: string): int =
+    for i in 0..themeNames.high:
+      if themeNames[i].name == name: return i
+    result = -1
+
+  proc addThemeNames(themesDir: string, userTheme: bool) =
+    for path in walkFiles(themesDir / fmt"*.{ThemeExt}"):
+      let (_, name, _) = splitFile(path)
+      let idx = findThemeWithName(name)
+      if idx >= 0:
+        themeNames.del(idx)
+        themeNames.add(
+          ThemeName(name: name, userTheme: userTheme, override: true)
+        )
+      else:
+        themeNames.add(
+          ThemeName(name: name, userTheme: userTheme, override: false)
+        )
+
+  addThemeNames(a.path.themesDir, userTheme=false)
+  addThemeNames(a.path.userThemesDir, userTheme=true)
+
+  if themeNames.len == 0:
+    raise newException(IOError, "Could not find any themes, exiting")
+
+  themeNames.sort(
+    proc (a, b: ThemeName): int = cmp(a.name, b.name)
+  )
+
+  a.theme.themeNames = themeNames
+
+# }}}
+# {{{ findThemeIndex()
+proc findThemeIndex(name: string; a): int =
+  for i in 0..a.theme.themeNames.high:
+    if a.theme.themeNames[i].name == name:
+      return i
+  result = -1
+
+# }}}
+# {{{ themePath()
+proc themePath(theme: ThemeName; a): string =
+  let themeDir = if theme.userTheme: a.path.userThemesDir
+                 else: a.path.themesDir
+  themeDir / addFileExt(theme.name, ThemeExt)
+
+# }}}
+# {{{ loadTheme()
+proc loadTheme(theme: ThemeName; a) =
+  var path = themePath(theme, a)
+  info(fmt"Loading theme '{theme.name}' from '{path}'")
+
+  a.theme.config = loadTheme(path)
+  a.logfile.flushFile()
+
+# }}}
+# {{{ saveTheme(a)
+proc saveTheme(a) =
+  try:
+    with a.theme.themeNames[a.theme.currThemeIndex]:
+      userTheme = true
+      override = true
+
+    let themePath = themePath(a.currThemeName, a)
+    saveTheme(a.theme.config, themePath)
+    a.themeEditor.modified = false
+
+  except CatchableError as e:
+    logError(e, "Error saving theme")
+    setStatusMessage(IconWarning,
+                     fmt"Cannot save theme '{a.currThemeName.name}': {e.msg}",
+                     a)
+  finally:
+    a.logFile.flushFile()
+
+# }}}
+# {{{ loadThemeImage()
+proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
+  if userTheme:
+    let imgPath = a.path.userThemeImagesDir / imageName
+    result = loadImage(imgPath, a)
+    if result.isNone:
+      info("Couldn't load image from user theme images directory: " &
+           fmt"'{imgPath}'. Attempting default theme images directory.")
+
+  let imgPath = a.path.themeImagesDir / imageName
+  result = loadImage(imgPath, a)
+  if result.isNone:
+    logging.error(
+      "Couldn't load image from default theme images directory: '{imgPath}'"
+    )
+
+# }}}
+# {{{ updateThemeStyles()
+proc updateThemeStyles(a) =
+  alias(cfg, a.theme.config)
+
+  updateWidgetStyles(a)
+
+  a.theme.windowStyle      = cfg.get("ui.window").toWindowStyle()
+  a.theme.statusBarStyle   = cfg.get("ui.status-bar").toStatusBarStyle()
+  a.theme.toolbarPaneStyle = cfg.get("pane.toolbar").toToolbarPaneStyle()
+  a.theme.notesPaneStyle   = cfg.get("pane.notes").toNotesPaneStyle()
+  a.theme.levelStyle       = cfg.get("level").toLevelStyle()
+
+  a.win.setStyle(a.theme.windowStyle)
+
+  a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
+                                           koi.getPxRatio())
+
+# }}}
+# {{{ switchTheme()
+proc switchTheme(themeIndex: Natural; a) =
+  alias(cfg, a.theme.config)
+
+  let theme = a.theme.themeNames[themeIndex]
+  loadTheme(theme, a)
+
+  updateThemeStyles(a)
+
+  let bgImageName = a.theme.windowStyle.backgroundImage
+
+  if bgImageName != "":
+    a.ui.backgroundImage = loadThemeImage(bgImageName, theme.userTheme, a)
+    a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
+  else:
+    a.ui.backgroundImage = Paint.none
+    a.ui.drawLevelParams.backgroundImage = Paint.none
+
+  a.theme.currThemeIndex = themeIndex
+
+  a.themeEditor.modified = false
+  a.theme.prevConfig = a.theme.config.deepCopy()
+
+# }}}
+
+# }}}
+
+# {{{ setSwapInterval()
+proc setSwapInterval(a) =
+  glfw.swapInterval(if a.prefs.vsync: 1 else: 0)
+
+# }}}
+# {{{ saveAppConfig()
+
+proc saveAppConfig(cfg: HoconNode, filename: string)
+
+proc saveAppConfig(a) =
+  alias(opts, a.opts)
+
+  let dp = a.ui.drawLevelParams
+
+  let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
+  let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
+
+  let cur = a.ui.cursor
+
+  var cfg = newHoconObject()
+
+  var p = "preferences."
+  cfg.set(p & "load-last-map",                  a.prefs.loadLastMap)
+  cfg.set(p & "splash.show-at-startup",         a.prefs.showSplash)
+  cfg.set(p & "splash.auto-close",              a.prefs.autoCloseSplash)
+  cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
+  cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
+  cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
+  cfg.set(p & "video.vsync",                    a.prefs.vsync)
+
+  p = "last-state."
+  cfg.set(p & "last-document", a.doc.filename)
+
+  p = "last-state.ui."
+  cfg.set(p & "theme-name",              a.currThemeName.name)
+  cfg.set(p & "zoom-level",              dp.getZoomLevel())
+  cfg.set(p & "current-level",           cur.level)
+  cfg.set(p & "cursor.row",              cur.row)
+  cfg.set(p & "cursor.column",           cur.col)
+  cfg.set(p & "view-start.row",          dp.viewStartRow)
+  cfg.set(p & "view-start.column",       dp.viewStartCol)
+  cfg.set(p & "option.show-cell-coords", dp.drawCellCoords)
+  cfg.set(p & "option.show-tools-pane",  opts.showToolsPane)
+  cfg.set(p & "option.show-notes-pane",  opts.showNotesPane)
+  cfg.set(p & "option.wasd-mode",        opts.wasdMode)
+  cfg.set(p & "option.walk-mode",        opts.walkMode)
+  cfg.set(p & "option.draw-trail",       opts.drawTrail)
+
+  p = "last-state.window."
+  cfg.set(p & "maximized",  a.win.maximized)
+  cfg.set(p & "x-position", xpos)
+  cfg.set(p & "y-position", ypos)
+  cfg.set(p & "width",      width)
+  cfg.set(p & "height",     height)
+
+  saveAppConfig(cfg, a.path.configFile)
 
 # }}}
 
