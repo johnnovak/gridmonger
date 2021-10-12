@@ -202,8 +202,8 @@ level {
     ]
 
     tooltip {
-      background = "#e6cb99fa"
-      text = ""
+      background = "#382a1cff"
+      text = "#e6cb99fa"
     }
   }
 
