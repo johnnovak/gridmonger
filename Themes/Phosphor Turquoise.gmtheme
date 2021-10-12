@@ -42,7 +42,7 @@ ui {
       width = 2.0
     }
     shadow {
-      enabled = false
+      enabled = no
       color = "#00000000"
       feather = 0.0
       x-offset = 0.0
@@ -136,7 +136,7 @@ level {
   }
 
   background-hatch {
-    enabled = false
+    enabled = no
     color = "#00000000"
     width = 0.5
     spacing-factor = 1.0
@@ -148,17 +148,17 @@ level {
       grid = "#003e2c77"
     }
     floor {
-      style = Solid
+      style = solid
       grid = "#003621b2"
     }
   }
 
   outline {
-    style = "square edges"
+    style = square-edges
     fill-style = solid
     color = "#001910ff"
     width-factor = 0.0
-    overscan = false
+    overscan = no
   }
 
   shadow {
@@ -173,8 +173,7 @@ level {
   }
 
   floor {
-    transparent = false
-
+    transparent = no
     background = [
       "#000806ff"
       "#335ca242"
@@ -194,13 +193,13 @@ level {
     comment = "#ff3300b3"
     background-shape = circle
     index = "#000000f2"
-
     index-background = [
       "#9dcc00ff"
       "#397500ff"
       "#cc8000ff"
       "#b65700ff"
     ]
+
     tooltip {
       background = "#443823f0"
       text = "#e6cb99fa"
@@ -236,7 +235,6 @@ pane {
     text = "#00dda2ff"
     scroll-bar = "#00e0a4ff"
     index = "#000000f2"
-
     index-background = [
       "#9dcc00ff"
       "#397500ff"

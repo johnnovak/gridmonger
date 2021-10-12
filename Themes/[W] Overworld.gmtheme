@@ -59,7 +59,7 @@ ui {
       active = "#ff8b00ff"
       disabled = "#ffffff33"
     }
-    foreground { 
+    foreground {
       normal = "#000000b3"
       active = "#000000a7"
       disabled = "#00000059"
@@ -121,7 +121,7 @@ level {
     trail = "#00000051"
     paste-preview = "#3399ff80"
 
-    foreground { 
+    foreground {
       normal = "#222022ff"
       light = "#2d2a2a49"
     }
@@ -193,13 +193,13 @@ level {
     comment = "#ff3300cc"
     background-shape = circle
     index = "#ffffffff"
-
     index-background = [
       "#fd4948ff"
       "#32b6e5ff"
       "#a0a2a2ff"
       "#4c4e4eff"
     ]
+
     tooltip {
       background = "#000000e8"
       text = "#ffffffe6"
@@ -235,7 +235,6 @@ pane {
     text = "#ffeeeed4"
     scroll-bar = "#00000000"
     index = "#ffffffff"
-
     index-background = [
       "#fd4948ff"
       "#1e98c7ff"
@@ -251,3 +250,4 @@ pane {
     }
   }
 }
+

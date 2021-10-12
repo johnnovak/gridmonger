@@ -42,7 +42,7 @@ ui {
       width = 0.0
     }
     shadow {
-      enabled = true
+      enabled = yes
       color = "#00000077"
       feather = 20.0
       x-offset = 2.0
@@ -136,7 +136,7 @@ level {
   }
 
   background-hatch {
-    enabled = false
+    enabled = no
     color = "#00000000"
     width = 0.5
     spacing-factor = 1.0
@@ -158,7 +158,7 @@ level {
     fill-style = solid
     color = "#00000000"
     width-factor = 0.0
-    overscan = false
+    overscan = no
   }
 
   shadow {
@@ -173,8 +173,7 @@ level {
   }
 
   floor {
-    transparent = false
-
+    transparent = no
     background = [
       "#d9d9d5ff"
       "#6f000097"
@@ -194,13 +193,13 @@ level {
     comment = "#ff3300cc"
     background-shape = circle
     index = "#ffffffff"
-
     index-background = [
       "#f75c4aff"
       "#ff9c6aff"
       "#00b3c8ff"
       "#13837fff"
     ]
+
     tooltip {
       background = "#121212e8"
       text = "#ffffffe9"
@@ -236,7 +235,6 @@ pane {
     text = "#ccccccff"
     scroll-bar = "#ccccccff"
     index = "#ffffffff"
-
     index-background = [
       "#f75c4aff"
       "#fa8d64ff"

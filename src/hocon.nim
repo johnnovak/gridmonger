@@ -633,6 +633,7 @@ proc write*(node: HoconNode, stream: Stream,
 
   let startIndent = if writeRootObjectBraces: 0 else: -1
   discard go(node, nil, depth=0, indent=startIndent, prevType=wtOther)
+  stream.write("\n")
 
 # }}}
 # {{{ Helpers
