@@ -541,20 +541,32 @@ proc parse*(p): HoconNode =
 
 # {{{ Writer
 
+type WrittenType = enum
+  wtObjectOpen, wtObjectClose, wtSimpleField, wtOther
+
+
+
 proc write*(node: HoconNode, stream: Stream,
+            indentSize: Natural = 2,
             writeRootObjectBraces: bool = false,
-            newlineBeforeObjectDepthLimit: Natural = 1,
+            newlineAfterSimpleFields: bool = true,
+            newlinesAroundObjects: bool = true,
+            newlinesAroundObjectsMaxDepth: Natural = 1,
             yesNoBool: bool = true) =
 
-  proc go(curr: HoconNode, parent: HoconNode; depth, indent: int) =
+  proc go(curr: HoconNode, parent: HoconNode, depth, indent: int,
+          prevType: WrittenType): WrittenType =
+
+    var prevType = prevType
+
     case curr.kind
     of hnkArray:
       stream.write(" = [\n")
       for val in curr.elems:
-        stream.write(" ".repeat((indent+1) * 2))
-        go(val, curr, depth+1, indent+1)
+        stream.write(" ".repeat((indent+1) * indentSize))
+        prevType = go(val, curr, depth+1, indent+1, prevType)
         stream.write("\n")
-      stream.write(" ".repeat((indent) * 2))
+      stream.write(" ".repeat((indent) * indentSize))
       stream.write("]")
 
     of hnkObject:
@@ -563,18 +575,31 @@ proc write*(node: HoconNode, stream: Stream,
         if depth > 0: stream.write(" ")
         stream.write("{\n")
 
+      if newlinesAroundObjects:
+        prevType = wtObjectOpen
+
       for key, val in curr.fields:
-        if depth <= newlineBeforeObjectDepthLimit and
-           val.kind == hnkObject:
+        if val.kind == hnkObject:
+          if (newlinesAroundObjects and
+             prevType == wtObjectClose and
+             depth <= newlinesAroundObjectsMaxDepth) or
+             (newlineAfterSimpleFields and prevType == wtSimpleField):
+            stream.write("\n")
+
+        if val.kind notin {hnkObject} and prevType == wtObjectClose:
           stream.write("\n")
 
-        stream.write(" ".repeat((indent+1) * 2) & key)
-        go(val, curr, depth+1, indent+1)
+        stream.write(" ".repeat((indent+1) * indentSize) & key)
+        prevType = go(val, curr, depth+1, indent+1, prevType)
         stream.write("\n")
 
+        if val.kind notin {hnkObject}:
+          prevType = wtSimpleField
+
       if writeBraces:
-        stream.write(" ".repeat((indent) * 2))
+        stream.write(" ".repeat((indent) * indentSize))
         stream.write("}")
+        prevType = wtObjectClose
 
     of hnkNull:
       if (parent.kind != hnkArray): stream.write(" = ")
@@ -604,8 +629,10 @@ proc write*(node: HoconNode, stream: Stream,
       else:
         stream.write($curr.bool)
 
+    return prevType
+
   let startIndent = if writeRootObjectBraces: 0 else: -1
-  go(node, nil, depth=0, indent=startIndent)
+  discard go(node, nil, depth=0, indent=startIndent, prevType=wtOther)
 
 # }}}
 # {{{ Helpers
@@ -1010,7 +1037,8 @@ obj1 { # comment }=;./23!@#//##{
       3#
     ]#
     //}
-    obj3{a:"b"}}
+    obj3{a:"b"}
+    obj4{c:"d"}}
 }
 c = "d"
 """

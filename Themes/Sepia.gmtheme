@@ -154,7 +154,7 @@ level {
   }
 
   outline {
-    style = squareEdges
+    style = square-edges
     fill-style = solid
     color = "#a89d90ff"
     width-factor = 0.28

@@ -5866,7 +5866,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     prop(label, path):
       var val = cfg.getEnum(path, T)
       koi.dropDown(val)
-      cfg.set(path, $val)
+      cfg.set(path, enumToDashCase($val))
 
 
   koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)

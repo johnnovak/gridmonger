@@ -6,6 +6,7 @@ import logging except Level
 import options
 import strformat
 import strutils
+import unicode
 
 import nanovg
 
@@ -122,10 +123,14 @@ proc getEnum*(cfg; path: string, T: typedesc[enum], default = T.low): T =
     let v = cfg.getString(path)
     if v != "":
       try:
-        result = parseEnum[T](v.toUpper())
+        result = parseEnum[T](v.replace('-', ' ').title())
       except ValueError:
         invalidValueError(path, "enum", v)
   except CatchableError as e:
     error(e.msg)
+
+proc enumToDashCase*(val: string): string =
+  val.toLower.replace(' ', '-')
+
 
 # vim: et:ts=2:sw=2:fdm=marker
