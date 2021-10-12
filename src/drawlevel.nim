@@ -257,7 +257,6 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
                              strokeColor: Color) =
 
   for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
-
     var sp = spacing * pxRatio
 
     var image = vg.renderToImage(
@@ -300,7 +299,7 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalColor)
+  renderLineHatchPatterns(dp, vg, pxRatio, ls.outlineColor)
 
   dp.setZoomLevel(ls, dp.zoomLevel)
 
