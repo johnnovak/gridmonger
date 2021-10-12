@@ -148,7 +148,7 @@ level {
       grid = "#00000000"
     }
     floor {
-      style = Loose
+      style = loose
       grid = "#00000038"
     }
   }

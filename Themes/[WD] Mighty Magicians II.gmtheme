@@ -148,7 +148,7 @@ level {
       grid = "#00000000"
     }
     floor {
-      style = Solid
+      style = solid
       grid = "#66666653"
     }
   }

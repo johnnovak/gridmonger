@@ -115,7 +115,7 @@ level {
     background = "#62584eff"
     cursor = "#ff8b00ff"
     cursor-guides = "#ffb30033"
-    line-width = Normal
+    line-width = normal
     link-marker = "#00b3c8ff"
     selection = "#ff808080"
     trail = "#00000051"
@@ -144,7 +144,7 @@ level {
 
   grid {
     background {
-      style = None
+      style = none
       grid = "#00000000"
     }
     floor {
