@@ -156,7 +156,7 @@ level {
   outline {
     style = rounded-edges
     fill-style = hatched
-    color = "#9a9c9cff"
+    color = "#353232ff"
     width-factor = 0.25
     overscan = yes
   }

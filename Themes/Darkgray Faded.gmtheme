@@ -144,20 +144,20 @@ level {
 
   grid {
     background {
-      style = cross
-      grid = "#ff000097"
+      style = solid
+      grid = "#0000001a"
     }
     floor {
-      style = none
+      style = solid
       grid = "#00000040"
     }
   }
 
   outline {
-    style = filled-rounded-edges
-    fill-style = hatched
-    color = "#49c8005f"
-    width-factor = 0.3398058252427185
+    style = none
+    fill-style = solid
+    color = "#00000000"
+    width-factor = 0.0
     overscan = no
   }
 
