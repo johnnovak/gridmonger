@@ -40,7 +40,7 @@ proc invalidValueError(path, valueType, value: string) =
   error(msg)
 
 
-proc getString*(cfg; path: string, default: string): string =
+proc getStringOrDefault*(cfg; path: string, default: string = ""): string =
   result = default
   try:
     result = cfg.getString(path)
@@ -60,7 +60,7 @@ proc parseColor*(s: string): Option[Color] =
     except ValueError:
       discard
 
-proc getColor*(cfg; path: string, default: Color = black()): Color =
+proc getColorOrDefault*(cfg; path: string, default: Color = black()): Color =
   result = default
   try:
     let v = cfg.getString(path)
@@ -74,7 +74,7 @@ proc getColor*(cfg; path: string, default: Color = black()): Color =
     error(e.msg)
 
 
-proc getBool*(cfg; path: string, default: bool): bool =
+proc getBoolOrDefault*(cfg; path: string, default: bool = false): bool =
   result = default
   try:
     result = cfg.getBool(path)
@@ -82,29 +82,29 @@ proc getBool*(cfg; path: string, default: bool): bool =
     error(e.msg)
 
 
-proc getFloat*(cfg; path: string, default: float): float =
+proc getFloatOrDefault*(cfg; path: string, default: float = 0): float =
   result = default
   try:
     result = cfg.getFloat(path)
   except CatchableError as e:
     error(e.msg)
 
-proc getInt*(cfg; path: string, default: int): int =
+proc getIntOrDefault*(cfg; path: string, default: int = 0): int =
   result = default
   try:
     result = cfg.getInt(path)
   except CatchableError as e:
     error(e.msg)
 
-proc getNatural*(cfg; path: string, default: Natural): Natural =
+proc getNaturalOrDefault*(cfg; path: string, default: Natural = 0): Natural =
   result = default
   try:
     result = cfg.getNatural(path)
   except CatchableError as e:
     error(e.msg)
 
-proc getNatural*(cfg; path: string, limits: FieldLimits,
-                 default: Natural): Natural =
+proc getNaturalOrDefault*(cfg; path: string, limits: FieldLimits,
+                          default: Natural = 0): Natural =
   try:
     result = default
     var i: int
@@ -118,7 +118,8 @@ proc getNatural*(cfg; path: string, limits: FieldLimits,
     error(e.msg)
 
 
-proc getEnum*(cfg; path: string, T: typedesc[enum], default = T.low): T =
+proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum],
+                       default = T.low): T =
   try:
     let v = cfg.getString(path)
     if v != "":

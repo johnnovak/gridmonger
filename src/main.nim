@@ -1344,38 +1344,38 @@ proc updateWidgetStyles(a) =
   # Button
   a.theme.buttonStyle = koi.getDefaultButtonStyle()
 
-  let w = cfg.get("ui.widget")
+  let w = cfg.getObjectOrEmpty("ui.widget")
 
   with a.theme.buttonStyle:
-    cornerRadius      = w.getFloat("corner-radius")
-    fillColor         = w.getColor("background.normal")
-    fillColorHover    = w.getColor("background.hover")
-    fillColorDown     = w.getColor("background.active")
-    fillColorDisabled = w.getColor("background.disabled")
+    cornerRadius      = w.getFloatOrDefault("corner-radius")
+    fillColor         = w.getColorOrDefault("background.normal")
+    fillColorHover    = w.getColorOrDefault("background.hover")
+    fillColorDown     = w.getColorOrDefault("background.active")
+    fillColorDisabled = w.getColorOrDefault("background.disabled")
 
-    label.color            = w.getColor("foreground.normal")
-    label.colorHover       = w.getColor("foreground.normal")
-    label.colorDown        = w.getColor("foreground.active")
-    label.colorActive      = w.getColor("foreground.active")
-    label.colorActiveHover = w.getColor("foreground.active")
-    label.colorDisabled    = w.getColor("foreground.disabled")
+    label.color            = w.getColorOrDefault("foreground.normal")
+    label.colorHover       = label.color
+    label.colorDown        = w.getColorOrDefault("foreground.active")
+    label.colorActive      = label.colorDown
+    label.colorActiveHover = label.colorDown
+    label.colorDisabled    = w.getColorOrDefault("foreground.disabled")
 
   # Radio button
   a.theme.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
 
   with a.theme.radioButtonStyle:
-    buttonCornerRadius         = w.getFloat("corner-radius")
-    buttonFillColor            = w.getColor("background.normal")
-    buttonFillColorHover       = w.getColor("background.hover")
-    buttonFillColorDown        = w.getColor("background.active")
-    buttonFillColorActive      = w.getColor("background.active")
-    buttonFillColorActiveHover = w.getColor("background.active")
+    buttonCornerRadius         = w.getFloatOrDefault("corner-radius")
+    buttonFillColor            = w.getColorOrDefault("background.normal")
+    buttonFillColorHover       = w.getColorOrDefault("background.hover")
+    buttonFillColorDown        = w.getColorOrDefault("background.active")
+    buttonFillColorActive      = buttonFillColorDown
+    buttonFillColorActiveHover = buttonFillColorDown
 
-    label.color            = w.getColor("foreground.normal")
-    label.colorHover       = w.getColor("foreground.normal")
-    label.colorDown        = w.getColor("foreground.active")
-    label.colorActive      = w.getColor("foreground.active")
-    label.colorActiveHover = w.getColor("foreground.active")
+    label.color            = w.getColorOrDefault("foreground.normal")
+    label.colorHover       = label.color
+    label.colorDown        = w.getColorOrDefault("foreground.active")
+    label.colorActive      = label.colorDown
+    label.colorActiveHover = label.colorDown
 
   # Icon radio button
   a.theme.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
@@ -1383,61 +1383,65 @@ proc updateWidgetStyles(a) =
   with a.theme.iconRadioButtonsStyle:
     buttonPadHoriz             = 4.0
     buttonPadVert              = 4.0
-    buttonFillColor            = w.getColor("background.normal")
-    buttonFillColorHover       = w.getColor("background.hover")
-    buttonFillColorDown        = w.getColor("background.active")
-    buttonFillColorActive      = w.getColor("background.active")
-    buttonFillColorActiveHover = w.getColor("background.active")
+    buttonFillColor            = w.getColorOrDefault("background.normal")
+    buttonFillColorHover       = w.getColorOrDefault("background.hover")
+    buttonFillColorDown        = w.getColorOrDefault("background.active")
+    buttonFillColorActive      = buttonFillColorDown
+    buttonFillColorActiveHover = buttonFillColorDown
 
     label.fontSize         = 18.0
-    label.color            = w.getColor("foreground.normal")
-    label.colorHover       = w.getColor("foreground.normal")
-    label.colorDown        = w.getColor("foreground.active")
-    label.colorActive      = w.getColor("foreground.active")
-    label.colorActiveHover = w.getColor("foreground.active")
+    label.color            = w.getColorOrDefault("foreground.normal")
+    label.colorHover       = label.color
+    label.colorDown        = w.getColorOrDefault("foreground.active")
+    label.colorActive      = label.colorDown
+    label.colorActiveHover = label.colorDown
+
     label.padHoriz         = 0
     label.padHoriz         = 0
 
   # Text field
   a.theme.textFieldStyle = koi.getDefaultTextFieldStyle()
 
-  let t = cfg.get("ui.text-field")
+  let t = cfg.getObjectOrEmpty("ui.text-field")
 
   with a.theme.textFieldStyle:
-    bgCornerRadius      = w.getFloat("corner-radius")
-    bgFillColor         = w.getColor("background.normal")
-    bgFillColorHover    = w.getColor("background.hover")
-    bgFillColorActive   = t.getColor("edit.background")
-    bgFillColorDisabled = w.getColor("background.disabled")
-    textColor           = w.getColor("foreground.normal")
-    textColorHover      = w.getColor("foreground.normal")
-    textColorActive     = t.getColor("edit.text")
-    textColorDisabled   = w.getColor("foreground.disabled")
-    cursorColor         = t.getColor("cursor")
-    selectionColor      = t.getColor("selection")
+    bgCornerRadius      = w.getFloatOrDefault("corner-radius")
+    bgFillColor         = w.getColorOrDefault("background.normal")
+    bgFillColorHover    = w.getColorOrDefault("background.hover")
+    bgFillColorActive   = t.getColorOrDefault("edit.background")
+    bgFillColorDisabled = w.getColorOrDefault("background.disabled")
+    textColor           = w.getColorOrDefault("foreground.normal")
+    textColorHover      = textColor
+    textColorActive     = t.getColorOrDefault("edit.text")
+    textColorDisabled   = w.getColorOrDefault("foreground.disabled")
+    cursorColor         = t.getColorOrDefault("cursor")
+    selectionColor      = t.getColorOrDefault("selection")
 
   # Text area
   a.theme.textAreaStyle = koi.getDefaultTextAreaStyle()
 
   with a.theme.textAreaStyle:
-    bgCornerRadius    = w.getFloat("corner-radius")
-    bgFillColor       = w.getColor("background.normal")
-    bgFillColorHover  = lerp(bgFillColor, w.getColor("background.hover"), 0.5)
-    bgFillColorActive = t.getColor("edit.background")
-    textColor         = w.getColor("foreground.normal")
-    textColorHover    = w.getColor("foreground.normal")
-    textColorActive   = t.getColor("edit.text")
-    cursorColor       = t.getColor("cursor")
-    selectionColor    = t.getColor("selection")
+    bgCornerRadius    = w.getFloatOrDefault("corner-radius")
+    bgFillColor       = w.getColorOrDefault("background.normal")
+
+    bgFillColorHover  = lerp(bgFillColor,
+                             w.getColorOrDefault("background.hover"), 0.5)
+
+    bgFillColorActive = t.getColorOrDefault("edit.background")
+    textColor         = w.getColorOrDefault("foreground.normal")
+    textColorHover    = textColor
+    textColorActive   = t.getColorOrDefault("edit.text")
+    cursorColor       = t.getColorOrDefault("cursor")
+    selectionColor    = t.getColorOrDefault("selection")
 
     with scrollBarStyleNormal:
-      let c = t.getColor("scroll-bar.normal")
+      let c = t.getColorOrDefault("scroll-bar.normal")
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
 
     with scrollBarStyleEdit:
-      let c = t.getColor("scroll-bar.edit")
+      let c = t.getColorOrDefault("scroll-bar.edit")
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
@@ -1446,42 +1450,42 @@ proc updateWidgetStyles(a) =
   a.theme.checkBoxStyle = koi.getDefaultCheckBoxStyle()
 
   with a.theme.checkBoxStyle:
-    cornerRadius          = w.getFloat("corner-radius")
-    fillColor             = w.getColor("background.normal")
-    fillColorHover        = w.getColor("background.hover")
-    fillColorDown         = w.getColor("background.active")
-    fillColorActive       = w.getColor("background.active")
+    cornerRadius          = w.getFloatOrDefault("corner-radius")
+    fillColor             = w.getColorOrDefault("background.normal")
+    fillColorHover        = w.getColorOrDefault("background.hover")
+    fillColorDown         = w.getColorOrDefault("background.active")
+    fillColorActive       = fillColorDown
     icon.fontSize         = 12.0
-    icon.color            = w.getColor("foreground.normal")
-    icon.colorHover       = w.getColor("foreground.normal")
-    icon.colorDown        = w.getColor("foreground.active")
-    icon.colorActive      = w.getColor("foreground.active")
-    icon.colorActiveHover = w.getColor("foreground.active")
+    icon.color            = w.getColorOrDefault("foreground.normal")
+    icon.colorHover       = icon.color
+    icon.colorDown        = w.getColorOrDefault("foreground.active")
+    icon.colorActive      = icon.colorDown
+    icon.colorActiveHover = icon.colorDown
     iconActive            = IconCheck
     iconInactive          = NoIcon
 
   # Dialog style
   a.theme.dialogStyle = koi.getDefaultDialogStyle()
 
-  let d = cfg.get("ui.dialog")
+  let d = cfg.getObjectOrEmpty("ui.dialog")
 
   with a.theme.dialogStyle:
-    cornerRadius      = d.getFloat("corner-radius")
-    backgroundColor   = d.getColor("background")
-    titleBarBgColor   = d.getColor("title.background")
-    titleBarTextColor = d.getColor("title.text")
+    cornerRadius      = d.getFloatOrDefault("corner-radius")
+    backgroundColor   = d.getColorOrDefault("background")
+    titleBarBgColor   = d.getColorOrDefault("title.background")
+    titleBarTextColor = d.getColorOrDefault("title.text")
 
-    outerBorderColor  = d.getColor("outer-border.color")
-    innerBorderColor  = d.getColor("inner-border.color")
-    outerBorderWidth  = d.getFloat("outer-border.width")
-    innerBorderWidth  = d.getFloat("inner-border.width")
+    outerBorderColor  = d.getColorOrDefault("outer-border.color")
+    innerBorderColor  = d.getColorOrDefault("inner-border.color")
+    outerBorderWidth  = d.getFloatOrDefault("outer-border.width")
+    innerBorderWidth  = d.getFloatOrDefault("inner-border.width")
 
     with shadow:
-      enabled = d.getBool("shadow.enabled")
-      xOffset = d.getFloat("shadow.x-offset")
-      yOffset = d.getFloat("shadow.y-offset")
-      feather = d.getFloat("shadow.feather")
-      color   = d.getColor("shadow.color")
+      enabled = d.getBoolOrDefault("shadow.enabled")
+      xOffset = d.getFloatOrDefault("shadow.x-offset")
+      yOffset = d.getFloatOrDefault("shadow.y-offset")
+      feather = d.getFloatOrDefault("shadow.feather")
+      color   = d.getColorOrDefault("shadow.color")
 
   a.theme.aboutDialogStyle = a.theme.dialogStyle.deepCopy()
   a.theme.aboutDialogStyle.drawTitleBar = false
@@ -1491,45 +1495,45 @@ proc updateWidgetStyles(a) =
 
   with a.theme.labelStyle:
     fontSize      = 14
-    color         = d.getColor("label")
-    colorDisabled = color.lerp(d.getColor("background"), 0.7)
+    color         = d.getColorOrDefault("label")
+    colorDisabled = color.lerp(d.getColorOrDefault("background"), 0.7)
     align         = haLeft
 
   # Warning label
   a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
 
   with a.theme.warningLabelStyle:
-    color     = d.getColor("warning")
+    color     = d.getColorOrDefault("warning")
     multiLine = true
 
   # Level dropDown
-  let ld = cfg.get("level.level-drop-down")
+  let ld = cfg.getObjectOrEmpty("level.level-drop-down")
 
   a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
 
   with a.theme.levelDropDownStyle:
-    buttonCornerRadius       = w.getFloat("corner-radius")
-    buttonFillColor          = ld.getColor("button.normal")
-    buttonFillColorHover     = ld.getColor("button.hover")
-    buttonFillColorDown      = ld.getColor("button.normal")
-    buttonFillColorDisabled  = ld.getColor("button.normal")
+    buttonCornerRadius       = w.getFloatOrDefault("corner-radius")
+    buttonFillColor          = ld.getColorOrDefault("button.normal")
+    buttonFillColorHover     = ld.getColorOrDefault("button.hover")
+    buttonFillColorDown      = buttonFillColor
+    buttonFillColorDisabled  = buttonFillColor
     label.fontSize           = 15.0
-    label.color              = ld.getColor("button.label")
-    label.colorHover         = ld.getColor("button.label")
-    label.colorDown          = ld.getColor("button.label")
-    label.colorActive        = ld.getColor("button.label")
-    label.colorDisabled      = ld.getColor("button.label")
+    label.color              = ld.getColorOrDefault("button.label")
+    label.colorHover         = label.color
+    label.colorDown          = label.color
+    label.colorActive        = label.color
+    label.colorDisabled      = label.color
     label.align              = haCenter
     item.align               = haLeft
-    item.color               = ld.getColor("item.normal")
-    item.colorHover          = ld.getColor("item.hover")
-    itemListCornerRadius     = w.getFloat("corner-radius")
+    item.color               = ld.getColorOrDefault("item.normal")
+    item.colorHover          = ld.getColorOrDefault("item.hover")
+    itemListCornerRadius     = w.getFloatOrDefault("corner-radius")
     itemListPadHoriz         = 10.0
-    itemListFillColor        = ld.getColor("item-list-background")
-    itemBackgroundColorHover = w.getColor("background.normal")
+    itemListFillColor        = ld.getColorOrDefault("item-list-background")
+    itemBackgroundColorHover = w.getColorOrDefault("background.normal")
 
   # About button
-  let ab = cfg.get("ui.about-button")
+  let ab = cfg.getObjectOrEmpty("ui.about-button")
 
   a.theme.aboutButtonStyle = koi.getDefaultButtonStyle()
 
@@ -1537,12 +1541,12 @@ proc updateWidgetStyles(a) =
     labelOnly        = true
     label.fontSize   = 20.0
     label.padHoriz   = 0
-    label.color      = ab.getColor("label.normal")
-    label.colorHover = ab.getColor("label.hover")
-    label.colorDown  = ab.getColor("label.down")
+    label.color      = ab.getColorOrDefault("label.normal")
+    label.colorHover = ab.getColorOrDefault("label.hover")
+    label.colorDown  = ab.getColorOrDefault("label.down")
 
   # Note text area
-  let pn = cfg.get("pane.notes")
+  let pn = cfg.getObjectOrEmpty("pane.notes")
 
   a.theme.noteTextAreaStyle = koi.getDefaultTextAreaStyle()
 
@@ -1557,10 +1561,10 @@ proc updateWidgetStyles(a) =
     textFontSize        = 15.0
     textFontFace        = "sans-bold"
     textLineHeight      = 1.4
-    textColorDisabled   = pn.getColor("text")
+    textColorDisabled   = pn.getColorOrDefault("text")
 
     with scrollBarStyleNormal:
-      let c = pn.getColor("scroll-bar")
+      let c = pn.getColorOrDefault("scroll-bar")
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
@@ -1669,11 +1673,18 @@ proc updateThemeStyles(a) =
 
   updateWidgetStyles(a)
 
-  a.theme.windowStyle      = cfg.get("ui.window").toWindowStyle()
-  a.theme.statusBarStyle   = cfg.get("ui.status-bar").toStatusBarStyle()
-  a.theme.toolbarPaneStyle = cfg.get("pane.toolbar").toToolbarPaneStyle()
-  a.theme.notesPaneStyle   = cfg.get("pane.notes").toNotesPaneStyle()
-  a.theme.levelStyle       = cfg.get("level").toLevelStyle()
+  a.theme.windowStyle      = cfg.getObjectOrEmpty("ui.window").toWindowStyle()
+
+  a.theme.statusBarStyle   = cfg.getObjectOrEmpty("ui.status-bar")
+                                .toStatusBarStyle()
+
+  a.theme.toolbarPaneStyle = cfg.getObjectOrEmpty("pane.toolbar")
+                                .toToolbarPaneStyle()
+
+  a.theme.notesPaneStyle   = cfg.getObjectOrEmpty("pane.notes")
+                                .toNotesPaneStyle()
+
+  a.theme.levelStyle       = cfg.getObjectOrEmpty("level").toLevelStyle()
 
   a.win.setStyle(a.theme.windowStyle)
 
@@ -2167,7 +2178,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
     dialogX = floor(calcDialogX(DlgWidth, a))
     dialogY = floor((koi.winHeight() - DlgHeight) * 0.5)
 
-  let logoColor = a.theme.config.getColor("ui.about-dialog.logo")
+  let logoColor = a.theme.config.getColorOrDefault("ui.about-dialog.logo")
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconQuestion}  About Gridmonger",
                   x=dialogX.some, y=dialogY.some,
@@ -5748,24 +5759,24 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.label(label)
       koi.setNextId(path)
       body
-      if a.theme.prevConfig.get(path) != cfg.get(path):
+      if a.theme.prevConfig.getOpt(path) != cfg.getOpt(path):
         te.modified = true
 
   template colorProp(label: string, path: string) =
     prop(label, path):
-      var val = cfg.getColor(path)
+      var val = cfg.getColorOrDefault(path)
       koi.color(val)
       cfg.set(path, $val)
 
   template boolProp(label: string, path: string) =
     prop(label, path):
-      var val = cfg.getBool(path)
+      var val = cfg.getBoolOrDefault(path)
       koi.checkBox(val)
       cfg.set(path, val)
 
   template floatProp(label: string, path: string, limits: FieldLimits) =
     prop(label, path):
-      var val = cfg.getFloat(path)
+      var val = cfg.getFloatOrDefault(path)
       koi.horizSlider(startVal=limits.minFloat,
                       endVal=limits.maxFloat,
                       val,
@@ -5774,7 +5785,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   template enumProp(label: string, path: string, T: typedesc[enum]) =
     prop(label, path):
-      var val = cfg.getEnum(path, T)
+      var val = cfg.getEnumOrDefault(path, T)
       koi.dropDown(val)
       cfg.set(path, enumToDashCase($val))
 
@@ -5884,7 +5895,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("About Dialog", te.sectionAboutDialog):
       let path = "ui.about-dialog.logo"
       colorProp("Logo", path)
-      if cfg.get(path) != a.theme.prevConfig.get(path):
+      if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
         a.aboutLogo.updateLogoImage = true
 
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
@@ -5892,17 +5903,17 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         p = "ui.splash-image."
         var path = p & "logo"
         colorProp("Logo", path)
-        if cfg.get(path) != a.theme.prevConfig.get(path):
+        if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
           a.splash.updateLogoImage = true
 
         path = p & "outline"
         colorProp("Logo", path)
-        if cfg.get(path) != a.theme.prevConfig.get(path):
+        if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
           a.splash.updateOutlineImage = true
 
         path = p & "shadow-alpha"
         floatProp("Shadow Alpha", path, AlphaLimits)
-        if cfg.get(path) != a.theme.prevConfig.get(path):
+        if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
           a.splash.updateShadowImage = true
 
       group:
@@ -6540,7 +6551,7 @@ proc renderFrameSplash(a) =
   vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
 
   if s.logoImage == NoImage or s.updateLogoImage:
-    colorImage(s.logo, cfg.getColor("ui.splash-image.logo"))
+    colorImage(s.logo, cfg.getColorOrDefault("ui.splash-image.logo"))
     if s.logoImage == NoImage:
       s.logoImage = createImage(s.logo)
     else:
@@ -6548,7 +6559,7 @@ proc renderFrameSplash(a) =
     s.updateLogoImage = false
 
   if s.outlineImage == NoImage or s.updateOutlineImage:
-    colorImage(s.outline, cfg.getColor("ui.splash-image.outline"))
+    colorImage(s.outline, cfg.getColorOrDefault("ui.splash-image.outline"))
     if s.outlineImage == NoImage:
       s.outlineImage = createImage(s.outline)
     else:
@@ -6572,7 +6583,7 @@ proc renderFrameSplash(a) =
 
   s.shadowPaint = createPattern(
     vg, s.shadowImage,
-    alpha=cfg.getFloat("ui.splash-image.shadow-alpha"),
+    alpha=cfg.getFloatOrDefault("ui.splash-image.shadow-alpha"),
     scale=scale
   )
 
@@ -6873,19 +6884,20 @@ proc initPreferences(cfg: HoconNode; a) =
   let prefs = cfg.getObjectOrEmpty("preferences")
 
   with a.prefs:
-    showSplash        = prefs.getBool("splash.show-at-startup", default=true)
-    autoCloseSplash   = prefs.getBool("splash.auto-close", default=false)
+    showSplash        = prefs.getBoolOrDefault("splash.show-at-startup", true)
 
-    splashTimeoutSecs = prefs.getNatural("splash.auto-close-timeout-secs",
-                                       default=3)
-                             .limit(SplashTimeoutSecsLimits)
+    autoCloseSplash   = prefs.getBoolOrDefault("splash.auto-close", false)
 
-    loadLastMap       = prefs.getBool("load-last-map", default=true)
-    vsync             = prefs.getBool("video.vsync",   default=true)
+    splashTimeoutSecs = prefs.getNaturalOrDefault(
+                          "splash.auto-close-timeout-secs", 3
+                        ).limit(SplashTimeoutSecsLimits)
 
-    autosave          = prefs.getBool("auto-save.enabled", default=true)
+    loadLastMap       = prefs.getBoolOrDefault("load-last-map", true)
+    vsync             = prefs.getBoolOrDefault("video.vsync", true)
 
-    autosaveFreqMins  = prefs.getNatural("auto-save.frequency-mins", default=2)
+    autosave          = prefs.getBoolOrDefault("auto-save.enabled", true)
+
+    autosaveFreqMins  = prefs.getNaturalOrDefault("auto-save.frequency-mins", 2)
                              .limit(AutosaveFreqMinsLimits)
 
 # }}}
@@ -6905,25 +6917,25 @@ proc initApp(a) =
 
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
 
-  var themeIndex = findThemeIndex(uiCfg.getString("theme-name",
-                                                  default="Default"), a)
+  var themeIndex = findThemeIndex(uiCfg.getStringOrDefault("theme-name",
+                                                           "Default"), a)
   if themeIndex == -1: themeIndex = 0
   switchTheme(themeIndex, a)
 
   with a.opts:
-    showNotesPane = uiCfg.getBool("option.show-notes-pane", default=true)
-    showToolsPane = uiCfg.getBool("option.show-tools-pane", default=true)
-    drawTrail     = uiCfg.getBool("option.draw-trail",      default=false)
-    walkMode      = uiCfg.getBool("option.walk-mode",       default=false)
-    wasdMode      = uiCfg.getBool("option.wasd-mode",       default=false)
+    showNotesPane = uiCfg.getBoolOrDefault("option.show-notes-pane", true)
+    showToolsPane = uiCfg.getBoolOrDefault("option.show-tools-pane", true)
+    drawTrail     = uiCfg.getBoolOrDefault("option.draw-trail",      false)
+    walkMode      = uiCfg.getBoolOrDefault("option.walk-mode",       false)
+    wasdMode      = uiCfg.getBoolOrDefault("option.wasd-mode",       false)
 
-  a.ui.drawLevelParams.drawCellCoords = uiCfg.getBool(
-    "option.show-cell-coords", default=true
+  a.ui.drawLevelParams.drawCellCoords = uiCfg.getBoolOrDefault(
+    "option.show-cell-coords", true
   )
   a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle,
-                                    uiCfg.getNatural("zoom-level", default=9))
+                                    uiCfg.getNaturalOrDefault("zoom-level", 9))
 
-  let lastMapFileName = cfg.getString("last-state.last-document", default="")
+  let lastMapFileName = cfg.getStringOrDefault("last-state.last-document", "")
 
   if a.prefs.loadLastMap and lastMapFileName != "":
     if not loadMap(lastMapFileName, a):
@@ -6936,11 +6948,11 @@ proc initApp(a) =
   # TODO timestamp check to determine whether to read the DISP info from the
   # conf or from the file
   with a.ui.drawLevelParams:
-    viewStartRow = uiCfg.getNatural("view-start.row",    default=0)
-    viewStartCol = uiCfg.getNatural("view-start.column", default=0)
+    viewStartRow = uiCfg.getNaturalOrDefault("view-start.row",    0)
+    viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
 
   with a.ui.cursor:
-    let currLevel = uiCfg.getNatural("current-level", default=0)
+    let currLevel = uiCfg.getNaturalOrDefault("current-level", 0)
                          .limit(ZoomLevelLimits)
 
     if currLevel > a.doc.map.levels.high:
@@ -6949,8 +6961,8 @@ proc initApp(a) =
       col   = 0
     else:
       level = currLevel
-      row   = uiCfg.getNatural("cursor.row",    default=0)
-      col   = uiCfg.getNatural("cursor.column", default=0)
+      row   = uiCfg.getNaturalOrDefault("cursor.row",    0)
+      col   = uiCfg.getNaturalOrDefault("cursor.column", 0)
 
   updateLastCursorViewCoords(a)
 
@@ -6969,22 +6981,22 @@ proc initApp(a) =
 
   let winCfg = cfg.getObjectOrEmpty("last-state.window")
 
-  let width  = winCfg.getNatural("width", default=700)
+  let width  = winCfg.getNaturalOrDefault("width", 700)
                      .limit(WindowWidthLimits)
 
-  let height = winCfg.getNatural("height", default=800)
+  let height = winCfg.getNaturalOrDefault("height", 800)
                      .limit(WindowWidthLimits)
 
-  var xpos = winCfg.getInt("x-position", default = -1)
+  var xpos = winCfg.getIntOrDefault("x-position", -1)
   if xpos < 0: xpos = (maxWidth - width) div 2
 
-  var ypos = winCfg.getInt("y-position", default = -1)
+  var ypos = winCfg.getIntOrDefault("y-position", -1)
   if ypos < 0: ypos = (maxHeight - height) div 2
 
   a.win.size = (width.int, height.int)
   a.win.pos = (xpos, ypos)
 
-  if winCfg.getBool("maximized", default=false):
+  if winCfg.getBoolOrDefault("maximized", false):
     a.win.maximize()
 
   a.win.show()

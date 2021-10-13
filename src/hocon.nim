@@ -687,6 +687,27 @@ proc get*(node: HoconNode, path: string): HoconNode =
   result = curr
 
 
+proc getOpt*(node: HoconNode, path: string): Option[HoconNode] =
+  var curr = node
+  for key in path.split('.'):
+    if key.hasOnlyDigits():
+      let idx = parseInt(key)
+      if curr.kind != hnkArray:
+        return
+      if not (idx >= 0 and idx <= curr.elems.high):
+        return
+      curr = curr.elems[idx]
+
+    else:
+      if curr.kind != hnkObject:
+        return
+      if not curr.fields.hasKey(key):
+        return
+      curr = curr.fields[key]
+
+  result = curr.some
+
+
 proc getString*(node: HoconNode; path: string): string =
   let v = node.get(path)
   case v.kind
