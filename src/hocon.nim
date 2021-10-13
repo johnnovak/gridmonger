@@ -1,4 +1,5 @@
 import deques
+import options
 import unicode
 import streams
 import strformat
@@ -738,36 +739,85 @@ proc getNatural*(node: HoconNode, path: string): Natural =
 
 # }}}
 # {{{ set
-template setValue*(node: HoconNode, path: string, body: untyped) =
-  var curr {.inject.} = node
+proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
+
+  proc isInt(s: string): bool =
+    try:
+      discard parseInt(s)
+      true
+    except ValueError:
+      false
+
+  var curr = node
   let pathElems = path.split('.')
 
   for i, key {.inject.} in pathElems.pairs:
-    if curr.kind != hnkObject:
-      raiseHoconPathError(path, fmt"'{key}' is not an object")
-
     let isLast = i == pathElems.high
-    if isLast: body
-    else:
-      if not curr.fields.hasKey(key):
-        curr.fields[key] = newHoconObject()
-      curr = curr.fields[key]
 
-proc set*(node: HoconNode, path: string, n: HoconNode) =
-  node.setValue(path):
-    curr.fields[key] = n
+    var arrayIdx = int.none
+    try:
+      arrayIdx = parseInt(key).some
+    except ValueError:
+      discard
 
-proc setNull*(node: HoconNode, path: string) =
-  node.set(path, HoconNode(kind: hnkNull))
+    if arrayIdx.isSome and arrayIdx.get < 0:
+      raiseHoconPathError(path,
+                          fmt"Array index must be positive: {arrayIdx.get}")
 
-proc set*(node: HoconNode, path: string, str: string) =
-  node.set(path, HoconNode(kind: hnkString, str: str))
+    if arrayIdx.isSome: # array index
+      let arrayIdx = arrayIdx.get
 
-proc set*(node: HoconNode, path: string, num: SomeNumber) =
-  node.set(path, HoconNode(kind: hnkNumber, num: num.float))
+      if curr.kind != hnkArray:
+        raiseHoconPathError(path, fmt"'{key}' is not an array")
 
-proc set*(node: HoconNode, path: string, flag: bool) =
-  node.set(path, HoconNode(kind: hnkBool, bool: flag))
+      var arrayExtended = false
+      if arrayIdx > curr.elems.high:
+        if createPath:
+          raiseHoconPathError(path, fmt"Invalid array index: {arrayIdx}")
+        else:
+          for _ in curr.elems.high..arrayIdx:
+            curr.elems.add(HoconNode(kind: hnkNull))
+          arrayExtended = true
+
+      if isLast:
+        curr.elems[arrayIdx] = value
+      else:
+        if arrayExtended:
+          curr.elems[arrayIdx] = if pathElems[i+1].isInt: newHoconArray()
+                                 else:                    newHoconObject()
+        curr = curr.elems[arrayIdx]
+
+    else: # object key
+      if curr.kind != hnkObject:
+        raiseHoconPathError(path, fmt"'{key}' is not an object")
+
+      if isLast:
+        curr.fields[key] = value
+      else:
+        if not curr.fields.hasKey(key):
+          if createPath:
+            curr.fields[key] = if pathElems[i+1].isInt: newHoconArray()
+                               else:                    newHoconObject()
+          else:
+            raiseHoconPathError(path, fmt"'{key}' not found")
+        curr = curr.fields[key]
+
+
+proc setNull*(node: HoconNode, path: string, createPath = true) =
+  let value = HoconNode(kind: hnkNull)
+  node.set(path, value, createPath)
+
+proc set*(node: HoconNode, path: string, str: string, createPath = true) =
+  let value = HoconNode(kind: hnkString, str: str)
+  node.set(path, value, createPath)
+
+proc set*(node: HoconNode, path: string, num: SomeNumber, createPath = true) =
+  let value = HoconNode(kind: hnkNumber, num: num.float)
+  node.set(path, value, createPath)
+
+proc set*(node: HoconNode, path: string, flag: bool, createPath = true) =
+  let value = HoconNode(kind: hnkBool, bool: flag)
+  node.set(path, value, createPath)
 
 # }}}
 # }}}
@@ -967,6 +1017,38 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkNewline, line: 4, column: 15)
 
   # }}}
+  # {{{ equality test
+  block:
+    let n1 = HoconNode(kind: hnkBool, bool: true)
+    assert n1 == n1.deepCopy()
+
+    let n2 = HoconNode(kind: hnkString, str: "foo")
+    assert n2 == n2.deepCopy()
+
+    let n3 = HoconNode(kind: hnkNull)
+    assert n3 == n3.deepCopy()
+
+    let n4 = HoconNode(kind: hnkNumber, num: 123.456)
+    assert n4 == n4.deepCopy()
+
+    var arr = newHoconArray()
+    arr.elems.add(n1)
+    arr.elems.add(n2)
+    arr.elems.add(n3)
+    assert arr == arr.deepCopy()
+
+    var obj = newHoconObject()
+    obj.set("a", true)
+    obj.set("b", 42)
+    obj.set("c", "foo")
+    assert obj == obj.deepCopy()
+
+    var obj2 = newHoconObject()
+    obj.set("o2", obj.deepCopy())
+    obj.set("a", arr.deepCopy())
+    assert obj2 == obj2.deepCopy()
+
+  # }}}
   # {{{ parser test
 
   proc printTree(node: HoconNode, depth: int = 0) =
@@ -1055,37 +1137,6 @@ c = "d"
     echo st.data
 
   # }}}
-
-  block:
-    let n1 = HoconNode(kind: hnkBool, bool: true)
-    assert n1 == n1.deepCopy()
-
-    let n2 = HoconNode(kind: hnkString, str: "foo")
-    assert n2 == n2.deepCopy()
-
-    let n3 = HoconNode(kind: hnkNull)
-    assert n3 == n3.deepCopy()
-
-    let n4 = HoconNode(kind: hnkNumber, num: 123.456)
-    assert n4 == n4.deepCopy()
-
-    var arr = newHoconArray()
-    arr.elems.add(n1)
-    arr.elems.add(n2)
-    arr.elems.add(n3)
-    assert arr == arr.deepCopy()
-
-    var obj = newHoconObject()
-    obj.set("a", true)
-    obj.set("b", 42)
-    obj.set("c", "foo")
-    assert obj == obj.deepCopy()
-
-    var obj2 = newHoconObject()
-    obj.set("o2", obj.deepCopy())
-    obj.set("a", arr.deepCopy())
-    assert obj2 == obj2.deepCopy()
-
 
 # }}}
 

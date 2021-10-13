@@ -1,5 +1,8 @@
 BUGS
 
+- prompt to save changed theme on exit
+- handle invalid theme files
+- attemp to fully load invalid themes
 
 
 TODO for v0.9
