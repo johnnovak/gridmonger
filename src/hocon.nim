@@ -543,8 +543,7 @@ proc parse*(p): HoconNode =
 # {{{ Writer
 
 type WrittenType = enum
-  wtObjectOpen, wtObjectClose, wtSimpleField, wtOther
-
+  wtObjectOpen, wtObjectClose, wtFieldName, wtSimpleField, wtOther
 
 
 proc write*(node: HoconNode, stream: Stream,
@@ -562,10 +561,11 @@ proc write*(node: HoconNode, stream: Stream,
 
     case curr.kind
     of hnkArray:
-      stream.write(" = [\n")
+      if prevType == wtFieldName: stream.write(" = ")
+      stream.write("[\n")
       for val in curr.elems:
         stream.write(" ".repeat((indent+1) * indentSize))
-        prevType = go(val, curr, depth+1, indent+1, prevType)
+        prevType = go(val, curr, depth+1, indent+1, wtOther)
         stream.write("\n")
       stream.write(" ".repeat((indent) * indentSize))
       stream.write("]")
@@ -573,7 +573,7 @@ proc write*(node: HoconNode, stream: Stream,
     of hnkObject:
       let writeBraces = depth > 0 or (depth == 0 and writeRootObjectBraces)
       if writeBraces:
-        if depth > 0: stream.write(" ")
+        if depth > 0 and prevType == wtFieldName: stream.write(" ")
         stream.write("{\n")
 
       if newlinesAroundObjects:
@@ -591,7 +591,7 @@ proc write*(node: HoconNode, stream: Stream,
           stream.write("\n")
 
         stream.write(" ".repeat((indent+1) * indentSize) & key)
-        prevType = go(val, curr, depth+1, indent+1, prevType)
+        prevType = go(val, curr, depth+1, indent+1, wtFieldName)
         stream.write("\n")
 
         if val.kind notin {hnkObject}:
@@ -773,11 +773,14 @@ proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
       var arrayExtended = false
       if arrayIdx > curr.elems.high:
         if createPath:
-          raiseHoconPathError(path, fmt"Invalid array index: {arrayIdx}")
-        else:
-          for _ in curr.elems.high..arrayIdx:
+          var elemsToAdd = if curr.elems.len == 0: arrayIdx+1
+                           else: arrayIdx - curr.elems.high
+          while elemsToAdd > 0:
             curr.elems.add(HoconNode(kind: hnkNull))
+            dec(elemsToAdd)
           arrayExtended = true
+        else:
+          raiseHoconPathError(path, fmt"Invalid array index: {arrayIdx}")
 
       if isLast:
         curr.elems[arrayIdx] = value
@@ -824,6 +827,25 @@ proc set*(node: HoconNode, path: string, flag: bool, createPath = true) =
 
 # {{{ Tests
 when isMainModule:
+
+  proc printTree(node: HoconNode, depth: int = 0) =
+    let indent = " ".repeat(depth * 2)
+    case node.kind
+    of hnkArray:
+      echo ""
+      for val in node.elems:
+        stdout.write indent
+        printTree(val, depth+1)
+    of hnkObject:
+      echo ""
+      for key, val in node.fields:
+        stdout.write indent & key & ": "
+        printTree(val, depth+1)
+    of hnkNull:   echo "null"
+    of hnkString: echo "\"" & $node.str & "\""
+    of hnkNumber: echo $node.num
+    of hnkBool:   echo $node.bool
+
   let testString = "\u0024\u00a2\u0939\u20ac\ud5cc"
   # byteLen            1     2     3     3     3
   # byteOffs           0     1     3     6     9
@@ -1051,25 +1073,6 @@ when isMainModule:
   # }}}
   # {{{ parser test
 
-  proc printTree(node: HoconNode, depth: int = 0) =
-    let indent = " ".repeat(depth * 2)
-    case node.kind
-    of hnkArray:
-      echo ""
-      for val in node.elems:
-        stdout.write indent
-        printTree(val, depth+1)
-    of hnkObject:
-      echo ""
-      for key, val in node.fields:
-        stdout.write indent & key & ": "
-        printTree(val, depth+1)
-    of hnkNull:   echo "null"
-    of hnkString: echo "\"" & $node.str & "\""
-    of hnkNumber: echo $node.num
-    of hnkBool:   echo $node.bool
-
-
   block:
     let testString = """
 {
@@ -1139,7 +1142,22 @@ c = "d"
     echo st.data
 
   # }}}
+# {{{ setter test
+  block:
+    var obj = newHoconObject()
+    obj.set("a.b.c1.d1", true)
+    obj.set("a.b.c1.d2", 42)
+    obj.set("a.b.c2.0", "x")
+    obj.set("a.b.c2.2", "z")
+    obj.set("a.b.c2.1", "y")
+    obj.set("a.b.c2.5.2.foo.1", "bar")
 
+    var st = newStringStream()
+    echo '-'.repeat(40)
+    obj.write(st)
+    echo st.data
+
+# }}}
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
