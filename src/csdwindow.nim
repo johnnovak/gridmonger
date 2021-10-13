@@ -8,7 +8,6 @@ import with
 
 import common
 import utils
-import theme
 
 
 const

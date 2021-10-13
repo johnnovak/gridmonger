@@ -1,4 +1,5 @@
 import deques
+import options
 import unicode
 import streams
 import strformat
@@ -541,20 +542,32 @@ proc parse*(p): HoconNode =
 
 # {{{ Writer
 
+type WrittenType = enum
+  wtObjectOpen, wtObjectClose, wtSimpleField, wtOther
+
+
+
 proc write*(node: HoconNode, stream: Stream,
+            indentSize: Natural = 2,
             writeRootObjectBraces: bool = false,
-            newlineBeforeObjectDepthLimit: Natural = 1,
+            newlineAfterSimpleFields: bool = true,
+            newlinesAroundObjects: bool = true,
+            newlinesAroundObjectsMaxDepth: Natural = 1,
             yesNoBool: bool = true) =
 
-  proc go(curr: HoconNode, parent: HoconNode; depth, indent: int) =
+  proc go(curr: HoconNode, parent: HoconNode, depth, indent: int,
+          prevType: WrittenType): WrittenType =
+
+    var prevType = prevType
+
     case curr.kind
     of hnkArray:
       stream.write(" = [\n")
       for val in curr.elems:
-        stream.write(" ".repeat((indent+1) * 2))
-        go(val, curr, depth+1, indent+1)
+        stream.write(" ".repeat((indent+1) * indentSize))
+        prevType = go(val, curr, depth+1, indent+1, prevType)
         stream.write("\n")
-      stream.write(" ".repeat((indent) * 2))
+      stream.write(" ".repeat((indent) * indentSize))
       stream.write("]")
 
     of hnkObject:
@@ -563,18 +576,31 @@ proc write*(node: HoconNode, stream: Stream,
         if depth > 0: stream.write(" ")
         stream.write("{\n")
 
+      if newlinesAroundObjects:
+        prevType = wtObjectOpen
+
       for key, val in curr.fields:
-        if depth <= newlineBeforeObjectDepthLimit and
-           val.kind == hnkObject:
+        if val.kind == hnkObject:
+          if (newlinesAroundObjects and
+             prevType == wtObjectClose and
+             depth <= newlinesAroundObjectsMaxDepth) or
+             (newlineAfterSimpleFields and prevType == wtSimpleField):
+            stream.write("\n")
+
+        if val.kind notin {hnkObject} and prevType == wtObjectClose:
           stream.write("\n")
 
-        stream.write(" ".repeat((indent+1) * 2) & key)
-        go(val, curr, depth+1, indent+1)
+        stream.write(" ".repeat((indent+1) * indentSize) & key)
+        prevType = go(val, curr, depth+1, indent+1, prevType)
         stream.write("\n")
 
+        if val.kind notin {hnkObject}:
+          prevType = wtSimpleField
+
       if writeBraces:
-        stream.write(" ".repeat((indent) * 2))
+        stream.write(" ".repeat((indent) * indentSize))
         stream.write("}")
+        prevType = wtObjectClose
 
     of hnkNull:
       if (parent.kind != hnkArray): stream.write(" = ")
@@ -604,8 +630,11 @@ proc write*(node: HoconNode, stream: Stream,
       else:
         stream.write($curr.bool)
 
+    return prevType
+
   let startIndent = if writeRootObjectBraces: 0 else: -1
-  go(node, nil, depth=0, indent=startIndent)
+  discard go(node, nil, depth=0, indent=startIndent, prevType=wtOther)
+  stream.write("\n")
 
 # }}}
 # {{{ Helpers
@@ -710,36 +739,85 @@ proc getNatural*(node: HoconNode, path: string): Natural =
 
 # }}}
 # {{{ set
-template setValue*(node: HoconNode, path: string, body: untyped) =
-  var curr {.inject.} = node
+proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
+
+  proc isInt(s: string): bool =
+    try:
+      discard parseInt(s)
+      true
+    except ValueError:
+      false
+
+  var curr = node
   let pathElems = path.split('.')
 
   for i, key {.inject.} in pathElems.pairs:
-    if curr.kind != hnkObject:
-      raiseHoconPathError(path, fmt"'{key}' is not an object")
-
     let isLast = i == pathElems.high
-    if isLast: body
-    else:
-      if not curr.fields.hasKey(key):
-        curr.fields[key] = newHoconObject()
-      curr = curr.fields[key]
 
-proc set*(node: HoconNode, path: string, n: HoconNode) =
-  node.setValue(path):
-    curr.fields[key] = n
+    var arrayIdx = int.none
+    try:
+      arrayIdx = parseInt(key).some
+    except ValueError:
+      discard
 
-proc setNull*(node: HoconNode, path: string) =
-  node.set(path, HoconNode(kind: hnkNull))
+    if arrayIdx.isSome and arrayIdx.get < 0:
+      raiseHoconPathError(path,
+                          fmt"Array index must be positive: {arrayIdx.get}")
 
-proc set*(node: HoconNode, path: string, str: string) =
-  node.set(path, HoconNode(kind: hnkString, str: str))
+    if arrayIdx.isSome: # array index
+      let arrayIdx = arrayIdx.get
 
-proc set*(node: HoconNode, path: string, num: SomeNumber) =
-  node.set(path, HoconNode(kind: hnkNumber, num: num.float))
+      if curr.kind != hnkArray:
+        raiseHoconPathError(path, fmt"'{key}' is not an array")
 
-proc set*(node: HoconNode, path: string, flag: bool) =
-  node.set(path, HoconNode(kind: hnkBool, bool: flag))
+      var arrayExtended = false
+      if arrayIdx > curr.elems.high:
+        if createPath:
+          raiseHoconPathError(path, fmt"Invalid array index: {arrayIdx}")
+        else:
+          for _ in curr.elems.high..arrayIdx:
+            curr.elems.add(HoconNode(kind: hnkNull))
+          arrayExtended = true
+
+      if isLast:
+        curr.elems[arrayIdx] = value
+      else:
+        if arrayExtended:
+          curr.elems[arrayIdx] = if pathElems[i+1].isInt: newHoconArray()
+                                 else:                    newHoconObject()
+        curr = curr.elems[arrayIdx]
+
+    else: # object key
+      if curr.kind != hnkObject:
+        raiseHoconPathError(path, fmt"'{key}' is not an object")
+
+      if isLast:
+        curr.fields[key] = value
+      else:
+        if not curr.fields.hasKey(key):
+          if createPath:
+            curr.fields[key] = if pathElems[i+1].isInt: newHoconArray()
+                               else:                    newHoconObject()
+          else:
+            raiseHoconPathError(path, fmt"'{key}' not found")
+        curr = curr.fields[key]
+
+
+proc setNull*(node: HoconNode, path: string, createPath = true) =
+  let value = HoconNode(kind: hnkNull)
+  node.set(path, value, createPath)
+
+proc set*(node: HoconNode, path: string, str: string, createPath = true) =
+  let value = HoconNode(kind: hnkString, str: str)
+  node.set(path, value, createPath)
+
+proc set*(node: HoconNode, path: string, num: SomeNumber, createPath = true) =
+  let value = HoconNode(kind: hnkNumber, num: num.float)
+  node.set(path, value, createPath)
+
+proc set*(node: HoconNode, path: string, flag: bool, createPath = true) =
+  let value = HoconNode(kind: hnkBool, bool: flag)
+  node.set(path, value, createPath)
 
 # }}}
 # }}}

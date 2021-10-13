@@ -18,7 +18,6 @@ import icons
 import level
 import map
 import regions
-import theme
 import utils
 
 

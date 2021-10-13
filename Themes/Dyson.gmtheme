@@ -1,7 +1,7 @@
 ui {
   window {
     modified-flag = "#ffffff40"
-    
+
     background {
       color = "#b6b8b8ff"
       image = ""
@@ -42,7 +42,7 @@ ui {
       width = 0.0
     }
     shadow {
-      enabled = false
+      enabled = no
       color = "#0000004f"
       feather = 18.0
       x-offset = 2.0
@@ -59,7 +59,7 @@ ui {
       active = "#ffb300ff"
       disabled = "#ffffff33"
     }
-    foreground { 
+    foreground {
       normal = "#000000b3"
       active = "#000000b3"
       disabled = "#00000059"
@@ -93,7 +93,7 @@ ui {
 
   about-button {
     label {
-      normal= "#0000004d"
+      normal = "#0000004d"
       hover = "#00000066"
       down = "#000000b3"
     }
@@ -136,7 +136,7 @@ level {
   }
 
   background-hatch {
-    enabled = false
+    enabled = no
     color = "#00000000"
     width = 0.5
     spacing-factor = 1.0
@@ -154,11 +154,11 @@ level {
   }
 
   outline {
-    style = "rounded edges"
+    style = rounded-edges
     fill-style = hatched
-    color = "#9a9c9cff"
+    color = "#353232ff"
     width-factor = 0.25
-    overscan = true
+    overscan = yes
   }
 
   shadow {
@@ -173,8 +173,7 @@ level {
   }
 
   floor {
-    transparent = false
-
+    transparent = no
     background = [
       "#f2f2eeff"
       "#6f00008f"
@@ -194,13 +193,13 @@ level {
     comment = "#ff3300cc"
     background-shape = circle
     index = "#ffffffff"
-
     index-background = [
       "#fd4948ff"
       "#32b6e5ff"
       "#a0a2a2ff"
       "#4c4e4eff"
     ]
+
     tooltip {
       background = "#0a0a0ae8"
       text = "#ffffffe6"
@@ -236,7 +235,6 @@ pane {
     text = "#2d2a2aff"
     scroll-bar = "#51515100"
     index = "#ffffffff"
-
     index-background = [
       "#fd4948ff"
       "#1e98c7ff"

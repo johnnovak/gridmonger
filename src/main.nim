@@ -1683,8 +1683,6 @@ proc updateThemeStyles(a) =
 # }}}
 # {{{ switchTheme()
 proc switchTheme(themeIndex: Natural; a) =
-  alias(cfg, a.theme.config)
-
   let theme = a.theme.themeNames[themeIndex]
   loadTheme(theme, a)
 
@@ -5741,97 +5739,9 @@ with ThemeEditorAutoLayoutParams:
 
 # {{{ renderThemeEditorProps()
 
-type PropertyKind = enum
-  pkColor, pkString #, pkBool, pkFloat, pkEnum
-
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
   alias(cfg, a.theme.config)
-
-#[
-  let ts = a.theme.style
-
-  macro prop(label: static[string], path: untyped): untyped =
-
-    proc getRefObjType(sym: NimNode): NimNode =
-      sym.getTypeImpl[0].getTypeImpl
-
-    proc findProp(objType: NimNode, name: string): NimNode =
-      let recList = objType[2]
-      for identDef in recList:
-        let propName = identDef[0].strVal
-        if propName == name:
-          let propType = identDef[1]
-          return propType
-      error("Cannot find property: " & name)
-
-    let
-      pathStr = path.repr
-      pathArr = pathStr.split(".")
-      sectionName = pathArr[0]
-      subsectionName = pathArr[1]
-      propNameWithIndex = pathArr[2]
-
-    let
-      p = propNameWithIndex.find('[')
-      propName = if p > -1: propNameWithIndex.substr(0, p-1)
-                 else: propNameWithIndex
-
-    let
-      rootObjType = getRefObjType(ThemeStyle.getTypeInst)
-      sectionObjType = findProp(rootObjType, sectionName).getRefObjType
-      subsectionObjType = findProp(sectionObjType, subsectionName).getRefObjType
-      propType = findProp(subsectionObjType, propName)
-
-    let fullPath = parseExpr("ts." & pathStr)
-
-    result = nnkStmtList.newTree
-    result.add quote do:
-      koi.label(`label`)
-      koi.setNextId(`pathStr`)
-
-    if propType == Color.getTypeInst or
-       # a bit hacky; all arrays are of type Color
-       propType.getTypeImpl.kind == nnkBracketExpr:
-      result.add quote do:
-        koi.color(`fullPath`)
-
-    elif propType == float.getTypeInst:
-      let limitSym = newIdentNode(
-        sectionName.capitalizeAscii() &
-        subsectionName.capitalizeAscii() &
-        propName.capitalizeAscii() &
-        "Limits"
-      )
-
-      result.add quote do:
-        # TODO limits
-        koi.horizSlider(startVal=`limitSym`.minFloat,
-                        endVal=`limitSym`.maxFloat,
-                        `fullPath`,
-                        style=ThemeEditorSliderStyle)
-
-    elif propType == bool.getTypeInst:
-      result.add quote do:
-        koi.checkBox(`fullPath`)
-
-    elif propType.getTypeImpl.kind == nnkEnumTy:
-      result.add quote do:
-        koi.dropDown(`fullPath`)
-
-    else:
-      echo propType.treeRepr
-      error("Unknown type: " & propType.strVal)
-
-#    echo result.repr
-
-    let prevFullPath = parseExpr("te.prevState." & pathStr)
-
-    result.add quote do:
-      if `prevFullPath` != `fullPath`:
-        te.modified = true
-
-]#
 
   template prop(label: string, path: string, body: untyped)  =
     block:
@@ -5843,10 +5753,9 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   template colorProp(label: string, path: string) =
     prop(label, path):
-      var n = cfg.get(path)
-      var val = parseColor(n.str).get
+      var val = cfg.getColor(path)
       koi.color(val)
-      n.str = $val
+      cfg.set(path, $val)
 
   template boolProp(label: string, path: string) =
     prop(label, path):
@@ -5856,17 +5765,18 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   template floatProp(label: string, path: string, limits: FieldLimits) =
     prop(label, path):
-      var n = cfg.get(path)
+      var val = cfg.getFloat(path)
       koi.horizSlider(startVal=limits.minFloat,
                       endVal=limits.maxFloat,
-                      n.num,
+                      val,
                       style=ThemeEditorSliderStyle)
+      cfg.set(path, val)
 
   template enumProp(label: string, path: string, T: typedesc[enum]) =
     prop(label, path):
       var val = cfg.getEnum(path, T)
       koi.dropDown(val)
-      cfg.set(path, $val)
+      cfg.set(path, enumToDashCase($val))
 
 
   koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)
@@ -6196,10 +6106,6 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   koi.label(cx, cy, w, wh, fmt"T  H  E  M  E       E  D  I  T  O  R",
             style=titleStyle)
 
-  var betaStyle = getDefaultLabelStyle()
-  betaStyle.color = rgb(1.0, 0.7, 0)
-  koi.label(cx + 265, cy, 40, wh, fmt"beta", style=betaStyle)
-
   # Theme name & action buttons
   vg.beginPath()
   vg.rect(x+1, y+TitleHeight, w, h=96)
@@ -6241,15 +6147,15 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   let buttonsDisabled = koi.isDialogOpen()
 
-  if koi.button(cx, cy, w=bw, h=wh, "New", disabled=true):
-    discard
-
-  cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
     saveTheme(a)
 
   cx += bw + bp
-  if koi.button(cx, cy, w=bw, h=wh, "Props", disabled=true):
+  if koi.button(cx, cy, w=bw, h=wh, "Copy", disabled=true):
+    discard
+
+  cx += bw + bp
+  if koi.button(cx, cy, w=bw, h=wh, "Rename", disabled=true):
     discard # TODO
 
   cx += bw + bp

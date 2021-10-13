@@ -42,7 +42,7 @@ ui {
       width = 0.0
     }
     shadow {
-      enabled = false
+      enabled = no
       color = "#00000000"
       feather = 0.0
       x-offset = 0.0
@@ -59,7 +59,7 @@ ui {
       active = "#ffa600ff"
       disabled = "#ffffff33"
     }
-    foreground { 
+    foreground {
       normal = "#000000b3"
       active = "#0000009a"
       disabled = "#00000059"
@@ -136,7 +136,7 @@ level {
   }
 
   background-hatch {
-    enabled = false
+    enabled = no
     color = "#00000000"
     width = 1.0
     spacing-factor = 3.0
@@ -148,7 +148,7 @@ level {
       grid = "#00000000"
     }
     floor {
-      style = Solid
+      style = solid
       grid = "#0303035c"
     }
   }
@@ -158,7 +158,7 @@ level {
     fill-style = solid
     color = "#00000000"
     width-factor = 0.0
-    overscan = false
+    overscan = no
   }
 
   shadow {
@@ -173,8 +173,7 @@ level {
   }
 
   floor {
-    transparent = false
-
+    transparent = no
     background = [
       "#eeeeeeff"
       "#9d3336bb"
@@ -194,7 +193,6 @@ level {
     comment = "#ff3c00ab"
     background-shape = circle
     index = "#000000b5"
-
     index-background = [
       "#12da0dff"
       "#00d3cdff"
@@ -202,6 +200,7 @@ level {
       "#c87dffff"
       "#493929ff"
     ]
+
     tooltip {
       background = "#fffee8fa"
       text = "#3c2c1cff"
@@ -237,7 +236,6 @@ pane {
     text = "#000000af"
     scroll-bar = "#d3c5b8ff"
     index = "#000000b5"
-
     index-background = [
       "#12da0dff"
       "#00d3cdff"
@@ -253,3 +251,4 @@ pane {
     }
   }
 }
+

@@ -174,7 +174,6 @@ level {
 
   floor {
     transparent = no
-
     background = [
       "#f2f2eeff"
       "#6f000097"
@@ -194,13 +193,13 @@ level {
     comment = "#ff3300cc"
     background-shape = circle
     index = "#ffffffff"
-
     index-background = [
       "#f75c4aff"
       "#ff9c6aff"
       "#00b3c8ff"
       "#13837fff"
     ]
+
     tooltip {
       background = "#0d0d0dff"
       text = "#e6e6e6ff"
@@ -236,7 +235,6 @@ pane {
     text = "#e6e6e6ff"
     scroll-bar = "#e6e6e6ff"
     index = "#ffffffff"
-
     index-background = [
       "#f75c4aff"
       "#fa8d64ff"
@@ -252,3 +250,4 @@ pane {
     }
   }
 }
+
