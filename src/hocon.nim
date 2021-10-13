@@ -939,6 +939,38 @@ when isMainModule:
     assert t.eatToken() == Token(kind: tkNewline, line: 4, column: 15)
 
   # }}}
+  # {{{ equality test
+  block:
+    let n1 = HoconNode(kind: hnkBool, bool: true)
+    assert n1 == n1.deepCopy()
+
+    let n2 = HoconNode(kind: hnkString, str: "foo")
+    assert n2 == n2.deepCopy()
+
+    let n3 = HoconNode(kind: hnkNull)
+    assert n3 == n3.deepCopy()
+
+    let n4 = HoconNode(kind: hnkNumber, num: 123.456)
+    assert n4 == n4.deepCopy()
+
+    var arr = newHoconArray()
+    arr.elems.add(n1)
+    arr.elems.add(n2)
+    arr.elems.add(n3)
+    assert arr == arr.deepCopy()
+
+    var obj = newHoconObject()
+    obj.set("a", true)
+    obj.set("b", 42)
+    obj.set("c", "foo")
+    assert obj == obj.deepCopy()
+
+    var obj2 = newHoconObject()
+    obj.set("o2", obj.deepCopy())
+    obj.set("a", arr.deepCopy())
+    assert obj2 == obj2.deepCopy()
+
+  # }}}
   # {{{ parser test
 
   proc printTree(node: HoconNode, depth: int = 0) =
@@ -996,22 +1028,25 @@ when isMainModule:
   block:
     let testString = """
 
-obj1 { # comment }=;./23!@#//##{
+objA { # comment }=;./23!@#//##{
   foo = "fooval"//blah
-  bar
-    =1234.5
   # line comment
   // line comment
   obj2
   {
-    key1 = true, key2 = null
     arr = [//
       1, 2#
       3#
     ]#
     //}
-    obj3{a:"b"}}
+    obj3{a:"b"}
+    key1 = true, key2 = null
+    obj4{c:"d"}}
+  bar
+    =1234.5
+    obj5 {"x"=y }
 }
+objB { b: false }
 c = "d"
 """
     var p = initHoconParser(newStringStream(testString))
@@ -1026,37 +1061,6 @@ c = "d"
     echo st.data
 
   # }}}
-
-  block:
-    let n1 = HoconNode(kind: hnkBool, bool: true)
-    assert n1 == n1.deepCopy()
-
-    let n2 = HoconNode(kind: hnkString, str: "foo")
-    assert n2 == n2.deepCopy()
-
-    let n3 = HoconNode(kind: hnkNull)
-    assert n3 == n3.deepCopy()
-
-    let n4 = HoconNode(kind: hnkNumber, num: 123.456)
-    assert n4 == n4.deepCopy()
-
-    var arr = newHoconArray()
-    arr.elems.add(n1)
-    arr.elems.add(n2)
-    arr.elems.add(n3)
-    assert arr == arr.deepCopy()
-
-    var obj = newHoconObject()
-    obj.set("a", true)
-    obj.set("b", 42)
-    obj.set("c", "foo")
-    assert obj == obj.deepCopy()
-
-    var obj2 = newHoconObject()
-    obj.set("o2", obj.deepCopy())
-    obj.set("a", arr.deepCopy())
-    assert obj2 == obj2.deepCopy()
-
 
 # }}}
 
