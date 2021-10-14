@@ -1,49 +1,54 @@
 BUGS
 
 - prompt to save changed theme on exit
-- handle invalid theme files
-- attemp to fully load invalid themes
+
+
+ENHANCEMENTS
+
+- scrollable dropdowns (if list is larger than window, click to open
+  misbehaves)
+
+- thick wall style (for Companion style)
+- (optionally use color for ID notes?)
+
+- log memory access crashes? (or division by zero)
 
 
 TODO for v0.9
-
-  - finish OS X package
-
-  - inactive button color in titlebar
-  - tooltip roundness & shadow opacity
-  - level dropdown shadow opacity
-
-  - thick wall style (for Companion style)
-  - (optionally use color for ID notes?)
 
   - region name reassignment on:
     - resize
     - change map coord origin (update levels with regions without overrides)
     - change region size
 
-  - installer:
+  - store AppState in map
+
+  - UI:
+    - textarea: mouse handling, scrollwheel
+
+  - win installer:
     - script for building installer
     - add file extension association option
     - new gui?
  
-  - finalise all themes
+  - OS X:
+      - finish OS X package
+      - code signing
+      - gridmonger document icon
 
-  - store AppState in map
-
-  - config format:
-    - rename properties according to theme editor (in progress)
-    - check all attributes, rename a few for consistency
-
-  - textarea: mouse handling, scrollwheel
+  - theme:
+    - inactive button color in titlebar
+    - tooltip roundness & shadow opacity
+    - level dropdown shadow opacity
 
   - debug level from config
 
-  - log memory access crashes? (or division by zero)
+  - finalise all themes
 
 
 v1.0
   - clean up icons
-  - come up with final marker icon set
+  - finalise marker icon set
 
 
 v1.1
@@ -84,8 +89,6 @@ v1.1
 
   - rethink save display params into file
 
-  - linux package?
-
   - legend / locations / notes window
 
   - level selector popup
@@ -99,6 +102,8 @@ v1.1
 
   - display dialog on crash with instruction to file a bug report (print log
     file location and backup file location)
+
+  - linux package?
 
 
 LOW PRIORITY

@@ -2479,7 +2479,6 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 # {{{ Save/discard map changes dialog
 proc openSaveDiscardMapDialog(action: proc (a: var AppContext); a) =
   alias(dlg, a.dialog.saveDiscardMapDialog)
-
   dlg.action = action
   dlg.isOpen = true
 
@@ -2493,7 +2492,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Changes?",
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Save Map?",
                   x = calcDialogX(DlgWidth, a).some,
                   style = a.theme.dialogStyle)
 
@@ -2502,12 +2501,12 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  koi.label(x, y, DlgWidth, h, "You have unsaved changes.",
+  koi.label(x, y, DlgWidth, h, "You have made change to the map.",
             style=a.theme.labelStyle)
 
   y += h
   koi.label(
-    x, y, DlgWidth, h, "Do you want to save your changes first?",
+    x, y, DlgWidth, h, "Do you want to save the map first?",
     style=a.theme.labelStyle
   )
 
@@ -5994,10 +5993,11 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Background",        p & "background.color")
 
       group:
-        stringProp("Background Image", p & "background.image")
+        let path = p & "background.image"
+        stringProp("Background Image", path)
 
         koi.nextLayoutColumn()
-        if koi.button("Reload"):
+        if koi.button("Reload", disabled=cfg.getString(path) == ""):
           a.theme.loadBackgroundImage = true
 
       group:
@@ -6698,15 +6698,20 @@ proc renderFrame(a) =
       saveAppConfig(a)
       a.shouldClose = true
 
-    when defined(NO_QUIT_DIALOG):
-      saveConfigAndExit(a)
-    else:
+    proc handleMapModified(a) =
       if not koi.isDialogOpen():
         if a.doc.undoManager.isModified:
           openSaveDiscardMapDialog(action=saveConfigAndExit, a)
         else:
           saveConfigAndExit(a)
 
+    when defined(NO_QUIT_DIALOG):
+      saveConfigAndExit(a)
+    else:
+      if a.themeEditor.modified:
+        openSaveDiscardThemeDialog(action=handleMapModified, a)
+      else:
+        handleMapModified(a)
 
   # XXX HACK: If the theme pane is shown, widgets are handled first, then
   # the global shortcuts, so widget-specific shorcuts can take precedence
