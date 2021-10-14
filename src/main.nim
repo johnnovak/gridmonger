@@ -2458,6 +2458,10 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 # }}}
 # {{{ Save/discard map changes dialog
+proc openSaveDiscardMapDialog(action: proc (a: var AppContext); a) =
+  a.dialog.saveDiscardMapDialog.action = action
+  a.dialog.saveDiscardMapDialog.isOpen = true
+
 
 proc saveMapAction(a)
 
@@ -3896,10 +3900,10 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 # }}}
 
 # {{{ Save/discard theme changes dialog
-
 proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
   a.dialog.saveDiscardThemeDialog.action = action
   a.dialog.saveDiscardThemeDialog.isOpen = true
+
 
 proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
   const
@@ -4083,11 +4087,8 @@ proc redoAction(a) =
 
 # {{{ newMapAction()
 proc newMapAction(a) =
-  alias(dlg, a.dialog.saveDiscardMapDialog)
-
   if a.doc.undoManager.isModified:
-    dlg.isOpen = true
-    dlg.action = openNewMapDialog
+    openSaveDiscardMapDialog(action=openNewMapDialog, a)
   else:
     openNewMapDialog(a)
 
@@ -4134,11 +4135,8 @@ proc openMap(a) =
 # }}}
 # {{{ openMapAction()
 proc openMapAction(a) =
-  alias(dlg, a.dialog.saveDiscardMapDialog)
-
   if a.doc.undoManager.isModified:
-    dlg.isOpen = true
-    dlg.action = openMap
+    openSaveDiscardMapDialog(action=openMap, a)
   else:
     openMap(a)
 
@@ -6603,9 +6601,7 @@ proc renderFrame(a) =
     else:
       if not koi.isDialogOpen():
         if a.doc.undoManager.isModified:
-          alias(dlg, a.dialog.saveDiscardMapDialog)
-          dlg.isOpen = true
-          dlg.action = saveConfigAndExit
+          openSaveDiscardMapDialog(action=saveConfigAndExit, a)
         else:
           saveConfigAndExit(a)
 
