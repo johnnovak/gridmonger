@@ -312,6 +312,7 @@ type
     nextThemeIndex:         Option[Natural]
     themeReloaded:          bool
     updateThemeStyles:      bool
+    loadBackgroundImage:    bool
 
     buttonStyle:            ButtonStyle
     checkBoxStyle:          CheckboxStyle
@@ -1692,13 +1693,8 @@ proc updateThemeStyles(a) =
                                            koi.getPxRatio())
 
 # }}}
-# {{{ switchTheme()
-proc switchTheme(themeIndex: Natural; a) =
-  let theme = a.theme.themeNames[themeIndex]
-  loadTheme(theme, a)
-
-  updateThemeStyles(a)
-
+# {{{ loadBackgroundImage()
+proc loadBackgroundImage(theme: ThemeName; a) =
   let bgImageName = a.theme.windowStyle.backgroundImage
 
   if bgImageName != "":
@@ -1707,6 +1703,15 @@ proc switchTheme(themeIndex: Natural; a) =
   else:
     a.ui.backgroundImage = Paint.none
     a.ui.drawLevelParams.backgroundImage = Paint.none
+
+# }}}
+# {{{ switchTheme()
+proc switchTheme(themeIndex: Natural; a) =
+  let theme = a.theme.themeNames[themeIndex]
+  loadTheme(theme, a)
+
+  updateThemeStyles(a)
+  loadBackgroundImage(theme, a)
 
   a.theme.currThemeIndex = themeIndex
 
@@ -1822,15 +1827,15 @@ proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
 # {{{ Dialogs
 
 const
-  DlgItemHeight    = 24.0
-  DlgButtonWidth   = 80.0
-  DlgButtonPad     = 10.0
-  DlgNumberWidth   = 50.0
-  DlgCheckBoxSize  = 18.0
-  DlgTopPad        = 50.0
-  DlgTopNoTabPad   = 60.0
-  DlgLeftPad       = 30.0
-  DlgTabBottomPad  = 50.0
+  DlgItemHeight   = 24.0
+  DlgButtonWidth  = 80.0
+  DlgButtonPad    = 10.0
+  DlgNumberWidth  = 50.0
+  DlgCheckBoxSize = 18.0
+  DlgTopPad       = 50.0
+  DlgTopNoTabPad  = 60.0
+  DlgLeftPad      = 30.0
+  DlgTabBottomPad = 50.0
 
   DialogLayoutParams = AutoLayoutParams(
     itemsPerRow:      2,
@@ -4889,13 +4894,13 @@ proc handleGlobalKeyEvents(a) =
             a
           )
 
-      elif ke.isShortcutDown(scOpenMap):           openMapAction(a)
-      elif ke.isShortcutDown(scSaveMap):           saveMapAction(a)
-      elif ke.isShortcutDown(scSaveMapAs):         saveMapAsAction(a)
+      elif ke.isShortcutDown(scOpenMap):       openMapAction(a)
+      elif ke.isShortcutDown(scSaveMap):       saveMapAction(a)
+      elif ke.isShortcutDown(scSaveMapAs):     saveMapAsAction(a)
 
-      elif ke.isShortcutDown(scReloadTheme):       reloadThemeAction(a)
-      elif ke.isShortcutDown(scPreviousTheme):     prevThemeAction(a)
-      elif ke.isShortcutDown(scNextTheme):         nextThemeAction(a)
+      elif ke.isShortcutDown(scReloadTheme):   reloadThemeAction(a)
+      elif ke.isShortcutDown(scPreviousTheme): prevThemeAction(a)
+      elif ke.isShortcutDown(scNextTheme):     nextThemeAction(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
         openUserManualAction(a)
@@ -5762,6 +5767,12 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       if a.theme.prevConfig.getOpt(path) != cfg.getOpt(path):
         te.modified = true
 
+  template stringProp(label: string, path: string) =
+    prop(label, path):
+      var val = cfg.getStringOrDefault(path)
+      koi.textfield(val)
+      cfg.set(path, $val)
+
   template colorProp(label: string, path: string) =
     prop(label, path):
       var val = cfg.getColorOrDefault(path)
@@ -5806,8 +5817,14 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Modified Flag",    p & "modified-flag")
 
       group:
-        colorProp("Background",       p & "background.color")
-#        prop("Background Image", p & "background.image", pkString)
+        colorProp("Background",        p & "background.color")
+
+      group:
+        stringProp("Background Image", p & "background.image")
+
+        koi.nextLayoutColumn()
+        if koi.button("Reload"):
+          a.theme.loadBackgroundImage = true
 
       group:
         p = "ui.window.title."
@@ -6162,15 +6179,17 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
     saveTheme(a)
 
   cx += bw + bp
-  if koi.button(cx, cy, w=bw, h=wh, "Copy", disabled=true):
+  if koi.button(cx, cy, w=bw, h=wh, "Copy"):
     discard
 
   cx += bw + bp
-  if koi.button(cx, cy, w=bw, h=wh, "Rename", disabled=true):
+  if koi.button(cx, cy, w=bw, h=wh, "Rename",
+                disabled=not a.currThemeName.userTheme):
     discard # TODO
 
   cx += bw + bp
-  if koi.button(cx, cy, w=bw, h=wh, "Delete", disabled=true):
+  if koi.button(cx, cy, w=bw, h=wh, "Delete",
+                disabled=not a.currThemeName.userTheme):
     discard # TODO
 
   # Scroll view with properties
@@ -6470,6 +6489,11 @@ proc renderFramePre(a) =
   if a.theme.updateThemeStyles:
     a.theme.updateThemeStyles = false
     updateThemeStyles(a)
+
+  if a.theme.loadBackgroundImage:
+    a.theme.loadBackgroundImage = false
+    loadBackgroundImage(a.currThemeName, a)
+
 #    a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
 #                                             koi.getPxRatio())
 
