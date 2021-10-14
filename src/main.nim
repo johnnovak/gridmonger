@@ -364,6 +364,7 @@ type
     editRegionPropsDialog:  EditRegionPropsParams
 
     saveDiscardThemeDialog: SaveDiscardThemeDialogParams
+    copyThemeDialog:        CopyThemeDialogParams
     deleteThemeDialog:      DeleteThemeDialogParams
 
 
@@ -533,6 +534,14 @@ type
   SaveDiscardThemeDialogParams = object
     isOpen:       bool
     action:       proc (a: var AppContext)
+
+
+  CopyThemeDialogParams = object
+    isOpen:       bool
+    activateFirstTextField: bool
+
+    newThemeName: string
+
 
   DeleteThemeDialogParams = object
     isOpen:       bool
@@ -1670,6 +1679,17 @@ proc deleteTheme(theme: ThemeName; a): bool =
       setStatusMessage(IconWarning, fmt"Error deleting theme: {e.msg}", a)
 
 # }}}
+# {{{ copyTheme()
+proc copyTheme(theme: ThemeName, newThemeName: string; a): bool =
+  try:
+    let newThemePath = a.path.userThemesDir / addFileExt(newThemeName, ThemeExt)
+    copyFileWithPermissions(themePath(a.currThemeName, a), newThemePath)
+    result = true
+  except CatchableError as e:
+    logError(e, "Error copying theme")
+    setStatusMessage(IconWarning, fmt"Error copying theme: {e.msg}", a)
+
+# }}}
 # {{{ loadThemeImage()
 proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
   if userTheme:
@@ -2287,15 +2307,14 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialog.preferencesDialog)
 
-  dlg.showSplash = a.prefs.showSplash
-  dlg.autoCloseSplash = a.prefs.autoCloseSplash
+  dlg.showSplash        = a.prefs.showSplash
+  dlg.autoCloseSplash   = a.prefs.autoCloseSplash
   dlg.splashTimeoutSecs = $a.prefs.splashTimeoutSecs
-  dlg.loadLastMap = a.prefs.loadLastMap
-  dlg.vsync = a.prefs.vsync
-  dlg.autosave = a.prefs.autosave
-  dlg.autosaveFreqMins = $a.prefs.autosaveFreqMins
-
-  dlg.isOpen = true
+  dlg.loadLastMap       = a.prefs.loadLastMap
+  dlg.vsync             = a.prefs.vsync
+  dlg.autosave          = a.prefs.autosave
+  dlg.autosaveFreqMins  = $a.prefs.autosaveFreqMins
+  dlg.isOpen            = true
 
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
@@ -2459,8 +2478,10 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 # }}}
 # {{{ Save/discard map changes dialog
 proc openSaveDiscardMapDialog(action: proc (a: var AppContext); a) =
-  a.dialog.saveDiscardMapDialog.action = action
-  a.dialog.saveDiscardMapDialog.isOpen = true
+  alias(dlg, a.dialog.saveDiscardMapDialog)
+
+  dlg.action = action
+  dlg.isOpen = true
 
 
 proc saveMapAction(a)
@@ -2827,8 +2848,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 # {{{ New level dialog
 proc openNewLevelDialog(a) =
   alias(dlg, a.dialog.newLevelDialog)
-  let map = a.doc.map
 
+  let map = a.doc.map
   var co: CoordinateOptions
 
   if mapHasLevels(a):
@@ -3350,8 +3371,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 # }}}
 # {{{ Delete level dialog
 proc openDeleteLevelDialog(a) =
-  alias(dlg, a.dialog.deleteLevelDialog)
-  dlg.isOpen = true
+  a.dialog.deleteLevelDialog.isOpen = true
 
 
 proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
@@ -3423,7 +3443,6 @@ proc openEditNoteDialog(a) =
   alias(dlg, a.dialog.editNoteDialog)
 
   let cur = a.ui.cursor
-
   let l = currLevel(a)
   dlg.row = cur.row
   dlg.col = cur.col
@@ -3641,7 +3660,6 @@ proc openEditLabelDialog(a) =
   alias(dlg, a.dialog.editLabelDialog)
 
   let cur = a.ui.cursor
-
   let l = currLevel(a)
   dlg.row = cur.row
   dlg.col = cur.col
@@ -3901,8 +3919,9 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
 # {{{ Save/discard theme changes dialog
 proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
-  a.dialog.saveDiscardThemeDialog.action = action
-  a.dialog.saveDiscardThemeDialog.isOpen = true
+  alias(dlg, a.dialog.saveDiscardThemeDialog)
+  dlg.action = action
+  dlg.isOpen = true
 
 
 proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
@@ -3976,10 +3995,89 @@ proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
   koi.endDialog()
 
 # }}}
+# {{{ Copy theme dialog
+
+proc openCopyThemeDialog(a) =
+  alias(dlg, a.dialog.copyThemeDialog)
+  dlg.newThemeName = a.currThemeName.name
+  dlg.isOpen = true
+
+
+proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
+  const
+    DlgWidth = 390.0
+    DlgHeight = 160.0
+    LabelWidth = 135.0
+
+  let h = DlgItemHeight
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCopy}  Copy Theme",
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopPad
+
+  koi.label(x, y, LabelWidth, h, "New Theme Name", style=a.theme.labelStyle)
+  koi.textField(
+    x + LabelWidth, y, w=196, h,
+    dlg.newThemeName,
+    activate = dlg.activateFirstTextField,
+    # TODO disallow invalid filename chars
+    style = a.theme.textFieldStyle
+  )
+
+  proc copyAction(dlg: var CopyThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+    if copyTheme(a.currThemeName, dlg.newThemeName, a):
+      searchThemes(a)
+      let newThemeIndex = findThemeIndex(dlg.newThemeName, a)
+      if newThemeIndex > -1:
+        a.theme.nextThemeIndex = newThemeIndex.Natural.some
+
+  proc cancelAction(dlg: var CopyThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
+
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
+                style = a.theme.buttonStyle):
+    copyAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
+                style = a.theme.buttonStyle):
+    cancelAction(dlg, a)
+
+  dlg.activateFirstTextField = false
+
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): copyAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
 # {{{ Delete theme dialog
 
 proc openDeleteThemeDialog(a) =
   a.dialog.deleteThemeDialog.isOpen = true
+
 
 proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
   const
@@ -4010,13 +4108,14 @@ proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
       with a.theme:
         nextThemeIndex = min(currThemeIndex, themeNames.high).Natural.some
 
+
   proc cancelAction(dlg: var DeleteThemeDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
-  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconTrash} Delete",
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Delete",
                 style = a.theme.buttonStyle):
     deleteAction(dlg, a)
 
@@ -4030,8 +4129,8 @@ proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
-    elif ke.isShortcutDown(scDiscard): deleteAction(dlg, a)
+    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): deleteAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -6254,17 +6353,17 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
     saveTheme(a)
 
   cx += bw + bp
-  if koi.button(cx, cy, w=bw, h=wh, "Copy"):
-    discard # TODO
+  if koi.button(cx, cy, w=bw, h=wh, "Copy", disabled=buttonsDisabled):
+    openCopyThemeDialog(a)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Rename",
-                disabled=not a.currThemeName.userTheme):
+                disabled=not a.currThemeName.userTheme or buttonsDisabled):
     discard # TODO
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Delete",
-                disabled=not a.currThemeName.userTheme):
+                disabled=not a.currThemeName.userTheme or buttonsDisabled):
     openDeleteThemeDialog(a)
 
   # Scroll view with properties
@@ -6535,6 +6634,9 @@ proc renderUI(a) =
 
   elif dlg.saveDiscardThemeDialog.isOpen:
     saveDiscardThemeDialog(dlg.saveDiscardThemeDialog, a)
+
+  elif dlg.copyThemeDialog.isOpen:
+    copyThemeDialog(dlg.copyThemeDialog, a)
 
   elif dlg.deleteThemeDialog.isOpen:
     deleteThemeDialog(dlg.deleteThemeDialog, a)
