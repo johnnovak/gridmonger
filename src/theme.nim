@@ -157,29 +157,34 @@ proc toToolbarPaneStyle*(cfg: HoconNode): ToolbarPaneStyle =
 
 # {{{ loadTheme*()
 proc loadTheme*(filename: string): HoconNode =
-  var p = initHoconParser(newFileStream(filename))
-  let cfg = p.parse()
+  var s: FileStream
+  try:
+    s = newFileStream(filename)
+    var p = initHoconParser(s)
+    let cfg = p.parse()
 
-  cfg.limit("ui.dialog.corner-radius",      DialogCornerRadiusLimits)
-  cfg.limit("ui.dialog.outer-border.width", DialogBorderWidthLimits)
-  cfg.limit("ui.dialog.inner-border.width", DialogBorderWidthLimits)
-  cfg.limit("ui.dialog.shadow.feather",     ShadowFeatherLimits)
-  cfg.limit("ui.dialog.shadow.x-offset",    ShadowOffsetLimits)
-  cfg.limit("ui.dialog.shadow.y-offset",    ShadowOffsetLimits)
+    cfg.limit("ui.dialog.corner-radius",      DialogCornerRadiusLimits)
+    cfg.limit("ui.dialog.outer-border.width", DialogBorderWidthLimits)
+    cfg.limit("ui.dialog.inner-border.width", DialogBorderWidthLimits)
+    cfg.limit("ui.dialog.shadow.feather",     ShadowFeatherLimits)
+    cfg.limit("ui.dialog.shadow.x-offset",    ShadowOffsetLimits)
+    cfg.limit("ui.dialog.shadow.y-offset",    ShadowOffsetLimits)
 
-  cfg.limit("ui.widget.corner-radius",      WidgetCornerRadiusLimits)
+    cfg.limit("ui.widget.corner-radius",      WidgetCornerRadiusLimits)
 
-  cfg.limit("ui.splash-image.shadow-alpha", AlphaLimits)
+    cfg.limit("ui.splash-image.shadow-alpha", AlphaLimits)
 
-  cfg.limit("level.background-hatch.width",          BackgroundHatchWidthLimits)
-  cfg.limit("level.background-hatch.spacing-factor", BackgroundHatchSpacingFactorLimits)
+    cfg.limit("level.background-hatch.width",          BackgroundHatchWidthLimits)
+    cfg.limit("level.background-hatch.spacing-factor", BackgroundHatchSpacingFactorLimits)
 
-  cfg.limit("level.outline.width-factor",   OutlineWidthFactorLimits)
+    cfg.limit("level.outline.width-factor",   OutlineWidthFactorLimits)
 
-  cfg.limit("level.shadow.inner.width-factor", ShadowWidthFactorLimits)
-  cfg.limit("level.shadow.outer.width-factor", ShadowWidthFactorLimits)
+    cfg.limit("level.shadow.inner.width-factor", ShadowWidthFactorLimits)
+    cfg.limit("level.shadow.outer.width-factor", ShadowWidthFactorLimits)
 
-  result = cfg
+    result = cfg
+  finally:
+    if s != nil: s.close()
 
 # }}}
 # {{{ saveTheme*()
