@@ -364,6 +364,7 @@ type
     editRegionPropsDialog:  EditRegionPropsParams
 
     saveDiscardThemeDialog: SaveDiscardThemeDialogParams
+    deleteThemeDialog:      DeleteThemeDialogParams
 
 
   AboutDialogParams = object
@@ -532,6 +533,9 @@ type
   SaveDiscardThemeDialogParams = object
     isOpen:       bool
     action:       proc (a: var AppContext)
+
+  DeleteThemeDialogParams = object
+    isOpen:       bool
 
 
   ThemeEditor = object
@@ -1649,6 +1653,21 @@ proc saveTheme(a) =
                      a)
   finally:
     a.logFile.flushFile()
+
+# }}}
+# {{{ deleteTheme()
+proc deleteTheme(theme: ThemeName; a): bool =
+  if theme.userTheme:
+    try:
+      var path = themePath(theme, a)
+      info(fmt"Deleting theme '{theme.name}' at '{path}'")
+
+      removeFile(path)
+      a.logfile.flushFile()
+      result = true
+    except CatchableError as e:
+      logError(e, "Error deleting theme")
+      setStatusMessage(IconWarning, fmt"Error deleting theme: {e.msg}", a)
 
 # }}}
 # {{{ loadThemeImage()
@@ -3878,6 +3897,10 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
 # {{{ Save/discard theme changes dialog
 
+proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
+  a.dialog.saveDiscardThemeDialog.action = action
+  a.dialog.saveDiscardThemeDialog.isOpen = true
+
 proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
   const
     DlgWidth = 350.0
@@ -3942,6 +3965,69 @@ proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
     if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
     elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
     elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
+# {{{ Delete theme dialog
+
+proc openDeleteThemeDialog(a) =
+  a.dialog.deleteThemeDialog.isOpen = true
+
+proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
+  const
+    DlgWidth = 350.0
+    DlgHeight = 160.0
+
+  let h = DlgItemHeight
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconTrash}  Delete Theme?",
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopPad
+
+  koi.label(
+    x, y, DlgWidth, h, "Are you sure you want to delete the theme?",
+    style=a.theme.labelStyle
+  )
+
+  proc deleteAction(dlg: var DeleteThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+    if deleteTheme(a.currThemeName, a):
+      searchThemes(a)
+      with a.theme:
+        nextThemeIndex = min(currThemeIndex, themeNames.high).Natural.some
+
+  proc cancelAction(dlg: var DeleteThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
+
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconTrash} Delete",
+                style = a.theme.buttonStyle):
+    deleteAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
+                style = a.theme.buttonStyle):
+    cancelAction(dlg, a)
+
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
+    elif ke.isShortcutDown(scDiscard): deleteAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4114,11 +4200,8 @@ proc reloadTheme(a) =
 # }}}
 # {{{ reloadThemeAction()
 proc reloadThemeAction(a) =
-  alias(dlg, a.dialog.saveDiscardThemeDialog)
-
   if a.themeEditor.modified:
-    dlg.isOpen = true
-    dlg.action = reloadTheme
+    openSaveDiscardThemeDialog(action=reloadTheme, a)
   else:
     reloadTheme(a)
 
@@ -4132,11 +4215,8 @@ proc prevTheme(a) =
 # }}}
 # {{{ prevThemeAction()
 proc prevThemeAction(a) =
-  alias(dlg, a.dialog.saveDiscardThemeDialog)
-
   if a.themeEditor.modified:
-    dlg.isOpen = true
-    dlg.action = prevTheme
+    openSaveDiscardThemeDialog(action=prevTheme, a)
   else:
     prevTheme(a)
 
@@ -4151,11 +4231,8 @@ proc nextTheme(a) =
 # }}}
 # {{{ nextThemeAction()
 proc nextThemeAction(a) =
-  alias(dlg, a.dialog.saveDiscardThemeDialog)
-
   if a.themeEditor.modified:
-    dlg.isOpen = true
-    dlg.action = nextTheme
+    openSaveDiscardThemeDialog(action=nextTheme, a)
   else:
     nextTheme(a)
 
@@ -6180,7 +6257,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Copy"):
-    discard
+    discard # TODO
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Rename",
@@ -6190,7 +6267,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Delete",
                 disabled=not a.currThemeName.userTheme):
-    discard # TODO
+    openDeleteThemeDialog(a)
 
   # Scroll view with properties
 
@@ -6460,6 +6537,9 @@ proc renderUI(a) =
 
   elif dlg.saveDiscardThemeDialog.isOpen:
     saveDiscardThemeDialog(dlg.saveDiscardThemeDialog, a)
+
+  elif dlg.deleteThemeDialog.isOpen:
+    deleteThemeDialog(dlg.deleteThemeDialog, a)
 
 # }}}
 # {{{ renderFramePre()
