@@ -1884,6 +1884,9 @@ const
   DlgLeftPad      = 30.0
   DlgTabBottomPad = 50.0
 
+  ConfirmDlgWidth  = 350.0
+  ConfirmDlgHeight = 160.0
+
   DialogLayoutParams = AutoLayoutParams(
     itemsPerRow:      2,
     rowWidth:         370.0,
@@ -2495,8 +2498,8 @@ proc saveMapAction(a)
 
 proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   const
-    DlgWidth = 350.0
-    DlgHeight = 160.0
+    DlgWidth  = ConfirmDlgWidth
+    DlgHeight = ConfirmDlgHeight
 
   let h = DlgItemHeight
 
@@ -3386,7 +3389,7 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   alias(um, a.doc.undoManager)
 
   const
-    DlgWidth = 350.0
+    DlgWidth  = ConfirmDlgWidth
     DlgHeight = 136.0
 
   let h = DlgItemHeight
@@ -3933,8 +3936,8 @@ proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
 
 proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
   const
-    DlgWidth = 350.0
-    DlgHeight = 160.0
+    DlgWidth  = ConfirmDlgWidth
+    DlgHeight = ConfirmDlgHeight
 
   let h = DlgItemHeight
 
@@ -4014,8 +4017,8 @@ proc openOverwriteThemeDialog(themeName: string,
 
 proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
   const
-    DlgWidth = 350.0
-    DlgHeight = 160.0
+    DlgWidth  = ConfirmDlgWidth
+    DlgHeight = ConfirmDlgHeight
 
   let h = DlgItemHeight
 
@@ -4172,8 +4175,8 @@ proc openDeleteThemeDialog(a) =
 
 proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
   const
-    DlgWidth = 350.0
-    DlgHeight = 160.0
+    DlgWidth  = ConfirmDlgWidth
+    DlgHeight = ConfirmDlgHeight
 
   let h = DlgItemHeight
 
