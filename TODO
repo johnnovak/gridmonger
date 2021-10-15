@@ -1,6 +1,6 @@
 BUGS
 
-- prompt to save changed theme on exit
+- window not visible after disconnecting external screen
 
 
 ENHANCEMENTS
@@ -30,7 +30,7 @@ TODO for v0.9
     - script for building installer
     - add file extension association option
     - new gui?
- 
+
   - OS X:
       - finish OS X package
       - code signing

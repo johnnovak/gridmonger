@@ -365,6 +365,7 @@ type
 
     saveDiscardThemeDialog: SaveDiscardThemeDialogParams
     copyThemeDialog:        CopyThemeDialogParams
+    overwriteThemeDialog:   OverwriteThemeDialogParams
     deleteThemeDialog:      DeleteThemeDialogParams
 
 
@@ -542,6 +543,11 @@ type
 
     newThemeName: string
 
+
+  OverwriteThemeDialogParams = object
+    isOpen:       bool
+    themeName:    string
+    action:       proc (a: var AppContext)
 
   DeleteThemeDialogParams = object
     isOpen:       bool
@@ -1351,6 +1357,142 @@ proc currThemeName(a): var ThemeName =
   a.theme.themeNames[a.theme.currThemeIndex]
 
 # }}}
+# {{{ findThemeIndex()
+proc findThemeIndex(name: string; a): int =
+  for i in 0..a.theme.themeNames.high:
+    if a.theme.themeNames[i].name == name:
+      return i
+  result = -1
+
+# }}}
+# {{{ themePath()
+proc themePath(theme: ThemeName; a): string =
+  let themeDir = if theme.userTheme: a.path.userThemesDir
+                 else: a.path.themesDir
+  themeDir / addFileExt(theme.name, ThemeExt)
+
+# }}}
+
+# {{{ buildThemeList()
+proc buildThemeList(a) =
+  var themeNames: seq[ThemeName] = @[]
+
+  proc findThemeWithName(name: string): int =
+    for i in 0..themeNames.high:
+      if themeNames[i].name == name: return i
+    result = -1
+
+  proc addThemeNames(themesDir: string, userTheme: bool) =
+    for path in walkFiles(themesDir / fmt"*.{ThemeExt}"):
+      let (_, name, _) = splitFile(path)
+      let idx = findThemeWithName(name)
+      if idx >= 0:
+        themeNames.del(idx)
+        themeNames.add(
+          ThemeName(name: name, userTheme: userTheme, override: true)
+        )
+      else:
+        themeNames.add(
+          ThemeName(name: name, userTheme: userTheme, override: false)
+        )
+
+  addThemeNames(a.path.themesDir, userTheme=false)
+  addThemeNames(a.path.userThemesDir, userTheme=true)
+
+  if themeNames.len == 0:
+    raise newException(IOError, "Could not find any themes, exiting")
+
+  themeNames.sort(
+    proc (a, b: ThemeName): int = cmp(a.name, b.name)
+  )
+
+  a.theme.themeNames = themeNames
+
+# }}}
+# {{{ loadTheme()
+proc loadTheme(theme: ThemeName; a) =
+  var path = themePath(theme, a)
+  info(fmt"Loading theme '{theme.name}' from '{path}'")
+
+  a.theme.config = loadTheme(path)
+  a.logfile.flushFile()
+
+# }}}
+# {{{ saveTheme(a)
+proc saveTheme(a) =
+  try:
+    with a.theme.themeNames[a.theme.currThemeIndex]:
+      userTheme = true
+      override = true
+
+    let themePath = themePath(a.currThemeName, a)
+    saveTheme(a.theme.config, themePath)
+    a.themeEditor.modified = false
+
+  except CatchableError as e:
+    logError(e, "Error saving theme")
+    setStatusMessage(IconWarning,
+                     fmt"Cannot save theme '{a.currThemeName.name}': {e.msg}",
+                     a)
+  finally:
+    a.logFile.flushFile()
+
+# }}}
+# {{{ deleteTheme()
+proc deleteTheme(theme: ThemeName; a): bool =
+  if theme.userTheme:
+    try:
+      var path = themePath(theme, a)
+      info(fmt"Deleting theme '{theme.name}' at '{path}'")
+
+      removeFile(path)
+      a.logfile.flushFile()
+      result = true
+    except CatchableError as e:
+      logError(e, "Error deleting theme")
+      setStatusMessage(IconWarning, fmt"Error deleting theme: {e.msg}", a)
+
+# }}}
+# {{{ copyTheme()
+proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
+  try:
+    copyFileWithPermissions(themePath(a.currThemeName, a), newThemePath)
+    result = true
+  except CatchableError as e:
+    logError(e, "Error copying theme")
+    setStatusMessage(IconWarning, fmt"Error copying theme: {e.msg}", a)
+
+# }}}
+
+# {{{ loadThemeImage()
+proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
+  if userTheme:
+    let imgPath = a.path.userThemeImagesDir / imageName
+    result = loadImage(imgPath, a)
+    if result.isNone:
+      info("Couldn't load image from user theme images directory: " &
+           fmt"'{imgPath}'. Attempting default theme images directory.")
+
+  let imgPath = a.path.themeImagesDir / imageName
+  result = loadImage(imgPath, a)
+  if result.isNone:
+    logging.error(
+      "Couldn't load image from default theme images directory: '{imgPath}'"
+    )
+
+# }}}
+# {{{ loadBackgroundImage()
+proc loadBackgroundImage(theme: ThemeName; a) =
+  let bgImageName = a.theme.windowStyle.backgroundImage
+
+  if bgImageName != "":
+    a.ui.backgroundImage = loadThemeImage(bgImageName, theme.userTheme, a)
+    a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
+  else:
+    a.ui.backgroundImage = Paint.none
+    a.ui.drawLevelParams.backgroundImage = Paint.none
+
+# }}}
 # {{{ updateWidgetStyles()
 proc updateWidgetStyles(a) =
   alias(cfg, a.theme.config)
@@ -1584,129 +1726,6 @@ proc updateWidgetStyles(a) =
       thumbFillColorDown  = c.withAlpha(0.6)
 
 # }}}
-# {{{ searchThemes()
-proc searchThemes(a) =
-  var themeNames: seq[ThemeName] = @[]
-
-  proc findThemeWithName(name: string): int =
-    for i in 0..themeNames.high:
-      if themeNames[i].name == name: return i
-    result = -1
-
-  proc addThemeNames(themesDir: string, userTheme: bool) =
-    for path in walkFiles(themesDir / fmt"*.{ThemeExt}"):
-      let (_, name, _) = splitFile(path)
-      let idx = findThemeWithName(name)
-      if idx >= 0:
-        themeNames.del(idx)
-        themeNames.add(
-          ThemeName(name: name, userTheme: userTheme, override: true)
-        )
-      else:
-        themeNames.add(
-          ThemeName(name: name, userTheme: userTheme, override: false)
-        )
-
-  addThemeNames(a.path.themesDir, userTheme=false)
-  addThemeNames(a.path.userThemesDir, userTheme=true)
-
-  if themeNames.len == 0:
-    raise newException(IOError, "Could not find any themes, exiting")
-
-  themeNames.sort(
-    proc (a, b: ThemeName): int = cmp(a.name, b.name)
-  )
-
-  a.theme.themeNames = themeNames
-
-# }}}
-# {{{ findThemeIndex()
-proc findThemeIndex(name: string; a): int =
-  for i in 0..a.theme.themeNames.high:
-    if a.theme.themeNames[i].name == name:
-      return i
-  result = -1
-
-# }}}
-# {{{ themePath()
-proc themePath(theme: ThemeName; a): string =
-  let themeDir = if theme.userTheme: a.path.userThemesDir
-                 else: a.path.themesDir
-  themeDir / addFileExt(theme.name, ThemeExt)
-
-# }}}
-# {{{ loadTheme()
-proc loadTheme(theme: ThemeName; a) =
-  var path = themePath(theme, a)
-  info(fmt"Loading theme '{theme.name}' from '{path}'")
-
-  a.theme.config = loadTheme(path)
-  a.logfile.flushFile()
-
-# }}}
-# {{{ saveTheme(a)
-proc saveTheme(a) =
-  try:
-    with a.theme.themeNames[a.theme.currThemeIndex]:
-      userTheme = true
-      override = true
-
-    let themePath = themePath(a.currThemeName, a)
-    saveTheme(a.theme.config, themePath)
-    a.themeEditor.modified = false
-
-  except CatchableError as e:
-    logError(e, "Error saving theme")
-    setStatusMessage(IconWarning,
-                     fmt"Cannot save theme '{a.currThemeName.name}': {e.msg}",
-                     a)
-  finally:
-    a.logFile.flushFile()
-
-# }}}
-# {{{ deleteTheme()
-proc deleteTheme(theme: ThemeName; a): bool =
-  if theme.userTheme:
-    try:
-      var path = themePath(theme, a)
-      info(fmt"Deleting theme '{theme.name}' at '{path}'")
-
-      removeFile(path)
-      a.logfile.flushFile()
-      result = true
-    except CatchableError as e:
-      logError(e, "Error deleting theme")
-      setStatusMessage(IconWarning, fmt"Error deleting theme: {e.msg}", a)
-
-# }}}
-# {{{ copyTheme()
-proc copyTheme(theme: ThemeName, newThemeName: string; a): bool =
-  try:
-    let newThemePath = a.path.userThemesDir / addFileExt(newThemeName, ThemeExt)
-    copyFileWithPermissions(themePath(a.currThemeName, a), newThemePath)
-    result = true
-  except CatchableError as e:
-    logError(e, "Error copying theme")
-    setStatusMessage(IconWarning, fmt"Error copying theme: {e.msg}", a)
-
-# }}}
-# {{{ loadThemeImage()
-proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
-  if userTheme:
-    let imgPath = a.path.userThemeImagesDir / imageName
-    result = loadImage(imgPath, a)
-    if result.isNone:
-      info("Couldn't load image from user theme images directory: " &
-           fmt"'{imgPath}'. Attempting default theme images directory.")
-
-  let imgPath = a.path.themeImagesDir / imageName
-  result = loadImage(imgPath, a)
-  if result.isNone:
-    logging.error(
-      "Couldn't load image from default theme images directory: '{imgPath}'"
-    )
-
-# }}}
 # {{{ updateThemeStyles()
 proc updateThemeStyles(a) =
   alias(cfg, a.theme.config)
@@ -1732,18 +1751,7 @@ proc updateThemeStyles(a) =
                                            koi.getPxRatio())
 
 # }}}
-# {{{ loadBackgroundImage()
-proc loadBackgroundImage(theme: ThemeName; a) =
-  let bgImageName = a.theme.windowStyle.backgroundImage
 
-  if bgImageName != "":
-    a.ui.backgroundImage = loadThemeImage(bgImageName, theme.userTheme, a)
-    a.ui.drawLevelParams.backgroundImage = a.ui.backgroundImage
-  else:
-    a.ui.backgroundImage = Paint.none
-    a.ui.drawLevelParams.backgroundImage = Paint.none
-
-# }}}
 # {{{ switchTheme()
 proc switchTheme(themeIndex: Natural; a) =
   let theme = a.theme.themeNames[themeIndex]
@@ -3994,6 +4002,76 @@ proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
   koi.endDialog()
 
 # }}}
+# {{{ Overwrite theme dialog
+proc openOverwriteThemeDialog(themeName: string,
+                              action: proc (a: var AppContext); a) =
+  alias(dlg, a.dialog.overwriteThemeDialog)
+
+  dlg.themeName = themeName
+  dlg.action = action
+  dlg.isOpen = true
+
+
+proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
+  const
+    DlgWidth = 350.0
+    DlgHeight = 160.0
+
+  let h = DlgItemHeight
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFloppy}  Overwrite Theme?",
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopPad
+
+  koi.label(x, y, DlgWidth, h, "User theme '{dlg.themeName}' already exists.",
+            style=a.theme.labelStyle)
+
+  y += h
+  koi.label(
+    x, y, DlgWidth, h, "Do you want to overwrite it?",
+    style=a.theme.labelStyle
+  )
+
+  proc overwriteAction(dlg: var OverwriteThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+    dlg.action(a)
+
+  proc cancelAction(dlg: var OverwriteThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
+
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Overwrite",
+                style = a.theme.buttonStyle):
+    overwriteAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
+                style = a.theme.buttonStyle):
+    cancelAction(dlg, a)
+
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): overwriteAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
 # {{{ Copy theme dialog
 
 proc openCopyThemeDialog(a) =
@@ -4031,11 +4109,22 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   proc copyAction(dlg: var CopyThemeDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
-    if copyTheme(a.currThemeName, dlg.newThemeName, a):
-      searchThemes(a)
-      let newThemeIndex = findThemeIndex(dlg.newThemeName, a)
-      if newThemeIndex > -1:
-        a.theme.nextThemeIndex = newThemeIndex.Natural.some
+
+    let dlg = dlg
+    let newThemePath = a.path.userThemesDir / addFileExt(dlg.newThemeName,
+                                                         ThemeExt)
+    proc copyTheme(a) =
+      if copyTheme(a.currThemeName, newThemePath, a):
+        buildThemeList(a)
+        let newThemeIndex = findThemeIndex(dlg.newThemeName, a)
+        if newThemeIndex > -1:
+          a.theme.nextThemeIndex = newThemeIndex.Natural.some
+
+    if fileExists(newThemePath):
+      openOverwriteThemeDialog(dlg.newThemeName, action=copyTheme, a)
+    else:
+      copyTheme(a)
+
 
   proc cancelAction(dlg: var CopyThemeDialogParams; a) =
     koi.closeDialog()
@@ -4103,7 +4192,7 @@ proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
     if deleteTheme(a.currThemeName, a):
-      searchThemes(a)
+      buildThemeList(a)
       with a.theme:
         nextThemeIndex = min(currThemeIndex, themeNames.high).Natural.some
 
@@ -6596,6 +6685,7 @@ proc renderUI(a) =
     renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
+  
   if dlg.aboutDialog.isOpen:
     aboutDialog(dlg.aboutDialog, a)
 
@@ -6637,6 +6727,9 @@ proc renderUI(a) =
 
   elif dlg.copyThemeDialog.isOpen:
     copyThemeDialog(dlg.copyThemeDialog, a)
+
+  elif dlg.overwriteThemeDialog.isOpen:
+    overwriteThemeDialog(dlg.overwriteThemeDialog, a)
 
   elif dlg.deleteThemeDialog.isOpen:
     deleteThemeDialog(dlg.deleteThemeDialog, a)
@@ -7120,7 +7213,7 @@ proc initApp(a) =
   a.doc.undoManager = newUndoManager[Map, UndoStateData]()
   a.ui.drawLevelParams = newDrawLevelParams()
 
-  searchThemes(a)
+  buildThemeList(a)
 
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
 
