@@ -4028,7 +4028,8 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  koi.label(x, y, DlgWidth, h, "User theme '{dlg.themeName}' already exists.",
+  koi.label(x, y, DlgWidth, h,
+            fmt"User theme '{dlg.themeName}' already exists.",
             style=a.theme.labelStyle)
 
   y += h
@@ -4049,10 +4050,12 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
-  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Overwrite",
+  x -= 20
+  if koi.button(x, y, DlgButtonWidth+20, h, fmt"{IconCheck} Overwrite",
                 style = a.theme.buttonStyle):
     overwriteAction(dlg, a)
 
+  x += 20
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
