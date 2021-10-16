@@ -6704,10 +6704,11 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   titleStyle.align = haCenter
 
   cy += 6.0
-  koi.label(cx, cy, w, wh, fmt"T  H  E  M  E       E  D  I  T  O  R",
+  koi.label(cx, cy, w, wh, "T  H  E  M  E       E  D  I  T  O  R",
             style=titleStyle)
 
   # Theme name & action buttons
+
   vg.beginPath()
   vg.rect(x+1, y+TitleHeight, w, h=96)
   vg.fillColor(gray(0.36))
@@ -6715,14 +6716,27 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   cx = x+15
   cy += 45.0
-  koi.label(cx, cy, w, wh, fmt"Theme")
+  koi.label(cx, cy, w, wh, "Theme")
+
+  let buttonsDisabled = koi.isDialogOpen()
+
+  var themeNames = newSeq[string]()
+  for t in a.theme.themeNames:
+    themeNames.add(t.name)
+
+  var themeIndex = a.theme.currThemeIndex
 
   cx += 60.0
-  koi.textField(
+  koi.dropDown(
     cx, cy, w=196.0, wh,
-    a.currThemeName.name,
-    disabled=true
+    themeNames,
+    themeIndex,
+    tooltip = "",
+    disabled = buttonsDisabled
   )
+
+  if themeIndex != a.theme.currThemeIndex:
+    a.theme.nextThemeIndex = themeIndex.some
 
   # User theme indicator
   cx += 201
@@ -6745,8 +6759,6 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   # Theme action buttons
   cx = x+15
   cy += 40.0
-
-  let buttonsDisabled = koi.isDialogOpen()
 
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
     saveTheme(a)
@@ -7548,7 +7560,7 @@ proc crashHandler(e: ref Exception, a) =
 
   if doAutoSave:
     if crashAutosavePath == "":
-      msg &= fmt"Autosaving the map has been unsuccesful.\n\n"
+      msg &= "Autosaving the map has been unsuccesful.\n\n"
     else:
       msg &= "The map has been successfully autosaved as '" &
              crashAutosavePath
