@@ -932,7 +932,7 @@ func viewRow(a): int =
 
 # }}}
 # {{{ viewCol()
-func viewCol(col: Natural; a): int =
+proc viewCol(col: Natural; a): int =
   col - a.ui.drawLevelParams.viewStartCol
 
 func viewCol(a): int =
@@ -950,7 +950,7 @@ func currLevel(a): common.Level =
 
 # }}}
 # {{{ currRegion()
-proc currRegion(a): Option[Region] =
+func currRegion(a): Option[Region] =
   let l = currLevel(a)
   if l.regionOpts.enabled:
     let rc = a.doc.map.getRegionCoords(a.ui.cursor)
@@ -962,17 +962,6 @@ proc currRegion(a): Option[Region] =
 # {{{ coordOptsForCurrLevel()
 func coordOptsForCurrLevel(a): CoordinateOptions =
   a.doc.map.coordOptsForLevel(a.ui.cursor.level)
-
-# }}}
-# {{{ setCursor()
-proc setCursor(cur: Location; a) =
-  a.ui.cursor = cur
-
-  if a.ui.lastCursor.level != a.ui.cursor.level:
-    a.opts.drawTrail = false
-
-  if a.opts.drawTrail:
-    a.doc.map.setTrail(cur, true)
 
 # }}}
 
@@ -1020,23 +1009,7 @@ proc setSetLinkDestinationMessage(floor: Floor; a) =
                    @[IconArrowsAll, "select cell",
                    "Enter", "set", "Esc", "cancel"], a)
 # }}}
-# {{{ resetCursorAndViewStart()
-proc resetCursorAndViewStart(a) =
-  a.ui.cursor.level = 0
-  a.ui.cursor.row = 0
-  a.ui.cursor.col = 0
-  a.ui.drawLevelParams.viewStartRow = 0
-  a.ui.drawLevelParams.viewStartCol = 0
 
-# }}}
-# {{{ updateLastCursorViewCoords()
-proc updateLastCursorViewCoords(a) =
-  let dp = a.ui.drawLevelParams
-
-  a.ui.lastCursorViewX = dp.gridSize * viewCol(a)
-  a.ui.lastCursorViewY = dp.gridSize * viewRow(a)
-
-# }}}
 # {{{ drawAreaWidth()
 proc drawAreaWidth(a): float =
   if a.opts.showThemeEditor: koi.winWidth() - ThemePaneWidth
@@ -1052,6 +1025,164 @@ proc drawAreaHeight(a): float =
 proc toolsPaneWidth(): float =
   if koi.winHeight() < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
   else: ToolsPaneWidthNarrow
+
+# }}}
+
+# {{{ setCursor()
+proc setCursor(cur: Location; a) =
+  a.ui.cursor = cur
+
+  if a.ui.lastCursor.level != a.ui.cursor.level:
+    a.opts.drawTrail = false
+
+  if a.opts.drawTrail:
+    a.doc.map.setTrail(cur, true)
+
+# }}}
+# {{{ stepCursor()
+proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
+  alias(dp, a.ui.drawLevelParams)
+
+  let l = a.doc.map.levels[cur.level]
+  let sm = ScrollMargin
+  var cur = cur
+
+  case dir:
+  of dirE:
+    cur.col = min(cur.col + steps, l.cols-1)
+    let viewCol = viewCol(cur.col, a)
+    let viewColMax = dp.viewCols-1 - sm
+    if viewCol > viewColMax:
+      dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol +
+                                                        (viewCol - viewColMax))
+
+  of dirS:
+    cur.row = min(cur.row + steps, l.rows-1)
+    let viewRow = viewRow(cur.row, a)
+    let viewRowMax = dp.viewRows-1 - sm
+    if viewRow > viewRowMax:
+      dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow +
+                                                        (viewRow - viewRowMax))
+
+  of dirW:
+    cur.col = max(cur.col - steps, 0)
+    let viewCol = viewCol(cur.col, a)
+    if viewCol < sm:
+      dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
+
+  of dirN:
+    cur.row = max(cur.row - steps, 0)
+    let viewRow = viewRow(cur.row, a)
+    if viewRow < sm:
+      dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
+
+  result = cur
+
+# }}}
+# {{{ moveCursor()
+proc moveCursor(dir: CardinalDir, steps: Natural; a) =
+  let cur = stepCursor(a.ui.cursor, dir, steps, a)
+  setCursor(cur, a)
+
+# }}}
+# {{{ moveCursorTo()
+proc moveCursorTo(loc: Location; a) =
+  var cur = a.ui.cursor
+  cur.level = loc.level
+
+  let dx = loc.col - cur.col
+  let dy = loc.row - cur.row
+
+  cur = if   dx < 0: stepCursor(cur, dirW, -dx, a)
+        elif dx > 0: stepCursor(cur, dirE,  dx, a)
+        else: cur
+
+  cur = if   dy < 0: stepCursor(cur, dirN, -dy, a)
+        elif dy > 0: stepCursor(cur, dirS,  dy, a)
+        else: cur
+
+  setCursor(cur, a)
+
+# }}}
+# {{{ centerCursorAt()
+proc centerCursorAt(loc: Location; a) =
+  alias(dp, a.ui.drawLevelParams)
+
+  let l = currLevel(a)
+
+  dp.viewStartRow = (loc.row.int - dp.viewRows div 2).clamp(0, l.rows-1)
+  dp.viewStartCol = (loc.col.int - dp.viewCols div 2).clamp(0, l.cols-1)
+
+  moveCursorTo(loc, a)
+
+# }}}
+# {{{ locationAtMouse()
+proc locationAtMouse(a): Option[Location] =
+  let dp = a.ui.drawLevelParams
+
+  let
+    mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
+    mouseViewCol = ((koi.mx() - dp.startX) / dp.gridSize).int
+
+    mouseRow = dp.viewStartRow + mouseViewRow
+    mouseCol = dp.viewStartCol + mouseViewCol
+
+  if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
+     mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
+
+    result = Location(
+      level: a.ui.cursor.level,
+      row: mouseRow,
+      col: mouseCol
+    ).some
+  else:
+    result = Location.none
+
+# }}}
+# {{{ moveLevel()
+proc moveLevel(dir: CardinalDir, steps: Natural; a) =
+  alias(dp, a.ui.drawLevelParams)
+
+  let l = currLevel(a)
+  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
+  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
+
+  var newViewStartCol = dp.viewStartCol
+  var newViewStartRow = dp.viewStartRow
+
+  case dir:
+  of dirE: newViewStartCol = min(dp.viewStartCol + steps, maxViewStartCol)
+  of dirW: newViewStartCol = max(dp.viewStartCol - steps, 0)
+  of dirS: newViewStartRow = min(dp.viewStartRow + steps, maxViewStartRow)
+  of dirN: newViewStartRow = max(dp.viewStartRow - steps, 0)
+
+  var cur = a.ui.cursor
+  cur.row = cur.row + viewRow(newViewStartRow, a)
+  cur.col = cur.col + viewCol(newViewStartCol, a)
+
+  setCursor(cur, a)
+
+  dp.viewStartRow = newViewStartRow
+  dp.viewStartCol = newViewStartCol
+
+# }}}
+
+# {{{ resetCursorAndViewStart()
+proc resetCursorAndViewStart(a) =
+  a.ui.cursor.level = 0
+  a.ui.cursor.row = 0
+  a.ui.cursor.col = 0
+
+  a.ui.drawLevelParams.viewStartRow = 0
+  a.ui.drawLevelParams.viewStartCol = 0
+
+# }}}
+# {{{ updateLastCursorViewCoords()
+proc updateLastCursorViewCoords(a) =
+  let dp = a.ui.drawLevelParams
+
+  a.ui.lastCursorViewX = dp.gridSize * viewCol(a)
+  a.ui.lastCursorViewY = dp.gridSize * viewRow(a)
 
 # }}}
 # {{{ updateViewStartAndCursorPosition()
@@ -1110,156 +1241,6 @@ proc updateViewStartAndCursorPosition(a) =
   updateLastCursorViewCoords(a)
 
 # }}}
-# {{{ locationAtMouse()
-proc locationAtMouse(a): Option[Location] =
-  let dp = a.ui.drawLevelParams
-
-  let
-    mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
-    mouseViewCol = ((koi.mx() - dp.startX) / dp.gridSize).int
-
-    mouseRow = dp.viewStartRow + mouseViewRow
-    mouseCol = dp.viewStartCol + mouseViewCol
-
-  if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
-     mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
-
-    result = Location(
-      level: a.ui.cursor.level,
-      row: mouseRow,
-      col: mouseCol
-    ).some
-  else:
-    result = Location.none
-
-# }}}
-
-# {{{ moveLevel()
-proc moveLevel(dir: CardinalDir, steps: Natural; a) =
-  alias(dp, a.ui.drawLevelParams)
-
-  let l = currLevel(a)
-  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
-  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
-
-  var newViewStartCol = dp.viewStartCol
-  var newViewStartRow = dp.viewStartRow
-
-  case dir:
-  of dirE: newViewStartCol = min(dp.viewStartCol + steps, maxViewStartCol)
-  of dirW: newViewStartCol = max(dp.viewStartCol - steps, 0)
-  of dirS: newViewStartRow = min(dp.viewStartRow + steps, maxViewStartRow)
-  of dirN: newViewStartRow = max(dp.viewStartRow - steps, 0)
-
-  var cur = a.ui.cursor
-  cur.row = cur.row + viewRow(newViewStartRow, a)
-  cur.col = cur.col + viewCol(newViewStartCol, a)
-
-  setCursor(cur, a)
-
-  dp.viewStartRow = newViewStartRow
-  dp.viewStartCol = newViewStartCol
-
-# }}}
-# {{{ stepCursor()
-proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
-  alias(dp, a.ui.drawLevelParams)
-
-  let l = a.doc.map.levels[cur.level]
-  let sm = ScrollMargin
-  var cur = cur
-
-  case dir:
-  of dirE:
-    cur.col = min(cur.col + steps, l.cols-1)
-    let viewCol = viewCol(cur.col, a)
-    let viewColMax = dp.viewCols-1 - sm
-    if viewCol > viewColMax:
-      dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol +
-                                                        (viewCol - viewColMax))
-
-  of dirS:
-    cur.row = min(cur.row + steps, l.rows-1)
-    let viewRow = viewRow(cur.row, a)
-    let viewRowMax = dp.viewRows-1 - sm
-    if viewRow > viewRowMax:
-      dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow +
-                                                        (viewRow - viewRowMax))
-
-  of dirW:
-    cur.col = max(cur.col - steps, 0)
-    let viewCol = viewCol(cur.col, a)
-    if viewCol < sm:
-      dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
-
-  of dirN:
-    cur.row = max(cur.row - steps, 0)
-    let viewRow = viewRow(cur.row, a)
-    if viewRow < sm:
-      dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
-
-  result = cur
-
-# }}}
-# {{{ moveCursor()
-proc moveCursor(dir: CardinalDir, steps: Natural; a) =
-  let cur = stepCursor(a.ui.cursor, dir, steps, a)
-  setCursor(cur, a)
-
-# }}}
-# {{{ moveSelStart()
-proc moveSelStart(dir: CardinalDir; a) =
-  alias(dp, a.ui.drawLevelParams)
-
-  let cols = a.ui.nudgeBuf.get.level.cols
-  let rows = a.ui.nudgeBuf.get.level.cols
-
-  case dir:
-  of dirE:
-    if dp.selStartCol < cols-1: inc(dp.selStartCol)
-
-  of dirS:
-    if dp.selStartRow < rows-1: inc(dp.selStartRow)
-
-  of dirW:
-    if dp.selStartCol + cols > 1: dec(dp.selStartCol)
-
-  of dirN:
-    if dp.selStartRow + rows > 1: dec(dp.selStartRow)
-
-
-# }}}
-# {{{ moveCursorTo()
-proc moveCursorTo(loc: Location; a) =
-  var cur = a.ui.cursor
-  cur.level = loc.level
-
-  let dx = loc.col - cur.col
-  let dy = loc.row - cur.row
-
-  cur = if   dx < 0: stepCursor(cur, dirW, -dx, a)
-        elif dx > 0: stepCursor(cur, dirE,  dx, a)
-        else: cur
-
-  cur = if   dy < 0: stepCursor(cur, dirN, -dy, a)
-        elif dy > 0: stepCursor(cur, dirS,  dy, a)
-        else: cur
-
-  setCursor(cur, a)
-
-# }}}
-# {{{ centerCursorAt()
-proc centerCursorAt(loc: Location; a) =
-  alias(dp, a.ui.drawLevelParams)
-
-  let l = currLevel(a)
-
-  dp.viewStartRow = (loc.row.int - dp.viewRows div 2).clamp(0, l.rows-1)
-  dp.viewStartCol = (loc.col.int - dp.viewCols div 2).clamp(0, l.cols-1)
-
-  moveCursorTo(loc, a)
-
-# }}}
 
 # {{{ enterSelectMode()
 proc enterSelectMode(a) =
@@ -1298,6 +1279,28 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
     ui.cutToBuffer = false
 
   result = bbox
+
+# }}}
+# {{{ moveSelStart()
+proc moveSelStart(dir: CardinalDir; a) =
+  alias(dp, a.ui.drawLevelParams)
+
+  let cols = a.ui.nudgeBuf.get.level.cols
+  let rows = a.ui.nudgeBuf.get.level.cols
+
+  case dir:
+  of dirE:
+    if dp.selStartCol < cols-1: inc(dp.selStartCol)
+
+  of dirS:
+    if dp.selStartRow < rows-1: inc(dp.selStartRow)
+
+  of dirW:
+    if dp.selStartCol + cols > 1: dec(dp.selStartCol)
+
+  of dirN:
+    if dp.selStartRow + rows > 1: dec(dp.selStartRow)
+
 
 # }}}
 
@@ -1369,7 +1372,7 @@ proc saveMap(filename: string, autosave: bool = false; a) =
 # {{{ Graphics utils
 
 # {{{ colorImage()
-proc colorImage(d: var ImageData, color: Color) =
+func colorImage(d: var ImageData, color: Color) =
   for i in 0..<(d.width * d.height):
     d.data[i*4]   = (color.r * 255).byte
     d.data[i*4+1] = (color.g * 255).byte
@@ -1411,12 +1414,12 @@ proc loadImage(path: string; a): Option[Paint] =
 # {{{ Theme handling
 
 # {{{ currThemeName()
-proc currThemeName(a): var ThemeName =
+func currThemeName(a): var ThemeName =
   a.theme.themeNames[a.theme.currThemeIndex]
 
 # }}}
 # {{{ findThemeIndex()
-proc findThemeIndex(name: string; a): int =
+func findThemeIndex(name: string; a): int =
   for i in 0..a.theme.themeNames.high:
     if a.theme.themeNames[i].name == name:
       return i
@@ -1424,7 +1427,7 @@ proc findThemeIndex(name: string; a): int =
 
 # }}}
 # {{{ themePath()
-proc themePath(theme: ThemeName; a): string =
+func themePath(theme: ThemeName; a): string =
   let themeDir = if theme.userTheme: a.path.userThemesDir
                  else: a.path.themesDir
   themeDir / addFileExt(theme.name, ThemeExt)
@@ -1435,7 +1438,7 @@ proc themePath(theme: ThemeName; a): string =
 proc buildThemeList(a) =
   var themeNames: seq[ThemeName] = @[]
 
-  proc findThemeWithName(name: string): int =
+  func findThemeWithName(name: string): int =
     for i in 0..themeNames.high:
       if themeNames[i].name == name: return i
     result = -1
@@ -2653,7 +2656,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
                   x = calcDialogX(DlgWidth, a).some,
                   style = a.theme.dialogStyle)
 
-  a.clearStatusMessage()
+  clearStatusMessage(a)
 
   var x = DlgLeftPad
   var y = DlgTopPad
@@ -3920,7 +3923,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     validationError = mkValidationError("Name is mandatory")
   else:
     if dlg.name != currRegion(a).get.name:
-      for name in l.regionNames():
+      for name in l.regionNames:
         if name == dlg.name:
           validationError = mkValidationError(
             "A region already exists with the same name"
@@ -4314,7 +4317,7 @@ proc openForumAction(a) =
 proc undoAction(a) =
   alias(um, a.doc.undoManager)
 
-  if um.canUndo():
+  if um.canUndo:
     let undoStateData = um.undo(a.doc.map)
     if a.doc.map.hasLevels:
       moveCursorTo(undoStateData.location, a)
@@ -4327,7 +4330,7 @@ proc undoAction(a) =
 proc redoAction(a) =
   alias(um, a.doc.undoManager)
 
-  if um.canRedo():
+  if um.canRedo:
     let undoStateData = um.redo(a.doc.map)
     moveCursorTo(undoStateData.location, a)
     setStatusMessage(IconRedo,
@@ -5373,7 +5376,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scSelectionEraseArea):
         let selection = ui.selection.get
-        let bbox = selection.boundingBox()
+        let bbox = selection.boundingBox
         if bbox.isSome:
           actions.eraseSelection(map, cur.level, selection, bbox.get, um)
           exitSelectMode(a)
@@ -5381,7 +5384,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scSelectionFillArea):
         let selection = ui.selection.get
-        let bbox = selection.boundingBox()
+        let bbox = selection.boundingBox
         if bbox.isSome:
           actions.fillSelection(map, cur.level, selection, bbox.get,
                                 ui.currFloorColor, um)
@@ -5390,7 +5393,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scSelectionSurroundArea):
         let selection = ui.selection.get
-        let bbox = selection.boundingBox()
+        let bbox = selection.boundingBox
         if bbox.isSome:
           actions.surroundSelectionWithWalls(map, cur.level, selection,
                                              bbox.get, um)
@@ -5399,7 +5402,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scSelectionSetFloorColorArea):
         let selection = ui.selection.get
-        let bbox = selection.boundingBox()
+        let bbox = selection.boundingBox
         if bbox.isSome:
           actions.setSelectionFloorColor(map, cur.level, selection,
                                          bbox.get, ui.currFloorColor, um)
@@ -5408,7 +5411,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scSelectionCropArea):
         let sel = ui.selection.get
-        let bbox = sel.boundingBox()
+        let bbox = sel.boundingBox
         if bbox.isSome:
           let newCur = actions.cropLevel(map, cur, bbox.get, um)
           moveCursorTo(newCur, a)
