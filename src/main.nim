@@ -360,6 +360,7 @@ type
 
     saveDiscardThemeDialog: SaveDiscardThemeDialogParams
     copyThemeDialog:        CopyThemeDialogParams
+    renameThemeDialog:      RenameThemeDialogParams
     overwriteThemeDialog:   OverwriteThemeDialogParams
     deleteThemeDialog:      DeleteThemeDialogParams
 
@@ -522,20 +523,21 @@ type
   EditRegionPropsParams = object
     isOpen:       bool
     activateFirstTextField: bool
-
     name:         string
     notes:        string
-
 
   SaveDiscardThemeDialogParams = object
     isOpen:       bool
     action:       proc (a: var AppContext)
 
-
   CopyThemeDialogParams = object
     isOpen:       bool
     activateFirstTextField: bool
+    newThemeName: string
 
+  RenameThemeDialogParams = object
+    isOpen:       bool
+    activateFirstTextField: bool
     newThemeName: string
 
 
@@ -1586,6 +1588,16 @@ proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
   except CatchableError as e:
     logError(e, "Error copying theme")
     setStatusMessage(IconWarning, fmt"Error copying theme: {e.msg}", a)
+
+# }}}
+# {{{ renameTheme()
+proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
+  try:
+    moveFile(themePath(a.currThemeName, a), newThemePath)
+    result = true
+  except CatchableError as e:
+    logError(e, "Error renaming theme")
+    setStatusMessage(IconWarning, fmt"Error renaming theme: {e.msg}", a)
 
 # }}}
 
@@ -4414,6 +4426,118 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   koi.endDialog()
 
 # }}}
+# {{{ Rename theme dialog
+
+proc openRenameThemeDialog(a) =
+  alias(dlg, a.dialog.renameThemeDialog)
+  dlg.newThemeName = a.currThemeName.name
+  dlg.isOpen = true
+
+
+proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
+  const
+    DlgWidth = 390.0
+    DlgHeight = 170.0
+    LabelWidth = 135.0
+
+  let h = DlgItemHeight
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFile}  Rename Theme",
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopPad
+
+  koi.label(x, y, LabelWidth, h, "New Theme Name", style=a.theme.labelStyle)
+  koi.textField(
+    x + LabelWidth, y, w=196, h,
+    dlg.newThemeName,
+    activate = dlg.activateFirstTextField,
+    # TODO disallow invalid filename chars?
+    style = a.theme.textFieldStyle
+  )
+
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if not isValidFilename(dlg.newThemeName):
+    validationError = "Theme name is invalid"
+
+  var validationWarning = ""
+  let idx = findThemeIndex(dlg.newThemeName, a)
+  if idx.isSome:
+    let theme = a.theme.themeNames[idx.get]
+    if theme.userTheme:
+      validationWarning = "User theme already exists with this name"
+    else:
+      validationWarning = "Built-in theme will be shadowed by this name"
+
+  if validationError != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationError(validationError),
+              style=a.theme.errorLabelStyle)
+
+  elif validationWarning != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationWarning(validationWarning),
+              style=a.theme.warningLabelStyle)
+
+
+  proc renameAction(dlg: var RenameThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+    let dlg = dlg
+    let newThemePath = a.path.userThemesDir / addFileExt(dlg.newThemeName,
+                                                         ThemeExt)
+    proc renameTheme(a) =
+      if renameTheme(a.currThemeName, newThemePath, a):
+        buildThemeList(a)
+        a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
+
+    if fileExists(newThemePath):
+      openOverwriteThemeDialog(dlg.newThemeName, action=renameTheme, a)
+    else:
+      renameTheme(a)
+
+
+  proc cancelAction(dlg: var RenameThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
+
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
+                disabled = validationError != "", style = a.theme.buttonStyle):
+    renameAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
+                style = a.theme.buttonStyle):
+    cancelAction(dlg, a)
+
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): renameAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
 # {{{ Delete theme dialog
 
 proc openDeleteThemeDialog(a) =
@@ -6634,7 +6758,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Rename",
                 disabled=not a.currThemeName.userTheme or buttonsDisabled):
-    discard # TODO
+    openRenameThemeDialog(a)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Delete",
@@ -6795,7 +6919,7 @@ proc renderUI(a) =
     renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
-  
+
   if dlg.aboutDialog.isOpen:
     aboutDialog(dlg.aboutDialog, a)
 
@@ -6837,6 +6961,9 @@ proc renderUI(a) =
 
   elif dlg.copyThemeDialog.isOpen:
     copyThemeDialog(dlg.copyThemeDialog, a)
+
+  elif dlg.renameThemeDialog.isOpen:
+    renameThemeDialog(dlg.renameThemeDialog, a)
 
   elif dlg.overwriteThemeDialog.isOpen:
     overwriteThemeDialog(dlg.overwriteThemeDialog, a)
