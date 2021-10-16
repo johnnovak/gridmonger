@@ -1410,6 +1410,7 @@ proc loadImage(path: string; a): Option[Paint] =
     result = Paint.none
 
 # }}}
+
 # }}}
 # {{{ Theme handling
 
@@ -1891,9 +1892,12 @@ proc saveAppConfig(a) =
 
 # {{{ Key handling
 
+# {{{ hasKeyEvent()
 proc hasKeyEvent(): bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
 
+# }}}
+# {{{ isKeyDown()
 func isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
                repeat=false): bool =
 
@@ -1907,7 +1911,8 @@ func isKeyDown(ev: Event, key: Key,
                mods: set[ModifierKey] = {}, repeat=false): bool =
   isKeyDown(ev, {key}, mods, repeat)
 
-
+# }}}
+# {{{ checkShortcut()
 proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
                    actions: set[KeyAction]): bool =
   if ev.kind == ekKey:
@@ -1917,23 +1922,30 @@ proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
         if currShortcut in g_appShortcuts[sc]:
           return true
 
-proc isShortcutsDown(ev: Event, shortcuts: set[AppShortcut],
+# }}}
+# {{{ isShortcutDown()
+proc isShortcutDown(ev: Event, shortcuts: set[AppShortcut],
                      repeat=false): bool =
   let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
   checkShortcut(ev, shortcuts, actions)
 
 proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
-  isShortcutsDown(ev, {shortcut}, repeat)
+  isShortcutDown(ev, {shortcut}, repeat)
 
-proc isShortcutsUp(ev: Event, shortcuts: set[AppShortcut]): bool =
+# }}}
+# {{{ isShortcutUp()
+proc isShortcutUp(ev: Event, shortcuts: set[AppShortcut]): bool =
   checkShortcut(ev, shortcuts, actions={kaUp})
 
 proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
-  isShortcutsUp(ev, {shortcut})
+  isShortcutUp(ev, {shortcut})
+
+# }}}
 
 # }}}
 # {{{ Dialogs
 
+# {{{ Constants
 const
   DlgItemHeight   = 24.0
   DlgButtonWidth  = 80.0
@@ -1960,9 +1972,14 @@ const
     defaultRowHeight: 24.0
   )
 
+# }}}
+# {{{ Helpers
+
+# {{{ calcDialogX()
 proc calcDialogX(dlgWidth: float; a): float =
   drawAreaWidth(a)*0.5 - dlgWidth*0.5
 
+# }}}
 # {{{ coordinateFields()
 template coordinateFields() =
   const LetterLabelWidth = 100
@@ -2273,6 +2290,7 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 
 # }}}
 
+# }}}
 
 # {{{ About dialog
 proc openAboutDialog(a) =
@@ -4541,6 +4559,7 @@ proc pickFloorColorAction(a) =
   a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor).byte
 
 # }}}
+
 # }}}
 # {{{ Drawing
 
@@ -4708,6 +4727,7 @@ proc drawStatusBar(y: float, winWidth: float; a) =
 # }}}
 
 # }}}
+# {{{ Event handling
 
 # {{{ resetManualNoteTooltip()
 proc resetManualNoteTooltip(a) =
@@ -5228,8 +5248,8 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      if ke.isShortcutsUp({scEraseCell, scDrawClearFloor, scEraseTrail,
-                           scSetFloorColor}):
+      if ke.isShortcutUp({scEraseCell, scDrawClearFloor, scEraseTrail,
+                          scSetFloorColor}):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -5301,7 +5321,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scSelectionAll):  ui.selection.get.fill(true)
       elif ke.isShortcutDown(scSelectionNone): ui.selection.get.fill(false)
 
-      elif ke.isShortcutsDown({scSelectionAddRect, scSelectionSubRect}):
+      elif ke.isShortcutDown({scSelectionAddRect, scSelectionSubRect}):
         ui.editMode = emSelectRect
         ui.selRect = some(SelectionRect(
           startRow: cur.row,
@@ -5444,7 +5464,7 @@ proc handleGlobalKeyEvents(a) =
       let cur = a.ui.cursor
       ui.selection.get[cur.row, cur.col] = ui.editMode == emSelectDraw
 
-      if ke.isShortcutsUp({scSelectionDraw, scSelectionErase}):
+      if ke.isShortcutUp({scSelectionDraw, scSelectionErase}):
         ui.editMode = emSelect
 
     # }}}
@@ -5471,7 +5491,7 @@ proc handleGlobalKeyEvents(a) =
 
       ui.selRect.get.rect = rectN(r1,c1, r2,c2)
 
-      if ke.isShortcutsUp({scSelectionAddRect, scSelectionSubRect}):
+      if ke.isShortcutUp({scSelectionAddRect, scSelectionSubRect}):
         ui.selection.get.fill(ui.selRect.get.rect, ui.selRect.get.selected)
         ui.selRect = SelectionRect.none
         ui.editMode = emSelect
@@ -5654,6 +5674,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
 # }}}
 
+# }}}
 # {{{ Rendering
 
 # {{{ renderLevel()
