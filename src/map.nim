@@ -75,6 +75,11 @@ proc refreshSortedLevelNames*(m) =
 
 # }}}
 
+# {{{ hasLevels*()
+func hasLevels*(m): bool =
+  m.levels.len > 0
+
+# }}}
 # {{{ addLevel*()
 proc addLevel*(m; l: Level) =
   m.levels.add(l)

@@ -939,11 +939,6 @@ func viewCol(a): int =
   viewCol(a.ui.cursor.col, a)
 
 # }}}
-# {{{ mapHasLevels()
-func mapHasLevels(a): bool =
-  a.doc.map.levels.len > 0
-
-# }}}
 # {{{ currSortedLevelIdx()
 func currSortedLevelIdx(a): Natural =
   a.doc.map.findSortedLevelIdxByLevelIdx(a.ui.cursor.level)
@@ -1305,6 +1300,69 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   result = bbox
 
 # }}}
+
+# }}}
+
+# {{{ loadMap()
+proc loadMap(filename: string; a): bool =
+  info(fmt"Loading map '{filename}'...")
+
+  try:
+    let t0 = getMonoTime()
+    a.doc.map = readMapFile(filename)
+    let dt = getMonoTime() - t0
+
+    a.doc.filename = filename
+    a.doc.lastAutosaveTime = getMonoTime()
+
+    initUndoManager(a.doc.undoManager)
+
+    resetCursorAndViewStart(a)
+
+    let message = fmt"Map '{filename}' loaded in " &
+                  fmt"{durationToFloatMillis(dt):.2f} ms"
+
+    info(message)
+    setStatusMessage(IconFloppy, message, a)
+    result = true
+
+  except CatchableError as e:
+    logError(e, "Error loading map")
+    setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
+  finally:
+    a.logFile.flushFile()
+
+# }}}
+# {{{ saveMap()
+proc saveMap(filename: string, autosave: bool = false; a) =
+  let dp = a.ui.drawLevelParams
+
+  let cur = a.ui.cursor
+
+  let mapDisplayOpts = MapDisplayOptions(
+    currLevel    : cur.level,
+    zoomLevel    : dp.getZoomLevel(),
+    cursorRow    : cur.row,
+    cursorCol    : cur.col,
+    viewStartRow : dp.viewStartRow,
+    viewStartCol : dp.viewStartCol
+  )
+
+  info(fmt"Saving map to '{filename}'")
+
+  try:
+    writeMapFile(a.doc.map, mapDisplayOpts, filename)
+    a.doc.undoManager.setLastSaveState()
+
+    if not autosave:
+      setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
+
+  except CatchableError as e:
+    logError(e, "Error saving map")
+    let prefix = if autosave: "Autosave failed: " else: ""
+    setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
+  finally:
+    a.logFile.flushFile()
 
 # }}}
 
@@ -2862,7 +2920,7 @@ proc openNewLevelDialog(a) =
   let map = a.doc.map
   var co: CoordinateOptions
 
-  if mapHasLevels(a):
+  if map.hasLevels:
     let l = currLevel(a)
     dlg.locationName = l.locationName
     dlg.levelName = ""
@@ -4258,7 +4316,7 @@ proc undoAction(a) =
 
   if um.canUndo():
     let undoStateData = um.undo(a.doc.map)
-    if mapHasLevels(a):
+    if a.doc.map.hasLevels:
       moveCursorTo(undoStateData.location, a)
     setStatusMessage(IconUndo, fmt"Undid action: {undoStateData.actionName}", a)
   else:
@@ -4286,84 +4344,21 @@ proc newMapAction(a) =
     openNewMapDialog(a)
 
 # }}}
-# {{{ loadMap()
-proc loadMap(filename: string; a): bool =
-  info(fmt"Loading map '{filename}'...")
-
-  try:
-    let t0 = getMonoTime()
-    a.doc.map = readMapFile(filename)
-    let dt = getMonoTime() - t0
-
-    a.doc.filename = filename
-    a.doc.lastAutosaveTime = getMonoTime()
-
-    initUndoManager(a.doc.undoManager)
-
-    resetCursorAndViewStart(a)
-
-    let message = fmt"Map '{filename}' loaded in " &
-                  fmt"{durationToFloatMillis(dt):.2f} ms"
-
-    info(message)
-    setStatusMessage(IconFloppy, message, a)
-    result = true
-
-  except CatchableError as e:
-    logError(e, "Error loading map")
-    setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
-  finally:
-    a.logFile.flushFile()
-
-# }}}
-# {{{ openMap()
-proc openMap(a) =
-  when defined(DEBUG): discard
-  else:
-    let filename = fileDialog(fdOpenFile,
-                              filters=GridmongerMapFileFilter)
-    if filename != "":
-      discard loadMap(filename, a)
-
-# }}}
 # {{{ openMapAction()
 proc openMapAction(a) =
+
+  proc openMap(a) =
+    when defined(DEBUG): discard
+    else:
+      let filename = fileDialog(fdOpenFile,
+                                filters=GridmongerMapFileFilter)
+      if filename != "":
+        discard loadMap(filename, a)
+
   if a.doc.undoManager.isModified:
     openSaveDiscardMapDialog(action=openMap, a)
   else:
     openMap(a)
-
-# }}}
-# {{{ saveMap()
-proc saveMap(filename: string, autosave: bool = false; a) =
-  let dp = a.ui.drawLevelParams
-
-  let cur = a.ui.cursor
-
-  let mapDisplayOpts = MapDisplayOptions(
-    currLevel    : cur.level,
-    zoomLevel    : dp.getZoomLevel(),
-    cursorRow    : cur.row,
-    cursorCol    : cur.col,
-    viewStartRow : dp.viewStartRow,
-    viewStartCol : dp.viewStartCol
-  )
-
-  info(fmt"Saving map to '{filename}'")
-
-  try:
-    writeMapFile(a.doc.map, mapDisplayOpts, filename)
-    a.doc.undoManager.setLastSaveState()
-
-    if not autosave:
-      setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
-
-  except CatchableError as e:
-    logError(e, "Error saving map")
-    let prefix = if autosave: "Autosave failed: " else: ""
-    setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
-  finally:
-    a.logFile.flushFile()
 
 # }}}
 # {{{ saveMapAsAction()
@@ -4384,44 +4379,41 @@ proc saveMapAction(a) =
 
 # }}}
 
-# {{{ reloadTheme()
-proc reloadTheme(a) =
-  a.theme.nextThemeIndex = a.theme.currThemeIndex.some
-
-# }}}
 # {{{ reloadThemeAction()
 proc reloadThemeAction(a) =
+
+  proc reloadTheme(a) =
+    a.theme.nextThemeIndex = a.theme.currThemeIndex.some
+
   if a.themeEditor.modified:
     openSaveDiscardThemeDialog(action=reloadTheme, a)
   else:
     reloadTheme(a)
 
 # }}}
-# {{{ prevTheme()
-proc prevTheme(a) =
-  var i = a.theme.currThemeIndex
-  if i == 0: i = a.theme.themeNames.high else: dec(i)
-  a.theme.nextThemeIndex = i.some
-
-# }}}
 # {{{ prevThemeAction()
 proc prevThemeAction(a) =
+
+  proc prevTheme(a) =
+    var i = a.theme.currThemeIndex
+    if i == 0: i = a.theme.themeNames.high else: dec(i)
+    a.theme.nextThemeIndex = i.some
+
   if a.themeEditor.modified:
     openSaveDiscardThemeDialog(action=prevTheme, a)
   else:
     prevTheme(a)
 
 # }}}
-# {{{ nextTheme()
-proc nextTheme(a) =
-  var i = a.theme.currThemeIndex
-  inc(i)
-  if i > a.theme.themeNames.high: i = 0
-  a.theme.nextThemeIndex = i.some
-
-# }}}
 # {{{ nextThemeAction()
 proc nextThemeAction(a) =
+
+  proc nextTheme(a) =
+    var i = a.theme.currThemeIndex
+    inc(i)
+    if i > a.theme.themeNames.high: i = 0
+    a.theme.nextThemeIndex = i.some
+
   if a.themeEditor.modified:
     openSaveDiscardThemeDialog(action=nextTheme, a)
   else:
@@ -4655,7 +4647,7 @@ proc drawStatusBar(y: float, winWidth: float; a) =
   # Display cursor coordinates
   vg.setFont(14)
 
-  if mapHasLevels(a):
+  if a.doc.map.hasLevels:
     let
       l = currLevel(a)
       coordOpts = coordOptsForCurrLevel(a)
@@ -6578,7 +6570,7 @@ proc renderUI(a) =
             style = a.theme.aboutButtonStyle, tooltip = "About"):
     openAboutDialog(a)
 
-  if not mapHasLevels(a):
+  if not map.hasLevels:
     drawEmptyMap(a)
 
   else:
@@ -6820,8 +6812,8 @@ proc renderFrame(a) =
     uiRendered = true
 
   if a.splash.win == nil:
-    if mapHasLevels(a): handleGlobalKeyEvents(a)
-    else:               handleGlobalKeyEvents_NoLevels(a)
+    if a.doc.map.hasLevels: handleGlobalKeyEvents(a)
+    else:                   handleGlobalKeyEvents_NoLevels(a)
 
   else:
     if not a.opts.showThemeEditor and a.win.glfwWin.focused:
