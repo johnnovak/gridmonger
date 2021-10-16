@@ -27,7 +27,8 @@ ui {
     corner-radius = 8.0
     background = "#4b4335ff"
     label = "#f2e4cfa9"
-    warning = "#ff6a3dff"
+    warning = "#ffffffec"
+    error = "#ff6a3dff"
 
     title {
       background = "#201e1bff"

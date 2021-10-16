@@ -320,6 +320,7 @@ type
     aboutButtonStyle:       ButtonStyle
 
     iconRadioButtonsStyle:  RadioButtonsStyle
+    warningLabelStyle:      LabelStyle
     errorLabelStyle:        LabelStyle
 
     levelDropDownStyle:     DropDownStyle
@@ -1779,11 +1780,18 @@ proc updateWidgetStyles(a) =
     colorDisabled = color.lerp(d.getColorOrDefault("background"), 0.7)
     align         = haLeft
 
-  # Warning label
+  # Error label
+  a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
+
+  with a.theme.warningLabelStyle:
+    color     = d.getColorOrDefault("warning")
+    multiLine = true
+
+  # Error label
   a.theme.errorLabelStyle = koi.getDefaultLabelStyle()
 
   with a.theme.errorLabelStyle:
-    color     = d.getColorOrDefault("warning")
+    color     = d.getColorOrDefault("error")
     multiLine = true
 
   # Level dropDown
@@ -4324,7 +4332,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     x + LabelWidth, y, w=196, h,
     dlg.newThemeName,
     activate = dlg.activateFirstTextField,
-    # TODO disallow invalid filename chars
+    # TODO disallow invalid filename chars?
     style = a.theme.textFieldStyle
   )
 
@@ -4346,11 +4354,13 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
-              mkValidationError(validationError), style=a.theme.errorLabelStyle)
+              mkValidationError(validationError),
+              style=a.theme.errorLabelStyle)
 
   elif validationWarning != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
-              mkValidationWarning(validationWarning))
+              mkValidationWarning(validationWarning),
+              style=a.theme.warningLabelStyle)
 
 
   proc copyAction(dlg: var CopyThemeDialogParams; a) =
@@ -6285,6 +6295,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Background",         p & "background")
         colorProp("Label",              p & "label")
         colorProp("Warning",            p & "warning")
+        colorProp("Error",              p & "error")
 
       group:
         colorProp("Title Background",   p & "title.background")
