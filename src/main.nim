@@ -43,36 +43,28 @@ import unicode
 import utils
 
 # }}}
+# {{{ Extra resources
 
 when defined(windows):
   {.link: "extras/appicons/windows/gridmonger.res".}
-
-const
-  BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
-  ThemeExt = "gmtheme"
-
-const
-  SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
-  AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
-  ZoomLevelLimits*         = intLimits(MinZoomLevel, MaxZoomLevel)
-  WindowWidthLimits*       = intLimits(WindowMinWidth, max=20_000)
-  WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
-
-# {{{ logError()
-proc logError(e: ref Exception, msgPrefix: string = "") =
-  var msg = "Error message: " & e.msg & "\n\nStack trace:\n" & getStackTrace(e)
-  if msgPrefix != "":
-    msg = msgPrefix & "\n" & msg
-
-  logging.error(msg)
 
 # }}}
 
 # {{{ Constants
 const
+  BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
+
+const
+  ThemeExt = "gmtheme"
+  MapFileExt = "gmm"
+  CrashAutosaveFilename = addFileExt("Crash Autosave", MapFileExt)
+  GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
+
+const
   CursorJump   = 5
   ScrollMargin = 3
 
+const
   StatusBarHeight         = 26.0
 
   LevelTopPad_Regions     = 28.0
@@ -81,7 +73,6 @@ const
   LevelRightPad_Coords    = 50.0
   LevelBottomPad_Coords   = 40.0
   LevelLeftPad_Coords     = 50.0
-
 
   LevelTopPad_NoCoords    = 65.0
   LevelRightPad_NoCoords  = 28.0
@@ -104,9 +95,11 @@ const
   ThemePaneWidth          = 316.0
 
 const
-  MapFileExt = "gmm"
-  CrashAutosaveFilename = addFileExt("Crash Autosave", MapFileExt)
-  GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
+  SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
+  AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
+  ZoomLevelLimits*         = intLimits(MinZoomLevel, MaxZoomLevel)
+  WindowWidthLimits*       = intLimits(WindowMinWidth, max=20_000)
+  WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
 
 const
   SpecialWalls = @[
@@ -166,7 +159,7 @@ const
   ]
 
 # }}}
-# {{{ AppContext
+# {{{ App context
 
 type
   AppContext = ref object
@@ -617,7 +610,7 @@ var g_app: AppContext
 using a: var AppContext
 
 # }}}
-# {{{ Keyboard shortcuts
+# {{{ Key shortcuts
 
 type MoveKeys = object
   left, right, up, down: set[Key]
@@ -918,6 +911,52 @@ let g_appShortcuts = {
   scEditPreferences:    @[mkKeyShortcut(keyU,             {mkCtrl, mkAlt})]
 
 }.toTable
+
+# }}}
+
+# {{{ Logging
+
+# {{{ rollLogFile(a)
+proc rollLogFile(a) =
+  alias(p, a.path)
+
+  let fileNames = @[
+    p.logFile & ".bak3",
+    p.logFile & ".bak2",
+    p.logFile & ".bak1",
+    p.logFile
+  ]
+
+  for i, fname in fileNames:
+    if fileExists(fname):
+      if i == 0:
+        discard tryRemoveFile(fname)
+      else:
+        try:
+          moveFile(fname, fileNames[i-1])
+        except CatchableError:
+          discard
+
+# }}}
+# {{{ initLogger(a)
+proc initLogger(a) =
+  rollLogFile(a)
+  a.logFile = open(a.path.logFile, fmWrite)
+  var fileLog = newFileLogger(a.logFile,
+                              fmtStr="[$levelname] $date $time - ",
+                              levelThreshold=lvlDebug)
+  addHandler(fileLog)
+
+# }}}
+# {{{ logError()
+proc logError(e: ref Exception, msgPrefix: string = "") =
+  var msg = "Error message: " & e.msg & "\n\nStack trace:\n" & getStackTrace(e)
+  if msgPrefix != "":
+    msg = msgPrefix & "\n" & msg
+
+  logging.error(msg)
+
+# }}}
 
 # }}}
 
@@ -1305,80 +1344,8 @@ proc moveSelStart(dir: CardinalDir; a) =
 # }}}
 
 # }}}
+# {{{ Graphics helpers
 
-# {{{ loadMap()
-proc loadMap(filename: string; a): bool =
-  info(fmt"Loading map '{filename}'...")
-
-  try:
-    let t0 = getMonoTime()
-    a.doc.map = readMapFile(filename)
-    let dt = getMonoTime() - t0
-
-    a.doc.filename = filename
-    a.doc.lastAutosaveTime = getMonoTime()
-
-    initUndoManager(a.doc.undoManager)
-
-    resetCursorAndViewStart(a)
-
-    let message = fmt"Map '{filename}' loaded in " &
-                  fmt"{durationToFloatMillis(dt):.2f} ms"
-
-    info(message)
-    setStatusMessage(IconFloppy, message, a)
-    result = true
-
-  except CatchableError as e:
-    logError(e, "Error loading map")
-    setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
-  finally:
-    a.logFile.flushFile()
-
-# }}}
-# {{{ saveMap()
-proc saveMap(filename: string, autosave: bool = false; a) =
-  let dp = a.ui.drawLevelParams
-
-  let cur = a.ui.cursor
-
-  let mapDisplayOpts = MapDisplayOptions(
-    currLevel    : cur.level,
-    zoomLevel    : dp.getZoomLevel(),
-    cursorRow    : cur.row,
-    cursorCol    : cur.col,
-    viewStartRow : dp.viewStartRow,
-    viewStartCol : dp.viewStartCol
-  )
-
-  info(fmt"Saving map to '{filename}'")
-
-  try:
-    writeMapFile(a.doc.map, mapDisplayOpts, filename)
-    a.doc.undoManager.setLastSaveState()
-
-    if not autosave:
-      setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
-
-  except CatchableError as e:
-    logError(e, "Error saving map")
-    let prefix = if autosave: "Autosave failed: " else: ""
-    setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
-  finally:
-    a.logFile.flushFile()
-
-# }}}
-
-# {{{ Graphics utils
-
-# {{{ colorImage()
-func colorImage(d: var ImageData, color: Color) =
-  for i in 0..<(d.width * d.height):
-    d.data[i*4]   = (color.r * 255).byte
-    d.data[i*4+1] = (color.g * 255).byte
-    d.data[i*4+2] = (color.b * 255).byte
-
-# }}}
 # {{{ createImage()
 template createImage(d: var ImageData): Image =
   vg.createImageRGBA(
@@ -1398,6 +1365,21 @@ proc createPattern(vg: NVGContext, img: var Image, alpha: float = 1.0,
   )
 
 # }}}
+# {{{ createAlpha()
+proc createAlpha(d: var ImageData) =
+  for i in 0..<(d.width * d.height):
+    # copy the R component to the alpha channel
+    d.data[i*4+3] = d.data[i*4]
+
+# }}}
+# {{{ colorImage()
+func colorImage(d: var ImageData, color: Color) =
+  for i in 0..<(d.width * d.height):
+    d.data[i*4]   = (color.r * 255).byte
+    d.data[i*4+1] = (color.g * 255).byte
+    d.data[i*4+2] = (color.b * 255).byte
+
+# }}}
 # {{{ loadImage()
 proc loadImage(path: string; a): Option[Paint] =
   alias(vg, a.vg)
@@ -1411,7 +1393,67 @@ proc loadImage(path: string; a): Option[Paint] =
 
 # }}}
 
+# {{{ setSwapInterval()
+proc setSwapInterval(a) =
+  glfw.swapInterval(if a.prefs.vsync: 1 else: 0)
+
 # }}}
+
+# }}}
+# {{{ Key event helpers
+
+# {{{ hasKeyEvent()
+proc hasKeyEvent(): bool =
+  koi.hasEvent() and koi.currEvent().kind == ekKey
+
+# }}}
+# {{{ isKeyDown()
+func isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
+               repeat=false): bool =
+
+  # ignore numlock & capslock
+  let eventMods = ev.mods - {mkNumLock, mkCapsLock}
+  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
+  ev.action in a and ev.key in keys and eventmods == mods
+
+
+func isKeyDown(ev: Event, key: Key,
+               mods: set[ModifierKey] = {}, repeat=false): bool =
+  isKeyDown(ev, {key}, mods, repeat)
+
+# }}}
+# {{{ checkShortcut()
+proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
+                   actions: set[KeyAction]): bool =
+  if ev.kind == ekKey:
+    if ev.action in actions:
+      let currShortcut = mkKeyShortcut(ev.key, ev.mods)
+      for sc in shortcuts:
+        if currShortcut in g_appShortcuts[sc]:
+          return true
+
+# }}}
+# {{{ isShortcutDown()
+proc isShortcutDown(ev: Event, shortcuts: set[AppShortcut],
+                     repeat=false): bool =
+  let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
+  checkShortcut(ev, shortcuts, actions)
+
+proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
+  isShortcutDown(ev, {shortcut}, repeat)
+
+# }}}
+# {{{ isShortcutUp()
+proc isShortcutUp(ev: Event, shortcuts: set[AppShortcut]): bool =
+  checkShortcut(ev, shortcuts, actions={kaUp})
+
+proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
+  isShortcutUp(ev, {shortcut})
+
+# }}}
+
+# }}}
+
 # {{{ Theme handling
 
 # {{{ currThemeName()
@@ -1830,15 +1872,40 @@ proc switchTheme(themeIndex: Natural; a) =
 # }}}
 
 # }}}
+# {{{ Config handling
 
-# {{{ setSwapInterval()
-proc setSwapInterval(a) =
-  glfw.swapInterval(if a.prefs.vsync: 1 else: 0)
+# {{{ loadAppConfigOrDefault()
+proc loadAppConfigOrDefault(filename: string): HoconNode =
+  var s: FileStream
+  try:
+    s = newFileStream(filename)
+    var p = initHoconParser(s)
+    result = p.parse()
+  except CatchableError as e:
+    logging.warn(
+      fmt"Couldn't load config file '{filename}', using default config. " &
+      fmt"Error message: {e.msg}"
+    )
+    result = newHoconObject()
+  finally:
+    if s != nil: s.close()
 
 # }}}
 # {{{ saveAppConfig()
+proc saveAppConfig(cfg: HoconNode, filename: string) =
+  var s: FileStream
+  try:
+    s = newFileStream(filename, fmWrite)
+    cfg.write(s)
+  except CatchableError as e:
+    logging.error(
+      fmt"Couldn't write config file '{filename}'. Error message: {e.msg}"
+    )
+  finally:
+    if s != nil: s.close()
 
-proc saveAppConfig(cfg: HoconNode, filename: string)
+# }}}
+# {{{ saveAppConfig()
 
 proc saveAppConfig(a) =
   alias(opts, a.opts)
@@ -1890,55 +1957,99 @@ proc saveAppConfig(a) =
 
 # }}}
 
-# {{{ Key handling
+# }}}
+# {{{ Map handling
 
-# {{{ hasKeyEvent()
-proc hasKeyEvent(): bool =
-  koi.hasEvent() and koi.currEvent().kind == ekKey
+# {{{ loadMap()
+proc loadMap(filename: string; a): bool =
+  info(fmt"Loading map '{filename}'...")
+
+  try:
+    let t0 = getMonoTime()
+    a.doc.map = readMapFile(filename)
+    let dt = getMonoTime() - t0
+
+    a.doc.filename = filename
+    a.doc.lastAutosaveTime = getMonoTime()
+
+    initUndoManager(a.doc.undoManager)
+
+    resetCursorAndViewStart(a)
+
+    let message = fmt"Map '{filename}' loaded in " &
+                  fmt"{durationToFloatMillis(dt):.2f} ms"
+
+    info(message)
+    setStatusMessage(IconFloppy, message, a)
+    result = true
+
+  except CatchableError as e:
+    logError(e, "Error loading map")
+    setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
+  finally:
+    a.logFile.flushFile()
 
 # }}}
-# {{{ isKeyDown()
-func isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
-               repeat=false): bool =
+# {{{ saveMap()
+proc saveMap(filename: string, autosave: bool = false; a) =
+  let dp = a.ui.drawLevelParams
 
-  # ignore numlock & capslock
-  let eventMods = ev.mods - {mkNumLock, mkCapsLock}
-  let a = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  ev.action in a and ev.key in keys and eventmods == mods
+  let cur = a.ui.cursor
 
+  let mapDisplayOpts = MapDisplayOptions(
+    currLevel    : cur.level,
+    zoomLevel    : dp.getZoomLevel(),
+    cursorRow    : cur.row,
+    cursorCol    : cur.col,
+    viewStartRow : dp.viewStartRow,
+    viewStartCol : dp.viewStartCol
+  )
 
-func isKeyDown(ev: Event, key: Key,
-               mods: set[ModifierKey] = {}, repeat=false): bool =
-  isKeyDown(ev, {key}, mods, repeat)
+  info(fmt"Saving map to '{filename}'")
 
-# }}}
-# {{{ checkShortcut()
-proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
-                   actions: set[KeyAction]): bool =
-  if ev.kind == ekKey:
-    if ev.action in actions:
-      let currShortcut = mkKeyShortcut(ev.key, ev.mods)
-      for sc in shortcuts:
-        if currShortcut in g_appShortcuts[sc]:
-          return true
+  try:
+    writeMapFile(a.doc.map, mapDisplayOpts, filename)
+    a.doc.undoManager.setLastSaveState()
 
-# }}}
-# {{{ isShortcutDown()
-proc isShortcutDown(ev: Event, shortcuts: set[AppShortcut],
-                     repeat=false): bool =
-  let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  checkShortcut(ev, shortcuts, actions)
+    if not autosave:
+      setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
 
-proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
-  isShortcutDown(ev, {shortcut}, repeat)
+  except CatchableError as e:
+    logError(e, "Error saving map")
+    let prefix = if autosave: "Autosave failed: " else: ""
+    setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
+  finally:
+    a.logFile.flushFile()
 
 # }}}
-# {{{ isShortcutUp()
-proc isShortcutUp(ev: Event, shortcuts: set[AppShortcut]): bool =
-  checkShortcut(ev, shortcuts, actions={kaUp})
+# {{{ handleAutoSaveMap()
+proc handleAutoSaveMap(a) =
+  if a.prefs.autosave and a.doc.undoManager.isModified:
+    let dt = getMonoTime() - a.doc.lastAutosaveTime
+    if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
+      let filename = if a.doc.filename == "":
+                       a.path.autosaveDir / addFileExt("Untitled", MapFileExt)
+                     else: a.doc.filename
 
-proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
-  isShortcutUp(ev, {shortcut})
+      saveMap(filename, autosave=true, a)
+      a.doc.lastAutosaveTime = getMonoTime()
+
+# }}}
+# {{{ autoSaveMapOnCrash()
+proc autoSaveMapOnCrash(a): string =
+  var fname: string
+  if a.doc.filename == "":
+    let (path, _, _) = splitFile(a.doc.filename)
+    fname = path
+  else:
+    fname = a.path.autosaveDir
+
+  fname = fname / CrashAutosaveFilename
+
+  info(fmt"Auto-saving map to '{fname}'")
+  saveMap(fname, autosave=false, a)
+
+  result = fname
 
 # }}}
 
@@ -4561,172 +4672,6 @@ proc pickFloorColorAction(a) =
 # }}}
 
 # }}}
-# {{{ Drawing
-
-# {{{ drawEmptyMap()
-proc drawEmptyMap(a) =
-  alias(vg, a.vg)
-
-  let ls = a.theme.levelStyle
-
-  vg.setFont(size=22)
-  vg.fillColor(ls.foregroundNormalColor)
-  vg.textAlign(haCenter, vaMiddle)
-  var y = drawAreaHeight(a) * 0.5
-  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
-
-# }}}
-# {{{ drawNoteTooltip()
-proc drawNoteTooltip(x, y: float, note: Annotation, a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-
-  let dp = a.ui.drawLevelParams
-
-  if note.text != "":
-    const PadX = 10
-    const PadY = 8
-
-    var
-      noteBoxX = x
-      noteBoxY = y
-      noteBoxW = 250.0
-
-    vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
-    vg.textLineHeight(1.5)
-
-    let
-      bounds = vg.textBoxBounds(noteBoxX + PadX,
-                                noteBoxY + PadY,
-                                noteBoxW - PadX*2, note.text)
-      noteTextH = bounds.y2 - bounds.y1
-      noteTextW = bounds.x2 - bounds.x1
-      noteBoxH = noteTextH + PadY*2
-
-    noteBoxW = noteTextW + PadX*2
-
-    let
-      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
-      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
-
-    if xOver > 0:
-      noteBoxX -= xOver
-
-    if yOver > 0:
-      noteBoxY -= noteBoxH + 22
-
-    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
-
-    vg.fillColor(a.theme.levelStyle.noteTooltipBackgroundColor)
-    vg.beginPath()
-    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
-    vg.fill()
-
-    vg.fillColor(a.theme.levelStyle.noteTooltipTextColor)
-    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
-
-# }}}
-# {{{ drawModeAndOptionIndicators()
-proc drawModeAndOptionIndicators(a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-
-  let ls = a.theme.levelStyle
-
-  var x = ui.levelLeftPad
-  let y = TitleBarHeight + 32
-
-  vg.save()
-
-  vg.fillColor(ls.coordinatesHighlightColor)
-
-  if a.opts.wasdMode:
-    vg.setFont(15)
-    discard vg.text(x, y, fmt"WASD+{IconMouse}")
-    x += 80
-
-  if a.opts.drawTrail:
-    vg.setFont(19)
-    discard vg.text(x, y+1, IconShoePrints)
-
-# }}}
-# {{{ drawStatusBar()
-proc drawStatusBar(y: float, winWidth: float; a) =
-  alias(vg, a.vg)
-
-  let s = a.theme.statusBarStyle
-
-  let ty = y + StatusBarHeight * TextVertAlignFactor
-
-  # Bar background
-  vg.save()
-
-  vg.beginPath()
-  vg.rect(0, y, winWidth, StatusBarHeight)
-  vg.fillColor(s.backgroundColor)
-  vg.fill()
-
-  # Display cursor coordinates
-  vg.setFont(14)
-
-  if a.doc.map.hasLevels:
-    let
-      l = currLevel(a)
-      coordOpts = coordOptsForCurrLevel(a)
-
-      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
-      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
-
-      cursorPos = fmt"({col}, {row})"
-      tw = vg.textWidth(cursorPos)
-
-    vg.fillColor(s.coordinatesColor)
-    vg.textAlign(haLeft, vaMiddle)
-    discard vg.text(winWidth - tw - 7, ty, cursorPos)
-
-    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
-
-  # Display icon & message
-  const
-    IconPosX = 10
-    MessagePosX = 30
-    MessagePadX = 20
-    CommandLabelPadX = 13
-    CommandTextPadX = 10
-
-  var x = 10.0
-
-  vg.fillColor(s.textColor)
-  discard vg.text(IconPosX, ty, a.ui.statusIcon)
-
-  let tx = vg.text(MessagePosX, ty, a.ui.statusMessage)
-  x = tx + MessagePadX
-
-  # Display commands, if present
-  for i, cmd in a.ui.statusCommands.pairs:
-    if i mod 2 == 0:
-      let label = cmd
-      let w = vg.textWidth(label)
-
-      vg.beginPath()
-      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
-      vg.fillColor(s.commandBackgroundColor)
-      vg.fill()
-
-      vg.fillColor(s.commandTextColor)
-      discard vg.text(x + 5, ty, label)
-      x += w + CommandLabelPadX
-    else:
-      let text = cmd
-      vg.fillColor(s.textColor)
-      let tx = vg.text(x, ty, text)
-      x = tx + CommandTextPadX
-
-  vg.restore()
-
-# }}}
-
-# }}}
 # {{{ Event handling
 
 # {{{ resetManualNoteTooltip()
@@ -5675,8 +5620,59 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 # }}}
 
 # }}}
+
 # {{{ Rendering
 
+# {{{ renderNoteTooltip()
+proc renderNoteTooltip(x, y: float, note: Annotation, a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+
+  let dp = a.ui.drawLevelParams
+
+  if note.text != "":
+    const PadX = 10
+    const PadY = 8
+
+    var
+      noteBoxX = x
+      noteBoxY = y
+      noteBoxW = 250.0
+
+    vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
+    vg.textLineHeight(1.5)
+
+    let
+      bounds = vg.textBoxBounds(noteBoxX + PadX,
+                                noteBoxY + PadY,
+                                noteBoxW - PadX*2, note.text)
+      noteTextH = bounds.y2 - bounds.y1
+      noteTextW = bounds.x2 - bounds.x1
+      noteBoxH = noteTextH + PadY*2
+
+    noteBoxW = noteTextW + PadX*2
+
+    let
+      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
+      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
+
+    if xOver > 0:
+      noteBoxX -= xOver
+
+    if yOver > 0:
+      noteBoxY -= noteBoxH + 22
+
+    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
+
+    vg.fillColor(a.theme.levelStyle.noteTooltipBackgroundColor)
+    vg.beginPath()
+    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
+    vg.fill()
+
+    vg.fillColor(a.theme.levelStyle.noteTooltipTextColor)
+    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
+
+# }}}
 # {{{ renderLevel()
 proc renderLevel(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -5774,12 +5770,50 @@ proc renderLevel(a) =
       x = dp.startX + viewCol(a) * dp.gridSize + NoteTooltipXOffs
       y = dp.startY + viewRow(a) * dp.gridSize + NoteTooltipYOffs
 
-    drawNoteTooltip(x, y, note.get, a)
+    renderNoteTooltip(x, y, note.get, a)
 
 
   a.ui.lastCursor = a.ui.cursor
 
 # }}}
+# {{{ renderEmptyMap()
+proc renderEmptyMap(a) =
+  alias(vg, a.vg)
+
+  let ls = a.theme.levelStyle
+
+  vg.setFont(size=22)
+  vg.fillColor(ls.foregroundNormalColor)
+  vg.textAlign(haCenter, vaMiddle)
+  var y = drawAreaHeight(a) * 0.5
+  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
+
+# }}}
+# {{{ renderModeAndOptionIndicators()
+proc renderModeAndOptionIndicators(a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+
+  let ls = a.theme.levelStyle
+
+  var x = ui.levelLeftPad
+  let y = TitleBarHeight + 32
+
+  vg.save()
+
+  vg.fillColor(ls.coordinatesHighlightColor)
+
+  if a.opts.wasdMode:
+    vg.setFont(15)
+    discard vg.text(x, y, fmt"WASD+{IconMouse}")
+    x += 80
+
+  if a.opts.drawTrail:
+    vg.setFont(19)
+    discard vg.text(x, y+1, IconShoePrints)
+
+# }}}
+
 # {{{ renderToolsPane()
 
 # {{{ specialWallDrawProc()
@@ -6017,15 +6051,88 @@ proc renderNotesPane(x, y, w, h: float; a) =
     vg.restore()
 
 # }}}
+# {{{ renderStatusBar()
+proc renderStatusBar(y: float, winWidth: float; a) =
+  alias(vg, a.vg)
+
+  let s = a.theme.statusBarStyle
+
+  let ty = y + StatusBarHeight * TextVertAlignFactor
+
+  # Bar background
+  vg.save()
+
+  vg.beginPath()
+  vg.rect(0, y, winWidth, StatusBarHeight)
+  vg.fillColor(s.backgroundColor)
+  vg.fill()
+
+  # Display cursor coordinates
+  vg.setFont(14)
+
+  if a.doc.map.hasLevels:
+    let
+      l = currLevel(a)
+      coordOpts = coordOptsForCurrLevel(a)
+
+      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
+      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
+
+      cursorPos = fmt"({col}, {row})"
+      tw = vg.textWidth(cursorPos)
+
+    vg.fillColor(s.coordinatesColor)
+    vg.textAlign(haLeft, vaMiddle)
+    discard vg.text(winWidth - tw - 7, ty, cursorPos)
+
+    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
+
+  # Display icon & message
+  const
+    IconPosX = 10
+    MessagePosX = 30
+    MessagePadX = 20
+    CommandLabelPadX = 13
+    CommandTextPadX = 10
+
+  var x = 10.0
+
+  vg.fillColor(s.textColor)
+  discard vg.text(IconPosX, ty, a.ui.statusIcon)
+
+  let tx = vg.text(MessagePosX, ty, a.ui.statusMessage)
+  x = tx + MessagePadX
+
+  # Display commands, if present
+  for i, cmd in a.ui.statusCommands.pairs:
+    if i mod 2 == 0:
+      let label = cmd
+      let w = vg.textWidth(label)
+
+      vg.beginPath()
+      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
+      vg.fillColor(s.commandBackgroundColor)
+      vg.fill()
+
+      vg.fillColor(s.commandTextColor)
+      discard vg.text(x + 5, ty, label)
+      x += w + CommandLabelPadX
+    else:
+      let text = cmd
+      vg.fillColor(s.textColor)
+      let tx = vg.text(x, ty, text)
+      x = tx + CommandTextPadX
+
+  vg.restore()
 
 # }}}
-# {{{ Theme editor
+
+# {{{ renderThemeEditorProps()
 
 var ThemeEditorScrollViewStyle = getDefaultScrollViewStyle()
 with ThemeEditorScrollViewStyle:
-  vertScrollBarWidth = 14.0
-  with scrollBarStyle:
-    thumbPad = 4.0
+  vertScrollBarWidth      = 14.0
+  scrollBarStyle.thumbPad = 4.0
 
 var ThemeEditorSliderStyle = getDefaultSliderStyle()
 with ThemeEditorSliderStyle:
@@ -6034,10 +6141,8 @@ with ThemeEditorSliderStyle:
 
 var ThemeEditorAutoLayoutParams = DefaultAutoLayoutParams
 with ThemeEditorAutoLayoutParams:
-  leftPad = 14.0
+  leftPad  = 14.0
   rightPad = 16.0
-
-# {{{ renderThemeEditorProps()
 
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
@@ -6492,82 +6597,6 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # }}}
 
-# }}}
-
-# {{{ showSplash()
-proc showSplash(a) =
-  alias(s, g_app.splash)
-
-  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
-  let w = (maxWidth * 0.6).int32
-  let h = (w/s.logo.width * s.logo.height).int32
-
-  s.win.size = (w, h)
-  s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
-  s.win.show()
-
-  if not a.opts.showThemeEditor:
-    koi.setFocusCaptured(true)
-
-# }}}
-# {{{ closeSplash()
-proc closeSplash(a) =
-  alias(s, a.splash)
-
-  s.win.destroy()
-  s.win = nil
-
-  s.vg.deleteImage(s.logoImage)
-  s.vg.deleteImage(s.outlineImage)
-  s.vg.deleteImage(s.shadowImage)
-
-  s.logoImage = NoImage
-  s.outlineImage = NoImage
-  s.shadowImage = NoImage
-
-  nvgDeleteContext(s.vg)
-  s.vg = nil
-
-  s.show = false
-
-  if not a.opts.showThemeEditor:
-    koi.setFocusCaptured(false)
-
-# }}}
-
-# {{{ handleAutosave()
-proc handleAutosave(a) =
-  if a.prefs.autosave and a.doc.undoManager.isModified:
-    let dt = getMonoTime() - a.doc.lastAutosaveTime
-    if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
-      let filename = if a.doc.filename == "":
-                       a.path.autosaveDir / addFileExt("Untitled", MapFileExt)
-                     else: a.doc.filename
-
-      saveMap(filename, autosave=true, a)
-      a.doc.lastAutosaveTime = getMonoTime()
-
-# }}}
-# {{{ autoSaveOnCrash()
-proc autoSaveOnCrash(a): string =
-  var fname: string
-  if a.doc.filename == "":
-    let (path, _, _) = splitFile(a.doc.filename)
-    fname = path
-  else:
-    fname = a.path.autosaveDir
-
-  fname = fname / CrashAutosaveFilename
-
-  info(fmt"Auto-saving map to '{fname}'")
-  saveMap(fname, autosave=false, a)
-
-  result = fname
-
-# }}}
-
-# {{{ Main render/UI loop
-
 # {{{ renderUI()
 proc renderUI(a) =
   alias(ui, a.ui)
@@ -6595,7 +6624,7 @@ proc renderUI(a) =
     openAboutDialog(a)
 
   if not map.hasLevels:
-    drawEmptyMap(a)
+    renderEmptyMap(a)
 
   else:
     let levelNames = map.sortedLevelNames
@@ -6687,11 +6716,11 @@ proc renderUI(a) =
         a
       )
 
-    drawModeAndOptionIndicators(a)
+    renderModeAndOptionIndicators(a)
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
-  drawStatusBar(statusBarY, uiWidth.float, a)
+  renderStatusBar(statusBarY, uiWidth.float, a)
 
   # Theme editor pane
   # XXX hack, we need to render the theme editor before the dialogs, so
@@ -6794,6 +6823,9 @@ proc renderFramePre(a) =
 
 # }}}
 # {{{ renderFrame()
+
+proc closeSplash(a)
+
 proc renderFrame(a) =
 
   proc displayThemeLoadedMessage(a) =
@@ -6955,15 +6987,9 @@ proc renderFrameSplash(a) =
 # }}}
 
 # }}}
+
 # {{{ Init & cleanup
 
-# {{{ createAlpha()
-proc createAlpha(d: var ImageData) =
-  for i in 0..<(d.width * d.height):
-    # copy the R component to the alpha channel
-    d.data[i*4+3] = d.data[i*4]
-
-# }}}
 # {{{ createSplashWindow()
 proc createSplashWindow(mousePassthru: bool = false; a) =
   alias(s, a.splash)
@@ -6987,6 +7013,46 @@ proc createSplashWindow(mousePassthru: bool = false; a) =
 
   s.win = newWindow(cfg)
   s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
+
+# }}}
+# {{{ showSplash()
+proc showSplash(a) =
+  alias(s, g_app.splash)
+
+  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
+  let w = (maxWidth * 0.6).int32
+  let h = (w/s.logo.width * s.logo.height).int32
+
+  s.win.size = (w, h)
+  s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
+  s.win.show()
+
+  if not a.opts.showThemeEditor:
+    koi.setFocusCaptured(true)
+
+# }}}
+# {{{ closeSplash()
+proc closeSplash(a) =
+  alias(s, a.splash)
+
+  s.win.destroy()
+  s.win = nil
+
+  s.vg.deleteImage(s.logoImage)
+  s.vg.deleteImage(s.outlineImage)
+  s.vg.deleteImage(s.shadowImage)
+
+  s.logoImage = NoImage
+  s.outlineImage = NoImage
+  s.shadowImage = NoImage
+
+  nvgDeleteContext(s.vg)
+  s.vg = nil
+
+  s.show = false
+
+  if not a.opts.showThemeEditor:
+    koi.setFocusCaptured(false)
 
 # }}}
 
@@ -7070,6 +7136,7 @@ proc setDefaultWidgetStyles(a) =
   koi.setDefaultCheckboxStyle(s)
 
 # }}}
+#
 # {{{ initGfx()
 proc initGfx(a) =
   glfw.initialize()
@@ -7100,72 +7167,6 @@ GPU info
   a.vg = vg
 
 # }}}
-
-# {{{ rollLogFile(a)
-proc rollLogFile(a) =
-  alias(p, a.path)
-
-  let fileNames = @[
-    p.logFile & ".bak3",
-    p.logFile & ".bak2",
-    p.logFile & ".bak1",
-    p.logFile
-  ]
-
-  for i, fname in fileNames:
-    if fileExists(fname):
-      if i == 0:
-        discard tryRemoveFile(fname)
-      else:
-        try:
-          moveFile(fname, fileNames[i-1])
-        except CatchableError:
-          discard
-
-# }}}
-# {{{ initLogger(a)
-proc initLogger(a) =
-  rollLogFile(a)
-  a.logFile = open(a.path.logFile, fmWrite)
-  var fileLog = newFileLogger(a.logFile,
-                              fmtStr="[$levelname] $date $time - ",
-                              levelThreshold=lvlDebug)
-  addHandler(fileLog)
-
-# }}}
-
-# {{{ loadAppConfigOrDefault()
-proc loadAppConfigOrDefault(filename: string): HoconNode =
-  var s: FileStream
-  try:
-    s = newFileStream(filename)
-    var p = initHoconParser(s)
-    result = p.parse()
-  except CatchableError as e:
-    logging.warn(
-      fmt"Couldn't load config file '{filename}', using default config. " &
-      fmt"Error message: {e.msg}"
-    )
-    result = newHoconObject()
-  finally:
-    if s != nil: s.close()
-
-# }}}
-# {{{ saveAppConfig()
-proc saveAppConfig(cfg: HoconNode, filename: string) =
-  var s: FileStream
-  try:
-    s = newFileStream(filename, fmWrite)
-    cfg.write(s)
-  except CatchableError as e:
-    logging.error(
-      fmt"Couldn't write config file '{filename}'. Error message: {e.msg}"
-    )
-  finally:
-    if s != nil: s.close()
-
-# }}}
-#
 # {{{ initPaths()
 proc initPaths(a) =
   alias(p, a.path)
@@ -7354,7 +7355,7 @@ proc crashHandler(e: ref Exception, a) =
 
   if doAutosave:
     try:
-      crashAutosavePath = autoSaveOnCrash(a)
+      crashAutosavePath = autoSaveMapOnCrash(a)
     except Exception as e:
       logError(e, "Error autosaving map on crash")
 
@@ -7430,7 +7431,7 @@ proc main() =
       if a.splash.win != nil:
         glfw.swapBuffers(a.splash.win)
 
-      handleAutosave(a)
+      handleAutoSaveMap(a)
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
