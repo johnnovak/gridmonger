@@ -1481,17 +1481,15 @@ func themePath(theme: ThemeName; a): string =
 # }}}
 # {{{ makeUniqueThemeName()
 proc makeUniqueThemeName(themeName: string; a): string =
-  var basename: string
-  var i: Natural
+  var basename = themeName
+  var i = 1
 
   var s = themeName.rsplit(' ', maxsplit=1)
   if s.len == 2:
     try:
-      basename = s[0]
       i = parseInt(s[1])
-    except ValueError:
-      basename = themeName
-      i = 1
+      basename = s[0]
+    except ValueError: discard
 
   while true:
     inc(i)
@@ -4430,7 +4428,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
 proc openRenameThemeDialog(a) =
   alias(dlg, a.dialog.renameThemeDialog)
-  dlg.newThemeName = a.currThemeName.name
+  dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
   dlg.isOpen = true
 
 
