@@ -43,6 +43,7 @@ import unicode
 import utils
 
 # }}}
+
 # {{{ Extra resources
 
 when defined(windows):
@@ -319,7 +320,7 @@ type
     aboutButtonStyle:       ButtonStyle
 
     iconRadioButtonsStyle:  RadioButtonsStyle
-    warningLabelStyle:      LabelStyle
+    errorLabelStyle:        LabelStyle
 
     levelDropDownStyle:     DropDownStyle
     noteTextAreaStyle:      TextAreaStyle
@@ -1462,11 +1463,10 @@ func currThemeName(a): var ThemeName =
 
 # }}}
 # {{{ findThemeIndex()
-func findThemeIndex(name: string; a): int =
+func findThemeIndex(name: string; a): Option[Natural] =
   for i in 0..a.theme.themeNames.high:
     if a.theme.themeNames[i].name == name:
-      return i
-  result = -1
+      return i.Natural.some
 
 # }}}
 # {{{ themePath()
@@ -1474,6 +1474,26 @@ func themePath(theme: ThemeName; a): string =
   let themeDir = if theme.userTheme: a.path.userThemesDir
                  else: a.path.themesDir
   themeDir / addFileExt(theme.name, ThemeExt)
+
+# }}}
+# {{{ makeUniqueThemeName()
+proc makeUniqueThemeName(themeName: string; a): string =
+  var basename: string
+  var i: Natural
+
+  var s = themeName.rsplit(' ', maxsplit=1)
+  if s.len == 2:
+    try:
+      basename = s[0]
+      i = parseInt(s[1])
+    except ValueError:
+      basename = themeName
+      i = 1
+
+  while true:
+    inc(i)
+    result = fmt"{basename} {i}"
+    if findThemeIndex(result, a).isNone: return
 
 # }}}
 
@@ -1760,9 +1780,9 @@ proc updateWidgetStyles(a) =
     align         = haLeft
 
   # Warning label
-  a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
+  a.theme.errorLabelStyle = koi.getDefaultLabelStyle()
 
-  with a.theme.warningLabelStyle:
+  with a.theme.errorLabelStyle:
     color     = d.getColorOrDefault("warning")
     multiLine = true
 
@@ -2086,11 +2106,6 @@ const
 # }}}
 # {{{ Helpers
 
-# {{{ calcDialogX()
-proc calcDialogX(dlgWidth: float; a): float =
-  drawAreaWidth(a)*0.5 - dlgWidth*0.5
-
-# }}}
 # {{{ coordinateFields()
 template coordinateFields() =
   const LetterLabelWidth = 100
@@ -2289,8 +2304,13 @@ template validateLevelFields(dlg, map, validationError: untyped) =
 
 # }}}
 
+# {{{ calcDialogX()
+proc calcDialogX(dlgWidth: float; a): float =
+  drawAreaWidth(a)*0.5 - dlgWidth*0.5
+
+# }}}
 # {{{ dialogButtonsStartPos()
-proc dialogButtonsStartPos(dlgWidth, dlgHeight: float,
+func dialogButtonsStartPos(dlgWidth, dlgHeight: float,
                            numButtons: Natural): (float, float) =
   const BorderPad = 15.0
 
@@ -2303,8 +2323,41 @@ proc dialogButtonsStartPos(dlgWidth, dlgHeight: float,
 
 # }}}
 # {{{ mkValidationError()
-proc mkValidationError(msg: string): string =
+func mkValidationError(msg: string): string =
   fmt"{IconWarning}   {msg}"
+
+# }}}
+# {{{ mkValidationWarning()
+func mkValidationWarning(msg: string): string =
+  fmt"{IconWarning}   {msg}"
+
+# }}}
+# {{{ moveGridPositionWrapping()
+func moveGridPositionWrapping(currIdx: int, dc: int = 0, dr: int = 0,
+                              numItems, itemsPerRow: Natural): Natural =
+  assert numItems mod itemsPerRow == 0
+
+  let numRows = ceil(numItems.float / itemsPerRow).Natural
+  var row = currIdx div itemsPerRow
+  var col = currIdx mod itemsPerRow
+  col = floorMod(col+dc, itemsPerRow).Natural
+  row = floorMod(row+dr, numRows).Natural
+  result = row * itemsPerRow + col
+
+# }}}
+# {{{ handleGridRadioButton()
+func handleGridRadioButton(ke: Event, currButtonIdx: Natural,
+                           numButtons, buttonsPerRow: Natural): Natural =
+
+  proc move(dc: int = 0, dr: int = 0): Natural =
+    moveGridPositionWrapping(currButtonIdx, dc, dr, numButtons, buttonsPerRow)
+
+  result =
+    if   ke.isKeyDown(MoveKeysCursor.left,  repeat=true): move(dc = -1)
+    elif ke.isKeyDown(MoveKeysCursor.right, repeat=true): move(dc =  1)
+    elif ke.isKeyDown(MoveKeysCursor.up,    repeat=true): move(dr = -1)
+    elif ke.isKeyDown(MoveKeysCursor.down,  repeat=true): move(dr =  1)
+    else: currButtonIdx
 
 # }}}
 # {{{ handleTabNavigation()
@@ -2329,34 +2382,7 @@ proc handleTabNavigation(ke: Event,
       result = i
 
 # }}}
-# {{{ moveGridPositionWrapping()
-proc moveGridPositionWrapping(currIdx: int, dc: int = 0, dr: int = 0,
-                              numItems, itemsPerRow: Natural): Natural =
-  assert numItems mod itemsPerRow == 0
 
-  let numRows = ceil(numItems.float / itemsPerRow).Natural
-  var row = currIdx div itemsPerRow
-  var col = currIdx mod itemsPerRow
-  col = floorMod(col+dc, itemsPerRow).Natural
-  row = floorMod(row+dr, numRows).Natural
-  result = row * itemsPerRow + col
-
-# }}}
-# {{{ handleGridRadioButton()
-proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
-                           numButtons, buttonsPerRow: Natural): Natural =
-
-  proc move(dc: int = 0, dr: int = 0): Natural =
-    moveGridPositionWrapping(currButtonIdx, dc, dr, numButtons, buttonsPerRow)
-
-  result =
-    if   ke.isKeyDown(MoveKeysCursor.left,  repeat=true): move(dc = -1)
-    elif ke.isKeyDown(MoveKeysCursor.right, repeat=true): move(dc =  1)
-    elif ke.isKeyDown(MoveKeysCursor.up,    repeat=true): move(dr = -1)
-    elif ke.isKeyDown(MoveKeysCursor.down,  repeat=true): move(dr =  1)
-    else: currButtonIdx
-
-# }}}
 # {{{ colorRadioButtonDrawProc()
 proc colorRadioButtonDrawProc(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
@@ -2838,7 +2864,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var NewMapDialogParams; a) =
@@ -2984,7 +3010,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var EditMapPropsDialogParams; a) =
@@ -3178,7 +3204,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var NewLevelDialogParams; a) =
@@ -3361,7 +3387,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var EditLevelPropsParams; a) =
@@ -3782,7 +3808,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   y += 45
 
   for err in validationErrors:
-    koi.label(x, y, DlgWidth, h, err, style=a.theme.warningLabelStyle)
+    koi.label(x, y, DlgWidth, h, err, style=a.theme.errorLabelStyle)
     y += h
 
 
@@ -3936,7 +3962,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   if validationError != "":
     koi.label(x, y, DlgWidth, h, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
     y += h
 
 
@@ -4063,7 +4089,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
   if validationError != "":
     koi.label(x, y, DlgWidth, h, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
     y += h
 
 
@@ -4272,14 +4298,14 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
 
 proc openCopyThemeDialog(a) =
   alias(dlg, a.dialog.copyThemeDialog)
-  dlg.newThemeName = a.currThemeName.name
+  dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
   dlg.isOpen = true
 
 
 proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   const
     DlgWidth = 390.0
-    DlgHeight = 160.0
+    DlgHeight = 170.0
     LabelWidth = 135.0
 
   let h = DlgItemHeight
@@ -4302,6 +4328,31 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     style = a.theme.textFieldStyle
   )
 
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if not isValidFilename(dlg.newThemeName):
+    validationError = "Theme name is invalid"
+
+  var validationWarning = ""
+  let idx = findThemeIndex(dlg.newThemeName, a)
+  if idx.isSome:
+    let theme = a.theme.themeNames[idx.get]
+    if theme.userTheme:
+      validationWarning = "User theme already exists with this name"
+    else:
+      validationWarning = "Built-in theme will be shadowed by this name"
+
+  if validationError != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationError(validationError), style=a.theme.errorLabelStyle)
+
+  elif validationWarning != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationWarning(validationWarning))
+
+
   proc copyAction(dlg: var CopyThemeDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
@@ -4312,9 +4363,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     proc copyTheme(a) =
       if copyTheme(a.currThemeName, newThemePath, a):
         buildThemeList(a)
-        let newThemeIndex = findThemeIndex(dlg.newThemeName, a)
-        if newThemeIndex > -1:
-          a.theme.nextThemeIndex = newThemeIndex.Natural.some
+        a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
 
     if fileExists(newThemePath):
       openOverwriteThemeDialog(dlg.newThemeName, action=copyTheme, a)
@@ -4330,15 +4379,13 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
-                style = a.theme.buttonStyle):
+                disabled = validationError != "", style = a.theme.buttonStyle):
     copyAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
     cancelAction(dlg, a)
-
-  dlg.activateFirstTextField = false
 
 
   if hasKeyEvent():
@@ -4652,6 +4699,7 @@ proc startDrawSpecialWallAction(a) =
   setStatusMessage("", "Draw wall special", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
+
 # {{{ prevFloorColorAction()
 proc prevFloorColorAction(a) =
   if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
@@ -7242,8 +7290,7 @@ proc initApp(a) =
 
   var themeIndex = findThemeIndex(uiCfg.getStringOrDefault("theme-name",
                                                            "Default"), a)
-  if themeIndex == -1: themeIndex = 0
-  switchTheme(themeIndex, a)
+  switchTheme(if themeIndex.isSome: themeIndex.get else: 0, a)
 
   with a.opts:
     showNotesPane = uiCfg.getBoolOrDefault("option.show-notes-pane", true)
