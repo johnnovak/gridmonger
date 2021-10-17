@@ -43,6 +43,7 @@ import unicode
 import utils
 
 # }}}
+
 # {{{ Extra resources
 
 when defined(windows):
@@ -320,6 +321,7 @@ type
 
     iconRadioButtonsStyle:  RadioButtonsStyle
     warningLabelStyle:      LabelStyle
+    errorLabelStyle:        LabelStyle
 
     levelDropDownStyle:     DropDownStyle
     noteTextAreaStyle:      TextAreaStyle
@@ -358,6 +360,7 @@ type
 
     saveDiscardThemeDialog: SaveDiscardThemeDialogParams
     copyThemeDialog:        CopyThemeDialogParams
+    renameThemeDialog:      RenameThemeDialogParams
     overwriteThemeDialog:   OverwriteThemeDialogParams
     deleteThemeDialog:      DeleteThemeDialogParams
 
@@ -520,20 +523,21 @@ type
   EditRegionPropsParams = object
     isOpen:       bool
     activateFirstTextField: bool
-
     name:         string
     notes:        string
-
 
   SaveDiscardThemeDialogParams = object
     isOpen:       bool
     action:       proc (a: var AppContext)
 
-
   CopyThemeDialogParams = object
     isOpen:       bool
     activateFirstTextField: bool
+    newThemeName: string
 
+  RenameThemeDialogParams = object
+    isOpen:       bool
+    activateFirstTextField: bool
     newThemeName: string
 
 
@@ -1462,11 +1466,10 @@ func currThemeName(a): var ThemeName =
 
 # }}}
 # {{{ findThemeIndex()
-func findThemeIndex(name: string; a): int =
+func findThemeIndex(name: string; a): Option[Natural] =
   for i in 0..a.theme.themeNames.high:
     if a.theme.themeNames[i].name == name:
-      return i
-  result = -1
+      return i.Natural.some
 
 # }}}
 # {{{ themePath()
@@ -1474,6 +1477,24 @@ func themePath(theme: ThemeName; a): string =
   let themeDir = if theme.userTheme: a.path.userThemesDir
                  else: a.path.themesDir
   themeDir / addFileExt(theme.name, ThemeExt)
+
+# }}}
+# {{{ makeUniqueThemeName()
+proc makeUniqueThemeName(themeName: string; a): string =
+  var basename = themeName
+  var i = 1
+
+  var s = themeName.rsplit(' ', maxsplit=1)
+  if s.len == 2:
+    try:
+      i = parseInt(s[1])
+      basename = s[0]
+    except ValueError: discard
+
+  while true:
+    inc(i)
+    result = fmt"{basename} {i}"
+    if findThemeIndex(result, a).isNone: return
 
 # }}}
 
@@ -1565,6 +1586,16 @@ proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
   except CatchableError as e:
     logError(e, "Error copying theme")
     setStatusMessage(IconWarning, fmt"Error copying theme: {e.msg}", a)
+
+# }}}
+# {{{ renameTheme()
+proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
+  try:
+    moveFile(themePath(a.currThemeName, a), newThemePath)
+    result = true
+  except CatchableError as e:
+    logError(e, "Error renaming theme")
+    setStatusMessage(IconWarning, fmt"Error renaming theme: {e.msg}", a)
 
 # }}}
 
@@ -1759,11 +1790,18 @@ proc updateWidgetStyles(a) =
     colorDisabled = color.lerp(d.getColorOrDefault("background"), 0.7)
     align         = haLeft
 
-  # Warning label
+  # Error label
   a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
 
   with a.theme.warningLabelStyle:
     color     = d.getColorOrDefault("warning")
+    multiLine = true
+
+  # Error label
+  a.theme.errorLabelStyle = koi.getDefaultLabelStyle()
+
+  with a.theme.errorLabelStyle:
+    color     = d.getColorOrDefault("error")
     multiLine = true
 
   # Level dropDown
@@ -2086,11 +2124,6 @@ const
 # }}}
 # {{{ Helpers
 
-# {{{ calcDialogX()
-proc calcDialogX(dlgWidth: float; a): float =
-  drawAreaWidth(a)*0.5 - dlgWidth*0.5
-
-# }}}
 # {{{ coordinateFields()
 template coordinateFields() =
   const LetterLabelWidth = 100
@@ -2289,8 +2322,13 @@ template validateLevelFields(dlg, map, validationError: untyped) =
 
 # }}}
 
+# {{{ calcDialogX()
+proc calcDialogX(dlgWidth: float; a): float =
+  drawAreaWidth(a)*0.5 - dlgWidth*0.5
+
+# }}}
 # {{{ dialogButtonsStartPos()
-proc dialogButtonsStartPos(dlgWidth, dlgHeight: float,
+func dialogButtonsStartPos(dlgWidth, dlgHeight: float,
                            numButtons: Natural): (float, float) =
   const BorderPad = 15.0
 
@@ -2303,8 +2341,41 @@ proc dialogButtonsStartPos(dlgWidth, dlgHeight: float,
 
 # }}}
 # {{{ mkValidationError()
-proc mkValidationError(msg: string): string =
+func mkValidationError(msg: string): string =
   fmt"{IconWarning}   {msg}"
+
+# }}}
+# {{{ mkValidationWarning()
+func mkValidationWarning(msg: string): string =
+  fmt"{IconWarning}   {msg}"
+
+# }}}
+# {{{ moveGridPositionWrapping()
+func moveGridPositionWrapping(currIdx: int, dc: int = 0, dr: int = 0,
+                              numItems, itemsPerRow: Natural): Natural =
+  assert numItems mod itemsPerRow == 0
+
+  let numRows = ceil(numItems.float / itemsPerRow).Natural
+  var row = currIdx div itemsPerRow
+  var col = currIdx mod itemsPerRow
+  col = floorMod(col+dc, itemsPerRow).Natural
+  row = floorMod(row+dr, numRows).Natural
+  result = row * itemsPerRow + col
+
+# }}}
+# {{{ handleGridRadioButton()
+func handleGridRadioButton(ke: Event, currButtonIdx: Natural,
+                           numButtons, buttonsPerRow: Natural): Natural =
+
+  proc move(dc: int = 0, dr: int = 0): Natural =
+    moveGridPositionWrapping(currButtonIdx, dc, dr, numButtons, buttonsPerRow)
+
+  result =
+    if   ke.isKeyDown(MoveKeysCursor.left,  repeat=true): move(dc = -1)
+    elif ke.isKeyDown(MoveKeysCursor.right, repeat=true): move(dc =  1)
+    elif ke.isKeyDown(MoveKeysCursor.up,    repeat=true): move(dr = -1)
+    elif ke.isKeyDown(MoveKeysCursor.down,  repeat=true): move(dr =  1)
+    else: currButtonIdx
 
 # }}}
 # {{{ handleTabNavigation()
@@ -2329,34 +2400,7 @@ proc handleTabNavigation(ke: Event,
       result = i
 
 # }}}
-# {{{ moveGridPositionWrapping()
-proc moveGridPositionWrapping(currIdx: int, dc: int = 0, dr: int = 0,
-                              numItems, itemsPerRow: Natural): Natural =
-  assert numItems mod itemsPerRow == 0
 
-  let numRows = ceil(numItems.float / itemsPerRow).Natural
-  var row = currIdx div itemsPerRow
-  var col = currIdx mod itemsPerRow
-  col = floorMod(col+dc, itemsPerRow).Natural
-  row = floorMod(row+dr, numRows).Natural
-  result = row * itemsPerRow + col
-
-# }}}
-# {{{ handleGridRadioButton()
-proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
-                           numButtons, buttonsPerRow: Natural): Natural =
-
-  proc move(dc: int = 0, dr: int = 0): Natural =
-    moveGridPositionWrapping(currButtonIdx, dc, dr, numButtons, buttonsPerRow)
-
-  result =
-    if   ke.isKeyDown(MoveKeysCursor.left,  repeat=true): move(dc = -1)
-    elif ke.isKeyDown(MoveKeysCursor.right, repeat=true): move(dc =  1)
-    elif ke.isKeyDown(MoveKeysCursor.up,    repeat=true): move(dr = -1)
-    elif ke.isKeyDown(MoveKeysCursor.down,  repeat=true): move(dr =  1)
-    else: currButtonIdx
-
-# }}}
 # {{{ colorRadioButtonDrawProc()
 proc colorRadioButtonDrawProc(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
@@ -2838,7 +2882,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var NewMapDialogParams; a) =
@@ -2984,7 +3028,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var EditMapPropsDialogParams; a) =
@@ -3178,7 +3222,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var NewLevelDialogParams; a) =
@@ -3361,7 +3405,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
 
   if validationError != "":
     koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
 
 
   proc okAction(dlg: var EditLevelPropsParams; a) =
@@ -3782,7 +3826,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   y += 45
 
   for err in validationErrors:
-    koi.label(x, y, DlgWidth, h, err, style=a.theme.warningLabelStyle)
+    koi.label(x, y, DlgWidth, h, err, style=a.theme.errorLabelStyle)
     y += h
 
 
@@ -3936,7 +3980,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   if validationError != "":
     koi.label(x, y, DlgWidth, h, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
     y += h
 
 
@@ -4063,7 +4107,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
   if validationError != "":
     koi.label(x, y, DlgWidth, h, validationError,
-              style=a.theme.warningLabelStyle)
+              style=a.theme.errorLabelStyle)
     y += h
 
 
@@ -4272,14 +4316,14 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
 
 proc openCopyThemeDialog(a) =
   alias(dlg, a.dialog.copyThemeDialog)
-  dlg.newThemeName = a.currThemeName.name
+  dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
   dlg.isOpen = true
 
 
 proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   const
     DlgWidth = 390.0
-    DlgHeight = 160.0
+    DlgHeight = 170.0
     LabelWidth = 135.0
 
   let h = DlgItemHeight
@@ -4298,9 +4342,36 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     x + LabelWidth, y, w=196, h,
     dlg.newThemeName,
     activate = dlg.activateFirstTextField,
-    # TODO disallow invalid filename chars
+    # TODO disallow invalid filename chars?
     style = a.theme.textFieldStyle
   )
+
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if not isValidFilename(dlg.newThemeName):
+    validationError = "Theme name is invalid"
+
+  var validationWarning = ""
+  let idx = findThemeIndex(dlg.newThemeName, a)
+  if idx.isSome:
+    let theme = a.theme.themeNames[idx.get]
+    if theme.userTheme:
+      validationWarning = "User theme already exists with this name"
+    else:
+      validationWarning = "Built-in theme will be shadowed by this name"
+
+  if validationError != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationError(validationError),
+              style=a.theme.errorLabelStyle)
+
+  elif validationWarning != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationWarning(validationWarning),
+              style=a.theme.warningLabelStyle)
+
 
   proc copyAction(dlg: var CopyThemeDialogParams; a) =
     koi.closeDialog()
@@ -4312,9 +4383,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     proc copyTheme(a) =
       if copyTheme(a.currThemeName, newThemePath, a):
         buildThemeList(a)
-        let newThemeIndex = findThemeIndex(dlg.newThemeName, a)
-        if newThemeIndex > -1:
-          a.theme.nextThemeIndex = newThemeIndex.Natural.some
+        a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
 
     if fileExists(newThemePath):
       openOverwriteThemeDialog(dlg.newThemeName, action=copyTheme, a)
@@ -4330,15 +4399,13 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
-                style = a.theme.buttonStyle):
+                disabled = validationError != "", style = a.theme.buttonStyle):
     copyAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
     cancelAction(dlg, a)
-
-  dlg.activateFirstTextField = false
 
 
   if hasKeyEvent():
@@ -4350,6 +4417,118 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
     elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
     elif ke.isShortcutDown(scAccept): copyAction(dlg, a)
+    else: eventHandled = false
+
+    if eventHandled: setEventHandled()
+
+  koi.endDialog()
+
+# }}}
+# {{{ Rename theme dialog
+
+proc openRenameThemeDialog(a) =
+  alias(dlg, a.dialog.renameThemeDialog)
+  dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
+  dlg.isOpen = true
+
+
+proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
+  const
+    DlgWidth = 390.0
+    DlgHeight = 170.0
+    LabelWidth = 135.0
+
+  let h = DlgItemHeight
+
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconFile}  Rename Theme",
+                  x = calcDialogX(DlgWidth, a).some,
+                  style = a.theme.dialogStyle)
+
+  clearStatusMessage(a)
+
+  var x = DlgLeftPad
+  var y = DlgTopPad
+
+  koi.label(x, y, LabelWidth, h, "New Theme Name", style=a.theme.labelStyle)
+  koi.textField(
+    x + LabelWidth, y, w=196, h,
+    dlg.newThemeName,
+    activate = dlg.activateFirstTextField,
+    # TODO disallow invalid filename chars?
+    style = a.theme.textFieldStyle
+  )
+
+  dlg.activateFirstTextField = false
+
+  # Validation
+  var validationError = ""
+  if not isValidFilename(dlg.newThemeName):
+    validationError = "Theme name is invalid"
+
+  var validationWarning = ""
+  let idx = findThemeIndex(dlg.newThemeName, a)
+  if idx.isSome:
+    let theme = a.theme.themeNames[idx.get]
+    if theme.userTheme:
+      validationWarning = "User theme already exists with this name"
+    else:
+      validationWarning = "Built-in theme will be shadowed by this name"
+
+  if validationError != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationError(validationError),
+              style=a.theme.errorLabelStyle)
+
+  elif validationWarning != "":
+    koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight,
+              mkValidationWarning(validationWarning),
+              style=a.theme.warningLabelStyle)
+
+
+  proc renameAction(dlg: var RenameThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+    let dlg = dlg
+    let newThemePath = a.path.userThemesDir / addFileExt(dlg.newThemeName,
+                                                         ThemeExt)
+    proc renameTheme(a) =
+      if renameTheme(a.currThemeName, newThemePath, a):
+        buildThemeList(a)
+        a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
+
+    if fileExists(newThemePath):
+      openOverwriteThemeDialog(dlg.newThemeName, action=renameTheme, a)
+    else:
+      renameTheme(a)
+
+
+  proc cancelAction(dlg: var RenameThemeDialogParams; a) =
+    koi.closeDialog()
+    dlg.isOpen = false
+
+
+  (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
+
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
+                disabled = validationError != "", style = a.theme.buttonStyle):
+    renameAction(dlg, a)
+
+  x += DlgButtonWidth + DlgButtonPad
+  if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
+                style = a.theme.buttonStyle):
+    cancelAction(dlg, a)
+
+
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+    var eventHandled = true
+
+    if   ke.isShortcutDown(scNextTextField):
+      dlg.activateFirstTextField = true
+
+    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): renameAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4652,6 +4831,7 @@ proc startDrawSpecialWallAction(a) =
   setStatusMessage("", "Draw wall special", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
+
 # {{{ prevFloorColorAction()
 proc prevFloorColorAction(a) =
   if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
@@ -6237,6 +6417,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Background",         p & "background")
         colorProp("Label",              p & "label")
         colorProp("Warning",            p & "warning")
+        colorProp("Error",              p & "error")
 
       group:
         colorProp("Title Background",   p & "title.background")
@@ -6521,10 +6702,11 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   titleStyle.align = haCenter
 
   cy += 6.0
-  koi.label(cx, cy, w, wh, fmt"T  H  E  M  E       E  D  I  T  O  R",
+  koi.label(cx, cy, w, wh, "T  H  E  M  E       E  D  I  T  O  R",
             style=titleStyle)
 
   # Theme name & action buttons
+
   vg.beginPath()
   vg.rect(x+1, y+TitleHeight, w, h=96)
   vg.fillColor(gray(0.36))
@@ -6532,14 +6714,27 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   cx = x+15
   cy += 45.0
-  koi.label(cx, cy, w, wh, fmt"Theme")
+  koi.label(cx, cy, w, wh, "Theme")
+
+  let buttonsDisabled = koi.isDialogOpen()
+
+  var themeNames = newSeq[string]()
+  for t in a.theme.themeNames:
+    themeNames.add(t.name)
+
+  var themeIndex = a.theme.currThemeIndex
 
   cx += 60.0
-  koi.textField(
+  koi.dropDown(
     cx, cy, w=196.0, wh,
-    a.currThemeName.name,
-    disabled=true
+    themeNames,
+    themeIndex,
+    tooltip = "",
+    disabled = buttonsDisabled
   )
+
+  if themeIndex != a.theme.currThemeIndex:
+    a.theme.nextThemeIndex = themeIndex.some
 
   # User theme indicator
   cx += 201
@@ -6563,8 +6758,6 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   cx = x+15
   cy += 40.0
 
-  let buttonsDisabled = koi.isDialogOpen()
-
   if koi.button(cx, cy, w=bw, h=wh, "Save", disabled=buttonsDisabled):
     saveTheme(a)
 
@@ -6575,7 +6768,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Rename",
                 disabled=not a.currThemeName.userTheme or buttonsDisabled):
-    discard # TODO
+    openRenameThemeDialog(a)
 
   cx += bw + bp
   if koi.button(cx, cy, w=bw, h=wh, "Delete",
@@ -6736,7 +6929,7 @@ proc renderUI(a) =
     renderThemeEditorPane(x, y, w, h, a)
 
   # Dialogs
-  
+
   if dlg.aboutDialog.isOpen:
     aboutDialog(dlg.aboutDialog, a)
 
@@ -6778,6 +6971,9 @@ proc renderUI(a) =
 
   elif dlg.copyThemeDialog.isOpen:
     copyThemeDialog(dlg.copyThemeDialog, a)
+
+  elif dlg.renameThemeDialog.isOpen:
+    renameThemeDialog(dlg.renameThemeDialog, a)
 
   elif dlg.overwriteThemeDialog.isOpen:
     overwriteThemeDialog(dlg.overwriteThemeDialog, a)
@@ -7242,8 +7438,7 @@ proc initApp(a) =
 
   var themeIndex = findThemeIndex(uiCfg.getStringOrDefault("theme-name",
                                                            "Default"), a)
-  if themeIndex == -1: themeIndex = 0
-  switchTheme(themeIndex, a)
+  switchTheme(if themeIndex.isSome: themeIndex.get else: 0, a)
 
   with a.opts:
     showNotesPane = uiCfg.getBoolOrDefault("option.show-notes-pane", true)
@@ -7363,7 +7558,7 @@ proc crashHandler(e: ref Exception, a) =
 
   if doAutoSave:
     if crashAutosavePath == "":
-      msg &= fmt"Autosaving the map has been unsuccesful.\n\n"
+      msg &= "Autosaving the map has been unsuccesful.\n\n"
     else:
       msg &= "The map has been successfully autosaved as '" &
              crashAutosavePath
