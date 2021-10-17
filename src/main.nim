@@ -7644,4 +7644,20 @@ proc main() =
 
 main()
 
+#[
+var um = newUndoManager[Map, UndoStateData]()
+
+var m = newMap("test map")
+var l = newLevel("loc", "level", elevation=0, 10, 10)
+m.addLevel(l)
+
+setMapProperties(m, Location(level: 0, row: 0, col: 0), "", m.coordOpts,
+                 "", um)
+
+discard um.undo(m)
+discard um.redo(m)
+discard um.undo(m)
+discard um.redo(m)
+]#
+
 # vim: et:ts=2:sw=2:fdm=marker

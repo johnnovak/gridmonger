@@ -17,8 +17,7 @@ ENHANCEMENTS
 TODO for v0.9
 
   - region name reassignment on:
-    - resize
-    - change map coord origin (update levels with regions without overrides)
+    - crop level
     - change region size
 
   - store AppState in map

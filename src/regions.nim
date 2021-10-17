@@ -61,21 +61,17 @@ proc findFirstRegionByName*(r; name: string): Option[(RegionCoords, Region)] =
 
 # }}}
 # {{{ isUntitledRegion*()
-const UntitledRegionName = "Untitled Region"
+const UntitledRegionPrefix = "Untitled Region "
 
 proc isUntitledRegion*(r: Region): bool =
-  r.name.startsWith(UntitledRegionName)
+  r.name.startsWith(UntitledRegionPrefix)
 
 # }}}
 # {{{ nextUntitledRegionName*()
 proc nextUntitledRegionName*(r; index: var int): string =
-
-  proc mkUntitledRegionName(index: var int): string =
-    result = UntitledRegionName & " " & $index
-    inc(index)
-
   while true:
-    let name = mkUntitledRegionName(index)
+    let name = UntitledRegionPrefix & $index
+    inc(index)
     var region = r.findFirstRegionByName(name)
     if region.isNone: return name
 

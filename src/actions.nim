@@ -823,16 +823,16 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
   let action = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.level]
 
-    let adjustLinkedStairs = l.elevation != elevation
-
-    let reallocateRegions = l.regionOpts != regionOpts or
-                            l.overrideCoordOpts != overrideCoordOpts or
-                            overrideCoordOpts and l.coordOpts != coordOpts
-
     let
       oldCoordOpts = m.coordOptsForLevel(loc.level)
       oldRegionOpts = l.regionOpts
       oldRegions = l.regions
+
+    let adjustLinkedStairs = l.elevation != elevation
+
+    let reallocateRegions = regionOpts != oldRegionOpts or
+                            overrideCoordOpts != l.overrideCoordOpts or
+                            (overrideCoordOpts and coordOpts != l.coordOpts)
 
     l.locationName = locationName
     l.levelName = levelName
@@ -850,6 +850,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 
     m.refreshSortedLevelNames()
     result = usd
+
 
   let l = map.levels[loc.level]
   let
@@ -892,26 +893,40 @@ proc setMapProperties*(map; loc: Location, name: string,
   let usd = UndoStateData(actionName: "Edit map properties", location: loc)
 
   let action = proc (m: var Map): UndoStateData =
+    let oldCoordOpts = m.coordOpts
+
     m.name = name
     m.coordOpts = coordOpts
     m.notes = notes
 
-    # TODO reallocate regions in all levels that do not override the
-    # map coordinate opts
-
+    if coordOpts != oldCoordOpts:
+      for levelIdx, l in m.levels.pairs:
+        if l.regionOpts.enabled and not l.overrideCoordOpts:
+          m.reallocateRegions(levelIdx, oldCoordOpts,
+                              oldRegionOpts = l.regionOpts,
+                              oldRegions = l.regions)
     result = usd
+
 
   let
     oldName = map.name
     oldCoordOpts = map.coordOpts
     oldNotes = map.notes
 
+  var oldRegions = initTable[int, Regions]()
+
+  for levelIdx, l in map.levels.pairs:
+    if not l.overrideCoordOpts:
+      oldRegions[levelIdx] = l.regions
+
   var undoAction = proc (m: var Map): UndoStateData =
     m.name = oldName
     m.coordOpts = oldCoordOpts
     m.notes = oldNotes
 
-    # TODO restore the regions in changed levels
+    for levelIdx, l in m.levels.mpairs:
+      if not l.overrideCoordOpts:
+        l.regions = oldRegions[levelIdx]
 
     result = usd
 

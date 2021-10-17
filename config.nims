@@ -4,8 +4,8 @@ import strutils
 
 
 proc setCommonCompileParams() =
-  --gc:arc
-  --deepcopy:on
+#  --gc:orc
+#  --deepcopy:on
   --D:nvgGL3
   --D:glfwStaticLib
   hint "Performance", false 

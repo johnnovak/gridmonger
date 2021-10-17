@@ -522,7 +522,7 @@ proc newLevelFrom*(src: Level, srcRect: Rect[Natural],
                     cols = srcRect.cols + border*2,
                     src.overrideCoordOpts, src.coordOpts, src.regionOpts,
                     src.notes,
-                    initRegions = false)
+                    initRegions=false)
 
   result.copyCellsAndAnnotationsFrom(destRow, destCol, src, copyRect)
 
