@@ -79,13 +79,6 @@ template singleCellAction(map; loc: Location; um;
 
 # }}}
 
-# {{{ setWall*()
-proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
-
-  singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
-    m.setWall(loc, dir, w)
-
-# }}}
 # {{{ drawClearFloor*()
 proc drawClearFloor*(map; loc: Location, floorColor: byte; um) =
 
@@ -116,16 +109,31 @@ proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
       m.setFloorColor(loc, floorColor)
 
 # }}}
-# {{{ eraseCellWalls*()
-proc eraseCellWalls*(map; loc: Location; um) =
-  singleCellAction(map, loc, um, "Erase cell walls", m):
-    m.eraseCellWalls(loc)
+# {{{ toggleFloorOrientation*()
+proc toggleFloorOrientation*(map; loc: Location; um) =
+
+  singleCellAction(map, loc, um, "Toggle floor orientation", m):
+    let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
+    m.setFloorOrientation(loc, newOt)
 
 # }}}
 # {{{ eraseCell*()
 proc eraseCell*(map; loc: Location; um) =
   singleCellAction(map, loc, um, "Erase cell", m):
     m.eraseCell(loc)
+
+# }}}
+# {{{ setWall*()
+proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
+
+  singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
+    m.setWall(loc, dir, w)
+
+# }}}
+# {{{ eraseCellWalls*()
+proc eraseCellWalls*(map; loc: Location; um) =
+  singleCellAction(map, loc, um, "Erase cell walls", m):
+    m.eraseCellWalls(loc)
 
 # }}}
 # {{{ excavateTunnel*()
@@ -165,14 +173,6 @@ proc clearTrail*(map; loc: Location, bbox: Rect[Natural]; um;
         loc.row = r
         loc.col = c
         m.setTrail(loc, false)
-
-# }}}
-# {{{ toggleFloorOrientation*()
-proc toggleFloorOrientation*(map; loc: Location; um) =
-
-  singleCellAction(map, loc, um, "Toggle floor orientation", m):
-    let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
-    m.setFloorOrientation(loc, newOt)
 
 # }}}
 
