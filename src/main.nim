@@ -44,6 +44,7 @@ import utils
 
 # }}}
 
+
 # {{{ Extra resources
 
 when defined(windows):
@@ -4350,7 +4351,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
   # Validation
   var validationError = ""
-  if not isValidFilename(dlg.newThemeName):
+  if not utils.isValidFilename(dlg.newThemeName):
     validationError = "Theme name is invalid"
 
   var validationWarning = ""
@@ -4462,7 +4463,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 
   # Validation
   var validationError = ""
-  if not isValidFilename(dlg.newThemeName):
+  if not utils.isValidFilename(dlg.newThemeName):
     validationError = "Theme name is invalid"
 
   var validationWarning = ""

@@ -18,10 +18,10 @@ import icons
 import level
 import map
 import regions
+import rle
 import utils
 
 
-# TODO use app version instead?
 const CurrentMapVersion = 1
 
 # {{{ Field limits
@@ -64,7 +64,25 @@ const
   ZoomLevelLimits*         = intLimits(min=MinZoomLevel, max=MaxZoomLevel)
 
 # }}}
+# {{{ Types
+type
+  MapReadError* = object of IOError
 
+  CompressionType = enum
+    ctUncompressed     = 0,
+    ctRunLengthEncoded = 1,
+    ctZeroes           = 2
+
+  MapDisplayOptions* = object
+    currLevel*:       Natural
+    zoomLevel*:       Natural
+    cursorRow*:       Natural
+    cursorCol*:       Natural
+    viewStartRow*:    Natural
+    viewStartCol*:    Natural
+
+# }}}
+# {{{ FourCCs
 const
   FourCC_GRDM      = "GRMM"
   FourCC_GRDM_cell = "cell"
@@ -77,25 +95,12 @@ const
   FourCC_GRDM_anno = "anno"
   FourCC_GRDM_prop = "prop"
   FourCC_GRDM_regn = "regn"
-
-
-type MapReadError* = object of IOError
-
-proc raiseMapReadError(s: string) {.noReturn.} =
-  raise newException(MapReadError, s)
-
-
-type
-  MapDisplayOptions* = object
-    currLevel*:       Natural
-    zoomLevel*:       Natural
-    cursorRow*:       Natural
-    cursorCol*:       Natural
-    viewStartRow*:    Natural
-    viewStartCol*:    Natural
-
+# }}}
 
 # {{{ Read
+
+using rr: RiffReader
+
 # TODO move utils into nim-riff?
 # {{{ appendInGroupChunkMsg()
 proc appendInGroupChunkMsg(msg: string, groupChunkId: Option[string]): string =
@@ -105,6 +110,11 @@ proc appendInGroupChunkMsg(msg: string, groupChunkId: Option[string]): string =
 
 # }}}
 
+# {{{ raiseMapReadError()
+proc raiseMapReadError(s: string) {.noReturn.} =
+  raise newException(MapReadError, s)
+
+# }}}
 # {{{ chunkOnlyOnceError()
 proc chunkOnlyOnceError(chunkId: string,
                         groupChunkId: Option[string] = string.none) =
@@ -172,8 +182,6 @@ proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
     raiseMapReadError(fmt"Invalid enum value for {name}: {v}")
 
 # }}}
-
-using rr: RiffReader
 
 # {{{ readLocation()
 proc readLocation(rr): Location =
@@ -730,10 +738,11 @@ proc readMapFile*(filename: string): Map =
 
 # }}}
 # }}}
-
 # {{{ Write
 
 using rw: RiffWriter
+
+var g_runLengthEncoder: RunLengthEncoder
 
 # {{{ writeDisplayOptions_v1()
 proc writeDisplayOptions_v1(rw; opts: MapDisplayOptions) =
@@ -827,13 +836,39 @@ proc writeLevelProperties_v1(rw; l: Level) =
 proc writeLevelCells_v1(rw; cells: seq[Cell]) =
   rw.beginChunk(FourCC_GRDM_cell)
 
-  for c in cells:
-    rw.write(c.floor.uint8)
-    rw.write(c.floorOrientation.uint8)
-    rw.write(c.floorColor.uint8)
-    rw.write(c.wallN.uint8)
-    rw.write(c.wallW.uint8)
-    rw.write(c.trail.uint8)
+  template writeLayer(field: untyped) =
+    alias(e, g_runLengthEncoder)
+
+    var allZeroes = true
+    for c {.inject.} in cells:
+      if field.uint8 != 0:
+        allZeroes = false
+        break
+
+    if allZeroes:
+      rw.write(ctZeroes.uint8)
+    else:
+      initRunLengthEncoder(e, cells.len)
+      for c {.inject.} in cells:
+        e.encode(field.uint8)
+      e.flush()
+
+      let compressRatio = (e.encodedLength + 4) / cells.len
+      if compressRatio < 0.9:
+        rw.write(ctRunLengthEncoded.uint8)
+        rw.write(e.encodedLength.uint32)
+        rw.write(e.buf, startIndex=0, numValues=e.encodedLength)
+      else:
+        rw.write(ctUncompressed.uint8)
+        for c {.inject.} in cells:
+          rw.write(field.uint)
+
+  writeLayer: c.floor
+  writeLayer: c.floorOrientation
+  writeLayer: c.floorColor
+  writeLayer: c.wallN
+  writeLayer: c.wallW
+  writeLayer: c.trail
 
   rw.endChunk()
 
@@ -841,7 +876,6 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
 # {{{ writeLevelAnnotations_v1()
 proc writeLevelAnnotations_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_anno)
-#  rw.beginChunk("anno")
 
   rw.write(l.numAnnotations.uint16)
 

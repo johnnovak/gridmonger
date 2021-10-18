@@ -16,14 +16,6 @@ proc durationToFloatMillis*(d: Duration): float64 =
   inNanoseconds(d).float64 * 1e-6
 
 # }}}
-# {{{ writePrettyConfig*()
-proc writePrettyConfig*(c: Config, filename: string) =
-  var ss = newStringStream()
-  c.writeConfig(ss)
-  let prettyConfig = ss.data.replace("\n[", "\n\n[").replace("=", " = ")
-  writeFile(filename, prettyConfig)
-
-# }}}
 
 # {{{ linkFloorToString*()
 proc linkFloorToString*(f: Floor): string =
@@ -62,6 +54,7 @@ proc `<`*(a, b: Location): bool =
   else: return false
 
 # }}}
+
 # {{{ toLetterCoord*)
 proc toLetterCoord*(x: Natural): string =
 
@@ -114,16 +107,17 @@ proc formatRowCoord*(row: Natural, numRows: Natural,
   of csLetter: toLetterCoord(x)
 
 # }}}
-# {{{ step*()
-proc step*(row, col: int, dir: Direction): (int, int) =
-  if   dir == North:     result = (row-1, col)
-  elif dir == NorthEast: result = (row-1, col+1)
-  elif dir == East:      result = (row,   col+1)
-  elif dir == SouthEast: result = (row+1, col+1)
-  elif dir == South:     result = (row+1, col)
-  elif dir == SouthWest: result = (row+1, col-1)
-  elif dir == West:      result = (row,   col-1)
-  elif dir == NorthWest: result = (row-1, col-1)
+
+# {{{ isValidFilename*()
+func isValidFilename*(filename: string): bool =
+  const MaxLen = 259
+  const InvalidFilenameChars = {'/', '\\', ':', '*', '?', '"', '<', '>',
+                                '|', '^', '\0'}
+
+  if filename.len == 0 or filename.len > MaxLen or
+    filename[0] == ' ' or filename[^1] == ' ' or filename[^1] == '.' or
+    find(filename, InvalidFilenameChars) != -1: false
+  else: true
 
 # }}}
 

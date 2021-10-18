@@ -7,7 +7,7 @@ import rect
 
 
 const
-  AppVersion* = "0.1"
+  AppVersion* = "0.9"
 
 const
   EnDash* = "\u2013"

@@ -200,6 +200,17 @@ proc copyFrom*(g; destRow, destCol: Natural,
 # }}}
 # {{{ getNeighbourCell*()
 proc getNeighbourCell*(g; r,c: Natural, dir: Direction): Option[Cell] =
+
+  func step(row, col: int, dir: Direction): (int, int) =
+    if   dir == North:     result = (row-1, col)
+    elif dir == NorthEast: result = (row-1, col+1)
+    elif dir == East:      result = (row,   col+1)
+    elif dir == SouthEast: result = (row+1, col+1)
+    elif dir == South:     result = (row+1, col)
+    elif dir == SouthWest: result = (row+1, col-1)
+    elif dir == West:      result = (row,   col-1)
+    elif dir == NorthWest: result = (row-1, col-1)
+
   let (nr, nc) = step(r,c, dir)
   if nr < 0 or nc < 0 or nr >= g.rows or nc >= g.cols: Cell.none
   else: g[nr,nc].some
