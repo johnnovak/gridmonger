@@ -850,8 +850,8 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
     else:
       initRunLengthEncoder(e, cells.len)
       for c {.inject.} in cells:
-        e.encode(field.uint8)
-      e.flush()
+        discard e.encode(field.uint8)
+      discard e.flush()
 
       let compressRatio = (e.encodedLength + 4) / cells.len
       if compressRatio < 0.9:
