@@ -407,7 +407,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
                                 bbox: Rect[Natural]): Links =
     result = initLinks()
 
-    for src, dest in origLinks.pairs:
+    for src, dest in origLinks:
       var src = src
       var dest = dest
       var addLink = false
@@ -503,7 +503,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
         # More efficient to just iterate through all links in the map in one
         # go
-        for src, dest in m.links.pairs:
+        for src, dest in m.links:
           var
             src = src
             dest = dest
@@ -900,7 +900,7 @@ proc setMapProperties*(map; loc: Location, name: string,
     m.notes = notes
 
     if coordOpts != oldCoordOpts:
-      for levelIdx, l in m.levels.pairs:
+      for levelIdx, l in m.levels:
         if l.regionOpts.enabled and not l.overrideCoordOpts:
           m.reallocateRegions(levelIdx, oldCoordOpts,
                               oldRegionOpts = l.regionOpts,
@@ -915,7 +915,7 @@ proc setMapProperties*(map; loc: Location, name: string,
 
   var oldRegions = initTable[int, Regions]()
 
-  for levelIdx, l in map.levels.pairs:
+  for levelIdx, l in map.levels:
     if not l.overrideCoordOpts:
       oldRegions[levelIdx] = l.regions
 

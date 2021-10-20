@@ -17,7 +17,7 @@ proc initRegions*(): Regions =
 # }}}
 # {{{ dump*()
 proc dump*(r) =
-  for k,v in r.pairs():
+  for k,v in r:
     echo "key: ", k, ", val: ", v
   echo ""
 
@@ -36,7 +36,7 @@ proc getRegion*(r; rc: RegionCoords): Option[Region] =
 # }}}
 # {{{ allRegions*()
 iterator allRegions*(r): (RegionCoords, Region) =
-  for rc, r in r.pairs:
+  for rc, r in r:
     yield (rc, r)
 
 # }}}
@@ -54,7 +54,7 @@ proc regionNames*(r): seq[string] =
 
 # {{{ findFirstRegionByName*()
 proc findFirstRegionByName*(r; name: string): Option[(RegionCoords, Region)] =
-  for rc, r in r.pairs:
+  for rc, r in r:
     if r.name == name:
       return (rc, r).some
   result = (RegionCoords, Region).none

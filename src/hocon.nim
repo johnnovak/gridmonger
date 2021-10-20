@@ -1,4 +1,5 @@
 import deques
+import math
 import options
 import unicode
 import streams
@@ -362,14 +363,14 @@ proc `==`*(a: HoconNode, b: HoconNode): bool =
 
   of hnkObject:
     if a.fields.len != b.fields.len: return false
-    for k,v in a.fields.pairs:
+    for k,v in a.fields:
       if not b.fields.hasKey(k): return false
       if v != b.fields[k]: return false
     true
 
   of hnkArray:
     if a.elems.len != b.elems.len: return false
-    for i,v in a.elems.pairs:
+    for i,v in a.elems:
       if v != b.elems[i]: return false
     true
 
@@ -620,7 +621,11 @@ proc write*(node: HoconNode, stream: Stream,
 
     of hnkNumber:
       if (parent.kind != hnkArray): stream.write(" = ")
-      stream.write($curr.num)
+      let (i, f) = splitDecimal(curr.num)
+      if f == 0.0:
+        stream.write($i.int)
+      else:
+        stream.write($curr.num)
 
     of hnkBool:
       if (parent.kind != hnkArray): stream.write(" = ")
@@ -772,7 +777,7 @@ proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
   var curr = node
   let pathElems = path.split('.')
 
-  for i, key {.inject.} in pathElems.pairs:
+  for i, key {.inject.} in pathElems:
     let isLast = i == pathElems.high
 
     var arrayIdx = int.none

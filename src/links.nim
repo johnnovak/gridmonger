@@ -21,7 +21,7 @@ proc initLinks*(): Links =
 
 # {{{ dump*()
 proc dump*(l) =
-  for src, dest in l.pairs:
+  for src, dest in l:
     echo "src: ", src, ", dest: ", dest
 
 # }}}
@@ -108,7 +108,7 @@ proc filterByInRect*(l; level: Natural, rect: Rect[Natural],
 # {{{ filterBySrcLevel*()
 proc filterBySrcLevel*(l; level: Natural): Links =
   result = initBiTable[Location, Location]()
-  for src, dest in l.pairs:
+  for src, dest in l:
     if src.level == level:
       result[src] = dest
 
@@ -116,7 +116,7 @@ proc filterBySrcLevel*(l; level: Natural): Links =
 # {{{ filterByDestLevel*()
 proc filterByDestLevel*(l; level: Natural): Links =
   result = initBiTable[Location, Location]()
-  for src, dest in l.pairs:
+  for src, dest in l:
     if dest.level == level:
       result[src] = dest
 
@@ -135,7 +135,7 @@ proc remapLevelIndex*(vl; oldIndex, newIndex: Natural) =
 
   for src in links.keys: vl.delBySrc(src)
 
-  for src, dest in links.pairs:
+  for src, dest in links:
     var src = src
     var dest = dest
 
@@ -151,7 +151,7 @@ proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
                         levelRect: Rect[int]): Links =
   result = initLinks()
 
-  for src, dest in l.pairs:
+  for src, dest in l:
     var src = src
     var dest = dest
 

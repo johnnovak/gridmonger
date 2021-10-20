@@ -80,7 +80,7 @@ proc numAnnotations*(a): Natural =
 # }}}
 # {{{ allAnnotations*()
 iterator allAnnotations*(a): (Natural, Natural, Annotation) =
-  for k, annot in a.annotations.pairs:
+  for k, annot in a.annotations:
     let (r,c) = a.keyToCoords(k)
     yield (r,c, annot)
 
@@ -112,7 +112,7 @@ proc getNote*(a; r,c: Natural): Option[Annotation] =
 # }}}
 # {{{ allNotes*()
 iterator allNotes*(a): (Natural, Natural, Annotation) =
-  for k, annot in a.annotations.pairs:
+  for k, annot in a.annotations:
     if annot.isNote:
       let (r,c) = a.keyToCoords(k)
       yield (r,c, annot)
@@ -123,12 +123,12 @@ iterator allNotes*(a): (Natural, Natural, Annotation) =
 # {{{ reindexNotes*()
 proc reindexNotes*(a) =
   var keys: seq[int] = @[]
-  for k, n in a.annotations.pairs():
+  for k, n in a.annotations:
     if n.kind == akIndexed:
       keys.add(k)
 
   sort(keys)
-  for i, k in keys.pairs():
+  for i, k in keys:
     a.annotations[k].index = i+1
 
 # }}}
@@ -148,7 +148,7 @@ proc getLabel*(a; r,c: Natural): Option[Annotation] =
 # }}}
 # {{{ allLabels*()
 iterator allLabels*(a): (Natural, Natural, Annotation) =
-  for k, annot in a.annotations.pairs:
+  for k, annot in a.annotations:
     if annot.isLabel:
       let (r,c) = a.keyToCoords(k)
       yield (r,c, annot)

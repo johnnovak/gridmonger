@@ -999,7 +999,6 @@ template drawShadows_IterateViewBuf(body: untyped) =
       if not isCursorActive(viewRow, viewCol, dp):
         let x {.inject.} = cellX(viewCol, dp)
         let y {.inject.} = cellY(viewRow, dp)
-
         body
 
 # }}}
@@ -2550,3 +2549,4 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
+

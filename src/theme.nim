@@ -36,8 +36,8 @@ proc limit(config: HoconNode, key: string, limits: FieldLimits) =
     v.get.num = v.get.num.limit(limits)
 
 proc getColorOrDefaultArray(cfg: HoconNode, key: string, colors: var openArray[Color]) =
-  for i in 0..colors.high:
-    colors[i] = cfg.getColorOrDefault(fmt"{key}.{i}")
+  for i,c in colors.mpairs:
+    c = cfg.getColorOrDefault(fmt"{key}.{i}")
 # }}}
 
 # {{{ toLevelStyle*()

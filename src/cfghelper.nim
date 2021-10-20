@@ -120,7 +120,7 @@ proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum],
     let v = cfg.getString(path)
     if v != "":
       try:
-        result = parseEnum[T](v.replace('-', ' ').title())
+        result = parseEnum[T](v.replace('-', ' ').title)
       except ValueError:
         invalidValueError(path, "enum", v)
   except CatchableError as e:

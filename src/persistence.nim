@@ -53,8 +53,10 @@ const
   NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=400)
   NoteIconTextLimits*      = strLimits(minRuneLen=0, maxRuneLen=400)
   NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
-  NoteColorLimits*         = intLimits(min=0,
-                                       max=NotesPaneStyle.indexBackgroundColor.len)
+
+  NoteColorLimits*      = intLimits(min=0,
+                                    max=NotesPaneStyle.indexBackgroundColor.len)
+
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
 
   NumLinksLimits*          = intLimits(min=0, max=10_000)
@@ -150,9 +152,9 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
 proc checkStringLength(s: string, name: string, limit: FieldLimits) =
   if s.runeLen < limit.minRuneLen or s.runeLen > limit.maxRuneLen:
     raiseMapReadError(
-      fmt"The length of {name} must be between {limit.minRuneLen} and " &
-      fmt"{limit.maxRuneLen} UTF-8 code points, actual length: {s.runeLen}, " &
-      "value: {s}"
+      fmt"The length of string '{name}' must be between {limit.minRuneLen} " &
+      fmt"and {limit.maxRuneLen} UTF-8 code points, " &
+      fmt"actual length: {s.runeLen}, value: {s}"
     )
 
 # }}}
@@ -161,12 +163,21 @@ proc checkValueRange[T: SomeInteger](v: T, name: string,
                                      min: T = 0, max: T = 0) =
   if v < min or v > max:
     raiseMapReadError(
-      fmt"The value of {name} must be between {min} and " &
-      fmt"{max}, actual value: {v}"
+      fmt"The value of integer '{name}' must be between {min} and {max}, " &
+      fmt"actual value: {v}"
     )
 
 proc checkValueRange[T: SomeInteger](v: T, name: string, limit: FieldLimits) =
   checkValueRange(v, name, T(limit.minInt), T(limit.maxInt))
+
+# }}}
+# {{{ checkBool()
+proc checkBool(b: uint8, name: string) =
+  if b > 1:
+    raiseMapReadError(
+      fmt"The value of boolean '{name}' must be either 0 or 1, " &
+      fmt"actual value: {b}"
+    )
 
 # }}}
 # {{{ checkEnum()
@@ -250,26 +261,102 @@ proc readLevelProperties_v1(rr): Level =
   debug(fmt"  numColumns: {numColumns}")
   checkValueRange(numColumns, "lvl.prop.numColumns", LevelColumnsLimits)
 
-  let overrideCoordOpts = rr.read(uint8).bool
+  let overrideCoordOpts = rr.read(uint8)
   debug(fmt"  overrideCoordOpts: {overrideCoordOpts}")
+  checkBool(overrideCoordOpts, "lvl.prop.overrideCoordOpts")
 
   let notes = rr.readWStr()
   debug(fmt"  notes: {notes}")
   checkStringLength(notes, "lvl.prop.notes", NotesLimits)
 
   result = newLevel(locationName, levelName, elevation, numRows, numColumns)
-  result.overrideCoordOpts = overrideCoordOpts
+  result.overrideCoordOpts = overrideCoordOpts.bool
   result.notes = notes
 
 # }}}
-# {{{ readLevelData_v1()
-proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
-  debug(fmt"Reading level data...")
+# {{{ readLevelCells_v1_compr()
+proc readLevelCells_v1_compr(rr; numCells: Natural): seq[Cell] =
+
+  template readLayer(fieldType: typedesc, field, checkField: untyped) =
+    let ct = rr.read(uint8)
+    checkEnum(ct, "lvl.cell.compressionType", CompressionType)
+
+    case CompressionType(ct)
+    of ctUncompressed:
+      for c {.inject.} in cells.mitems:
+        let data {.inject.} = rr.read(uint8)
+        checkField
+        field = fieldType(data)
+
+    of ctRunLengthEncoded:
+      let compressedSize = rr.read(uint32)
+      if compressedSize.int > numCells:
+        raiseMapReadError(
+          "Error decompressing level cell data: invalid compressed size: " &
+          $compressedSize & ", numCells: " & $numCells
+        )
+
+      if compressedBuf.len < compressedSize.int:
+        compressedBuf = newSeq[byte](compressedSize)
+
+      rr.read(compressedBuf, 0, compressedSize)
+
+      var d: RunLengthDecoder
+      initRunLengthDecoder(d, compressedBuf)
+
+      for c {.inject.} in cells.mitems:
+        let b = d.decode()
+        if b.isSome:
+          let data {.inject.} = b.get
+          checkField
+          field = fieldType(data)
+        else:
+          raiseMapReadError(
+            "Error decompressing level cell data: premature end of " &
+            "compressed stream"
+          )
+
+    of ctZeroes:
+      for c {.inject.} in cells.mitems:
+        field = fieldType(0)
+
+
+  debug(fmt"Reading level cells...")
 
   var cells: seq[Cell]
   newSeq[Cell](cells, numCells)
 
-  for i in 0..<numCells:
+  var compressedBuf: seq[byte]
+
+  readLayer(Floor): c.floor
+  do: checkEnum(data, "lvl.cell.floor", Floor)
+
+  readLayer(Orientation): c.floorOrientation
+  do: checkEnum(data, "lvl.cell.floorOrientation", Orientation)
+
+  readLayer(byte): c.floorColor
+  do: checkValueRange(data, "lvl.cell.floorColor", CellFloorColorLimits)
+
+  readLayer(Wall): c.wallN
+  do: checkEnum(data, "lvl.cell.wallN", Wall)
+
+  readLayer(Wall): c.wallW
+  do: checkEnum(data, "lvl.cell.wallW", Wall)
+
+  readLayer(bool): c.trail
+  do: checkBool(data, "lvl.cell.trail")
+
+  result = cells
+
+# }}}
+# {{{ readLevelCells_v1()
+proc readLevelCells_v1(rr; numCells: Natural): seq[Cell] =
+  debug(fmt"Reading level cells...")
+
+  var cells: seq[Cell]
+  newSeq[Cell](cells, numCells)
+
+  for cell in cells.mitems:
     let floor = rr.read(uint8)
     checkEnum(floor, "lvl.cell.floor", Floor)
 
@@ -285,15 +372,16 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
     let wallW = rr.read(uint8)
     checkEnum(wallW, "lvl.cell.wallW", Wall)
 
-    let trail = rr.read(uint8).bool
+    let trail = rr.read(uint8)
+    checkBool(trail, "lvl.cell.trail")
 
-    cells[i] = Cell(
+    cell = Cell(
       floor: floor.Floor,
       floorOrientation: floorOrientation.Orientation,
       floorColor: floorColor,
       wallN: wallN.Wall,
       wallW: wallW.Wall,
-      trail: trail
+      trail: trail.bool
     )
 
   result = cells
@@ -301,7 +389,7 @@ proc readLevelData_v1(rr; numCells: Natural): seq[Cell] =
 # }}}
 # {{{ readLevelAnnotations_v1()
 proc readLevelAnnotations_v1(rr; l: Level) =
-  debug(fmt"Reading annotations...")
+  debug(fmt"Reading level annotations...")
 
   let numAnnotations = rr.read(uint16).Natural
   debug(fmt"  numAnnotations: {numAnnotations}")
@@ -400,11 +488,12 @@ proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
   )
 
 # }}}
-# {{{ readRegions_v1*()
-proc readRegions_v1(rr): (RegionOptions, Regions) =
-  debug(fmt"Reading regions...")
+# {{{ readLevelRegions_v1*()
+proc readLevelRegions_v1(rr): (RegionOptions, Regions) =
+  debug(fmt"Reading level regions...")
 
-  let enabled = rr.read(uint8).bool
+  let enabled = rr.read(uint8)
+  checkBool(enabled, "lvl.regn.enabled")
 
   let rowsPerRegion = rr.read(uint16)
   checkValueRange(rowsPerRegion, "lvl.regn.rowsPerRegion", RowsPerRegionLimits)
@@ -413,13 +502,14 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
   checkValueRange(colsPerRegion, "lvl.regn.colsPerRegion",
                                  ColumnsPerRegionLimits)
 
-  let perRegionCoords = rr.read(uint8).bool
+  let perRegionCoords = rr.read(uint8)
+  checkBool(perRegionCoords, "lvl.cell.perRegionCoords")
 
   let regionOpts = RegionOptions(
-    enabled:         enabled,
+    enabled:         enabled.bool,
     rowsPerRegion:   rowsPerRegion,
     colsPerRegion:   colsPerRegion,
-    perRegionCoords: perRegionCoords
+    perRegionCoords: perRegionCoords.bool
   )
 
   debug(fmt"  Regions opts: {regionOpts}")
@@ -442,7 +532,8 @@ proc readRegions_v1(rr): (RegionOptions, Regions) =
     let notes = rr.readWStr()
     checkStringLength(notes, "lvl.regn.region.notes", NotesLimits)
 
-    debug(fmt"    row: {row}, col: {col}, name: {name}, notes: {notes}")
+    debug(fmt"    regionIndex: {i}, row: {row}, col: {col}, name: {name}, " &
+          fmt"notes: {notes}")
 
     regions.setRegion(
       RegionCoords(row: row, col: col),
@@ -519,14 +610,14 @@ proc readLevel_v1(rr): Level =
   level.coordOpts = readCoordinateOptions_v1(rr, groupChunkId.get)
 
   rr.cursor = regnCursor.get
-  (level.regionOpts, level.regions) = readRegions_v1(rr)
+  (level.regionOpts, level.regions) = readLevelRegions_v1(rr)
 
   rr.cursor = cellCursor.get
 
   # +1 needed because of the south & east borders
   let numCells = (level.rows+1) * (level.cols+1)
 
-  level.cellGrid.cells = readLevelData_v1(rr, numCells)
+  level.cellGrid.cells = readLevelCells_v1_compr(rr, numCells)
 
   if annoCursor.isSome:
     rr.cursor = annoCursor.get
@@ -794,8 +885,8 @@ proc writeCoordinateOptions_v1(rw; co: CoordinateOptions) =
   rw.endChunk()
 
 # }}}
-# {{{ writeRegions_v1()
-proc writeRegions_v1(rw; l: Level) =
+# {{{ writeLevelRegions_v1()
+proc writeLevelRegions_v1(rw; l: Level) =
   rw.beginChunk(FourCC_GRDM_regn)
 
   rw.write(l.regionOpts.enabled.uint8)
@@ -834,7 +925,6 @@ proc writeLevelProperties_v1(rw; l: Level) =
 # }}}
 # {{{ writeLevelCells_v1()
 proc writeLevelCells_v1(rw; cells: seq[Cell]) =
-  rw.beginChunk(FourCC_GRDM_cell)
 
   template writeLayer(field: untyped) =
     alias(e, g_runLengthEncoder)
@@ -849,19 +939,27 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
       rw.write(ctZeroes.uint8)
     else:
       initRunLengthEncoder(e, cells.len)
+
+      var compressFailed = false
       for c {.inject.} in cells:
-        discard e.encode(field.uint8)
-      discard e.flush()
+        if not e.encode(field.uint8):
+          compressFailed = true
+          break
+      if not e.flush():
+        compressFailed = true
 
       let compressRatio = (e.encodedLength + 4) / cells.len
-      if compressRatio < 0.9:
+      if not compressFailed and compressRatio < 0.9:
         rw.write(ctRunLengthEncoded.uint8)
         rw.write(e.encodedLength.uint32)
-        rw.write(e.buf, startIndex=0, numValues=e.encodedLength)
+        rw.write(e.buf, 0, e.encodedLength)
       else:
         rw.write(ctUncompressed.uint8)
         for c {.inject.} in cells:
           rw.write(field.uint)
+
+
+  rw.beginChunk(FourCC_GRDM_cell)
 
   writeLayer: c.floor
   writeLayer: c.floorOrientation
@@ -910,7 +1008,7 @@ proc writeLevel_v1(rw; l: Level) =
 
   writeLevelProperties_v1(rw, l)
   writeCoordinateOptions_v1(rw, l.coordOpts)
-  writeRegions_v1(rw, l)
+  writeLevelRegions_v1(rw, l)
   writeLevelCells_v1(rw, l.cellGrid.cells)
   writeLevelAnnotations_v1(rw, l)
 

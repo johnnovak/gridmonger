@@ -1468,8 +1468,8 @@ func currThemeName(a): var ThemeName =
 # }}}
 # {{{ findThemeIndex()
 func findThemeIndex(name: string; a): Option[Natural] =
-  for i in 0..a.theme.themeNames.high:
-    if a.theme.themeNames[i].name == name:
+  for i, themeName in a.theme.themeNames.mpairs:
+    if themeName.name == name:
       return i.Natural.some
 
 # }}}
@@ -1504,8 +1504,8 @@ proc buildThemeList(a) =
   var themeNames: seq[ThemeName] = @[]
 
   func findThemeWithName(name: string): int =
-    for i in 0..themeNames.high:
-      if themeNames[i].name == name: return i
+    for i, themeName in themeNames.mpairs:
+      if themeName.name == name: return i
     result = -1
 
   proc addThemeNames(themesDir: string, userTheme: bool) =
@@ -6285,7 +6285,7 @@ proc renderStatusBar(y: float, winWidth: float; a) =
   x = tx + MessagePadX
 
   # Display commands, if present
-  for i, cmd in a.ui.statusCommands.pairs:
+  for i, cmd in a.ui.statusCommands:
     if i mod 2 == 0:
       let label = cmd
       let w = vg.textWidth(label)
@@ -7472,7 +7472,6 @@ proc initApp(a) =
 
   with a.ui.cursor:
     let currLevel = uiCfg.getNaturalOrDefault("current-level", 0)
-                         .limit(ZoomLevelLimits)
 
     if currLevel > a.doc.map.levels.high:
       level = 0

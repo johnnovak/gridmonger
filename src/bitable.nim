@@ -15,10 +15,10 @@ proc initBiTable*[K, V](
 
 proc dumpBiTable*[K, V](t: BiTable[K, V]) =
   echo "KEY TO VAL"
-  for k,v in t.keyToVal.pairs():
+  for k,v in t.keyToVal:
     echo "1: ", k, ", 2: ", v
   echo "VAL TO KEY"
-  for k,v in t.valToKey.pairs():
+  for k,v in t.valToKey:
     echo "1: ", k, ", 2: ", v
 
 
@@ -73,7 +73,7 @@ proc `[]=`*[K, V](t: var BiTable[K, V], key: K, val: V) =
   t.valToKey[val] = key
 
 proc addAll*[K, V](t: var BiTable[K, V], src: BiTable[K, V]) =
-  for k, v in src.pairs():
+  for k, v in src.pairs:
     t[k] = v
 
 
