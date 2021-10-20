@@ -44,7 +44,6 @@ import utils
 
 # }}}
 
-
 # {{{ Extra resources
 
 when defined(windows):
@@ -99,7 +98,6 @@ const
 const
   SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
   AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
-  ZoomLevelLimits*         = intLimits(MinZoomLevel, MaxZoomLevel)
   WindowWidthLimits*       = intLimits(WindowMinWidth, max=20_000)
   WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
 
@@ -1947,8 +1945,6 @@ proc saveAppConfig(cfg: HoconNode, filename: string) =
 # {{{ saveAppConfig()
 
 proc saveAppConfig(a) =
-  alias(opts, a.opts)
-
   let dp = a.ui.drawLevelParams
 
   let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
@@ -1979,11 +1975,11 @@ proc saveAppConfig(a) =
   cfg.set(p & "view-start.row",          dp.viewStartRow)
   cfg.set(p & "view-start.column",       dp.viewStartCol)
   cfg.set(p & "option.show-cell-coords", dp.drawCellCoords)
-  cfg.set(p & "option.show-tools-pane",  opts.showToolsPane)
-  cfg.set(p & "option.show-notes-pane",  opts.showNotesPane)
-  cfg.set(p & "option.wasd-mode",        opts.wasdMode)
-  cfg.set(p & "option.walk-mode",        opts.walkMode)
-  cfg.set(p & "option.draw-trail",       opts.drawTrail)
+  cfg.set(p & "option.show-tools-pane",  a.opts.showToolsPane)
+  cfg.set(p & "option.show-notes-pane",  a.opts.showNotesPane)
+  cfg.set(p & "option.wasd-mode",        a.opts.wasdMode)
+  cfg.set(p & "option.walk-mode",        a.opts.walkMode)
+  cfg.set(p & "option.draw-trail",       a.opts.drawTrail)
 
   p = "last-state.window."
   cfg.set(p & "maximized",  a.win.maximized)
@@ -2035,19 +2031,26 @@ proc saveMap(filename: string, autosave: bool = false; a) =
 
   let cur = a.ui.cursor
 
-  let mapDisplayOpts = MapDisplayOptions(
-    currLevel    : cur.level,
-    zoomLevel    : dp.getZoomLevel(),
-    cursorRow    : cur.row,
-    cursorCol    : cur.col,
-    viewStartRow : dp.viewStartRow,
-    viewStartCol : dp.viewStartCol
+  let appState = AppState(
+    themeName:         a.currThemeName.name,
+    zoomLevel:         dp.getZoomLevel(),
+    currentLevel:      cur.level,
+    cursorRow:         cur.row,
+    cursorCol:         cur.col,
+    viewStartRow:      dp.viewStartRow,
+    viewStartCol:      dp.viewStartCol,
+    optShowCellCoords: dp.drawCellCoords,
+    optShowToolsPane:  a.opts.showToolsPane,
+    optShowNotesPane:  a.opts.showNotesPane,
+    optWasdMode:       a.opts.wasdMode,
+    optWalkMode:       a.opts.walkMode,
+    optDrawTrail:      a.opts.drawTrail
   )
 
   info(fmt"Saving map to '{filename}'")
 
   try:
-    writeMapFile(a.doc.map, mapDisplayOpts, filename)
+    writeMapFile(a.doc.map, appState, filename)
     a.doc.undoManager.setLastSaveState()
 
     if not autosave:
@@ -4866,9 +4869,8 @@ proc resetManualNoteTooltip(a) =
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents(a) =
   alias(ui, a.ui)
-  alias(opts, a.opts)
 
-  if opts.wasdMode:
+  if a.opts.wasdMode:
     if ui.editMode == emNormal:
       if koi.mbLeftDown():
         ui.editMode = emExcavateTunnel
@@ -5001,7 +5003,7 @@ proc handleGlobalKeyEvents(a) =
 
     const mkCS = {mkCtrl, mkShift}
 
-    if not a.opts.wasdMode and allowJump:
+    if not opts.wasdMode and allowJump:
       if   ke.isKeyDown(k.left,  {mkCtrl}, repeat=true): moveCursor(dirW, j, a)
       elif ke.isKeyDown(k.right, {mkCtrl}, repeat=true): moveCursor(dirE, j, a)
       elif ke.isKeyDown(k.up,    {mkCtrl}, repeat=true): moveCursor(dirN, j, a)
@@ -5767,8 +5769,6 @@ proc handleGlobalKeyEvents(a) =
 # }}}
 # {{{ handleGlobalKeyEvents_NoLevels()
 proc handleGlobalKeyEvents_NoLevels(a) =
-  alias(opts, a.opts)
-
   if hasKeyEvent():
     let ke = koi.currEvent()
 
@@ -5795,7 +5795,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
     # Toggle options
     elif ke.isShortcutDown(scToggleThemeEditor):
-      toggleShowOption(opts.showThemeEditor, NoIcon,
+      toggleShowOption(a.opts.showThemeEditor, NoIcon,
                        "Theme editor pane", a)
 
 # }}}
@@ -7451,8 +7451,10 @@ proc initApp(a) =
   a.ui.drawLevelParams.drawCellCoords = uiCfg.getBoolOrDefault(
     "option.show-cell-coords", true
   )
-  a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle,
-                                    uiCfg.getNaturalOrDefault("zoom-level", 9))
+  a.ui.drawLevelParams.setZoomLevel(
+    a.theme.levelStyle,
+    uiCfg.getNaturalOrDefault("zoom-level", 9).limit(ZoomLevelLimits)
+  )
 
   let lastMapFileName = cfg.getStringOrDefault("last-state.last-document", "")
 
@@ -7467,7 +7469,7 @@ proc initApp(a) =
   # TODO timestamp check to determine whether to read the DISP info from the
   # conf or from the file
   with a.ui.drawLevelParams:
-    viewStartRow = uiCfg.getNaturalOrDefault("view-start.row",    0)
+    viewStartRow = uiCfg.getNaturalOrDefault("view-start.row", 0)
     viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
 
   with a.ui.cursor:
@@ -7643,21 +7645,5 @@ proc main() =
 # }}}
 
 main()
-
-#[
-var um = newUndoManager[Map, UndoStateData]()
-
-var m = newMap("test map")
-var l = newLevel("loc", "level", elevation=0, 10, 10)
-m.addLevel(l)
-
-setMapProperties(m, Location(level: 0, row: 0, col: 0), "", m.coordOpts,
-                 "", um)
-
-discard um.undo(m)
-discard um.redo(m)
-discard um.undo(m)
-discard um.redo(m)
-]#
 
 # vim: et:ts=2:sw=2:fdm=marker

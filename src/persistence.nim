@@ -75,13 +75,20 @@ type
     ctRunLengthEncoded = 1,
     ctZeroes           = 2
 
-  MapDisplayOptions* = object
-    currLevel*:       Natural
-    zoomLevel*:       Natural
-    cursorRow*:       Natural
-    cursorCol*:       Natural
-    viewStartRow*:    Natural
-    viewStartCol*:    Natural
+  AppState* = object
+    themeName*:         string
+    zoomLevel*:         Natural
+    currentLevel*:      Natural
+    cursorRow*:         Natural
+    cursorCol*:         Natural
+    viewStartRow*:      Natural
+    viewStartCol*:      Natural
+    optShowCellCoords*: bool
+    optShowToolsPane*:  bool
+    optShowNotesPane*:  bool
+    optWasdMode*:       bool
+    optWalkMode*:       bool
+    optDrawTrail*:      bool
 
 # }}}
 # {{{ FourCCs
@@ -89,7 +96,7 @@ const
   FourCC_GRDM      = "GRMM"
   FourCC_GRDM_cell = "cell"
   FourCC_GRDM_coor = "coor"
-  FourCC_GRDM_disp = "disp"
+  FourCC_GRDM_stat = "stat"
   FourCC_GRDM_lnks = "lnks"
   FourCC_GRDM_lvl  = "lvl "
   FourCC_GRDM_lvls = "lvls"
@@ -201,13 +208,67 @@ proc readLocation(rr): Location =
   result.col = rr.read(uint16)
 
 # }}}
-# {{{ readDisplayOptions_v1()
-proc readDisplayOptions_v1(rr): MapDisplayOptions =
-  debug(fmt"Reading display options...")
+# {{{ readAppState_v1()
+proc readAppState_v1(rr; m: Map): AppState =
+  debug(fmt"Reading app state...")
 
-  # TODO
-  discard
+  let themeName = rr.readWStr()
+  checkStringLength(themeName, "stat.themeName", ThemeNameLimits)
 
+  let zoomLevel = rr.read(uint8)
+  checkValueRange(zoomLevel, "stat.zoomLevel", ZoomLevelLimits)
+
+  let maxLevelIndex = NumLevelsLimits.maxInt - 1
+  let currentLevel = rr.read(uint16).int
+  checkValueRange(currentLevel, "stat.currentLevel", max=maxLevelIndex)
+
+  let l = m.levels[currentLevel]
+
+  let cursorRow = rr.read(uint16)
+  checkValueRange(cursorRow, "stat.cursorRow", max=l.rows.uint16-1)
+
+  let cursorCol = rr.read(uint16)
+  checkValueRange(cursorCol, "stat.cursorCol", max=l.cols.uint16-1)
+
+  let viewStartRow = rr.read(uint16)
+  checkValueRange(viewStartRow, "stat.viewStartRow", max=l.rows.uint16-1)
+
+  let viewStartCol = rr.read(uint16)
+  checkValueRange(viewStartCol, "stat.viewStartCol", max=l.cols.uint16-1)
+
+  let optShowCellCoords = rr.read(uint8)
+  checkBool(optShowCellCoords, "stat.optShowCellCoords")
+
+  let optShowToolsPane = rr.read(uint8)
+  checkBool(optShowToolsPane, "stat.optShowToolsPane")
+
+  let optShowNotesPane = rr.read(uint8)
+  checkBool(optShowNotesPane, "stat.optShowNotesPane")
+
+  let optWasdMode = rr.read(uint8)
+  checkBool(optWasdMode, "stat.optWasdMode")
+
+  let optWalkMode = rr.read(uint8)
+  checkBool(optWalkMode, "stat.optWalkMode")
+
+  let optDrawTrail = rr.read(uint8)
+  checkBool(optDrawTrail, "stat.optDrawTrail")
+
+  AppState(
+    themeName:         themeName,
+    zoomLevel:         zoomLevel,
+    currentLevel:      currentLevel,
+    cursorRow:         cursorRow,
+    cursorCol:         cursorCol,
+    viewStartRow:      viewStartRow,
+    viewStartCol:      viewStartCol,
+    optShowCellCoords: optShowCellCoords.bool,
+    optShowToolsPane:  optShowToolsPane.bool,
+    optShowNotesPane:  optShowNotesPane.bool,
+    optWasdMode:       optWasdMode.bool,
+    optWalkMode:       optWalkMode.bool,
+    optDrawTrail:      optDrawTrail.bool
+  )
 
 # }}}
 # {{{ readLinks_v1()
@@ -750,7 +811,7 @@ proc readMapFile*(filename: string): Map =
       mapCursor = Cursor.none
       linksCursor = Cursor.none
       levelListCursor = Cursor.none
-      displayOptsCursor = Cursor.none
+      appStateCursor = Cursor.none
 
     # Find chunks
     if not rr.hasSubchunks():
@@ -785,10 +846,10 @@ proc readMapFile*(filename: string): Map =
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
           linksCursor = rr.cursor.some
 
-        of FourCC_GRDM_disp:
-          debug(fmt"GRDM.lnks disp found")
-          if displayOptsCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_disp)
-          displayOptsCursor = rr.cursor.some
+        of FourCC_GRDM_stat:
+          debug(fmt"GRDM.stat chunk found")
+          if appStateCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_stat)
+          appStateCursor = rr.cursor.some
 
         else:
           debug(fmt"Skiping unknown top level chunk, " &
@@ -814,9 +875,9 @@ proc readMapFile*(filename: string): Map =
     rr.cursor = linksCursor.get
     m.links = readLinks_v1(rr, m.levels)
 
-    if displayOptsCursor.isSome:
-      rr.cursor = displayOptsCursor.get
-      discard readDisplayOptions_v1(rr)
+    if appStateCursor.isSome:
+      rr.cursor = appStateCursor.get
+      let appState = readAppState_v1(rr, m)
 
     result = m
 
@@ -835,16 +896,23 @@ using rw: RiffWriter
 
 var g_runLengthEncoder: RunLengthEncoder
 
-# {{{ writeDisplayOptions_v1()
-proc writeDisplayOptions_v1(rw; opts: MapDisplayOptions) =
-  rw.beginChunk(FourCC_GRDM_disp)
+# {{{ writeAppState_v1()
+proc writeAppState_v1(rw; s: AppState) =
+  rw.beginChunk(FourCC_GRDM_stat)
 
-  rw.write(opts.currLevel.uint16)
-  rw.write(opts.zoomLevel.uint8)
-  rw.write(opts.cursorRow.uint16)
-  rw.write(opts.cursorCol.uint16)
-  rw.write(opts.viewStartRow.uint16)
-  rw.write(opts.viewStartCol.uint16)
+  rw.writeWStr(s.themeName)
+  rw.write(s.zoomLevel.uint8)
+  rw.write(s.currentLevel.uint16)
+  rw.write(s.cursorRow.uint16)
+  rw.write(s.cursorCol.uint16)
+  rw.write(s.viewStartRow.uint16)
+  rw.write(s.viewStartCol.uint16)
+  rw.write(s.optShowCellCoords.uint8)
+  rw.write(s.optShowToolsPane.uint8)
+  rw.write(s.optShowNotesPane.uint8)
+  rw.write(s.optWasdMode.uint8)
+  rw.write(s.optWalkMode.uint8)
+  rw.write(s.optDrawTrail.uint8)
 
   rw.endChunk()
 
@@ -1047,7 +1115,7 @@ proc writeMap_v1(rw; m: Map) =
 
 # }}}
 # {{{ writeMapFile*()
-proc writeMapFile*(m: Map, opts: MapDisplayOptions, filename: string) =
+proc writeMapFile*(m: Map, appState: AppState, filename: string) =
   var rw: RiffWriter
   try:
     rw = createRiffFile(filename, FourCC_GRDM)
@@ -1055,7 +1123,7 @@ proc writeMapFile*(m: Map, opts: MapDisplayOptions, filename: string) =
     writeMap_v1(rw, m)
     writeLevelList_v1(rw, m.levels)
     writeLinks_v1(rw, m.links)
-    writeDisplayOptions_v1(rw, opts)
+    writeAppState_v1(rw, appState)
 
   except MapReadError as e:
     raise e
