@@ -83,7 +83,6 @@ v1.1
   - align levels to each other based on coords
   - action for aligning two levels
 
-  - RLE compression
   - colours for text labels
 
   - rethink save display params into file
