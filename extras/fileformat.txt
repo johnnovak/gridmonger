@@ -1,3 +1,9 @@
+
+                       Gridmonger map file format
+                       ==========================
+                               Version 1
+
+
 RIFF ('GRDM'          # Gridmonger map file
     LIST ('INFO'
         'INAM'        # Name
@@ -47,18 +53,18 @@ RIFF ('GRDM'          # Gridmonger map file
     INT16   elevation         (min=-200, max=200)
     UINT16  numRows           (min=1, max=6666)
     UINT16  numColums         (min=1, max=6666)
-    UINT8   overrideCoordOpts (0=off, >0=on)
+    UINT8   overrideCoordOpts (0=off, 1=on)
     WSTR    notes             (maxRuneLen=2000)
 
 'regn'
-    UINT8   enableRegions     (0=off, >0=on)
+    UINT8   enableRegions     (0=off, 1=on)
     UINT16  rowsPerRegion     (min=2, max=3333)
     UINT16  columnsPerRegion  (min=2, max=3333)
     UINT16  numRegions
 
     numRegion times:
-    UINT16  row*              (max=0, max=3332)
-    UINT16  column*           (min=0, max=3332)
+    UINT16  row*              (max=3332)
+    UINT16  column*           (max=3332)
     WSTR    name              (minRuneLen=1, maxRuneLen=100)
     WSTR    notes             (maxRuneLen=2000)
 
@@ -66,14 +72,37 @@ RIFF ('GRDM'          # Gridmonger map file
 
 
 'cell'
-    (numRows * numColums) records of:
+    Cell data is stored in layers (similar in concept to bitmaps).
+    Each layer can use a different compressions method.
+    The data stored per layer, and the order of layers are as follows:
 
-    UINT8   floor
-    UINT8   floorOrientation
-    UINT8   floorColor
-    UINT8   wallNorth
-    UINT8   wallWest
-    UINT8   trail
+      UINT8   floor             (see Floor in common.nim for mappings)
+      UINT8   floorOrientation  (0=horiz, 1=vert)
+      UINT8   floorColor        (max=9)
+      UINT8   wallNorth         (see Wall in common.nim for mappings)
+      UINT8   wallWest          (see Wall in common.nim for mappings)
+      UINT8   trail             (0=off, 1=on)
+
+    Layer format:
+
+      UINT8   compressionType
+
+      if compressionType == 0 (uncompressed)
+        uncompressed data as (numRows * numColums) bytes
+
+      if compressionType == 1 (run-length encoded)
+        UINT32   length     length of compressed data in bytes
+        (UINT8 * length)    RLE compressed data
+
+        The compression uses simple RLE encoding:
+
+        - Values less than 0x80 are literal Values
+        - Values greater than or equal to 0x80 are header values, followed
+          by a single data byte. The lower 7-bits of the header is
+          (repeatCount - 1); the data byte should be repeated repeatCount times.
+
+      if compressionType == 2 (all zeros)
+        no data; the whole layer should be filled with zeroes
 
 
 'note'
@@ -92,7 +121,7 @@ RIFF ('GRDM'          # Gridmonger map file
         UINT8   indexColor    (max=3)
 
     if kind == 2 (icon)
-        UINT8   icon          (max=39)
+        UINT8   icon          (max=39, see NoteIcons in icons.nim for mappings)
 
     if kind == 3 (customId)
         BSTR    custom ID     (minLen=1, maxLen=2, only alphanumeric)
@@ -125,6 +154,6 @@ RIFF ('GRDM'          # Gridmonger map file
 
     TODO:
     BSTR    themeName         (minLen=1, maxLen=200, only alphanumeric)
-    UINT8   showCoords        (0 or 1)
+    UINT8   showCoords        (0=off, 1=on)
     UINT8   gridStyle
 
