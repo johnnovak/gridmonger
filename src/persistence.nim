@@ -793,7 +793,7 @@ proc readMap_v1(rr): Map =
 # }}}
 # # {{{ readMapFile*()
 # TODO return display related info and info chunk data as well
-proc readMapFile*(filename: string): Map =
+proc readMapFile*(filename: string): (Map, Option[AppState]) =
   var rr: RiffReader
   try:
     rr = openRiffFile(filename)
@@ -878,8 +878,9 @@ proc readMapFile*(filename: string): Map =
     if appStateCursor.isSome:
       rr.cursor = appStateCursor.get
       let appState = readAppState_v1(rr, m)
-
-    result = m
+      result = (m, appState.some)
+    else:
+      result = (m, AppState.none)
 
   except MapReadError as e:
     raise e

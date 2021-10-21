@@ -1160,7 +1160,7 @@ proc centerCursorAt(loc: Location; a) =
 # }}}
 # {{{ locationAtMouse()
 proc locationAtMouse(a): Option[Location] =
-  let dp = a.ui.drawLevelParams
+  alias(dp, a.ui.drawLevelParams)
 
   let
     mouseViewRow = ((koi.my() - dp.startY) / dp.gridSize).int
@@ -1211,17 +1211,19 @@ proc moveLevel(dir: CardinalDir, steps: Natural; a) =
 
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
-  a.ui.cursor.level = 0
-  a.ui.cursor.row = 0
-  a.ui.cursor.col = 0
+  with a.ui.cursor:
+    level = 0
+    row = 0
+    col = 0
 
-  a.ui.drawLevelParams.viewStartRow = 0
-  a.ui.drawLevelParams.viewStartCol = 0
+  with a.ui.drawLevelParams:
+    viewStartRow = 0
+    viewStartCol = 0
 
 # }}}
 # {{{ updateLastCursorViewCoords()
 proc updateLastCursorViewCoords(a) =
-  let dp = a.ui.drawLevelParams
+  alias(dp, a.ui.drawLevelParams)
 
   a.ui.lastCursorViewX = dp.gridSize * viewCol(a)
   a.ui.lastCursorViewY = dp.gridSize * viewRow(a)
@@ -1945,7 +1947,7 @@ proc saveAppConfig(cfg: HoconNode, filename: string) =
 # {{{ saveAppConfig()
 
 proc saveAppConfig(a) =
-  let dp = a.ui.drawLevelParams
+  alias(dp, a.ui.drawLevelParams)
 
   let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
   let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
@@ -2001,15 +2003,40 @@ proc loadMap(filename: string; a): bool =
 
   try:
     let t0 = getMonoTime()
-    a.doc.map = readMapFile(filename)
+    let (map, appState) = readMapFile(filename)
     let dt = getMonoTime() - t0
 
+    a.doc.map = map
     a.doc.filename = filename
     a.doc.lastAutosaveTime = getMonoTime()
 
-    initUndoManager(a.doc.undoManager)
+    if appState.isSome:
+      let s = appState.get
 
-    resetCursorAndViewStart(a)
+      a.theme.nextThemeIndex = findThemeIndex(s.themeName, a)
+
+      with a.ui.cursor:
+        level = s.currentLevel
+        row = s.cursorRow
+        col = s.cursorCol
+
+      with a.ui.drawLevelParams:
+        viewStartRow = s.viewStartRow
+        viewStartCol = s.viewStartCol
+        drawCellCoords = s.optShowCellCoords
+
+      a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, s.zoomLevel)
+
+      with a.opts:
+        showToolsPane = s.optShowToolsPane
+        showNotesPane = s.optShowNotesPane
+        wasdMode = s.optWasdMode
+        walkMode = s.optWalkMode
+        drawTrail = s.optDrawTrail
+    else:
+      resetCursorAndViewStart(a)
+
+    initUndoManager(a.doc.undoManager)
 
     let message = fmt"Map '{filename}' loaded in " &
                   fmt"{durationToFloatMillis(dt):.2f} ms"
@@ -2027,7 +2054,7 @@ proc loadMap(filename: string; a): bool =
 # }}}
 # {{{ saveMap()
 proc saveMap(filename: string, autosave: bool = false; a) =
-  let dp = a.ui.drawLevelParams
+  alias(dp, a.ui.drawLevelParams)
 
   let cur = a.ui.cursor
 
@@ -4757,7 +4784,7 @@ proc nextLevelAction(a) =
 
 # {{{ centerCursorAfterZoom()
 proc centerCursorAfterZoom(a) =
-  let dp = a.ui.drawLevelParams
+  alias(dp, a.ui.drawLevelParams)
   let cur = a.ui.cursor
 
   let viewCol = round(a.ui.lastCursorViewX / dp.gridSize).int
@@ -4940,8 +4967,7 @@ proc handleGlobalKeyEvents(a) =
   alias(map, a.doc.map)
   alias(um, a.doc.undoManager)
   alias(opts, a.opts)
-
-  let dp = a.ui.drawLevelParams
+  alias(dp, a.ui.drawLevelParams)
 
   var l = currLevel(a)
 
@@ -5808,8 +5834,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 proc renderNoteTooltip(x, y: float, note: Annotation, a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
-
-  let dp = a.ui.drawLevelParams
+  alias(dp, a.ui.drawLevelParams)
 
   if note.text != "":
     const PadX = 10
