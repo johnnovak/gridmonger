@@ -180,6 +180,7 @@ type
     aboutLogo:   AboutLogo
 
     shouldClose: bool
+    updateUI:    bool
 
     logFile:     File
 
@@ -853,13 +854,13 @@ let g_appShortcuts = {
   scJumpToLinkedCell:          @[mkKeyShortcut(keyG,      {})],
   scLinkCell:                  @[mkKeyShortcut(keyG,      {mkShift})],
 
-  scPreviousLevel:             @[mkKeyShortcut(keyPageDown,   {}),
-                                 mkKeyShortcut(keyKpAdd,      {}),
-                                 mkKeyShortcut(keyEqual,      {mkCtrl})],
-
-  scNextLevel:                 @[mkKeyShortcut(keyPageUp,     {}),
+  scPreviousLevel:             @[mkKeyShortcut(keyPageUp,     {}),
                                  mkKeyShortcut(keyKpSubtract, {}),
                                  mkKeyShortcut(keyMinus,      {mkCtrl})],
+
+  scNextLevel:                 @[mkKeyShortcut(keyPageDown,   {}),
+                                 mkKeyShortcut(keyKpAdd,      {}),
+                                 mkKeyShortcut(keyEqual,      {mkCtrl})],
 
   scZoomIn:                    @[mkKeyShortcut(keyEqual,      {})],
   scZoomOut:                   @[mkKeyShortcut(keyMinus,      {})],
@@ -2013,6 +2014,7 @@ proc loadMap(filename: string; a): bool =
     if appState.isSome:
       let s = appState.get
 
+      a.updateUI = false
       a.theme.nextThemeIndex = findThemeIndex(s.themeName, a)
 
       with a.ui.cursor:
@@ -7040,8 +7042,7 @@ proc renderFramePre(a) =
     a.theme.loadBackgroundImage = false
     loadBackgroundImage(a.currThemeName, a)
 
-#    a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
-#                                             koi.getPxRatio())
+  a.updateUI = true
 
 # }}}
 # {{{ renderFrame()
@@ -7517,6 +7518,8 @@ proc initApp(a) =
   a.splash.t0 = getMonoTime()
   setSwapInterval(a)
 
+  a.updateUI = true
+
   # Init window
   a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(g_app)
   a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
@@ -7648,7 +7651,8 @@ proc main() =
         glFlush()
 
       # Swap buffers
-      glfw.swapBuffers(a.win.glfwWin)
+      if a.updateUI:
+        glfw.swapBuffers(a.win.glfwWin)
 
       if a.splash.win != nil:
         glfw.swapBuffers(a.splash.win)
