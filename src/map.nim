@@ -3,6 +3,8 @@ import options
 import sequtils
 import strformat
 
+import with
+
 import common
 import level
 import links
@@ -10,7 +12,6 @@ import rect
 import regions
 import tables
 import utils
-import with
 
 
 using m: Map
@@ -379,7 +380,8 @@ proc calcRegionResizeOffsets*(
 
     result.rowOffs = (case m.coordOptsForLevel(level).origin
                       of coNorthWest: -srcRect.r1
-                      of coSouthWest: -(newRows - srcRect.r2)) div rowsPerRegion
+                      of coSouthWest:
+                        -(newRows - srcRect.r2)) div rowsPerRegion
 
 # }}}
 

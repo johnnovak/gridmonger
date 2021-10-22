@@ -2,6 +2,7 @@ import options
 import strformat
 
 import koi/undomanager
+import with
 
 import common
 import level
@@ -683,9 +684,11 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
 
+    # Adjust links
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
+    # Adjut regions
     let (regionOffsRow, regionOffsCol) = calcRegionResizeOffsets(
       m, loc.level, newRows, newCols, anchor
     )
@@ -726,7 +729,6 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
   let
     oldLinks = map.links.filterByLevel(loc.level)
     oldRegions = map.levels[loc.level].regions
-    # TODO
 
     newLevelRect = rectI(0, 0, cropRect.rows, cropRect.cols)
     rowOffs = -cropRect.r1
@@ -738,6 +740,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
   let action = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = m.newLevelFrom(loc.level, cropRect)
 
+    # Adjust links
     for src in oldLinks.keys: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
@@ -754,6 +757,9 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
     for src in newLinks.keys: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
+
+    m.levels[loc.level].regions = oldRegions
+
     result = usd
 
 

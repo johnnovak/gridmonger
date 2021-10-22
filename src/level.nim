@@ -222,26 +222,28 @@ iterator allRegionCoords*(l): RegionCoords =
 
 # {{{ initRegionsFrom*()
 proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
-                      rowOffs: int = 0, colOffs: int = 0): Regions =
+                      regionRowOffs: int = 0,
+                      regionColOffs: int = 0): Regions =
 
   var destRegions = initRegions()
   var index = 1
 
-  for destCoord in dest.allRegionCoords:
-    # TODO change to Natural?
-    let srcRow = destCoord.row.int + rowOffs
-    let srcCol = destCoord.col.int + colOffs
+  for destRegionCoord in dest.allRegionCoords:
+    let srcRegionRow = destRegionCoord.row.int + regionRowOffs
+    let srcRegionCol = destRegionCoord.col.int + regionColOffs
 
-    let srcRegion = if src.isNone or srcRow < 0 or srcCol < 0:
-      Region.none
-    else:
-      src.get.getRegion(RegionCoords(row: srcRow, col: srcCol))
+    let srcRegion = if src.isNone or srcRegionRow < 0 or srcRegionCol < 0:
+                      Region.none
+                    else:
+                      src.get.getRegion(RegionCoords(row: srcRegionRow,
+                                                     col: srcRegionCol))
 
     if srcRegion.isSome and not srcRegion.get.isUntitledRegion():
-      destRegions.setRegion(destCoord, srcRegion.get)
+      destRegions.setRegion(destRegionCoord, srcRegion.get)
     else:
       destRegions.setRegion(
-        destCoord, Region(name: dest.regions.nextUntitledRegionName(index))
+        destRegionCoord,
+        Region(name: dest.regions.nextUntitledRegionName(index))
       )
 
   result = destRegions

@@ -5,9 +5,6 @@ BUGS
 
 ENHANCEMENTS
 
-- scrollable dropdowns (if list is larger than window, click to open
-  misbehaves)
-
 - thick wall style (for Companion style)
 - (optionally use color for ID notes?)
 
@@ -16,12 +13,10 @@ ENHANCEMENTS
 
 TODO for v0.9
 
-  - region name reassignment on:
-    - crop level
-    - change region size
-
   - UI:
     - textarea: mouse handling, scrollwheel
+    - scrollable dropdowns (if list is larger than window, click to open
+      misbehaves)
 
   - win installer:
     - script for building installer
