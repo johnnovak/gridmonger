@@ -26,6 +26,9 @@ task releaseStacktrace, "release build with stacktrace":
   --linetrace:on
   releaseTask()
 
+task packageWin, "create Windows installer":
+  exec "strip gridmonger.exe"
+  exec "makensis gridmonger.nsi"
 
 task packageMac, "create Mac app bundle":
   let contentsDir = "dist/Gridmonger.app/Contents/"

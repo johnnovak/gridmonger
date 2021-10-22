@@ -6,7 +6,6 @@ BUGS
 ENHANCEMENTS
 
 - thick wall style (for Companion style)
-- (optionally use color for ID notes?)
 
 - log memory access crashes? (or division by zero)
 
@@ -19,7 +18,6 @@ TODO for v0.9
       misbehaves)
 
   - win installer:
-    - script for building installer
     - add file extension association option
     - new gui?
 
