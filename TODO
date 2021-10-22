@@ -20,8 +20,6 @@ TODO for v0.9
     - crop level
     - change region size
 
-  - store AppState in map
-
   - UI:
     - textarea: mouse handling, scrollwheel
 
