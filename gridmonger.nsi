@@ -1,3 +1,5 @@
+!include MUI2.nsh
+
 !define NAME          "Gridmonger"
 !define VERSION       "0.9"
 
@@ -31,6 +33,38 @@ VIProductVersion 0.9.0.0
 
 VIFileVersion 0.9.0.0
 
+;--------------------------------
+;Interface Settings
+
+!define MUI_ABORTWARNING
+!define MUI_UNABORTWARNING
+
+!define MUI_ICON   extras\appicons\windows\gridmonger.ico
+!define MUI_UNICON extras\appicons\windows\gridmonger.ico
+;--------------------------------
+;Pages
+
+!insertmacro MUI_PAGE_WELCOME
+
+!define MUI_COMPONENTSPAGE_NODESC
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+
+!define MUI_FINISHPAGE_RUN $INSTDIR\${APP_EXE}
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_WELCOME
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+
+;--------------------------------
+;Languages
+
+!insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
 
 
 !macro RemoveInstalledFiles un
@@ -43,7 +77,7 @@ VIFileVersion 0.9.0.0
     Delete $INSTDIR\${UNINSTALL_EXE}
   FunctionEnd
 !macroend
- 
+
 !insertmacro RemoveInstalledFiles ""
 !insertmacro RemoveInstalledFiles "un."
 
@@ -54,21 +88,10 @@ VIFileVersion 0.9.0.0
     Delete "$DESKTOP\${NAME}.lnk"
   FunctionEnd
 !macroend
- 
+
 !insertmacro RemoveShortcuts ""
 !insertmacro RemoveShortcuts "un."
 
-
-;=============================================================================
-; Pages
-;=============================================================================
-
-Page components
-Page directory
-Page instfiles
-
-UninstPage uninstConfirm
-UninstPage instfiles
 
 ;=============================================================================
 ; Sections
@@ -100,7 +123,7 @@ Section "Gridmonger (required)"
   WriteRegDWORD HKLM ${REGPATH_UNINSTSUBKEY} "NoRepair" 1
 
   WriteUninstaller "$INSTDIR\${UNINSTALL_EXE}"
-  
+
 SectionEnd
 
 ;-----------------------------------------------------------------------------
@@ -134,7 +157,7 @@ SectionGroupEnd
 ;=============================================================================
 
 Section "Uninstall"
-  
+
   ; Remove registry keys
   DeleteRegKey HKLM ${REGPATH_UNINSTSUBKEY}
   DeleteRegKey HKLM SOFTWARE\${NAME}
