@@ -46,8 +46,8 @@ import utils
 
 # {{{ Extra resources
 
-when defined(windows):
-  {.link: "extras/appicons/windows/gridmonger.res".}
+#when defined(windows):
+#  {.link: "extras/appicons/windows/gridmonger.res".}
 
 # }}}
 
@@ -7288,7 +7288,7 @@ proc loadAndSetIcon(a) =
   proc add(idx: Natural, img: ImageData) =
     icons[idx].width = img.width.int32
     icons[idx].height = img.height.int32
-    icons[idx].pixels = cast[ptr cuchar](img.data)
+    icons[idx].pixels = cast[ptr uint8](img.data)
 
   var icon32 = loadImage(p.dataDir / "icon32.png")
   var icon48 = loadImage(p.dataDir / "icon48.png")

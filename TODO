@@ -12,18 +12,12 @@ ENHANCEMENTS
 
 TODO for v0.9
 
-  - UI:
-    - textarea: mouse handling, scrollwheel
-    - scrollable dropdowns (if list is larger than window, click to open
-      misbehaves)
-
   - win installer:
     - add file extension association option
     - new gui?
 
   - OS X:
       - finish OS X package
-      - code signing
       - gridmonger document icon
 
   - theme:
