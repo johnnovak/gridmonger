@@ -147,6 +147,8 @@ using
   ctx: DrawLevelContext
 
 # {{{ newDrawLevelParams*()
+{.push warning[ProveInit]:off.}
+
 proc newDrawLevelParams*(): DrawLevelParams =
   result = new DrawLevelParams
   for paint in result.lineHatchPatterns.mitems:
@@ -154,6 +156,7 @@ proc newDrawLevelParams*(): DrawLevelParams =
 
   result.zoomLevel = MinZoomLevel
 
+{.pop}
 # }}}
 
 # {{{ getZoomLevel*()

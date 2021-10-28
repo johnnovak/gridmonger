@@ -2,7 +2,6 @@ import options
 import strformat
 
 import koi/undomanager
-import with
 
 import common
 import level

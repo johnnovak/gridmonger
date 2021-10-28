@@ -2,6 +2,7 @@ import algorithm
 import math
 import logging except Level
 import options
+import std/enumutils
 import strformat
 import strutils
 import sugar
@@ -20,7 +21,6 @@ import map
 import regions
 import rle
 import utils
-
 
 const CurrentMapVersion = 1
 
@@ -188,16 +188,15 @@ proc checkBool(b: uint8, name: string) =
 
 # }}}
 # {{{ checkEnum()
-proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
-  var valid: bool
-  try:
-    let ev = $E(v)
-    valid = not ev.contains("invalid data")
-  except RangeDefect:
-    valid = false
+{.push warning[HoleEnumConv]:off.}
 
-  if not valid:
+proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
+  try:
+    discard E(v).symbolRank
+  except IndexDefect:
     raiseMapReadError(fmt"Invalid enum value for {name}: {v}")
+
+{.pop}
 
 # }}}
 
@@ -336,6 +335,8 @@ proc readLevelProperties_v1(rr): Level =
 
 # }}}
 # {{{ readLevelCells_v1_compr()
+{.push warning[HoleEnumConv]:off.}
+
 proc readLevelCells_v1_compr(rr; numCells: Natural): seq[Cell] =
 
   template readLayer(fieldType: typedesc, field, checkField: untyped) =
@@ -381,7 +382,6 @@ proc readLevelCells_v1_compr(rr; numCells: Natural): seq[Cell] =
       for c {.inject.} in cells.mitems:
         field = fieldType(0)
 
-
   debug(fmt"Reading level cells...")
 
   var cells: seq[Cell]
@@ -409,8 +409,12 @@ proc readLevelCells_v1_compr(rr; numCells: Natural): seq[Cell] =
 
   result = cells
 
+{.pop}
+
 # }}}
 # {{{ readLevelCells_v1()
+{.push warning[HoleEnumConv]:off.}
+
 proc readLevelCells_v1(rr; numCells: Natural): seq[Cell] =
   debug(fmt"Reading level cells...")
 
@@ -446,6 +450,8 @@ proc readLevelCells_v1(rr; numCells: Natural): seq[Cell] =
     )
 
   result = cells
+
+{.pop}
 
 # }}}
 # {{{ readLevelAnnotations_v1()

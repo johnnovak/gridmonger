@@ -44,10 +44,11 @@ import utils
 
 # }}}
 
-# {{{ Extra resources
+# {{{ Resources
 
-#when defined(windows):
-#  {.link: "extras/appicons/windows/gridmonger.res".}
+when defined(windows):
+  const arch = when defined(i386): "32" else: "64"
+  {.link: fmt"extras/appicons/windows/gridmonger{arch}.res".}
 
 # }}}
 
@@ -1346,7 +1347,6 @@ proc moveSelStart(dir: CardinalDir; a) =
   of dirN:
     if dp.selStartRow + rows > 1: dec(dp.selStartRow)
 
-
 # }}}
 
 # }}}
@@ -2019,12 +2019,12 @@ proc loadMap(filename: string; a): bool =
 
       with a.ui.cursor:
         level = s.currentLevel
-        row = s.cursorRow
-        col = s.cursorCol
+        row   = s.cursorRow
+        col   = s.cursorCol
 
       with a.ui.drawLevelParams:
-        viewStartRow = s.viewStartRow
-        viewStartCol = s.viewStartCol
+        viewStartRow   = s.viewStartRow
+        viewStartCol   = s.viewStartCol
         drawCellCoords = s.optShowCellCoords
 
       a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, s.zoomLevel)
@@ -2032,9 +2032,9 @@ proc loadMap(filename: string; a): bool =
       with a.opts:
         showToolsPane = s.optShowToolsPane
         showNotesPane = s.optShowNotesPane
-        wasdMode = s.optWasdMode
-        walkMode = s.optWalkMode
-        drawTrail = s.optDrawTrail
+        wasdMode      = s.optWasdMode
+        walkMode      = s.optWalkMode
+        drawTrail     = s.optDrawTrail
     else:
       resetCursorAndViewStart(a)
 
@@ -2061,19 +2061,19 @@ proc saveMap(filename: string, autosave: bool = false; a) =
   let cur = a.ui.cursor
 
   let appState = AppState(
-    themeName:         a.currThemeName.name,
-    zoomLevel:         dp.getZoomLevel(),
-    currentLevel:      cur.level,
-    cursorRow:         cur.row,
-    cursorCol:         cur.col,
-    viewStartRow:      dp.viewStartRow,
-    viewStartCol:      dp.viewStartCol,
-    optShowCellCoords: dp.drawCellCoords,
-    optShowToolsPane:  a.opts.showToolsPane,
-    optShowNotesPane:  a.opts.showNotesPane,
-    optWasdMode:       a.opts.wasdMode,
-    optWalkMode:       a.opts.walkMode,
-    optDrawTrail:      a.opts.drawTrail
+    themeName         : a.currThemeName.name,
+    zoomLevel         : dp.getZoomLevel(),
+    currentLevel      : cur.level,
+    cursorRow         : cur.row,
+    cursorCol         : cur.col,
+    viewStartRow      : dp.viewStartRow,
+    viewStartCol      : dp.viewStartCol,
+    optShowCellCoords : dp.drawCellCoords,
+    optShowToolsPane  : a.opts.showToolsPane,
+    optShowNotesPane  : a.opts.showNotesPane,
+    optWasdMode       : a.opts.wasdMode,
+    optWalkMode       : a.opts.walkMode,
+    optDrawTrail      : a.opts.drawTrail
   )
 
   info(fmt"Saving map to '{filename}'")
@@ -2143,15 +2143,15 @@ const
   ConfirmDlgHeight = 160.0
 
   DialogLayoutParams = AutoLayoutParams(
-    itemsPerRow:      2,
-    rowWidth:         370.0,
-    labelWidth:       160.0,
-    sectionPad:       0.0,
-    leftPad:          0.0,
-    rightPad:         0.0,
-    rowPad:           8.0,
-    rowGroupPad:      20.0,
-    defaultRowHeight: 24.0
+    itemsPerRow      : 2,
+    rowWidth         : 370.0,
+    labelWidth       : 160.0,
+    sectionPad       : 0.0,
+    leftPad          : 0.0,
+    rightPad         : 0.0,
+    rowPad           : 8.0,
+    rowGroupPad      : 20.0,
+    defaultRowHeight : 24.0
   )
 
 # }}}
@@ -2195,7 +2195,7 @@ template coordinateFields() =
       dlg.columnStart,
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
-        kind: tckInteger,
+        kind:   tckInteger,
         minInt: 0,
         maxInt: LevelColumnsLimits.maxInt
       ).some,
@@ -2218,7 +2218,7 @@ template coordinateFields() =
     koi.textField(
       dlg.rowStart,
       constraint = TextFieldConstraint(
-        kind: tckInteger,
+        kind:   tckInteger,
         minInt: 0,
         maxInt: LevelRowsLimits.maxInt
       ).some,
@@ -2251,7 +2251,7 @@ template regionFields() =
           dlg.colsPerRegion,
           activate = dlg.activateFirstTextField,
           constraint = TextFieldConstraint(
-            kind: tckInteger,
+            kind:   tckInteger,
             minInt: LevelRowsLimits.minInt,
             maxInt: LevelRowsLimits.maxInt
           ).some,
@@ -2265,7 +2265,7 @@ template regionFields() =
         koi.textField(
           dlg.rowsPerRegion,
           constraint = TextFieldConstraint(
-            kind: tckInteger,
+            kind:   tckInteger,
             minInt: LevelColumnsLimits.minInt,
             maxInt: LevelColumnsLimits.maxInt
           ).some,
@@ -2303,7 +2303,7 @@ template levelCommonFields() =
       dlg.locationName,
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
-        kind: tckString,
+        kind:   tckString,
         minLen: LevelLocationNameLimits.minRuneLen,
         maxLen: LevelLocationNameLimits.maxRuneLen.some
       ).some,
@@ -2329,7 +2329,7 @@ template levelCommonFields() =
     koi.textField(
       dlg.elevation,
       constraint = TextFieldConstraint(
-        kind: tckInteger,
+        kind:   tckInteger,
         minInt: LevelElevationLimits.minInt,
         maxInt: LevelElevationLimits.maxInt
       ).some,
@@ -2654,7 +2654,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         activate = dlg.activateFirstTextField,
         disabled = disabled,
         constraint = TextFieldConstraint(
-          kind: tckInteger,
+          kind:   tckInteger,
           minInt: SplashTimeoutSecsLimits.minInt,
           maxInt: SplashTimeoutSecsLimits.maxInt
         ).some,
@@ -2687,7 +2687,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         activate = dlg.activateFirstTextField,
         disabled = autosaveDisabled,
         constraint = TextFieldConstraint(
-          kind: tckInteger,
+          kind:   tckInteger,
           minInt: AutosaveFreqMinsLimits.minInt,
           maxInt: AutosaveFreqMinsLimits.maxInt
         ).some,
@@ -3210,7 +3210,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
       koi.textField(
         dlg.cols,
         constraint = TextFieldConstraint(
-          kind: tckInteger,
+          kind:   tckInteger,
           minInt: LevelColumnsLimits.minInt,
           maxInt: LevelColumnsLimits.maxInt
         ).some,
@@ -3223,7 +3223,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
       koi.textField(
         dlg.rows,
         constraint = TextFieldConstraint(
-          kind: tckInteger,
+          kind:   tckInteger,
           minInt: LevelRowsLimits.minInt,
           maxInt: LevelRowsLimits.maxInt
         ).some,
@@ -3544,7 +3544,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     dlg.cols,
     activate = dlg.activateFirstTextField,
     constraint = TextFieldConstraint(
-      kind: tckInteger,
+      kind:   tckInteger,
       minInt: LevelColumnsLimits.minInt,
       maxInt: LevelColumnsLimits.maxInt
     ).some,
@@ -3557,7 +3557,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     x + LabelWidth, y, w=DlgNumberWidth, h,
     dlg.rows,
     constraint = TextFieldConstraint(
-      kind: tckInteger,
+      kind:   tckInteger,
       minInt: LevelRowsLimits.minInt,
       maxInt: LevelRowsLimits.maxInt
     ).some,
@@ -7290,9 +7290,9 @@ proc loadAndSetIcon(a) =
     icons[idx].height = img.height.int32
     icons[idx].pixels = cast[ptr uint8](img.data)
 
-  var icon32 = loadImage(p.dataDir / "icon32.png")
-  var icon48 = loadImage(p.dataDir / "icon48.png")
-  var icon64 = loadImage(p.dataDir / "icon64.png")
+  var icon32  = loadImage(p.dataDir / "icon32.png")
+  var icon48  = loadImage(p.dataDir / "icon48.png")
+  var icon64  = loadImage(p.dataDir / "icon64.png")
   var icon128 = loadImage(p.dataDir / "icon128.png")
   var icon256 = loadImage(p.dataDir / "icon256.png")
 
@@ -7316,10 +7316,10 @@ proc loadFonts(a) =
       logging.error(fmt"Cannot load font '{filename}'")
       raise e
 
-  discard loadFont("sans", p.dataDir / "Roboto-Regular.ttf", a)
-  let boldFont = loadFont("sans-bold", p.dataDir / "Roboto-Bold.ttf", a)
+  discard         loadFont("sans",       p.dataDir / "Roboto-Regular.ttf", a)
+  let boldFont  = loadFont("sans-bold",  p.dataDir / "Roboto-Bold.ttf", a)
   let blackFont = loadFont("sans-black", p.dataDir / "Roboto-Black.ttf", a)
-  let iconFont = loadFont("icon", p.dataDir / "GridmongerIcons.ttf", a)
+  let iconFont  = loadFont("icon",       p.dataDir / "GridmongerIcons.ttf", a)
 
   discard addFallbackFont(a.vg, boldFont, iconFont)
   discard addFallbackFont(a.vg, blackFont, iconFont)

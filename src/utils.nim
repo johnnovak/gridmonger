@@ -1,6 +1,5 @@
 import hashes
-import parsecfg
-import streams
+import typetraits
 import strutils
 import times
 
