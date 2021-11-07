@@ -104,13 +104,13 @@ const
 
 const
   SpecialWalls = @[
-    wIllusoryWall,
-    wInvisibleWall,
     wDoor,
     wLockedDoor,
     wArchway,
     wSecretDoor,
     wOneWayDoorNE,
+    wIllusoryWall,
+    wInvisibleWall,
     wLeverSW,
     wNicheSW,
     wStatueSW,
