@@ -80,7 +80,7 @@ template singleCellAction(map; loc: Location; um;
 # }}}
 
 # {{{ drawClearFloor*()
-proc drawClearFloor*(map; loc: Location, floorColor: byte; um) =
+proc drawClearFloor*(map; loc: Location, floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, fmt"Draw/clear floor", m):
     let l = m.levels[loc.level]
@@ -91,7 +91,7 @@ proc drawClearFloor*(map; loc: Location, floorColor: byte; um) =
 
 # }}}
 # {{{ setFloorColor*()
-proc setFloorColor*(map; loc: Location, floorColor: byte; um) =
+proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor color {EnDash} {floorColor}", m):
     m.setFloorColor(loc, floorColor)
@@ -99,7 +99,7 @@ proc setFloorColor*(map; loc: Location, floorColor: byte; um) =
 # }}}
 # {{{ setOrientedFloor*()
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
-                       floorColor: byte; um) =
+                       floorColor: Natural; um) =
 
   singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
     m.setFloor(loc, f)
@@ -137,14 +137,14 @@ proc eraseCellWalls*(map; loc: Location; um) =
 
 # }}}
 # {{{ excavateTunnel*()
-proc excavateTunnel*(map; loc: Location, floorColor: byte; um) =
+proc excavateTunnel*(map; loc: Location, floorColor: Natural; um) =
   singleCellAction(map, loc, um, "Excavate tunnel", m):
     m.excavateTunnel(loc, floorColor)
 
 # }}}
 # {{{ excavateTrail*()
-proc excavateTrail*(map; loc: Location, bbox: Rect[Natural], floorColor: byte;
-                    um) =
+proc excavateTrail*(map; loc: Location, bbox: Rect[Natural],
+                    floorColor: Natural; um) =
 
   cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Excavate trail", m):
     var loc = loc
@@ -218,7 +218,7 @@ proc eraseLabel*(map; loc: Location; um) =
 # }}}
 
 # {{{ setLink*()
-proc setLink*(map; src, dest: Location, floorColor: byte; um) =
+proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
   let srcFloor = map.getFloor(src)
   let linkType = linkFloorToString(srcFloor)
 
@@ -330,7 +330,7 @@ proc eraseSelection*(map; level: Natural, sel: Selection,
 # }}}
 # {{{ fillSelection*()
 proc fillSelection*(map; level: Natural, sel: Selection,
-                    bbox: Rect[Natural], floorColor: byte; um) =
+                    bbox: Rect[Natural], floorColor: Natural; um) =
 
   let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
 
@@ -378,7 +378,7 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
 # }}}
 # {{{ setSelectionFloorColor*()
 proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
-                             bbox: Rect[Natural], floorColor: byte; um) =
+                             bbox: Rect[Natural], floorColor: Natural; um) =
 
   let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
 

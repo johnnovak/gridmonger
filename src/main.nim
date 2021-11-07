@@ -252,7 +252,7 @@ type
     statusCommands:    seq[string]
 
     currSpecialWall:   Natural
-    currFloorColor:    byte
+    currFloorColor:    Natural
 
 
     manualNoteTooltipState: ManualNoteTooltipState
@@ -720,11 +720,40 @@ type AppShortcut = enum
   scEraseCell,
   scDrawClearFloor,
   scToggleFloorOrientation,
+
   scSetFloorColor,
   scPickFloorColor,
+  scPreviousFloorColor,
+  scNextFloorColor,
+
+  scSelectFloorColor1,
+  scSelectFloorColor2,
+  scSelectFloorColor3,
+  scSelectFloorColor4,
+  scSelectFloorColor5,
+  scSelectFloorColor6,
+  scSelectFloorColor7,
+  scSelectFloorColor8,
+  scSelectFloorColor9,
+  scSelectFloorColor10,
 
   scDrawWall,
   scDrawSpecialWall,
+  scPreviousSpecialWall,
+  scNextSpecialWall,
+
+  scSelectSpecialWall1,
+  scSelectSpecialWall2,
+  scSelectSpecialWall3,
+  scSelectSpecialWall4,
+  scSelectSpecialWall5,
+  scSelectSpecialWall6,
+  scSelectSpecialWall7,
+  scSelectSpecialWall8,
+  scSelectSpecialWall9,
+  scSelectSpecialWall10,
+  scSelectSpecialWall11,
+  scSelectSpecialWall12,
 
   scEraseTrail,
   scExcavateTrail,
@@ -733,14 +762,8 @@ type AppShortcut = enum
   scJumpToLinkedCell,
   scLinkCell,
 
-  scPreviousSpecialWall,
-  scNextSpecialWall,
-
   scPreviousLevel,
   scNextLevel,
-
-  scPreviousFloorColor,
-  scNextFloorColor,
 
   scZoomIn,
   scZoomOut,
@@ -855,10 +878,34 @@ let g_appShortcuts = {
   scPreviousFloorColor:        @[mkKeyShortcut(keyComma,  {})],
   scNextFloorColor:            @[mkKeyShortcut(keyPeriod, {})],
 
+  scSelectFloorColor1:         @[mkKeyShortcut(key1,      {mkCtrl})],
+  scSelectFloorColor2:         @[mkKeyShortcut(key2,      {mkCtrl})],
+  scSelectFloorColor3:         @[mkKeyShortcut(key3,      {mkCtrl})],
+  scSelectFloorColor4:         @[mkKeyShortcut(key4,      {mkCtrl})],
+  scSelectFloorColor5:         @[mkKeyShortcut(key5,      {mkCtrl})],
+  scSelectFloorColor6:         @[mkKeyShortcut(key6,      {mkCtrl})],
+  scSelectFloorColor7:         @[mkKeyShortcut(key7,      {mkCtrl})],
+  scSelectFloorColor8:         @[mkKeyShortcut(key8,      {mkCtrl})],
+  scSelectFloorColor9:         @[mkKeyShortcut(key9,      {mkCtrl})],
+  scSelectFloorColor10:        @[mkKeyShortcut(key0,      {mkCtrl})],
+
   scDrawWall:                  @[mkKeyShortcut(keyW,            {})],
   scDrawSpecialWall:           @[mkKeyShortcut(keyR,            {})],
   scPreviousSpecialWall:       @[mkKeyShortcut(keyLeftBracket,  {})],
   scNextSpecialWall:           @[mkKeyShortcut(keyRightBracket, {})],
+
+  scSelectSpecialWall1:        @[mkKeyShortcut(key1,      {mkAlt})],
+  scSelectSpecialWall2:        @[mkKeyShortcut(key2,      {mkAlt})],
+  scSelectSpecialWall3:        @[mkKeyShortcut(key3,      {mkAlt})],
+  scSelectSpecialWall4:        @[mkKeyShortcut(key4,      {mkAlt})],
+  scSelectSpecialWall5:        @[mkKeyShortcut(key5,      {mkAlt})],
+  scSelectSpecialWall6:        @[mkKeyShortcut(key6,      {mkAlt})],
+  scSelectSpecialWall7:        @[mkKeyShortcut(key7,      {mkAlt})],
+  scSelectSpecialWall8:        @[mkKeyShortcut(key8,      {mkAlt})],
+  scSelectSpecialWall9:        @[mkKeyShortcut(key9,      {mkAlt})],
+  scSelectSpecialWall10:       @[mkKeyShortcut(key0,      {mkAlt})],
+  scSelectSpecialWall11:       @[mkKeyShortcut(keyMinus,  {mkAlt})],
+  scSelectSpecialWall12:       @[mkKeyShortcut(keyEqual,  {mkAlt})],
 
   scEraseTrail:                @[mkKeyShortcut(keyX,      {})],
   scExcavateTrail:             @[mkKeyShortcut(keyD,      {mkCtrl, mkAlt})],
@@ -2496,9 +2543,9 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 proc openAboutDialog(a) =
   a.dialog.aboutDialog.isOpen = true
 
-proc openUserManualAction(a)
-proc openWebsiteAction(a)
-proc openForumAction(a)
+proc openUserManual(a)
+proc openWebsite(a)
+proc openForum(a)
 
 proc aboutDialog(dlg: var AboutDialogParams; a) =
   alias(al, a.aboutLogo)
@@ -2555,17 +2602,17 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   y += 50
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Manual",
                 style=a.theme.buttonStyle):
-    openUserManualAction(a)
+    openUserManual(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Website",
                 style=a.theme.buttonStyle):
-    openWebsiteAction(a)
+    openWebsite(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Forum",
                 style=a.theme.buttonStyle):
-    openForumAction(a)
+    openForum(a)
 
   proc closeAction(dlg: var AboutDialogParams; a) =
     a.aboutLogo.updateLogoImage = true
@@ -2773,7 +2820,7 @@ proc openSaveDiscardMapDialog(action: proc (a: var AppContext); a) =
   dlg.isOpen = true
 
 
-proc saveMapAction(a)
+proc saveMap(a)
 
 proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   const
@@ -2803,7 +2850,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   proc saveAction(dlg: var SaveDiscardMapDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
-    saveMapAction(a)
+    saveMap(a)
     dlg.action(a)
 
   proc discardAction(dlg: var SaveDiscardMapDialogParams; a) =
@@ -4648,23 +4695,8 @@ proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
 # }}}
 
 # }}}
-# {{{ Actions
 
-# {{{ openUserManualAction()
-proc openUserManualAction(a) =
-  openDefaultBrowser(a.path.manualDir / "index.html")
-
-# }}}
-# {{{ openWebsiteAction()
-proc openWebsiteAction(a) =
-  openDefaultBrowser("https://gridmonger.johnnovak.net")
-
-# }}}
-# {{{ openForumAction()
-proc openForumAction(a) =
-  openDefaultBrowser("https://gridmonger.johnnovak.net")
-
-# }}}
+# {{{ Undoable actions
 
 # {{{ undoAction()
 proc undoAction(a) =
@@ -4690,134 +4722,6 @@ proc redoAction(a) =
                      fmt"Redid action: {undoStateData.actionName}", a)
   else:
     setStatusMessage(IconWarning, "Nothing to redo", a)
-# }}}
-
-# {{{ newMapAction()
-proc newMapAction(a) =
-  if a.doc.undoManager.isModified:
-    openSaveDiscardMapDialog(action=openNewMapDialog, a)
-  else:
-    openNewMapDialog(a)
-
-# }}}
-# {{{ openMapAction()
-proc openMapAction(a) =
-
-  proc openMap(a) =
-    when defined(DEBUG): discard
-    else:
-      let filename = fileDialog(fdOpenFile,
-                                filters=GridmongerMapFileFilter)
-      if filename != "":
-        discard loadMap(filename, a)
-
-  if a.doc.undoManager.isModified:
-    openSaveDiscardMapDialog(action=openMap, a)
-  else:
-    openMap(a)
-
-# }}}
-# {{{ saveMapAsAction()
-proc saveMapAsAction(a) =
-  when not defined(DEBUG):
-    var filename = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
-    if filename != "":
-      filename = addFileExt(filename, MapFileExt)
-
-      saveMap(filename, autosave=false, a)
-      a.doc.filename = filename
-
-# }}}
-# {{{ saveMapAction()
-proc saveMapAction(a) =
-  if a.doc.filename != "": saveMap(a.doc.filename, autosave=false, a)
-  else: saveMapAsAction(a)
-
-# }}}
-
-# {{{ reloadThemeAction()
-proc reloadThemeAction(a) =
-
-  proc reloadTheme(a) =
-    a.theme.nextThemeIndex = a.theme.currThemeIndex.some
-
-  if a.themeEditor.modified:
-    openSaveDiscardThemeDialog(action=reloadTheme, a)
-  else:
-    reloadTheme(a)
-
-# }}}
-# {{{ prevThemeAction()
-proc prevThemeAction(a) =
-
-  proc prevTheme(a) =
-    var i = a.theme.currThemeIndex
-    if i == 0: i = a.theme.themeNames.high else: dec(i)
-    a.theme.nextThemeIndex = i.some
-
-  if a.themeEditor.modified:
-    openSaveDiscardThemeDialog(action=prevTheme, a)
-  else:
-    prevTheme(a)
-
-# }}}
-# {{{ nextThemeAction()
-proc nextThemeAction(a) =
-
-  proc nextTheme(a) =
-    var i = a.theme.currThemeIndex
-    inc(i)
-    if i > a.theme.themeNames.high: i = 0
-    a.theme.nextThemeIndex = i.some
-
-  if a.themeEditor.modified:
-    openSaveDiscardThemeDialog(action=nextTheme, a)
-  else:
-    nextTheme(a)
-
-# }}}
-
-# {{{ prevLevelAction()
-proc prevLevelAction(a) =
-  var si = currSortedLevelIdx(a)
-  if si > 0:
-    var cur = a.ui.cursor
-    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
-    setCursor(cur, a)
-
-# }}}
-# {{{ nextLevelAction()
-proc nextLevelAction(a) =
-  var si = currSortedLevelIdx(a)
-  if si < a.doc.map.levels.len-1:
-    var cur = a.ui.cursor
-    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
-    setCursor(cur, a)
-
-# }}}
-
-# {{{ centerCursorAfterZoom()
-proc centerCursorAfterZoom(a) =
-  alias(dp, a.ui.drawLevelParams)
-  let cur = a.ui.cursor
-
-  let viewCol = round(a.ui.lastCursorViewX / dp.gridSize).int
-  let viewRow = round(a.ui.lastCursorViewY / dp.gridSize).int
-  dp.viewStartCol = max(cur.col - viewCol, 0)
-  dp.viewStartRow = max(cur.row - viewRow, 0)
-
-# }}}
-# {{{ zoomInAction()
-proc zoomInAction(a) =
-  incZoomLevel(a.theme.levelStyle, a.ui.drawLevelParams)
-  centerCursorAfterZoom(a)
-
-# }}}
-# {{{ zoomOutAction()
-proc zoomOutAction(a) =
-  decZoomLevel(a.theme.levelStyle, a.ui.drawLevelParams)
-  centerCursorAfterZoom(a)
-
 # }}}
 
 # {{{ setFloorAction()
@@ -4877,22 +4781,181 @@ proc startDrawSpecialWallAction(a) =
 
 # }}}
 
-# {{{ prevFloorColorAction()
-proc prevFloorColorAction(a) =
-  if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
-  else: a.ui.currFloorColor = a.theme.levelStyle.floorBackgroundColor.high.byte
+# }}}
+# {{{ Non-undoable actions
+# {{{ openUserManual()
+proc openUserManual(a) =
+  openDefaultBrowser(a.path.manualDir / "index.html")
 
 # }}}
-# {{{ nextFloorColorAction()
-proc nextFloorColorAction(a) =
-  if a.ui.currFloorColor < a.theme.levelStyle.floorBackgroundColor.high.byte:
+# {{{ openWebsite()
+proc openWebsite(a) =
+  openDefaultBrowser("https://gridmonger.johnnovak.net")
+
+# }}}
+# {{{ openForum()
+proc openForum(a) =
+  openDefaultBrowser("https://gridmonger.johnnovak.net")
+
+# }}}
+
+# {{{ newMap()
+proc newMap(a) =
+  if a.doc.undoManager.isModified:
+    openSaveDiscardMapDialog(action=openNewMapDialog, a)
+  else:
+    openNewMapDialog(a)
+
+# }}}
+# {{{ openMap()
+proc openMap(a) =
+
+  proc doOpenMap(a) =
+    when defined(DEBUG): discard
+    else:
+      let filename = fileDialog(fdOpenFile,
+                                filters=GridmongerMapFileFilter)
+      if filename != "":
+        discard loadMap(filename, a)
+
+  if a.doc.undoManager.isModified:
+    openSaveDiscardMapDialog(action=doOpenMap, a)
+  else:
+    doOpenMap(a)
+
+# }}}
+# {{{ saveMapAs()
+proc saveMapAs(a) =
+  when not defined(DEBUG):
+    var filename = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
+    if filename != "":
+      filename = addFileExt(filename, MapFileExt)
+
+      saveMap(filename, autosave=false, a)
+      a.doc.filename = filename
+
+# }}}
+# {{{ saveMap()
+proc saveMap(a) =
+  if a.doc.filename != "": saveMap(a.doc.filename, autosave=false, a)
+  else: saveMapAs(a)
+
+# }}}
+
+# {{{ reloadTheme()
+proc reloadTheme(a) =
+
+  proc doReloadTheme(a) =
+    a.theme.nextThemeIndex = a.theme.currThemeIndex.some
+
+  if a.themeEditor.modified:
+    openSaveDiscardThemeDialog(action=doReloadTheme, a)
+  else:
+    doReloadTheme(a)
+
+# }}}
+# {{{ selectPrevTheme()
+proc selectPrevTheme(a) =
+
+  proc prevTheme(a) =
+    var i = a.theme.currThemeIndex
+    if i == 0: i = a.theme.themeNames.high else: dec(i)
+    a.theme.nextThemeIndex = i.some
+
+  if a.themeEditor.modified:
+    openSaveDiscardThemeDialog(action=prevTheme, a)
+  else:
+    prevTheme(a)
+
+# }}}
+# {{{ selectNextTheme()
+proc selectNextTheme(a) =
+
+  proc nextTheme(a) =
+    var i = a.theme.currThemeIndex
+    inc(i)
+    if i > a.theme.themeNames.high: i = 0
+    a.theme.nextThemeIndex = i.some
+
+  if a.themeEditor.modified:
+    openSaveDiscardThemeDialog(action=nextTheme, a)
+  else:
+    nextTheme(a)
+
+# }}}
+
+# {{{ selectPrevLevel()
+proc selectPrevLevel(a) =
+  var si = currSortedLevelIdx(a)
+  if si > 0:
+    var cur = a.ui.cursor
+    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
+    setCursor(cur, a)
+
+# }}}
+# {{{ selectNextLevel()
+proc selectNextLevel(a) =
+  var si = currSortedLevelIdx(a)
+  if si < a.doc.map.levels.len-1:
+    var cur = a.ui.cursor
+    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
+    setCursor(cur, a)
+
+# }}}
+
+# {{{ centerCursorAfterZoom()
+proc centerCursorAfterZoom(a) =
+  alias(dp, a.ui.drawLevelParams)
+  let cur = a.ui.cursor
+
+  let viewCol = round(a.ui.lastCursorViewX / dp.gridSize).int
+  let viewRow = round(a.ui.lastCursorViewY / dp.gridSize).int
+  dp.viewStartCol = max(cur.col - viewCol, 0)
+  dp.viewStartRow = max(cur.row - viewRow, 0)
+
+# }}}
+# {{{ zoomIn()
+proc zoomIn(a) =
+  incZoomLevel(a.theme.levelStyle, a.ui.drawLevelParams)
+  centerCursorAfterZoom(a)
+
+# }}}
+# {{{ zoomOut()
+proc zoomOut(a) =
+  decZoomLevel(a.theme.levelStyle, a.ui.drawLevelParams)
+  centerCursorAfterZoom(a)
+
+# }}}
+
+# {{{ selectSpecialWall()
+proc selectSpecialWall(index: Natural; a) =
+  assert index <= SpecialWalls.high
+  a.ui.currSpecialWall = index
+
+# }}}
+
+# {{{ selectPrevFloorColor()
+proc selectPrevFloorColor(a) =
+  if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
+  else: a.ui.currFloorColor = a.theme.levelStyle.floorBackgroundColor.high
+
+# }}}
+# {{{ selectNextFloorColor()
+proc selectNextFloorColor(a) =
+  if a.ui.currFloorColor < a.theme.levelStyle.floorBackgroundColor.high:
     inc(a.ui.currFloorColor)
   else: a.ui.currFloorColor = 0
 
 # }}}
-# {{{ pickFloorColorAction()
-proc pickFloorColorAction(a) =
-  a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor).byte
+# {{{ pickFloorColor()
+proc pickFloorColor(a) =
+  a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor)
+
+# }}}
+# {{{ selectFloorColor()
+proc selectFloorColor(index: Natural; a) =
+  assert index <= LevelStyle.floorBackgroundColor.high
+  a.ui.currFloorColor = index
 
 # }}}
 
@@ -5081,8 +5144,8 @@ proc handleGlobalKeyEvents(a) =
         if handleMoveCursor(ke, moveKeys, a):
           setStatusMessage("moved", a)
 
-      if   ke.isShortcutDown(scPreviousLevel, repeat=true): prevLevelAction(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true): nextLevelAction(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
 
       let cur = a.ui.cursor
 
@@ -5162,6 +5225,19 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scCycleFloorGroup6Backward):
         setOrCycleFloorAction(FloorsKey6, forward=false, a)
 
+      elif ke.isShortcutDown(scSelectSpecialWall1):  selectSpecialWall(0, a)
+      elif ke.isShortcutDown(scSelectSpecialWall2):  selectSpecialWall(1, a)
+      elif ke.isShortcutDown(scSelectSpecialWall3):  selectSpecialWall(2, a)
+      elif ke.isShortcutDown(scSelectSpecialWall4):  selectSpecialWall(3, a)
+      elif ke.isShortcutDown(scSelectSpecialWall5):  selectSpecialWall(4, a)
+      elif ke.isShortcutDown(scSelectSpecialWall6):  selectSpecialWall(5, a)
+      elif ke.isShortcutDown(scSelectSpecialWall7):  selectSpecialWall(6, a)
+      elif ke.isShortcutDown(scSelectSpecialWall8):  selectSpecialWall(7, a)
+      elif ke.isShortcutDown(scSelectSpecialWall9):  selectSpecialWall(8, a)
+      elif ke.isShortcutDown(scSelectSpecialWall10): selectSpecialWall(9, a)
+      elif ke.isShortcutDown(scSelectSpecialWall11): selectSpecialWall(10, a)
+      elif ke.isShortcutDown(scSelectSpecialWall12): selectSpecialWall(11, a)
+
       elif ke.isShortcutDown(scPreviousSpecialWall, repeat=true):
         if ui.currSpecialWall > 0: dec(ui.currSpecialWall)
         else: ui.currSpecialWall = SpecialWalls.high
@@ -5193,12 +5269,23 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconWarning, "No trail to clear", a)
 
       elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
-        prevFloorColorAction(a)
+        selectPrevFloorColor(a)
 
       elif ke.isShortcutDown(scNextFloorColor, repeat=true):
-        nextFloorColorAction(a)
+        selectNextFloorColor(a)
 
-      elif ke.isShortcutDown(scPickFloorColor): pickFloorColorAction(a)
+      elif ke.isShortcutDown(scPickFloorColor): pickFloorColor(a)
+
+      elif ke.isShortcutDown(scSelectFloorColor1):  selectFloorColor(0, a)
+      elif ke.isShortcutDown(scSelectFloorColor2):  selectFloorColor(1, a)
+      elif ke.isShortcutDown(scSelectFloorColor3):  selectFloorColor(2, a)
+      elif ke.isShortcutDown(scSelectFloorColor4):  selectFloorColor(3, a)
+      elif ke.isShortcutDown(scSelectFloorColor5):  selectFloorColor(4, a)
+      elif ke.isShortcutDown(scSelectFloorColor6):  selectFloorColor(5, a)
+      elif ke.isShortcutDown(scSelectFloorColor7):  selectFloorColor(6, a)
+      elif ke.isShortcutDown(scSelectFloorColor8):  selectFloorColor(7, a)
+      elif ke.isShortcutDown(scSelectFloorColor9):  selectFloorColor(8, a)
+      elif ke.isShortcutDown(scSelectFloorColor10): selectFloorColor(9, a)
 
       elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
       elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
@@ -5268,12 +5355,12 @@ proc handleGlobalKeyEvents(a) =
           setStatusMessage(IconWarning, "Cannot link current cell", a)
 
       elif ke.isShortcutDown(scZoomIn, repeat=true):
-        zoomInAction(a)
+        zoomIn(a)
         setStatusMessage(IconZoomIn,
           fmt"Zoomed in – level {dp.getZoomLevel()}", a)
 
       elif ke.isShortcutDown(scZoomOut, repeat=true):
-        zoomOutAction(a)
+        zoomOut(a)
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
@@ -5326,7 +5413,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scDeleteLevel):
         openDeleteLevelDialog(a)
 
-      elif ke.isShortcutDown(scNewMap): newMapAction(a)
+      elif ke.isShortcutDown(scNewMap): newMap(a)
       elif ke.isShortcutDown(scEditMapProps): openEditMapPropsDialog(a)
 
       elif ke.isShortcutDown(scEditLevelProps):
@@ -5345,16 +5432,16 @@ proc handleGlobalKeyEvents(a) =
             a
           )
 
-      elif ke.isShortcutDown(scOpenMap):       openMapAction(a)
-      elif ke.isShortcutDown(scSaveMap):       saveMapAction(a)
-      elif ke.isShortcutDown(scSaveMapAs):     saveMapAsAction(a)
+      elif ke.isShortcutDown(scOpenMap):       openMap(a)
+      elif ke.isShortcutDown(scSaveMap):       saveMap(a)
+      elif ke.isShortcutDown(scSaveMapAs):     saveMapAs(a)
 
-      elif ke.isShortcutDown(scReloadTheme):   reloadThemeAction(a)
-      elif ke.isShortcutDown(scPreviousTheme): prevThemeAction(a)
-      elif ke.isShortcutDown(scNextTheme):     nextThemeAction(a)
+      elif ke.isShortcutDown(scReloadTheme):   reloadTheme(a)
+      elif ke.isShortcutDown(scPreviousTheme): selectPrevTheme(a)
+      elif ke.isShortcutDown(scNextTheme):     selectNextTheme(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
-        openUserManualAction(a)
+        openUserManual(a)
 
       elif ke.isShortcutDown(scShowAboutDialog):
         openAboutDialog(a)
@@ -5606,23 +5693,23 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped level to selection", a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
 
       elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
-        prevFloorColorAction(a)
+        selectPrevFloorColor(a)
 
       elif ke.isShortcutDown(scNextFloorColor, repeat=true):
-        nextFloorColorAction(a)
+        selectNextFloorColor(a)
 
-      elif ke.isShortcutDown(scPickFloorColor): pickFloorColorAction(a)
+      elif ke.isShortcutDown(scPickFloorColor): pickFloorColor(a)
 
       elif ke.isShortcutDown(scCancel):
         exitSelectMode(a)
         a.clearStatusMessage()
 
       elif ke.isShortcutDown(scOpenUserManual):
-        openUserManualAction(a)
+        openUserManual(a)
 
     # }}}
     # {{{ emSelectDraw, emSelectErase
@@ -5687,15 +5774,15 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
-        openUserManualAction(a)
+        openUserManual(a)
 
     # }}}
     # {{{ emMovePreview
@@ -5719,8 +5806,8 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
 
       elif ke.isShortcutDown(scCancel):
         undoAction(a)
@@ -5729,7 +5816,7 @@ proc handleGlobalKeyEvents(a) =
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
-        openUserManualAction(a)
+        openUserManual(a)
 
     # }}}
     # {{{ emNudgePreview
@@ -5738,8 +5825,8 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = a.ui.cursor
 
-      if   ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
+      if   ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
 
       elif ke.isShortcutDown(scAccept):
         let newCur = actions.nudgeLevel(map, cur,
@@ -5756,7 +5843,7 @@ proc handleGlobalKeyEvents(a) =
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
-        openUserManualAction(a)
+        openUserManual(a)
 
     # }}}
     # {{{ emSetCellLink
@@ -5766,8 +5853,8 @@ proc handleGlobalKeyEvents(a) =
         let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
         discard handleMoveCursor(ke, moveKeys, a)
 
-      if   ke.isShortcutDown(scPreviousLevel, repeat=true): prevLevelAction(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true): nextLevelAction(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
 
       let cur = a.ui.cursor
 
@@ -5794,15 +5881,15 @@ proc handleGlobalKeyEvents(a) =
                            fmt"{capitalizeAscii(linkType)} link destination set",
                            a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomInAction(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOutAction(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
 
       elif ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
-        openUserManualAction(a)
+        openUserManual(a)
 
     # }}}
 
@@ -5812,25 +5899,25 @@ proc handleGlobalKeyEvents_NoLevels(a) =
   if hasKeyEvent():
     let ke = koi.currEvent()
 
-    if   ke.isShortcutDown(scNewMap):            newMapAction(a)
+    if   ke.isShortcutDown(scNewMap):            newMap(a)
     elif ke.isShortcutDown(scEditMapProps):      openEditMapPropsDialog(a)
 
-    elif ke.isShortcutDown(scOpenMap):           openMapAction(a)
-    elif ke.isShortcutDown(scSaveMap):           saveMapAction(a)
-    elif ke.isShortcutDown(scSaveMapAs):         saveMapAsAction(a)
+    elif ke.isShortcutDown(scOpenMap):           openMap(a)
+    elif ke.isShortcutDown(scSaveMap):           saveMap(a)
+    elif ke.isShortcutDown(scSaveMapAs):         saveMapAs(a)
 
     elif ke.isShortcutDown(scNewLevel):          openNewLevelDialog(a)
 
-    elif ke.isShortcutDown(scReloadTheme):       reloadThemeAction(a)
-    elif ke.isShortcutDown(scPreviousTheme):     prevThemeAction(a)
-    elif ke.isShortcutDown(scNextTheme):         nextThemeAction(a)
+    elif ke.isShortcutDown(scReloadTheme):       reloadTheme(a)
+    elif ke.isShortcutDown(scPreviousTheme):     selectPrevTheme(a)
+    elif ke.isShortcutDown(scNextTheme):         selectNextTheme(a)
 
     elif ke.isShortcutDown(scEditPreferences):   openPreferencesDialog(a)
 
     elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
     elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
 
-    elif ke.isShortcutDown(scOpenUserManual):    openUserManualAction(a)
+    elif ke.isShortcutDown(scOpenUserManual):    openUserManual(a)
     elif ke.isShortcutDown(scShowAboutDialog):   openAboutDialog(a)
 
     # Toggle options

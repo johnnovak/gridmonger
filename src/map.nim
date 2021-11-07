@@ -171,8 +171,8 @@ proc getFloorColor*(m; loc: Location): Natural {.inline.} =
 # }}}
 # {{{ setFloorColor*()
 proc setFloorColor*(m; loc: Location,
-                    floorColor: byte) {.inline.} =
-  m.levels[loc.level].setFloorColor(loc.row, loc.col, floorColor)
+                    floorColor: Natural) {.inline.} =
+  m.levels[loc.level].setFloorColor(loc.row, loc.col, floorColor.byte)
 
 # }}}
 
@@ -204,7 +204,7 @@ proc setTrail*(m; loc: Location, t: bool) =
 # }}}
 
 # {{{ excavateTunnel*()
-proc excavateTunnel*(m; loc: Location, floorColor: byte) =
+proc excavateTunnel*(m; loc: Location, floorColor: Natural) =
   alias(l, m.levels[loc.level])
   alias(c, loc.col)
   alias(r, loc.row)
