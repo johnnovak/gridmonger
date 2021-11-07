@@ -120,39 +120,39 @@ const
 
   SpecialWallTooltips = SpecialWalls.mapIt(($it).title())
 
-  FloorsKey1 = @[
+  FloorGroup1 = @[
     fDoor,
     fLockedDoor,
     fArchway
   ]
 
-  FloorsKey2 = @[
+  FloorGroup2 = @[
     fSecretDoor,
     fSecretDoorBlock,
     fOneWayDoor1,
     fOneWayDoor2
   ]
 
-  FloorsKey3 = @[
+  FloorGroup3 = @[
     fPressurePlate,
     fHiddenPressurePlate
   ]
 
-  FloorsKey4 = @[
+  FloorGroup4 = @[
     fClosedPit,
     fOpenPit,
     fHiddenPit,
     fCeilingPit
   ]
 
-  FloorsKey5 = @[
+  FloorGroup5 = @[
     fTeleportSource,
     fTeleportDestination,
     fSpinner,
     fInvisibleBarrier
   ]
 
-  FloorsKey6 = @[
+  FloorGroup6 = @[
     fStairsDown,
     fStairsUp,
     fEntranceDoor,
@@ -4732,8 +4732,8 @@ proc setFloorAction(f: Floor; a) =
   setStatusMessage(fmt"Set floor type – {f}", a)
 
 # }}}
-# {{{ setOrCycleFloorAction()
-proc setOrCycleFloorAction(floors: seq[Floor], forward: bool; a) =
+# {{{ cycleFloorGroupAction()
+proc cycleFloorGroupAction(floors: seq[Floor], forward: bool; a) =
   var floor = a.doc.map.getFloor(a.ui.cursor)
 
   if floor != fEmpty:
@@ -5190,40 +5190,40 @@ proc handleGlobalKeyEvents(a) =
         startDrawSpecialWallAction(a)
 
       elif ke.isShortcutDown(scCycleFloorGroup1Forward):
-        setOrCycleFloorAction(FloorsKey1, forward=true, a)
+        cycleFloorGroupAction(FloorGroup1, forward=true, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup2Forward):
-        setOrCycleFloorAction(FloorsKey2, forward=true, a)
+        cycleFloorGroupAction(FloorGroup2, forward=true, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup3Forward):
-        setOrCycleFloorAction(FloorsKey3, forward=true, a)
+        cycleFloorGroupAction(FloorGroup3, forward=true, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup4Forward):
-        setOrCycleFloorAction(FloorsKey4, forward=true, a)
+        cycleFloorGroupAction(FloorGroup4, forward=true, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup5Forward):
-        setOrCycleFloorAction(FloorsKey5, forward=true, a)
+        cycleFloorGroupAction(FloorGroup5, forward=true, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup6Forward):
-        setOrCycleFloorAction(FloorsKey6, forward=true, a)
+        cycleFloorGroupAction(FloorGroup6, forward=true, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup1Backward):
-        setOrCycleFloorAction(FloorsKey1, forward=false, a)
+        cycleFloorGroupAction(FloorGroup1, forward=false, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup2Backward):
-        setOrCycleFloorAction(FloorsKey2, forward=false, a)
+        cycleFloorGroupAction(FloorGroup2, forward=false, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup3Backward):
-        setOrCycleFloorAction(FloorsKey3, forward=false, a)
+        cycleFloorGroupAction(FloorGroup3, forward=false, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup4Backward):
-        setOrCycleFloorAction(FloorsKey4, forward=false, a)
+        cycleFloorGroupAction(FloorGroup4, forward=false, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup5Backward):
-        setOrCycleFloorAction(FloorsKey5, forward=false, a)
+        cycleFloorGroupAction(FloorGroup5, forward=false, a)
 
       elif ke.isShortcutDown(scCycleFloorGroup6Backward):
-        setOrCycleFloorAction(FloorsKey6, forward=false, a)
+        cycleFloorGroupAction(FloorGroup6, forward=false, a)
 
       elif ke.isShortcutDown(scSelectSpecialWall1):  selectSpecialWall(0, a)
       elif ke.isShortcutDown(scSelectSpecialWall2):  selectSpecialWall(1, a)

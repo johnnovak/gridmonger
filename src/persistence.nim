@@ -334,10 +334,10 @@ proc readLevelProperties_v1(rr): Level =
   result.notes = notes
 
 # }}}
-# {{{ readLevelCells_v1_compr()
+# {{{ readLevelCells_v1()
 {.push warning[HoleEnumConv]:off.}
 
-proc readLevelCells_v1_compr(rr; numCells: Natural): seq[Cell] =
+proc readLevelCells_v1(rr; numCells: Natural): seq[Cell] =
 
   template readLayer(fieldType: typedesc, field, checkField: untyped) =
     let ct = rr.read(uint8)
@@ -406,48 +406,6 @@ proc readLevelCells_v1_compr(rr; numCells: Natural): seq[Cell] =
 
   readLayer(bool): c.trail
   do: checkBool(data, "lvl.cell.trail")
-
-  result = cells
-
-{.pop}
-
-# }}}
-# {{{ readLevelCells_v1()
-{.push warning[HoleEnumConv]:off.}
-
-proc readLevelCells_v1(rr; numCells: Natural): seq[Cell] =
-  debug(fmt"Reading level cells...")
-
-  var cells: seq[Cell]
-  newSeq[Cell](cells, numCells)
-
-  for cell in cells.mitems:
-    let floor = rr.read(uint8)
-    checkEnum(floor, "lvl.cell.floor", Floor)
-
-    let floorOrientation = rr.read(uint8)
-    checkEnum(floorOrientation, "lvl.cell.floorOrientation", Orientation)
-
-    let floorColor = rr.read(uint8)
-    checkValueRange(floorColor, "lvl.cell.floorColor", CellFloorColorLimits)
-
-    let wallN = rr.read(uint8)
-    checkEnum(wallN, "lvl.cell.wallN", Wall)
-
-    let wallW = rr.read(uint8)
-    checkEnum(wallW, "lvl.cell.wallW", Wall)
-
-    let trail = rr.read(uint8)
-    checkBool(trail, "lvl.cell.trail")
-
-    cell = Cell(
-      floor: floor.Floor,
-      floorOrientation: floorOrientation.Orientation,
-      floorColor: floorColor,
-      wallN: wallN.Wall,
-      wallW: wallW.Wall,
-      trail: trail.bool
-    )
 
   result = cells
 
@@ -684,7 +642,7 @@ proc readLevel_v1(rr): Level =
   # +1 needed because of the south & east borders
   let numCells = (level.rows+1) * (level.cols+1)
 
-  level.cellGrid.cells = readLevelCells_v1_compr(rr, numCells)
+  level.cellGrid.cells = readLevelCells_v1(rr, numCells)
 
   if annoCursor.isSome:
     rr.cursor = annoCursor.get
