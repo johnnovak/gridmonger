@@ -659,6 +659,18 @@ const
   )
 
 
+type DiagonalKeys = object
+  upLeft, upRight, downLeft, downRight: set[Key]
+
+const
+  DiagonalKeysWall = DiagonalKeys(
+    upLeft    : {keyKp7, keyY},
+    upRight   : {keyKp9, keyU},
+    downLeft  : {keyKp1, keyB},
+    downRight : {keyKp3, keyN}
+  )
+
+
 type AppShortcut = enum
   # General
   scNextTextField,
