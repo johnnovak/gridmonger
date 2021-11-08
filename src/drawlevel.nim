@@ -1068,205 +1068,6 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
 
 # }}}
 
-# {{{ Draw floor types
-# {{{ drawSecretDoorBlock()
-proc drawSecretDoorBlock(x, y: float, isCursorActive: bool,
-                         floorColor: Natural; ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-
-  alias(vg, ctx.vg)
-
-  vg.beginPath()
-  vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
-  vg.rect(x, y, dp.gridSize, dp.gridSize)
-  vg.fill()
-
-  let
-    icon = "S"
-    fontSizeFactor = DefaultIconFontSizeFactor
-    gs = dp.gridSize
-
-  var bgCol = calcBlendedFloorColor(floorColor, ls=ctx.ls)
-  if isCursorActive:
-    bgCol = lerp(bgCol, ls.cursorColor, ls.cursorColor.a)
-              .withAlpha(1.0)
-
-  let o = if dp.zoomLevel > 11: 3 else: 2
-
-  drawIcon(x-o, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x+o, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y-o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-  drawIcon(x, y+o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
-
-  drawIcon(x, y, 0, 0, icon, gs, ls.foregroundNormalColor, fontSizeFactor, vg)
-
-# }}}
-# {{{ drawPressurePlate()
-proc drawPressurePlate(x, y: float; ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  let
-    offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs
-    sw = dp.thinStrokeWidth
-
-  vg.lineCap(lcjRound)
-  vg.strokeColor(ls.foregroundNormalColor)
-  vg.strokeWidth(sw)
-
-  vg.beginPath()
-  vg.rect(snap(x + offs, sw), snap(y + offs, sw), a, a)
-  vg.stroke()
-
-# }}}
-# {{{ drawHiddenPressurePlate()
-proc drawHiddenPressurePlate(x, y: float; ctx) =
-  alias(ls, ctx.ls)
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  let
-    offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs
-    sw = dp.thinStrokeWidth
-
-  vg.lineCap(lcjRound)
-  vg.strokeColor(ls.foregroundLightColor)
-  vg.strokeWidth(sw)
-
-  vg.beginPath()
-  vg.rect(snap(x + offs, sw), snap(y + offs, sw), a, a)
-  vg.stroke()
-
-# }}}
-# {{{ drawOpenPitWithColor()
-proc drawOpenPitWithColor(x, y: float, color: Color; ctx) =
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  let
-    offs = (dp.gridSize * 0.3).int
-    sw = dp.thinStrokeWidth
-
-  var x1, y1: float
-  if dp.lineWidth == lwThin:
-    x1 = x + offs
-    y1 = y + offs
-  else:
-    let sw2 = sw*0.5
-    x1 = snap(x + offs - sw2, sw)
-    y1 = snap(y + offs - sw2, sw)
-
-  let a = dp.gridSize - 2*offs + sw
-
-  vg.fillColor(color)
-  vg.beginPath()
-  vg.rect(x1, y1, a, a)
-  vg.fill()
-
-# }}}
-# {{{ drawOpenPit()
-proc drawOpenPit(x, y: float; ctx) =
-  drawOpenPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
-
-# }}}
-# {{{ drawCeilingPit()
-proc drawCeilingPit(x, y: float; ctx) =
-  drawOpenPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
-
-# }}}
-# {{{ drawClosedPitWithColor()
-proc drawClosedPitWithColor(x, y: float, color: Color; ctx) =
-  alias(dp, ctx.dp)
-  alias(vg, ctx.vg)
-
-  let
-    offs = (dp.gridSize * 0.3).int
-    a = dp.gridSize - 2*offs
-    sw = dp.thinStrokeWidth
-    x1 = snap(x + offs, sw)
-    y1 = snap(y + offs, sw)
-    x2 = snap(x + offs + a, sw)
-    y2 = snap(y + offs + a, sw)
-
-  vg.lineCap(lcjSquare)
-  vg.strokeColor(color)
-  vg.strokeWidth(sw)
-
-  vg.beginPath()
-  vg.rect(x1, y1, a, a)
-  vg.moveTo(x1+1, y1+1)
-  vg.lineTo(x2-1, y2-1)
-  vg.moveTo(x2-1, y1+1)
-  vg.lineTo(x1+1, y2-1)
-  vg.stroke()
-
-# }}}
-# {{{ drawClosedPit()
-proc drawClosedPit(x, y: float; ctx) =
-  drawClosedPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
-
-# }}}
-# {{{ drawHiddenPit()
-proc drawHiddenPit(x, y: float; ctx) =
-  drawClosedPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
-
-# }}}
-# {{{ drawStairsDown()
-proc drawStairsDown(x, y: float; ctx) =
-  drawIcon(x, y, 0, 0, IconStairsDown, ctx)
-
-# }}}
-# {{{ drawStairsUp()
-proc drawStairsUp(x, y: float; ctx) =
-  drawIcon(x, y, 0, 0, IconStairsUp, ctx)
-
-# }}}
-# {{{ drawDoorEnter()
-proc drawDoorEnter(x, y: float; ctx) =
-  drawIcon(x, y, 0.05, 0, IconDoorEnter, ctx.dp.gridSize,
-           ctx.ls.foregroundNormalColor,
-           fontSizeFactor=0.6, ctx.vg)
-
-# }}}
-# {{{ drawDoorExit()
-proc drawDoorExit(x, y: float; ctx) =
-  drawIcon(x, y, 0.05, 0, IconDoorExit, ctx.dp.gridSize,
-           ctx.ls.foregroundNormalColor,
-           fontSizeFactor=0.6, ctx.vg)
-
-# }}}
-# {{{ drawSpinner()
-proc drawSpinner(x, y: float; ctx) =
-  drawIcon(x, y, 0.06, 0, IconSpinner, ctx)
-
-# }}}
-# {{{ drawTeleportSource()
-proc drawTeleportSource(x, y: float; ctx) =
-  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
-           ctx.ls.foregroundNormalColor,
-           fontSizeFactor=0.7, ctx.vg)
-
-# }}}
-# {{{ drawTeleportDestination()
-proc drawTeleportDestination(x, y: float; ctx) =
-  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
-           ctx.ls.foregroundLightColor,
-           fontSizeFactor=0.7, ctx.vg)
-
-# }}}
-# {{{ drawInvisibleBarrier()
-proc drawInvisibleBarrier(x, y: float; ctx) =
-  drawIcon(x, y, 0, 0.015, IconBarrier, ctx.dp.gridSize,
-           ctx.ls.foregroundLightColor,
-           fontSizeFactor=1.0, ctx.vg)
-
-# }}}
-# }}}
-
 # {{{ Draw wall types
 # {{{ setWallStyle()
 template setWallStyle(): untyped =
@@ -1475,7 +1276,7 @@ proc drawSecretDoorHoriz*(x, y: float, orientation: Orientation,
 # }}}
 # {{{ drawArchwayHoriz*()
 proc drawArchwayHoriz*(x, y: float, orientation: Orientation,
-                       regionBorder: bool = false, drawOpening: bool = true;
+                       regionBorder: bool = false;
                        ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
@@ -1513,14 +1314,12 @@ proc drawArchwayHoriz*(x, y: float, orientation: Orientation,
   vg.strokeColor(ls.foregroundNormalColor)
   vg.lineCap(lcjSquare)
 
-  if drawOpening:
-    vg.lineCap(lcjSquare)
-    vg.beginPath()
-    vg.moveTo(snap(x1, sw), snap(y1, sw))
-    vg.lineTo(snap(x1, sw), snap(y2, sw))
-    vg.moveTo(snap(x2, sw), snap(y1, sw))
-    vg.lineTo(snap(x2, sw), snap(y2, sw))
-    vg.stroke()
+  vg.beginPath()
+  vg.moveTo(snap(x1, sw), snap(y1, sw))
+  vg.lineTo(snap(x1, sw), snap(y2, sw))
+  vg.moveTo(snap(x2, sw), snap(y1, sw))
+  vg.lineTo(snap(x2, sw), snap(y2, sw))
+  vg.stroke()
 
 # }}}
 # {{{ drawOneWayDoorHoriz*()
@@ -1889,6 +1688,264 @@ proc drawRegionBorderEdgeVert*(x, y: float, color: Color, north: bool; ctx) =
 
 # }}}
 # }}}
+# {{{ Draw floor types
+# {{{ drawSecretDoorBlock()
+proc drawSecretDoorBlock(x, y: float, floorColor: Natural,
+                         isCursorActive: bool; ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+
+  alias(vg, ctx.vg)
+
+  vg.beginPath()
+  vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
+  vg.rect(x, y, dp.gridSize, dp.gridSize)
+  vg.fill()
+
+  let
+    icon = "S"
+    fontSizeFactor = DefaultIconFontSizeFactor
+    gs = dp.gridSize
+
+  var bgCol = calcBlendedFloorColor(floorColor, ls=ctx.ls)
+  # TODO extract
+  if isCursorActive:
+    bgCol = lerp(bgCol, ls.cursorColor, ls.cursorColor.a)
+              .withAlpha(1.0)
+
+  let o = if dp.zoomLevel > 11: 3 else: 2
+
+  drawIcon(x-o, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x+o, y, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y-o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+  drawIcon(x, y+o, 0, 0, icon, gs, bgCol, fontSizeFactor, vg)
+
+  drawIcon(x, y, 0, 0, icon, gs, ls.foregroundNormalColor, fontSizeFactor, vg)
+
+# }}}
+# {{{ drawPressurePlate()
+proc drawPressurePlate(x, y: float; ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    offs = (dp.gridSize * 0.3).int
+    a = dp.gridSize - 2*offs
+    sw = dp.thinStrokeWidth
+
+  vg.lineCap(lcjRound)
+  vg.strokeColor(ls.foregroundNormalColor)
+  vg.strokeWidth(sw)
+
+  vg.beginPath()
+  vg.rect(snap(x + offs, sw), snap(y + offs, sw), a, a)
+  vg.stroke()
+
+# }}}
+# {{{ drawHiddenPressurePlate()
+proc drawHiddenPressurePlate(x, y: float; ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    offs = (dp.gridSize * 0.3).int
+    a = dp.gridSize - 2*offs
+    sw = dp.thinStrokeWidth
+
+  vg.lineCap(lcjRound)
+  vg.strokeColor(ls.foregroundLightColor)
+  vg.strokeWidth(sw)
+
+  vg.beginPath()
+  vg.rect(snap(x + offs, sw), snap(y + offs, sw), a, a)
+  vg.stroke()
+
+# }}}
+# {{{ drawOpenPitWithColor()
+proc drawOpenPitWithColor(x, y: float, color: Color; ctx) =
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    offs = (dp.gridSize * 0.3).int
+    sw = dp.thinStrokeWidth
+
+  var x1, y1: float
+  if dp.lineWidth == lwThin:
+    x1 = x + offs
+    y1 = y + offs
+  else:
+    let sw2 = sw*0.5
+    x1 = snap(x + offs - sw2, sw)
+    y1 = snap(y + offs - sw2, sw)
+
+  let a = dp.gridSize - 2*offs + sw
+
+  vg.fillColor(color)
+  vg.beginPath()
+  vg.rect(x1, y1, a, a)
+  vg.fill()
+
+# }}}
+# {{{ drawOpenPit()
+proc drawOpenPit(x, y: float; ctx) =
+  drawOpenPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
+
+# }}}
+# {{{ drawCeilingPit()
+proc drawCeilingPit(x, y: float; ctx) =
+  drawOpenPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
+
+# }}}
+# {{{ drawClosedPitWithColor()
+proc drawClosedPitWithColor(x, y: float, color: Color; ctx) =
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    offs = (dp.gridSize * 0.3).int
+    a = dp.gridSize - 2*offs
+    sw = dp.thinStrokeWidth
+    x1 = snap(x + offs, sw)
+    y1 = snap(y + offs, sw)
+    x2 = snap(x + offs + a, sw)
+    y2 = snap(y + offs + a, sw)
+
+  vg.lineCap(lcjSquare)
+  vg.strokeColor(color)
+  vg.strokeWidth(sw)
+
+  vg.beginPath()
+  vg.rect(x1, y1, a, a)
+  vg.moveTo(x1+1, y1+1)
+  vg.lineTo(x2-1, y2-1)
+  vg.moveTo(x2-1, y1+1)
+  vg.lineTo(x1+1, y2-1)
+  vg.stroke()
+
+# }}}
+# {{{ drawClosedPit()
+proc drawClosedPit(x, y: float; ctx) =
+  drawClosedPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
+
+# }}}
+# {{{ drawHiddenPit()
+proc drawHiddenPit(x, y: float; ctx) =
+  drawClosedPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
+
+# }}}
+# {{{ drawStairsDown()
+proc drawStairsDown(x, y: float; ctx) =
+  drawIcon(x, y, 0, 0, IconStairsDown, ctx)
+
+# }}}
+# {{{ drawStairsUp()
+proc drawStairsUp(x, y: float; ctx) =
+  drawIcon(x, y, 0, 0, IconStairsUp, ctx)
+
+# }}}
+# {{{ drawDoorEnter()
+proc drawDoorEnter(x, y: float; ctx) =
+  drawIcon(x, y, 0.05, 0, IconDoorEnter, ctx.dp.gridSize,
+           ctx.ls.foregroundNormalColor,
+           fontSizeFactor=0.6, ctx.vg)
+
+# }}}
+# {{{ drawDoorExit()
+proc drawDoorExit(x, y: float; ctx) =
+  drawIcon(x, y, 0.05, 0, IconDoorExit, ctx.dp.gridSize,
+           ctx.ls.foregroundNormalColor,
+           fontSizeFactor=0.6, ctx.vg)
+
+# }}}
+# {{{ drawSpinner()
+proc drawSpinner(x, y: float; ctx) =
+  drawIcon(x, y, 0.06, 0, IconSpinner, ctx)
+
+# }}}
+# {{{ drawTeleportSource()
+proc drawTeleportSource(x, y: float; ctx) =
+  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
+           ctx.ls.foregroundNormalColor,
+           fontSizeFactor=0.7, ctx.vg)
+
+# }}}
+# {{{ drawTeleportDestination()
+proc drawTeleportDestination(x, y: float; ctx) =
+  drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
+           ctx.ls.foregroundLightColor,
+           fontSizeFactor=0.7, ctx.vg)
+
+# }}}
+# {{{ drawInvisibleBarrier()
+proc drawInvisibleBarrier(x, y: float; ctx) =
+  drawIcon(x, y, 0, 0.015, IconBarrier, ctx.dp.gridSize,
+           ctx.ls.foregroundLightColor,
+           fontSizeFactor=1.0, ctx.vg)
+
+# }}}
+# {{{ drawBridge()
+proc drawBridge(x, y: float, orientation: Orientation; ctx) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
+  let
+    wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
+    wallLen = (dp.gridSize * 0.25).int + wallLenOffs
+    xs = x
+    x1 = xs + wallLen + 1
+    xe = xs + dp.gridSize
+    x2 = xe - wallLen - 1
+    yo = round(dp.gridSize * 0.1)
+    y1 = y - yo
+    y2 = y + dp.gridSize + yo
+
+  let w = x2 - x1
+  let h = dp.gridSize + 2*yo
+
+  let fc0 = ls.floorBackgroundColor[0]
+  var bgCol = lerp(ls.backgroundColor.withAlpha(1.0),
+                    fc0.withAlpha(1.0),
+                    fc0.a)
+
+  vg.beginPath()
+  vg.fillColor(bgCol)
+  vg.rect(x1, y1, w, h)
+  vg.fill()
+
+  var sw = dp.normalStrokeWidth
+  vg.strokeWidth(sw)
+  vg.strokeColor(ls.foregroundNormalColor)
+  vg.lineCap(lcjSquare)
+
+  vg.beginPath()
+  vg.moveTo(snap(x1, sw), snap(y1, sw))
+  vg.lineTo(snap(x1, sw), snap(y2, sw))
+  vg.moveTo(snap(x2, sw), snap(y1, sw))
+  vg.lineTo(snap(x2, sw), snap(y2, sw))
+  vg.stroke()
+
+  # Shading
+  sw = 1.0
+  let numLines = 6
+  let step = h / numLines
+  var yy = y1 + step/2
+
+  vg.strokeWidth(sw)
+  vg.beginPath()
+
+  for i in 1..numLines:
+    vg.moveTo(snap(x1, sw), snap(yy, sw))
+    vg.lineTo(snap(x2, sw), snap(yy, sw))
+    yy += step
+
+  vg.stroke()
+
+# }}}
+# }}}
 
 # {{{ drawBackgroundGrid()
 proc drawBackgroundGrid(viewBuf: Level; ctx) =
@@ -1947,16 +2004,17 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   let
     bufRow = viewRow + ViewBufBorder
     bufCol = viewCol + ViewBufBorder
+    f = viewBuf.getFloor(bufRow, bufCol)
     x = cellX(viewCol, dp)
     y = cellY(viewRow, dp)
 
-  template drawOriented(drawProc: untyped) =
+  template drawOriented(drawProc: untyped, offsetFactor = 0.5) =
     let orientation = viewBuf.getFloorOrientation(bufRow, bufCol)
     case orientation
     of Horiz:
-      drawProc(x, y + floor(dp.gridSize*0.5), orientation, ctx=ctx)
+      drawProc(x, y + floor(dp.gridSize * offsetFactor), orientation, ctx=ctx)
     of Vert:
-      setVertTransform(x + floor(dp.gridSize*0.5), y, ctx)
+      setVertTransform(x + floor(dp.gridSize*(1 - offsetFactor)), y, ctx)
       drawProc(0, 0, orientation, ctx=ctx)
       vg.resetTransform()
 
@@ -1965,9 +2023,11 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
 
 
   vg.save()
-  vg.intersectScissor(x, y, dp.gridSize+1, dp.gridSize+1)
 
-  case viewBuf.getFloor(bufRow, bufCol)
+  if f != fBridge:
+    vg.intersectScissor(x, y, dp.gridSize+1, dp.gridSize+1)
+
+  case f
   of fEmpty:               discard
   of fBlank:               discard
   of fDoor:                drawOriented(drawDoorHoriz)
@@ -1975,8 +2035,8 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   of fArchway:             drawOriented(drawArchwayHoriz)
   of fSecretDoorBlock:     drawSecretDoorBlock(
                              x, y,
-                             isCursorActive(viewRow, viewCol, dp),
                              viewBuf.getFloorColor(bufRow, bufCol),
+                             isCursorActive(viewRow, viewCol, dp),
                              ctx
                            )
   of fSecretDoor:          drawOriented(drawSecretDoorHoriz)
@@ -1996,6 +2056,7 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   of fTeleportSource:      draw(drawTeleportSource)
   of fTeleportDestination: draw(drawTeleportDestination)
   of fInvisibleBarrier:    draw(drawInvisibleBarrier)
+  of fBridge:              drawOriented(drawBridge, offsetFactor=0)
 
   vg.restore()
 
@@ -2004,9 +2065,30 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
 proc drawFloors(viewBuf: Level; ctx) =
   alias(dp, ctx.dp)
 
-  for r in 0..<dp.viewRows:
-    for c in 0..<dp.viewCols:
-      drawCellFloor(viewBuf, r,c, ctx)
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let 
+        bufRow = viewRow + ViewBufBorder
+        bufCol = viewCol + ViewBufBorder
+        f = viewBuf.getFloor(bufRow, bufCol)
+
+      if f != fBridge:
+        drawCellFloor(viewBuf, viewRow, viewCol, ctx)
+
+# }}}
+# {{{ drawBridges()
+proc drawBridges(viewBuf: Level; ctx) =
+  alias(dp, ctx.dp)
+
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let 
+        bufRow = viewRow + ViewBufBorder
+        bufCol = viewCol + ViewBufBorder
+        f = viewBuf.getFloor(bufRow, bufCol)
+
+      if f == fBridge:
+        drawCellFloor(viewBuf, viewRow, viewCol, ctx)
 
 # }}}
 # {{{ drawTrail()
@@ -2524,6 +2606,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
     drawOuterShadows(viewBuf, ctx)
 
   drawWalls(l, viewBuf, ctx)
+  drawBridges(viewBuf, ctx)
 
   if dp.regionOpts.enabled:
     drawRegionBorders(l, viewBuf, ctx)

@@ -159,6 +159,10 @@ const
     fExitDoor
   ]
 
+  FloorGroup7 = @[
+    fBridge
+  ]
+
 # }}}
 # {{{ App context
 
@@ -708,6 +712,7 @@ type AppShortcut = enum
   scCycleFloorGroup4Forward,
   scCycleFloorGroup5Forward,
   scCycleFloorGroup6Forward,
+  scCycleFloorGroup7Forward,
 
   scCycleFloorGroup1Backward,
   scCycleFloorGroup2Backward,
@@ -715,6 +720,7 @@ type AppShortcut = enum
   scCycleFloorGroup4Backward,
   scCycleFloorGroup5Backward,
   scCycleFloorGroup6Backward,
+  scCycleFloorGroup7Backward,
 
   scExcavateTunnel,
   scEraseCell,
@@ -860,6 +866,7 @@ let g_appShortcuts = {
   scCycleFloorGroup4Forward:   @[mkKeyShortcut(key4,      {})],
   scCycleFloorGroup5Forward:   @[mkKeyShortcut(key5,      {})],
   scCycleFloorGroup6Forward:   @[mkKeyShortcut(key6,      {})],
+  scCycleFloorGroup7Forward:   @[mkKeyShortcut(key7,      {})],
 
   scCycleFloorGroup1Backward:  @[mkKeyShortcut(key1,      {mkShift})],
   scCycleFloorGroup2Backward:  @[mkKeyShortcut(key2,      {mkShift})],
@@ -867,6 +874,7 @@ let g_appShortcuts = {
   scCycleFloorGroup4Backward:  @[mkKeyShortcut(key4,      {mkShift})],
   scCycleFloorGroup5Backward:  @[mkKeyShortcut(key5,      {mkShift})],
   scCycleFloorGroup6Backward:  @[mkKeyShortcut(key6,      {mkShift})],
+  scCycleFloorGroup7Backward:  @[mkKeyShortcut(key7,      {mkShift})],
 
   scExcavateTunnel:            @[mkKeyShortcut(keyD,      {})],
   scEraseCell:                 @[mkKeyShortcut(keyE,      {})],
@@ -5189,6 +5197,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emDrawSpecialWall
         startDrawSpecialWallAction(a)
 
+
       elif ke.isShortcutDown(scCycleFloorGroup1Forward):
         cycleFloorGroupAction(FloorGroup1, forward=true, a)
 
@@ -5207,6 +5216,10 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scCycleFloorGroup6Forward):
         cycleFloorGroupAction(FloorGroup6, forward=true, a)
 
+      elif ke.isShortcutDown(scCycleFloorGroup7Forward):
+        cycleFloorGroupAction(FloorGroup7, forward=true, a)
+
+
       elif ke.isShortcutDown(scCycleFloorGroup1Backward):
         cycleFloorGroupAction(FloorGroup1, forward=false, a)
 
@@ -5224,6 +5237,9 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scCycleFloorGroup6Backward):
         cycleFloorGroupAction(FloorGroup6, forward=false, a)
+
+      elif ke.isShortcutDown(scCycleFloorGroup7Backward):
+        cycleFloorGroupAction(FloorGroup7, forward=false, a)
 
       elif ke.isShortcutDown(scSelectSpecialWall1):  selectSpecialWall(0, a)
       elif ke.isShortcutDown(scSelectSpecialWall2):  selectSpecialWall(1, a)
