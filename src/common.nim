@@ -146,7 +146,7 @@ type
   Floor* = enum
     fEmpty               = ( 0, "none"),
     fBlank               = ( 1, "blank"),
-    fDoor                = (20, "door"),
+    fDoor                = (20, "open door"),
     fLockedDoor          = (21, "locked door"),
     fArchway             = (22, "archway"),
     fSecretDoorBlock     = (23, "secret door (block)"),
@@ -174,7 +174,7 @@ type
     wWall          = (10, "wall")
     wIllusoryWall  = (11, "illusory wall")
     wInvisibleWall = (12, "invisible wall")
-    wDoor          = (20, "door")
+    wDoor          = (20, "open door")
     wLockedDoor    = (21, "locked door")
     wArchway       = (22, "archway")
     wSecretDoor    = (23, "secret door")
