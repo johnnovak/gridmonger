@@ -203,6 +203,7 @@ type
 
 
   Paths = object
+    appDir:             string
     dataDir:            string
     userDataDir:        string
     configDir:          string
@@ -6307,12 +6308,6 @@ proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
 
   vg.fill()
 
-  # TODO debug
-  let index = if index < 5: index
-              elif index < 10: index * 5
-              else: index * 10
-  # TODO debug
-
   var fontSizeFactor = if   index <  10: 0.4
                        elif index < 100: 0.37
                        else:             0.32
@@ -7509,20 +7504,21 @@ GPU info
 proc initPaths(a) =
   alias(p, a.path)
 
-  p.dataDir = "Data"
+  p.appDir = getAppDir()
+  p.dataDir = p.appDir / "Data"
 
   const ConfigDir = "Config"
-  let portableMode = dirExists(ConfigDir)
+  let portableMode = dirExists(p.appDir / ConfigDir)
 
   if portableMode:
-    p.userDataDir = "."
+    p.userDataDir = p.appDir
   else:
     p.userDataDir = getConfigDir() / "Gridmonger"
 
-  p.manualDir = "Manual"
+  p.manualDir = p.appDir / "Manual"
   p.autosaveDir = p.userDataDir / "Autosave"
 
-  p.themesDir = "Themes"
+  p.themesDir = p.appDir / "Themes"
   p.userThemesDir = p.userDataDir / "User Themes"
 
   const ImagesDir = "Images"
@@ -7532,6 +7528,11 @@ proc initPaths(a) =
   p.logFile = p.userDataDir / "gridmonger.log"
   p.configDir = p.userDataDir / ConfigDir
   p.configFile = p.configDir / "gridmonger.cfg"
+
+# }}}
+# {{{ createDirs()
+proc createDirs(a) =
+  alias(p, a.path)
 
   createDir(p.userDataDir)
   createDir(p.configDir)
@@ -7734,6 +7735,8 @@ proc main() =
        fmt"compiled at {CompileDate} {CompileTime}")
 
   info(fmt"Paths: {a.path}")
+
+  createDirs(a)
 
   try:
     initGfx(a)
