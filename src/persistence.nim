@@ -866,6 +866,7 @@ proc writeAppState_v1(rw; s: AppState) =
   rw.beginChunk(FourCC_GRDM_stat)
 
   rw.writeWStr(s.themeName)
+
   rw.write(s.zoomLevel.uint8)
   rw.write(s.currentLevel.uint16)
   rw.write(s.cursorRow.uint16)

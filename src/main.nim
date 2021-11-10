@@ -2036,9 +2036,9 @@ proc saveAppConfig(a) =
 
   p = "last-state."
   cfg.set(p & "last-document", a.doc.filename)
+  cfg.set(p & "theme-name",    a.currThemeName.name)
 
   p = "last-state.ui."
-  cfg.set(p & "theme-name",              a.currThemeName.name)
   cfg.set(p & "zoom-level",              dp.getZoomLevel())
   cfg.set(p & "current-level",           cur.level)
   cfg.set(p & "cursor.row",              cur.row)
@@ -7563,25 +7563,12 @@ proc initPreferences(cfg: HoconNode; a) =
                              .limit(AutosaveFreqMinsLimits)
 
 # }}}
-# {{{ initApp()
-proc initApp(a) =
-  let cfg = loadAppConfigOrDefault(a.path.configFile)
-  initPreferences(cfg, a)
-
-  loadFonts(a)
-  loadAndSetIcon(a)
-  setDefaultWidgetStyles(a)
-
-  a.doc.undoManager = newUndoManager[Map, UndoStateData]()
-  a.ui.drawLevelParams = newDrawLevelParams()
-
-  buildThemeList(a)
-
+# {{{ loadUIStateFromConfig()
+proc loadUIStateFromConfig(cfg: HoconNode, a) =
+  # TODO check values?
+  # TODO timestamp check to determine whether to read the DISP info from the
+  # conf or from the file
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
-
-  var themeIndex = findThemeIndex(uiCfg.getStringOrDefault("theme-name",
-                                                           "Default"), a)
-  switchTheme(if themeIndex.isSome: themeIndex.get else: 0, a)
 
   with a.opts:
     showNotesPane = uiCfg.getBoolOrDefault("option.show-notes-pane", true)
@@ -7593,23 +7580,12 @@ proc initApp(a) =
   a.ui.drawLevelParams.drawCellCoords = uiCfg.getBoolOrDefault(
     "option.show-cell-coords", true
   )
+
   a.ui.drawLevelParams.setZoomLevel(
     a.theme.levelStyle,
     uiCfg.getNaturalOrDefault("zoom-level", 9).limit(ZoomLevelLimits)
   )
 
-  let lastMapFileName = cfg.getStringOrDefault("last-state.last-document", "")
-
-  if a.prefs.loadLastMap and lastMapFileName != "":
-    if not loadMap(lastMapFileName, a):
-      a.doc.map = newMap("Untitled Map")
-  else:
-    a.doc.map = newMap("Untitled Map")
-    setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
-
-  # TODO check values?
-  # TODO timestamp check to determine whether to read the DISP info from the
-  # conf or from the file
   with a.ui.drawLevelParams:
     viewStartRow = uiCfg.getNaturalOrDefault("view-start.row", 0)
     viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
@@ -7625,6 +7601,43 @@ proc initApp(a) =
       level = currLevel
       row   = uiCfg.getNaturalOrDefault("cursor.row",    0)
       col   = uiCfg.getNaturalOrDefault("cursor.column", 0)
+
+# }}}
+# {{{ initApp()
+proc initApp(a) =
+  let cfg = loadAppConfigOrDefault(a.path.configFile)
+  initPreferences(cfg, a)
+
+  loadFonts(a)
+  loadAndSetIcon(a)
+  setDefaultWidgetStyles(a)
+
+  a.doc.undoManager = newUndoManager[Map, UndoStateData]()
+  a.ui.drawLevelParams = newDrawLevelParams()
+
+  buildThemeList(a)
+
+  var themeIndex = findThemeIndex(
+    cfg.getStringOrDefault("last-state.theme-name", "Default"), a
+  )
+
+  switchTheme(if themeIndex.isSome: themeIndex.get else: 0, a)
+
+  # Init map & load last map, or map from command line
+  a.doc.map = newMap("Untitled Map")
+
+  let mapFileName = if paramCount() >= 1: paramStr(1)
+                    else: cfg.getStringOrDefault("last-state.last-document", "")
+
+  if mapFileName != "":
+    discard loadMap(mapFileName, a):
+  else:
+    setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
+
+  # TODO check values?
+  # TODO timestamp check to determine whether to read the DISP info from the
+  # conf or from the file
+  loadUIStateFromConfig(cfg, a)
 
   updateLastCursorViewCoords(a)
 
@@ -7698,7 +7711,8 @@ proc crashHandler(e: ref Exception, a) =
     try:
       crashAutosavePath = autoSaveMapOnCrash(a)
     except Exception as e:
-      logError(e, "Error autosaving map on crash")
+      if a.logFile != nil:
+        logError(e, "Error autosaving map on crash")
 
   var msg = "A fatal error has occured, Gridmonger will now exit.\n\n"
 
@@ -7710,12 +7724,13 @@ proc crashHandler(e: ref Exception, a) =
              crashAutosavePath
 
   msg &= "\n\nIf the problem persists, please refer to the 'Reporting " &
-         "problems' section of the user manual to report the issue."
+         "problems' section of the user manual on how to report it."
 
   when not defined(DEBUG):
     discard osdialog_message(mblError, mbbOk, msg)
 
-  logError(e, "An unexpected error has occured, the application will now exit")
+  if a.logFile != nil:
+    logError(e, "An unexpected error has occured, exiting")
 
   quit(QuitFailure)
 
@@ -7728,17 +7743,17 @@ proc main() =
   g_app = new AppContext
   var a = g_app
 
-  initPaths(a)
-  initLogger(a)
-
-  info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), " &
-       fmt"compiled at {CompileDate} {CompileTime}")
-
-  info(fmt"Paths: {a.path}")
-
-  createDirs(a)
-
   try:
+    initPaths(a)
+    initLogger(a)
+
+    info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), " &
+         fmt"compiled at {CompileDate} {CompileTime}")
+
+    info(fmt"Paths: {a.path}")
+
+    createDirs(a)
+
     initGfx(a)
     initApp(a)
 

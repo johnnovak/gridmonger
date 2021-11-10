@@ -1,3 +1,4 @@
+!include x64.nsh
 !include MUI2.nsh
 !include LogicLib.nsh
 !include WinCore.nsh
@@ -15,19 +16,35 @@
 
 !define REGPATH_UNINSTSUBKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}"
 
-
-Name "${NAME} ${VERSION}"
-OutFile "gridmonger-${VERSION}-win64-setup.exe"
+!ifdef ARCH32
+  !define ARCH "32"
+!else
+  !define ARCH "64"
+!endif
 
 Unicode True
 RequestExecutionLevel admin
 
-; The default installation directory
-InstallDir $PROGRAMFILES64\${NAME}
+Function .onInit
+  ${If} ${RunningX64}
+    !ifdef ARCH32
+      MessageBox MB_YESNO "This will install the 32-bit version of Gridmonger.$\r$\n$\r$\nYou are running 64-bit Windows, therefore installing the 64-bit version is recommended.$\r$\n$\r$\nDo you still wish to continue?" IDYES go
+        Abort
+      go:
+    !endif
+    SetRegView 64
+  ${EndIf}
+FunctionEnd
 
-; Registry key to check for directory (so if you install again, it will
-; overwrite the old one automatically)
-InstallDirRegKey HKLM "Software\${NAME}" "InstallDir"
+Name "${NAME}"
+Caption "${NAME} ${VERSION} Setup - ${ARCH}-bit"
+OutFile "gridmonger-${VERSION}-win${ARCH}-setup.exe"
+
+!ifdef ARCH32
+  InstallDir "$PROGRAMFILES32\${NAME}"
+!else
+  InstallDir "$PROGRAMFILES64\${NAME}"
+!endif
 
 VIAddVersionKey "ProductName" "${NAME}"
 VIAddVersionKey "ProductVersion" "0.9.0.0"
@@ -51,8 +68,15 @@ VIFileVersion 0.9.0.0
 
 !define MUI_WELCOMEFINISHPAGE_BITMAP   extras\installer-images\welcome-finish.bmp
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP extras\installer-images\welcome-finish.bmp
+
 ;--------------------------------
 ;Pages
+
+!define MUI_WELCOMEPAGE_TITLE "Welcome to the Gridmonger setup"
+!define welcome1 "This wizard will guide you through the installation of Gridmonger.$\r$\n$\r$\n"
+!define welcome2 "Please close all running instances of Gridmonger before proceeding.$\r$\n$\r$\n"
+!define welcome3 "Click Next to continue."
+!define MUI_WELCOMEPAGE_TEXT "${welcome1}${welcome2}${welcome3}"
 
 !insertmacro MUI_PAGE_WELCOME
 
@@ -139,8 +163,6 @@ VIFileVersion 0.9.0.0
     DeleteRegKey /IfEmpty HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${ASSOC_EXT}\OpenWithProgids"
     DeleteRegKey /IfEmpty HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${ASSOC_EXT}\OpenWithList"
     DeleteRegKey /IfEmpty HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${ASSOC_EXT}"
-    ;DeleteRegKey HKCU "Software\Microsoft\Windows\Roaming\OpenWith\FileExts\${ASSOC_EXT}"
-    ;DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs\${ASSOC_EXT}"
 
     ${NotifyShell_AssocChanged}
   FunctionEnd
@@ -199,8 +221,6 @@ SectionEnd
 Section "Associate with GMM (Gridmonger Map) files" Shell_FileAssoc
   # Register file type
   WriteRegStr ShCtx "Software\Classes\${ASSOC_PROGID}\DefaultIcon" "" "$INSTDIR\${APP_EXE},0"
-  ;WriteRegStr ShCtx "Software\Classes\${ASSOC_PROGID}\shell\${ASSOC_VERB}" "" "${NAME}" [Optional]
-  ;WriteRegStr ShCtx "Software\Classes\${ASSOC_PROGID}\shell\${ASSOC_VERB}" "MUIVerb" "@$INSTDIR\${APP_EXE},-42" ; WinXP+ [Optional] Localizable verb display name
   WriteRegStr ShCtx "Software\Classes\${ASSOC_PROGID}\shell\${ASSOC_VERB}\command" "" '"$INSTDIR\${APP_EXE}" "%1"'
   WriteRegStr ShCtx "Software\Classes\${ASSOC_EXT}" "" "${ASSOC_PROGID}"
 
