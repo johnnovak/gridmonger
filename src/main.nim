@@ -2085,24 +2085,25 @@ proc loadMap(filename: string; a): bool =
       a.updateUI = false
       a.theme.nextThemeIndex = findThemeIndex(s.themeName, a)
 
-      with a.ui.cursor:
-        level = s.currentLevel
-        row   = s.cursorRow
-        col   = s.cursorCol
-
-      with a.ui.drawLevelParams:
-        viewStartRow   = s.viewStartRow
-        viewStartCol   = s.viewStartCol
-        drawCellCoords = s.optShowCellCoords
-
-      a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, s.zoomLevel)
-
       with a.opts:
         showToolsPane = s.optShowToolsPane
         showNotesPane = s.optShowNotesPane
         wasdMode      = s.optWasdMode
         walkMode      = s.optWalkMode
         drawTrail     = s.optDrawTrail
+
+      with a.ui.drawLevelParams:
+        viewStartRow   = s.viewStartRow
+        viewStartCol   = s.viewStartCol
+        drawCellCoords = s.optShowCellCoords
+
+      with a.ui.cursor:
+        level = s.currentLevel
+        row   = s.cursorRow
+        col   = s.cursorCol
+
+      a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, s.zoomLevel)
+
     else:
       resetCursorAndViewStart(a)
 
@@ -7563,11 +7564,8 @@ proc initPreferences(cfg: HoconNode; a) =
                              .limit(AutosaveFreqMinsLimits)
 
 # }}}
-# {{{ loadUIStateFromConfig()
-proc loadUIStateFromConfig(cfg: HoconNode, a) =
-  # TODO check values?
-  # TODO timestamp check to determine whether to read the DISP info from the
-  # conf or from the file
+# {{{ restoreUIStateFromConfig()
+proc restoreUIStateFromConfig(cfg: HoconNode, a) =
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
 
   with a.opts:
@@ -7577,10 +7575,6 @@ proc loadUIStateFromConfig(cfg: HoconNode, a) =
     walkMode      = uiCfg.getBoolOrDefault("option.walk-mode",       false)
     wasdMode      = uiCfg.getBoolOrDefault("option.wasd-mode",       false)
 
-  a.ui.drawLevelParams.drawCellCoords = uiCfg.getBoolOrDefault(
-    "option.show-cell-coords", true
-  )
-
   a.ui.drawLevelParams.setZoomLevel(
     a.theme.levelStyle,
     uiCfg.getNaturalOrDefault("zoom-level", 9).limit(ZoomLevelLimits)
@@ -7589,6 +7583,7 @@ proc loadUIStateFromConfig(cfg: HoconNode, a) =
   with a.ui.drawLevelParams:
     viewStartRow = uiCfg.getNaturalOrDefault("view-start.row", 0)
     viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
+    drawCellCoords = uiCfg.getBoolOrDefault("option.show-cell-coords", true)
 
   with a.ui.cursor:
     let currLevel = uiCfg.getNaturalOrDefault("current-level", 0)
@@ -7634,10 +7629,7 @@ proc initApp(a) =
   else:
     setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
-  # TODO check values?
-  # TODO timestamp check to determine whether to read the DISP info from the
-  # conf or from the file
-  loadUIStateFromConfig(cfg, a)
+  restoreUIStateFromConfig(cfg, a)
 
   updateLastCursorViewCoords(a)
 
