@@ -402,7 +402,11 @@ type
     activeTab:    Natural
     activateFirstTextField: bool
 
-    name:         string
+    title:        string
+    game:         string
+    author:       string
+    creationDate: string
+
     origin:       Natural
     rowStyle:     Natural
     columnStyle:  Natural
@@ -416,7 +420,11 @@ type
     activeTab:    Natural
     activateFirstTextField: bool
 
-    name:         string
+    title:        string
+    game:         string
+    author:       string
+    creationDate: string
+
     origin:       Natural
     rowStyle:     Natural
     columnStyle:  Natural
@@ -2423,6 +2431,55 @@ template validateLevelFields(dlg, map, validationError: untyped) =
         break
 
 # }}}
+# {{{ mapCommonGeneralFields()
+template mapCommonGeneralFields() =
+  group:
+    koi.label("Title", style=a.theme.labelStyle)
+
+    koi.textField(
+      dlg.title,
+      activate = dlg.activateFirstTextField,
+      constraint = TextFieldConstraint(
+        kind: tckString,
+        minLen: MapTitleLimits.minRuneLen,
+        maxLen: MapTitleLimits.maxRuneLen.some
+      ).some,
+      style = a.theme.textFieldStyle
+    )
+
+    koi.label("Game", style=a.theme.labelStyle)
+
+    koi.textField(
+      dlg.game,
+      constraint = TextFieldConstraint(
+        kind: tckString,
+        minLen: MapGameLimits.minRuneLen,
+        maxLen: MapGameLimits.maxRuneLen.some
+      ).some,
+      style = a.theme.textFieldStyle
+    )
+
+    koi.label("Author", style=a.theme.labelStyle)
+
+    koi.textField(
+      dlg.author,
+      constraint = TextFieldConstraint(
+        kind: tckString,
+        minLen: MapAuthorLimits.minRuneLen,
+        maxLen: MapAuthorLimits.maxRuneLen.some
+      ).some,
+      style = a.theme.textFieldStyle
+    )
+
+    koi.label("Creation date", style=a.theme.labelStyle)
+
+    koi.textField(
+      dlg.creationDate,
+      disabled = true,
+      style = a.theme.textFieldStyle
+    )
+
+# }}}
 
 # {{{ calcDialogX()
 proc calcDialogX(dlgWidth: float; a): float =
@@ -2909,13 +2966,18 @@ proc openNewMapDialog(a) =
   alias(dlg, a.dialog.newMapDialog)
 
   with a.doc.map.coordOpts:
-    dlg.name        = "Untitled Map"
-    dlg.origin      = origin.ord
-    dlg.rowStyle    = rowStyle.ord
-    dlg.columnStyle = columnStyle.ord
-    dlg.rowStart    = $rowStart
-    dlg.columnStart = $columnStart
-    dlg.notes       = ""
+    dlg.title        = "Untitled Map"
+    dlg.game         = ""
+    dlg.author       = ""
+    dlg.creationDate = "" # TODO
+
+    dlg.origin       = origin.ord
+    dlg.rowStyle     = rowStyle.ord
+    dlg.columnStyle  = columnStyle.ord
+    dlg.rowStart     = $rowStart
+    dlg.columnStart  = $columnStart
+
+    dlg.notes        = ""
 
   dlg.activeTab = 0
   dlg.isOpen = true
@@ -2954,19 +3016,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    group:
-      koi.label("Name", style=a.theme.labelStyle)
-
-      koi.textField(
-        dlg.name,
-        activate = dlg.activateFirstTextField,
-        constraint = TextFieldConstraint(
-          kind: tckString,
-          minLen: MapNameLimits.minRuneLen,
-          maxLen: MapNameLimits.maxRuneLen.some
-        ).some,
-        style = a.theme.textFieldStyle
-      )
+    mapCommonGeneralFields()
 
   elif dlg.activeTab == 1:  # Coordinates
     coordinateFields()
@@ -2979,8 +3029,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
   # Validation
   var validationError = ""
-  if dlg.name == "":
-    validationError = mkValidationError("Name is mandatory")
+  if dlg.title == "":
+    validationError = mkValidationError("Title is mandatory")
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
@@ -2993,7 +3043,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     a.opts.drawTrail = false
 
     a.doc.filename = ""
-    a.doc.map = newMap(dlg.name)
+    a.doc.map = newMap(dlg.title, dlg.game, dlg.author, dlg.creationDate)
 
     with a.doc.map.coordOpts:
       origin      = CoordinateOrigin(dlg.origin)
@@ -3054,7 +3104,10 @@ proc openEditMapPropsDialog(a) =
   alias(dlg, a.dialog.editMapPropsDialog)
   alias(map, a.doc.map)
 
-  dlg.name = $map.name
+  dlg.title        = map.title
+  dlg.game         = map.game
+  dlg.author       = map.author
+  dlg.creationDate = map.creationDate
 
   with map.coordOpts:
     dlg.origin      = origin.ord
@@ -3100,19 +3153,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    group:
-      koi.label("Name", style=a.theme.labelStyle)
-
-      koi.textField(
-        dlg.name,
-        activate = dlg.activateFirstTextField,
-        constraint = TextFieldConstraint(
-          kind: tckString,
-          minLen: MapNameLimits.minRuneLen,
-          maxLen: MapNameLimits.maxRuneLen.some
-        ).some,
-        style = a.theme.textFieldStyle
-      )
+    mapCommonGeneralFields()
 
   elif dlg.activeTab == 1:  # Coordinates
     coordinateFields()
@@ -3125,8 +3166,8 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
   # Validation
   var validationError = ""
-  if dlg.name == "":
-    validationError = mkValidationError("Name is mandatory")
+  if dlg.title == "":
+    validationError = mkValidationError("Title is mandatory")
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
@@ -3144,8 +3185,9 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
       columnStart : parseInt(dlg.columnStart)
     )
 
-    actions.setMapProperties(a.doc.map, a.ui.cursor, dlg.name, coordOpts,
-                             dlg.notes, a.doc.undoManager)
+    actions.setMapProperties(a.doc.map, a.ui.cursor,
+                             dlg.title, dlg.game, dlg.author, dlg.creationDate,
+                             coordOpts, dlg.notes, a.doc.undoManager)
 
     setStatusMessage(IconFile, "Map properties updated", a)
 
@@ -7142,7 +7184,7 @@ proc renderFramePre(a) =
   if a.theme.nextThemeIndex.isSome:
     loadPendingTheme(a.theme.nextThemeIndex.get, a)
 
-  a.win.title = a.doc.map.name
+  a.win.title = a.doc.map.title
   a.win.modified = a.doc.undoManager.isModified
 
   if a.theme.updateThemeStyles:
@@ -7619,7 +7661,7 @@ proc initApp(a) =
   switchTheme(if themeIndex.isSome: themeIndex.get else: 0, a)
 
   # Init map & load last map, or map from command line
-  a.doc.map = newMap("Untitled Map")
+  a.doc.map = newMap("Untitled Map", game="", author="", creationDate="") # TODO
 
   let mapFileName = if paramCount() >= 1: paramStr(1)
                     else: cfg.getStringOrDefault("last-state.last-document", "")

@@ -52,12 +52,16 @@ const
 
 type
   Map* = ref object
-    name*:        string
-    levels*:      seq[Level]
-    coordOpts*:   CoordinateOptions
-    notes*:       string
+    title*:        string
+    game*:         string
+    author*:       string
+    creationDate*: string
+    notes*:        string
 
-    links*:       Links
+    levels*:       seq[Level]
+    coordOpts*:    CoordinateOptions
+
+    links*:        Links
 
     sortedLevelNames*:         seq[string]
     sortedLevelIdxToLevelIdx*: Table[Natural, Natural]

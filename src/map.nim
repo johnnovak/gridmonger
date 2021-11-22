@@ -17,9 +17,13 @@ import utils
 using m: Map
 
 # {{{ newMap*()
-proc newMap*(name: string): Map =
+proc newMap*(title, game, author, creationDate: string): Map =
   var m = new Map
-  m.name = name
+  m.title        = title
+  m.game         = game
+  m.author       = author
+  m.creationDate = creationDate
+
   m.levels = @[]
   m.links = initLinks()
 

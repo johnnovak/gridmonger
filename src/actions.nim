@@ -839,13 +839,13 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
                             overrideCoordOpts != l.overrideCoordOpts or
                             (overrideCoordOpts and coordOpts != l.coordOpts)
 
-    l.locationName = locationName
-    l.levelName = levelName
-    l.elevation = elevation
+    l.locationName      = locationName
+    l.levelName         = levelName
+    l.elevation         = elevation
     l.overrideCoordOpts = overrideCoordOpts
-    l.coordOpts = coordOpts
-    l.regionOpts = regionOpts
-    l.notes = notes
+    l.coordOpts         = coordOpts
+    l.regionOpts        = regionOpts
+    l.notes             = notes
 
     if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
@@ -859,26 +859,26 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 
   let l = map.levels[loc.level]
   let
-    oldLocationName = l.locationName
-    oldLevelName = l.levelName
-    oldElevation = l.elevation
+    oldLocationName      = l.locationName
+    oldLevelName         = l.levelName
+    oldElevation         = l.elevation
     oldOverrideCoordOpts = l.overrideCoordOpts
-    oldCoordOpts = l.coordOpts
-    oldRegionOpts = l.regionOpts
-    oldRegions = l.regions
+    oldCoordOpts         = l.coordOpts
+    oldRegionOpts        = l.regionOpts
+    oldRegions           = l.regions
 
   var undoAction = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.level]
 
     let adjustLinkedStairs = l.elevation != oldElevation
 
-    l.locationName = oldLocationName
-    l.levelName = oldLevelName
-    l.elevation = oldElevation
+    l.locationName      = oldLocationName
+    l.levelName         = oldLevelName
+    l.elevation         = oldElevation
     l.overrideCoordOpts = oldOverrideCoordOpts
-    l.coordOpts = oldCoordOpts
-    l.regionOpts = oldRegionOpts
-    l.regions = oldRegions
+    l.coordOpts         = oldCoordOpts
+    l.regionOpts        = oldRegionOpts
+    l.regions           = oldRegions
 
     if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
@@ -892,7 +892,8 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 # }}}
 
 # {{{ setMapProperties*()
-proc setMapProperties*(map; loc: Location, name: string,
+proc setMapProperties*(map; loc: Location,
+                       title, game, author, creationDate: string,
                        coordOpts: CoordinateOptions, notes: string; um) =
 
   let usd = UndoStateData(actionName: "Edit map properties", location: loc)
@@ -900,9 +901,12 @@ proc setMapProperties*(map; loc: Location, name: string,
   let action = proc (m: var Map): UndoStateData =
     let oldCoordOpts = m.coordOpts
 
-    m.name = name
-    m.coordOpts = coordOpts
-    m.notes = notes
+    m.title        = title
+    m.game         = game
+    m.author       = author
+    m.creationDate = creationDate
+    m.notes        = notes
+    m.coordOpts    = coordOpts
 
     if coordOpts != oldCoordOpts:
       for levelIdx, l in m.levels:
@@ -914,9 +918,12 @@ proc setMapProperties*(map; loc: Location, name: string,
 
 
   let
-    oldName = map.name
-    oldCoordOpts = map.coordOpts
-    oldNotes = map.notes
+    oldTitle        = map.title
+    oldGame         = map.game
+    oldAuthor       = map.author
+    oldCreationDate = map.creationDate
+    oldNotes        = map.notes
+    oldCoordOpts    = map.coordOpts
 
   var oldRegions = initTable[int, Regions]()
 
@@ -925,9 +932,12 @@ proc setMapProperties*(map; loc: Location, name: string,
       oldRegions[levelIdx] = l.regions
 
   var undoAction = proc (m: var Map): UndoStateData =
-    m.name = oldName
-    m.coordOpts = oldCoordOpts
-    m.notes = oldNotes
+    m.title        = oldTitle
+    m.game         = oldGame
+    m.author       = oldAuthor
+    m.creationDate = oldCreationDate
+    m.notes        = oldNotes
+    m.coordOpts    = oldCoordOpts
 
     for levelIdx, l in m.levels.mpairs:
       if not l.overrideCoordOpts:

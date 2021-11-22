@@ -25,9 +25,12 @@ import utils
 const CurrentMapVersion = 1
 
 # {{{ Field limits
-
 const
-  MapNameLimits*           = strLimits(minRuneLen=1, maxRuneLen=100)
+  MapTitleLimits*          = strLimits(minRuneLen=1,  maxRuneLen=100)
+  MapGameLimits*           = strLimits(minRuneLen=1,  maxRuneLen=100)
+  MapAuthorLimits*         = strLimits(minRuneLen=1,  maxRuneLen=100)
+  MapCreationDateLimits*   = strLimits(minRuneLen=10, maxRuneLen=10)
+
   NotesLimits*             = strLimits(minRuneLen=0, maxRuneLen=2000)
 
   NumLevelsLimits*         = intLimits(min=0, max=999)
@@ -688,21 +691,34 @@ proc readLevelList_v1(rr): seq[Level] =
 proc readMapProperties_v1(rr): Map =
   debug(fmt"Reading map properties...")
 
-  # TODO is inside Map the best place for this? or introduce a header chunk?
   let version = rr.read(uint16)
   debug(fmt"  version: {version}")
   if version > CurrentMapVersion:
     raiseMapReadError(fmt"Unsupported map file version: {version}")
 
-  let name = rr.readWStr()
-  debug(fmt"  name: {name}")
-  checkStringLength(name, "map.prop.name", MapNameLimits)
+  let title = rr.readWStr()
+  debug(fmt"  title: {title}")
+  checkStringLength(title, "map.prop.title", MapTitleLimits)
+#[
+  let game = rr.readWStr()
+  debug(fmt"  game: {game}")
+  checkStringLength(game, "map.prop.game", MapTitleLimits)
 
+  let author = rr.readWStr()
+  debug(fmt"  author: {author}")
+  checkStringLength(author, "map.prop.author", MapAuthorLimits)
+
+  let creationDate = rr.readWStr()
+  debug(fmt"  creationDate: {creationDate}")
+  checkStringLength(creationDate, "map.prop.creationDate",
+                    MapCreationDateLimits)
+]#
   let notes = rr.readWStr()
   debug(fmt"  notes: {notes}")
   checkStringLength(notes, "map.prop.notes", NotesLimits)
 
-  result = newMap(name)
+#  result = newMap(title, game, author, creationDate)
+  result = newMap(title, "", "", "")
   result.notes = notes
 
 # }}}
@@ -1064,7 +1080,10 @@ proc writeMapProperties_v1(rw; m: Map) =
   rw.beginChunk(FourCC_GRDM_prop)
 
   rw.write(CurrentMapVersion.uint16)
-  rw.writeWStr(m.name)
+  rw.writeWStr(m.title)
+  rw.writeWStr(m.game)
+  rw.writeWStr(m.author)
+  rw.writeWStr(m.creationDate)
   rw.writeWStr(m.notes)
 
   rw.endChunk()
