@@ -1,4 +1,3 @@
-
                        Gridmonger map file format
                        ==========================
                                Version 1
@@ -28,14 +27,16 @@ RIFF ('GRDM'          # Gridmonger map file
     )
     'lnks'            # Map links
 
-    TODO
-    'disp'            # Display related info
+    'stat'            # App state (optional)
 )
 
 
 'prop' (Map)
     UINT16  version
-    WSTR    name              (minRuneLen=1, maxRuneLen=100)
+    WSTR    title             (minRuneLen=1, maxRuneLen=100)
+    WSTR    game              (maxRuneLen=100)
+    WSTR    author            (maxRuneLen=100)
+    BSTR    creationTime      (len=19)
     WSTR    notes             (maxRuneLen=2000)
 
 
@@ -146,14 +147,20 @@ RIFF ('GRDM'          # Gridmonger map file
     UINT16  destColumn        (max=numColumns-1 of the given level)
 
 
-'disp'
-    UINT8   currLevel         (max=numLevels-1)
+'stat'
+    BSTR    themeName         (minLen=1, maxLen=200, only alphanumeric)
+
     UINT8   zoomLevel         (min=1, max=20)
+    UINT8   currentLevel      (max=numLevels-1)
     UINT16  cursorRow         (max=numRows-1    of the given level)
     UINT16  cursorColumn      (max=numColumns-1 of the given level)
+    UINT16  viewStartRow      (max=numRows-1    of the given level)
+    UINT16  viewStartColumn   (max=numColumns-1 of the given level)
 
-    TODO:
-    BSTR    themeName         (minLen=1, maxLen=200, only alphanumeric)
-    UINT8   showCoords        (0=off, 1=on)
-    UINT8   gridStyle
+    UINT8   optShowCellCoords (0=off, 1=on)
+    UINT8   optShowToolsPane  (0=off, 1=on)
+    UINT8   optShowNotesPane  (0=off, 1=on)
+    UINT8   optWasdMode       (0=off, 1=on)
+    UINT8   optWalkMode       (0=off, 1=on)
+    UINT8   optDrawTrail      (0=off, 1=on)
 

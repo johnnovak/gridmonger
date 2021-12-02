@@ -55,7 +55,7 @@ type
     title*:        string
     game*:         string
     author*:       string
-    creationDate*: string
+    creationTime*: string
     notes*:        string
 
     levels*:       seq[Level]

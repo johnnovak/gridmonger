@@ -120,4 +120,10 @@ func isValidFilename*(filename: string): bool =
 
 # }}}
 
+# {{{ currentLocalDatetimeString*()
+proc currentLocalDatetimeString*(): string =
+  now().format("yyyy-MM-dd HH:mm:ss")
+
+# }}}
+
 # vim: et:ts=2:sw=2:fdm=marker

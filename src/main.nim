@@ -405,7 +405,6 @@ type
     title:        string
     game:         string
     author:       string
-    creationDate: string
 
     origin:       Natural
     rowStyle:     Natural
@@ -423,7 +422,6 @@ type
     title:        string
     game:         string
     author:       string
-    creationDate: string
 
     origin:       Natural
     rowStyle:     Natural
@@ -2371,8 +2369,8 @@ template noteFields(dlgWidth: float) =
   )
 
 # }}}
-# {{{ levelCommonFields()
-template levelCommonFields() =
+# {{{ commonLevelFields()
+template commonLevelFields() =
   group:
     koi.label("Location name", style=a.theme.labelStyle)
 
@@ -2431,8 +2429,8 @@ template validateLevelFields(dlg, map, validationError: untyped) =
         break
 
 # }}}
-# {{{ mapCommonGeneralFields()
-template mapCommonGeneralFields() =
+# {{{ commonGeneralMapFields()
+template commonGeneralMapFields(map: Map, displayCreationTime: bool) =
   group:
     koi.label("Title", style=a.theme.labelStyle)
 
@@ -2471,13 +2469,21 @@ template mapCommonGeneralFields() =
       style = a.theme.textFieldStyle
     )
 
-    koi.label("Creation date", style=a.theme.labelStyle)
+    if displayCreationTime:
+      koi.label("Creation time", style=a.theme.labelStyle)
 
-    koi.textField(
-      dlg.creationDate,
-      disabled = true,
-      style = a.theme.textFieldStyle
-    )
+      koi.textField(
+        map.creationTime,
+        disabled = true,
+        style = a.theme.textFieldStyle
+      )
+
+# }}}
+# {{{ validateCommonGeneralMapFields()
+template validateCommonGeneralMapFields(dlg: untyped): string =
+  if dlg.title == "":
+    mkValidationError("Title is mandatory")
+  else: ""
 
 # }}}
 
@@ -2969,7 +2975,6 @@ proc openNewMapDialog(a) =
     dlg.title        = "Untitled Map"
     dlg.game         = ""
     dlg.author       = ""
-    dlg.creationDate = "" # TODO
 
     dlg.origin       = origin.ord
     dlg.rowStyle     = rowStyle.ord
@@ -3016,7 +3021,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    mapCommonGeneralFields()
+    commonGeneralMapFields(a.doc.map, displayCreationTime=false)
 
   elif dlg.activeTab == 1:  # Coordinates
     coordinateFields()
@@ -3028,9 +3033,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
 
   # Validation
-  var validationError = ""
-  if dlg.title == "":
-    validationError = mkValidationError("Title is mandatory")
+  var validationError = validateCommonGeneralMapFields(dlg)
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
@@ -3043,7 +3046,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     a.opts.drawTrail = false
 
     a.doc.filename = ""
-    a.doc.map = newMap(dlg.title, dlg.game, dlg.author, dlg.creationDate)
+    a.doc.map = newMap(dlg.title, dlg.game, dlg.author,
+                       creationTime=currentLocalDatetimeString())
 
     with a.doc.map.coordOpts:
       origin      = CoordinateOrigin(dlg.origin)
@@ -3107,7 +3111,6 @@ proc openEditMapPropsDialog(a) =
   dlg.title        = map.title
   dlg.game         = map.game
   dlg.author       = map.author
-  dlg.creationDate = map.creationDate
 
   with map.coordOpts:
     dlg.origin      = origin.ord
@@ -3153,7 +3156,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    mapCommonGeneralFields()
+    commonGeneralMapFields(a.doc.map, displayCreationTime=true)
 
   elif dlg.activeTab == 1:  # Coordinates
     coordinateFields()
@@ -3165,9 +3168,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
 
   # Validation
-  var validationError = ""
-  if dlg.title == "":
-    validationError = mkValidationError("Title is mandatory")
+  var validationError = validateCommonGeneralMapFields(dlg)
 
   if validationError != "":
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
@@ -3186,7 +3187,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     )
 
     actions.setMapProperties(a.doc.map, a.ui.cursor,
-                             dlg.title, dlg.game, dlg.author, dlg.creationDate,
+                             dlg.title, dlg.game, dlg.author,
                              coordOpts, dlg.notes, a.doc.undoManager)
 
     setStatusMessage(IconFile, "Map properties updated", a)
@@ -3312,7 +3313,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    levelCommonFields()
+    commonLevelFields()
 
     group:
       koi.label("Columns", style=a.theme.labelStyle)
@@ -3515,7 +3516,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    levelCommonFields()
+    commonLevelFields()
 
   elif dlg.activeTab == 1:  # Coordinates
     koi.label("Override map settings", style=a.theme.labelStyle)
@@ -7661,7 +7662,8 @@ proc initApp(a) =
   switchTheme(if themeIndex.isSome: themeIndex.get else: 0, a)
 
   # Init map & load last map, or map from command line
-  a.doc.map = newMap("Untitled Map", game="", author="", creationDate="") # TODO
+  a.doc.map = newMap("Untitled Map", game="", author="",
+                     creationTime=currentLocalDatetimeString())
 
   let mapFileName = if paramCount() >= 1: paramStr(1)
                     else: cfg.getStringOrDefault("last-state.last-document", "")

@@ -2,7 +2,6 @@ https://forum.nim-lang.org/t/8188#52705
 
 BUGS
 
-- window not visible after disconnecting external screen
 
 
 ENHANCEMENTS
@@ -14,7 +13,14 @@ ENHANCEMENTS
 
 TODO for v0.9
 
-  - game, author, etc map fields
+  - window not visible after disconnecting external screen
+    - reset window position shortcut
+
+  - command line options to override:
+    - config
+    - position
+    - width/height
+    - hide title bar
 
   - OS X:
       - finish OS X package

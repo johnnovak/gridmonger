@@ -27,9 +27,9 @@ const CurrentMapVersion = 1
 # {{{ Field limits
 const
   MapTitleLimits*          = strLimits(minRuneLen=1,  maxRuneLen=100)
-  MapGameLimits*           = strLimits(minRuneLen=1,  maxRuneLen=100)
-  MapAuthorLimits*         = strLimits(minRuneLen=1,  maxRuneLen=100)
-  MapCreationDateLimits*   = strLimits(minRuneLen=10, maxRuneLen=10)
+  MapGameLimits*           = strLimits(minRuneLen=0,  maxRuneLen=100)
+  MapAuthorLimits*         = strLimits(minRuneLen=0,  maxRuneLen=100)
+  MapCreationTimeLimits*   = strLimits(minRuneLen=19, maxRuneLen=19)
 
   NotesLimits*             = strLimits(minRuneLen=0, maxRuneLen=2000)
 
@@ -214,7 +214,7 @@ proc readLocation(rr): Location =
 proc readAppState_v1(rr; m: Map): AppState =
   debug(fmt"Reading app state...")
 
-  let themeName = rr.readWStr()
+  let themeName = rr.readBStr()
   checkStringLength(themeName, "stat.themeName", ThemeNameLimits)
 
   let zoomLevel = rr.read(uint8)
@@ -699,26 +699,25 @@ proc readMapProperties_v1(rr): Map =
   let title = rr.readWStr()
   debug(fmt"  title: {title}")
   checkStringLength(title, "map.prop.title", MapTitleLimits)
-#[
+
   let game = rr.readWStr()
   debug(fmt"  game: {game}")
-  checkStringLength(game, "map.prop.game", MapTitleLimits)
+  checkStringLength(game, "map.prop.game", MapGameLimits)
 
   let author = rr.readWStr()
   debug(fmt"  author: {author}")
   checkStringLength(author, "map.prop.author", MapAuthorLimits)
 
-  let creationDate = rr.readWStr()
-  debug(fmt"  creationDate: {creationDate}")
-  checkStringLength(creationDate, "map.prop.creationDate",
-                    MapCreationDateLimits)
-]#
+  let creationTime = rr.readBStr()
+  debug(fmt"  creationTime: {creationTime}")
+  checkStringLength(creationTime, "map.prop.creationTime",
+                    MapCreationTimeLimits)
+
   let notes = rr.readWStr()
   debug(fmt"  notes: {notes}")
   checkStringLength(notes, "map.prop.notes", NotesLimits)
 
-#  result = newMap(title, game, author, creationDate)
-  result = newMap(title, "", "", "")
+  result = newMap(title, game, author, creationTime)
   result.notes = notes
 
 # }}}
@@ -881,7 +880,7 @@ var g_runLengthEncoder: RunLengthEncoder
 proc writeAppState_v1(rw; s: AppState) =
   rw.beginChunk(FourCC_GRDM_stat)
 
-  rw.writeWStr(s.themeName)
+  rw.writeBStr(s.themeName)
 
   rw.write(s.zoomLevel.uint8)
   rw.write(s.currentLevel.uint16)
@@ -889,6 +888,7 @@ proc writeAppState_v1(rw; s: AppState) =
   rw.write(s.cursorCol.uint16)
   rw.write(s.viewStartRow.uint16)
   rw.write(s.viewStartCol.uint16)
+
   rw.write(s.optShowCellCoords.uint8)
   rw.write(s.optShowToolsPane.uint8)
   rw.write(s.optShowNotesPane.uint8)
@@ -1083,7 +1083,7 @@ proc writeMapProperties_v1(rw; m: Map) =
   rw.writeWStr(m.title)
   rw.writeWStr(m.game)
   rw.writeWStr(m.author)
-  rw.writeWStr(m.creationDate)
+  rw.writeBStr(m.creationTime)
   rw.writeWStr(m.notes)
 
   rw.endChunk()

@@ -892,9 +892,8 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 # }}}
 
 # {{{ setMapProperties*()
-proc setMapProperties*(map; loc: Location,
-                       title, game, author, creationDate: string,
-                       coordOpts: CoordinateOptions, notes: string; um) =
+proc setMapProperties*(map; loc: Location; title, game, author: string;
+                       coordOpts: CoordinateOptions; notes: string; um) =
 
   let usd = UndoStateData(actionName: "Edit map properties", location: loc)
 
@@ -904,7 +903,6 @@ proc setMapProperties*(map; loc: Location,
     m.title        = title
     m.game         = game
     m.author       = author
-    m.creationDate = creationDate
     m.notes        = notes
     m.coordOpts    = coordOpts
 
@@ -921,7 +919,6 @@ proc setMapProperties*(map; loc: Location,
     oldTitle        = map.title
     oldGame         = map.game
     oldAuthor       = map.author
-    oldCreationDate = map.creationDate
     oldNotes        = map.notes
     oldCoordOpts    = map.coordOpts
 
@@ -935,7 +932,6 @@ proc setMapProperties*(map; loc: Location,
     m.title        = oldTitle
     m.game         = oldGame
     m.author       = oldAuthor
-    m.creationDate = oldCreationDate
     m.notes        = oldNotes
     m.coordOpts    = oldCoordOpts
 
