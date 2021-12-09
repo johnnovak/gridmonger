@@ -21,10 +21,13 @@ ui {
       hover = "#aca458c8"
       down = "#aca458ff"
     }
+    border {
+      color = "#1b1b1bff"
+    }
   }
 
   dialog {
-    corner-radius = 0.0
+    corner-radius = 0
     background = "#cebeafff"
     label = "#0000008e"
     warning = "#ffffffec"
@@ -36,23 +39,23 @@ ui {
     }
     outer-border {
       color = "#cebeafff"
-      width = 0.0
+      width = 0
     }
     inner-border {
       color = "#93887dff"
-      width = 7.0
+      width = 7
     }
     shadow {
       enabled = no
       color = "#00000000"
-      feather = 0.0
-      x-offset = 0.0
-      y-offset = 0.0
+      feather = 0
+      x-offset = 0
+      y-offset = 0
     }
   }
 
   widget {
-    corner-radius = 5.0
+    corner-radius = 5
 
     background {
       normal = "#70645dd8"
@@ -139,8 +142,8 @@ level {
   background-hatch {
     enabled = yes
     color = "#00000026"
-    width = 1.0
-    spacing-factor = 3.0
+    width = 1
+    spacing-factor = 3
   }
 
   grid {
@@ -165,11 +168,11 @@ level {
   shadow {
     inner {
       color = "#00000000"
-      width-factor = 0.0
+      width-factor = 0
     }
     outer {
       color = "#00000000"
-      width-factor = 0.0
+      width-factor = 0
     }
   }
 
@@ -204,6 +207,11 @@ level {
     tooltip {
       background = "#000000e8"
       text = "#ffffffe6"
+      corner-radius = 5
+
+      shadow {
+        color = "#00000064"
+      }
     }
   }
 
@@ -218,6 +226,7 @@ level {
 
   level-drop-down {
     item-list-background = "#3c3422f0"
+    corner-radius = 5
 
     button {
       normal = "#ffffff00"
@@ -227,6 +236,9 @@ level {
     item {
       normal = "#e6cb99fa"
       hover = "#3c3422e6"
+    }
+    shadow {
+      color = "#00000064"
     }
   }
 }

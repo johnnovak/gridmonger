@@ -2,6 +2,7 @@ import options
 import streams
 import strformat
 
+import koi
 import nanovg
 
 import cfghelper
@@ -10,6 +11,284 @@ import fieldlimits
 import hocon
 import strutils
 import utils
+
+
+# {{{ DefaultThemeConfig
+
+const DefaultThemeString = """
+  ui {
+    window {
+      modified-flag = "#ffffff40"
+
+      background {
+        color = "#666666ff"
+        image = ""
+      }
+      title {
+        background {
+          normal = "#2e2e2eff"
+          inactive = "#1a1a1aff"
+        }
+        text {
+          normal = "#ffffff80"
+          inactive = "#ffffff66"
+        }
+      }
+      button {
+        normal = "#ffffff73"
+        hover = "#ffffffb3"
+        down = "#ffffffe6"
+        inactive = "#00000080"
+      }
+      border {
+        color = "#1b1b1bff"
+      }
+    }
+
+    dialog {
+      corner-radius = 6
+      background = "#4d4d4dff"
+      label = "#ffffffb3"
+      warning = "#ffffffec"
+      error = "#ff6464ff"
+
+      title {
+        background = "#1a1a1aff"
+        text = "#d9d9d9ff"
+      }
+      outer-border {
+        color = "#00000000"
+        width = 0
+      }
+      inner-border {
+        color = "#00000000"
+        width = 0
+      }
+      shadow {
+        enabled = yes
+        color = "#000000a8"
+        feather = 24
+        x-offset = 2
+        y-offset = 3
+      }
+    }
+
+    widget {
+      corner-radius = 4
+
+      background {
+        normal = "#ffffff80"
+        hover = "#ffffffa1"
+        active = "#ffa600ff"
+        disabled = "#ffffff33"
+      }
+      foreground {
+        normal = "#000000b3"
+        active = "#0000009e"
+        disabled = "#00000059"
+      }
+    }
+
+    text-field {
+      cursor = "#ffbe00ff"
+      selection = "#c8820078"
+
+      edit {
+        background = "#ffffff33"
+        text = "#ffffffcc"
+      }
+      scroll-bar {
+        normal = "#00000000"
+        edit = "#ffffffcc"
+      }
+    }
+
+    status-bar {
+      background = "#262626ff"
+      text = "#d1d1d1ff"
+      coordinates = "#999999ff"
+
+      command {
+        background = "#ffa600e9"
+        text = "#333333ff"
+      }
+    }
+
+    about-button {
+      label {
+        normal = "#ffffff80"
+        hover = "#ffffffb3"
+        down = "#ffffffd9"
+      }
+    }
+
+    about-dialog {
+      logo = "#e6e6e6ff"
+    }
+
+    splash-image {
+      logo = "#202020ff"
+      outline = "#e6e6e6ff"
+      shadow-alpha = 1
+    }
+  }
+
+  level {
+    general {
+      background = "#666666ff"
+      line-width = normal
+      cursor = "#ffa600ff"
+      cursor-guides = "#ffa60033"
+      link-marker = "#00b3c8ff"
+      selection = "#ff808066"
+      trail = "#00000062"
+      paste-preview = "#3399ff66"
+
+      foreground {
+        normal = "#1a1a1aff"
+        light = "#1a1a1a46"
+      }
+      coordinates {
+        normal = "#e6e6e6ff"
+        highlight = "#ffbf00ff"
+      }
+      region-border {
+        normal = "#ff8080ff"
+        empty = "#ff808066"
+      }
+    }
+
+    background-hatch {
+      enabled = yes
+      color = "#00000066"
+      width = 1
+      spacing-factor = 2
+    }
+
+    grid {
+      background {
+        style = solid
+        grid = "#0000001a"
+      }
+      floor {
+        style = solid
+        grid = "#33333368"
+      }
+    }
+
+    outline {
+      style = cell
+      fill-style = solid
+      color = "#3d3d3dff"
+      width-factor = 0.5
+      overscan = no
+    }
+
+    shadow {
+      inner {
+        color = "#0000001a"
+        width-factor = 0
+      }
+      outer {
+        color = "#0000001a"
+        width-factor = 0
+      }
+    }
+
+    floor {
+      transparent = no
+      background = [
+        "#f2f2eeff"
+        "#6f000097"
+        "#ff290074"
+        "#ffb30080"
+        "#7c652192"
+        "#709a0092"
+        "#a6c41e63"
+        "#0c9ce047"
+        "#1c6fac83"
+        "#9c559fa6"
+      ]
+    }
+
+    note {
+      marker = "#1a1a1ab3"
+      comment = "#ff3300cc"
+      background-shape = circle
+      index = "#ffffffff"
+      index-background = [
+        "#f75c4aff"
+        "#ff9c6aff"
+        "#00b3c8ff"
+        "#13837fff"
+      ]
+
+      tooltip {
+        background = "#0d0d0dff"
+        text = "#e6e6e6ff"
+        corner-radius = 5
+
+        shadow {
+          color = "#00000064"
+        }
+      }
+    }
+
+    label {
+      text = [
+        "#353232ff"
+        "#ffffffff"
+        "#f75c4aff"
+        "#00b3c8ff"
+      ]
+    }
+
+    level-drop-down {
+      item-list-background = "#333333ff"
+      corner-radius = 5
+
+      button {
+        normal = "#00000000"
+        hover = "#00000047"
+        label = "#ffffffe6"
+      }
+      item {
+        normal = "#ffffffcc"
+        hover = "#000000b3"
+      }
+      shadow {
+        color = "#00000064"
+      }
+    }
+  }
+
+  pane {
+    notes {
+      text = "#e6e6e6ff"
+      scroll-bar = "#e6e6e6ff"
+      index = "#ffffffff"
+      index-background = [
+        "#f75c4aff"
+        "#fa8d64ff"
+        "#00b3c8ff"
+        "#1d8d89ff"
+      ]
+    }
+
+    toolbar {
+      button {
+        normal = "#e6e6e6ff"
+        hover = "#ffffffff"
+      }
+    }
+  }
+"""
+
+let s = newStringStream(DefaultThemeString)
+var p = initHoconParser(s)
+let DefaultThemeConfig = p.parse()
+
+# }}}
 
 # {{{ Limits
 const
@@ -102,6 +381,14 @@ proc toLevelStyle*(cfg: HoconNode): LevelStyle =
   s.noteTooltipBackgroundColor = cfg.getColorOrDefault(p & "tooltip.background")
   s.noteTooltipTextColor       = cfg.getColorOrDefault(p & "tooltip.text")
 
+  let cr = cfg.getFloatOrDefault(p & "tooltip.corner-radius")
+  s.noteTooltipCornerRadius = cr
+
+  var ss = koi.getDefaultShadowStyle()
+  ss.color = cfg.getColorOrDefault(p & "tooltip.shadow.color")
+  ss.cornerRadius = cr * 1.6
+  s.noteTooltipShadowStyle = ss
+
   cfg.getColorOrDefaultArray("label.text", s.labelTextColor)
 
 # }}}
@@ -110,16 +397,18 @@ proc toWindowStyle*(cfg: HoconNode): WindowStyle =
   alias(s, result)
   s = new WindowStyle
 
-  s.modifiedFlagColor            = cfg.getColorOrDefault("modified-flag")
+  s.borderColor                  = cfg.getColorOrDefault("border.color")
   s.backgroundColor              = cfg.getColorOrDefault("background.color")
   s.backgroundImage              = cfg.getStringOrDefault("background.image")
   s.titleBackgroundColor         = cfg.getColorOrDefault("title.background.normal")
   s.titleBackgroundInactiveColor = cfg.getColorOrDefault("title.background.inactive")
   s.titleColor                   = cfg.getColorOrDefault("title.text.normal")
   s.titleInactiveColor           = cfg.getColorOrDefault("title.text.inactive")
+  s.modifiedFlagColor            = cfg.getColorOrDefault("modified-flag")
   s.buttonColor                  = cfg.getColorOrDefault("button.normal")
   s.buttonHoverColor             = cfg.getColorOrDefault("button.hover")
   s.buttonDownColor              = cfg.getColorOrDefault("button.down")
+  s.buttonInactiveColor          = cfg.getColorOrDefault("button.inactive")
 
 # }}}
 # {{{ toStatusBarStyle*()
@@ -177,10 +466,13 @@ proc loadTheme*(filename: string): HoconNode =
     cfg.limit("level.background-hatch.width",          BackgroundHatchWidthLimits)
     cfg.limit("level.background-hatch.spacing-factor", BackgroundHatchSpacingFactorLimits)
 
+    cfg.limit("level.note.tooltip.corner-radius", WidgetCornerRadiusLimits)
+
     cfg.limit("level.outline.width-factor",   OutlineWidthFactorLimits)
 
     cfg.limit("level.shadow.inner.width-factor", ShadowWidthFactorLimits)
     cfg.limit("level.shadow.outer.width-factor", ShadowWidthFactorLimits)
+
 
     result = cfg
   finally:

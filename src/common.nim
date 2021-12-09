@@ -1,5 +1,6 @@
 import tables
 
+import koi
 import nanovg
 
 import bitable
@@ -255,7 +256,7 @@ const
 
 type
   WindowStyle* = ref object
-    modifiedFlagColor*:            Color
+    borderColor*:                  Color
     backgroundColor*:              Color
     backgroundImage*:              string
     titleBackgroundColor*:         Color
@@ -265,6 +266,8 @@ type
     buttonColor*:                  Color
     buttonHoverColor*:             Color
     buttonDownColor*:              Color
+    buttonInactiveColor*:          Color
+    modifiedFlagColor*:            Color
 
   StatusBarStyle* = ref object
     backgroundColor*:        Color
@@ -331,6 +334,8 @@ type
     noteIndexColor*:             Color
     noteTooltipBackgroundColor*: Color
     noteTooltipTextColor*:       Color
+    noteTooltipCornerRadius*:    float
+    noteTooltipShadowStyle*:     ShadowStyle
 
     labelTextColor*:             array[4, Color]
 

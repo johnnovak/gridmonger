@@ -354,6 +354,7 @@ type
 
 
 proc `==`*(a: HoconNode, b: HoconNode): bool =
+  if cast[int](a) == 0: return cast[int](b) == 0  # HACK
   if a.kind != b.kind: return false
   case a.kind
   of hnkNull:   true
@@ -373,6 +374,26 @@ proc `==`*(a: HoconNode, b: HoconNode): bool =
     for i,v in a.elems:
       if v != b.elems[i]: return false
     true
+
+
+proc `$`*(n: HoconNode): string =
+  case n.kind
+  of hnkNull:   "Null"
+  of hnkString: fmt"Str({n.str})"
+  of hnkNumber: fmt"Num({n.num})"
+  of hnkBool:   fmt"Bool({n.bool})"
+  of hnkObject:
+    var s = "{"
+    for k,v in n.fields:
+      s &= "\"" & k & "\": " & $v & ", " #TODO
+    s &= "}"
+    s
+  of hnkArray:
+    var s = "["
+    for e in n.elems:
+      s &= fmt"{e}, " #TODO
+    s &= "]"
+    s
 
 
 using p: var HoconParser
@@ -666,7 +687,17 @@ proc hasOnlyDigits(s: string): bool =
     if not c.isDigit(): return false
   true
 
-# {{{ get
+# {{{ Getters
+
+iterator keys*(node: HoconNode): String =
+  case node.kind
+  of hnkArray:
+    yield
+  of hnkObject:
+    yield
+  else:
+
+
 proc get*(node: HoconNode, path: string): HoconNode =
   var curr = node
   for key in path.split('.'):
@@ -762,9 +793,9 @@ proc getNatural*(node: HoconNode, path: string): Natural =
   else:
     raiseHoconValueError(n.kind, hnkNumber, path)
 
-
 # }}}
-# {{{ set
+# {{{ Setters
+
 proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
 
   proc isInt(s: string): bool =
@@ -849,6 +880,7 @@ proc set*(node: HoconNode, path: string, flag: bool, createPath = true) =
   node.set(path, value, createPath)
 
 # }}}
+
 # }}}
 
 # {{{ Tests

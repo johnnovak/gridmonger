@@ -13,6 +13,15 @@ ENHANCEMENTS
 
 TODO for v0.9
 
+  - theme:
+    - inactive button color in titlebar
+    - tooltip roundness & shadow opacity
+    - level dropdown shadow opacity
+
+  - hide titlebar shortcut
+
+  - debug level from config
+
   - window not visible after disconnecting external screen
     - reset window position shortcut
 
@@ -25,13 +34,6 @@ TODO for v0.9
   - OS X:
       - finish OS X package
       - gridmonger document icon
-
-  - theme:
-    - inactive button color in titlebar
-    - tooltip roundness & shadow opacity
-    - level dropdown shadow opacity
-
-  - debug level from config
 
   - finalise all themes
 

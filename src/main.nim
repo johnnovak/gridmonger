@@ -1866,7 +1866,7 @@ proc updateWidgetStyles(a) =
     colorDisabled = color.lerp(d.getColorOrDefault("background"), 0.7)
     align         = haLeft
 
-  # Error label
+  # Warning label
   a.theme.warningLabelStyle = koi.getDefaultLabelStyle()
 
   with a.theme.warningLabelStyle:
@@ -1886,7 +1886,7 @@ proc updateWidgetStyles(a) =
   a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
 
   with a.theme.levelDropDownStyle:
-    buttonCornerRadius       = w.getFloatOrDefault("corner-radius")
+    buttonCornerRadius       = ld.getFloatOrDefault("corner-radius")
     buttonFillColor          = ld.getColorOrDefault("button.normal")
     buttonFillColorHover     = ld.getColorOrDefault("button.hover")
     buttonFillColorDown      = buttonFillColor
@@ -1901,7 +1901,7 @@ proc updateWidgetStyles(a) =
     item.align               = haLeft
     item.color               = ld.getColorOrDefault("item.normal")
     item.colorHover          = ld.getColorOrDefault("item.hover")
-    itemListCornerRadius     = w.getFloatOrDefault("corner-radius")
+    itemListCornerRadius     = ld.getFloatOrDefault("corner-radius")
     itemListPadHoriz         = 10.0
     itemListFillColor        = ld.getColorOrDefault("item-list-background")
     itemBackgroundColorHover = w.getColorOrDefault("background.normal")
@@ -3047,7 +3047,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
     a.doc.filename = ""
     a.doc.map = newMap(dlg.title, dlg.game, dlg.author,
-                       creationTime=currentLocalDatetimeString())
+                       creationTime=now().format("yyyy-MM-dd HH:mm:ss"))
 
     with a.doc.map.coordOpts:
       origin      = CoordinateOrigin(dlg.origin)
@@ -5997,6 +5997,7 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
   alias(dp, a.ui.drawLevelParams)
+  alias(ls, a.theme.levelStyle)
 
   if note.text != "":
     const PadX = 10
@@ -6030,11 +6031,13 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
     if yOver > 0:
       noteBoxY -= noteBoxH + 22
 
-    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH)
+    vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH,
+                  ls.noteTooltipShadowStyle)
 
     vg.fillColor(a.theme.levelStyle.noteTooltipBackgroundColor)
     vg.beginPath()
-    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH, 5)
+    vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH,
+                   r=ls.noteTooltipCornerRadius)
     vg.fill()
 
     vg.fillColor(a.theme.levelStyle.noteTooltipTextColor)
@@ -6516,6 +6519,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.setNextId(path)
       body
       if a.theme.prevConfig.getOpt(path) != cfg.getOpt(path):
+        echo path
         te.modified = true
 
   template stringProp(label: string, path: string) =
@@ -6565,12 +6569,10 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("Window", te.sectionTitleBar):
       p = "ui.window."
       group:
-        colorProp("Modified Flag",    p & "modified-flag")
+        colorProp("Border",           p & "border.color")
 
       group:
-        colorProp("Background",        p & "background.color")
-
-      group:
+        colorProp("Background",       p & "background.color")
         let path = p & "background.image"
         stringProp("Background Image", path)
 
@@ -6586,24 +6588,29 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Title Text Inactive",       p & "text.inactive")
 
       group:
+        p = "ui.window."
+        colorProp("Modified Flag",    p & "modified-flag")
+
+      group:
         p = "ui.window.button."
-        colorProp("Button Normal", p & "normal")
-        colorProp("Button Hover",  p & "hover")
-        colorProp("Button Down",   p & "down")
+        colorProp("Button Normal",    p & "normal")
+        colorProp("Button Hover",     p & "hover")
+        colorProp("Button Down",      p & "down")
+        colorProp("Button Inactive",  p & "inactive")
 
     if koi.subSectionHeader("Dialog", te.sectionDialog):
       p = "ui.dialog."
       group:
         let CRLimits = DialogCornerRadiusLimits
-        floatProp("Corner Radius",      p & "corner-radius", CRLimits)
-        colorProp("Background",         p & "background")
-        colorProp("Label",              p & "label")
-        colorProp("Warning",            p & "warning")
-        colorProp("Error",              p & "error")
+        floatProp("Corner Radius",    p & "corner-radius", CRLimits)
+        colorProp("Background",       p & "background")
+        colorProp("Label",            p & "label")
+        colorProp("Warning",          p & "warning")
+        colorProp("Error",            p & "error")
 
       group:
-        colorProp("Title Background",   p & "title.background")
-        colorProp("Title Text",         p & "title.text")
+        colorProp("Title Background", p & "title.background")
+        colorProp("Title Text",       p & "title.text")
 
       group:
         let BWLimits = DialogBorderWidthLimits
@@ -6666,6 +6673,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       let path = "ui.about-dialog.logo"
       colorProp("Logo", path)
       if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
+        echo path
         a.aboutLogo.updateLogoImage = true
 
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
@@ -6674,16 +6682,19 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         var path = p & "logo"
         colorProp("Logo", path)
         if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
+          echo path
           a.splash.updateLogoImage = true
 
         path = p & "outline"
         colorProp("Logo", path)
         if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
+          echo path
           a.splash.updateOutlineImage = true
 
         path = p & "shadow-alpha"
         floatProp("Shadow Alpha", path, AlphaLimits)
         if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
+          echo path
           a.splash.updateShadowImage = true
 
       group:
@@ -6785,10 +6796,12 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Background 3",       p & "index-background.2")
         colorProp("Background 4",       p & "index-background.3")
         colorProp("Index",              p & "index")
-
       group:
-        colorProp("Tooltip Background", p & "tooltip.background")
-        colorProp("Tooltip Text",       p & "tooltip.text")
+        colorProp("Tooltip Background",     p & "tooltip.background")
+        colorProp("Tooltip Text",           p & "tooltip.text")
+        floatProp("Tooltip Corner Radius ", p & "tooltip.corner-radius",
+                  WidgetCornerRadiusLimits)
+        colorProp("Tooltip Shadow",         p & "tooltip.shadow.color")
 
     if koi.subSectionHeader("Labels", te.sectionLabels):
       p = "level.label."
@@ -6808,6 +6821,11 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorprop("Item List Background", p & "item-list-background")
         colorprop("Item Normal",          p & "item.normal")
         colorprop("Item Hover",           p & "item.hover")
+      group:
+        let WCRLimits = WidgetCornerRadiusLimits
+        floatProp("Corner Radius",        p & "corner-radius", WCRLimits)
+      group:
+        colorProp("Shadow",               p & "shadow.color")
 
   # }}}
   # {{{ Panes section

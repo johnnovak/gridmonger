@@ -21,10 +21,13 @@ ui {
       hover = "#d25a00e6"
       down = "#f08200e6"
     }
+    border {
+      color = "#1b1b1bff"
+    }
   }
 
   dialog {
-    corner-radius = 0.0
+    corner-radius = 0
     background = "#190800ff"
     label = "#e04700ff"
     warning = "#ffffffec"
@@ -36,23 +39,23 @@ ui {
     }
     outer-border {
       color = "#0f0500ff"
-      width = 3.0
+      width = 3
     }
     inner-border {
       color = "#e04700ff"
-      width = 2.0
+      width = 2
     }
     shadow {
       enabled = no
       color = "#00000000"
-      feather = 0.0
-      x-offset = 0.0
-      y-offset = 0.0
+      feather = 0
+      x-offset = 0
+      y-offset = 0
     }
   }
 
   widget {
-    corner-radius = 0.0
+    corner-radius = 0
 
     background {
       normal = "#a43700ff"
@@ -107,7 +110,7 @@ ui {
   splash-image {
     logo = "#000907ff"
     outline = "#00e0a4ff"
-    shadow-alpha = 1.0
+    shadow-alpha = 1
   }
 }
 
@@ -140,7 +143,7 @@ level {
     enabled = no
     color = "#00000000"
     width = 0.5
-    spacing-factor = 1.0
+    spacing-factor = 1
   }
 
   grid {
@@ -158,18 +161,18 @@ level {
     style = square-edges
     fill-style = solid
     color = "#001910ff"
-    width-factor = 0.0
+    width-factor = 0
     overscan = no
   }
 
   shadow {
     inner {
       color = "#00000000"
-      width-factor = 0.0
+      width-factor = 0
     }
     outer {
       color = "#00000000"
-      width-factor = 0.0
+      width-factor = 0
     }
   }
 
@@ -204,6 +207,11 @@ level {
     tooltip {
       background = "#443823f0"
       text = "#e6cb99fa"
+      corner-radius = 5
+
+      shadow {
+        color = "#00000064"
+      }
     }
   }
 
@@ -218,6 +226,7 @@ level {
 
   level-drop-down {
     item-list-background = "#411300ff"
+    corner-radius = 5
 
     button {
       normal = "#00000000"
@@ -227,6 +236,9 @@ level {
     item {
       normal = "#ff6f00ff"
       hover = "#000000cc"
+    }
+    shadow {
+      color = "#00000064"
     }
   }
 }

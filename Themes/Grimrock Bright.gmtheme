@@ -21,10 +21,13 @@ ui {
       hover = "#aca458c8"
       down = "#aca458ff"
     }
+    border {
+      color = "#1b1b1bff"
+    }
   }
 
   dialog {
-    corner-radius = 0.0
+    corner-radius = 0
     background = "#333333ff"
     label = "#ffffffb3"
     warning = "#ffffffec"
@@ -36,23 +39,23 @@ ui {
     }
     outer-border {
       color = "#00000000"
-      width = 0.0
+      width = 0
     }
     inner-border {
       color = "#00000000"
-      width = 0.0
+      width = 0
     }
     shadow {
       enabled = no
       color = "#00000000"
-      feather = 0.0
-      x-offset = 0.0
-      y-offset = 0.0
+      feather = 0
+      x-offset = 0
+      y-offset = 0
     }
   }
 
   widget {
-    corner-radius = 0.0
+    corner-radius = 0
 
     background {
       normal = "#ffffff80"
@@ -107,7 +110,7 @@ ui {
   splash-image {
     logo = "#413c36ff"
     outline = "#d3c9c3ff"
-    shadow-alpha = 0.7211538461538462
+    shadow-alpha = 0.7211538461538461
   }
 }
 
@@ -139,8 +142,8 @@ level {
   background-hatch {
     enabled = yes
     color = "#00000040"
-    width = 1.0
-    spacing-factor = 3.0
+    width = 1
+    spacing-factor = 3
   }
 
   grid {
@@ -158,18 +161,18 @@ level {
     style = none
     fill-style = solid
     color = "#00000000"
-    width-factor = 0.0
+    width-factor = 0
     overscan = no
   }
 
   shadow {
     inner {
       color = "#00000000"
-      width-factor = 0.0
+      width-factor = 0
     }
     outer {
       color = "#00000000"
-      width-factor = 0.0
+      width-factor = 0
     }
   }
 
@@ -204,6 +207,11 @@ level {
     tooltip {
       background = "#312b26ff"
       text = "#f0e0d2ff"
+      corner-radius = 5
+
+      shadow {
+        color = "#00000064"
+      }
     }
   }
 
@@ -218,6 +226,7 @@ level {
 
   level-drop-down {
     item-list-background = "#3c3422f0"
+    corner-radius = 5
 
     button {
       normal = "#ffffff00"
@@ -227,6 +236,9 @@ level {
     item {
       normal = "#e6cb99fa"
       hover = "#3c3422e6"
+    }
+    shadow {
+      color = "#00000064"
     }
   }
 }

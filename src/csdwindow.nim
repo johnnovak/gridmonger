@@ -32,7 +32,8 @@ type
 
     w: Window  # the wrapper GLFW window
 
-    buttonStyle:         ButtonStyle
+    buttonActiveStyle:   ButtonStyle
+    buttonInactiveStyle: ButtonStyle
     title:               string
     maximized:           bool
     maximizing:          bool
@@ -70,6 +71,7 @@ with DefaultCSDWindowStyle:
   buttonColor                  = gray(1.0, 0.45)
   buttonHoverColor             = gray(1.0, 0.7)
   buttonDownColor              = gray(1.0, 0.9)
+  buttonInactiveColor          = gray(1.0, 0.5)
   modifiedFlagColor            = gray(1.0, 0.45)
 
 proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
@@ -79,14 +81,21 @@ proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
 proc setStyle*(win; s: WindowStyle) =
   win.style = s
 
-  alias(bs, win.buttonStyle)
-  bs = koi.getDefaultButtonStyle()
+  win.buttonActiveStyle = koi.getDefaultButtonStyle()
+  with win.buttonActiveStyle:
+    labelOnly        = true
+    label.padHoriz   = 0
+    label.color      = s.buttonColor
+    label.colorHover = s.buttonHoverColor
+    label.colorDown  = s.buttonDownColor
 
-  bs.labelOnly        = true
-  bs.label.padHoriz   = 0
-  bs.label.color      = s.buttonColor
-  bs.label.colorHover = s.buttonHoverColor
-  bs.label.colorDown  = s.buttonDownColor
+  win.buttonInactiveStyle = koi.getDefaultButtonStyle()
+  with win.buttonInactiveStyle:
+    labelOnly        = true
+    label.padHoriz   = 0
+    label.color      = s.buttonInactiveColor
+    label.colorHover = s.buttonInactiveColor
+    label.colorDown  = s.buttonInactiveColor
 
 # }}}
 # {{{ newCSDWindow*()
@@ -219,10 +228,11 @@ proc maximize*(win) =
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   alias(s, win.style)
 
-  let (bgColor, textColor) = if win.w.focused:
-    (s.titleBackgroundColor, s.titleColor)
+  let (bgColor, textColor, buttonStyle) = if win.w.focused:
+    (s.titleBackgroundColor, s.titleColor, win.buttonActiveStyle)
   else:
-    (s.titleBackgroundInactiveColor, s.titleInactiveColor)
+    (s.titleBackgroundInactiveColor, s.titleInactiveColor,
+     win.buttonInactiveStyle)
 
   let
     bw = TitleBarButtonWidth
@@ -248,8 +258,6 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
       discard vg.text(tx+10, ty, IconAsterisk)
 
 
-  alias(bs, win.buttonStyle)
-
   # TODO hacky, shouldn't set the current layer from the outside
   let oldCurrLayer = koi.currentLayer()
   koi.setCurrentLayer(layerWindowDecoration)
@@ -257,21 +265,21 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   # Minimise/maximise/close window buttons
   var x = winWidth - TitleBarWindowButtonsTotalWidth
 
-  if koi.button(x, by, bw, bh, IconWindowLeft, style=bs):
+  if koi.button(x, by, bw, bh, IconWindowLeft, style=buttonStyle):
     win.alignLeft()
 
   x += bw
-  if koi.button(x, by, bw, bh, IconWindowRight, style=bs):
+  if koi.button(x, by, bw, bh, IconWindowRight, style=buttonStyle):
     win.alignRight()
 
   x += bw + TitleBarWindowStandardButtonsLeftPad
-  if koi.button(x, by, bw, bh, IconWindowMinimise, style=bs):
+  if koi.button(x, by, bw, bh, IconWindowMinimise, style=buttonStyle):
     win.w.iconify()
 
   x += bw
   if koi.button(x, by, bw, bh,
                 if win.maximized: IconWindowRestore else: IconWindowMaximise,
-                style=bs):
+                style=buttonStyle):
     if not win.maximizing:  # workaround to avoid double-activation
       if win.maximized:
         win.restore()
@@ -279,7 +287,7 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
         win.maximize()
 
   x += bw
-  if koi.button(x, by, bw, bh, IconWindowClose, style=bs):
+  if koi.button(x, by, bw, bh, IconWindowClose, style=buttonStyle):
     win.w.shouldClose = true
 
   koi.setCurrentLayer(oldCurrLayer)
@@ -486,8 +494,7 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   koi.addDrawLayer(layerWindowDecoration, vg):
     vg.beginPath()
     vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
-    # TODO border color
-    vg.strokeColor(gray(0.09))
+    vg.strokeColor(win.style.borderColor)
     vg.strokeWidth(1.0)
     vg.stroke()
 
