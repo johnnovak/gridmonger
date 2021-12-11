@@ -20,6 +20,7 @@ ui {
       normal = "#ffffff73"
       hover = "#ffffffb3"
       down = "#ffffffe6"
+      inactive = "#00000080"
     }
     border {
       color = "#1b1b1bff"
@@ -30,7 +31,7 @@ ui {
     corner-radius = 0
     background = "#404040ff"
     label = "#ffffffb3"
-    warning = "#ffffffec"
+    warning = "#ff6464ff"
     error = "#ff6464ff"
 
     title {

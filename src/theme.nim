@@ -20,6 +20,9 @@ const DefaultThemeString = """
     window {
       modified-flag = "#ffffff40"
 
+      border {
+        color = "#1b1b1bff"
+      }
       background {
         color = "#666666ff"
         image = ""
@@ -40,9 +43,6 @@ const DefaultThemeString = """
         down = "#ffffffe6"
         inactive = "#00000080"
       }
-      border {
-        color = "#1b1b1bff"
-      }
     }
 
     dialog {
@@ -56,11 +56,11 @@ const DefaultThemeString = """
         background = "#1a1a1aff"
         text = "#d9d9d9ff"
       }
-      outer-border {
+      inner-border {
         color = "#00000000"
         width = 0
       }
-      inner-border {
+      outer-border {
         color = "#00000000"
         width = 0
       }

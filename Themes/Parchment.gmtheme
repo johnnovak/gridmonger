@@ -2,6 +2,9 @@ ui {
   window {
     modified-flag = "#e29c2258"
 
+    border {
+      color = "#1b1b1bff"
+    }
     background {
       color = "#00000000"
       image = old-paper.jpg
@@ -20,9 +23,7 @@ ui {
       normal = "#d2c1a45e"
       hover = "#d2ba9179"
       down = "#d2b583a0"
-    }
-    border {
-      color = "#1b1b1bff"
+      inactive = "#00000080"
     }
   }
 
@@ -37,11 +38,11 @@ ui {
       background = "#201e1bff"
       text = "#ffe2b0ab"
     }
-    outer-border {
+    inner-border {
       color = "#00000000"
       width = 0
     }
-    inner-border {
+    outer-border {
       color = "#00000000"
       width = 0
     }

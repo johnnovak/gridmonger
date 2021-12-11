@@ -20,6 +20,7 @@ ui {
       normal = "#ffffff4d"
       hover = "#ffffff66"
       down = "#ffffff80"
+      inactive = "#00000080"
     }
     border {
       color = "#1b1b1bff"

@@ -1901,10 +1901,15 @@ proc updateWidgetStyles(a) =
     item.align               = haLeft
     item.color               = ld.getColorOrDefault("item.normal")
     item.colorHover          = ld.getColorOrDefault("item.hover")
-    itemListCornerRadius     = ld.getFloatOrDefault("corner-radius")
+    itemListCornerRadius     = buttonCornerRadius
     itemListPadHoriz         = 10.0
     itemListFillColor        = ld.getColorOrDefault("item-list-background")
-    itemBackgroundColorHover = w.getColorOrDefault("background.normal")
+    itemBackgroundColorHover = w.getColorOrDefault("background.active")
+
+    var ss = koi.getDefaultShadowStyle()
+    ss.color = ld.getColorOrDefault("shadow.color")
+    ss.cornerRadius = buttonCornerRadius * 1.6
+    shadow = ss
 
   # About button
   let ab = cfg.getObjectOrEmpty("ui.about-button")
@@ -6519,7 +6524,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       koi.setNextId(path)
       body
       if a.theme.prevConfig.getOpt(path) != cfg.getOpt(path):
-        echo path
         te.modified = true
 
   template stringProp(label: string, path: string) =
@@ -6673,7 +6677,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       let path = "ui.about-dialog.logo"
       colorProp("Logo", path)
       if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
-        echo path
         a.aboutLogo.updateLogoImage = true
 
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
@@ -6682,19 +6685,16 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         var path = p & "logo"
         colorProp("Logo", path)
         if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
-          echo path
           a.splash.updateLogoImage = true
 
         path = p & "outline"
         colorProp("Logo", path)
         if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
-          echo path
           a.splash.updateOutlineImage = true
 
         path = p & "shadow-alpha"
         floatProp("Shadow Alpha", path, AlphaLimits)
         if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
-          echo path
           a.splash.updateShadowImage = true
 
       group:

@@ -2,6 +2,9 @@ ui {
   window {
     modified-flag = "#ffffff38"
 
+    border {
+      color = "#1b1b1bff"
+    }
     background {
       color = "#000000ff"
       image = ""
@@ -20,9 +23,7 @@ ui {
       normal = "#ffffff4d"
       hover = "#ffffff66"
       down = "#ffffff80"
-    }
-    border {
-      color = "#1b1b1bff"
+      inactive = "#00000080"
     }
   }
 
@@ -37,13 +38,13 @@ ui {
       background = "#0d0d0dff"
       text = "#d9d9d9ff"
     }
-    outer-border {
-      color = "#00000000"
-      width = 0
-    }
     inner-border {
       color = "#000000ff"
       width = 4
+    }
+    outer-border {
+      color = "#00000000"
+      width = 0
     }
     shadow {
       enabled = no

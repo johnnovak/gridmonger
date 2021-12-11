@@ -2,6 +2,9 @@ ui {
   window {
     modified-flag = "#ff487e64"
 
+    border {
+      color = "#1b1b1bff"
+    }
     background {
       color = "#080002ff"
       image = ""
@@ -20,9 +23,7 @@ ui {
       normal = "#b40035c8"
       hover = "#d2003dc8"
       down = "#f00046e8"
-    }
-    border {
-      color = "#1b1b1bff"
+      inactive = "#00000080"
     }
   }
 
@@ -37,13 +38,13 @@ ui {
       background = "#ca003cff"
       text = "#000000cc"
     }
-    outer-border {
-      color = "#0f0004ff"
-      width = 6
-    }
     inner-border {
       color = "#ca003cff"
       width = 2
+    }
+    outer-border {
+      color = "#0f0004ff"
+      width = 6
     }
     shadow {
       enabled = no
@@ -226,6 +227,7 @@ level {
 
   level-drop-down {
     item-list-background = "#411300ff"
+    corner-radius = 5
 
     button {
       normal = "#00000000"
@@ -235,6 +237,9 @@ level {
     item {
       normal = "#ff6f00ff"
       hover = "#000000cc"
+    }
+    shadow {
+      color = "#00000064"
     }
   }
 }
