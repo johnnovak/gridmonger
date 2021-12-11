@@ -689,15 +689,6 @@ proc hasOnlyDigits(s: string): bool =
 
 # {{{ Getters
 
-iterator keys*(node: HoconNode): String =
-  case node.kind
-  of hnkArray:
-    yield
-  of hnkObject:
-    yield
-  else:
-
-
 proc get*(node: HoconNode, path: string): HoconNode =
   var curr = node
   for key in path.split('.'):
@@ -825,7 +816,10 @@ proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
       let arrayIdx = arrayIdx.get
 
       if curr.kind != hnkArray:
-        raiseHoconPathError(path, fmt"'{key}' is not an array")
+        if createPath:
+          curr = newHoconArray()
+        else:
+          raiseHoconPathError(path, fmt"'{key}' is not an array")
 
       var arrayExtended = false
       if arrayIdx > curr.elems.high:
@@ -849,7 +843,10 @@ proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
 
     else: # object key
       if curr.kind != hnkObject:
-        raiseHoconPathError(path, fmt"'{key}' is not an object")
+        if createPath:
+          curr = newHoconObject()
+        else:
+          raiseHoconPathError(path, fmt"'{key}' is not an object")
 
       if isLast:
         curr.fields[key] = value
@@ -878,6 +875,23 @@ proc set*(node: HoconNode, path: string, num: SomeNumber, createPath = true) =
 proc set*(node: HoconNode, path: string, flag: bool, createPath = true) =
   let value = HoconNode(kind: hnkBool, bool: flag)
   node.set(path, value, createPath)
+
+
+proc merge*(dest: HoconNode, src: HoconNode, path: string = "") =
+  proc append(path, el: string): string =
+    if path == "": el
+    else: fmt"{path}.{el}"
+
+  case src.kind
+  of hnkArray:
+    for idx, child in src.elems:
+      merge(dest, child, path.append($idx))
+  of hnkObject:
+    for key, child in src.fields:
+      merge(dest, child, path.append($key))
+  else:
+    if path != "":
+      dest.set(path, src)
 
 # }}}
 
@@ -1200,7 +1214,7 @@ c = "d"
     echo st.data
 
   # }}}
-# {{{ setter test
+  # {{{ setter test
   block:
     var obj = newHoconObject()
     obj.set("a.b.c1.d1", true)
@@ -1214,6 +1228,63 @@ c = "d"
     echo '-'.repeat(40)
     obj.write(st)
     echo st.data
+
+# }}}
+  # {{{ merge test
+  block:
+    let srcObj = """
+{
+  a = {
+    b = {
+      c = 5
+    }
+    d = "foo"
+    e = [1,2,3]
+  }
+  f = [
+    {
+      g = 11
+      h = 12
+    },
+    42
+  ]
+  i = "end"
+  j = false
+}
+"""
+    var p = initHoconParser(newStringStream(srcObj))
+    let src = p.parse()
+
+    block:
+      var st = newStringStream()
+      echo '-'.repeat(40)
+      src.write(st)
+      echo st.data
+
+    let destObj = """
+{
+  a = {
+    b = {
+      x1 = 5
+    }
+    x2 = true
+  }
+  f = ["A", "B"]
+  x = "X"
+  y = "Y"
+  j = [true, false]
+}
+"""
+    p = initHoconParser(newStringStream(destObj))
+    let dest = p.parse()
+
+    dest.merge(src)
+
+    block:
+      var st = newStringStream()
+      echo '-'.repeat(40)
+      dest.write(st)
+      echo st.data
 
 # }}}
 # }}}
