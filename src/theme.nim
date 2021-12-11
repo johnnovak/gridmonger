@@ -473,8 +473,9 @@ proc loadTheme*(filename: string): HoconNode =
     cfg.limit("level.shadow.inner.width-factor", ShadowWidthFactorLimits)
     cfg.limit("level.shadow.outer.width-factor", ShadowWidthFactorLimits)
 
+    result = DefaultThemeConfig.deepCopy()
+    result.merge(cfg)
 
-    result = cfg
   finally:
     if s != nil: s.close()
 
