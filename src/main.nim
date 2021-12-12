@@ -1118,7 +1118,7 @@ proc setSelectModeActionMessage(a) =
                    @["Ctrl+E", "erase", "Ctrl+F", "fill",
                      "Ctrl+S", "surround", "Ctrl+R", "crop",
                      "Ctrl+M", "move (cut+paste)",
-                     "Ctrl+C", "set color"], a)
+                     "Ctrl+C", "set colour"], a)
 # }}}
 # {{{ setSetLinkDestinationMessage()
 proc setSetLinkDestinationMessage(floor: Floor; a) =
@@ -2029,8 +2029,10 @@ proc saveAppConfig(cfg: HoconNode, filename: string) =
 proc saveAppConfig(a) =
   alias(dp, a.ui.drawLevelParams)
 
-  let (xpos, ypos)    = if a.win.maximized: a.win.oldPos  else: a.win.pos
-  let (width, height) = if a.win.maximized: a.win.oldSize else: a.win.size
+  let (xpos, ypos) = if a.win.maximized: a.win.unmaximizedPos else: a.win.pos
+
+  let (width, height) = if a.win.maximized: a.win.unmaximizedSize
+                        else: a.win.size
 
   let cur = a.ui.cursor
 
@@ -5233,8 +5235,8 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scSetFloorColor):
         ui.editMode = emColorFloor
-        setStatusMessage(IconEraser, "Set floor color",
-                         @[IconArrowsAll, "set color"], a)
+        setStatusMessage(IconEraser, "Set floor colour",
+                         @[IconArrowsAll, "set colour"], a)
 
         if not map.isEmpty(cur):
           actions.setFloorColor(map, cur, ui.currFloorColor, um)
@@ -5748,7 +5750,7 @@ proc handleGlobalKeyEvents(a) =
           actions.setSelectionFloorColor(map, cur.level, selection,
                                          bbox.get, ui.currFloorColor, um)
           exitSelectMode(a)
-          setStatusMessage(IconPencil, "Set floor color of selection", a)
+          setStatusMessage(IconPencil, "Set floor colour of selection", a)
 
       elif ke.isShortcutDown(scSelectionCropArea):
         let sel = ui.selection.get
@@ -6625,7 +6627,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
       group:
         boolProp( "Shadow?",         p & "shadow.enabled")
-        colorProp("Shadow Color",    p & "shadow.color")
+        colorProp("Shadow Colour",   p & "shadow.color")
         floatProp("Shadow Feather",  p & "shadow.feather",  ShadowFeatherLimits)
         floatProp("Shadow X Offset", p & "shadow.x-offset", ShadowOffsetLimits)
         floatProp("Shadow Y Offset", p & "shadow.y-offset", ShadowOffsetLimits)
@@ -6736,7 +6738,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
       p = "level.background-hatch."
       boolProp("Background Hatch?",     p & "enabled")
-      colorProp("Hatch Color",          p & "color")
+      colorProp("Hatch Colour",         p & "color")
       floatProp("Hatch Stroke Width",   p & "width",          WidthLimits)
       floatProp("Hatch Spacing Factor", p & "spacing-factor", SpacingLimits)
 

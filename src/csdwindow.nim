@@ -41,9 +41,9 @@ type
     resizeDir:           WindowResizeDir
     mx0, my0:            float
     posX0, posY0:        int
-    width0, height0:     int32
-    oldPosX, oldPosY:    int
-    oldWidth, oldHeight: int32
+    size0:               tuple[w, h: int32]
+    unmaximizedPos:      tuple[x, y: int32]
+    unmaximizedSize:     tuple[w, h: int32]
 
     oldFocusCaptured, focusCaptured: bool
 
@@ -167,14 +167,14 @@ proc maximized*(win): bool =
 
 # }}}
 
-# {{{ oldPos*()
-proc oldPos*(win): tuple[x, y: int32] =
-  (win.oldPosX, win.oldPosY)
+# {{{ unmaximizedPos*()
+proc unmaximizedPos*(win): tuple[x, y: int32] =
+  win.unmaximizedPos
 
 # }}}
-# {{{ oldSize*()
-proc oldSize*(win): tuple[w, h: int32] =
-  (win.oldWidth, win.oldHeight)
+# {{{ unmaximizedSize*()
+proc unmaximizedSize*(win): tuple[w, h: int32] =
+  win.unmaximizedSize
 
 # }}}
 
@@ -186,8 +186,33 @@ proc getScreenSize(): (int, int) =
   (w.int, h.int)
 # }}}
 
+# {{{ restore()
+proc restore(win) =
+  if win.maximized:
+    win.w.pos = win.unmaximizedPos
+    win.w.size = win.unmaximizedSize
+    win.maximized = false
+
+# }}}
+# {{{ maximize*()
+proc maximize*(win) =
+  if not (win.maximized or win.maximizing):
+    let (w, h) = getScreenSize()
+    win.unmaximizedPos = win.w.pos
+    win.unmaximizedSize = win.w.size
+
+    win.maximized = true
+    win.maximizing = true
+
+    win.w.pos = (0, 0)
+    win.w.size = (w, h)
+
+    win.maximizing = false
+
+# }}}
 # {{{ alignLeft()
 proc alignLeft(win) =
+  win.restore()
   let (w, h) = getScreenSize()
   win.w.pos = (0, 0)
   win.w.size = (w div 2, h)
@@ -195,32 +220,11 @@ proc alignLeft(win) =
 # }}}
 # {{{ alignRight()
 proc alignRight(win) =
+  win.restore()
   let (w, h) = getScreenSize()
   let x = w div 2
   win.w.pos = (x, 0)
   win.w.size = (w-x, h)
-
-# }}}
-# {{{ restore()
-proc restore(win) =
-  win.w.pos = (win.oldPosX, win.oldPosY)
-  win.w.size = (win.oldWidth, win.oldHeight)
-  win.maximized = false
-
-# }}}
-# {{{ maximize*()
-proc maximize*(win) =
-  let (w, h) = getScreenSize()
-  (win.oldPosX, win.oldPosY) = win.w.pos
-  (win.oldWidth, win.oldHeight) = win.w.size
-
-  win.maximized = true
-  win.maximizing = true
-
-  win.w.pos = (0, 0)
-  win.w.size = (w, h)
-
-  win.maximizing = false
 
 # }}}
 #
@@ -341,7 +345,7 @@ proc handleWindowDragEvents(win) =
             win.my0 = my
             win.resizeDir = d
             (win.posX0, win.posY0) = win.w.pos
-            (win.width0, win.height0) = win.w.size
+            win.size0 = win.w.size
             win.dragState = wdsResizing
             # TODO maybe hide on OSX only?
 #            hideCursor()
@@ -363,15 +367,16 @@ proc handleWindowDragEvents(win) =
         # LMB-dragging the title bar will restore the window first (we're
         # imitating Windows' behaviour here).
         if win.maximized:
+          let oldWidth = win.unmaximizedSize.w
 
           # The restored window is centered horizontally around the cursor.
-          (win.posX0, win.posY0) = ((mx - win.oldWidth*0.5).int32, 0)
+          (win.posX0, win.posY0) = ((mx - oldWidth * 0.5).int32, 0)
 
           # Fake the last horizontal cursor position to be at the middle of
           # the restored window's width. This is needed so when we're in the
           # "else" branch on the next frame when dragging the restored window,
           # there won't be an unwanted window position jump.
-          win.mx0 = win.oldWidth*0.5
+          win.mx0 = oldWidth*0.5
           win.my0 = my
 
           # ...but we also want to clamp the window position to the visible
@@ -384,13 +389,13 @@ proc handleWindowDragEvents(win) =
           # TODO This logic needs to be a bit more sophisticated to support
           # multiple monitors
           let (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
-          let dx = win.posX0 + win.oldWidth - workAreaWidth
+          let dx = win.posX0 + oldWidth - workAreaWidth
           if dx > 0:
-            win.posX0 = workAreaWidth - win.oldWidth
+            win.posX0 = workAreaWidth - oldWidth
             win.mx0 += dx.float
 
           win.w.pos = (win.posX0, win.posY0)
-          win.w.size = (win.oldWidth, win.oldHeight)
+          win.w.size = (oldWidth, win.unmaximizedSize.h)
           win.maximized = false
 
         else:
@@ -410,7 +415,7 @@ proc handleWindowDragEvents(win) =
 
       var
         (newX, newY) = (win.posX0, win.posY0)
-        (newW, newH) = (win.width0, win.height0)
+        (newW, newH) = win.size0
 
       case win.resizeDir:
       of wrdN:
@@ -452,10 +457,10 @@ proc handleWindowDragEvents(win) =
       win.w.size = (newWidth, newHeight)
 
       if win.resizeDir in {wrdSW, wrdW, wrdNW}:
-        win.width0 = newWidth
+        win.size0.w = newWidth
 
       if win.resizeDir in {wrdNE, wrdN, wrdNW}:
-        win.height0 = newHeight
+        win.size0.h = newHeight
 
     else:
       win.dragState = wdsNone
