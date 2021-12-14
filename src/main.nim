@@ -986,7 +986,7 @@ let g_appShortcuts = {
   scToggleWasdMode:     @[mkKeyShortcut(keyTab,           {})],
   scToggleDrawTrail:    @[mkKeyShortcut(keyT,             {})],
   scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
-  scToggleTitleBar:     @[mkKeyShortcut(keytT,            {mkAlt, mkShift})],
+  scToggleTitleBar:     @[mkKeyShortcut(keyT,             {mkAlt, mkShift})],
 
   # Misc
   scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
@@ -1144,8 +1144,8 @@ proc drawAreaHeight(a): float =
 
 # }}}
 # {{{ toolsPaneWidth()
-proc toolsPaneWidth(): float =
-  if koi.winHeight() < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
+proc toolsPaneWidth(a): float =
+  if koi.winHeight() - a.win.titleBarHeight < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
   else: ToolsPaneWidthNarrow
 
 # }}}
@@ -1347,7 +1347,7 @@ proc updateViewStartAndCursorPosition(a) =
                              NotesPaneBottomPad
 
   if a.opts.showToolsPane:
-    ui.levelDrawAreaWidth -= toolsPaneWidth()
+    ui.levelDrawAreaWidth -= toolsPaneWidth(a)
 
   dp.viewRows = min(dp.numDisplayableRows(ui.levelDrawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(ui.levelDrawAreaWidth), l.cols)
@@ -5545,6 +5545,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scToggleTitleBar):
         toggleShowOption(opts.showTitleBar, NoIcon, "Title bar", a)
+        a.win.showTitleBar = a.opts.showTitleBar
 
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
@@ -6001,7 +6002,8 @@ proc handleGlobalKeyEvents_NoLevels(a) =
                        "Theme editor pane", a)
 
     elif ke.isShortcutDown(scToggleTitleBar):
-      toggleShowOption(opts.showTitleBar, NoIcon, "Title bar", a)
+      toggleShowOption(a.opts.showTitleBar, NoIcon, "Title bar", a)
+      a.win.showTitleBar = a.opts.showTitleBar
 
 # }}}
 
@@ -6302,11 +6304,14 @@ proc renderToolsPane(x, y, w, h: float; a) =
     colorX = x + 3
     colorY = y + 445
 
-  if koi.winHeight() < ToolsPaneYBreakpoint2:
+    availableHeight = koi.winHeight() - a.win.titleBarHeight
+
+  echo x
+  if availableHeight < ToolsPaneYBreakpoint2:
     colorItemsPerColum = 5
     toolX += 30
 
-  if koi.winHeight() < ToolsPaneYBreakpoint1:
+  if availableHeight < ToolsPaneYBreakpoint1:
     toolItemsPerColumn = 6
     toolX -= 30
     colorX += 3
@@ -7011,6 +7016,7 @@ proc renderUI(a) =
 
   let winHeight = koi.winHeight()
   let uiWidth = drawAreaWidth(a)
+  let yStart = a.win.titleBarHeight
 
   # Clear background
   vg.beginPath()
@@ -7024,7 +7030,7 @@ proc renderUI(a) =
   vg.fill()
 
   # About button
-  if button(x = uiWidth-55, y=45, w=20, h=DlgItemHeight, IconQuestion,
+  if button(x=uiWidth-55.0, y=45.0, w=20.0, h=DlgItemHeight, IconQuestion,
             style = a.theme.aboutButtonStyle, tooltip = "About"):
     openAboutDialog(a)
 
@@ -7046,7 +7052,7 @@ proc renderUI(a) =
 
     koi.dropDown(
       x = round((uiWidth - levelDropDownWidth) * 0.5),
-      y = 45.0,
+      y = yStart + 45.0,
       w = levelDropDownWidth,
       h = 24.0,
       levelNames,
@@ -7107,16 +7113,16 @@ proc renderUI(a) =
       renderNotesPane(
         x = NotesPaneLeftPad,
         y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
-        w = uiWidth - toolsPaneWidth() - NotesPaneLeftPad - NotesPaneRightPad,
+        w = uiWidth - toolsPaneWidth(a) - NotesPaneLeftPad - NotesPaneRightPad,
         h = NotesPaneHeight,
         a
       )
 
     if a.opts.showToolsPane:
       renderToolsPane(
-        x = uiWidth - toolsPaneWidth(),
-        y = ToolsPaneTopPad,
-        w = toolsPaneWidth(),
+        x = uiWidth - toolsPaneWidth(a),
+        y = yStart + ToolsPaneTopPad,
+        w = toolsPaneWidth(a),
         h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
         a
       )
@@ -7134,7 +7140,7 @@ proc renderUI(a) =
   if a.opts.showThemeEditor:
     let
       x = uiWidth
-      y = a.win.titleBarHeight
+      y = yStart
       w = ThemePaneWidth
       h = drawAreaHeight(a)
 
