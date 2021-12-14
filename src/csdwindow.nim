@@ -9,7 +9,7 @@ import with
 import common
 import utils
 
-
+# {{{ Constants
 const
   TitleBarFontSize = 14.0
   TitleBarHeight* = 26.0
@@ -23,7 +23,7 @@ const
 
   WindowResizeEdgeWidth = 7.0
   WindowResizeCornerSize = 20.0
-
+# }}}
 #  {{{ CSDWindow
 type
   CSDWindow* = ref object
@@ -37,6 +37,7 @@ type
     title:               string
     maximized:           bool
     maximizing:          bool
+    showTitleBar:        bool
     dragState:           WindowDragState
     resizeDir:           WindowResizeDir
     mx0, my0:            float
@@ -58,7 +59,6 @@ type
 using win: CSDWindow
 
 # }}}
-
 # {{{ Default style
 # TODO will be removed
 var DefaultCSDWindowStyle = new WindowStyle
@@ -77,8 +77,9 @@ with DefaultCSDWindowStyle:
 proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
 
 # }}}
+#
 # # {{{ setStyle()
-proc setStyle*(win; s: WindowStyle) =
+proc setStyle(win; s: WindowStyle) =
   win.style = s
 
   win.buttonActiveStyle = koi.getDefaultButtonStyle()
@@ -96,6 +97,11 @@ proc setStyle*(win; s: WindowStyle) =
     label.color      = s.buttonInactiveColor
     label.colorHover = s.buttonInactiveColor
     label.colorDown  = s.buttonInactiveColor
+
+# }}}
+# # {{{ style*
+proc `style=`*(win; s: WindowStyle) =
+  win.setStyle(s)
 
 # }}}
 # {{{ newCSDWindow*()
@@ -117,6 +123,30 @@ proc newCSDWindow*(): CSDWindow =
 
   result.w = newWindow(cfg)
   result.setStyle(DefaultCSDWindowStyle)
+  result.showTitleBar = true
+
+# }}}
+# {{{ showTitleBar*
+proc showTitleBar*(win): bool =
+  win.showTitleBar
+
+proc `showTitleBar=`*(win; show: bool) =
+  win.showTitleBar = show
+
+# }}}
+# {{{ titleBarHeight*
+proc titleBarHeight*(win): float =
+  if win.showTitleBar: TitleBarHeight else: 0
+
+# }}}
+# {{{ unmaximizedPos*
+proc unmaximizedPos*(win): tuple[x, y: int32] =
+  win.unmaximizedPos
+
+# }}}
+# {{{ unmaximizedSize*
+proc unmaximizedSize*(win): tuple[w, h: int32] =
+  win.unmaximizedSize
 
 # }}}
 # {{{ GLFW Window adapters
@@ -167,17 +197,6 @@ proc maximized*(win): bool =
 
 # }}}
 
-# {{{ unmaximizedPos*()
-proc unmaximizedPos*(win): tuple[x, y: int32] =
-  win.unmaximizedPos
-
-# }}}
-# {{{ unmaximizedSize*()
-proc unmaximizedSize*(win): tuple[w, h: int32] =
-  win.unmaximizedSize
-
-# }}}
-
 # {{{ getScreenSize()
 proc getScreenSize(): (int, int) =
   # TODO This logic needs to be a bit more sophisticated to support
@@ -185,7 +204,6 @@ proc getScreenSize(): (int, int) =
   let (_, _, w, h) = getPrimaryMonitor().workArea
   (w.int, h.int)
 # }}}
-
 # {{{ restore()
 proc restore(win) =
   if win.maximized:
@@ -227,7 +245,7 @@ proc alignRight(win) =
   win.w.size = (w-x, h)
 
 # }}}
-#
+
 # {{{ renderTitleBar()
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   alias(s, win.style)
@@ -297,7 +315,6 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   koi.setCurrentLayer(oldCurrLayer)
 
 # }}}
-
 # {{{ handleWindowDragEvents()
 proc handleWindowDragEvents(win) =
   let
@@ -307,7 +324,7 @@ proc handleWindowDragEvents(win) =
 
   case win.dragState
   of wdsNone:
-    if koi.hasNoActiveItem() and koi.mbLeftDown():
+    if win.showTitleBar and koi.hasNoActiveItem() and koi.mbLeftDown():
       if my < TitleBarHeight and
          mx > 0 and mx < winWidth - TitleBarWindowButtonsTotalWidth:
         win.mx0 = mx
@@ -468,6 +485,8 @@ proc handleWindowDragEvents(win) =
 
 # }}}
 
+# {{{ renderFrame*()
+
 type RenderFramePreProc = proc (win: CSDWindow)
 type RenderFrameProc = proc (win: CSDWindow)
 
@@ -475,7 +494,6 @@ var g_window: CSDWindow
 var g_renderFramePreProc: RenderFramePreProc
 var g_renderFrameProc: RenderFrameProc
 
-# {{{ renderFrame*()
 proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   if win.w.iconified: return
 
@@ -490,7 +508,9 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
 
   # Render title bar must precede the window drag event handler because of
   # the overlapping button/resize handle areas
-  renderTitleBar(win, vg, winWidth.float)
+  if win.showTitleBar:
+    renderTitleBar(win, vg, winWidth.float)
+
   handleWindowDragEvents(win)
 
   g_renderFrameProc(win)
@@ -507,12 +527,15 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   koi.endFrame()
 
 # }}}
-
+# {{{ renderFramePreCb*
 proc `renderFramePreCb=`*(win; p: RenderFramePreProc) =
   g_renderFramePreProc = p
 
+# }}}
+# {{{ renderFrameCb*
 proc `renderFrameCb=`*(win; p: RenderFrameProc) =
   g_window = win
   g_renderFrameProc = p
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

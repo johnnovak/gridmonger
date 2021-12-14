@@ -235,6 +235,8 @@ type
 
     showThemeEditor:   bool
 
+    showTitleBar:      bool
+
 
   UIState = object
     cursor:            Location
@@ -818,6 +820,7 @@ type AppShortcut = enum
   scToggleWasdMode,
   scToggleDrawTrail,
   scToggleThemeEditor,
+  scToggleTitleBar,
 
   # Misc
   scShowAboutDialog,
@@ -983,6 +986,7 @@ let g_appShortcuts = {
   scToggleWasdMode:     @[mkKeyShortcut(keyTab,           {})],
   scToggleDrawTrail:    @[mkKeyShortcut(keyT,             {})],
   scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
+  scToggleTitleBar:     @[mkKeyShortcut(keytT,            {mkAlt, mkShift})],
 
   # Misc
   scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
@@ -1136,7 +1140,7 @@ proc drawAreaWidth(a): float =
 # }}}
 # {{{ drawAreaHeight()
 proc drawAreaHeight(a): float =
-  koi.winHeight() - TitleBarHeight
+  koi.winHeight() - a.win.titleBarHeight
 
 # }}}
 # {{{ toolsPaneWidth()
@@ -1329,7 +1333,7 @@ proc updateViewStartAndCursorPosition(a) =
     a.ui.levelTopPad += LevelTopPad_Regions
 
   dp.startX = ui.levelLeftPad
-  dp.startY = TitleBarHeight + ui.levelTopPad
+  dp.startY = a.win.titleBarHeight + ui.levelTopPad
 
   ui.levelDrawAreaWidth = drawAreaWidth(a) - a.ui.levelLeftPad -
                                              a.ui.levelRightPad
@@ -1968,7 +1972,7 @@ proc updateThemeStyles(a) =
 
   a.theme.levelStyle       = cfg.getObjectOrEmpty("level").toLevelStyle()
 
-  a.win.setStyle(a.theme.windowStyle)
+  a.win.style = a.theme.windowStyle
 
   a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
                                            koi.getPxRatio())
@@ -5539,6 +5543,9 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scToggleThemeEditor):
         toggleShowOption(opts.showThemeEditor, NoIcon, "Theme editor pane", a)
 
+      elif ke.isShortcutDown(scToggleTitleBar):
+        toggleShowOption(opts.showTitleBar, NoIcon, "Title bar", a)
+
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
     of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
@@ -5993,6 +6000,9 @@ proc handleGlobalKeyEvents_NoLevels(a) =
       toggleShowOption(a.opts.showThemeEditor, NoIcon,
                        "Theme editor pane", a)
 
+    elif ke.isShortcutDown(scToggleTitleBar):
+      toggleShowOption(opts.showTitleBar, NoIcon, "Title bar", a)
+
 # }}}
 
 # }}}
@@ -6175,7 +6185,7 @@ proc renderModeAndOptionIndicators(a) =
   let ls = a.theme.levelStyle
 
   var x = ui.levelLeftPad
-  let y = TitleBarHeight + 32
+  let y = a.win.titleBarHeight + 32
 
   vg.save()
 
@@ -7004,7 +7014,7 @@ proc renderUI(a) =
 
   # Clear background
   vg.beginPath()
-  vg.rect(0, TitleBarHeight, uiWidth, winHeight - TitleBarHeight)
+  vg.rect(0, a.win.titleBarHeight, uiWidth, winHeight - a.win.titleBarHeight)
 
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
@@ -7124,7 +7134,7 @@ proc renderUI(a) =
   if a.opts.showThemeEditor:
     let
       x = uiWidth
-      y = TitleBarHeight
+      y = a.win.titleBarHeight
       w = ThemePaneWidth
       h = drawAreaHeight(a)
 
