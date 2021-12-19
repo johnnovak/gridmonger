@@ -11,13 +11,6 @@ ENHANCEMENTS
 
 TODO for v0.9
 
-  - theme:
-    - inactive button color in titlebar
-    - tooltip roundness & shadow opacity
-    - level dropdown shadow opacity
-
-  - hide titlebar shortcut
-
   - debug level from config
 
   - window not visible after disconnecting external screen

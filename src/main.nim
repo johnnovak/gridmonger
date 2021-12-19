@@ -23,6 +23,7 @@ import koi
 import koi/undomanager
 import nanovg
 when not defined(DEBUG): import osdialog
+import simple_parseopt
 import with
 
 import actions
@@ -1037,6 +1038,63 @@ proc logError(e: ref Exception, msgPrefix: string = "") =
     msg = msgPrefix & "\n" & msg
 
   logging.error(msg)
+
+# }}}
+# {{{ parseCommandLineParams()
+proc parseCommandLineParams(): tuple[winCfg:     HoconNode,
+                                     configFile: Option[string],
+                                     mapFile:    Option[string]] =
+
+  simple_parseopt.command_name("gridmonger")
+
+  simple_parseopt.config:
+    dash_dash_parameters.no_slash
+
+  simple_parseopt.help_text(text = fmt"""
+GRIDMONGER v{AppVersion} ({BuildGitHash})
+Developed by John Novak, 2019-2021
+http://gridmonger.johnnovak.net/""")
+
+  let (opts, supplied) = get_options_and_supplied:
+    configFile:   string  {.alias("c"),
+                            info("config file to use").}
+
+    xpos:         int  {.alias("x"), info("window X position").}
+    ypos:         int  {.alias("y"), info("window Y position").}
+    width:        int  {.alias("w"), info("window width").}
+    height:       int  {.alias("h"), info("window height").}
+    maximized:    bool {.alias("m"), info("maximize window").}
+    showTitleBar: bool {.alias("t"), info("show title bar").}
+
+    mapFile:      string  {.bare, info("map file to load").}
+
+  let cfg = newHoconObject()
+
+  if supplied.mapFile:
+    cfg.set("maximized", opts.maximized)
+
+  if supplied.showTitleBar:
+    cfg.set("show-title-bar", opts.showTitleBar)
+
+  if supplied.xpos:
+    cfg.set("x-position", opts.xpos)
+
+  if supplied.ypos:
+    cfg.set("y-position", opts.ypos)
+
+  if supplied.width:
+    cfg.set("width", opts.width)
+
+  if supplied.height:
+    cfg.set("height", opts.height)
+
+  let configFile = if supplied.configFile: opts.configFile.some
+                   else: string.none
+
+  let mapFile = if supplied.mapFile: opts.mapFile.some
+                else: string.none
+
+  result = (cfg, configFile, mapFile)
 
 # }}}
 
@@ -2681,7 +2739,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
             style=labelStyle)
 
   y += 25
-  koi.label(0, y, w, h, "Developed by John Novak, 2019-2021", style=labelStyle)
+  koi.label(0, y, w, h, "Developed by John Novak, 2019-2022", style=labelStyle)
 
   x = (DlgWidth - (3*DlgButtonWidth + 2*DlgButtonPad)) * 0.5
   y += 50
@@ -7816,6 +7874,7 @@ proc main() =
   g_app = new AppContext
   var a = g_app
 
+
   try:
     initPaths(a)
     initLogger(a)
@@ -7824,6 +7883,8 @@ proc main() =
          fmt"compiled at {CompileDate} {CompileTime}")
 
     info(fmt"Paths: {a.path}")
+
+    let (winCfg, configFile, mapFile) = parseCommandLineParams()
 
     createDirs(a)
 
