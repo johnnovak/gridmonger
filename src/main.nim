@@ -89,10 +89,10 @@ const
 
   ToolsPaneWidthNarrow    = 60.0
   ToolsPaneWidthWide      = 90.0
-  ToolsPaneTopPad         = 91.0
+  ToolsPaneTopPad         = 65.0
   ToolsPaneBottomPad      = 30.0
-  ToolsPaneYBreakpoint1   = 735.0
-  ToolsPaneYBreakpoint2   = 885.0
+  ToolsPaneYBreakpoint1   = 709.0
+  ToolsPaneYBreakpoint2   = 859.0
 
   ThemePaneWidth          = 316.0
 
@@ -234,8 +234,6 @@ type
     wasdMode:          bool
 
     showThemeEditor:   bool
-
-    showTitleBar:      bool
 
 
   UIState = object
@@ -1145,7 +1143,7 @@ proc drawAreaHeight(a): float =
 # }}}
 # {{{ toolsPaneWidth()
 proc toolsPaneWidth(a): float =
-  if koi.winHeight() - a.win.titleBarHeight < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
+  if drawAreaHeight(a) < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
   else: ToolsPaneWidthNarrow
 
 # }}}
@@ -2070,11 +2068,12 @@ proc saveAppConfig(a) =
   cfg.set(p & "option.draw-trail",       a.opts.drawTrail)
 
   p = "last-state.window."
-  cfg.set(p & "maximized",  a.win.maximized)
-  cfg.set(p & "x-position", xpos)
-  cfg.set(p & "y-position", ypos)
-  cfg.set(p & "width",      width)
-  cfg.set(p & "height",     height)
+  cfg.set(p & "maximized",      a.win.maximized)
+  cfg.set(p & "show-title-bar", a.win.showTitleBar)
+  cfg.set(p & "x-position",     xpos)
+  cfg.set(p & "y-position",     ypos)
+  cfg.set(p & "width",          width)
+  cfg.set(p & "height",         height)
 
   saveAppConfig(cfg, a.path.configFile)
 
@@ -5090,15 +5089,15 @@ proc handleLevelMouseEvents(a) =
 # }}}
 # {{{ handleGlobalKeyEvents()
 
-proc toggleOption(opt: var bool, icon, msg, on, off: string; a) =
+template toggleOption(opt: untyped, icon, msg, on, off: string; a) =
   opt = not opt
   let state = if opt: on else: off
-  setStatusMessage(icon, fmt"{msg} {state}", a)
+  setStatusMessage(icon, msg & " " & state, a)
 
-proc toggleShowOption(opt: var bool, icon, msg: string; a) =
+template toggleShowOption(opt: untyped, icon, msg: string; a) =
   toggleOption(opt, icon, msg, on="shown", off="hidden", a)
 
-proc toggleOnOffOption(opt: var bool, icon, msg: string; a) =
+template toggleOnOffOption(opt: untyped, icon, msg: string; a) =
   toggleOption(opt, icon, msg, on="on", off="off", a)
 
 
@@ -5544,8 +5543,7 @@ proc handleGlobalKeyEvents(a) =
         toggleShowOption(opts.showThemeEditor, NoIcon, "Theme editor pane", a)
 
       elif ke.isShortcutDown(scToggleTitleBar):
-        toggleShowOption(opts.showTitleBar, NoIcon, "Title bar", a)
-        a.win.showTitleBar = a.opts.showTitleBar
+        toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
 
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
@@ -6002,8 +6000,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
                        "Theme editor pane", a)
 
     elif ke.isShortcutDown(scToggleTitleBar):
-      toggleShowOption(a.opts.showTitleBar, NoIcon, "Title bar", a)
-      a.win.showTitleBar = a.opts.showTitleBar
+      toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
 
 # }}}
 
@@ -6304,14 +6301,11 @@ proc renderToolsPane(x, y, w, h: float; a) =
     colorX = x + 3
     colorY = y + 445
 
-    availableHeight = koi.winHeight() - a.win.titleBarHeight
-
-  echo x
-  if availableHeight < ToolsPaneYBreakpoint2:
+  if drawAreaHeight(a) < ToolsPaneYBreakpoint2:
     colorItemsPerColum = 5
     toolX += 30
 
-  if availableHeight < ToolsPaneYBreakpoint1:
+  if drawAreaHeight(a) < ToolsPaneYBreakpoint1:
     toolItemsPerColumn = 6
     toolX -= 30
     colorX += 3
@@ -7020,7 +7014,7 @@ proc renderUI(a) =
 
   # Clear background
   vg.beginPath()
-  vg.rect(0, a.win.titleBarHeight, uiWidth, winHeight - a.win.titleBarHeight)
+  vg.rect(0, a.win.titleBarHeight, uiWidth, drawAreaHeight(a))
 
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
@@ -7030,8 +7024,8 @@ proc renderUI(a) =
   vg.fill()
 
   # About button
-  if button(x=uiWidth-55.0, y=45.0, w=20.0, h=DlgItemHeight, IconQuestion,
-            style = a.theme.aboutButtonStyle, tooltip = "About"):
+  if button(x=uiWidth-55.0, y=yStart+19.0, w=20.0, h=DlgItemHeight,
+            IconQuestion, style=a.theme.aboutButtonStyle, tooltip="About"):
     openAboutDialog(a)
 
   if not map.hasLevels:
@@ -7052,7 +7046,7 @@ proc renderUI(a) =
 
     koi.dropDown(
       x = round((uiWidth - levelDropDownWidth) * 0.5),
-      y = yStart + 45.0,
+      y = yStart + 19.0,
       w = levelDropDownWidth,
       h = 24.0,
       levelNames,
@@ -7747,6 +7741,8 @@ proc initApp(a) =
 
   if winCfg.getBoolOrDefault("maximized", false):
     a.win.maximize()
+
+  a.win.showTitleBar = winCfg.getBoolOrDefault("show-title-bar", true)
 
   a.win.show()
 

@@ -160,6 +160,7 @@ RIFF ('GRDM'          # Gridmonger map file
     UINT8   optShowCellCoords (0=off, 1=on)
     UINT8   optShowToolsPane  (0=off, 1=on)
     UINT8   optShowNotesPane  (0=off, 1=on)
+    UINT8   optShowTitleBar   (0=off, 1=on)
     UINT8   optWasdMode       (0=off, 1=on)
     UINT8   optWalkMode       (0=off, 1=on)
     UINT8   optDrawTrail      (0=off, 1=on)

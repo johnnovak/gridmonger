@@ -2,6 +2,8 @@ https://forum.nim-lang.org/t/8188#52705
 
 BUGS
 
+do not display theme loaded message on map load
+
 
 
 ENHANCEMENTS
