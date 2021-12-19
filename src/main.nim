@@ -310,6 +310,7 @@ type
     themeNames:             seq[ThemeName]
     currThemeIndex:         Natural
     nextThemeIndex:         Option[Natural]
+    hideThemeLoadedMessage: bool
     themeReloaded:          bool
     updateThemeStyles:      bool
     loadBackgroundImage:    bool
@@ -2100,6 +2101,7 @@ proc loadMap(filename: string; a): bool =
 
       a.updateUI = false
       a.theme.nextThemeIndex = findThemeIndex(s.themeName, a)
+      a.theme.hideThemeLoadedMessage = true
 
       with a.opts:
         showToolsPane = s.optShowToolsPane
@@ -7244,7 +7246,10 @@ proc renderFrame(a) =
       setStatusMessage(fmt"Theme '{themeName}' loaded", a)
 
   if a.theme.nextThemeIndex.isSome:
-    displayThemeLoadedMessage(a)
+    if a.theme.hideThemeLoadedMessage:
+      a.theme.hideThemeLoadedMessage = false
+    else:
+      displayThemeLoadedMessage(a)
     a.theme.nextThemeIndex = Natural.none
 
   proc handleWindowClose(a) =
