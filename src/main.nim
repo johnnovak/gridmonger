@@ -1041,9 +1041,9 @@ proc logError(e: ref Exception, msgPrefix: string = "") =
 
 # }}}
 # {{{ parseCommandLineParams()
-proc parseCommandLineParams(): tuple[winCfg:     HoconNode,
-                                     configFile: Option[string],
-                                     mapFile:    Option[string]] =
+proc parseCommandLineParams(): tuple[configFile: Option[string],
+                                     mapFile:    Option[string],
+                                     winCfg:     HoconNode] =
 
   simple_parseopt.command_name("gridmonger")
 
@@ -1068,25 +1068,25 @@ http://gridmonger.johnnovak.net/""")
 
     mapFile:      string  {.bare, info("map file to load").}
 
-  let cfg = newHoconObject()
+  let winCfg = newHoconObject()
 
   if supplied.mapFile:
-    cfg.set("maximized", opts.maximized)
+    winCfg.set("maximized", opts.maximized)
 
   if supplied.showTitleBar:
-    cfg.set("show-title-bar", opts.showTitleBar)
+    winCfg.set("show-title-bar", opts.showTitleBar)
 
   if supplied.xpos:
-    cfg.set("x-position", opts.xpos)
+    winCfg.set("x-position", opts.xpos)
 
   if supplied.ypos:
-    cfg.set("y-position", opts.ypos)
+    winCfg.set("y-position", opts.ypos)
 
   if supplied.width:
-    cfg.set("width", opts.width)
+    winCfg.set("width", opts.width)
 
   if supplied.height:
-    cfg.set("height", opts.height)
+    winCfg.set("height", opts.height)
 
   let configFile = if supplied.configFile: opts.configFile.some
                    else: string.none
@@ -1094,7 +1094,7 @@ http://gridmonger.johnnovak.net/""")
   let mapFile = if supplied.mapFile: opts.mapFile.some
                 else: string.none
 
-  result = (cfg, configFile, mapFile)
+  result = (configFile, mapFile, winCfg)
 
 # }}}
 
@@ -7735,7 +7735,12 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
 
 # }}}
 # {{{ initApp()
-proc initApp(a) =
+proc initApp(configFile: Option[string], mapFile: Option[string],
+             winCfg: HoconNode; a) =
+
+  if configFile.isSome:
+    a.path.configFile = configFile.get
+
   let cfg = loadAppConfigOrDefault(a.path.configFile)
   initPreferences(cfg, a)
 
@@ -7758,7 +7763,7 @@ proc initApp(a) =
   a.doc.map = newMap("Untitled Map", game="", author="",
                      creationTime=currentLocalDatetimeString())
 
-  let mapFileName = if paramCount() >= 1: paramStr(1)
+  let mapFileName = if mapFile.isSome: mapFile.get
                     else: cfg.getStringOrDefault("last-state.last-document", "")
 
   if mapFileName != "":
@@ -7785,27 +7790,28 @@ proc initApp(a) =
   # Set window size & position
   let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
 
-  let winCfg = cfg.getObjectOrEmpty("last-state.window")
+  let mergedWinCfg = cfg.getObjectOrEmpty("last-state.window")
+  mergedWinCfg.merge(winCfg)
 
-  let width  = winCfg.getNaturalOrDefault("width", 700)
-                     .limit(WindowWidthLimits)
+  let width  = mergedWinCfg.getNaturalOrDefault("width", 700)
+                           .limit(WindowWidthLimits)
 
-  let height = winCfg.getNaturalOrDefault("height", 800)
-                     .limit(WindowWidthLimits)
+  let height = mergedWinCfg.getNaturalOrDefault("height", 800)
+                           .limit(WindowWidthLimits)
 
-  var xpos = winCfg.getIntOrDefault("x-position", -1)
+  var xpos = mergedWinCfg.getIntOrDefault("x-position", -1)
   if xpos < 0: xpos = (maxWidth - width) div 2
 
-  var ypos = winCfg.getIntOrDefault("y-position", -1)
+  var ypos = mergedWinCfg.getIntOrDefault("y-position", -1)
   if ypos < 0: ypos = (maxHeight - height) div 2
 
   a.win.size = (width.int, height.int)
   a.win.pos = (xpos, ypos)
 
-  if winCfg.getBoolOrDefault("maximized", false):
+  if mergedWinCfg.getBoolOrDefault("maximized", false):
     a.win.maximize()
 
-  a.win.showTitleBar = winCfg.getBoolOrDefault("show-title-bar", true)
+  a.win.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar", true)
 
   a.win.show()
 
@@ -7874,8 +7880,9 @@ proc main() =
   g_app = new AppContext
   var a = g_app
 
-
   try:
+    let (configFile, mapFile, winCfg) = parseCommandLineParams()
+
     initPaths(a)
     initLogger(a)
 
@@ -7884,12 +7891,10 @@ proc main() =
 
     info(fmt"Paths: {a.path}")
 
-    let (winCfg, configFile, mapFile) = parseCommandLineParams()
-
     createDirs(a)
 
     initGfx(a)
-    initApp(a)
+    initApp(configFile, mapFile, winCfg, a)
 
     while not a.shouldClose:
       # Render app
