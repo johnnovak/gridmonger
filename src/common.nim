@@ -1,3 +1,4 @@
+import strutils
 import tables
 
 import koi
@@ -9,6 +10,7 @@ import rect
 
 const
   AppVersion* = "0.9"
+  BuildGitHash* = strutils.strip(staticExec("git rev-parse --short HEAD"))
 
 const
   EnDash* = "\u2013"

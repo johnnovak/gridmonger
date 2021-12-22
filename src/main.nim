@@ -23,11 +23,11 @@ import koi
 import koi/undomanager
 import nanovg
 when not defined(DEBUG): import osdialog
-import simple_parseopt
 import with
 
 import actions
 import cfghelper
+import cmdline
 import common
 import csdwindow
 import drawlevel
@@ -54,9 +54,6 @@ when defined(windows):
 # }}}
 
 # {{{ Constants
-const
-  BuildGitHash = strutils.strip(staticExec("git rev-parse --short HEAD"))
-
 const
   ThemeExt = "gmtheme"
   MapFileExt = "gmm"
@@ -1038,63 +1035,6 @@ proc logError(e: ref Exception, msgPrefix: string = "") =
     msg = msgPrefix & "\n" & msg
 
   logging.error(msg)
-
-# }}}
-# {{{ parseCommandLineParams()
-proc parseCommandLineParams(): tuple[configFile: Option[string],
-                                     mapFile:    Option[string],
-                                     winCfg:     HoconNode] =
-
-  simple_parseopt.command_name("gridmonger")
-
-  simple_parseopt.config:
-    dash_dash_parameters.no_slash
-
-  simple_parseopt.help_text(text = fmt"""
-GRIDMONGER v{AppVersion} ({BuildGitHash})
-Developed by John Novak, 2019-2021
-http://gridmonger.johnnovak.net/""")
-
-  let (opts, supplied) = get_options_and_supplied:
-    configFile:   string  {.alias("c"),
-                            info("config file to use").}
-
-    xpos:         int  {.alias("x"), info("window X position").}
-    ypos:         int  {.alias("y"), info("window Y position").}
-    width:        int  {.alias("w"), info("window width").}
-    height:       int  {.alias("h"), info("window height").}
-    maximized:    bool {.alias("m"), info("maximize window").}
-    showTitleBar: bool {.alias("t"), info("show title bar").}
-
-    mapFile:      string  {.bare, info("map file to load").}
-
-  let winCfg = newHoconObject()
-
-  if supplied.mapFile:
-    winCfg.set("maximized", opts.maximized)
-
-  if supplied.showTitleBar:
-    winCfg.set("show-title-bar", opts.showTitleBar)
-
-  if supplied.xpos:
-    winCfg.set("x-position", opts.xpos)
-
-  if supplied.ypos:
-    winCfg.set("y-position", opts.ypos)
-
-  if supplied.width:
-    winCfg.set("width", opts.width)
-
-  if supplied.height:
-    winCfg.set("height", opts.height)
-
-  let configFile = if supplied.configFile: opts.configFile.some
-                   else: string.none
-
-  let mapFile = if supplied.mapFile: opts.mapFile.some
-                else: string.none
-
-  result = (configFile, mapFile, winCfg)
 
 # }}}
 
