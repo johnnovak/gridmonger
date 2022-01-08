@@ -2675,11 +2675,10 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   labelStyle.align = haCenter
 
   y += 265
-  koi.label(0, y, w, h, fmt"version {AppVersion}  ({BuildGitHash})",
-            style=labelStyle)
+  koi.label(0, y, w, h, VersionInfo, style=labelStyle)
 
   y += 25
-  koi.label(0, y, w, h, "Developed by John Novak, 2019-2022", style=labelStyle)
+  koi.label(0, y, w, h, DevelopedByInfo, style=labelStyle)
 
   x = (DlgWidth - (3*DlgButtonWidth + 2*DlgButtonPad)) * 0.5
   y += 50
@@ -7826,9 +7825,8 @@ proc main() =
     initPaths(a)
     initLogger(a)
 
-    info(fmt"Gridmonger v{AppVersion} ({BuildGitHash}), " &
-         fmt"compiled at {CompileDate} {CompileTime}")
-
+    info(FullVersionInfo)
+    info(CompiledAtInfo)
     info(fmt"Paths: {a.path}")
 
     createDirs(a)

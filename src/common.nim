@@ -1,3 +1,4 @@
+import strformat
 import strutils
 import tables
 
@@ -10,7 +11,13 @@ import rect
 
 const
   AppVersion* = "0.9"
+
   BuildGitHash* = strutils.strip(staticExec("git rev-parse --short HEAD"))
+
+  VersionInfo* = fmt"Version {AppVersion} ({BuildGitHash})"
+  FullVersionInfo* = fmt"Gridmonger {VersionInfo} [{hostOS}/{hostCPU}]"
+  CompiledAtInfo* = fmt"Compiled at {CompileDate} {CompileTime}"
+  DevelopedByInfo* = fmt"Developed by John Novak, 2019-{CompileDate[0..3]}"
 
 const
   EnDash* = "\u2013"
