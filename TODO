@@ -1,26 +1,22 @@
 BUGS
+====
 
 
 
 ENHANCEMENTS
+============
 
-- thick wall style (for Companion style)
-
-- log memory access crashes? (or division by zero)
+  - thick wall style (for Companion style)
+  - log memory access crashes? (or division by zero)
 
 
 TODO for v0.9
+=============
 
   - debug level from config
 
   - window not visible after disconnecting external screen
     - reset window position shortcut
-
-  - command line options to override:
-    - config
-    - position
-    - width/height
-    - hide title bar
 
   - OS X:
       - finish OS X package
@@ -28,6 +24,9 @@ TODO for v0.9
 
   - finalise all themes
 
+
+FUTURE
+======
 
 v1.0
   - clean up icons
@@ -89,6 +88,7 @@ v1.1
 
 
 LOW PRIORITY
+============
   - proper multi-window handling in csdwindow
   - better csdwindow separation (e.g. titlebar)
 
@@ -106,6 +106,7 @@ LOW PRIORITY
 
 
 FONTS
+=====
   - https://fonts.google.com/specimen/Neuton
   - https://fonts.google.com/specimen/Grenze
   - https://fonts.google.com/specimen/Fondamento
