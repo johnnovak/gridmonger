@@ -4517,7 +4517,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   if idx.isSome:
     let theme = a.theme.themeNames[idx.get]
     if theme.userTheme:
-      validationWarning = "User theme already exists with this name"
+      validationWarning = "An user theme with this name already exists"
     else:
       validationWarning = "Built-in theme will be shadowed by this name"
 
@@ -4629,7 +4629,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
   if idx.isSome:
     let theme = a.theme.themeNames[idx.get]
     if theme.userTheme:
-      validationWarning = "User theme already exists with this name"
+      validationWarning = "An user theme with this name already exists"
     else:
       validationWarning = "Built-in theme will be shadowed by this name"
 
