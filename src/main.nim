@@ -1961,19 +1961,18 @@ proc updateThemeStyles(a) =
 
   updateWidgetStyles(a)
 
-  a.theme.windowStyle      = cfg.getObjectOrEmpty("ui.window").toWindowStyle()
-
-  a.theme.statusBarStyle   = cfg.getObjectOrEmpty("ui.status-bar")
-                                .toStatusBarStyle()
+  a.theme.statusBarStyle = cfg.getObjectOrEmpty("ui.status-bar")
+                              .toStatusBarStyle()
 
   a.theme.toolbarPaneStyle = cfg.getObjectOrEmpty("pane.toolbar")
                                 .toToolbarPaneStyle()
 
-  a.theme.notesPaneStyle   = cfg.getObjectOrEmpty("pane.notes")
-                                .toNotesPaneStyle()
+  a.theme.notesPaneStyle = cfg.getObjectOrEmpty("pane.notes")
+                              .toNotesPaneStyle()
 
-  a.theme.levelStyle       = cfg.getObjectOrEmpty("level").toLevelStyle()
+  a.theme.levelStyle = cfg.getObjectOrEmpty("level").toLevelStyle()
 
+  a.theme.windowStyle = cfg.getObjectOrEmpty("ui.window").toWindowStyle()
   a.win.style = a.theme.windowStyle
 
   a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,

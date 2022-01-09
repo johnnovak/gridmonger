@@ -28,7 +28,7 @@ const
 type
   CSDWindow* = ref object
     modified*: bool
-    style*:    WindowStyle
+    style:    WindowStyle
 
     w: Window  # the wrapper GLFW window
 
