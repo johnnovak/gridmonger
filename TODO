@@ -24,6 +24,10 @@ TODO for v0.9
 
   - finalise all themes
 
+  - failure tests:
+    - invalid map file
+    - invalid config
+
 
 FUTURE
 ======

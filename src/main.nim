@@ -1763,7 +1763,6 @@ proc updateWidgetStyles(a) =
     label.colorDown        = w.getColorOrDefault("foreground.active")
     label.colorActive      = label.colorDown
     label.colorActiveHover = label.colorDown
-
     label.padHoriz         = 0
     label.padHoriz         = 0
 
@@ -1823,12 +1822,15 @@ proc updateWidgetStyles(a) =
     fillColorHover        = w.getColorOrDefault("background.hover")
     fillColorDown         = w.getColorOrDefault("background.active")
     fillColorActive       = fillColorDown
+    fillColorDisabled     = w.getColorOrDefault("background.disabled")
+
     icon.fontSize         = 12.0
     icon.color            = w.getColorOrDefault("foreground.normal")
     icon.colorHover       = icon.color
     icon.colorDown        = w.getColorOrDefault("foreground.active")
     icon.colorActive      = icon.colorDown
     icon.colorActiveHover = icon.colorDown
+
     iconActive            = IconCheck
     iconInactive          = NoIcon
 
@@ -1892,6 +1894,7 @@ proc updateWidgetStyles(a) =
     buttonFillColorHover     = ld.getColorOrDefault("button.hover")
     buttonFillColorDown      = buttonFillColor
     buttonFillColorDisabled  = buttonFillColor
+
     label.fontSize           = 15.0
     label.color              = ld.getColorOrDefault("button.label")
     label.colorHover         = label.color
@@ -1899,9 +1902,11 @@ proc updateWidgetStyles(a) =
     label.colorActive        = label.color
     label.colorDisabled      = label.color
     label.align              = haCenter
+
     item.align               = haLeft
     item.color               = ld.getColorOrDefault("item.normal")
     item.colorHover          = ld.getColorOrDefault("item.hover")
+
     itemListCornerRadius     = buttonCornerRadius
     itemListPadHoriz         = 10.0
     itemListFillColor        = ld.getColorOrDefault("item-list-background")
@@ -7803,7 +7808,7 @@ proc crashHandler(e: ref Exception, a) =
          "problems' section of the user manual on how to report it."
 
   when not defined(DEBUG):
-    discard osdialog_message(mblError, mbbOk, msg)
+    discard osdialog_message(mblError, mbbOk, msg.cstring)
 
   if a.logFile != nil:
     logError(e, "An unexpected error has occured, exiting")
