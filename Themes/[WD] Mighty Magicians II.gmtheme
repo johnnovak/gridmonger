@@ -2,6 +2,9 @@ ui {
   window {
     modified-flag = "#ffffff40"
 
+    border {
+      color = "#1b1b1bff"
+    }
     background {
       color = "#584e44ff"
       image = ""
@@ -22,9 +25,6 @@ ui {
       down = "#ffffffe6"
       inactive = "#00000080"
     }
-    border {
-      color = "#1b1b1bff"
-    }
   }
 
   dialog {
@@ -38,11 +38,11 @@ ui {
       background = "#1a1a1aff"
       text = "#d9d9d9ff"
     }
-    outer-border {
+    inner-border {
       color = "#00000000"
       width = 0
     }
-    inner-border {
+    outer-border {
       color = "#00000000"
       width = 0
     }
@@ -129,6 +129,8 @@ level {
     foreground {
       normal = "#3b393bff"
       light = "#2d2a2a46"
+      normal-cursor = "#3b393bff"
+      light-cursor = "#2d2a2a46"
     }
     coordinates {
       normal = "#ffe69996"
@@ -214,6 +216,8 @@ level {
         color = "#00000064"
       }
     }
+
+    marker-cursor = "#191616b4"
   }
 
   label {

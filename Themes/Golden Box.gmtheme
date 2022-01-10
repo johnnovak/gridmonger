@@ -105,7 +105,7 @@ ui {
   }
 
   about-dialog {
-    logo = "#00000000"
+    logo = "#dededeff"
   }
 
   splash-image {
@@ -129,6 +129,8 @@ level {
     foreground {
       normal = "#382a1cff"
       light = "#3c2c1c51"
+      normal-cursor = "#382a1cff"
+      light-cursor = "#3c2c1c51"
     }
     coordinates {
       normal = "#00000066"
@@ -215,6 +217,8 @@ level {
         color = "#00000064"
       }
     }
+
+    marker-cursor = "#3c2c1cbe"
   }
 
   label {

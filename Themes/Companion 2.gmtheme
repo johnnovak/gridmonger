@@ -3,10 +3,10 @@ ui {
     modified-flag = "#d2c3a978"
 
     border {
-      colour = "#1b1b1bff"
+      color = "#1b1b1bff"
     }
     background {
-      colour = "#b2944eff"
+      color = "#b2944eff"
       image = ""
     }
     title {
@@ -39,16 +39,16 @@ ui {
       text = "#fffde4dd"
     }
     inner-border {
-      colour = "#00000000"
+      color = "#00000000"
       width = 0
     }
     outer-border {
-      colour = "#00000000"
+      color = "#00000000"
       width = 0
     }
     shadow {
       enabled = no
-      colour = "#00000000"
+      color = "#00000000"
       feather = 0
       x-offset = 0
       y-offset = 0
@@ -129,6 +129,8 @@ level {
     foreground {
       normal = "#644b14ff"
       light = "#644b155c"
+      normal-cursor = "#644b14ff"
+      light-cursor = "#644b155c"
     }
     coordinates {
       normal = "#644b14cd"
@@ -142,7 +144,7 @@ level {
 
   background-hatch {
     enabled = no
-    colour = "#00000000"
+    color = "#00000000"
     width = 1
     spacing-factor = 3
   }
@@ -161,18 +163,18 @@ level {
   outline {
     style = none
     fill-style = solid
-    colour = "#00000000"
+    color = "#00000000"
     width-factor = 0
     overscan = no
   }
 
   shadow {
     inner {
-      colour = "#00000000"
+      color = "#00000000"
       width-factor = 0
     }
     outer {
-      colour = "#00000000"
+      color = "#00000000"
       width-factor = 0
     }
   }
@@ -212,9 +214,11 @@ level {
       corner-radius = 5
 
       shadow {
-        colour = "#00000064"
+        color = "#00000064"
       }
     }
+
+    marker-cursor = "#3c2c1cbe"
   }
 
   label {
@@ -240,7 +244,7 @@ level {
       hover = "#3c3422e6"
     }
     shadow {
-      colour = "#00000064"
+      color = "#00000064"
     }
   }
 }

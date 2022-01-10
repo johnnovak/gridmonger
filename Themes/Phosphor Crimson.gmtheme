@@ -129,6 +129,8 @@ level {
     foreground {
       normal = "#e0003fff"
       light = "#64001dff"
+      normal-cursor = "#e0003fff"
+      light-cursor = "#64001dff"
     }
     coordinates {
       normal = "#6d001fff"
@@ -214,6 +216,8 @@ level {
         color = "#00000064"
       }
     }
+
+    marker-cursor = "#ff1e5dff"
   }
 
   label {

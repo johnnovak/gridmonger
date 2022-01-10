@@ -28,15 +28,15 @@ ui {
   }
 
   dialog {
-    corner-radius = 0
-    background = "#333333ff"
-    label = "#ffffffb3"
+    corner-radius = 5
+    background = "#443e30ff"
+    label = "#bfb6a1ff"
     warning = "#ffffffec"
     error = "#ff6464ff"
 
     title {
-      background = "#0d0d0dff"
-      text = "#d9d9d9ff"
+      background = "#221f18ff"
+      text = "#dad0b7ff"
     }
     inner-border {
       color = "#00000000"
@@ -56,13 +56,13 @@ ui {
   }
 
   widget {
-    corner-radius = 4
+    corner-radius = 3
 
     background {
-      normal = "#ffffff80"
-      hover = "#ffffffa1"
-      active = "#ffa600ff"
-      disabled = "#ffffff33"
+      normal = "#a49c89ff"
+      hover = "#cdc2abff"
+      active = "#ffb100ff"
+      disabled = "#b0a79355"
     }
     foreground {
       normal = "#000000b3"
@@ -72,12 +72,12 @@ ui {
   }
 
   text-field {
-    cursor = "#ffbe00ff"
+    cursor = "#ffb100ff"
     selection = "#c8820078"
 
     edit {
       background = "#ffffff33"
-      text = "#ffffffb3"
+      text = "#dad0b7ff"
     }
     scroll-bar {
       normal = "#00000000"
@@ -105,7 +105,7 @@ ui {
   }
 
   about-dialog {
-    logo = "#00000000"
+    logo = "#eaeaeaff"
   }
 
   splash-image {
@@ -129,6 +129,8 @@ level {
     foreground {
       normal = "#594840ff"
       light = "#5948405c"
+      normal-cursor = "#594840ff"
+      light-cursor = "#5948405c"
     }
     coordinates {
       normal = "#00000066"
@@ -196,11 +198,11 @@ level {
   note {
     marker = "#3c2c1cbe"
     comment = "#ff3c00ab"
-    background-shape = circle
-    index = "#000000b5"
+    background-shape = rectangle
+    index = "#000000c1"
     index-background = [
-      "#12da0dff"
-      "#00d3cdff"
+      "#14ed0eff"
+      "#00f8f1ff"
       "#ff5375ff"
       "#c87dffff"
       "#493929ff"
@@ -215,6 +217,8 @@ level {
         color = "#00000064"
       }
     }
+
+    marker-cursor = "#3c2c1cbe"
   }
 
   label {

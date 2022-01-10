@@ -129,9 +129,11 @@ level {
     foreground {
       normal = "#1a1a1aff"
       light = "#1a1a1a46"
+      normal-cursor = "#1a1a1aff"
+      light-cursor = "#1a1a1a46"
     }
     coordinates {
-      normal = "#e6e6e6ff"
+      normal = "#dadadaff"
       highlight = "#ffbf00ff"
     }
     region-border {
@@ -181,7 +183,7 @@ level {
     transparent = no
     background = [
       "#f2f2eeff"
-      "#6f000097"
+      "#6f000096"
       "#ff290074"
       "#ffb30080"
       "#7c652192"
@@ -214,6 +216,8 @@ level {
         color = "#00000064"
       }
     }
+
+    marker-cursor = "#1a1a1ab3"
   }
 
   label {
