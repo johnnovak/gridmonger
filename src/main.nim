@@ -92,7 +92,7 @@ const
   ToolsPaneYBreakpoint1   = 709.0
   ToolsPaneYBreakpoint2   = 859.0
 
-  ThemePaneWidth          = 316.0
+  ThemePaneWidth          = 326.0
 
 const
   SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
@@ -6525,8 +6525,9 @@ with ThemeEditorSliderStyle:
 
 var ThemeEditorAutoLayoutParams = DefaultAutoLayoutParams
 with ThemeEditorAutoLayoutParams:
-  leftPad  = 14.0
-  rightPad = 16.0
+  leftPad    = 14.0
+  rightPad   = 16.0
+  labelWidth = 185.0
 
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
@@ -6725,8 +6726,10 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         enumProp( "Line Width",            p & "line-width", LineWidth)
       group:
-        colorProp("Foreground Normal",     p & "foreground.normal")
-        colorProp("Foreground Light",      p & "foreground.light")
+        colorProp("Foreground Normal",        p & "foreground.normal")
+        colorProp("Foreground Normal Cursor", p & "foreground.normal-cursor")
+        colorProp("Foreground Light",         p & "foreground.light")
+        colorProp("Foreground Light Cursor",  p & "foreground.light-cursor")
       group:
         colorProp("Link Marker",           p & "link-marker")
       group:
@@ -6800,6 +6803,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       p = "level.note."
       group:
         colorProp("Marker",             p & "marker")
+        colorProp("Marker Cursor",      p & "marker-cursor")
         colorProp("Comment",            p & "comment")
       group:
         enumProp( "Background Shape",   p & "background-shape",

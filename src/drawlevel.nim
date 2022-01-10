@@ -1739,7 +1739,8 @@ proc drawPressurePlate(x, y: float; isCursorActive: bool; ctx) =
     sw = dp.thinStrokeWidth
 
   vg.lineCap(lcjRound)
-  vg.strokeColor(ls.foregroundNormalColor)
+  vg.strokeColor(if isCursorActive: ls.backgroundColor
+                 else: ls.foregroundNormalColor)
   vg.strokeWidth(sw)
 
   vg.beginPath()
