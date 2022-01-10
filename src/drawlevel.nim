@@ -245,7 +245,7 @@ proc isCursorActive(viewRow, viewCol: Natural, dp): bool =
   dp.viewStartRow + viewRow == dp.cursorRow and
   dp.viewStartCol + viewCol == dp.cursorCol
 
-proc setVertTransform(x, y: float, ctx) =
+proc setVertTransform(x, y: float; ctx) =
   let dp = ctx.dp
   let vg = ctx.vg
 
@@ -529,7 +529,7 @@ proc drawCellOutlines(l: Level; ctx) =
 
 # }}}
 # {{{ drawCellHighlight()
-proc drawCellHighlight(x, y: float, color: Color; ctx) =
+proc drawCellHighlight(x, y: float; color: Color; ctx) =
   let vg = ctx.vg
   let dp = ctx.dp
 
@@ -736,7 +736,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
 
 # }}}
 # {{{ drawFloorBg()
-proc drawFloorBg(x, y: float, color: Color; ctx) =
+proc drawFloorBg(x, y: float; color: Color; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
   alias(ls, ctx.ls)
@@ -778,7 +778,7 @@ proc drawTrail(x, y: float; ctx) =
 
 # }}}
 # {{{ drawGrid()
-proc drawGrid(x, y: float, color: Color, gridStyle: GridStyle; ctx) =
+proc drawGrid(x, y: float; color: Color; gridStyle: GridStyle; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -859,7 +859,7 @@ template drawIcon(x, y, ox, oy: float, icon: string; ctx) =
 
 # }}}
 # {{{ drawIndexedNote()
-proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural,
+proc drawIndexedNote(x, y: float; index, colorIdx: Natural;
                      isCursorActive: bool; ctx) =
   alias(ls, ctx.ls)
   alias(vg, ctx.vg)
@@ -902,7 +902,7 @@ proc drawIndexedNote(x, y: float, index: Natural, colorIdx: Natural,
 
 # }}}
 # {{{ drawCustomIdNote()
-proc drawCustomIdNote(x, y: float, s: string; ctx) =
+proc drawCustomIdNote(x, y: float; s: string; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -916,7 +916,7 @@ proc drawCustomIdNote(x, y: float, s: string; ctx) =
 
 # }}}
 # {{{ drawNote()
-proc drawNote(x, y: float, note: Annotation, isCursorActive: bool; ctx) =
+proc drawNote(x, y: float; note: Annotation; isCursorActive: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -946,7 +946,7 @@ proc drawNote(x, y: float, note: Annotation, isCursorActive: bool; ctx) =
 
   # }}}
 # {{{ drawLabel()
-proc drawLabel(x, y: float, label: Annotation; ctx) =
+proc drawLabel(x, y: float; label: Annotation; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1070,27 +1070,31 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
 
 # {{{ Draw wall types
 # {{{ setWallStyle()
-template setWallStyle(): untyped =
+proc setWallStyle(regionBorder: bool; ctx): (float, float, float, float) =
+  alias(ls, ctx.ls)
+  alias(dp, ctx.dp)
+  alias(vg, ctx.vg)
+
   let (sw, color, lineCap, xoffs) = if regionBorder:
-    (dp.normalStrokeWidth + 1, ls.regionBorderNormalColor, lcjSquare, 1)
+    (dp.normalStrokeWidth + 1, ls.regionBorderNormalColor, lcjSquare, 1.0)
   else:
-    (dp.normalStrokeWidth, ls.foregroundNormalColor, lcjRound, 0)
+    (dp.normalStrokeWidth, ls.foregroundNormalColor, lcjRound, 0.0)
 
   vg.strokeWidth(sw)
   vg.strokeColor(color)
   vg.lineCap(linecap)
 
   let xsOffs = if regionBorder:
-                 case ctx.ls.lineWidth:
-                 of lwThin: 1
-                 of lwNormal: 0
-               else: 0
+                 case ls.lineWidth:
+                 of lwThin: 1.0
+                 of lwNormal: 0.0
+               else: 0.0
 
   let xeOffs = if regionBorder:
-                 case ctx.ls.lineWidth:
-                 of lwThin: 0
-                 of lwNormal: -1
-               else: 0
+                 case ls.lineWidth:
+                 of lwThin: 0.0
+                 of lwNormal: -1.0
+               else: 0.0
 
   (sw, xoffs, xsOffs, xeOffs)
 
@@ -1106,13 +1110,13 @@ func regionBorderYAdjustment(orientation: Orientation,
 # }}}
 
 # {{{ drawSolidWallHoriz*()
-proc drawSolidWallHoriz*(x, y: float, orientation: Orientation,
+proc drawSolidWallHoriz*(x, y: float; orientation: Orientation,
                          regionBorder: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let (sw, _, xsOffs, xeOffs) = setWallStyle()
+  let (sw, _, xsOffs, xeOffs) = setWallStyle(regionBorder, ctx)
 
   let
     xs = snap(x + xsOffs, sw)
@@ -1126,13 +1130,13 @@ proc drawSolidWallHoriz*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawIllusoryWallHoriz*()
-proc drawIllusoryWallHoriz*(x, y: float, orientation: Orientation,
-                            regionBorder: bool = false; ctx) =
+proc drawIllusoryWallHoriz*(x, y: float; orientation: Orientation;
+                            isCursorActive, regionBorder: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let (sw, _, _, _) = setWallStyle()
+  let (sw, _, _, _) = setWallStyle(regionBorder, ctx)
 
   let
     xs = x
@@ -1154,8 +1158,8 @@ proc drawIllusoryWallHoriz*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawInvisibleWallHoriz*()
-proc drawInvisibleWallHoriz*(x, y: float, orientation: Orientation,
-                             regionBorder: bool = false; ctx) =
+proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
+                             isCursorActive, regionBorder: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1183,13 +1187,13 @@ proc drawInvisibleWallHoriz*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawDoorHoriz*()
-proc drawDoorHoriz*(x, y: float, orientation: Orientation,
-                    regionBorder: bool = false, fill: bool = false; ctx) =
+proc drawDoorHoriz*(x, y: float; orientation: Orientation;
+                    isCursorActive, regionBorder, fill: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle()
+  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle(regionBorder, ctx)
 
   let
     wallLen = (dp.gridSize * 0.25).int
@@ -1235,19 +1239,19 @@ proc drawDoorHoriz*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawLockedDoorHoriz*()
-proc drawLockedDoorHoriz*(x, y: float, orientation: Orientation,
-                          regionBorder: bool = false; ctx) =
-  drawDoorHoriz(x, y, orientation, regionBorder, fill=true, ctx)
+proc drawLockedDoorHoriz*(x, y: float; orientation: Orientation;
+                          isCursorActive, regionBorder: bool = false; ctx) =
+  drawDoorHoriz(x, y, orientation, isCursorActive, regionBorder, fill=true, ctx)
 
 # }}}
 # {{{ drawSecretDoorHoriz*()
-proc drawSecretDoorHoriz*(x, y: float, orientation: Orientation,
-                          regionBorder: bool = false; ctx) =
+proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
+                          isCursorActive, regionBorder: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle()
+  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle(regionBorder, ctx)
 
   let
     wallLen = (dp.gridSize * 0.25).int
@@ -1275,14 +1279,13 @@ proc drawSecretDoorHoriz*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawArchwayHoriz*()
-proc drawArchwayHoriz*(x, y: float, orientation: Orientation,
-                       regionBorder: bool = false;
-                       ctx) =
+proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
+                       isCursorActive, regionBorder: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle()
+  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle(regionBorder, ctx)
 
   let
     wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
@@ -1323,13 +1326,13 @@ proc drawArchwayHoriz*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawOneWayDoorHoriz*()
-proc drawOneWayDoorHoriz*(x, y: float, orientation: Orientation,
-                          northEast: bool, regionBorder: bool; ctx) =
+proc drawOneWayDoorHoriz*(x, y: float; orientation: Orientation;
+                          isCursorActive, northEast, regionBorder: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle()
+  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle(regionBorder, ctx)
 
   let
     wallLen = (dp.gridSize * 0.28).int
@@ -1367,18 +1370,20 @@ proc drawOneWayDoorHoriz*(x, y: float, orientation: Orientation,
            dp.gridSize, ls.foregroundNormalColor, fontSizeFactor=0.46, ctx.vg)
 
 
-proc drawOneWayDoorHorizNE*(x, y: float, orientation: Orientation,
-                            regionBorder: bool = false; ctx) =
-  drawOneWayDoorHoriz(x, y, orientation, northEast=true, regionBorder, ctx)
+proc drawOneWayDoorHorizNE*(x, y: float; orientation: Orientation;
+                            isCursorActive, regionBorder: bool = false; ctx) =
+  drawOneWayDoorHoriz(x, y, orientation, isCursorActive, northEast=true,
+                      regionBorder, ctx)
 
-proc drawOneWayDoorHorizSW*(x, y: float, orientation: Orientation,
-                            regionBorder: bool = false; ctx) =
-  drawOneWayDoorHoriz(x, y, orientation, northEast=false, regionBorder, ctx)
+proc drawOneWayDoorHorizSW*(x, y: float; orientation: Orientation;
+                            isCursorActive, regionBorder: bool = false; ctx) =
+  drawOneWayDoorHoriz(x, y, orientation, isCursorActive, northEast=false,
+                      regionBorder, ctx)
 
 # }}}
 # {{{ drawLeverHoriz*()
-proc drawLeverHoriz*(x, y: float, orientation: Orientation,
-                     regionBorder: bool, northEast: bool; ctx) =
+proc drawLeverHoriz*(x, y: float; orientation: Orientation;
+                     regionBorder, northEast: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1406,24 +1411,23 @@ proc drawLeverHoriz*(x, y: float, orientation: Orientation,
   drawSolidWallHoriz(x, y, orientation, regionBorder, ctx)
 
 
-proc drawLeverHorizNE*(x, y: float, orientation: Orientation,
+proc drawLeverHorizNE*(x, y: float; orientation: Orientation;
                        regionBorder: bool = false; ctx) =
   drawLeverHoriz(x, y, orientation, regionBorder, northEast=true, ctx)
 
-proc drawLeverHorizSW*(x, y: float, orientation: Orientation,
+proc drawLeverHorizSW*(x, y: float; orientation: Orientation;
                        regionBorder: bool = false; ctx) =
   drawLeverHoriz(x, y, orientation, regionBorder, northEast=false, ctx)
 
 # }}}
 # {{{ drawNicheHoriz*()
-proc drawNicheHoriz*(x, y: float, orientation: Orientation,
-                     regionBorder: bool, northEast: bool, floorColor: Natural;
-                     ctx) =
+proc drawNicheHoriz*(x, y: float; orientation: Orientation;
+                     regionBorder, northEast: bool; floorColor: Natural; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle()
+  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle(regionBorder, ctx)
 
   let
     wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
@@ -1487,7 +1491,7 @@ proc drawNicheHorizSW*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawStatueHoriz*()
-proc drawStatueHoriz*(x, y: float, orientation: Orientation,
+proc drawStatueHoriz*(x, y: float; orientation: Orientation;
                       regionBorder: bool, northEast: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
@@ -1515,23 +1519,23 @@ proc drawStatueHoriz*(x, y: float, orientation: Orientation,
   drawSolidWallHoriz(x, y, orientation, regionBorder, ctx)
 
 
-proc drawStatueHorizNE*(x, y: float, orientation: Orientation,
+proc drawStatueHorizNE*(x, y: float; orientation: Orientation;
                         regionBorder: bool = false; ctx) =
   drawStatueHoriz(x, y, orientation, regionBorder, northEast=true, ctx)
 
-proc drawStatueHorizSW*(x, y: float, orientation: Orientation,
+proc drawStatueHorizSW*(x, y: float; orientation: Orientation;
                         regionBorder: bool = false; ctx) =
   drawStatueHoriz(x, y, orientation, regionBorder, northEast=false, ctx)
 
 # }}}
 # {{{ drawKeyholeHoriz*()
-proc drawKeyholeHoriz*(x, y: float, orientation: Orientation,
+proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
                        regionBorder: bool = false; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, _, xsOffs, xeOffs) = setWallStyle()
+  var (sw, _, xsOffs, xeOffs) = setWallStyle(regionBorder, ctx)
 
   let
     boxLen = (dp.gridSize * 0.25).int
@@ -1590,8 +1594,8 @@ proc drawKeyholeHoriz*(x, y: float, orientation: Orientation,
 
 # }}}
 # {{{ drawWritingHoriz*()
-proc drawWritingHoriz*(x, y: float, orientation: Orientation,
-                       regionBorder: bool, northEast: bool; ctx) =
+proc drawWritingHoriz*(x, y: float; orientation: Orientation;
+                       regionBorder, northEast: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1604,11 +1608,11 @@ proc drawWritingHoriz*(x, y: float, orientation: Orientation,
                         dp.gridSize, ls.foregroundNormalColor,
                         fontSizeFactor=0.7, vg)
 
-proc drawWritingHorizNE*(x, y: float, orientation: Orientation,
+proc drawWritingHorizNE*(x, y: float; orientation: Orientation;
                          regionBorder: bool = false; ctx) =
   drawWritingHoriz(x, y, orientation, regionBorder, northEast=true, ctx)
 
-proc drawWritingHorizSW*(x, y: float, orientation: Orientation,
+proc drawWritingHorizSW*(x, y: float; orientation: Orientation;
                          regionBorder: bool = false; ctx) =
   drawWritingHoriz(x, y, orientation, regionBorder, northEast=false, ctx)
 
@@ -1650,7 +1654,7 @@ proc drawEmptyRegionBorderWallVert*(x, y: float; ctx) =
 
 # }}}
 # {{{ drawRegionBorderEdgeHoriz*()
-proc drawRegionBorderEdgeHoriz*(x, y: float, color: Color, west: bool; ctx) =
+proc drawRegionBorderEdgeHoriz*(x, y: float; color: Color; west: bool; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1678,7 +1682,7 @@ proc drawRegionBorderEdgeHoriz*(x, y: float, color: Color, west: bool; ctx) =
 
 # }}}
 # {{{ drawRegionBorderEdgeVert*()
-proc drawRegionBorderEdgeVert*(x, y: float, color: Color, north: bool; ctx) =
+proc drawRegionBorderEdgeVert*(x, y: float; color: Color; north: bool; ctx) =
   alias(vg, ctx.vg)
 
   setVertTransform(x, y, ctx)
@@ -1690,7 +1694,7 @@ proc drawRegionBorderEdgeVert*(x, y: float, color: Color, north: bool; ctx) =
 # }}}
 # {{{ Draw floor types
 # {{{ drawSecretDoorBlock()
-proc drawSecretDoorBlock(x, y: float, floorColor: Natural,
+proc drawSecretDoorBlock(x, y: float; floorColor: Natural;
                          isCursorActive: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
@@ -1724,7 +1728,7 @@ proc drawSecretDoorBlock(x, y: float, floorColor: Natural,
 
 # }}}
 # {{{ drawPressurePlate()
-proc drawPressurePlate(x, y: float; ctx) =
+proc drawPressurePlate(x, y: float; isCursorActive: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1744,7 +1748,7 @@ proc drawPressurePlate(x, y: float; ctx) =
 
 # }}}
 # {{{ drawHiddenPressurePlate()
-proc drawHiddenPressurePlate(x, y: float; ctx) =
+proc drawHiddenPressurePlate(x, y: float; isCursorActive: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1764,7 +1768,7 @@ proc drawHiddenPressurePlate(x, y: float; ctx) =
 
 # }}}
 # {{{ drawOpenPitWithColor()
-proc drawOpenPitWithColor(x, y: float, color: Color; ctx) =
+proc drawOpenPitWithColor(x, y: float; color: Color; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1790,17 +1794,17 @@ proc drawOpenPitWithColor(x, y: float, color: Color; ctx) =
 
 # }}}
 # {{{ drawOpenPit()
-proc drawOpenPit(x, y: float; ctx) =
+proc drawOpenPit(x, y: float; isCursorActive: bool; ctx) =
   drawOpenPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
 
 # }}}
 # {{{ drawCeilingPit()
-proc drawCeilingPit(x, y: float; ctx) =
+proc drawCeilingPit(x, y: float; isCursorActive: bool; ctx) =
   drawOpenPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
 
 # }}}
 # {{{ drawClosedPitWithColor()
-proc drawClosedPitWithColor(x, y: float, color: Color; ctx) =
+proc drawClosedPitWithColor(x, y: float; color: Color; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1827,67 +1831,68 @@ proc drawClosedPitWithColor(x, y: float, color: Color; ctx) =
 
 # }}}
 # {{{ drawClosedPit()
-proc drawClosedPit(x, y: float; ctx) =
+proc drawClosedPit(x, y: float; isCursorActive: bool; ctx) =
   drawClosedPitWithColor(x, y, ctx.ls.foregroundNormalColor, ctx)
 
 # }}}
 # {{{ drawHiddenPit()
-proc drawHiddenPit(x, y: float; ctx) =
+proc drawHiddenPit(x, y: float; isCursorActive: bool; ctx) =
   drawClosedPitWithColor(x, y, ctx.ls.foregroundLightColor, ctx)
 
 # }}}
 # {{{ drawStairsDown()
-proc drawStairsDown(x, y: float; ctx) =
+proc drawStairsDown(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0, 0, IconStairsDown, ctx)
 
 # }}}
 # {{{ drawStairsUp()
-proc drawStairsUp(x, y: float; ctx) =
+proc drawStairsUp(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0, 0, IconStairsUp, ctx)
 
 # }}}
 # {{{ drawDoorEnter()
-proc drawDoorEnter(x, y: float; ctx) =
+proc drawDoorEnter(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0.05, 0, IconDoorEnter, ctx.dp.gridSize,
            ctx.ls.foregroundNormalColor,
            fontSizeFactor=0.6, ctx.vg)
 
 # }}}
 # {{{ drawDoorExit()
-proc drawDoorExit(x, y: float; ctx) =
+proc drawDoorExit(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0.05, 0, IconDoorExit, ctx.dp.gridSize,
            ctx.ls.foregroundNormalColor,
            fontSizeFactor=0.6, ctx.vg)
 
 # }}}
 # {{{ drawSpinner()
-proc drawSpinner(x, y: float; ctx) =
+proc drawSpinner(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0.06, 0, IconSpinner, ctx)
 
 # }}}
 # {{{ drawTeleportSource()
-proc drawTeleportSource(x, y: float; ctx) =
+proc drawTeleportSource(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
            ctx.ls.foregroundNormalColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
 # {{{ drawTeleportDestination()
-proc drawTeleportDestination(x, y: float; ctx) =
+proc drawTeleportDestination(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0, 0, IconTeleport, ctx.dp.gridSize,
            ctx.ls.foregroundLightColor,
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
 # {{{ drawInvisibleBarrier()
-proc drawInvisibleBarrier(x, y: float; ctx) =
+proc drawInvisibleBarrier(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0, 0.015, IconBarrier, ctx.dp.gridSize,
            ctx.ls.foregroundLightColor,
            fontSizeFactor=1.0, ctx.vg)
 
 # }}}
 # {{{ drawBridge()
-proc drawBridge(x, y: float, orientation: Orientation; ctx) =
+proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
+                ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -2007,19 +2012,22 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
     f = viewBuf.getFloor(bufRow, bufCol)
     x = cellX(viewCol, dp)
     y = cellY(viewRow, dp)
+    isCursorActive = isCursorActive(viewRow, viewCol, dp)
 
   template drawOriented(drawProc: untyped, offsetFactor = 0.5) =
     let orientation = viewBuf.getFloorOrientation(bufRow, bufCol)
+
     case orientation
     of Horiz:
-      drawProc(x, y + floor(dp.gridSize * offsetFactor), orientation, ctx=ctx)
+      drawProc(x, y + floor(dp.gridSize * offsetFactor), orientation,
+               isCursorActive=isCursorActive, ctx=ctx)
     of Vert:
       setVertTransform(x + floor(dp.gridSize*(1 - offsetFactor)), y, ctx)
-      drawProc(0, 0, orientation, ctx=ctx)
+      drawProc(0, 0, orientation, isCursorActive=isCursorActive, ctx=ctx)
       vg.resetTransform()
 
   template draw(drawProc: untyped) =
-    drawProc(x, y, ctx)
+    drawProc(x, y, isCursorActive=isCursorActive, ctx)
 
 
   vg.save()
@@ -2174,8 +2182,8 @@ proc drawNotes(viewBuf: Level; ctx) =
 # }}}
 
 # {{{ drawWall()
-proc drawWall(x, y: float, wall: Wall, orientation: Orientation,
-              viewBuf: Level, bufRow, bufCol: Natural,
+proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
+              viewBuf: Level; bufRow, bufCol: Natural;
               regionBorder: bool; ctx) =
 
   let vg = ctx.vg
