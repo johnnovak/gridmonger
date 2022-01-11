@@ -1,6 +1,7 @@
 import lenientops
 import math
 import options
+import strformat
 
 import glad/gl
 import koi
@@ -322,7 +323,7 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
 
 # }}}
 # {{{ calcBlendedFloorColor*()
-func calcBlendedFloorColor*(floorColor: Natural, transparentFloor: bool = false;
+func calcBlendedFloorColor*(floorColor: Natural, transparentFloor = false;
                             ls: LevelStyle): Color =
   let fc = ls.floorBackgroundColor[floorColor]
 
@@ -1283,7 +1284,8 @@ proc drawDoorHoriz*(x, y: float; orientation: Orientation;
 # {{{ drawLockedDoorHoriz*()
 proc drawLockedDoorHoriz*(x, y: float; orientation: Orientation;
                           isCursorActive, regionBorder: bool = false; ctx) =
-  drawDoorHoriz(x, y, orientation, isCursorActive, regionBorder, fill=true, ctx)
+  drawDoorHoriz(x, y, orientation, isCursorActive, regionBorder, fill=true,
+                ctx)
 
 # }}}
 # {{{ drawSecretDoorHoriz*()
@@ -1459,7 +1461,8 @@ proc drawLeverHoriz*(x, y: float; orientation: Orientation;
   vg.rect(lx, ly, lw, lw)
   vg.fill()
 
-  drawSolidWallHoriz(x, y, orientation, isCursorActive, regionBorder, ctx)
+  drawSolidWallHoriz(x, y, orientation, isCursorActive=false, regionBorder,
+                     ctx)
 
 
 proc drawLeverHorizNE*(x, y: float; orientation: Orientation;
@@ -1475,14 +1478,13 @@ proc drawLeverHorizSW*(x, y: float; orientation: Orientation;
 # }}}
 # {{{ drawNicheHoriz*()
 proc drawNicheHoriz*(x, y: float; orientation: Orientation;
-                     isCursorActive, regionBorder, northEast: bool;
-                     floorColor: Natural; ctx) =
+                     regionBorder, northEast: bool; floorColor: Natural; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle(isCursorActive, regionBorder,
-                                                 ctx)
+  var (sw, xoffs, xsOffs, xeOffs) = setWallStyle(isCursorActive=false,
+                                                 regionBorder, ctx)
 
   let
     wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
@@ -1539,14 +1541,14 @@ proc drawNicheHoriz*(x, y: float; orientation: Orientation;
 proc drawNicheHorizNE*(x, y: float; orientation: Orientation;
                        floorColor: Natural;
                        isCursorActive, regionBorder: bool = false; ctx) =
-  drawNicheHoriz(x, y, orientation, isCursorActive, regionBorder,
-                 northEast=true, floorColor, ctx)
+  drawNicheHoriz(x, y, orientation, regionBorder, northEast=true, floorColor,
+                 ctx)
 
 proc drawNicheHorizSW*(x, y: float; orientation: Orientation;
                        floorColor: Natural;
                        isCursorActive, regionBorder: bool = false; ctx) =
-  drawNicheHoriz(x, y, orientation, isCursorActive, regionBorder,
-                 northEast=false, floorColor, ctx)
+  drawNicheHoriz(x, y, orientation, regionBorder, northEast=false, floorColor,
+                 ctx)
 
 # }}}
 # {{{ drawStatueHoriz*()
@@ -1577,7 +1579,8 @@ proc drawStatueHoriz*(x, y: float; orientation: Orientation;
   vg.arc(cx, cy, dp.gridSize*0.27, a1, a2, pwCW)
   vg.fill()
 
-  drawSolidWallHoriz(x, y, orientation, isCursorActive, regionBorder, ctx)
+  drawSolidWallHoriz(x, y, orientation, isCursorActive=false, regionBorder,
+                     ctx)
 
 
 proc drawStatueHorizNE*(x, y: float; orientation: Orientation;
@@ -1598,7 +1601,8 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  var (sw, _, xsOffs, xeOffs) = setWallStyle(isCursorActive, regionBorder, ctx)
+  var (sw, _, xsOffs, xeOffs) = setWallStyle(isCursorActive=false, regionBorder,
+                                             ctx)
 
   let
     boxLen = (dp.gridSize * 0.25).int
@@ -1663,7 +1667,8 @@ proc drawWritingHoriz*(x, y: float; orientation: Orientation;
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  drawSolidWallHoriz(x, y, orientation, isCursorActive, regionBorder, ctx)
+  drawSolidWallHoriz(x, y, orientation, isCursorActive=false, regionBorder,
+                     ctx)
 
   let oy = if northEast: -0.33 else: -0.72
 
@@ -2272,17 +2277,25 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
 
   let
     bufRow = toBufRow(viewRow)
-    bufCol = toBufRow(viewCol)
-    isCursorActive = isCursorActive(viewRow, viewCol, dp)
+    bufCol = toBufCol(viewCol)
 
-  template drawOriented(drawProc: untyped) =
+  let (isCursorActiveNE, isCursorActiveSW) = case orientation
+    of Horiz:
+      (isCursorActive(viewRow,           viewCol, dp),
+       isCursorActive(max(viewRow-1, 0), viewCol, dp))
+    of Vert:
+      (isCursorActive(viewRow, max(viewCol-1, 0), dp),
+       isCursorActive(viewRow, viewCol,           dp))
+
+  template drawOriented(drawProc: untyped, cursorActive: bool = false) =
     case orientation
     of Horiz:
-      drawProc(x, y, orientation, regionBorder, ctx=ctx)
+      drawProc(x, y, orientation, isCursorActive=cursorActive,
+               regionBorder=regionBorder, ctx=ctx)
     of Vert:
       setVertTransform(x, y, ctx)
       drawProc(0, 0, orientation,
-               isCursorActive=isCursorActive, regionBorder=regionBorder,
+               isCursorActive=cursorActive, regionBorder=regionBorder,
                ctx=ctx)
       vg.resetTransform()
 
@@ -2290,13 +2303,11 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
     case orientation
     of Horiz:
       drawProc(x, y, orientation, floorColor,
-               isCursorActive=isCursorActive, regionBorder=regionBorder,
-               ctx=ctx)
+               isCursorActive=false, regionBorder=regionBorder, ctx=ctx)
     of Vert:
       setVertTransform(x, y, ctx)
       drawProc(0, 0, orientation, floorColor,
-               isCursorActive=isCursorActive, regionBorder=regionBorder,
-               ctx=ctx)
+               isCursorActive=false, regionBorder=regionBorder, ctx=ctx)
       vg.resetTransform()
 
   case wall
@@ -2310,12 +2321,13 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
   of wSecretDoor:    drawOriented(drawSecretDoorHoriz)
   of wOneWayDoorNE:  drawOriented(drawOneWayDoorHorizNE)
   of wOneWayDoorSW:  drawOriented(drawOneWayDoorHorizSW)
-  of wLeverNE:       drawOriented(drawLeverHorizNE)
-  of wLeverSW:       drawOriented(drawLeverHorizSW)
-  of wStatueNE:      drawOriented(drawStatueHorizNE)
-  of wStatueSW:      drawOriented(drawStatueHorizSW)
-  of wWritingNE:     drawOriented(drawWritingHorizNE)
-  of wWritingSW:     drawOriented(drawWritingHorizSW)
+  of wLeverNE:       drawOriented(drawLeverHorizNE,   isCursorActiveNE)
+  of wLeverSW:       drawOriented(drawLeverHorizSW,   isCursorActiveSW)
+  of wStatueNE:      drawOriented(drawStatueHorizNE,  isCursorActiveNE)
+  of wStatueSW:      drawOriented(drawStatueHorizSW,  isCursorActiveSW)
+  of wWritingNE:     drawOriented(drawWritingHorizNE, isCursorActiveNE)
+  of wWritingSW:     drawOriented(drawWritingHorizSW, isCursorActiveSW)
+
   of wKeyhole:       drawOriented(drawKeyholeHoriz)
 
   of wNicheNE:
@@ -2345,7 +2357,7 @@ proc drawCellWallsNorth(viewBuf: Level, viewRow: Natural,
       cellX(viewCol, dp),
       cellY(viewRow, dp),
       viewBuf.getWall(bufRow, bufCol, dirN), Horiz,
-      viewBuf, bufRow, bufCol,
+      viewBuf, viewRow, viewCol,
       regionBorder,
       ctx
     )
@@ -2365,7 +2377,7 @@ proc drawCellWallsWest(viewBuf: Level, viewCol: Natural,
       cellX(viewCol, dp),
       cellY(viewRow, dp),
       viewBuf.getWall(bufRow, bufCol, dirW), Vert,
-      viewBuf, bufRow, bufCol,
+      viewBuf, viewRow, viewCol,
       regionBorder,
       ctx
     )
