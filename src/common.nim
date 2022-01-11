@@ -279,73 +279,77 @@ type
     modifiedFlagColor*:            Color
 
   StatusBarStyle* = ref object
-    backgroundColor*:        Color
-    textColor*:              Color
-    coordinatesColor*:       Color
-    commandBackgroundColor*: Color
-    commandTextColor*:       Color
+    backgroundColor*:              Color
+    textColor*:                    Color
+    coordinatesColor*:             Color
+    commandBackgroundColor*:       Color
+    commandTextColor*:             Color
 
   NotesPaneStyle* = ref object
-    textColor*:              Color
-    scrollBarColor*:         Color
-    indexColor*:             Color
-    indexBackgroundColor*:   array[4, Color]
+    textColor*:                    Color
+    scrollBarColor*:               Color
+    indexColor*:                   Color
+    indexBackgroundColor*:         array[4, Color]
 
   ToolbarPaneStyle* = ref object
-    buttonNormalColor*:      Color
-    buttonHoverColor*:       Color
+    buttonNormalColor*:            Color
+    buttonHoverColor*:             Color
 
 
   LevelStyle* = ref object
-    lineWidth*:                  LineWidth
-    backgroundColor*:            Color
-    cursorColor*:                Color
-    cursorGuidesColor*:          Color
-    linkMarkerColor*:            Color
-    selectionColor*:             Color
-    trailColor*:                 Color
-    pastePreviewColor*:          Color
-    foregroundNormalColor*:      Color
-    foregroundLightColor*:       Color
-    coordinatesNormalColor*:     Color
-    coordinatesHighlightColor*:  Color
-    regionBorderNormalColor*:    Color
-    regionBorderEmptyColor*:     Color
+    lineWidth*:                    LineWidth
+    backgroundColor*:              Color
+    cursorColor*:                  Color
+    cursorGuidesColor*:            Color
+    linkMarkerColor*:              Color
+    selectionColor*:               Color
+    trailColor*:                   Color
+    pastePreviewColor*:            Color
+    foregroundNormalColor*:        Color
+    foregroundNormalCursorColor*:  Color
+    foregroundLightColor*:         Color
+    foregroundLightCursorColor*:   Color
+    coordinatesNormalColor*:       Color
+    coordinatesHighlightColor*:    Color
+    regionBorderNormalColor*:      Color
+    regionBorderEmptyColor*:       Color
 
     backgroundHatchEnabled*:       bool
     backgroundHatchColor*:         Color
     backgroundHatchWidth*:         float
     backgroundHatchSpacingFactor*: float
 
-    gridBackgroundStyle*:        GridStyle
-    gridBackgroundGridColor*:    Color
-    gridFloorStyle*:             GridStyle
-    gridFloorGridColor*:         Color
+    gridBackgroundStyle*:          GridStyle
+    gridBackgroundGridColor*:      Color
+    gridFloorStyle*:               GridStyle
+    gridFloorGridColor*:           Color
 
-    outlineStyle*:               OutlineStyle
-    outlineFillStyle*:           OutlineFillStyle
-    outlineColor*:               Color
-    outlineWidthFactor*:         float
-    outlineOverscan*:            bool
+    outlineStyle*:                 OutlineStyle
+    outlineFillStyle*:             OutlineFillStyle
+    outlineColor*:                 Color
+    outlineWidthFactor*:           float
+    outlineOverscan*:              bool
 
-    shadowInnerColor*:           Color
-    shadowInnerWidthFactor*:     float
-    shadowOuterColor*:           Color
-    shadowOuterWidthFactor*:     float
+    shadowInnerColor*:             Color
+    shadowInnerWidthFactor*:       float
+    shadowOuterColor*:             Color
+    shadowOuterWidthFactor*:       float
 
-    floorTransparent*:           bool
-    floorBackgroundColor*:       array[10, Color]
+    floorTransparent*:             bool
+    floorBackgroundColor*:         array[10, Color]
 
-    noteMarkerColor*:            Color
-    noteCommentColor*:           Color
-    noteBackgroundShape*:        NoteBackgroundShape
-    noteIndexBackgroundColor*:   array[4, Color]
-    noteIndexColor*:             Color
-    noteTooltipBackgroundColor*: Color
-    noteTooltipTextColor*:       Color
-    noteTooltipCornerRadius*:    float
-    noteTooltipShadowStyle*:     ShadowStyle
+    noteMarkerColor*:              Color
+    noteMarkerCursorColor*:        Color
+    noteCommentColor*:             Color
+    noteBackgroundShape*:          NoteBackgroundShape
+    noteIndexBackgroundColor*:     array[4, Color]
+    noteIndexColor*:               Color
+    noteTooltipBackgroundColor*:   Color
+    noteTooltipTextColor*:         Color
+    noteTooltipCornerRadius*:      float
+    noteTooltipShadowStyle*:       ShadowStyle
 
-    labelTextColor*:             array[4, Color]
+    labelTextColor*:               array[4, Color]
+
 
 # vim: et:ts=2:sw=2:fdm=marker

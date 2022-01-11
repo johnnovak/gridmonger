@@ -325,20 +325,22 @@ proc toLevelStyle*(cfg: HoconNode): LevelStyle =
   s = new LevelStyle
 
   var p = "general."
-  s.lineWidth                 = cfg.getEnumOrDefault(p & "line-width", LineWidth)
-  s.backgroundColor           = cfg.getColorOrDefault(p & "background")
-  s.cursorColor               = cfg.getColorOrDefault(p & "cursor")
-  s.cursorGuidesColor         = cfg.getColorOrDefault(p & "cursor-guides")
-  s.linkMarkerColor           = cfg.getColorOrDefault(p & "link-marker")
-  s.selectionColor            = cfg.getColorOrDefault(p & "selection")
-  s.trailColor                = cfg.getColorOrDefault(p & "trail")
-  s.pastePreviewColor         = cfg.getColorOrDefault(p & "paste-preview")
-  s.foregroundNormalColor     = cfg.getColorOrDefault(p & "foreground.normal")
-  s.foregroundLightColor      = cfg.getColorOrDefault(p & "foreground.light")
-  s.coordinatesNormalColor    = cfg.getColorOrDefault(p & "coordinates.normal")
-  s.coordinatesHighlightColor = cfg.getColorOrDefault(p & "coordinates.highlight")
-  s.regionBorderNormalColor   = cfg.getColorOrDefault(p & "region-border.normal")
-  s.regionBorderEmptyColor    = cfg.getColorOrDefault(p & "region-border.empty")
+  s.lineWidth                   = cfg.getEnumOrDefault(p & "line-width", LineWidth)
+  s.backgroundColor             = cfg.getColorOrDefault(p & "background")
+  s.cursorColor                 = cfg.getColorOrDefault(p & "cursor")
+  s.cursorGuidesColor           = cfg.getColorOrDefault(p & "cursor-guides")
+  s.linkMarkerColor             = cfg.getColorOrDefault(p & "link-marker")
+  s.selectionColor              = cfg.getColorOrDefault(p & "selection")
+  s.trailColor                  = cfg.getColorOrDefault(p & "trail")
+  s.pastePreviewColor           = cfg.getColorOrDefault(p & "paste-preview")
+  s.foregroundNormalColor       = cfg.getColorOrDefault(p & "foreground.normal")
+  s.foregroundNormalCursorColor = cfg.getColorOrDefault(p & "foreground.normal-cursor")
+  s.foregroundLightColor        = cfg.getColorOrDefault(p & "foreground.light")
+  s.foregroundLightCursorColor  = cfg.getColorOrDefault(p & "foreground.light-cursor")
+  s.coordinatesNormalColor      = cfg.getColorOrDefault(p & "coordinates.normal")
+  s.coordinatesHighlightColor   = cfg.getColorOrDefault(p & "coordinates.highlight")
+  s.regionBorderNormalColor     = cfg.getColorOrDefault(p & "region-border.normal")
+  s.regionBorderEmptyColor      = cfg.getColorOrDefault(p & "region-border.empty")
 
   p = "background-hatch."
   s.backgroundHatchEnabled       = cfg.getBoolOrDefault(p & "enabled")
@@ -371,9 +373,10 @@ proc toLevelStyle*(cfg: HoconNode): LevelStyle =
   cfg.getColorOrDefaultArray(p & "background", s.floorBackgroundColor)
 
   p = "note."
-  s.noteMarkerColor     = cfg.getColorOrDefault(p & "marker")
-  s.noteCommentColor    = cfg.getColorOrDefault(p & "comment")
-  s.noteBackgroundShape = cfg.getEnumOrDefault(p & "background-shape", NoteBackgroundShape)
+  s.noteMarkerColor       = cfg.getColorOrDefault(p & "marker")
+  s.noteMarkerCursorColor = cfg.getColorOrDefault(p & "marker-cursor")
+  s.noteCommentColor      = cfg.getColorOrDefault(p & "comment")
+  s.noteBackgroundShape   = cfg.getEnumOrDefault(p & "background-shape", NoteBackgroundShape)
 
   cfg.getColorOrDefaultArray(p & "index-background", s.noteIndexBackgroundColor)
 
