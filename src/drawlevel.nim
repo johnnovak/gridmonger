@@ -103,8 +103,9 @@ type
     vertTransformXOffs:    float
     vertRegionBorderYOffs: float
 
-    lineHatchPatterns:  LineHatchPatterns
-    lineHatchSize:      range[MinLineHatchSize..MaxLineHatchSize]
+    lineHatchPatterns:        LineHatchPatterns
+    cursorLineHatchPatterns:  LineHatchPatterns
+    lineHatchSize:            range[MinLineHatchSize..MaxLineHatchSize]
 
 
   Outline = enum
@@ -151,7 +152,11 @@ using
 
 proc newDrawLevelParams*(): DrawLevelParams =
   result = new DrawLevelParams
+
   for paint in result.lineHatchPatterns.mitems:
+    paint.image = NoImage
+
+  for paint in result.cursorLineHatchPatterns.mitems:
     paint.image = NoImage
 
   result.zoomLevel = MinZoomLevel
@@ -257,7 +262,8 @@ proc setVertTransform(x, y: float; ctx) =
 
 # {{{ renderLineHatchPatterns()
 proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
-                             strokeColor: Color) =
+                             strokeColor: Color,
+                             lineHatchPatterns: var LineHatchPatterns) =
 
   for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
     var sp = spacing * pxRatio
@@ -290,7 +296,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
       vg.shapeAntiAlias(true)
 
 
-    dp.lineHatchPatterns[spacing] = vg.imagePattern(
+    lineHatchPatterns[spacing] = vg.imagePattern(
       ox=0, oy=0, ex=spacing.float, ey=spacing.float, angle=0,
       image, alpha=1.0
     )
@@ -302,7 +308,15 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalColor)
+  for paint in dp.cursorLineHatchPatterns:
+    if paint.image != NoImage:
+      vg.deleteImage(paint.image)
+
+  renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalColor,
+                          dp.lineHatchPatterns)
+
+  renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalCursorColor,
+                          dp.cursorLineHatchPatterns)
 
   dp.setZoomLevel(ls, dp.zoomLevel)
 
@@ -364,10 +378,27 @@ proc setLevelClippingRect(l: Level; ctx) =
 
 # }}}
 
+# {{{ toBufRow()
 proc toBufRow(viewRow: Natural): Natural = viewRow + ViewBufBorder
 
+# }}}
+# {{{  toBufCol()
 proc toBufCol(viewCol: Natural): Natural = viewCol + ViewBufBorder
 
+# }}}
+# {{{ getForegroundNormalColor()
+template getForegroundNormalColor(isCursorActive: bool; ctx): Color =
+  if isCursorActive: ctx.ls.foregroundNormalCursorColor
+  else: ctx.ls.foregroundNormalColor
+
+# }}}
+# {{{ getForegroundLightColor()
+template getForegroundLightColor(isCursorActive: bool; ctx): Color =
+  if isCursorActive: ctx.ls.foregroundLightCursorColor
+  else: ctx.ls.foregroundLightColor
+
+# }}}
+#
 # {{{ forAllViewCells_CellCoords()
 template forAllViewCells_CellCoords(body: untyped) =
   for viewRow {.inject.} in 0..<dp.viewRows:
@@ -1073,15 +1104,8 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
 
 # }}}
 
-template getForegroundNormalColor(isCursorActive: bool; ctx): Color =
-  if isCursorActive: ctx.ls.foregroundNormalCursorColor
-  else: ctx.ls.foregroundNormalColor
-
-template getForegroundLightColor(isCursorActive: bool; ctx): Color =
-  if isCursorActive: ctx.ls.foregroundLightCursorColor
-  else: ctx.ls.foregroundLightColor
-
 # {{{ Draw wall types
+
 # {{{ setWallStyle()
 proc setWallStyle(isCursorActive, regionBorder: bool; ctx): (float, float,
                                                              float, float) =
@@ -1733,6 +1757,7 @@ proc drawRegionBorderEdgeVert*(x, y: float; color: Color; north: bool; ctx) =
   vg.resetTransform()
 
 # }}}
+
 # }}}
 # {{{ Draw floor types
 
@@ -1744,8 +1769,11 @@ proc drawSecretDoorBlock(x, y: float; floorColor: Natural;
 
   alias(vg, ctx.vg)
 
+  let paint = if isCursorActive: dp.cursorLineHatchPatterns[dp.lineHatchSize]
+              else: dp.lineHatchPatterns[dp.lineHatchSize]
+
   vg.beginPath()
-  vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
+  vg.fillPaint(paint)
   vg.rect(x, y, dp.gridSize, dp.gridSize)
   vg.fill()
 
@@ -1942,6 +1970,7 @@ proc drawInvisibleBarrier(x, y: float; isCursorActive: bool; ctx) =
 # {{{ drawBridge()
 proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
                 ctx) =
+
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1960,8 +1989,11 @@ proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
   let w = x2 - x1
   let h = dp.gridSize + 2*yo
 
-  let fc0 = ls.floorBackgroundColor[0]
-  var bgCol = lerp(ls.backgroundColor.withAlpha(1.0),
+  var bgCol = if isCursorActive:
+    ls.cursorColor
+  else:
+    let fc0 = ls.floorBackgroundColor[0]
+    lerp(ls.backgroundColor.withAlpha(1.0),
                     fc0.withAlpha(1.0),
                     fc0.a)
 
@@ -2001,6 +2033,7 @@ proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
   vg.stroke()
 
 # }}}
+
 # }}}
 
 # {{{ drawBackgroundGrid()
@@ -2123,7 +2156,7 @@ proc drawFloors(viewBuf: Level; ctx) =
 
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
-      let 
+      let
         bufRow = toBufRow(viewRow)
         bufCol = toBufCol(viewCol)
         f = viewBuf.getFloor(bufRow, bufCol)
@@ -2138,7 +2171,7 @@ proc drawBridges(viewBuf: Level; ctx) =
 
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
-      let 
+      let
         bufRow = toBufRow(viewRow)
         bufCol = toBufCol(viewCol)
         f = viewBuf.getFloor(bufRow, bufCol)
