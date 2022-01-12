@@ -31,7 +31,7 @@ ui {
     corner-radius = 0
     background = "#3b598dff"
     label = "#fafafac7"
-    warning = "#ffffffec"
+    warning = "#ffbe4eff"
     error = "#ff7373ff"
 
     title {

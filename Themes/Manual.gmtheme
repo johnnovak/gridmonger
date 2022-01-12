@@ -31,7 +31,7 @@ ui {
     corner-radius = 8
     background = "#55493aff"
     label = "#cbc1b5ff"
-    warning = "#ffffffec"
+    warning = "#ffbe4eff"
     error = "#ff6464ff"
 
     title {
@@ -125,12 +125,16 @@ level {
     selection = "#ff808066"
     paste-preview = "#3399ff66"
 
+    trail {
+      normal = "#0000005c"
+      cursor = "#0000005c"
+    }
     foreground {
-      normal { 
+      normal {
         normal = "#28211aff"
         cursor = "#28211aff"
       }
-      light { 
+      light {
         normal = "#271d1357"
         cursor = "#271d1357"
       }
@@ -142,10 +146,6 @@ level {
     region-border {
       normal = "#00000000"
       empty = "#00000000"
-    }
-    trail {
-      normal = "#0000005c"
-      cursor = "#0000005c"
     }
   }
 
@@ -203,6 +203,11 @@ level {
   }
 
   note {
+    marker {
+      normal = "#322c27ab"
+      cursor = "#322c27ab"
+    }
+
     comment = "#de3e16cc"
     background-shape = circle
     index = "#ffffffff"
@@ -213,10 +218,6 @@ level {
       "#549c95ff"
     ]
 
-    marker {
-      normal = "#322c27ab"
-      cursor = "#322c27ab"
-    }
     tooltip {
       background = "#252018ff"
       text = "#d7d2ccf7"

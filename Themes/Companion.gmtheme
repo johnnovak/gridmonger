@@ -59,10 +59,10 @@ ui {
     corner-radius = 5
 
     background {
-      normal = "#c9c3aca8"
-      hover = "#c9c3acdc"
+      normal = "#c9c1a1a8"
+      hover = "#c9c1a1dc"
       active = "#e1bc43ff"
-      disabled = "#c3bda651"
+      disabled = "#c3bb9c51"
     }
     foreground {
       normal = "#000000b3"
@@ -76,7 +76,7 @@ ui {
     selection = "#c8820078"
 
     edit {
-      background = "#ffffff33"
+      background = "#c9b4873d"
       text = "#ffffffb3"
     }
     scroll-bar {
@@ -105,12 +105,12 @@ ui {
   }
 
   about-dialog {
-    logo = "#c3bda6ff"
+    logo = "#c9b487ff"
   }
 
   splash-image {
     logo = "#52452fff"
-    outline = "#c3b28eff"
+    outline = "#c9b487ff"
     shadow-alpha = 0.55834578043316
   }
 }

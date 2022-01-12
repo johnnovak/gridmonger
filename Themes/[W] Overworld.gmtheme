@@ -31,7 +31,7 @@ ui {
     corner-radius = 8
     background = "#404040ff"
     label = "#ffffffb3"
-    warning = "#ffffffec"
+    warning = "#ffbe4eff"
     error = "#ff6464ff"
 
     title {
@@ -125,6 +125,10 @@ level {
     selection = "#ff808080"
     paste-preview = "#3399ff80"
 
+    trail {
+      normal = "#00000051"
+      cursor = "#00000051"
+    }
     foreground {
       normal {
         normal = "#222022ff"
@@ -142,10 +146,6 @@ level {
     region-border {
       normal = "#00000000"
       empty = "#00000000"
-    }
-    trail {
-      normal = "#00000051"
-      cursor = "#00000051"
     }
   }
 

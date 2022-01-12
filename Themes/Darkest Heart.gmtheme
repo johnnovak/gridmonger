@@ -105,12 +105,12 @@ ui {
   }
 
   about-dialog {
-    logo = "#999999ff"
+    logo = "#8d8d8dff"
   }
 
   splash-image {
-    logo = "#00000000"
-    outline = "#808080ff"
+    logo = "#1b1b1b00"
+    outline = "#747474ff"
     shadow-alpha = 1
   }
 }
