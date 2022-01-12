@@ -123,14 +123,17 @@ level {
     cursor-guides = "#ffb30033"
     link-marker = "#0000004d"
     selection = "#ff808066"
-    trail = "#1d1d1d51"
     paste-preview = "#3399ff66"
 
     foreground {
-      normal = "#433723ff"
-      light = "#00000040"
-      normal-cursor = "#433723ff"
-      light-cursor = "#00000040"
+      normal { 
+        normal = "#433723ff"
+        cursor = "#433723ff"
+      }
+      light { 
+        normal = "#00000040"
+        cursor = "#00000040"
+      }
     }
     coordinates {
       normal = "#00000066"
@@ -139,6 +142,10 @@ level {
     region-border {
       normal = "#aa5920ff"
       empty = "#aa59206b"
+    }
+    trail {
+      normal = "#1d1d1d51"
+      cursor = "#1d1d1d51"
     }
   }
 
@@ -196,7 +203,6 @@ level {
   }
 
   note {
-    marker = "#00000080"
     comment = "#991a00cc"
     background-shape = circle
     index = "#ffffffd9"
@@ -207,6 +213,10 @@ level {
       "#765e1cff"
     ]
 
+    marker {
+      normal = "#00000080"
+      cursor = "#00000080"
+    }
     tooltip {
       background = "#302925e9"
       text = "#e6d9c2cd"
@@ -216,8 +226,6 @@ level {
         color = "#00000064"
       }
     }
-
-    marker-cursor = "#00000080"
   }
 
   label {

@@ -1,7 +1,6 @@
 import lenientops
 import math
 import options
-import strformat
 
 import glad/gl
 import koi
@@ -25,7 +24,7 @@ const
   MinGridSize   = 13.0
   ZoomStep      = 2.0
 
-  UltrathinStrokeWidth = 1.0
+  UltraThinStrokeWidth = 1.0
 
   MinLineHatchSize = 3
   MaxLineHatchSize = 8
@@ -313,7 +312,7 @@ proc initDrawLevelParams*(dp; ls; vg: NVGContext, pxRatio: float) =
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalColor,
+  renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalNormalColor,
                           dp.lineHatchPatterns)
 
   renderLineHatchPatterns(dp, vg, pxRatio, ls.foregroundNormalCursorColor,
@@ -390,13 +389,13 @@ proc toBufCol(viewCol: Natural): Natural = viewCol + ViewBufBorder
 # {{{ getForegroundNormalColor()
 template getForegroundNormalColor(isCursorActive: bool; ctx): Color =
   if isCursorActive: ctx.ls.foregroundNormalCursorColor
-  else: ctx.ls.foregroundNormalColor
+  else: ctx.ls.foregroundNormalNormalColor
 
 # }}}
 # {{{ getForegroundLightColor()
 template getForegroundLightColor(isCursorActive: bool; ctx): Color =
   if isCursorActive: ctx.ls.foregroundLightCursorColor
-  else: ctx.ls.foregroundLightColor
+  else: ctx.ls.foregroundLightNormalColor
 
 # }}}
 #
@@ -545,7 +544,7 @@ proc drawCellOutlines(l: Level; ctx) =
       isNeighbourCellEmpty(l, r,c, NorthWest)
     )
 
-  let sw = UltrathinStrokeWidth
+  let sw = UltraThinStrokeWidth
 
   vg.strokeWidth(sw)
   vg.fillColor(ls.outlineColor)
@@ -636,7 +635,7 @@ proc drawCursorGuides(ctx) =
 
   vg.fillColor(ls.cursorGuidesColor)
   vg.strokeColor(ls.cursorGuidesColor)
-  let sw = UltrathinStrokeWidth
+  let sw = UltraThinStrokeWidth
   vg.strokeWidth(sw)
 
   vg.beginPath()
@@ -786,7 +785,7 @@ proc drawFloorBg(x, y: float; color: Color; ctx) =
 
 # }}}
 # {{{ drawTrail()
-proc drawTrail(x, y: float; ctx) =
+proc drawTrail(x, y: float; isActiveCursor: bool; ctx) =
   alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -794,6 +793,8 @@ proc drawTrail(x, y: float; ctx) =
   let
     offs = (dp.gridSize * 0.38).int
     sw = dp.thinStrokeWidth
+    a = dp.gridSize - 2*offs + sw
+    color = if isActiveCursor: ls.trailCursorColor else: ls.trailNormalColor
 
   var x1, y1: float
   if dp.lineWidth == lwThin:
@@ -804,9 +805,7 @@ proc drawTrail(x, y: float; ctx) =
     x1 = snap(x + offs - sw2, sw)
     y1 = snap(y + offs - sw2, sw)
 
-  let a = dp.gridSize - 2*offs + sw
-
-  vg.fillColor(ls.trailColor)
+  vg.fillColor(color)
   vg.beginPath()
   vg.rect(x1, y1, a, a)
   vg.fill()
@@ -817,7 +816,7 @@ proc drawGrid(x, y: float; color: Color; gridStyle: GridStyle; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  let sw = UltrathinStrokeWidth
+  let sw = UltraThinStrokeWidth
   vg.strokeColor(color)
   vg.strokeWidth(sw)
 
@@ -955,7 +954,7 @@ proc drawNote(x, y: float; note: Annotation; isCursorActive: bool; ctx) =
   alias(vg, ctx.vg)
 
   template getNoteMarkerColor(): Color =
-    if isCursorActive: ls.noteMarkerCursorColor else: ls.noteMarkerColor
+    if isCursorActive: ls.noteMarkerCursorColor else: ls.noteMarkerNormalColor
 
   case note.kind
   of akComment:  discard
@@ -1198,7 +1197,6 @@ proc drawIllusoryWallHoriz*(x, y: float; orientation: Orientation;
 # {{{ drawInvisibleWallHoriz*()
 proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
                              isCursorActive, regionBorder: bool = false; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1229,7 +1227,6 @@ proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
 # {{{ drawDoorHoriz*()
 proc drawDoorHoriz*(x, y: float; orientation: Orientation;
                     isCursorActive, regionBorder, fill: bool = false; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1291,7 +1288,6 @@ proc drawLockedDoorHoriz*(x, y: float; orientation: Orientation;
 # {{{ drawSecretDoorHoriz*()
 proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
                           isCursorActive, regionBorder: bool = false; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1327,7 +1323,6 @@ proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
 # {{{ drawArchwayHoriz*()
 proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
                        isCursorActive, regionBorder: bool = false; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1377,7 +1372,6 @@ proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
 # {{{ drawOneWayDoorHoriz*()
 proc drawOneWayDoorHoriz*(x, y: float; orientation: Orientation;
                           isCursorActive, regionBorder, northEast: bool; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1436,7 +1430,6 @@ proc drawOneWayDoorHorizSW*(x, y: float; orientation: Orientation;
 # {{{ drawLeverHoriz*()
 proc drawLeverHoriz*(x, y: float; orientation: Orientation;
                      isCursorActive, regionBorder, northEast: bool; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1527,7 +1520,7 @@ proc drawNicheHoriz*(x, y: float; orientation: Orientation;
   sw = dp.normalStrokeWidth
 
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.foregroundNormalColor)
+  vg.strokeColor(ls.foregroundNormalNormalColor)
   vg.lineCap(lcjRound)
 
   vg.beginPath()
@@ -1554,7 +1547,6 @@ proc drawNicheHorizSW*(x, y: float; orientation: Orientation;
 # {{{ drawStatueHoriz*()
 proc drawStatueHoriz*(x, y: float; orientation: Orientation;
                       isCursorActive, regionBorder, northEast: bool; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1631,7 +1623,7 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
     kl = boxLen.float
 
   vg.strokeWidth(sw)
-  vg.strokeColor(ls.foregroundNormalColor)
+  vg.strokeColor(ls.foregroundNormalNormalColor)
   vg.lineCap(lcjSquare)
   vg.beginPath()
   vg.rect(kx, ky, kl, kl)
@@ -1654,7 +1646,7 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
     h = kl-6
 
   if h >= 2:
-    vg.fillColor(ls.foregroundNormalColor)
+    vg.fillColor(ls.foregroundNormalNormalColor)
     vg.beginPath()
     vg.rect(kx+i, ky+i, h, h)
     vg.fill()
@@ -1663,7 +1655,6 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
 # {{{ drawWritingHoriz*()
 proc drawWritingHoriz*(x, y: float; orientation: Orientation;
                        isCursorActive, regionBorder, northEast: bool; ctx) =
-  alias(ls, ctx.ls)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -2197,7 +2188,7 @@ proc drawTrail(viewBuf: Level; ctx) =
       if viewBuf.hasTrail(bufRow, bufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
-        drawTrail(x, y, ctx)
+        drawTrail(x, y, isCursorActive(viewRow, viewCol, dp), ctx)
 
 # }}}
 

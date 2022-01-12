@@ -22,16 +22,16 @@ ui {
     button {
       normal = "#d4bf9b79"
       hover = "#d4bf9ba6"
-      down = "#d4bf9bc4"
-      inactive = "#00000080"
+      down = "#d4bf9bcf"
+      inactive = "#d4d4d441"
     }
   }
 
   dialog {
-    corner-radius = 0
+    corner-radius = 6
     background = "#3f382cff"
     label = "#bfbaa4f0"
-    warning = "#ffffffec"
+    warning = "#f2c024ec"
     error = "#ff5e3bff"
 
     title {
@@ -47,11 +47,11 @@ ui {
       width = 0
     }
     shadow {
-      enabled = no
-      color = "#00000000"
-      feather = 0
-      x-offset = 0
-      y-offset = 0
+      enabled = yes
+      color = "#0000003b"
+      feather = 12
+      x-offset = 1
+      y-offset = 1
     }
   }
 
@@ -123,14 +123,21 @@ level {
     cursor-guides = "#ffb91e2b"
     link-marker = "#0000004d"
     selection = "#ff808066"
-    trail = "#70101648"
     paste-preview = "#3399ff66"
 
+    trail {
+      normal = "#70101648"
+      cursor = "#70101648"
+    }
     foreground {
-      normal = "#644b14ff"
-      light = "#644b155c"
-      normal-cursor = "#644b14ff"
-      light-cursor = "#644b155c"
+      normal {
+        normal = "#644b14ff"
+        cursor = "#644b14ff"
+      }
+      light {
+        normal = "#644b155c"
+        cursor = "#644b155c"
+      }
     }
     coordinates {
       normal = "#644b14cd"
@@ -196,7 +203,11 @@ level {
   }
 
   note {
-    marker = "#3c2c1cbe"
+    marker {
+      normal = "#3c2c1cbe"
+      cursor = "#3c2c1cbe"
+    }
+
     comment = "#ff3300d7"
     background-shape = circle
     index = "#000000b5"
@@ -217,8 +228,6 @@ level {
         color = "#00000064"
       }
     }
-
-    marker-cursor = "#3c2c1cbe"
   }
 
   label {

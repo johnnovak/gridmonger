@@ -278,6 +278,7 @@ proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
   debug(fmt"Reading links...")
 
   var numLinks = rr.read(uint16).int
+  debug(fmt"  numLinks: {numLinks}")
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
 
   result = initBiTable[Location, Location](nextPowerOfTwo(numLinks))
@@ -286,16 +287,17 @@ proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
 
   while numLinks > 0:
     let src = readLocation(rr)
+    debug(fmt"  src: {src}")
     checkValueRange(src.level, "lnks.srcLevel", max=maxLevelIndex)
     checkValueRange(src.row, "lnks.srcRow", max=levels[src.level].rows-1)
     checkValueRange(src.col, "lnks.srcColumh", max=levels[src.level].cols-1)
 
     let dest = readLocation(rr)
+    debug(fmt"  dest: {dest}")
     checkValueRange(dest.level, "lnks.destLevel", max=maxLevelIndex)
     checkValueRange(dest.row, "lnks.destRow", max=levels[dest.level].cols-1)
     checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.level].cols-1)
 
-    result[src] = dest
     dec(numLinks)
 
 # }}}

@@ -303,11 +303,12 @@ type
     cursorGuidesColor*:            Color
     linkMarkerColor*:              Color
     selectionColor*:               Color
-    trailColor*:                   Color
+    trailNormalColor*:             Color
+    trailCursorColor*:             Color
     pastePreviewColor*:            Color
-    foregroundNormalColor*:        Color
+    foregroundNormalNormalColor*:  Color
     foregroundNormalCursorColor*:  Color
-    foregroundLightColor*:         Color
+    foregroundLightNormalColor*:   Color
     foregroundLightCursorColor*:   Color
     coordinatesNormalColor*:       Color
     coordinatesHighlightColor*:    Color
@@ -338,7 +339,7 @@ type
     floorTransparent*:             bool
     floorBackgroundColor*:         array[10, Color]
 
-    noteMarkerColor*:              Color
+    noteMarkerNormalColor*:        Color
     noteMarkerCursorColor*:        Color
     noteCommentColor*:             Color
     noteBackgroundShape*:          NoteBackgroundShape

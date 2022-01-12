@@ -23,7 +23,7 @@ ui {
       normal = "#ffffff64"
       hover = "#ffffffa0"
       down = "#ffffffdc"
-      inactive = "#ffffff46"
+      inactive = "#ffffff36"
     }
   }
 
@@ -39,17 +39,17 @@ ui {
       text = "#eef4ffff"
     }
     inner-border {
-      color = "#00000000"
-      width = 0
+      color = "#3b598d3d"
+      width = 7
     }
     outer-border {
       color = "#123e87ff"
-      width = 10
+      width = 14
     }
     shadow {
       enabled = no
-      color = "#00000000"
-      feather = 0
+      color = "#123e87ff"
+      feather = 50
       x-offset = 0
       y-offset = 0
     }
@@ -80,15 +80,15 @@ ui {
       text = "#ffffffb8"
     }
     scroll-bar {
-      normal = "#00000000"
-      edit = "#00000000"
+      normal = "#19325e00"
+      edit = "#d7e5fd00"
     }
   }
 
   status-bar {
     background = "#13223bff"
     text = "#ffffffdd"
-    coordinates = "#a0c0f4d8"
+    coordinates = "#bfd3f4c5"
 
     command {
       background = "#e8b20ee7"
@@ -123,14 +123,21 @@ level {
     cursor-guides = "#ffb46f3c"
     link-marker = "#00b3c8ff"
     selection = "#ff808066"
-    trail = "#ff8c135a"
     paste-preview = "#3399ff66"
 
+    trail {
+      normal = "#ff8c135a"
+      cursor = "#123e8748"
+    }
     foreground {
-      normal = "#e8b20eff"
-      light = "#e8b20e48"
-      normal-cursor = "#123e87ff"
-      light-cursor = "#123e87ff"
+      normal {
+        normal = "#e8b20eff"
+        cursor = "#123e87ff"
+      }
+      light {
+        normal = "#e8b20e48"
+        cursor = "#123e8748"
+      }
     }
     coordinates {
       normal = "#ffffff4d"
@@ -196,7 +203,11 @@ level {
   }
 
   note {
-    marker = "#e8b20eff"
+    marker {
+      normal = "#e8b20eff"
+      cursor = "#123e87ff"
+    }
+
     comment = "#ff3300cc"
     background-shape = circle
     index = "#e8b20eff"
@@ -216,8 +227,6 @@ level {
         color = "#00000064"
       }
     }
-
-    marker-cursor = "#123e87ff"
   }
 
   label {
@@ -231,7 +240,7 @@ level {
 
   level-drop-down {
     item-list-background = "#19325eff"
-    corner-radius = 5
+    corner-radius = 1
 
     button {
       normal = "#acb9d100"
@@ -239,7 +248,7 @@ level {
       label = "#ffffffee"
     }
     item {
-      normal = "#ffffffd1"
+      normal = "#ffffffce"
       hover = "#102d5cff"
     }
     shadow {

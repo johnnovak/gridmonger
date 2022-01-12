@@ -141,12 +141,21 @@ const DefaultThemeString = """
       cursor-guides = "#ffa60033"
       link-marker = "#00b3c8ff"
       selection = "#ff808066"
-      trail = "#00000062"
       paste-preview = "#3399ff66"
 
+      trail {
+        normal = "#00000062"
+        cursor = "#00000062"
+      }
       foreground {
-        normal = "#1a1a1aff"
-        light = "#1a1a1a46"
+        normal {
+          normal = "#1a1a1aff"
+          cursor = "#1a1a1aff"
+        }
+        light {
+          normal = "#1a1a1a46"
+          cursor = "#1a1a1a46"
+        }
       }
       coordinates {
         normal = "#e6e6e6ff"
@@ -212,7 +221,10 @@ const DefaultThemeString = """
     }
 
     note {
-      marker = "#1a1a1ab3"
+      marker {
+        normal = "#1a1a1ab3"
+        cursor = "#1a1a1ab3"
+      }
       comment = "#ff3300cc"
       background-shape = circle
       index = "#ffffffff"
@@ -331,12 +343,13 @@ proc toLevelStyle*(cfg: HoconNode): LevelStyle =
   s.cursorGuidesColor           = cfg.getColorOrDefault(p & "cursor-guides")
   s.linkMarkerColor             = cfg.getColorOrDefault(p & "link-marker")
   s.selectionColor              = cfg.getColorOrDefault(p & "selection")
-  s.trailColor                  = cfg.getColorOrDefault(p & "trail")
+  s.trailNormalColor            = cfg.getColorOrDefault(p & "trail.normal")
+  s.trailCursorColor            = cfg.getColorOrDefault(p & "trail.cursor")
   s.pastePreviewColor           = cfg.getColorOrDefault(p & "paste-preview")
-  s.foregroundNormalColor       = cfg.getColorOrDefault(p & "foreground.normal")
-  s.foregroundNormalCursorColor = cfg.getColorOrDefault(p & "foreground.normal-cursor")
-  s.foregroundLightColor        = cfg.getColorOrDefault(p & "foreground.light")
-  s.foregroundLightCursorColor  = cfg.getColorOrDefault(p & "foreground.light-cursor")
+  s.foregroundNormalNormalColor = cfg.getColorOrDefault(p & "foreground.normal.normal")
+  s.foregroundNormalCursorColor = cfg.getColorOrDefault(p & "foreground.normal.cursor")
+  s.foregroundLightNormalColor  = cfg.getColorOrDefault(p & "foreground.light.normal")
+  s.foregroundLightCursorColor  = cfg.getColorOrDefault(p & "foreground.light.cursor")
   s.coordinatesNormalColor      = cfg.getColorOrDefault(p & "coordinates.normal")
   s.coordinatesHighlightColor   = cfg.getColorOrDefault(p & "coordinates.highlight")
   s.regionBorderNormalColor     = cfg.getColorOrDefault(p & "region-border.normal")
@@ -373,8 +386,8 @@ proc toLevelStyle*(cfg: HoconNode): LevelStyle =
   cfg.getColorOrDefaultArray(p & "background", s.floorBackgroundColor)
 
   p = "note."
-  s.noteMarkerColor       = cfg.getColorOrDefault(p & "marker")
-  s.noteMarkerCursorColor = cfg.getColorOrDefault(p & "marker-cursor")
+  s.noteMarkerNormalColor = cfg.getColorOrDefault(p & "marker.normal")
+  s.noteMarkerCursorColor = cfg.getColorOrDefault(p & "marker.cursor")
   s.noteCommentColor      = cfg.getColorOrDefault(p & "comment")
   s.noteBackgroundShape   = cfg.getEnumOrDefault(p & "background-shape", NoteBackgroundShape)
 

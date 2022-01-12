@@ -3924,14 +3924,17 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   case dlg.kind:
   of akIndexed:
     koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
+
     koi.radioButtons(
       x + LabelWidth, y, 28, 28,
       labels = newSeq[string](ls.noteIndexBackgroundColor.len),
       dlg.indexColor,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-      drawProc = colorRadioButtonDrawProc(ls.noteIndexBackgroundColor.toSeq,
-                                          ls.cursorColor).some
+      drawProc = colorRadioButtonDrawProc(
+        ls.noteIndexBackgroundColor.toSeq,
+        a.theme.radioButtonStyle.buttonFillColorActive
+      ).some
     )
 
   of akCustomId:
@@ -4122,8 +4125,10 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
-    drawProc = colorRadioButtonDrawProc(ls.labelTextColor.toSeq,
-                                        ls.cursorColor).some,
+    drawProc = colorRadioButtonDrawProc(
+      ls.labelTextColor.toSeq,
+      a.theme.radioButtonStyle.buttonFillColorActive
+    ).some,
     style = a.theme.radioButtonStyle
   )
 
@@ -4516,7 +4521,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   if idx.isSome:
     let theme = a.theme.themeNames[idx.get]
     if theme.userTheme:
-      validationWarning = "An user theme with this name already exists"
+      validationWarning = "A user theme with this name already exists"
     else:
       validationWarning = "Built-in theme will be shadowed by this name"
 
@@ -4628,7 +4633,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
   if idx.isSome:
     let theme = a.theme.themeNames[idx.get]
     if theme.userTheme:
-      validationWarning = "An user theme with this name already exists"
+      validationWarning = "A user theme with this name already exists"
     else:
       validationWarning = "Built-in theme will be shadowed by this name"
 
@@ -6173,7 +6178,7 @@ proc renderEmptyMap(a) =
   let ls = a.theme.levelStyle
 
   vg.setFont(size=22)
-  vg.fillColor(ls.foregroundNormalColor)
+  vg.fillColor(ls.foregroundNormalNormalColor)
   vg.textAlign(haCenter, vaMiddle)
   var y = drawAreaHeight(a) * 0.5
   discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
@@ -6215,26 +6220,34 @@ proc specialWallDrawProc(ls: LevelStyle,
                state: WidgetState, first, last: bool,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
-    var col = case state
-              of wsActive:      ls.cursorColor
-              of wsHover:       ts.buttonHoverColor
-              of wsActiveHover: ls.cursorColor
-              of wsDown:        ls.cursorColor
-              else:             ts.buttonNormalColor
+    var (bgCol, active) = case state
+                          of wsActive:      (ls.cursorColor,       true)
+                          of wsHover:       (ts.buttonHoverColor,  false)
+                          of wsActiveHover: (ls.cursorColor,       true)
+                          of wsDown:        (ls.cursorColor,       true)
+                          else:             (ts.buttonNormalColor, false)
 
+    # TODO store on theme change?
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
-    let savedFloorColor = ls.floorBackgroundColor[0]
-    let savedBackgroundImage = dp.backgroundImage
+    let
+      savedFloorColor = ls.floorBackgroundColor[0]
+      savedForegroundNormalNormalColor = ls.foregroundNormalNormalColor
+      savedForegroundLightNormalColor = ls.foregroundLightNormalColor
+      savedBackgroundImage = dp.backgroundImage
 
-    ls.floorBackgroundColor[0] = lerp(ls.backgroundColor, col, col.a)
+    ls.floorBackgroundColor[0] = lerp(ls.backgroundColor, bgCol, bgCol.a)
                                  .withAlpha(1.0)
+    if active:
+      ls.foregroundNormalNormalColor = ls.foregroundNormalCursorColor
+      ls.foregroundLightNormalColor = ls.foregroundLightCursorColor
+
     dp.backgroundImage = Paint.none
 
     const Pad = 5
 
     vg.beginPath()
-    vg.fillColor(col)
+    vg.fillColor(bgCol)
     vg.rect(x, y, w-Pad, h-Pad)
     vg.fill()
 
@@ -6288,6 +6301,8 @@ proc specialWallDrawProc(ls: LevelStyle,
 
     # ...aaaaand restore it!
     ls.floorBackgroundColor[0] = savedFloorColor
+    ls.foregroundNormalNormalColor = savedForegroundNormalNormalColor
+    ls.foregroundLightNormalColor = savedForegroundLightNormalColor
     dp.backgroundImage = savedBackgroundImage
 
 # }}}
@@ -6726,14 +6741,15 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         enumProp( "Line Width",            p & "line-width", LineWidth)
       group:
-        colorProp("Foreground Normal",        p & "foreground.normal")
-        colorProp("Foreground Normal Cursor", p & "foreground.normal-cursor")
-        colorProp("Foreground Light",         p & "foreground.light")
-        colorProp("Foreground Light Cursor",  p & "foreground.light-cursor")
+        colorProp("Foreground Normal",        p & "foreground.normal.normal")
+        colorProp("Foreground Normal Cursor", p & "foreground.normal.cursor")
+        colorProp("Foreground Light",         p & "foreground.light.normal")
+        colorProp("Foreground Light Cursor",  p & "foreground.light.cursor")
       group:
         colorProp("Link Marker",           p & "link-marker")
       group:
-        colorProp("Trail",                 p & "trail")
+        colorProp("Trail Normal",          p & "trail.normal")
+        colorProp("Trail Cursor",          p & "trail.cursor")
       group:
         colorProp("Cursor",                p & "cursor")
         colorProp("Cursor Guides",         p & "cursor-guides")
@@ -6802,8 +6818,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("Notes", te.sectionNotes):
       p = "level.note."
       group:
-        colorProp("Marker",             p & "marker")
-        colorProp("Marker Cursor",      p & "marker-cursor")
+        colorProp("Marker Normal",      p & "marker.normal")
+        colorProp("Marker Cursor",      p & "marker.cursor")
         colorProp("Comment",            p & "comment")
       group:
         enumProp( "Background Shape",   p & "background-shape",
