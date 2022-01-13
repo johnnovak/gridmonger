@@ -44,6 +44,7 @@ const
   IconTrash* = "\uf1f8"
   IconUndo* = "\uf112"
   IconWarning* = "\uf071"
+  IconInfo* = "\uf05a"
   IconWindowClose* = "\uf2d3"
   IconWindowMaximise* = "\uf2d0"
   IconWindowMinimise* = "\uf2d1"

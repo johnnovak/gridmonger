@@ -2526,7 +2526,7 @@ func mkValidationError(msg: string): string =
 # }}}
 # {{{ mkValidationWarning()
 func mkValidationWarning(msg: string): string =
-  fmt"{IconWarning}   {msg}"
+  fmt"{IconInfo}   {msg}"
 
 # }}}
 # {{{ moveGridPositionWrapping()
