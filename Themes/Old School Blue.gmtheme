@@ -23,19 +23,19 @@ ui {
       normal = "#ffffff73"
       hover = "#ffffffb3"
       down = "#ffffffe6"
-      inactive = "#00000080"
+      inactive = "#ffffff3e"
     }
   }
 
   dialog {
     corner-radius = 8
-    background = "#44545dff"
+    background = "#225978ff"
     label = "#ffffffb3"
     warning = "#ffbe4eff"
     error = "#ff6464ff"
 
     title {
-      background = "#0f1619ff"
+      background = "#102f41ff"
       text = "#ffffffe6"
     }
     inner-border {
@@ -48,7 +48,7 @@ ui {
     }
     shadow {
       enabled = yes
-      color = "#00000057"
+      color = "#00000062"
       feather = 18
       x-offset = 2
       y-offset = 3
@@ -59,15 +59,15 @@ ui {
     corner-radius = 5
 
     background {
-      normal = "#b5bbbec3"
-      hover = "#c9cdcfd3"
+      normal = "#92aab8ff"
+      hover = "#b2c7d4ff"
       active = "#ffbe00ff"
-      disabled = "#ffffff3d"
+      disabled = "#b2c7d43c"
     }
     foreground {
-      normal = "#000000b3"
-      active = "#000000b3"
-      disabled = "#00000059"
+      normal = "#1c3f52f5"
+      active = "#1b3e50f5"
+      disabled = "#1937489d"
     }
   }
 
@@ -77,30 +77,30 @@ ui {
 
     edit {
       background = "#ffffff33"
-      text = "#ffffffb3"
+      text = "#ffffffd4"
     }
     scroll-bar {
-      normal = "#00000000"
-      edit = "#ffffff00"
+      normal = "#0b2f4100"
+      edit = "#d0e4f100"
     }
   }
 
   status-bar {
     background = "#00507dff"
-    text = "#ffffffd9"
+    text = "#ffffffef"
     coordinates = "#ffffff99"
 
     command {
-      background = "#ffffff75"
+      background = "#ffbe00e9"
       text = "#004673ff"
     }
   }
 
   about-button {
     label {
-      normal = "#ffffffa6"
-      hover = "#ffffffcc"
-      down = "#ffffffff"
+      normal = "#ffffff75"
+      hover = "#d0e4f1e4"
+      down = "#deeaf1fe"
     }
   }
 
@@ -109,8 +109,8 @@ ui {
   }
 
   splash-image {
-    logo = "#2e3f48ff"
-    outline = "#e5e5e5ff"
+    logo = "#17628aff"
+    outline = "#e5e8eb00"
     shadow-alpha = 0.3846153846153846
   }
 }

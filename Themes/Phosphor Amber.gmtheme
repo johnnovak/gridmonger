@@ -16,39 +16,39 @@ ui {
       }
       text {
         normal = "#e65000ff"
-        inactive = "#a7877f7a"
+        inactive = "#ffffff55"
       }
     }
     button {
       normal = "#b43c00e6"
       hover = "#d25a00e6"
       down = "#f08200e6"
-      inactive = "#00000080"
+      inactive = "#ffffff3a"
     }
   }
 
   dialog {
-    corner-radius = 5
-    background = "#230b00ff"
+    corner-radius = 0
+    background = "#351100ff"
     label = "#e04700df"
-    warning = "#ffd81bff"
-    error = "#ff6f00ff"
+    warning = "#ff851bff"
+    error = "#ff3100ff"
 
     title {
-      background = "#e04700ff"
+      background = "#d84400ff"
       text = "#000000be"
     }
     inner-border {
-      color = "#e04700ff"
+      color = "#000000ff"
       width = 2
     }
     outer-border {
-      color = "#0f0500ff"
-      width = 0
+      color = "#0f050052"
+      width = 4
     }
     shadow {
       enabled = yes
-      color = "#ff6f0051"
+      color = "#ff6f005c"
       feather = 50
       x-offset = 0
       y-offset = 0
@@ -59,58 +59,58 @@ ui {
     corner-radius = 4
 
     background {
-      normal = "#a8380039"
+      normal = "#a8380050"
       hover = "#a8380065"
-      active = "#ff560065"
+      active = "#ff560072"
       disabled = "#a8380039"
     }
     foreground {
       normal = "#ff5100ff"
-      active = "#ff7900ff"
+      active = "#ffb200ff"
       disabled = "#000000a9"
     }
   }
 
   text-field {
     cursor = "#ff8300ff"
-    selection = "#ff6b2734"
+    selection = "#ff59272a"
 
     edit {
-      background = "#4f190063"
-      text = "#ffb067d4"
+      background = "#5b3a0089"
+      text = "#ff8300ff"
     }
     scroll-bar {
-      normal = "#ff6b2734"
-      edit = "#c1854ed4"
+      normal = "#c9600000"
+      edit = "#b3560000"
     }
   }
 
   status-bar {
     background = "#280e00ff"
-    text = "#f0631ce6"
-    coordinates = "#ff9600ff"
+    text = "#f75300c9"
+    coordinates = "#ab3600ff"
 
     command {
-      background = "#cb5d00ff"
+      background = "#eb7900b3"
       text = "#000000d2"
     }
   }
 
   about-button {
     label {
-      normal = "#c84600ff"
-      hover = "#eb6400ff"
-      down = "#f5b400ff"
+      normal = "#923300ff"
+      hover = "#ab4800ff"
+      down = "#da5c00ff"
     }
   }
 
   about-dialog {
-    logo = "#cb5d00ff"
+    logo = "#a04e00ff"
   }
 
   splash-image {
-    logo = "#0a0300ff"
-    outline = "#e84900ff"
+    logo = "#461603ff"
+    outline = "#914900ff"
     shadow-alpha = 1
   }
 }
@@ -119,7 +119,7 @@ level {
   general {
     background = "#0f0500ff"
     line-width = thin
-    cursor = "#ff5f0078"
+    cursor = "#e04700ff"
     cursor-guides = "#ff6e0032"
     link-marker = "#7d0a1eff"
     selection = "#ff1e0078"
@@ -132,11 +132,11 @@ level {
     foreground {
       normal {
         normal = "#e04700ff"
-        cursor = "#e04700ff"
+        cursor = "#501500ff"
       }
       light {
         normal = "#641f00ff"
-        cursor = "#641f00ff"
+        cursor = "#a22b00ff"
       }
     }
     coordinates {
@@ -205,10 +205,10 @@ level {
   note {
     marker {
       normal = "#f48200ff"
-      cursor = "#f48200ff"
+      cursor = "#661b00ff"
     }
 
-    comment = "#ffb400ff"
+    comment = "#ff7c00ff"
     background-shape = circle
     index = "#000000f2"
     index-background = [

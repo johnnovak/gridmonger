@@ -1,6 +1,6 @@
 ui {
   window {
-    modified-flag = "#d28d00ff"
+    modified-flag = "#9278419a"
 
     border {
       color = "#1b1b1bff"
@@ -15,15 +15,15 @@ ui {
         inactive = "#1a1a1aff"
       }
       text {
-        normal = "#ab9271ff"
+        normal = "#d2c3a9b4"
         inactive = "#ffffff66"
       }
     }
     button {
-      normal = "#ab927185"
-      hover = "#ab92719e"
-      down = "#ab9271c1"
-      inactive = "#00000080"
+      normal = "#d2c3a965"
+      hover = "#d2c3a986"
+      down = "#d2c3a9a1"
+      inactive = "#ffffff43"
     }
   }
 
@@ -62,12 +62,12 @@ ui {
       normal = "#d7c9b894"
       hover = "#d7c9b8b9"
       active = "#f0a200ff"
-      disabled = "#ffffff33"
+      disabled = "#d7c9b827"
     }
     foreground {
-      normal = "#000000ab"
-      active = "#0000009e"
-      disabled = "#00000059"
+      normal = "#3a3228ff"
+      active = "#3a3228dd"
+      disabled = "#3a3228ae"
     }
   }
 
@@ -76,18 +76,18 @@ ui {
     selection = "#c492008d"
 
     edit {
-      background = "#ffffff33"
-      text = "#fff8f0dc"
+      background = "#716455ff"
+      text = "#dbd7d0ff"
     }
     scroll-bar {
-      normal = "#00000000"
-      edit = "#ffffffcc"
+      normal = "#1e150700"
+      edit = "#d3c8b400"
     }
   }
 
   status-bar {
     background = "#2c261cff"
-    text = "#e5d7b8ba"
+    text = "#c1aa90ff"
     coordinates = "#8c7748ff"
 
     command {
@@ -98,19 +98,19 @@ ui {
 
   about-button {
     label {
-      normal = "#ffffff80"
-      hover = "#ffffffb3"
-      down = "#ffffffd9"
+      normal = "#fff6e17d"
+      hover = "#fff6e19e"
+      down = "#fff6e1b7"
     }
   }
 
   about-dialog {
-    logo = "#e5decdd5"
+    logo = "#c9c3bcff"
   }
 
   splash-image {
     logo = "#443c33ff"
-    outline = "#c2b298ff"
+    outline = "#ab9f90ff"
     shadow-alpha = 1
   }
 }
@@ -244,11 +244,11 @@ level {
 
     button {
       normal = "#00000000"
-      hover = "#00000031"
-      label = "#ffffffdc"
+      hover = "#00000028"
+      label = "#fff6e1c5"
     }
     item {
-      normal = "#f0ebe4ce"
+      normal = "#e9ddc2d4"
       hover = "#000000ad"
     }
     shadow {
@@ -259,7 +259,7 @@ level {
 
 pane {
   notes {
-    text = "#ffffffbe"
+    text = "#fff6e1c5"
     scroll-bar = "#e6e6e6ff"
     index = "#ffffffff"
     index-background = [

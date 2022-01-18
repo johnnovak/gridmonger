@@ -16,14 +16,14 @@ ui {
       }
       text {
         normal = "#d2b686d2"
-        inactive = "#ffffff77"
+        inactive = "#ffffff69"
       }
     }
     button {
       normal = "#d2c1a45e"
       hover = "#d2ba9179"
       down = "#d2b583a0"
-      inactive = "#00000080"
+      inactive = "#ffffff3e"
     }
   }
 
@@ -91,7 +91,7 @@ ui {
     coordinates = "#ad9964eb"
 
     command {
-      background = "#9a793aff"
+      background = "#a27e38ff"
       text = "#3e3428ff"
     }
   }
@@ -105,12 +105,12 @@ ui {
   }
 
   about-dialog {
-    logo = "#dacbb0cf"
+    logo = "#c5af8bff"
   }
 
   splash-image {
-    logo = "#4b4439ff"
-    outline = "#d2bd9800"
+    logo = "#4b4338ff"
+    outline = "#d2bb9400"
     shadow-alpha = 0.4903846153846154
   }
 }
@@ -239,7 +239,7 @@ level {
   }
 
   level-drop-down {
-    item-list-background = "#3c3422ee"
+    item-list-background = "#403a29ff"
     corner-radius = 5
 
     button {
@@ -249,7 +249,7 @@ level {
     }
     item {
       normal = "#e6cb99fa"
-      hover = "#3c3422e6"
+      hover = "#3e3523ff"
     }
     shadow {
       color = "#00000064"

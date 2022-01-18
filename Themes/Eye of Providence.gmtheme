@@ -20,15 +20,15 @@ ui {
       }
     }
     button {
-      normal = "#aca45896"
-      hover = "#aca458c8"
-      down = "#aca458ff"
-      inactive = "#00000080"
+      normal = "#ac9e7d96"
+      hover = "#ac9e7eb9"
+      down = "#ac9e7ed8"
+      inactive = "#ffffff43"
     }
   }
 
   dialog {
-    corner-radius = 5
+    corner-radius = 6
     background = "#443e30ff"
     label = "#bfb6a1ff"
     warning = "#ffbe4eff"
@@ -56,7 +56,7 @@ ui {
   }
 
   widget {
-    corner-radius = 3
+    corner-radius = 5
 
     background {
       normal = "#a49c89ff"
@@ -77,11 +77,11 @@ ui {
 
     edit {
       background = "#ffffff33"
-      text = "#dad0b7ff"
+      text = "#ebe0c5ff"
     }
     scroll-bar {
       normal = "#00000000"
-      edit = "#ffffff00"
+      edit = "#ebe0c500"
     }
   }
 
@@ -105,12 +105,12 @@ ui {
   }
 
   about-dialog {
-    logo = "#eaeaeaff"
+    logo = "#d7bf93ff"
   }
 
   splash-image {
     logo = "#3c362eff"
-    outline = "#d3c7bbff"
+    outline = "#c1a776ff"
     shadow-alpha = 0.4903846153846154
   }
 }

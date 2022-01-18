@@ -23,7 +23,7 @@ ui {
       normal = "#ffffff73"
       hover = "#ffffffb3"
       down = "#ffffffe6"
-      inactive = "#00000080"
+      inactive = "#ffffff43"
     }
   }
 
@@ -44,12 +44,12 @@ ui {
     }
     outer-border {
       color = "#b6b8b8ff"
-      width = 6
+      width = 0
     }
     shadow {
-      enabled = no
-      color = "#0000004f"
-      feather = 18
+      enabled = yes
+      color = "#00000032"
+      feather = 4.854368932038835
       x-offset = 2
       y-offset = 3
     }
@@ -77,7 +77,7 @@ ui {
 
     edit {
       background = "#ffffff33"
-      text = "#ffffffb3"
+      text = "#ffffffc3"
     }
     scroll-bar {
       normal = "#00000000"
@@ -109,8 +109,8 @@ ui {
   }
 
   splash-image {
-    logo = "#32323200"
-    outline = "#dfdfdf00"
+    logo = "#4f4f4fff"
+    outline = "#e6e6e6ff"
     shadow-alpha = 0.7980769230769231
   }
 }
@@ -244,8 +244,8 @@ level {
 
     button {
       normal = "#00000000"
-      hover = "#0000001a"
-      label = "#000000b3"
+      hover = "#00000012"
+      label = "#343030ff"
     }
     item {
       normal = "#ffffffcc"
@@ -259,7 +259,7 @@ level {
 
 pane {
   notes {
-    text = "#2d2a2aff"
+    text = "#343030ff"
     scroll-bar = "#51515100"
     index = "#ffffffff"
     index-background = [
