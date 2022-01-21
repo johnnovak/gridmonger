@@ -232,6 +232,7 @@ type
     wasdMode:          bool
 
     showThemeEditor:   bool
+    showQuickReference: bool
 
 
   UIState = object
@@ -570,7 +571,7 @@ type
     sectionDialog:           bool
     sectionTitleBar:         bool
     sectionStatusBar:        bool
-    sectionLeveldropDown:    bool
+    sectionLevelDropDown:    bool
     sectionAboutButton:      bool
     sectionAboutDialog:      bool
     sectionSplashImage:      bool
@@ -816,13 +817,14 @@ type AppShortcut = enum
   scToggleWalkMode,
   scToggleWasdMode,
   scToggleDrawTrail,
-  scToggleThemeEditor,
   scToggleTitleBar,
 
   # Misc
   scShowAboutDialog,
   scOpenUserManual,
+  scToggleThemeEditor,
   scEditPreferences,
+  scToggleQuickReference,
 
 
 # TODO some shortcuts win/mac specific?
@@ -982,13 +984,14 @@ let g_appShortcuts = {
   scToggleWalkMode:     @[mkKeyShortcut(keyGraveAccent,   {})],
   scToggleWasdMode:     @[mkKeyShortcut(keyTab,           {})],
   scToggleDrawTrail:    @[mkKeyShortcut(keyT,             {})],
-  scToggleThemeEditor:  @[mkKeyShortcut(keyF12,           {})],
   scToggleTitleBar:     @[mkKeyShortcut(keyT,             {mkAlt, mkShift})],
 
   # Misc
-  scShowAboutDialog:    @[mkKeyShortcut(keyA,             {mkCtrl})],
-  scOpenUserManual:     @[mkKeyShortcut(keyF1,            {})],
-  scEditPreferences:    @[mkKeyShortcut(keyU,             {mkCtrl, mkAlt})]
+  scShowAboutDialog:      @[mkKeyShortcut(keyA,           {mkCtrl})],
+  scOpenUserManual:       @[mkKeyShortcut(keyF1,          {})],
+  scToggleThemeEditor:    @[mkKeyShortcut(keyF12,         {})],
+  scEditPreferences:      @[mkKeyShortcut(keyU,           {mkCtrl, mkAlt})],
+  scToggleQuickReference: @[mkKeyShortcut(keySlash,       {mkShift})]
 
 }.toTable
 
@@ -1883,7 +1886,7 @@ proc updateWidgetStyles(a) =
     color     = d.getColorOrDefault("error")
     multiLine = true
 
-  # Level dropDown
+  # Level drop-down
   let ld = cfg.getObjectOrEmpty("level.level-drop-down")
 
   a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
@@ -5525,6 +5528,13 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scShowAboutDialog):
         openAboutDialog(a)
 
+      elif ke.isShortcutDown(scToggleThemeEditor):
+        toggleShowOption(opts.showThemeEditor, NoIcon, "Theme editor pane", a)
+
+      elif ke.isShortcutDown(scToggleQuickReference):
+        toggleShowOption(opts.showQuickReference, NoIcon,
+                         "Quick reference pane", a)
+
       # Toggle options
       elif ke.isShortcutDown(scToggleCellCoords):
         toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
@@ -5546,9 +5556,6 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scToggleDrawTrail):
         map.setTrail(cur, true)
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
-
-      elif ke.isShortcutDown(scToggleThemeEditor):
-        toggleShowOption(opts.showThemeEditor, NoIcon, "Theme editor pane", a)
 
       elif ke.isShortcutDown(scToggleTitleBar):
         toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
@@ -6002,11 +6009,11 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isShortcutDown(scOpenUserManual):    openUserManual(a)
     elif ke.isShortcutDown(scShowAboutDialog):   openAboutDialog(a)
 
-    # Toggle options
     elif ke.isShortcutDown(scToggleThemeEditor):
       toggleShowOption(a.opts.showThemeEditor, NoIcon,
                        "Theme editor pane", a)
 
+    # Toggle options
     elif ke.isShortcutDown(scToggleTitleBar):
       toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
 
@@ -6206,6 +6213,12 @@ proc renderModeAndOptionIndicators(a) =
   if a.opts.drawTrail:
     vg.setFont(19)
     discard vg.text(x, y+1, IconShoePrints)
+
+# }}}
+
+# {{{ renderQuickReference()
+proc renderQuickReference(a) =
+  discard
 
 # }}}
 
@@ -6845,7 +6858,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Label 3", p & "text.2")
         colorProp("Label 4", p & "text.3")
 
-    if koi.subSectionHeader("Level Drop Down", te.sectionLeveldropDown):
+    if koi.subSectionHeader("Level Drop Down", te.sectionLevelDropDown):
       p = "level.level-drop-down."
       group:
         colorprop("Button Normal",        p & "button.normal")
@@ -7024,146 +7037,91 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # }}}
 
-# {{{ renderUI()
-proc renderUI(a) =
+# {{{ renderLevelDropdown()
+proc renderLevelDropdown(a) =
   alias(ui, a.ui)
   alias(vg, a.vg)
-  alias(dlg, a.dialog)
   alias(map, a.doc.map)
 
-  let winHeight = koi.winHeight()
-  let uiWidth = drawAreaWidth(a)
-  let yStart = a.win.titleBarHeight
+  let
+    levelNames = map.sortedLevelNames
+    uiWidth = drawAreaWidth(a)
+    yStart = a.win.titleBarHeight
 
-  # Clear background
-  vg.beginPath()
-  vg.rect(0, a.win.titleBarHeight, uiWidth, drawAreaHeight(a))
+  var sortedLevelIdx = currSortedLevelIdx(a)
+  let prevSortedLevelIdx = sortedLevelIdx
 
-  if ui.backgroundImage.isSome:
-    vg.fillPaint(ui.backgroundImage.get)
-  else:
-    vg.fillColor(a.theme.windowStyle.backgroundColor)
+  vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
 
-  vg.fill()
+  # Level drop-down
+  let levelDropDownWidth = round(
+    vg.textWidth(levelNames[sortedLevelIdx]) +
+    a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
+  )
 
-  # About button
-  if button(x=uiWidth-55.0, y=yStart+19.0, w=20.0, h=DlgItemHeight,
-            IconQuestion, style=a.theme.aboutButtonStyle, tooltip="About"):
-    openAboutDialog(a)
+  koi.dropDown(
+    x = round((uiWidth - levelDropDownWidth) * 0.5),
+    y = yStart + 19.0,
+    w = levelDropDownWidth,
+    h = 24.0,
+    levelNames,
+    sortedLevelIdx,
+    tooltip = "",
+    disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+    style = a.theme.levelDropDownStyle
+  )
 
-  if not map.hasLevels:
-    renderEmptyMap(a)
+  if sortedLevelIdx != prevSortedLevelIdx:
+    var cur = ui.cursor
+    cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+    setCursor(cur, a)
+# }}}
+# {{{ renderRegionDropDown()
+proc renderRegionDropDown(a) =
+  alias(ui, a.ui)
 
-  else:
-    let levelNames = map.sortedLevelNames
-    var sortedLevelIdx = currSortedLevelIdx(a)
-    let prevSortedLevelIdx = sortedLevelIdx
+  let
+    l = currLevel(a)
+    currRegion = currRegion(a)
+    uiWidth = drawAreaWidth(a)
 
-    vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
+  if currRegion.isSome:
+    var sortedRegionNames = l.regionNames()
+    sort(sortedRegionNames)
 
-    # Level drop-down
-    let levelDropDownWidth = round(
-      vg.textWidth(levelNames[sortedLevelIdx]) +
+    let currRegionName = currRegion.get.name
+    var sortedRegionIdx = sortedRegionNames.find(currRegionName)
+    let prevSortedRegionIdx = sortedRegionIdx
+
+    let regionDropDownWidth = round(
+      a.vg.textWidth(currRegionName) +
       a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
     )
 
     koi.dropDown(
-      x = round((uiWidth - levelDropDownWidth) * 0.5),
-      y = yStart + 19.0,
-      w = levelDropDownWidth,
+      x = round((uiWidth - regionDropDownWidth) * 0.5),
+      y = 73.0,
+      w = regionDropDownWidth,
       h = 24.0,
-      levelNames,
-      sortedLevelIdx,
+      sortedRegionNames,
+      sortedRegionIdx,
       tooltip = "",
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
       style = a.theme.levelDropDownStyle
     )
 
-    if sortedLevelIdx != prevSortedLevelIdx:
-      var cur = ui.cursor
-      cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
-      setCursor(cur, a)
+    if sortedRegionIdx != prevSortedRegionIdx :
+      let currRegionName = sortedRegionNames[sortedRegionIdx]
+      let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
 
-    let l = currLevel(a)
+      let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.level,
+                                               regionCoords)
 
-    # Region drop-down
-    if l.regionOpts.enabled:
-      let currRegion = currRegion(a)
-      if currRegion.isSome:
-        var sortedRegionNames = l.regionNames()
-        sort(sortedRegionNames)
-
-        let currRegionName = currRegion.get.name
-        var sortedRegionIdx = sortedRegionNames.find(currRegionName)
-        let prevSortedRegionIdx = sortedRegionIdx
-
-        let regionDropDownWidth = round(
-          vg.textWidth(currRegionName) +
-          a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
-        )
-
-        koi.dropDown(
-          x = round((uiWidth - regionDropDownWidth) * 0.5),
-          y = 73.0,
-          w = regionDropDownWidth,
-          h = 24.0,
-          sortedRegionNames,
-          sortedRegionIdx,
-          tooltip = "",
-          disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-          style = a.theme.levelDropDownStyle
-        )
-
-        if sortedRegionIdx != prevSortedRegionIdx :
-          let currRegionName = sortedRegionNames[sortedRegionIdx]
-          let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
-
-          let (r, c) = map.getRegionCenterLocation(a.ui.cursor.level,
-                                                   regionCoords)
-
-          centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
-
-    # Render level & panes
-    renderLevel(a)
-
-    if a.opts.showNotesPane:
-      renderNotesPane(
-        x = NotesPaneLeftPad,
-        y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
-        w = uiWidth - toolsPaneWidth(a) - NotesPaneLeftPad - NotesPaneRightPad,
-        h = NotesPaneHeight,
-        a
-      )
-
-    if a.opts.showToolsPane:
-      renderToolsPane(
-        x = uiWidth - toolsPaneWidth(a),
-        y = yStart + ToolsPaneTopPad,
-        w = toolsPaneWidth(a),
-        h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
-        a
-      )
-
-    renderModeAndOptionIndicators(a)
-
-  # Status bar
-  let statusBarY = winHeight - StatusBarHeight
-  renderStatusBar(statusBarY, uiWidth.float, a)
-
-  # Theme editor pane
-  # XXX hack, we need to render the theme editor before the dialogs, so
-  # that keyboard shortcuts in the the theme editor take precedence (e.g.
-  # when pressing ESC to close the colorpicker, the dialog should not close)
-  if a.opts.showThemeEditor:
-    let
-      x = uiWidth
-      y = yStart
-      w = ThemePaneWidth
-      h = drawAreaHeight(a)
-
-    renderThemeEditorPane(x, y, w, h, a)
-
-  # Dialogs
+      centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
+# }}}
+# {{{ renderDialogs()
+proc renderDialogs(a) =
+  alias(dlg, a.dialog)
 
   if dlg.aboutDialog.isOpen:
     aboutDialog(dlg.aboutDialog, a)
@@ -7217,6 +7175,89 @@ proc renderUI(a) =
     deleteThemeDialog(dlg.deleteThemeDialog, a)
 
 # }}}
+# {{{ renderUI()
+proc renderUI(a) =
+  alias(ui, a.ui)
+  alias(vg, a.vg)
+  alias(dlg, a.dialog)
+  alias(map, a.doc.map)
+
+  let winHeight = koi.winHeight()
+  let uiWidth = drawAreaWidth(a)
+  let yStart = a.win.titleBarHeight
+
+  # Clear background
+  vg.beginPath()
+  vg.rect(0, a.win.titleBarHeight, uiWidth, drawAreaHeight(a))
+
+  if ui.backgroundImage.isSome:
+    vg.fillPaint(ui.backgroundImage.get)
+  else:
+    vg.fillColor(a.theme.windowStyle.backgroundColor)
+
+  vg.fill()
+
+  if a.opts.showQuickReference:
+    renderQuickReference(a)
+
+  else:
+    # About button
+    if button(x=uiWidth-55.0, y=yStart+19.0, w=20.0, h=DlgItemHeight,
+              IconQuestion, style=a.theme.aboutButtonStyle, tooltip="About"):
+      openAboutDialog(a)
+
+    if not map.hasLevels:
+      renderEmptyMap(a)
+
+    else:
+      renderLevelDropdown(a)
+
+      if currLevel(a).regionOpts.enabled:
+        renderRegionDropDown(a)
+
+      renderLevel(a)
+
+      if a.opts.showNotesPane:
+        renderNotesPane(
+          x = NotesPaneLeftPad,
+          y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
+          w = uiWidth - toolsPaneWidth(a) - NotesPaneLeftPad - NotesPaneRightPad,
+          h = NotesPaneHeight,
+          a
+        )
+
+      if a.opts.showToolsPane:
+        renderToolsPane(
+          x = uiWidth - toolsPaneWidth(a),
+          y = yStart + ToolsPaneTopPad,
+          w = toolsPaneWidth(a),
+          h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
+          a
+        )
+
+      renderModeAndOptionIndicators(a)
+
+  # Status bar
+  let statusBarY = winHeight - StatusBarHeight
+  renderStatusBar(statusBarY, uiWidth.float, a)
+
+  # Theme editor pane
+  # XXX hack, we need to render the theme editor before the dialogs, so
+  # that keyboard shortcuts in the the theme editor take precedence (e.g.
+  # when pressing ESC to close the colorpicker, the dialog should not close)
+  if a.opts.showThemeEditor:
+    let
+      x = uiWidth
+      y = yStart
+      w = ThemePaneWidth
+      h = drawAreaHeight(a)
+
+    renderThemeEditorPane(x, y, w, h, a)
+
+  renderDialogs(a)
+
+# }}}
+
 # {{{ renderFramePre()
 proc renderFramePre(a) =
 

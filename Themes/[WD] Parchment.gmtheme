@@ -1,6 +1,6 @@
 ui {
   window {
-    modified-flag = "#d2c3a978"
+    modified-flag = "#e29c2258"
 
     border {
       color = "#1b1b1bff"
@@ -15,28 +15,28 @@ ui {
         inactive = "#1a1a1aff"
       }
       text {
-        normal = "#d2c3a9b4"
-        inactive = "#ffffff66"
+        normal = "#d2b686d2"
+        inactive = "#ffffff69"
       }
     }
     button {
-      normal = "#aca45896"
-      hover = "#aca458c8"
-      down = "#aca458ff"
-      inactive = "#00000080"
+      normal = "#d2c1a45e"
+      hover = "#d2ba9179"
+      down = "#d2b583a0"
+      inactive = "#ffffff43"
     }
   }
 
   dialog {
-    corner-radius = 0
-    background = "#333333ff"
-    label = "#ffffffb3"
+    corner-radius = 8
+    background = "#4b4335ff"
+    label = "#f2e4cfa9"
     warning = "#ffbe4eff"
-    error = "#ff6464ff"
+    error = "#ff6a3dff"
 
     title {
-      background = "#0d0d0dff"
-      text = "#d9d9d9ff"
+      background = "#201e1bff"
+      text = "#ffe2b0ab"
     }
     inner-border {
       color = "#00000000"
@@ -47,51 +47,51 @@ ui {
       width = 0
     }
     shadow {
-      enabled = no
-      color = "#00000000"
-      feather = 0
-      x-offset = 0
-      y-offset = 0
+      enabled = yes
+      color = "#00000054"
+      feather = 15
+      x-offset = 2
+      y-offset = 3
     }
   }
 
   widget {
-    corner-radius = 0
+    corner-radius = 5
 
     background {
-      normal = "#ffffff80"
-      hover = "#ffffffa1"
+      normal = "#c5b79eb7"
+      hover = "#c5b69be0"
       active = "#ffa600ff"
-      disabled = "#ffffff33"
+      disabled = "#c5b79f63"
     }
     foreground {
-      normal = "#000000b3"
-      active = "#00000000"
-      disabled = "#00000059"
+      normal = "#000000b1"
+      active = "#00000098"
+      disabled = "#00000063"
     }
   }
 
   text-field {
     cursor = "#ffbe00ff"
-    selection = "#c8820078"
+    selection = "#ffa60037"
 
     edit {
       background = "#ffffff33"
-      text = "#ffffffb3"
+      text = "#fff1dacb"
     }
     scroll-bar {
       normal = "#00000000"
-      edit = "#00000000"
+      edit = "#fff1da00"
     }
   }
 
   status-bar {
     background = "#3e3428ff"
-    text = "#d6ccc0e6"
+    text = "#dacbb0d2"
     coordinates = "#ad9964eb"
 
     command {
-      background = "#9a793aff"
+      background = "#a27e38ff"
       text = "#3e3428ff"
     }
   }
@@ -105,12 +105,12 @@ ui {
   }
 
   about-dialog {
-    logo = "#00000000"
+    logo = "#c5af8bff"
   }
 
   splash-image {
-    logo = "#4b4439ff"
-    outline = "#d2bd9800"
+    logo = "#4b4338ff"
+    outline = "#d2bb9400"
     shadow-alpha = 0.4903846153846154
   }
 }
@@ -239,7 +239,7 @@ level {
   }
 
   level-drop-down {
-    item-list-background = "#3c3422f0"
+    item-list-background = "#403a29ff"
     corner-radius = 5
 
     button {
@@ -249,7 +249,7 @@ level {
     }
     item {
       normal = "#e6cb99fa"
-      hover = "#3c3422e6"
+      hover = "#3e3523ff"
     }
     shadow {
       color = "#00000064"

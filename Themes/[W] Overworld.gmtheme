@@ -23,7 +23,7 @@ ui {
       normal = "#ffffff73"
       hover = "#ffffffb3"
       down = "#ffffffe6"
-      inactive = "#00000080"
+      inactive = "#ffffff43"
     }
   }
 
@@ -47,11 +47,11 @@ ui {
       width = 0
     }
     shadow {
-      enabled = no
-      color = "#00000000"
-      feather = 0
-      x-offset = 0
-      y-offset = 0
+      enabled = yes
+      color = "#0000003f"
+      feather = 10.14563106796121
+      x-offset = 2
+      y-offset = 3
     }
   }
 
@@ -91,26 +91,26 @@ ui {
     coordinates = "#999999ff"
 
     command {
-      background = "#808080ff"
+      background = "#ff8b00c6"
       text = "#262626ff"
     }
   }
 
   about-button {
     label {
-      normal = "#00000066"
-      hover = "#00000066"
-      down = "#000000b3"
+      normal = "#a18e66ff"
+      hover = "#b6a174ff"
+      down = "#ccb582ff"
     }
   }
 
   about-dialog {
-    logo = "#00000000"
+    logo = "#d8d2c4ff"
   }
 
   splash-image {
-    logo = "#604745ff"
-    outline = "#ffeca5ff"
+    logo = "#534b42ff"
+    outline = "#d8c08cff"
     shadow-alpha = 1
   }
 }

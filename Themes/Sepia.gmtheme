@@ -15,28 +15,28 @@ ui {
         inactive = "#1a1a1aff"
       }
       text {
-        normal = "#d2c3a9b4"
+        normal = "#d2c3a9d9"
         inactive = "#ffffff66"
       }
     }
     button {
-      normal = "#aca45896"
-      hover = "#aca458c8"
-      down = "#aca458ff"
-      inactive = "#00000080"
+      normal = "#d2c3a95c"
+      hover = "#d2c3a96f"
+      down = "#d2c3a98e"
+      inactive = "#ffffff3a"
     }
   }
 
   dialog {
     corner-radius = 0
-    background = "#cebeafff"
+    background = "#c7b8a9ff"
     label = "#0000008e"
     warning = "#996106ff"
     error = "#d72c0fd2"
 
     title {
-      background = "#0d0d0dc8"
-      text = "#d9d9d9ff"
+      background = "#4d4741ff"
+      text = "#e8d5c4ff"
     }
     inner-border {
       color = "#93887dff"
@@ -47,9 +47,9 @@ ui {
       width = 0
     }
     shadow {
-      enabled = no
-      color = "#00000000"
-      feather = 0
+      enabled = yes
+      color = "#0000004c"
+      feather = 50
       x-offset = 0
       y-offset = 0
     }
@@ -61,11 +61,11 @@ ui {
     background {
       normal = "#70645dd8"
       hover = "#8d7568d8"
-      active = "#ffd8aaff"
+      active = "#ffdfb9ff"
       disabled = "#70645d68"
     }
     foreground {
-      normal = "#fff0f0e9"
+      normal = "#d6c6b6ff"
       active = "#0000006f"
       disabled = "#fff2f25e"
     }
@@ -239,17 +239,17 @@ level {
   }
 
   level-drop-down {
-    item-list-background = "#3c3422f0"
+    item-list-background = "#5a514bff"
     corner-radius = 5
 
     button {
-      normal = "#ffffff00"
-      hover = "#ffffff26"
+      normal = "#ffe8d400"
+      hover = "#fff7f059"
       label = "#00000099"
     }
     item {
-      normal = "#e6cb99fa"
-      hover = "#3c3422e6"
+      normal = "#ffe8d4ff"
+      hover = "#504842ff"
     }
     shadow {
       color = "#00000064"

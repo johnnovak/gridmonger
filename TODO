@@ -16,6 +16,8 @@ TODO for v0.9
 
   - debug level from config
 
+  - ignore theme on load
+
   - window not visible after disconnecting external screen
     - reset window position shortcut
 

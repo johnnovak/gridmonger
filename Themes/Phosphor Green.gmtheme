@@ -1,116 +1,116 @@
 ui {
   window {
-    modified-flag = "#ff640064"
+    modified-flag = "#00ff0066"
 
     border {
       color = "#1b1b1bff"
     }
     background {
-      color = "#000800ff"
+      color = "#0f0500ff"
       image = ""
     }
     title {
       background {
-        normal = "#2d0900ff"
-        inactive = "#190300ff"
+        normal = "#002d00ff"
+        inactive = "#202020ff"
       }
       text {
-        normal = "#e65000ff"
-        inactive = "#78320aff"
+        normal = "#23c623ff"
+        inactive = "#ffffff55"
       }
     }
     button {
-      normal = "#b43c00e6"
-      hover = "#d25a00e6"
-      down = "#f08200e6"
-      inactive = "#00000080"
+      normal = "#36b43694"
+      hover = "#36b436b6"
+      down = "#36b436d9"
+      inactive = "#ffffff3a"
     }
   }
 
   dialog {
     corner-radius = 0
-    background = "#190800ff"
-    label = "#e04700ff"
-    warning = "#ffffffec"
-    error = "#ff6464ff"
+    background = "#002d00ff"
+    label = "#46d646ff"
+    warning = "#ffd200ff"
+    error = "#ff8600ff"
 
     title {
-      background = "#e04700ff"
-      text = "#000000cc"
+      background = "#00a400ff"
+      text = "#000000be"
     }
     inner-border {
-      color = "#e04700ff"
+      color = "#000000ff"
       width = 2
     }
     outer-border {
-      color = "#0f0500ff"
-      width = 3
+      color = "#000f0052"
+      width = 4
     }
     shadow {
-      enabled = no
-      color = "#00000000"
-      feather = 0
+      enabled = yes
+      color = "#00ff0056"
+      feather = 50
       x-offset = 0
       y-offset = 0
     }
   }
 
   widget {
-    corner-radius = 0
+    corner-radius = 4
 
     background {
-      normal = "#a43700ff"
-      hover = "#ffffffa1"
-      active = "#ffa600ff"
-      disabled = "#ffffff33"
+      normal = "#00a8004c"
+      hover = "#00a8008e"
+      active = "#bfff00ef"
+      disabled = "#00a80039"
     }
     foreground {
-      normal = "#000000e6"
-      active = "#00000000"
-      disabled = "#00000059"
+      normal = "#12ff12ff"
+      active = "#394b00ff"
+      disabled = "#00191bad"
     }
   }
 
   text-field {
-    cursor = "#ffbe00ff"
-    selection = "#c8820078"
+    cursor = "#00f700ff"
+    selection = "#ff852744"
 
     edit {
-      background = "#ffffff33"
-      text = "#ffffffb3"
+      background = "#445b0093"
+      text = "#d8f67ff0"
     }
     scroll-bar {
-      normal = "#00000000"
-      edit = "#00000000"
+      normal = "#00d90000"
+      edit = "#4ac74a00"
     }
   }
 
   status-bar {
-    background = "#001a00ff"
-    text = "#00da00ff"
-    coordinates = "#00b100ff"
+    background = "#002800ff"
+    text = "#00f700c9"
+    coordinates = "#00d20089"
 
     command {
-      background = "#00e000ff"
-      text = "#000000ff"
+      background = "#bfff00a1"
+      text = "#000000d2"
     }
   }
 
   about-button {
     label {
-      normal = "#c84600ff"
-      hover = "#eb6400ff"
-      down = "#f5b400ff"
+      normal = "#008100ff"
+      hover = "#00ab00ff"
+      down = "#00da00ff"
     }
   }
 
   about-dialog {
-    logo = "#00000000"
+    logo = "#74d200e2"
   }
 
   splash-image {
-    logo = "#000000ff"
-    outline = "#00bd00ff"
+    logo = "#023402ff"
+    outline = "#58a91bff"
     shadow-alpha = 1
   }
 }
@@ -125,12 +125,16 @@ level {
     selection = "#ccff0066"
     paste-preview = "#3399ff66"
 
+    trail {
+      normal = "#00e00052"
+      cursor = "#00e00052"
+    }
     foreground {
-      normal { 
+      normal {
         normal = "#00e000ff"
         cursor = "#00e000ff"
       }
-      light { 
+      light {
         normal = "#006400ff"
         cursor = "#006400ff"
       }
@@ -142,10 +146,6 @@ level {
     region-border {
       normal = "#7d0a1eff"
       empty = "#7d0a1e61"
-    }
-    trail {
-      normal = "#00e00052"
-      cursor = "#00e00052"
     }
   }
 
@@ -203,6 +203,11 @@ level {
   }
 
   note {
+    marker {
+      normal = "#00000000"
+      cursor = "#00000000"
+    }
+
     comment = "#ff3300b3"
     background-shape = circle
     index = "#000000f2"
@@ -213,10 +218,6 @@ level {
       "#b65700ff"
     ]
 
-    marker {
-      normal = "#00000000"
-      cursor = "#00000000"
-    }
     tooltip {
       background = "#443823f0"
       text = "#e6cb99fa"
@@ -238,16 +239,16 @@ level {
   }
 
   level-drop-down {
-    item-list-background = "#411300ff"
+    item-list-background = "#003900ff"
     corner-radius = 5
 
     button {
       normal = "#00000000"
-      hover = "#3a0900ff"
-      label = "#e04700ff"
+      hover = "#002e00ff"
+      label = "#00e000ff"
     }
     item {
-      normal = "#ff6f00ff"
+      normal = "#00e300ff"
       hover = "#000000cc"
     }
     shadow {
