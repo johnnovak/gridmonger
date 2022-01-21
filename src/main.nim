@@ -626,7 +626,7 @@ var g_app: AppContext
 using a: var AppContext
 
 # }}}
-# {{{ Key shortcuts
+# {{{ Keyboard shortcuts
 
 type MoveKeys = object
   left, right, up, down: set[Key]
@@ -995,6 +995,97 @@ let g_appShortcuts = {
 
 }.toTable
 
+# {{{ toStr()
+proc toStr(k: Key): string =
+  case k
+  of key0..key9: $k
+  of keyA..keyZ, keyF1..keyF25: ($k).toUpper()
+  of keyUnknown: "???"
+  of keySpace: "Space"
+  of keyApostrophe: "'"
+  of keyComma: ","
+  of keyMinus: "-"
+  of keyPeriod: "."
+  of keySlash: "/"
+  of keySemicolon: ";"
+  of keyEqual: "="
+  of keyLeftBracket: "["
+  of keyBackslash: "\\"
+  of keyRightBracket: "]"
+  of keyGraveAccent: "`"
+
+  of keyWorld1: "World1"
+  of keyWorld2: "World2"
+  of keyEscape: "Esc"
+  of keyEnter: "Enter"
+  of keyTab: "Tab"
+  of keyBackspace: "Bksp"
+  of keyInsert: "Ins"
+  of keyDelete: "Del"
+  of keyRight: "Right"
+  of keyLeft: "Left"
+  of keyDown: "Down"
+  of keyUp: "Up"
+
+  of keyPageUp: "PgUp"
+  of keyPageDown: "PgDn"
+  of keyHome: "Home"
+  of keyEnd: "End"
+  of keyCapsLock: "CapsLock"
+  of keyScrollLock: "ScrollLock"
+  of keyNumLock: "NumLock"
+  of keyPrintScreen: "PrtSc"
+  of keyPause: "Pause"
+
+  of keyKp0: "kp0"
+  of keyKp1: "kp1"
+  of keyKp2: "kp2"
+  of keyKp3: "kp3"
+  of keyKp4: "kp4"
+  of keyKp5: "kp5"
+  of keyKp6: "kp6"
+  of keyKp7: "kp7"
+  of keyKp8: "kp8"
+  of keyKp9: "kp9"
+  of keyKpDecimal: "kp."
+  of keyKpDivide: "kp/"
+  of keyKpMultiply: "kp*"
+  of keyKpSubtract: "kp-"
+  of keyKpAdd: "kp+"
+  of keyKpEnter: "kpEnter"
+  of keyKpEqual: "kp="
+
+  of keyLeftShift: "LShift"
+  of keyLeftControl: "LCtrl"
+  of keyLeftAlt: "LAlt"
+  of keyLeftSuper: "LSuper"
+  of keyRightShift: "RShift"
+  of keyRightControl: "RCtrl"
+  of keyRightAlt: "RAlt"
+  of keyRightSuper: "RSuper"
+  of keyMenu: "Menu"
+
+
+proc toStr(k: KeyShortcut): string =
+  var s: seq[string] = @[]
+  if mkCtrl  in k.mods: s.add("Ctrl")
+  if mkShift in k.mods: s.add("Shift")
+  if mkAlt   in k.mods: s.add("Alt")
+  s.add(k.key.toStr())
+  s.join("+")
+
+
+proc toStr(sc: AppShortcut, idx = -1): string =
+
+  var s: seq[string] = @[]
+  if idx == -1:
+    for k in g_appShortcuts[sc]:
+      s.add(k.toStr())
+    result = s.join("/")
+  else:
+    result = g_appShortcuts[sc][idx].toStr()
+# }}}
+
 # }}}
 
 # {{{ Logging
@@ -1109,27 +1200,41 @@ proc setStatusMessage(msg: string; a) =
 # }}}
 # {{{ setSelectModeSelectMessage()
 proc setSelectModeSelectMessage(a) =
-  setStatusMessage(IconSelection, "Mark selection",
-                   @["D", "draw", "E", "erase",
-                     "R", "add rect", "S", "sub rect",
-                     "A", "mark all", "U", "unmark all",
-                     "C/Y", "copy", "X", "cut",
-                     "Ctrl", "special"], a)
+  setStatusMessage(
+    IconSelection, "Mark selection",
+    @[scSelectionDraw.toStr(),    "draw",
+      scSelectionErase.toStr(),   "erase",
+      scSelectionAddRect.toStr(), "add rect",
+      scSelectionSubRect.toStr(), "sub rect",
+      scSelectionAll.toStr(),     "mark all",
+      scSelectionNone.toStr(),    "unmark all",
+      scSelectionCopy.toStr(),    "copy",
+      scSelectionCut.toStr(),     "cut",
+      "Ctrl",                     "special"],
+    a
+  )
+
 # }}}
 # {{{ setSelectModeActionMessage()
 proc setSelectModeActionMessage(a) =
-  setStatusMessage(IconSelection, "Mark selection",
-                   @["Ctrl+E", "erase", "Ctrl+F", "fill",
-                     "Ctrl+S", "surround", "Ctrl+R", "crop",
-                     "Ctrl+M", "move (cut+paste)",
-                     "Ctrl+C", "set colour"], a)
+  setStatusMessage(
+    IconSelection, "Mark selection",
+    @[scSelectionEraseArea.toStr(),         "erase",
+      scSelectionFillArea.toStr(),          "fill",
+      scSelectionSurroundArea.toStr(),      "surround",
+      scSelectionCropArea.toStr(),          "crop",
+      scSelectionMove.toStr(),              "move",
+      scSelectionSetFloorColorArea.toStr(), "set colour"],
+    a
+  )
+
 # }}}
 # {{{ setSetLinkDestinationMessage()
 proc setSetLinkDestinationMessage(floor: Floor; a) =
   setStatusMessage(IconLink,
                    fmt"Set {linkFloorToString(floor)} destination",
                    @[IconArrowsAll, "select cell",
-                   "Enter", "set", "Esc", "cancel"], a)
+                   scAccept.toStr(0), "set", scCancel.toStr(0), "cancel"], a)
 # }}}
 
 # {{{ drawAreaWidth()
@@ -7179,7 +7284,6 @@ proc renderDialogs(a) =
 proc renderUI(a) =
   alias(ui, a.ui)
   alias(vg, a.vg)
-  alias(dlg, a.dialog)
   alias(map, a.doc.map)
 
   let winHeight = koi.winHeight()
