@@ -4,12 +4,12 @@ import strutils
 
 
 proc setCommonCompileParams() =
-#  --gc:orc
-#  --deepcopy:on
+  --gc:orc
+  --deepcopy:on
   --d:nvgGL3
   --d:glfwStaticLib
   --d:nimPreviewFloatRoundtrip
-#  hint "Performance", false 
+#  hint "Performance", false
   switch "out", "gridmonger".toExe
   setCommand "c", "src/main"
 

@@ -21,6 +21,7 @@ import glfw
 from glfw/wrapper import IconImageObj
 import koi
 import koi/undomanager
+from koi/utils as koiUtils import lerp, invLerp
 import nanovg
 when not defined(DEBUG): import osdialog
 import with
@@ -5216,6 +5217,11 @@ template toggleShowOption(opt: untyped, icon, msg: string; a) =
 template toggleOnOffOption(opt: untyped, icon, msg: string; a) =
   toggleOption(opt, icon, msg, on="on", off="off", a)
 
+proc toggleThemeEditor(a) =
+  toggleShowOption(a.opts.showThemeEditor, NoIcon, "Theme editor pane", a)
+
+proc toggleTitleBar(a) =
+  toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
 
 # TODO separate into level events and global events?
 proc handleGlobalKeyEvents(a) =
@@ -5634,11 +5640,11 @@ proc handleGlobalKeyEvents(a) =
         openAboutDialog(a)
 
       elif ke.isShortcutDown(scToggleThemeEditor):
-        toggleShowOption(opts.showThemeEditor, NoIcon, "Theme editor pane", a)
+        toggleThemeEditor(a)
 
       elif ke.isShortcutDown(scToggleQuickReference):
-        toggleShowOption(opts.showQuickReference, NoIcon,
-                         "Quick reference pane", a)
+        opts.showQuickReference = true
+        clearStatusMessage(a)
 
       # Toggle options
       elif ke.isShortcutDown(scToggleCellCoords):
@@ -5663,7 +5669,7 @@ proc handleGlobalKeyEvents(a) =
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
       elif ke.isShortcutDown(scToggleTitleBar):
-        toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
+        toggleTitleBar(a)
 
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
@@ -6115,12 +6121,31 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isShortcutDown(scShowAboutDialog):   openAboutDialog(a)
 
     elif ke.isShortcutDown(scToggleThemeEditor):
-      toggleShowOption(a.opts.showThemeEditor, NoIcon,
-                       "Theme editor pane", a)
+      toggleThemeEditor(a)
 
     # Toggle options
     elif ke.isShortcutDown(scToggleTitleBar):
-      toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
+      toggleTitleBar(a)
+
+# }}}
+# {{{ handleQuickRefKeyEvents(a) =
+proc handleQuickRefKeyEvents(a) =
+  if hasKeyEvent():
+    let ke = koi.currEvent()
+
+    if   ke.isShortcutDown(scReloadTheme):   reloadTheme(a)
+    elif ke.isShortcutDown(scPreviousTheme): selectPrevTheme(a)
+    elif ke.isShortcutDown(scNextTheme):     selectNextTheme(a)
+
+    elif ke.isShortcutDown(scToggleThemeEditor):
+      toggleThemeEditor(a)
+
+    elif ke.isShortcutDown(scToggleQuickReference) or
+         ke.isShortcutDown(scAccept) or
+         ke.isShortcutDown(scCancel) or
+         isKeyDown(keySpace):
+
+      a.opts.showQuickReference = false
 
 # }}}
 
@@ -6289,7 +6314,7 @@ proc renderEmptyMap(a) =
 
   let ls = a.theme.levelStyle
 
-  vg.setFont(size=22)
+  vg.setFont(22, "sans-bold")
   vg.fillColor(ls.foregroundNormalNormalColor)
   vg.textAlign(haCenter, vaMiddle)
   var y = drawAreaHeight(a) * 0.5
@@ -6311,19 +6336,13 @@ proc renderModeAndOptionIndicators(a) =
   vg.fillColor(ls.coordinatesHighlightColor)
 
   if a.opts.wasdMode:
-    vg.setFont(15)
+    vg.setFont(15, "sans-bold")
     discard vg.text(x, y, fmt"WASD+{IconMouse}")
     x += 80
 
   if a.opts.drawTrail:
-    vg.setFont(19)
+    vg.setFont(19, "sans-bold")
     discard vg.text(x, y+1, IconShoePrints)
-
-# }}}
-
-# {{{ renderQuickReference()
-proc renderQuickReference(a) =
-  discard
 
 # }}}
 
@@ -6511,7 +6530,7 @@ proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
                        elif index < 100: 0.37
                        else:             0.32
 
-  vg.setFont((size*fontSizeFactor).float)
+  vg.setFont((size*fontSizeFactor).float, "sans-bold")
   vg.fillColor(fgColor)
   vg.textAlign(haCenter, vaMiddle)
 
@@ -6568,6 +6587,29 @@ proc renderNotesPane(x, y, w, h: float; a) =
     vg.restore()
 
 # }}}
+
+# {{{ renderCommand()
+proc renderCommand(x, y: float; command: string; a): float =
+  alias(vg, a.vg)
+
+  let w = vg.textWidth(command)
+
+  # TODO
+  let s = a.theme.statusBarStyle
+
+  let (x, y) = (round(x), round(y))
+
+  vg.beginPath()
+  vg.roundedRect(x, y-10, w+10, 18, 3)
+  vg.fillColor(s.commandBackgroundColor)
+  vg.fill()
+
+  vg.fillColor(s.commandTextColor)
+  discard vg.text(x+5, y, command)
+
+  result = w
+
+# }}}
 # {{{ renderStatusBar()
 proc renderStatusBar(y: float, winWidth: float; a) =
   alias(vg, a.vg)
@@ -6585,7 +6627,7 @@ proc renderStatusBar(y: float, winWidth: float; a) =
   vg.fill()
 
   # Display cursor coordinates
-  vg.setFont(14)
+  vg.setFont(14, "sans-bold")
 
   if a.doc.map.hasLevels:
     let
@@ -6609,7 +6651,7 @@ proc renderStatusBar(y: float, winWidth: float; a) =
     IconPosX = 10
     MessagePosX = 30
     MessagePadX = 20
-    CommandLabelPadX = 13
+    CommandLabelPadX = 14
     CommandTextPadX = 10
 
   var x = 10.0
@@ -6623,22 +6665,13 @@ proc renderStatusBar(y: float, winWidth: float; a) =
   # Display commands, if present
   for i, cmd in a.ui.statusCommands:
     if i mod 2 == 0:
-      let label = cmd
-      let w = vg.textWidth(label)
-
-      vg.beginPath()
-      vg.roundedRect(x, y+4, w + 10, StatusBarHeight-8, 3)
-      vg.fillColor(s.commandBackgroundColor)
-      vg.fill()
-
-      vg.fillColor(s.commandTextColor)
-      discard vg.text(x + 5, ty, label)
+      let w = renderCommand(x, ty, cmd, a)
       x += w + CommandLabelPadX
     else:
       let text = cmd
       vg.fillColor(s.textColor)
-      let tx = vg.text(x, ty, text)
-      x = tx + CommandTextPadX
+      let tw = vg.text(round(x), round(ty), text)
+      x = tw + CommandTextPadX
 
   vg.restore()
 
@@ -7142,6 +7175,252 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # }}}
 
+# {{{ Quick reference definition
+type
+  QuickRefItemKind = enum
+    qkShortcut, qkKeyShortcuts, qkCustom, qkDescription, qkSeparator
+
+  QuickRefItem = object
+    case kind: QuickRefItemKind
+    of qkShortcut:     shortcut:     AppShortcut
+    of qkKeyShortcuts: keyShortcuts: seq[KeyShortcut]
+    of qkCustom:       custom:       string
+    of qkDescription:  description:  string
+    of qkSeparator:    discard
+
+proc sc(sc: AppShortcut): QuickRefItem =
+  QuickRefItem(kind: qkShortcut, shortcut: sc)
+
+proc ksc(sc: seq[AppShortcut]): QuickRefItem =
+  var shortcuts: seq[KeyShortcut] = @[]
+  for s in sc: shortcuts.add(g_appShortcuts[s][0])
+  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts)
+
+proc desc(s: string): QuickRefItem =
+  QuickRefItem(kind: qkDescription, description: s)
+
+const QuickRefSepa = QuickRefItem(kind: qkSeparator)
+
+# {{{ General
+let g_quickRef_General = @[
+  scNewMap.sc,           "New map".desc,
+  scOpenMap.sc,          "Open map".desc,
+  scSaveMap.sc,          "Save map".desc,
+  scSaveMapAs.sc,        "Save map as".desc,
+  scEditMapProps.sc,     "Edit map properties".desc,
+  QuickRefSepa,
+
+  scNewLevel.sc,         "New level".desc,
+  scDeleteLevel.sc,      "Delete level".desc,
+  scEditLevelProps.sc,   "Edit level properties".desc,
+  QuickRefSepa,
+
+  scToggleCellCoords.sc, "Toggle cell coordinates".desc,
+  scToggleNotesPane.sc,  "Toggle notes pane".desc,
+  scToggleToolsPane.sc,  "Toggle tools pane".desc,
+  QuickRefSepa,
+
+  scPreviousTheme.sc,    "Previous theme".desc,
+  scNextTheme.sc,        "Next theme".desc,
+  scReloadTheme.sc,      "Reload current theme".desc,
+  QuickRefSepa,
+
+  scShowNoteTooltip.sc,  "Display note tooltip".desc,
+  QuickRefSepa,
+
+  scUndo.sc,             "Undo last action".desc,
+  scRedo.sc,             "Redo last action".desc,
+  QuickRefSepa,
+
+  scEditPreferences.sc,  "Preferences".desc
+]
+# }}}
+# {{{ Edit
+let g_quickRef_Edit = @[
+  scExcavateTunnel.sc,         "Excavate (Draw tunnel)".desc,
+  scEraseCell.sc,              "Clear floor & walls (Erase cell)".desc,
+  scDrawClearFloor.sc,         "Clear floor".desc,
+  scToggleFloorOrientation.sc, "Toggle floor orientation".desc,
+  QuickRefSepa,
+
+  @[scCycleFloorGroup1Forward,
+    scCycleFloorGroup1Backward].ksc, "Cycle door".desc,
+
+  @[scCycleFloorGroup2Forward,
+    scCycleFloorGroup2Backward].ksc, "Cycle special door".desc,
+
+  @[scCycleFloorGroup3Forward,
+    scCycleFloorGroup3Backward].ksc, "Cycle pressure plate".desc,
+
+  @[scCycleFloorGroup4Forward,
+    scCycleFloorGroup4Backward].ksc, "Cycle pit".desc,
+
+  @[scCycleFloorGroup5Forward,
+    scCycleFloorGroup5Backward].ksc, "Cycle special".desc,
+
+  @[scCycleFloorGroup6Forward,
+    scCycleFloorGroup6Backward].ksc, "Cycle entry/exit".desc,
+  QuickRefSepa,
+
+  scDrawWall.sc,               "Toggle wall".desc,
+  scDrawSpecialWall.sc,        "Toggle special wall".desc,
+
+  @[scPreviousSpecialWall,
+    scNextSpecialWall].ksc,    "Prev/next special wall".desc,
+
+  @[scPreviousFloorColor,
+    scNextFloorColor].ksc,     "Prev/next floor colour".desc,
+
+  scSetFloorColor.sc,          "Set floor colour".desc,
+  scPickFloorColor.sc,         "Pick floor colour".desc,
+  scExcavateTrail.sc,          "Excavate trail in current level".desc,
+  scClearTrail.sc,             "Clear trail in current level".desc,
+  scEraseTrail.sc,             "Erase trail".desc,
+  QuickRefSepa,
+
+  scMarkSelection.sc,          "Enter Select (Mark) mode".desc,
+  scPaste.sc,                  "Paste copy buffer contents".desc,
+  scPastePreview.sc,           "Enter paste preview mode".desc,
+  QuickRefSepa,
+
+  scEditNote.sc,               "Create/edit note".desc,
+  scEraseNote.sc,              "Erase note".desc,
+  scEditLabel.sc,              "Create/edit text label".desc,
+  scEraseLabel.sc,             "Erase text label".desc,
+  QuickRefSepa,
+
+  scJumpToLinkedCell.sc,       "Jump to other side of link".desc,
+  scLinkCell.sc,               "Set link destination".desc,
+  QuickRefSepa,
+
+  scResizeLevel.sc,            "Resize level".desc,
+  scNudgePreview.sc,           "Enter Nudge Level mode".desc,
+]
+# }}}
+
+# }}}
+# {{{ renderQuickReference()
+proc renderQuickReference(a) =
+  alias(vg, a.vg)
+
+  const
+    h = 24.0
+    sepaH = 14.0
+    colWidth = 105.0
+
+  # TODO
+  let textColor = a.theme.statusBarStyle.textColor
+
+  proc renderSection(x, y: float; items: seq[QuickRefItem]; a) =
+    var
+      i = 0
+      x0 = x
+      y0 = y
+      x = x
+      y = y
+      heightInc = h
+
+    vg.setFont(14, "sans-bold")
+
+    while i <= items.high:
+      let item = items[i]
+
+      case item.kind
+      of qkShortcut:
+        let shortcuts = g_appShortcuts[item.shortcut]
+        heightInc = 0.0
+        var ys = y
+        for sc in shortcuts:
+          let shortcut = sc.toStr()
+          discard renderCommand(x, ys, shortcut, a)
+          ys += h
+          heightInc += h
+        if shortcuts.len > 1: heightInc += sepaH
+        x += colWidth
+
+      of qkKeyShortcuts:
+        var sx = x
+        for idx, sc in item.keyShortcuts:
+          let shortcut = sc.toStr()
+          var xa = renderCommand(sx, y, shortcut, a)
+          if idx < item.keyShortcuts.high:
+            sx += xa + 13
+            vg.fillColor(textColor)
+            xa = vg.text(round(sx), round(y), "/")
+            sx += 9
+        x += colWidth
+        heightInc = h
+
+      of qkCustom:
+        discard
+
+      of qkDescription:
+        vg.fillColor(textColor)
+        discard vg.text(round(x), round(y), item.description)
+        x = x0
+        y += heightInc
+
+      of qkSeparator:
+        y += sepaH
+
+      inc(i)
+
+
+  # TODO
+  let
+    ds = a.theme.dialogStyle
+    width = drawAreaWidth(a)
+    height = drawAreaHeight(a)
+
+  koi.addDrawLayer(koi.currentLayer(), vg):
+    vg.save()
+    vg.intersectScissor(0, 0, width, height)
+
+  koi.addDrawLayer(koi.currentLayer(), vg):
+    # Background
+    vg.beginPath()
+    vg.rect(0, 0, width, height)
+    vg.fillColor(ds.backgroundColor)
+    vg.fill()
+
+    # Title
+    vg.setFont(20, "sans-bold")
+    vg.fillColor(textColor.withAlpha(0.7))
+    vg.textAlign(haCenter, vaMiddle)
+    discard vg.text(round(width*0.5), 60, "Quick Keyboard Reference")
+
+  let tabLabels = @["General", "Movement", "Dialogs", "Selection"]
+  var activeTab = 0
+
+  let
+    t = invLerp(WindowMinWidth.float, 1000.0, width).clamp(0.0, 1.0)
+    viewWidth = lerp(622.0, 680.0, t)
+    columnWidth = lerp(300.0, 330.0, t)
+    tabWidth = 420.0
+
+  koi.radioButtons(
+    (width - tabWidth)*0.5, 92, tabWidth, 24,
+    tabLabels, activeTab,
+    style = a.theme.radioButtonStyle
+  )
+
+  koi.beginScrollView(x = (width - viewWidth)*0.5 + 4, y = 150,
+                      w = viewWidth, h = (height - 162))
+
+  var a = a
+  let (sx, sy) = addDrawOffset(10, 10)
+
+  koi.addDrawLayer(koi.currentLayer(), vg):
+    renderSection(sx, sy, g_quickRef_General, a)
+    renderSection(sx + columnWidth, sy, g_quickRef_Edit, a)
+
+  koi.endScrollView(height = 810)
+
+  koi.addDrawLayer(koi.currentLayer(), vg):
+    vg.restore()
+
+# }}}
+
 # {{{ renderLevelDropdown()
 proc renderLevelDropdown(a) =
   alias(ui, a.ui)
@@ -7446,8 +7725,9 @@ proc renderFrame(a) =
     uiRendered = true
 
   if a.splash.win == nil:
-    if a.doc.map.hasLevels: handleGlobalKeyEvents(a)
-    else:                   handleGlobalKeyEvents_NoLevels(a)
+    if a.opts.showQuickReference: handleQuickRefKeyEvents(a)
+    elif a.doc.map.hasLevels:     handleGlobalKeyEvents(a)
+    else:                         handleGlobalKeyEvents_NoLevels(a)
 
   else:
     if not a.opts.showThemeEditor and a.win.glfwWin.focused:
@@ -7671,7 +7951,8 @@ proc loadFonts(a) =
       logging.error(fmt"Cannot load font '{filename}'")
       raise e
 
-  discard         loadFont("sans",       p.dataDir / "Roboto-Regular.ttf", a)
+  # TODO remove?
+#  discard         loadFont("sans",       p.dataDir / "Roboto-Regular.ttf", a)
   let boldFont  = loadFont("sans-bold",  p.dataDir / "Roboto-Bold.ttf", a)
   let blackFont = loadFont("sans-black", p.dataDir / "Roboto-Black.ttf", a)
   let iconFont  = loadFont("icon",       p.dataDir / "GridmongerIcons.ttf", a)
