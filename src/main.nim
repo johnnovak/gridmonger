@@ -5225,6 +5225,13 @@ template toggleOnOffOption(opt: untyped, icon, msg: string; a) =
 proc toggleThemeEditor(a) =
   toggleShowOption(a.opts.showThemeEditor, NoIcon, "Theme editor pane", a)
 
+proc showQuickReference(a) =
+  a.opts.showQuickReference = true
+  setStatusMessage(IconQuestion, "Quick keyboard reference",
+                   @[fmt"Ctrl+{IconArrowsHoriz}", "switch tab",
+                     "Esc/Space/Enter", "exit",
+                     "F1", "open user manual"], a)
+
 proc toggleTitleBar(a) =
   toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
 
@@ -5648,8 +5655,7 @@ proc handleGlobalKeyEvents(a) =
         toggleThemeEditor(a)
 
       elif ke.isShortcutDown(scToggleQuickReference):
-        opts.showQuickReference = true
-        clearStatusMessage(a)
+        showQuickReference(a)
 
       # Toggle options
       elif ke.isShortcutDown(scToggleCellCoords):
@@ -6128,6 +6134,9 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isShortcutDown(scToggleThemeEditor):
       toggleThemeEditor(a)
 
+    elif ke.isShortcutDown(scToggleQuickReference):
+      showQuickReference(a)
+
     # Toggle options
     elif ke.isShortcutDown(scToggleTitleBar):
       toggleTitleBar(a)
@@ -6135,7 +6144,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 # }}}
 # {{{ handleQuickRefKeyEvents(a) =
 
-let g_quickRefTabLabels = @["General", "Editing", "Movement", "Dialogs", "Selections"]
+let g_quickRefTabLabels = @["General", "Editing", "Dialogs"]
 
 proc handleQuickRefKeyEvents(a) =
   if hasKeyEvent():
@@ -6148,8 +6157,8 @@ proc handleQuickRefKeyEvents(a) =
     elif ke.isShortcutDown(scPreviousTheme): selectPrevTheme(a)
     elif ke.isShortcutDown(scNextTheme):     selectNextTheme(a)
 
-    elif ke.isShortcutDown(scToggleThemeEditor):
-      toggleThemeEditor(a)
+    elif ke.isShortcutDown(scOpenUserManual):    openUserManual(a)
+    elif ke.isShortcutDown(scToggleThemeEditor): toggleThemeEditor(a)
 
     elif ke.isShortcutDown(scToggleQuickReference) or
          ke.isShortcutDown(scAccept) or
@@ -6157,6 +6166,7 @@ proc handleQuickRefKeyEvents(a) =
          isKeyDown(keySpace):
 
       a.opts.showQuickReference = false
+      clearStatusMessage(a)
 
 # }}}
 
@@ -7189,33 +7199,29 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 # {{{ Quick reference definition
 type
   QuickRefItemKind = enum
-    qkShortcut, qkKeyShortcuts, qkCustomShortcut,
-    qkCustomSeq,
-    qkDescription,
-    qkSeparator
+    qkShortcut, qkKeyShortcuts, qkDescription, qkSeparator
 
   QuickRefItem = object
+    sepa: char
     case kind: QuickRefItemKind
     of qkShortcut:       shortcut:       AppShortcut
     of qkKeyShortcuts:   keyShortcuts:   seq[KeyShortcut]
-    of qkCustomShortcut: customShortcut: string
-    of qkCustomSeq:      customSeq:      seq[QuickRefItem]
     of qkDescription:    description:    string
     of qkSeparator:      discard
 
 proc sc(sc: AppShortcut): QuickRefItem =
   QuickRefItem(kind: qkShortcut, shortcut: sc)
 
-proc ksc(sc: seq[AppShortcut]): QuickRefItem =
+proc sc(sc: seq[AppShortcut], sepa = '/'): QuickRefItem =
   var shortcuts: seq[KeyShortcut] = @[]
   for s in sc: shortcuts.add(g_appShortcuts[s][0])
-  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts)
+  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts, sepa: sepa)
 
-proc cust(s: string): QuickRefItem =
-  QuickRefItem(kind: qkCustomShortcut, customShortcut: s)
+proc sc(sc: KeyShortcut): QuickRefItem =
+  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: @[sc])
 
-proc custSeq(s: seq[QuickRefItem]): QuickRefItem =
-  QuickRefItem(kind: qkCustomSeq, customSeq: s)
+proc sc(sc: seq[KeyShortcut], sepa = '/'): QuickRefItem =
+  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: sc, sepa: sepa)
 
 proc desc(s: string): QuickRefItem =
   QuickRefItem(kind: qkDescription, description: s)
@@ -7225,46 +7231,46 @@ const QuickRefSepa = QuickRefItem(kind: qkSeparator)
 # {{{ General
 let g_quickRef_General = @[
   @[
-    scNewMap.sc,           "New map".desc,
-    scOpenMap.sc,          "Open map".desc,
-    scSaveMap.sc,          "Save map".desc,
-    scSaveMapAs.sc,        "Save map as".desc,
-    scEditMapProps.sc,     "Edit map properties".desc,
+    scNewMap.sc,            "New map".desc,
+    scOpenMap.sc,           "Open map".desc,
+    scSaveMap.sc,           "Save map".desc,
+    scSaveMapAs.sc,         "Save map as".desc,
+    scEditMapProps.sc,      "Edit map properties".desc,
     QuickRefSepa,
 
-    scNewLevel.sc,         "New level".desc,
-    scDeleteLevel.sc,      "Delete level".desc,
-    scEditLevelProps.sc,   "Edit level properties".desc,
+    scNewLevel.sc,          "New level".desc,
+    scDeleteLevel.sc,       "Delete level".desc,
+    scEditLevelProps.sc,    "Edit level properties".desc,
     QuickRefSepa,
 
-    scEditRegionProps.sc,  "Edit region properties".desc,
+    scEditRegionProps.sc,   "Edit region properties".desc,
     QuickRefSepa,
 
-    scPreviousLevel.sc,    "Previous level".desc,
-    scNextLevel.sc,        "Next level".desc,
+    scPreviousLevel.sc,     "Previous level".desc,
+    scNextLevel.sc,         "Next level".desc,
 
-    scToggleCellCoords.sc, "Toggle cell coordinates".desc,
-    scToggleNotesPane.sc,  "Toggle notes pane".desc,
-    scToggleToolsPane.sc,  "Toggle tools pane".desc,
+    scToggleCellCoords.sc,  "Toggle cell coordinates".desc,
+    scToggleNotesPane.sc,   "Toggle notes pane".desc,
+    scToggleToolsPane.sc,   "Toggle tools pane".desc,
   ],
   @[
     @[scZoomIn,
-      scZoomOut].ksc,      "Zoom in/out".desc,
+      scZoomOut].sc,        "Zoom in/out".desc,
     QuickRefSepa,
 
-    scUndo.sc,             "Undo last action".desc,
-    scRedo.sc,             "Redo last action".desc,
- 
-    scToggleWalkMode.sc,   "Toggle walk mode".desc,
-    scToggleWasdMode.sc,   "Toggle WASD mode".desc,
+    scUndo.sc,              "Undo last action".desc,
+    scRedo.sc,              "Redo last action".desc,
+
+    scToggleWalkMode.sc,    "Toggle walk mode".desc,
+    scToggleWasdMode.sc,    "Toggle WASD mode".desc,
     QuickRefSepa,
 
-    scShowNoteTooltip.sc,  "Display note tooltip".desc,
+    scShowNoteTooltip.sc,   "Display note tooltip".desc,
     QuickRefSepa,
 
-    scPreviousTheme.sc,    "Previous theme".desc,
-    scNextTheme.sc,        "Next theme".desc,
-    scReloadTheme.sc,      "Reload current theme".desc,
+    scPreviousTheme.sc,     "Previous theme".desc,
+    scNextTheme.sc,         "Next theme".desc,
+    scReloadTheme.sc,       "Reload current theme".desc,
     QuickRefSepa,
 
     scShowAboutDialog.sc,      "Show about dialog".desc,
@@ -7272,7 +7278,7 @@ let g_quickRef_General = @[
     scOpenUserManual.sc,       "Open user manual in browser".desc,
     QuickRefSepa,
 
-    scEditPreferences.sc,  "Preferences".desc,
+    scEditPreferences.sc,   "Preferences".desc,
     QuickRefSepa,
 
     scToggleThemeEditor.sc, "Toggle theme editor".desc,
@@ -7283,85 +7289,85 @@ let g_quickRef_General = @[
 # {{{ Editing
 let g_quickRef_Editing = @[
   @[
-    scExcavateTunnel.sc,         "Excavate (Draw tunnel)".desc,
-    scEraseCell.sc,              "Clear floor & walls (Erase cell)".desc,
+    scExcavateTunnel.sc,         "Excavate".desc,
+    scEraseCell.sc,              "Erase cell".desc,
     scDrawClearFloor.sc,         "Clear floor".desc,
     scToggleFloorOrientation.sc, "Toggle floor orientation".desc,
     QuickRefSepa,
 
     @[scCycleFloorGroup1Forward,
-      scCycleFloorGroup1Backward].ksc, "Cycle door".desc,
+      scCycleFloorGroup1Backward].sc, "Cycle door".desc,
 
     @[scCycleFloorGroup2Forward,
-      scCycleFloorGroup2Backward].ksc, "Cycle special door".desc,
+      scCycleFloorGroup2Backward].sc, "Cycle special door".desc,
 
     @[scCycleFloorGroup3Forward,
-      scCycleFloorGroup3Backward].ksc, "Cycle pressure plate".desc,
+      scCycleFloorGroup3Backward].sc, "Cycle pressure plate".desc,
 
     @[scCycleFloorGroup4Forward,
-      scCycleFloorGroup4Backward].ksc, "Cycle pit".desc,
+      scCycleFloorGroup4Backward].sc, "Cycle pit".desc,
 
     @[scCycleFloorGroup5Forward,
-      scCycleFloorGroup5Backward].ksc, "Cycle teleport/spinner/barrier".desc,
+      scCycleFloorGroup5Backward].sc, "Cycle special".desc,
 
     @[scCycleFloorGroup6Forward,
-      scCycleFloorGroup6Backward].ksc, "Cycle entry/exit".desc,
+      scCycleFloorGroup6Backward].sc, "Cycle entry/exit".desc,
 
     @[scCycleFloorGroup7Forward,
-      scCycleFloorGroup7Backward].ksc, "Draw bridge".desc,
+      scCycleFloorGroup7Backward].sc, "Draw bridge".desc,
     QuickRefSepa,
 
-    scSelectSpecialWall1.sc, "Select special wall: Open door".desc,
-    scSelectSpecialWall2.sc, "Select special wall: Locked door".desc,
-    scSelectSpecialWall3.sc, "Select special wall: Archway".desc,
-    scSelectSpecialWall4.sc, "Select special wall: Secret Door".desc,
-    scSelectSpecialWall5.sc, "Select special wall: One-way door".desc,
-    scSelectSpecialWall6.sc, "Select special wall: Illusory wall".desc,
-    scSelectSpecialWall7.sc, "Select special wall: Invisible wall".desc,
-    scSelectSpecialWall8.sc, "Select special wall: Lever".desc,
-    scSelectSpecialWall9.sc, "Select special wall: Niche".desc,
-    scSelectSpecialWall10.sc, "Select special wall: Statue".desc,
-    scSelectSpecialWall11.sc, "Select special wall: Keyhole".desc,
-    scSelectSpecialWall12.sc, "Select special wall: Writing".desc,
+    scSelectSpecialWall1.sc,  "Special wall: Open door".desc,
+    scSelectSpecialWall2.sc,  "Special wall: Locked door".desc,
+    scSelectSpecialWall3.sc,  "Special wall: Archway".desc,
+    scSelectSpecialWall4.sc,  "Special wall: Secret Door".desc,
+    scSelectSpecialWall5.sc,  "Special wall: One-way door".desc,
+    scSelectSpecialWall6.sc,  "Special wall: Illusory wall".desc,
+    scSelectSpecialWall7.sc,  "Special wall: Invisible wall".desc,
+    scSelectSpecialWall8.sc,  "Special wall: Lever".desc,
+    scSelectSpecialWall9.sc,  "Special wall: Niche".desc,
+    scSelectSpecialWall10.sc, "Special wall: Statue".desc,
+    scSelectSpecialWall11.sc, "Special wall: Keyhole".desc,
+    scSelectSpecialWall12.sc, "Special wall: Writing".desc,
   ],
   @[
-    scDrawWall.sc,               "Toggle wall".desc,
-    scDrawSpecialWall.sc,        "Toggle special wall".desc,
+    scDrawWall.sc,            "Toggle wall".desc,
+    scDrawSpecialWall.sc,     "Toggle special wall".desc,
 
     @[scPreviousSpecialWall,
-      scNextSpecialWall].ksc,    "Prev/next special wall".desc,
+      scNextSpecialWall].sc,  "Prev/next special wall".desc,
     QuickRefSepa,
 
     @[scPreviousFloorColor,
-      scNextFloorColor].ksc,     "Prev/next floor colour".desc,
+      scNextFloorColor].sc,   "Prev/next floor colour".desc,
 
-    scSetFloorColor.sc,          "Set floor colour".desc,
-    scPickFloorColor.sc,         "Pick floor colour".desc,
+    scSetFloorColor.sc,       "Set floor colour".desc,
+    scPickFloorColor.sc,      "Pick floor colour".desc,
     QuickRefSepa,
 
-    scToggleDrawTrail.sc,        "Toggle draw trail".desc,
-    scExcavateTrail.sc,          "Excavate trail in current level".desc,
-    scClearTrail.sc,             "Clear trail in current level".desc,
-    scEraseTrail.sc,             "Erase trail".desc,
+    scToggleDrawTrail.sc,     "Toggle draw trail".desc,
+    scExcavateTrail.sc,       "Excavate trail in current level".desc,
+    scClearTrail.sc,          "Clear trail in current level".desc,
+    scEraseTrail.sc,          "Erase trail".desc,
     QuickRefSepa,
 
-    scMarkSelection.sc,          "Enter Select (Mark) mode".desc,
-    scPaste.sc,                  "Paste copy buffer contents".desc,
-    scPastePreview.sc,           "Enter Paste Preview mode".desc,
+    scMarkSelection.sc,       "Enter Select (Mark) mode".desc,
+    scPaste.sc,               "Paste copy buffer contents".desc,
+    scPastePreview.sc,        "Enter Paste Preview mode".desc,
     QuickRefSepa,
 
-    scEditNote.sc,               "Create/edit note".desc,
-    scEraseNote.sc,              "Erase note".desc,
-    scEditLabel.sc,              "Create/edit text label".desc,
-    scEraseLabel.sc,             "Erase text label".desc,
+    scEditNote.sc,            "Create/edit note".desc,
+    scEraseNote.sc,           "Erase note".desc,
+    scEditLabel.sc,           "Create/edit text label".desc,
+    scEraseLabel.sc,          "Erase text label".desc,
     QuickRefSepa,
 
-    scJumpToLinkedCell.sc,       "Jump to other side of link".desc,
-    scLinkCell.sc,               "Set link destination".desc,
+    scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
+    scLinkCell.sc,            "Set link destination".desc,
     QuickRefSepa,
 
-    scResizeLevel.sc,            "Resize level".desc,
-    scNudgePreview.sc,           "Enter Nudge Level mode".desc,
+    scResizeLevel.sc,         "Resize level".desc,
+    scNudgePreview.sc,        "Enter Nudge Level mode".desc,
     QuickRefSepa,
   ]
 ]
@@ -7376,8 +7382,16 @@ let g_quickRef_Movement = @[
 # {{{ Dialogs
 let g_quickRef_Dialogs = @[
   @[
+    KeyShortcut(key: keyTab,
+                mods: {mkShift}).sc, "Previous text input field".desc,
 
-    scAccept.sc,    "Confirm (OK, Save, etc.)".desc,
+    @[KeyShortcut(key: key1, mods: {mkCtrl}),
+      KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
+
+    scNextTextField.sc, "Next text input field".desc,
+    QuickRefSepa,
+
+    scAccept.sc,    "Confirm".desc,
     scCancel.sc,    "Cancel".desc,
     scDiscard.sc,   "Discard".desc,
   ]
@@ -7394,9 +7408,7 @@ let g_quickRef_Selections = @[
 let g_quickRefShortcuts = @[
   g_quickRef_General,
   g_quickRef_Editing,
-  g_quickRef_Movement,
-  g_quickRef_Dialogs,
-  g_quickRef_Selections,
+  g_quickRef_Dialogs
 ]
 
 # }}}
@@ -7408,12 +7420,13 @@ proc renderQuickReference(a) =
   const
     h = 24.0
     sepaH = 14.0
-    colWidth = 105.0
+    defaultColWidth = 105.0
 
   # TODO
   let textColor = a.theme.statusBarStyle.textColor
 
-  proc renderSection(x, y: float; items: seq[QuickRefItem]; a) =
+  proc renderSection(x, y: float; items: seq[QuickRefItem];
+                     colWidth: float; a) =
     var
       x0 = x
       y0 = y
@@ -7445,16 +7458,10 @@ proc renderQuickReference(a) =
           if idx < item.keyShortcuts.high:
             sx += xa + 13
             vg.fillColor(textColor)
-            xa = vg.text(round(sx), round(y), "/")
+            xa = vg.text(round(sx), round(y), $item.sepa)
             sx += 9
         x += colWidth
         heightInc = h
-
-      of qkCustomShortcut:
-        discard renderCommand(x, y, item.customShortcut, a)
-
-      of qkCustomSeq:
-        discard
 
       of qkDescription:
         vg.fillColor(textColor)
@@ -7468,17 +7475,18 @@ proc renderQuickReference(a) =
   # TODO
   let
     ds = a.theme.dialogStyle
-    width = drawAreaWidth(a)
-    height = drawAreaHeight(a)
+    uiWidth = drawAreaWidth(a)
+    uiHeight = drawAreaHeight(a)
+    yOffs = max((uiHeight - 750) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     vg.save()
-    vg.intersectScissor(0, 0, width, height)
+    vg.intersectScissor(0, 0, uiWidth, uiHeight)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     # Background
     vg.beginPath()
-    vg.rect(0, 0, width, height)
+    vg.rect(0, 0, uiWidth, uiHeight)
     vg.fillColor(ds.backgroundColor)
     vg.fill()
 
@@ -7486,32 +7494,41 @@ proc renderQuickReference(a) =
     vg.setFont(20, "sans-bold")
     vg.fillColor(textColor.withAlpha(0.7))
     vg.textAlign(haCenter, vaMiddle)
-    discard vg.text(round(width*0.5), 60, "Quick Keyboard Reference")
+    discard vg.text(round(uiWidth*0.5), 60+yOffs, "Quick Keyboard Reference")
 
   let
-    t = invLerp(WindowMinWidth.float, 800.0, width).clamp(0.0, 1.0)
+    t = invLerp(WindowMinWidth.float, 800.0, uiWidth).clamp(0.0, 1.0)
     viewWidth = lerp(622.0, 680.0, t)
     columnWidth = lerp(300.0, 330.0, t)
     tabWidth = 420.0
 
+  let radioButtonX = (uiWidth - tabWidth)*0.5
+
   koi.radioButtons(
-    (width - tabWidth)*0.5, 92, tabWidth, 24,
+    radioButtonX, 92+yOffs, tabWidth, 24,
     g_quickRefTabLabels, a.quickRef.activeTab,
     style = a.theme.radioButtonStyle
   )
 
-  koi.beginScrollView(x = (width - viewWidth)*0.5 + 4, y = 150,
-                      w = viewWidth, h = (height - 162))
+  koi.beginScrollView(x = (uiWidth - viewWidth)*0.5 + 4, y = 150+yOffs,
+                      w = viewWidth, h = (uiHeight - 162))
 
   var a = a
   var (sx, sy) = addDrawOffset(10, 10)
 
+  let (viewHeight, colWidth) = case a.quickRef.activeTab
+  of 0: (525.0, defaultColWidth)
+  of 1: (592.0, defaultColWidth)
+  else: (400.0, defaultColWidth + 30)
+
   koi.addDrawLayer(koi.currentLayer(), vg):
-    for r in g_quickRefShortcuts[a.quickRef.activeTab]:
-      renderSection(sx, sy, r, a)
+    let items = g_quickRefShortcuts[a.quickRef.activeTab]
+    if items.len == 1: sx = radioButtonX + 70
+    for r in items:
+      renderSection(sx, sy, r, colWidth, a)
       sx += columnWidth
 
-  koi.endScrollView(height = 810)
+  koi.endScrollView(viewHeight)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     vg.restore()
