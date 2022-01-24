@@ -17,15 +17,15 @@ task debug, "debug build":
   --d:debug
   setCommonCompileParams()
 
-task release, "release build":
+task releaseFull, "release build (no stacktrace)":
   --d:release
   --app:gui
   setCommonCompileParams()
 
-task releaseStacktrace, "release build with stacktrace":
+task release, "release build (with stacktrace)":
   --stacktrace:on
   --linetrace:on
-  releaseTask()
+  releaseFullTask()
 
 task packageWin32, "create 32-bit Windows installer":
   exec "strip gridmonger.exe"
