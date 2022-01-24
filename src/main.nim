@@ -8387,13 +8387,12 @@ proc main() =
     let (configFile, mapFile, winCfg) = parseCommandLineParams()
 
     initPaths(a)
+    createDirs(a)
     initLogger(a)
 
     info(FullVersionInfo)
     info(CompiledAtInfo)
     info(fmt"Paths: {a.path}")
-
-    createDirs(a)
 
     initGfx(a)
     initApp(configFile, mapFile, winCfg, a)
