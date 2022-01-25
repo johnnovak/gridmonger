@@ -3,6 +3,8 @@ BUGS
 
 - eob map, level -5, (20,19) tooltip bug
 - display level dimensions in level props dialog
+- map props: column/row start allows more than 9999
+- undo modified flag weirdness
 
 
 

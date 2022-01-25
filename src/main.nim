@@ -8144,30 +8144,29 @@ GPU info
 proc initPaths(a) =
   alias(p, a.path)
 
+  const ImagesDir = "Images"
+
   p.appDir = getAppDir()
-  p.dataDir = p.appDir / "Data"
+  p.dataDir   = p.appDir / "Data"
+  p.manualDir = p.appDir / "Manual"
+  p.themesDir = p.appDir / "Themes"
+  p.themeImagesDir = p.themesDir / ImagesDir
 
   const ConfigDir = "Config"
   let portableMode = dirExists(p.appDir / ConfigDir)
 
-  if portableMode:
-    p.userDataDir = p.appDir
-  else:
-    p.userDataDir = getConfigDir() / "Gridmonger"
+  p.userDataDir = if portableMode: p.appDir
+                  else: getConfigDir() / "Gridmonger"
 
-  p.manualDir = p.appDir / "Manual"
-  p.autosaveDir = p.userDataDir / "Autosave"
-
-  p.themesDir = p.appDir / "Themes"
-  p.userThemesDir = p.userDataDir / "User Themes"
-
-  const ImagesDir = "Images"
-  p.themeImagesDir = p.themesDir / ImagesDir
-  p.userThemeImagesDir = p.userThemesDir / ImagesDir
-
-  p.logFile = p.userDataDir / "gridmonger.log"
   p.configDir = p.userDataDir / ConfigDir
   p.configFile = p.configDir / "gridmonger.cfg"
+
+  p.logFile = p.userDataDir / "gridmonger.log"
+
+  p.autosaveDir = p.userDataDir / "Autosaves"
+
+  p.userThemesDir = p.userDataDir / "User Themes"
+  p.userThemeImagesDir = p.userThemesDir / ImagesDir
 
 # }}}
 # {{{ createDirs()
