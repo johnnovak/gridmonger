@@ -7372,13 +7372,6 @@ let g_quickRef_Editing = @[
   ]
 ]
 # }}}
-# {{{ Movement
-let g_quickRef_Movement = @[
-  @[
-    scPreviousTheme.sc,    "Previous theme".desc,
-  ]
-]
-# }}}
 # {{{ Dialogs
 let g_quickRef_Dialogs = @[
   @[
@@ -7391,16 +7384,9 @@ let g_quickRef_Dialogs = @[
     scNextTextField.sc, "Next text input field".desc,
     QuickRefSepa,
 
-    scAccept.sc,    "Confirm".desc,
-    scCancel.sc,    "Cancel".desc,
-    scDiscard.sc,   "Discard".desc,
-  ]
-]
-# }}}
-# {{{ Selections
-let g_quickRef_Selections = @[
-  @[
-    scPreviousTheme.sc,    "Previous theme".desc,
+    scAccept.sc,  "Confirm".desc,
+    scCancel.sc,  "Cancel".desc,
+    scDiscard.sc, "Discard".desc,
   ]
 ]
 # }}}
@@ -8065,8 +8051,7 @@ proc loadFonts(a) =
       logging.error(fmt"Cannot load font '{filename}'")
       raise e
 
-  # TODO remove?
-#  discard         loadFont("sans",       p.dataDir / "Roboto-Regular.ttf", a)
+  discard         loadFont("sans",       p.dataDir / "Roboto-Regular.ttf", a)
   let boldFont  = loadFont("sans-bold",  p.dataDir / "Roboto-Bold.ttf", a)
   let blackFont = loadFont("sans-black", p.dataDir / "Roboto-Black.ttf", a)
   let iconFont  = loadFont("icon",       p.dataDir / "GridmongerIcons.ttf", a)
