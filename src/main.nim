@@ -356,8 +356,8 @@ type
     newMapDialog:           NewMapDialogParams
     editMapPropsDialog:     EditMapPropsDialogParams
 
-    newLevelDialog:         NewLevelDialogParams
-    editLevelPropsDialog:   EditLevelPropsParams
+    newLevelDialog:         LevelPropertiesDialogParams
+    editLevelPropsDialog:   LevelPropertiesDialogParams
     resizeLevelDialog:      ResizeLevelDialogParams
     deleteLevelDialog:      DeleteLevelDialogParams
 
@@ -437,7 +437,7 @@ type
     isOpen:       bool
 
 
-  NewLevelDialogParams = object
+  LevelPropertiesDialogParams = object
     isOpen:            bool
     activeTab:         Natural
     activateFirstTextField: bool
@@ -465,32 +465,6 @@ type
 
     # Notes tab
     notes:              string
-
-
-  EditLevelPropsParams = object
-    isOpen:            bool
-    activeTab:         Natural
-    activateFirstTextField: bool
-
-    # General tab
-    locationName:      string
-    levelName:         string
-    elevation:         string
-    notes:             string
-
-    # Coordinates tab
-    overrideCoordOpts: bool
-    origin:            Natural
-    rowStyle:          Natural
-    columnStyle:       Natural
-    rowStart:          string
-    columnStart:       string
-
-    # Regions tab
-    enableRegions:     bool
-    colsPerRegion:     string
-    rowsPerRegion:     string
-    perRegionCoords:   bool
 
 
   ResizeLevelDialogParams = object
@@ -2498,7 +2472,7 @@ template noteFields(dlgWidth: float) =
 
 # }}}
 # {{{ commonLevelFields()
-template commonLevelFields() =
+template commonLevelFields(dimensionsDisabled: bool) =
   group:
     koi.label("Location name", style=a.theme.labelStyle)
 
@@ -2536,6 +2510,35 @@ template commonLevelFields() =
         minInt: LevelElevationLimits.minInt,
         maxInt: LevelElevationLimits.maxInt
       ).some,
+      style = a.theme.textFieldStyle
+    )
+
+  group:
+    koi.label("Columns", style=a.theme.labelStyle)
+
+    koi.nextItemWidth(DlgNumberWidth)
+    koi.textField(
+      dlg.cols,
+      constraint = TextFieldConstraint(
+        kind:   tckInteger,
+        minInt: LevelColumnsLimits.minInt,
+        maxInt: LevelColumnsLimits.maxInt
+      ).some,
+      disabled = dimensionsDisabled,
+      style = a.theme.textFieldStyle
+    )
+
+    koi.label("Rows", style=a.theme.labelStyle)
+
+    koi.nextItemWidth(DlgNumberWidth)
+    koi.textField(
+      dlg.rows,
+      constraint = TextFieldConstraint(
+        kind:   tckInteger,
+        minInt: LevelRowsLimits.minInt,
+        maxInt: LevelRowsLimits.maxInt
+      ).some,
+      disabled = dimensionsDisabled,
       style = a.theme.textFieldStyle
     )
 
@@ -3406,7 +3409,7 @@ proc openNewLevelDialog(a) =
   dlg.isOpen = true
 
 
-proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
+proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
   alias(map, a.doc.map)
 
   const
@@ -3440,34 +3443,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    commonLevelFields()
-
-    group:
-      koi.label("Columns", style=a.theme.labelStyle)
-
-      koi.nextItemWidth(DlgNumberWidth)
-      koi.textField(
-        dlg.cols,
-        constraint = TextFieldConstraint(
-          kind:   tckInteger,
-          minInt: LevelColumnsLimits.minInt,
-          maxInt: LevelColumnsLimits.maxInt
-        ).some,
-        style = a.theme.textFieldStyle
-      )
-
-      koi.label("Rows", style=a.theme.labelStyle)
-
-      koi.nextItemWidth(DlgNumberWidth)
-      koi.textField(
-        dlg.rows,
-        constraint = TextFieldConstraint(
-          kind:   tckInteger,
-          minInt: LevelRowsLimits.minInt,
-          maxInt: LevelRowsLimits.maxInt
-        ).some,
-        style = a.theme.textFieldStyle
-      )
+    commonLevelFields(dimensionsDisabled = false)
 
   elif dlg.activeTab == 1:  # Coordinates
     group:
@@ -3497,7 +3473,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
               style=a.theme.errorLabelStyle)
 
 
-  proc okAction(dlg: var NewLevelDialogParams; a) =
+  proc okAction(dlg: var LevelPropertiesDialogParams; a) =
     if validationError != "": return
 
     a.opts.drawTrail = false
@@ -3542,7 +3518,7 @@ proc newLevelDialog(dlg: var NewLevelDialogParams; a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var NewLevelDialogParams; a) =
+  proc cancelAction(dlg: var LevelPropertiesDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
@@ -3588,6 +3564,8 @@ proc openEditLevelPropsDialog(a) =
   dlg.locationName = l.locationName
   dlg.levelName = l.levelName
   dlg.elevation = $l.elevation
+  dlg.rows = $l.rows
+  dlg.cols = $l.cols
 
   let co = coordOptsForCurrLevel(a)
   dlg.overrideCoordOpts = l.overrideCoordOpts
@@ -3608,7 +3586,7 @@ proc openEditLevelPropsDialog(a) =
   dlg.isOpen = true
 
 
-proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
+proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
   alias(map, a.doc.map)
 
   const
@@ -3643,7 +3621,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    commonLevelFields()
+    commonLevelFields(dimensionsDisabled = true)
 
   elif dlg.activeTab == 1:  # Coordinates
     koi.label("Override map settings", style=a.theme.labelStyle)
@@ -3680,7 +3658,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
               style=a.theme.errorLabelStyle)
 
 
-  proc okAction(dlg: var EditLevelPropsParams; a) =
+  proc okAction(dlg: var LevelPropertiesDialogParams; a) =
     if validationError != "": return
 
     let elevation = parseInt(dlg.elevation)
@@ -3712,7 +3690,7 @@ proc editLevelPropsDialog(dlg: var EditLevelPropsParams; a) =
     dlg.isOpen = false
 
 
-  proc cancelAction(dlg: var EditLevelPropsParams; a) =
+  proc cancelAction(dlg: var LevelPropertiesDialogParams; a) =
     koi.closeDialog()
     dlg.isOpen = false
 
