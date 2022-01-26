@@ -2,7 +2,7 @@ BUGS
 ====
 
 - eob map, level -5, (20,19) tooltip bug
-- display level dimensions in level props dialog
+- undo modified flag weirdness
 
 
 
