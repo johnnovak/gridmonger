@@ -1287,7 +1287,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
 # }}}
 # {{{ moveCursor()
-proc moveCursor(dir: CardinalDir, steps: Natural; a) =
+proc moveCursor(dir: CardinalDir, steps: Natural = 1; a) =
   let cur = stepCursor(a.ui.cursor, dir, steps, a)
   setCursor(cur, a)
 
@@ -1347,7 +1347,7 @@ proc locationAtMouse(a): Option[Location] =
 
 # }}}
 # {{{ moveLevel()
-proc moveLevel(dir: CardinalDir, steps: Natural; a) =
+proc moveLevel(dir: CardinalDir, steps: Natural = 1; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
@@ -3512,7 +3512,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
     )
     setCursor(cur, a)
 
-    setStatusMessage(IconFile, fmt"New {rows}x{cols} level created", a)
+    setStatusMessage(IconFile, fmt"New {rows}×{cols} level created", a)
 
     koi.closeDialog()
     dlg.isOpen = false
@@ -5229,30 +5229,41 @@ proc handleGlobalKeyEvents(a) =
   proc turnRight(dir: CardinalDir): CardinalDir =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
 
+  template backward(): auto = turnLeft(turnLeft(ui.cursorOrient))
+  template left():     auto = turnLeft(ui.cursorOrient)
+  template right():    auto = turnRight(ui.cursorOrient)
 
   proc handleMoveWalk(ke: Event; a) =
+    const
+      mkC  = {mkCtrl}
+      mkS  = {mkShift}
+      mkCS = {mkCtrl, mkShift}
+      j = CursorJump
+
     let k = if opts.wasdMode: WalkKeysWasd else: WalkKeysCursor
 
-    if ke.isKeyDown(k.forward, repeat=true):
-      moveCursor(ui.cursorOrient, steps=1, a)
+    if   ke.isKeyDown(k.turnLeft,    repeat=true): ui.cursorOrient = left()
+    elif ke.isKeyDown(k.turnRight,   repeat=true): ui.cursorOrient = right()
 
-    elif ke.isKeyDown(k.backward, repeat=true):
-      let backward = turnLeft(turnLeft(ui.cursorOrient))
-      moveCursor(backward, steps=1, a)
+    elif ke.isKeyDown(k.forward,     repeat=true): moveCursor(ui.cursorOrient, a=a)
+    elif ke.isKeyDown(k.backward,    repeat=true): moveCursor(backward(),      a=a)
+    elif ke.isKeyDown(k.strafeLeft,  repeat=true): moveCursor(left(),          a=a)
+    elif ke.isKeyDown(k.strafeRight, repeat=true): moveCursor(right(),         a=a)
 
-    elif ke.isKeyDown(k.strafeLeft, repeat=true):
-      let left = turnLeft(ui.cursorOrient)
-      moveCursor(left, steps=1, a)
+    elif ke.isKeyDown(k.strafeLeft,  mkS,  repeat=true): moveLevel(left(),          a=a)
+    elif ke.isKeyDown(k.strafeRight, mkS,  repeat=true): moveLevel(right(),         a=a)
+    elif ke.isKeyDown(k.forward,     mkS,  repeat=true): moveLevel(ui.cursorOrient, a=a)
+    elif ke.isKeyDown(k.backward,    mkS,  repeat=true): moveLevel(backward(),      a=a)
 
-    elif ke.isKeyDown(k.strafeRight, repeat=true):
-      let right = turnRight(ui.cursorOrient)
-      moveCursor(right, steps=1, a)
+    elif ke.isKeyDown(k.strafeLeft,  mkC,  repeat=true): moveCursor(left(),          j, a)
+    elif ke.isKeyDown(k.strafeRight, mkC,  repeat=true): moveCursor(right(),         j, a)
+    elif ke.isKeyDown(k.forward,     mkC,  repeat=true): moveCursor(ui.cursorOrient, j, a)
+    elif ke.isKeyDown(k.backward,    mkC,  repeat=true): moveCursor(backward(),      j, a)
 
-    elif ke.isKeyDown(k.turnLeft, repeat=true):
-      ui.cursorOrient = turnLeft(ui.cursorOrient)
-
-    elif ke.isKeyDown(k.turnRight, repeat=true):
-      ui.cursorOrient = turnRight(ui.cursorOrient)
+    elif ke.isKeyDown(k.strafeLeft,  mkCS, repeat=true): moveLevel(left(),          j, a)
+    elif ke.isKeyDown(k.strafeRight, mkCS, repeat=true): moveLevel(right(),         j, a)
+    elif ke.isKeyDown(k.forward,     mkCS, repeat=true): moveLevel(ui.cursorOrient, j, a)
+    elif ke.isKeyDown(k.backward,    mkCS, repeat=true): moveLevel(backward(),      j, a)
 
 
   template handleMoveKeys(ke: Event, moveHandler: untyped) =
@@ -5266,20 +5277,21 @@ proc handleGlobalKeyEvents(a) =
 
   proc handleMoveCursor(ke: Event, k: MoveKeys,
                         allowPan, allowJump: bool; a): bool =
-    const j = CursorJump
+    const
+      j = CursorJump
+      mkCS = {mkCtrl, mkShift}
+
     result = true
 
-    if   ke.isKeyDown(k.left,  repeat=true): moveCursor(dirW, 1, a)
-    elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, 1, a)
-    elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, 1, a)
-    elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, 1, a)
+    if   ke.isKeyDown(k.left,  repeat=true): moveCursor(dirW, a=a)
+    elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, a=a)
+    elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, a=a)
+    elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, a=a)
     elif allowPan:
-      if   ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevel(dirW, 1, a)
-      elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevel(dirE, 1, a)
-      elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, 1, a)
-      elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, 1, a)
-
-    const mkCS = {mkCtrl, mkShift}
+      if   ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevel(dirW, a=a)
+      elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevel(dirE, a=a)
+      elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, a=a)
+      elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, a=a)
 
     if not opts.wasdMode and allowJump:
       if   ke.isKeyDown(k.left,  {mkCtrl}, repeat=true): moveCursor(dirW, j, a)
@@ -7458,7 +7470,7 @@ proc renderQuickReference(a) =
 
     # Title
     vg.setFont(20, "sans-bold")
-    vg.fillColor(textColor.withAlpha(0.7))
+    vg.fillColor(textColor.withAlpha(0.6))
     vg.textAlign(haCenter, vaMiddle)
     discard vg.text(round(uiWidth*0.5), 60+yOffs, "Quick Keyboard Reference")
 
