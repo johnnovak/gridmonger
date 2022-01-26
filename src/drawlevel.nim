@@ -819,6 +819,7 @@ proc drawGrid(x, y: float; color: Color; gridStyle: GridStyle; ctx) =
   let sw = UltraThinStrokeWidth
   vg.strokeColor(color)
   vg.strokeWidth(sw)
+  vg.lineCap(lcjSquare)
 
   case gridStyle
   of gsNone: discard
