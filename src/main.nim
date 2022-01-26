@@ -6194,9 +6194,11 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
     vg.textLineHeight(1.5)
 
     let
-      bounds = vg.textBoxBounds(noteBoxX + PadX,
-                                noteBoxY + PadY,
-                                noteBoxW - PadX*2, note.text)
+      textX = noteBoxX + PadX
+      textY = noteBoxY + PadY
+      breakWidth = noteBoxW - PadX*2
+      bounds = vg.textBoxBounds(textX, textY, breakWidth, note.text)
+
       noteTextH = bounds.y2 - bounds.y1
       noteTextW = bounds.x2 - bounds.x1
       noteBoxH = noteTextH + PadY*2
@@ -6223,7 +6225,7 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
     vg.fill()
 
     vg.fillColor(a.theme.levelStyle.noteTooltipTextColor)
-    vg.textBox(noteBoxX + PadX, noteBoxY + PadY, noteTextW, note.text)
+    vg.textBox(textX, textY, breakWidth, note.text)
 
 # }}}
 # {{{ renderLevel()
