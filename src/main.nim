@@ -1577,7 +1577,7 @@ proc hasKeyEvent(): bool =
 
 # }}}
 # {{{ isKeyDown()
-func isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
+proc isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
                repeat=false): bool =
 
   # ignore numlock & capslock
@@ -1586,7 +1586,7 @@ func isKeyDown(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
   ev.action in a and ev.key in keys and eventmods == mods
 
 
-func isKeyDown(ev: Event, key: Key,
+proc isKeyDown(ev: Event, key: Key,
                mods: set[ModifierKey] = {}, repeat=false): bool =
   isKeyDown(ev, {key}, mods, repeat)
 
@@ -2660,7 +2660,7 @@ func moveGridPositionWrapping(currIdx: int, dc: int = 0, dr: int = 0,
 
 # }}}
 # {{{ handleGridRadioButton()
-func handleGridRadioButton(ke: Event, currButtonIdx: Natural,
+proc handleGridRadioButton(ke: Event, currButtonIdx: Natural,
                            numButtons, buttonsPerRow: Natural): Natural =
 
   proc move(dc: int = 0, dr: int = 0): Natural =
@@ -5233,37 +5233,38 @@ proc handleGlobalKeyEvents(a) =
   template left():     auto = turnLeft(ui.cursorOrient)
   template right():    auto = turnRight(ui.cursorOrient)
 
-  proc handleMoveWalk(ke: Event; a) =
-    const
-      mkC  = {mkCtrl}
-      mkS  = {mkShift}
-      mkCS = {mkCtrl, mkShift}
-      j = CursorJump
-
+  proc handleMoveWalk(ev: Event; a) =
     let k = if opts.wasdMode: WalkKeysWasd else: WalkKeysCursor
 
-    if   ke.isKeyDown(k.turnLeft,    repeat=true): ui.cursorOrient = left()
-    elif ke.isKeyDown(k.turnRight,   repeat=true): ui.cursorOrient = right()
+    if ev.action in {kaDown, kaRepeat}:
+      let
+        key = ev.key
+        S = shiftDown()
+        C = ctrlDown()
+        CS = C and S
 
-    elif ke.isKeyDown(k.forward,     repeat=true): moveCursor(ui.cursorOrient, a=a)
-    elif ke.isKeyDown(k.backward,    repeat=true): moveCursor(backward(),      a=a)
-    elif ke.isKeyDown(k.strafeLeft,  repeat=true): moveCursor(left(),          a=a)
-    elif ke.isKeyDown(k.strafeRight, repeat=true): moveCursor(right(),         a=a)
+      if   key in k.turnLeft:  ui.cursorOrient = left()
+      elif key in k.turnRight: ui.cursorOrient = right()
 
-    elif ke.isKeyDown(k.strafeLeft,  mkS,  repeat=true): moveLevel(left(),          a=a)
-    elif ke.isKeyDown(k.strafeRight, mkS,  repeat=true): moveLevel(right(),         a=a)
-    elif ke.isKeyDown(k.forward,     mkS,  repeat=true): moveLevel(ui.cursorOrient, a=a)
-    elif ke.isKeyDown(k.backward,    mkS,  repeat=true): moveLevel(backward(),      a=a)
+      elif key in k.forward     and CS: moveLevel(ui.cursorOrient, CursorJump, a)
+      elif key in k.backward    and CS: moveLevel(backward(),      CursorJump, a)
+      elif key in k.strafeLeft  and CS: moveLevel(left(),          CursorJump, a)
+      elif key in k.strafeRight and CS: moveLevel(right(),         CursorJump, a)
 
-    elif ke.isKeyDown(k.strafeLeft,  mkC,  repeat=true): moveCursor(left(),          j, a)
-    elif ke.isKeyDown(k.strafeRight, mkC,  repeat=true): moveCursor(right(),         j, a)
-    elif ke.isKeyDown(k.forward,     mkC,  repeat=true): moveCursor(ui.cursorOrient, j, a)
-    elif ke.isKeyDown(k.backward,    mkC,  repeat=true): moveCursor(backward(),      j, a)
+      elif key in k.forward     and C: moveCursor(ui.cursorOrient, CursorJump, a)
+      elif key in k.backward    and C: moveCursor(backward(),      CursorJump, a)
+      elif key in k.strafeLeft  and C: moveCursor(left(),          CursorJump, a)
+      elif key in k.strafeRight and C: moveCursor(right(),         CursorJump, a)
 
-    elif ke.isKeyDown(k.strafeLeft,  mkCS, repeat=true): moveLevel(left(),          j, a)
-    elif ke.isKeyDown(k.strafeRight, mkCS, repeat=true): moveLevel(right(),         j, a)
-    elif ke.isKeyDown(k.forward,     mkCS, repeat=true): moveLevel(ui.cursorOrient, j, a)
-    elif ke.isKeyDown(k.backward,    mkCS, repeat=true): moveLevel(backward(),      j, a)
+      elif key in k.forward     and S: moveLevel(ui.cursorOrient,  steps=1, a)
+      elif key in k.backward    and S: moveLevel(backward(),       steps=1, a)
+      elif key in k.strafeLeft  and S: moveLevel(left(),           steps=1, a)
+      elif key in k.strafeRight and S: moveLevel(right(),          steps=1, a)
+
+      elif key in k.forward:           moveCursor(ui.cursorOrient, steps=1, a)
+      elif key in k.backward:          moveCursor(backward(),      steps=1, a)
+      elif key in k.strafeLeft:        moveCursor(left(),          steps=1, a)
+      elif key in k.strafeRight:       moveCursor(right(),         steps=1, a)
 
 
   template handleMoveKeys(ke: Event, moveHandler: untyped) =
