@@ -5277,8 +5277,9 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.backward,    mkCS, repeat=true): moveLevel(backward(),      j, a)
 
 
-  template handleMoveKeys(ke: Event, moveHandler: untyped) =
-    let k = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
+  template handleMoveKeys(ke: Event, allowWasdKeys: bool, moveHandler: untyped) =
+    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
+            else: MoveKeysCursor
 
     if   ke.isKeyDown(k.left,  repeat=true): moveHandler(dirW, a)
     elif ke.isKeyDown(k.right, repeat=true): moveHandler(dirE, a)
@@ -5733,7 +5734,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
-      handleMoveKeys(ke, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=true, handleMoveKey)
 
       if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
@@ -5766,7 +5767,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
-      handleMoveKeys(ke, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=true, handleMoveKey)
 
       if ke.isShortcutUp(scDrawSpecialWall):
         ui.editMode = emNormal
@@ -5926,8 +5927,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSelectDraw, emSelectErase
     of emSelectDraw, emSelectErase:
-      discard handleMoveCursor(ke, MoveKeysCursor, a)
-
+      discard handleMoveCursor(ke, MoveKeysCursor,
+                               allowPan=false, allowJump=false, a)
       let cur = a.ui.cursor
       ui.selection.get[cur.row, cur.col] = ui.editMode == emSelectDraw
 
@@ -5937,8 +5938,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSelectRect
     of emSelectRect:
-      discard handleMoveCursor(ke, MoveKeysCursor, a)
-
+      discard handleMoveCursor(ke, MoveKeysCursor,
+                               allowPan=false, allowJump=false, a)
       let cur = a.ui.cursor
 
       var r1,c1, r2,c2: Natural
@@ -5966,10 +5967,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emPastePreview
     of emPastePreview:
-      if opts.walkMode: handleMoveWalk(ke, a)
-      else:
-        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        discard handleMoveCursor(ke, moveKeys, a)
+      discard handleMoveCursor(ke, MoveKeysCursor, a)
 
       let cur = a.ui.cursor
 
@@ -5999,10 +5997,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emMovePreview
     of emMovePreview:
-      if opts.walkMode: handleMoveWalk(ke, a)
-      else:
-        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        discard handleMoveCursor(ke, moveKeys, a)
+      discard handleMoveCursor(ke, MoveKeysCursor, a)
 
       let cur = a.ui.cursor
 
@@ -6033,7 +6028,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emNudgePreview
     of emNudgePreview:
-      handleMoveKeys(ke, moveSelStart)
+      handleMoveKeys(ke, allowWasdKeys=false, moveSelStart)
 
       let cur = a.ui.cursor
 
@@ -6143,7 +6138,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
       toggleTitleBar(a)
 
 # }}}
-# {{{ handleQuickRefKeyEvents(a) =
+# {{{ handleQuickRefKeyEvents()
 
 let g_quickRefTabLabels = @["General", "Editing", "Dialogs"]
 
