@@ -5142,11 +5142,20 @@ proc resetManualNoteTooltip(a) =
 proc handleLevelMouseEvents(a) =
   alias(ui, a.ui)
 
+  proc moveCursorToMousePos(a) =
+    let loc = locationAtMouse(a)
+    if loc.isSome:
+      a.ui.cursor = loc.get
+      resetManualNoteTooltip(a)
+
   if a.opts.wasdMode:
     if ui.editMode == emNormal:
       if koi.mbLeftDown():
-        ui.editMode = emExcavateTunnel
-        startExcavateTunnelAction(a)
+        if koi.shiftDown():
+          moveCursorToMousePos(a)
+        else:
+          ui.editMode = emExcavateTunnel
+          startExcavateTunnelAction(a)
 
       elif koi.mbRightDown():
         ui.editMode = emDrawWall
@@ -5186,10 +5195,7 @@ proc handleLevelMouseEvents(a) =
 
   else:  # not WASD mode
     if koi.mbLeftDown():
-      let loc = locationAtMouse(a)
-      if loc.isSome:
-        a.ui.cursor = loc.get
-        resetManualNoteTooltip(a)
+      moveCursorToMousePos(a)
 
 # }}}
 # {{{ handleGlobalKeyEvents()
