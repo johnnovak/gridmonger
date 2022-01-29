@@ -5287,11 +5287,14 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.down,  repeat=true): moveHandler(dirS, a)
 
 
-  proc handleMoveCursor(ke: Event, k: MoveKeys,
-                        allowPan, allowJump: bool; a): bool =
+  proc handleMoveCursor(ke: Event; allowPan, allowJump, allowWasdKeys: bool;
+                        a): bool =
     const
       j = CursorJump
       mkCS = {mkCtrl, mkShift}
+
+    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
+            else: MoveKeysCursor
 
     result = true
 
@@ -5319,9 +5322,6 @@ proc handleGlobalKeyEvents(a) =
     result = false
 
 
-  proc handleMoveCursor(ke: Event, k: MoveKeys; a): bool =
-    handleMoveCursor(ke, k, allowPan=true, allowJump=true, a)
-
   if hasKeyEvent():
     let ke = koi.currEvent()
     # TODO eventHandled is not set here, but it's not actually needed (yet)
@@ -5339,8 +5339,8 @@ proc handleGlobalKeyEvents(a) =
 
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        if handleMoveCursor(ke, moveKeys, a):
+        if handleMoveCursor(ke, allowPan=true, allowJump=true,
+                            allowWasdKeys=true, a):
           setStatusMessage("moved", a)
 
       if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
@@ -5689,10 +5689,8 @@ proc handleGlobalKeyEvents(a) =
     of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        discard handleMoveCursor(ke, moveKeys,
-                                 allowPan=false, allowJump=false, a)
-
+        discard handleMoveCursor(ke, allowPan=false, allowJump=false,
+                                 allowWasdKeys=true, a)
       let cur = a.ui.cursor
 
       if cur != a.ui.lastCursor:
@@ -5776,8 +5774,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSelect
     of emSelect:
-      discard handleMoveCursor(ke, MoveKeysCursor, a)
-
+      discard handleMoveCursor(ke, allowPan=true, allowJump=true,
+                               allowWasdKeys=false, a)
       let cur = a.ui.cursor
 
       if   koi.ctrlDown(): setSelectModeActionMessage(a)
@@ -5927,8 +5925,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSelectDraw, emSelectErase
     of emSelectDraw, emSelectErase:
-      discard handleMoveCursor(ke, MoveKeysCursor,
-                               allowPan=false, allowJump=false, a)
+      discard handleMoveCursor(ke, allowPan=false, allowJump=false,
+                               allowWasdKeys=false, a)
       let cur = a.ui.cursor
       ui.selection.get[cur.row, cur.col] = ui.editMode == emSelectDraw
 
@@ -5938,8 +5936,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSelectRect
     of emSelectRect:
-      discard handleMoveCursor(ke, MoveKeysCursor,
-                               allowPan=false, allowJump=false, a)
+      discard handleMoveCursor(ke, allowPan=false, allowJump=false,
+                               allowWasdKeys=false, a)
       let cur = a.ui.cursor
 
       var r1,c1, r2,c2: Natural
@@ -5967,8 +5965,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emPastePreview
     of emPastePreview:
-      discard handleMoveCursor(ke, MoveKeysCursor, a)
-
+      discard handleMoveCursor(ke, allowPan=true, allowJump=true,
+                               allowWasdKeys=false, a)
       let cur = a.ui.cursor
 
       a.ui.drawLevelParams.selStartRow = cur.row
@@ -5997,8 +5995,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emMovePreview
     of emMovePreview:
-      discard handleMoveCursor(ke, MoveKeysCursor, a)
-
+      discard handleMoveCursor(ke, allowPan=true, allowJump=true,
+                               allowWasdKeys=false, a)
       let cur = a.ui.cursor
 
       a.ui.drawLevelParams.selStartRow = cur.row
@@ -6057,8 +6055,8 @@ proc handleGlobalKeyEvents(a) =
     of emSetCellLink:
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
-        let moveKeys = if opts.wasdMode: MoveKeysWasd else: MoveKeysCursor
-        discard handleMoveCursor(ke, moveKeys, a)
+        discard handleMoveCursor(ke, allowPan=true, allowJump=true,
+                                 allowWasdKeys=true, a)
 
       if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
       elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
