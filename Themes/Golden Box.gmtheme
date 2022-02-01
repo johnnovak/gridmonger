@@ -108,6 +108,10 @@ ui {
     logo = "#a79270ff"
   }
 
+  quick-help {
+    background = "#4e4333ff"
+  }
+
   splash-image {
     logo = "#3c362eff"
     outline = "#ae9267ff"
@@ -144,8 +148,8 @@ level {
       highlight = "#000000cc"
     }
     region-border {
-      normal = "#924b30ff"
-      empty = "#924b306f"
+      normal = "#924324ff"
+      empty = "#92432563"
     }
   }
 
@@ -163,7 +167,7 @@ level {
     }
     floor {
       style = loose
-      grid = "#8b6f45ff"
+      grid = "#00000021"
     }
   }
 
@@ -189,16 +193,16 @@ level {
   floor {
     transparent = no
     background = [
+      "#0a0a0a00"
+      "#b89969ff"
+      "#e9030227"
+      "#ae8e5dff"
+      "#00000021"
+      "#58873ea0"
+      "#71a23380"
       "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
+      "#3379a2bb"
+      "#3379a2bb"
     ]
   }
 
@@ -210,12 +214,12 @@ level {
 
     comment = "#ff3300cc"
     background-shape = circle
-    index = "#ffffffb3"
+    index = "#ffffffa4"
     index-background = [
-      "#00000000"
-      "#00000000"
-      "#00000000"
-      "#00000000"
+      "#503b25a1"
+      "#903e2cd5"
+      "#2c6c90d5"
+      "#4f6949d5"
       "#443823f0"
     ]
 
@@ -232,7 +236,7 @@ level {
 
   label {
     text = [
-      "#00000000"
+      "#000000a1"
       "#00000000"
       "#00000000"
       "#00000000"
@@ -273,8 +277,8 @@ pane {
 
   toolbar {
     button {
-      normal = "#ae936aff"
-      hover = "#bda887ff"
+      normal = "#ac9064ff"
+      hover = "#bea274ff"
     }
   }
 }

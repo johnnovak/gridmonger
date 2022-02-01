@@ -91,7 +91,7 @@ ui {
     coordinates = "#999999ff"
 
     command {
-      background = "#6e6e82ff"
+      background = "#b98900ff"
       text = "#2e2e2eff"
     }
   }
@@ -106,6 +106,10 @@ ui {
 
   about-dialog {
     logo = "#e0e0f0d7"
+  }
+
+  quick-help {
+    background = "#444461ff"
   }
 
   splash-image {

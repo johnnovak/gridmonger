@@ -108,6 +108,10 @@ ui {
     logo = "#a04e00ff"
   }
 
+  quick-help {
+    background = "#411700ff"
+  }
+
   splash-image {
     logo = "#461603ff"
     outline = "#914900ff"

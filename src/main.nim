@@ -550,6 +550,7 @@ type
     sectionLevelDropDown:    bool
     sectionAboutButton:      bool
     sectionAboutDialog:      bool
+    sectionQuickHelp:        bool
     sectionSplashImage:      bool
 
     sectionLevel:            bool
@@ -6875,6 +6876,11 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
         a.aboutLogo.updateLogoImage = true
 
+    if koi.subSectionHeader("Quick Help", te.sectionQuickHelp):
+      p = "ui.quick-help."
+      group:
+        colorProp("Background",        p & "background")
+
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
       group:
         p = "ui.splash-image."
@@ -7396,13 +7402,13 @@ let g_quickRefShortcuts = @[
 
 proc renderQuickReference(a) =
   alias(vg, a.vg)
+  let cfg = a.theme.config
 
   const
     h = 24.0
     sepaH = 14.0
     defaultColWidth = 105.0
 
-  # TODO
   let textColor = a.theme.statusBarStyle.textColor
 
   proc renderSection(x, y: float; items: seq[QuickRefItem];
@@ -7451,7 +7457,6 @@ proc renderQuickReference(a) =
       of qkSeparator:
         y += sepaH
 
-  # TODO
   let
     ds = a.theme.dialogStyle
     uiWidth = drawAreaWidth(a)
@@ -7466,7 +7471,7 @@ proc renderQuickReference(a) =
     # Background
     vg.beginPath()
     vg.rect(0, 0, uiWidth, uiHeight)
-    vg.fillColor(ds.backgroundColor)
+    vg.fillColor(cfg.getColorOrDefault("ui.quick-help.background"))
     vg.fill()
 
     # Title

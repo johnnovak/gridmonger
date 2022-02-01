@@ -126,6 +126,10 @@ const DefaultThemeString = """
       logo = "#e6e6e6ff"
     }
 
+    quick-help {
+      background = "#ff00ffff"
+    }
+
     splash-image {
       logo = "#202020ff"
       outline = "#e6e6e6ff"

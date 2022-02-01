@@ -108,6 +108,10 @@ ui {
     logo = "#cec5b2ff"
   }
 
+  quick-help {
+    background = "#51483fff"
+  }
+
   splash-image {
     logo = "#674b28ff"
     outline = "#ceb37aff"
@@ -117,7 +121,7 @@ ui {
 
 level {
   general {
-    background = "#62584eff"
+    background = "#655a4eff"
     line-width = normal
     cursor = "#ffb300ff"
     cursor-guides = "#ffb30033"
