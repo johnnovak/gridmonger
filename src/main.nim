@@ -4949,7 +4949,7 @@ proc startDrawWallAction(a) =
 # }}}
 # {{{ startDrawSpecialWallAction()
 proc startDrawSpecialWallAction(a) =
-  setStatusMessage("", "Draw wall special", @[IconArrowsAll, "set/clear"], a)
+  setStatusMessage("", "Draw special wall", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
 
