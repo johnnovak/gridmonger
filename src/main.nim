@@ -5773,8 +5773,13 @@ proc handleGlobalKeyEvents(a) =
       if   koi.ctrlDown(): setSelectModeActionMessage(a)
       else:                setSelectModeSelectMessage(a)
 
-      if   ke.isShortcutDown(scSelectionDraw):  ui.editMode = emSelectDraw
-      elif ke.isShortcutDown(scSelectionErase): ui.editMode = emSelectErase
+      if   ke.isShortcutDown(scSelectionDraw):
+        ui.selection.get[cur.row, cur.col] = true
+        ui.editMode = emSelectDraw
+
+      elif ke.isShortcutDown(scSelectionErase):
+        ui.selection.get[cur.row, cur.col] = false
+        ui.editMode = emSelectErase
 
       elif ke.isShortcutDown(scSelectionAll):  ui.selection.get.fill(true)
       elif ke.isShortcutDown(scSelectionNone): ui.selection.get.fill(false)
