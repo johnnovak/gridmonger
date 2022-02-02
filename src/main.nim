@@ -7199,14 +7199,15 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 # {{{ Quick reference definition
 type
   QuickRefItemKind = enum
-    qkShortcut, qkKeyShortcuts, qkDescription, qkSeparator
+    qkShortcut, qkKeyShortcuts, qkCustomShortcuts, qkDescription, qkSeparator
 
   QuickRefItem = object
     sepa: char
     case kind: QuickRefItemKind
-    of qkShortcut:       shortcut:       AppShortcut
-    of qkKeyShortcuts:   keyShortcuts:   seq[KeyShortcut]
-    of qkDescription:    description:    string
+    of qkShortcut:        shortcut:        AppShortcut
+    of qkKeyShortcuts:    keyShortcuts:    seq[KeyShortcut]
+    of qkCustomShortcuts: customShortcuts: seq[string]
+    of qkDescription:     description:     string
     of qkSeparator:      discard
 
 proc sc(sc: AppShortcut): QuickRefItem =
@@ -7222,6 +7223,9 @@ proc sc(sc: KeyShortcut): QuickRefItem =
 
 proc sc(sc: seq[KeyShortcut], sepa = '/'): QuickRefItem =
   QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: sc, sepa: sepa)
+
+proc csc(s: seq[string]): QuickRefItem =
+  QuickRefItem(kind: qkCustomShortcuts, customShortcuts: s)
 
 proc desc(s: string): QuickRefItem =
   QuickRefItem(kind: qkDescription, description: s)
@@ -7378,10 +7382,16 @@ let g_quickRef_Dialogs = @[
     KeyShortcut(key: keyTab,
                 mods: {mkShift}).sc, "Previous text input field".desc,
 
+    scNextTextField.sc, "Next text input field".desc,
+    QuickRefSepa,
+
     @[KeyShortcut(key: key1, mods: {mkCtrl}),
       KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
 
-    scNextTextField.sc, "Next text input field".desc,
+    @[fmt"Ctrl-{IconArrowsHoriz}"].csc, "Switch current tab".desc,
+    QuickRefSepa,
+
+    @[fmt"{IconArrowsAll}"].csc, "Change radio button selection".desc,
     QuickRefSepa,
 
     scAccept.sc,  "Confirm".desc,
@@ -7447,6 +7457,19 @@ proc renderQuickReference(a) =
             sx += 9
         x += colWidth
         heightInc = h
+
+      of qkCustomShortcuts:
+        var sx = x
+        for idx, shortcut in item.customShortcuts:
+          var xa = renderCommand(sx, y, shortcut, a)
+          if idx < item.customShortcuts.high:
+            sx += xa + 13
+            vg.fillColor(textColor)
+            xa = vg.text(round(sx), round(y), $item.sepa)
+            sx += 9
+        x += colWidth
+        heightInc = h
+
 
       of qkDescription:
         vg.fillColor(textColor)
