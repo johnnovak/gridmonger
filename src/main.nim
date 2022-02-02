@@ -2716,14 +2716,15 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
     let (x, y, w, h) = snapToGrid(x, y, w, h, sw)
 
     var col = colors[buttonIdx]
-    if state in {wsHover, wsDown, wsActiveHover}:
-      col = col.lerp(white(), 0.15)
+
+    let cursorColor = if state == wsHover: cursorColor.withAlpha(0.65)
+                      else: cursorColor
 
     const Pad = 5
     const SelPad = 3
 
     var cx, cy, cw, ch: float
-    if state in {wsDown, wsActive, wsActiveHover}:
+    if state in {wsDown, wsActive, wsActiveHover, wsHover}:
       vg.beginPath()
       vg.strokeColor(cursorColor)
       vg.strokeWidth(sw)
