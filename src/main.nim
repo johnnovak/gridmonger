@@ -6183,13 +6183,13 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
       noteBoxX = x
       noteBoxY = y
       noteBoxW = 250.0
+      textX = noteBoxX + PadX
+      textY = noteBoxY + PadY
 
     vg.setFont(14, "sans-bold", horizAlign=haLeft, vertAlign=vaTop)
     vg.textLineHeight(1.5)
 
     let
-      textX = noteBoxX + PadX
-      textY = noteBoxY + PadY
       breakWidth = noteBoxW - PadX*2
       bounds = vg.textBoxBounds(textX, textY, breakWidth, note.text)
 
@@ -6205,9 +6205,12 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
 
     if xOver > 0:
       noteBoxX -= xOver
+      textX -= xOver
 
     if yOver > 0:
-      noteBoxY -= noteBoxH + 22
+      let offs = noteBoxH + 22
+      noteBoxY -= offs
+      textY -= offs
 
     vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH,
                   ls.noteTooltipShadowStyle)
