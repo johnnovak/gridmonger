@@ -44,8 +44,8 @@ RIFF ('GRDM'          # Gridmonger map file
     UINT8   origin            (0=northeast, 1=southeast)
     UINT8   rowStyle          (0=number, 1=letter)
     UINT8   columnStyle       (0=number, 1=letter)
-    INT16   rowStart          (min=0, max=6666)
-    INT16   columnStart       (min=0, max=6666)
+    INT16   rowStart          (min=-9999, max=9999)
+    INT16   columnStart       (min=-9999, max=9999)
 
 
 'prop' (Level)
