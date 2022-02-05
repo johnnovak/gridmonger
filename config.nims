@@ -4,8 +4,8 @@ import strutils
 
 
 proc setCommonCompileParams() =
-  --gc:orc
-  --deepcopy:on
+#  --gc:orc
+#  --deepcopy:on
   --d:nvgGL3
   --d:glfwStaticLib
   --d:nimPreviewFloatRoundtrip
