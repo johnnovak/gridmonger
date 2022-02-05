@@ -8369,8 +8369,8 @@ proc crashHandler(e: ref Exception, a) =
       msg &= "The map has been successfully autosaved as '" &
              crashAutosavePath
 
-  msg &= "\n\nIf the problem persists, please refer to the 'Reporting " &
-         "problems' section of the user manual on how to report it."
+  msg &= "\n\nIf the problem persists, please refer to the 'Get Involved!' " &
+         "section on the website."
 
   when not defined(DEBUG):
     discard osdialog_message(mblError, mbbOk, msg.cstring)
