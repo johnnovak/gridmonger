@@ -5275,14 +5275,15 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.backward,    mkS, repeat=true): moveLevel(backward(), s, a)
 
 
-  template handleMoveKeys(ke: Event, allowWasdKeys: bool, moveHandler: untyped) =
+  template handleMoveKeys(ke: Event, allowWasdKeys, allowRepeat: bool,
+                          moveHandler: untyped) =
     let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
             else: MoveKeysCursor
 
-    if   ke.isKeyDown(k.left,  repeat=true): moveHandler(dirW, a)
-    elif ke.isKeyDown(k.right, repeat=true): moveHandler(dirE, a)
-    elif ke.isKeyDown(k.up,    repeat=true): moveHandler(dirN, a)
-    elif ke.isKeyDown(k.down,  repeat=true): moveHandler(dirS, a)
+    if   ke.isKeyDown(k.left,  repeat=allowRepeat): moveHandler(dirW, a)
+    elif ke.isKeyDown(k.right, repeat=allowRepeat): moveHandler(dirE, a)
+    elif ke.isKeyDown(k.up,    repeat=allowRepeat): moveHandler(dirN, a)
+    elif ke.isKeyDown(k.down,  repeat=allowRepeat): moveHandler(dirS, a)
 
 
   proc handleMoveCursor(ke: Event; allowPan, allowJump, allowWasdKeys: bool;
@@ -5724,7 +5725,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
-      handleMoveKeys(ke, allowWasdKeys=true, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
       if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
@@ -5757,7 +5758,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
-      handleMoveKeys(ke, allowWasdKeys=true, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
       if ke.isShortcutUp(scDrawSpecialWall):
         ui.editMode = emNormal
@@ -6024,7 +6025,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emNudgePreview
     of emNudgePreview:
       # TODO add ctrl-jump support
-      handleMoveKeys(ke, allowWasdKeys=false, moveSelStart)
+      handleMoveKeys(ke, allowWasdKeys=false, allowRepeat=true, moveSelStart)
 
       let cur = a.ui.cursor
 
