@@ -55,11 +55,14 @@ proc `<`*(a, b: Location): bool =
 # }}}
 
 # {{{ toLetterCoord*)
-proc toLetterCoord*(x: Natural): string =
+proc toLetterCoord*(x: int): string =
 
-  const N = 26  # number of letters in alphabet
+  const N = 26  # number of letters in the alphabet
 
   proc toLetter(i: Natural): char = chr(ord('A') + i)
+
+  let negative = x < 0
+  let x = abs(x)
 
   if x < N:
     result = $x.toLetter
@@ -74,11 +77,15 @@ proc toLetterCoord*(x: Natural): string =
   else:
     result = ""
 
+  if result != "" and negative:
+    result = "-" & result
+
 # }}}
 # {{{ formatColumnCoord*()
 proc formatColumnCoord*(col: Natural, numCols: Natural,
                         co: CoordinateOptions, ro: RegionOptions): string =
 
+  let col = col.int
   let x = co.columnStart + (if ro.enabled and ro.perRegionCoords:
                                col mod ro.colsPerRegion
                             else: col)
@@ -92,6 +99,7 @@ proc formatColumnCoord*(col: Natural, numCols: Natural,
 proc formatRowCoord*(row: Natural, numRows: Natural,
                      coordOpts: CoordinateOptions, regionOpts: RegionOptions): string =
 
+  let row = row.int
   var x = case coordOpts.origin
     of coNorthWest: row
     of coSouthWest: numRows-1 - row

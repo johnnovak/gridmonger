@@ -41,8 +41,8 @@ const
   LevelRowsLimits*         = intLimits(min=1, max=6666)
   LevelColumnsLimits*      = intLimits(min=1, max=6666)
 
-  RowStartLimits*          = intLimits(min=0, max=6666)
-  ColumnStartLimits*       = intLimits(min=0, max=6666)
+  RowStartLimits*          = intLimits(min= -9999, max=9999)
+  ColumnStartLimits*       = intLimits(min= -9999, max=9999)
 
   RowsPerRegionLimits*     = intLimits(min=2, max=3333)
   ColumnsPerRegionLimits*  = intLimits(min=2, max=3333)

@@ -82,7 +82,7 @@ type
   CoordinateOptions* = object
     origin*:                 CoordinateOrigin
     rowStyle*, columnStyle*: CoordinateStyle
-    rowStart*, columnStart*: Natural
+    rowStart*, columnStart*: int
 
   CoordinateOrigin* = enum
     coNorthWest, coSouthWest

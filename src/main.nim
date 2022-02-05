@@ -2380,8 +2380,8 @@ template coordinateFields() =
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
         kind:   tckInteger,
-        minInt: 0,
-        maxInt: LevelColumnsLimits.maxInt
+        minInt: ColumnStartLimits.minInt,
+        maxInt: ColumnStartLimits.maxInt
       ).some,
       style = a.theme.textFieldStyle
     )
@@ -2389,8 +2389,7 @@ template coordinateFields() =
       try:
         let i = parseInt(dlg.columnStart)
         koi.label(letterLabelX, y, LetterLabelWidth, DlgItemHeight,
-                  i.clamp(0, LevelColumnsLimits.maxInt).toLetterCoord,
-                  style=a.theme.labelStyle)
+                  i.toLetterCoord, style=a.theme.labelStyle)
       except ValueError:
         discard
 
@@ -2403,8 +2402,8 @@ template coordinateFields() =
       dlg.rowStart,
       constraint = TextFieldConstraint(
         kind:   tckInteger,
-        minInt: 0,
-        maxInt: LevelRowsLimits.maxInt
+        minInt: RowStartLimits.minInt,
+        maxInt: RowStartLimits.maxInt
       ).some,
       style = a.theme.textFieldStyle
     )
@@ -2412,8 +2411,7 @@ template coordinateFields() =
       try:
         let i = parseInt(dlg.rowStart)
         koi.label(letterLabelX, y, LetterLabelWidth, DlgItemHeight,
-                  i.clamp(0, LevelRowsLimits.maxInt).toLetterCoord,
-                  style=a.theme.labelStyle)
+                  i.toLetterCoord, style=a.theme.labelStyle)
       except ValueError:
         discard
 
@@ -2436,8 +2434,8 @@ template regionFields() =
           activate = dlg.activateFirstTextField,
           constraint = TextFieldConstraint(
             kind:   tckInteger,
-            minInt: LevelRowsLimits.minInt,
-            maxInt: LevelRowsLimits.maxInt
+            minInt: ColumnStartLimits.minInt,
+            maxInt: ColumnStartLimits.maxInt
           ).some,
           style = a.theme.textFieldStyle
         )
