@@ -916,12 +916,6 @@ proc drawIndexedNote(x, y: float; index, colorIdx: Natural;
 
   vg.fill()
 
-  # TODO debug
-  let index = if index < 5: index
-              elif index < 10: index * 5
-              else: index * 10
-  # TODO debug
-
   var fontSizeFactor = if   index <  10: 0.43
                        elif index < 100: 0.4
                        else:             0.35
