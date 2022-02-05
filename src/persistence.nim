@@ -22,6 +22,7 @@ import regions
 import rle
 import utils
 
+
 const CurrentMapVersion = 1
 
 # {{{ Field limits
@@ -53,8 +54,8 @@ const
                                        max=LevelStyle.floorBackgroundColor.len)
 
   NumAnnotationsLimits*    = intLimits(min=0, max=10_000)
-  NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=400)
-  NoteIconTextLimits*      = strLimits(minRuneLen=0, maxRuneLen=400)
+  NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=4000)
+  NoteIconTextLimits*      = strLimits(minRuneLen=0, maxRuneLen=4000)
   NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
 
   NoteColorLimits*      = intLimits(min=0,

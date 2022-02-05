@@ -130,7 +130,7 @@ RIFF ('GRDM'          # Gridmonger map file
     if kind == 4 (label)
         UINT8   labelColor    (max=3)
 
-    WSTR    text              (minRuneLen=1, maxRuneLen=400)
+    WSTR    text              (minRuneLen=1, maxRuneLen=4000)
 
 
 'lnks'
