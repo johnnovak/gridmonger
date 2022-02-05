@@ -3,12 +3,14 @@
 ._*
 *.swp
 *.exe
-*.gmm
-gridmonger.ini
-gridmonger
-*.log
-*.log.bak?
-Autosave
-Config
-dist
-User Themes
+
+/Autosaves
+/Config
+/dist
+/User Themes
+
+/gridmonger
+/gridmonger.ini
+/*.gmm
+/*.log
+/*.log.bak?
