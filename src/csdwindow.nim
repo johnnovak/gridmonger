@@ -186,6 +186,9 @@ proc hide*(win) =
 proc focus*(win) =
   win.w.focus()
 
+proc restore*(win) =
+  win.w.restore()
+
 proc shouldClose*(win): bool =
   win.w.shouldClose
 
@@ -204,8 +207,8 @@ proc getScreenSize(): (int, int) =
   let (_, _, w, h) = getPrimaryMonitor().workArea
   (w.int, h.int)
 # }}}
-# {{{ restore()
-proc restore(win) =
+# {{{ unmaximize()
+proc unmaximize(win) =
   if win.maximized:
     win.w.pos = win.unmaximizedPos
     win.w.size = win.unmaximizedSize
@@ -230,7 +233,7 @@ proc maximize*(win) =
 # }}}
 # {{{ alignLeft()
 proc alignLeft(win) =
-  win.restore()
+  win.unmaximize()
   let (w, h) = getScreenSize()
   win.w.pos = (0, 0)
   win.w.size = (w div 2, h)
@@ -238,7 +241,7 @@ proc alignLeft(win) =
 # }}}
 # {{{ alignRight()
 proc alignRight(win) =
-  win.restore()
+  win.unmaximize()
   let (w, h) = getScreenSize()
   let x = w div 2
   win.w.pos = (x, 0)
@@ -304,7 +307,7 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
                 style=buttonStyle):
     if not win.maximizing:  # workaround to avoid double-activation
       if win.maximized:
-        win.restore()
+        win.unmaximize()
       else:
         win.maximize()
 

@@ -44,6 +44,9 @@ import theme
 import unicode
 import utils
 
+when defined(windows):
+  import platform/windows/ipc
+
 # }}}
 
 # {{{ Resources
@@ -4994,6 +4997,17 @@ proc openMap(a) =
   else:
     doOpenMap(a)
 
+
+proc openMap(filename: string; a) =
+
+  proc doOpenMap(a) =
+    discard loadMap(filename, a)
+
+  if a.doc.undoManager.isModified:
+    openSaveDiscardMapDialog(action=doOpenMap, a)
+  else:
+    doOpenMap(a)
+
 # }}}
 # {{{ saveMapAs()
 proc saveMapAs(a) =
@@ -8388,6 +8402,17 @@ proc crashHandler(e: ref Exception, a) =
 
 # {{{ main()
 proc main() =
+  var serverInitOk = false
+  if ipc.isAppInstanceAlreadyRunning():
+    if ipc.initClient():
+      if paramCount() == 0:
+        ipc.sendFocusMessage()
+      else:
+        ipc.sendOpenFileMessage(paramStr(1))
+    quit()
+  else:
+    serverInitOk = ipc.initServer()
+
   g_app = new AppContext
   var a = g_app
 
@@ -8440,11 +8465,25 @@ proc main() =
 
       handleAutoSaveMap(a)
 
+      if serverInitOk:
+        let msg = ipc.tryReceiveMessage()
+        if msg.isSome:
+          let msg = msg.get
+          case msg.kind
+          of mkFocus:
+            a.win.restore()
+            a.win.focus()
+
+          of mkOpenFile:
+            a.win.restore()
+            a.win.focus()
+            openMap(msg.filename, a)
+
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
-        glfw.waitEventsTimeout(15)
+        glfw.waitEventsTimeout(0.1)
 
     cleanup(a)
 
