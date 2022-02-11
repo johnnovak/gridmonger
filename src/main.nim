@@ -208,7 +208,7 @@ type
   Paths = object
     appDir:             string
     dataDir:            string
-    logfileDir:         string
+    logDir:             string
     userDataDir:        string
     configDir:          string
     manualDir:          string
@@ -8226,7 +8226,8 @@ proc initPaths(a) =
   p.configDir = p.userDataDir / ConfigDir
   p.configFile = p.configDir / "gridmonger.cfg"
 
-  p.logFile = p.userDataDir / "gridmonger.log"
+  p.logDir = p.userDataDir / "Logs"
+  p.logFile = p.logDir / "gridmonger.log"
 
   p.autosaveDir = p.userDataDir / "Autosaves"
 
@@ -8240,6 +8241,7 @@ proc createDirs(a) =
 
   createDir(p.userDataDir)
   createDir(p.configDir)
+  createDir(p.logDir)
   createDir(p.autosaveDir)
   createDir(p.userThemesDir)
   createDir(p.userThemeImagesDir)

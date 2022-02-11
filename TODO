@@ -3,7 +3,6 @@ BUGS
 
 - undo modified flag weirdness
 - should load default theme when theme cannot be found
-- how to handle crash logs and autosave when running multiple instances
 
 
 
