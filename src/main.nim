@@ -174,12 +174,12 @@ type
     vg:          NVGContext
 
     prefs:       Preferences
-    path:        Paths
+    paths:       Paths
 
     doc:         Document
     opts:        Options
     ui:          UIState
-    dialog:      Dialogs
+    dialogs:     Dialogs
 
     theme:       Theme
     themeEditor: ThemeEditor
@@ -1084,7 +1084,7 @@ proc toStr(sc: AppShortcut, idx = -1): string =
 
 # {{{ rollLogFile(a)
 proc rollLogFile(a) =
-  alias(p, a.path)
+  alias(p, a.paths)
 
   let fileNames = @[
     p.logFile & ".bak3",
@@ -1107,7 +1107,7 @@ proc rollLogFile(a) =
 # {{{ initLogger(a)
 proc initLogger(a) =
   rollLogFile(a)
-  a.logFile = open(a.path.logFile, fmWrite)
+  a.logFile = open(a.paths.logFile, fmWrite)
   var fileLog = newFileLogger(a.logFile,
                               fmtStr="[$levelname] $date $time - ",
                               levelThreshold=lvlDebug)
@@ -1654,8 +1654,8 @@ func findThemeIndex(name: string; a): Option[Natural] =
 # }}}
 # {{{ themePath()
 func themePath(theme: ThemeName; a): string =
-  let themeDir = if theme.userTheme: a.path.userThemesDir
-                 else: a.path.themesDir
+  let themeDir = if theme.userTheme: a.paths.userThemesDir
+                 else: a.paths.themesDir
   themeDir / addFileExt(theme.name, ThemeExt)
 
 # }}}
@@ -1701,8 +1701,8 @@ proc buildThemeList(a) =
           ThemeName(name: name, userTheme: userTheme, override: false)
         )
 
-  addThemeNames(a.path.themesDir, userTheme=false)
-  addThemeNames(a.path.userThemesDir, userTheme=true)
+  addThemeNames(a.paths.themesDir, userTheme=false)
+  addThemeNames(a.paths.userThemesDir, userTheme=true)
 
   if themeNames.len == 0:
     raise newException(IOError, "Could not find any themes, exiting")
@@ -1782,13 +1782,13 @@ proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
 # {{{ loadThemeImage()
 proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
   if userTheme:
-    let imgPath = a.path.userThemeImagesDir / imageName
+    let imgPath = a.paths.userThemeImagesDir / imageName
     result = loadImage(imgPath, a)
     if result.isNone:
       info("Couldn't load image from user theme images directory: " &
            fmt"'{imgPath}'. Attempting default theme images directory.")
 
-  let imgPath = a.path.themeImagesDir / imageName
+  let imgPath = a.paths.themeImagesDir / imageName
   result = loadImage(imgPath, a)
   if result.isNone:
     logging.error(
@@ -2181,7 +2181,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "width",          width)
   cfg.set(p & "height",         height)
 
-  saveAppConfig(cfg, a.path.configFile)
+  saveAppConfig(cfg, a.paths.configFile)
 
 # }}}
 
@@ -2291,7 +2291,7 @@ proc handleAutoSaveMap(a) =
     let dt = getMonoTime() - a.doc.lastAutosaveTime
     if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
       let filename = if a.doc.filename == "":
-                       a.path.autosaveDir / addFileExt("Untitled", MapFileExt)
+                       a.paths.autosaveDir / addFileExt("Untitled", MapFileExt)
                      else: a.doc.filename
 
       saveMap(filename, autosave=true, a)
@@ -2305,7 +2305,7 @@ proc autoSaveMapOnCrash(a): string =
     let (path, _, _) = splitFile(a.doc.filename)
     fname = path
   else:
-    fname = a.path.autosaveDir
+    fname = a.paths.autosaveDir
 
   fname = fname / CrashAutosaveFilename
 
@@ -2758,14 +2758,14 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 # {{{ closeDialog()
 proc closeDialog(a) =
   koi.closeDialog()
-  a.dialog.activeDialog = dlgNone
+  a.dialogs.activeDialog = dlgNone
 # }}}
 
 # }}}
 
 # {{{ About dialog
 proc openAboutDialog(a) =
-  a.dialog.activeDialog = dlgAboutDialog
+  a.dialogs.activeDialog = dlgAboutDialog
 
 proc openUserManual(a)
 proc openWebsite(a)
@@ -2864,7 +2864,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 # }}}
 # {{{ Preferences dialog
 proc openPreferencesDialog(a) =
-  alias(dlg, a.dialog.preferencesDialog)
+  alias(dlg, a.dialogs.preferencesDialog)
 
   dlg.showSplash        = a.prefs.showSplash
   dlg.autoCloseSplash   = a.prefs.autoCloseSplash
@@ -2874,7 +2874,7 @@ proc openPreferencesDialog(a) =
   dlg.autosave          = a.prefs.autosave
   dlg.autosaveFreqMins  = $a.prefs.autosaveFreqMins
 
-  a.dialog.activeDialog = dlgPreferencesDialog
+  a.dialogs.activeDialog = dlgPreferencesDialog
 
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
@@ -3037,9 +3037,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 # }}}
 # {{{ Save/discard map changes dialog
 proc openSaveDiscardMapDialog(action: proc (a: var AppContext); a) =
-  alias(dlg, a.dialog.saveDiscardMapDialog)
+  alias(dlg, a.dialogs.saveDiscardMapDialog)
   dlg.action = action
-  a.dialog.activeDialog = dlgSaveDiscardMapDialog
+  a.dialogs.activeDialog = dlgSaveDiscardMapDialog
 
 
 proc saveMap(a)
@@ -3115,7 +3115,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
 
 # {{{ New map dialog
 proc openNewMapDialog(a) =
-  alias(dlg, a.dialog.newMapDialog)
+  alias(dlg, a.dialogs.newMapDialog)
 
   with a.doc.map.coordOpts:
     dlg.title        = "Untitled Map"
@@ -3132,7 +3132,7 @@ proc openNewMapDialog(a) =
 
   dlg.activeTab = 0
 
-  a.dialog.activeDialog = dlgNewMapDialog
+  a.dialogs.activeDialog = dlgNewMapDialog
 
 
 proc newMapDialog(dlg: var NewMapDialogParams; a) =
@@ -3251,7 +3251,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 # }}}
 # {{{ Edit map properties dialog
 proc openEditMapPropsDialog(a) =
-  alias(dlg, a.dialog.editMapPropsDialog)
+  alias(dlg, a.dialogs.editMapPropsDialog)
   alias(map, a.doc.map)
 
   dlg.title        = map.title
@@ -3267,7 +3267,7 @@ proc openEditMapPropsDialog(a) =
 
   dlg.notes = map.notes
 
-  a.dialog.activeDialog = dlgEditMapPropsDialog
+  a.dialogs.activeDialog = dlgEditMapPropsDialog
 
 
 proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
@@ -3380,7 +3380,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
 # {{{ New level dialog
 proc openNewLevelDialog(a) =
-  alias(dlg, a.dialog.newLevelDialog)
+  alias(dlg, a.dialogs.newLevelDialog)
 
   let map = a.doc.map
   var co: CoordinateOptions
@@ -3421,7 +3421,7 @@ proc openNewLevelDialog(a) =
 
   dlg.activeTab = 0
 
-  a.dialog.activeDialog = dlgNewLevelDialog
+  a.dialogs.activeDialog = dlgNewLevelDialog
 
 
 proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
@@ -3569,7 +3569,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
 # }}}
 # {{{ Edit level properties dialog
 proc openEditLevelPropsDialog(a) =
-  alias(dlg, a.dialog.editLevelPropsDialog)
+  alias(dlg, a.dialogs.editLevelPropsDialog)
 
   let l = currLevel(a)
 
@@ -3595,7 +3595,7 @@ proc openEditLevelPropsDialog(a) =
 
   dlg.notes = l.notes
 
-  a.dialog.activeDialog = dlgEditLevelPropsDialog
+  a.dialogs.activeDialog = dlgEditLevelPropsDialog
 
 
 proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
@@ -3736,14 +3736,14 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
 # }}}
 # {{{ Resize level dialog
 proc openResizeLevelDialog(a) =
-  alias(dlg, a.dialog.resizeLevelDialog)
+  alias(dlg, a.dialogs.resizeLevelDialog)
 
   let l = currLevel(a)
   dlg.rows = $l.rows
   dlg.cols = $l.cols
   dlg.anchor = raCenter
 
-  a.dialog.activeDialog = dlgResizeLevelDialog
+  a.dialogs.activeDialog = dlgResizeLevelDialog
 
 
 proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
@@ -3875,7 +3875,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 # }}}
 # {{{ Delete level dialog
 proc openDeleteLevelDialog(a) =
-  a.dialog.activeDialog = dlgDeleteLevelDialog
+  a.dialogs.activeDialog = dlgDeleteLevelDialog
 
 
 proc deleteLevelDialog(a) =
@@ -3942,7 +3942,7 @@ proc deleteLevelDialog(a) =
 
 # {{{ Edit note dialog
 proc openEditNoteDialog(a) =
-  alias(dlg, a.dialog.editNoteDialog)
+  alias(dlg, a.dialogs.editNoteDialog)
 
   let cur = a.ui.cursor
   let l = currLevel(a)
@@ -3973,7 +3973,7 @@ proc openEditNoteDialog(a) =
     dlg.customId = ""
     dlg.text = ""
 
-  a.dialog.activeDialog = dlgEditNoteDialog
+  a.dialogs.activeDialog = dlgEditNoteDialog
 
 
 proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
@@ -4160,7 +4160,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 # }}}
 # {{{ Edit label dialog
 proc openEditLabelDialog(a) =
-  alias(dlg, a.dialog.editLabelDialog)
+  alias(dlg, a.dialogs.editLabelDialog)
 
   let cur = a.ui.cursor
   let l = currLevel(a)
@@ -4178,7 +4178,7 @@ proc openEditLabelDialog(a) =
     dlg.editMode = false
     dlg.text = ""
 
-  a.dialog.activeDialog = dlgEditLabelDialog
+  a.dialogs.activeDialog = dlgEditLabelDialog
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
@@ -4294,13 +4294,13 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
 # {{{ Edit region properties dialog
 proc openEditRegionPropertiesDialog(a) =
-  alias(dlg, a.dialog.editRegionPropsDialog)
+  alias(dlg, a.dialogs.editRegionPropsDialog)
 
   let region = currRegion(a).get
   dlg.name  = region.name
   dlg.notes = region.notes
 
-  a.dialog.activeDialog = dlgEditRegionPropsDialog
+  a.dialogs.activeDialog = dlgEditRegionPropsDialog
 
 
 proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
@@ -4420,9 +4420,9 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 
 # {{{ Save/discard theme changes dialog
 proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
-  alias(dlg, a.dialog.saveDiscardThemeDialog)
+  alias(dlg, a.dialogs.saveDiscardThemeDialog)
   dlg.action = action
-  a.dialog.activeDialog = dlgSaveDiscardThemeDialog
+  a.dialogs.activeDialog = dlgSaveDiscardThemeDialog
 
 
 proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
@@ -4496,12 +4496,12 @@ proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
 # {{{ Overwrite theme dialog
 proc openOverwriteThemeDialog(themeName: string,
                               action: proc (a: var AppContext); a) =
-  alias(dlg, a.dialog.overwriteThemeDialog)
+  alias(dlg, a.dialogs.overwriteThemeDialog)
 
   dlg.themeName = themeName
   dlg.action = action
 
-  a.dialog.activeDialog = dlgOverwriteThemeDialog
+  a.dialogs.activeDialog = dlgOverwriteThemeDialog
 
 
 proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
@@ -4568,9 +4568,9 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
 # {{{ Copy theme dialog
 
 proc openCopyThemeDialog(a) =
-  alias(dlg, a.dialog.copyThemeDialog)
+  alias(dlg, a.dialogs.copyThemeDialog)
   dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
-  a.dialog.activeDialog = dlgCopyThemeDialog
+  a.dialogs.activeDialog = dlgCopyThemeDialog
 
 
 proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
@@ -4628,8 +4628,8 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
   proc copyAction(dlg: var CopyThemeDialogParams; a) =
     let dlg = dlg
-    let newThemePath = a.path.userThemesDir / addFileExt(dlg.newThemeName,
-                                                         ThemeExt)
+    let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
+                                                          ThemeExt)
     proc copyTheme(a) =
       if copyTheme(a.currThemeName, newThemePath, a):
         buildThemeList(a)
@@ -4679,9 +4679,9 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 # {{{ Rename theme dialog
 
 proc openRenameThemeDialog(a) =
-  alias(dlg, a.dialog.renameThemeDialog)
+  alias(dlg, a.dialogs.renameThemeDialog)
   dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
-  a.dialog.activeDialog = dlgRenameThemeDialog
+  a.dialogs.activeDialog = dlgRenameThemeDialog
 
 
 proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
@@ -4739,8 +4739,8 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 
   proc renameAction(dlg: var RenameThemeDialogParams; a) =
     let dlg = dlg
-    let newThemePath = a.path.userThemesDir / addFileExt(dlg.newThemeName,
-                                                         ThemeExt)
+    let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
+                                                          ThemeExt)
     proc renameTheme(a) =
       if renameTheme(a.currThemeName, newThemePath, a):
         buildThemeList(a)
@@ -4790,7 +4790,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 # {{{ Delete theme dialog
 
 proc openDeleteThemeDialog(a) =
-  a.dialog.activeDialog = dlgDeleteThemeDialog
+  a.dialogs.activeDialog = dlgDeleteThemeDialog
 
 
 proc deleteThemeDialog(a) =
@@ -4944,7 +4944,7 @@ proc startDrawSpecialWallAction(a) =
 # {{{ Non-undoable actions
 # {{{ openUserManual()
 proc openUserManual(a) =
-  openDefaultBrowser(a.path.manualDir / "index.html")
+  openDefaultBrowser(a.paths.manualDir / "index.html")
 
 # }}}
 # {{{ openWebsite()
@@ -7627,7 +7627,7 @@ proc renderRegionDropDown(a) =
 # }}}
 # {{{ renderDialogs()
 proc renderDialogs(a) =
-  alias(dlg, a.dialog)
+  alias(dlg, a.dialogs)
 
   case dlg.activeDialog:
   of dlgNone: discard
@@ -8041,7 +8041,7 @@ proc closeSplash(a) =
 
 # {{{ loadAndSetIcon()
 proc loadAndSetIcon(a) =
-  alias(p, a.path)
+  alias(p, a.paths)
 
   var icons: array[5, wrapper.IconImageObj]
 
@@ -8067,7 +8067,7 @@ proc loadAndSetIcon(a) =
 # }}}
 # {{{ loadFonts()
 proc loadFonts(a) =
-  alias(p, a.path)
+  alias(p, a.paths)
 
   proc loadFont(fontName: string, filename: string; a): Font =
     try:
@@ -8088,7 +8088,7 @@ proc loadFonts(a) =
 # {{{ loadSplashmages()
 proc loadSplashImages(a) =
   alias(s, a.splash)
-  alias(p, a.path)
+  alias(p, a.paths)
 
   s.logo    = loadImage(p.dataDir / "logo.png")
   s.outline = loadImage(p.dataDir / "logo-outline.png")
@@ -8103,7 +8103,7 @@ proc loadSplashImages(a) =
 proc loadAboutLogoImage(a) =
   alias(al, a.aboutLogo)
 
-  al.logo = loadImage(a.path.dataDir / "logo-small.png")
+  al.logo = loadImage(a.paths.dataDir / "logo-small.png")
   createAlpha(al.logo)
 
 # }}}
@@ -8152,7 +8152,7 @@ GPU info
 # }}}
 # {{{ initPaths()
 proc initPaths(a) =
-  alias(p, a.path)
+  alias(p, a.paths)
 
   const ImagesDir = "Images"
 
@@ -8195,7 +8195,7 @@ proc initPaths(a) =
 # }}}
 # {{{ createDirs()
 proc createDirs(a) =
-  alias(p, a.path)
+  alias(p, a.paths)
 
   createDir(p.userDataDir)
   createDir(p.configDir)
@@ -8265,9 +8265,9 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
              winCfg: HoconNode; a) =
 
   if configFile.isSome:
-    a.path.configFile = configFile.get
+    a.paths.configFile = configFile.get
 
-  let cfg = loadAppConfigOrDefault(a.path.configFile)
+  let cfg = loadAppConfigOrDefault(a.paths.configFile)
   initPreferences(cfg, a)
 
   loadFonts(a)
@@ -8428,7 +8428,7 @@ proc main() =
 
     info(FullVersionInfo)
     info(CompiledAtInfo)
-    info(fmt"Paths: {a.path}")
+    info(fmt"Paths: {a.paths}")
 
     initGfx(a)
     initApp(configFile, mapFile, winCfg, a)
