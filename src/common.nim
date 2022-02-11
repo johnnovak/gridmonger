@@ -17,7 +17,7 @@ const
   VersionInfo* = fmt"Version {AppVersion} ({BuildGitHash})"
   FullVersionInfo* = fmt"Gridmonger {VersionInfo} [{hostOS}/{hostCPU}]"
   CompiledAtInfo* = fmt"Compiled at {CompileDate} {CompileTime}"
-  DevelopedByInfo* = fmt"Developed by John Novak, 2019-{CompileDate[0..3]}"
+  DevelopedByInfo* = fmt"Developed by John Novak, 2020-{CompileDate[0..3]}"
 
 const
   EnDash* = "\u2013"
