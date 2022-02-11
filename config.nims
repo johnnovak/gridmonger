@@ -4,8 +4,8 @@ import strutils
 
 
 proc setCommonCompileParams() =
-#  --gc:orc
-#  --deepcopy:on
+  --gc:orc
+  --deepcopy:on
   --d:nvgGL3
   --d:glfwStaticLib
   --d:nimPreviewFloatRoundtrip
@@ -61,7 +61,7 @@ task packageMac, "create Mac app bundle":
   cpDir "Example Maps", resourcesDir / "Example Maps"
   cpDir "Manual", resourcesDir / "Manual"
   cpDir "Themes", resourcesDir / "Themes"
-  cpFile "gridmonger.icns", resourcesDir / "gridmonger.icns"
+  cpFile "extras/appicons/mac/gridmonger.icns", resourcesDir / "gridmonger.icns"
 
   # Clean executable
   exec "chmod +x " & distExePath

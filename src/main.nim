@@ -208,6 +208,7 @@ type
   Paths = object
     appDir:             string
     dataDir:            string
+    logfileDir:         string
     userDataDir:        string
     configDir:          string
     manualDir:          string
@@ -349,8 +350,37 @@ type
     userTheme: bool
     override:  bool
 
+  Dialog = enum
+    dlgNone,
+
+    dlgAboutDialog,
+    dlgPreferencesDialog,
+
+    dlgSaveDiscardMapDialog,
+
+    dlgNewMapDialog,
+    dlgEditMapPropsDialog,
+
+    dlgNewLevelDialog,
+    dlgEditLevelPropsDialog,
+    dlgResizeLevelDialog,
+    dlgDeleteLevelDialog,
+
+    dlgEditNoteDialog,
+    dlgEditLabelDialog,
+
+    dlgEditRegionPropsDialog,
+
+    dlgSaveDiscardThemeDialog,
+    dlgCopyThemeDialog,
+    dlgRenameThemeDialog,
+    dlgOverwriteThemeDialog,
+    dlgDeleteThemeDialog
+
 
   Dialogs = object
+    activeDialog:           Dialog
+
     aboutDialog:            AboutDialogParams
     preferencesDialog:      PreferencesDialogParams
 
@@ -362,7 +392,6 @@ type
     newLevelDialog:         LevelPropertiesDialogParams
     editLevelPropsDialog:   LevelPropertiesDialogParams
     resizeLevelDialog:      ResizeLevelDialogParams
-    deleteLevelDialog:      DeleteLevelDialogParams
 
     editNoteDialog:         EditNoteDialogParams
     editLabelDialog:        EditLabelDialogParams
@@ -373,18 +402,15 @@ type
     copyThemeDialog:        CopyThemeDialogParams
     renameThemeDialog:      RenameThemeDialogParams
     overwriteThemeDialog:   OverwriteThemeDialogParams
-    deleteThemeDialog:      DeleteThemeDialogParams
 
 
   AboutDialogParams = object
-    isOpen:       bool
     logoPaint:    Paint
     outlinePaint: Paint
     shadowPaint:  Paint
 
 
   PreferencesDialogParams = object
-    isOpen:             bool
     activeTab:          Natural
     activateFirstTextField: bool
 
@@ -398,12 +424,10 @@ type
 
 
   SaveDiscardMapDialogParams = object
-    isOpen:       bool
     action:       proc (a: var AppContext)
 
 
   NewMapDialogParams = object
-    isOpen:       bool
     activeTab:    Natural
     activateFirstTextField: bool
 
@@ -420,7 +444,6 @@ type
 
 
   EditMapPropsDialogParams = object
-    isOpen:       bool
     activeTab:    Natural
     activateFirstTextField: bool
 
@@ -436,12 +459,7 @@ type
     notes:        string
 
 
-  DeleteLevelDialogParams = object
-    isOpen:       bool
-
-
   LevelPropertiesDialogParams = object
-    isOpen:            bool
     activeTab:         Natural
     activateFirstTextField: bool
 
@@ -471,7 +489,6 @@ type
 
 
   ResizeLevelDialogParams = object
-    isOpen:       bool
     activateFirstTextField: bool
 
     rows:         string
@@ -486,9 +503,7 @@ type
 
 
   EditNoteDialogParams = object
-    isOpen:       bool
     activateFirstTextField: bool
-
     editMode:     bool
     row:          Natural
     col:          Natural
@@ -501,9 +516,7 @@ type
 
 
   EditLabelDialogParams = object
-    isOpen:       bool
     activateFirstTextField: bool
-
     editMode:     bool
     row:          Natural
     col:          Natural
@@ -512,33 +525,25 @@ type
 
 
   EditRegionPropsParams = object
-    isOpen:       bool
     activateFirstTextField: bool
     name:         string
     notes:        string
 
   SaveDiscardThemeDialogParams = object
-    isOpen:       bool
     action:       proc (a: var AppContext)
 
   CopyThemeDialogParams = object
-    isOpen:       bool
     activateFirstTextField: bool
     newThemeName: string
 
   RenameThemeDialogParams = object
-    isOpen:       bool
     activateFirstTextField: bool
     newThemeName: string
 
 
   OverwriteThemeDialogParams = object
-    isOpen:       bool
     themeName:    string
     action:       proc (a: var AppContext)
-
-  DeleteThemeDialogParams = object
-    isOpen:       bool
 
 
   ThemeEditor = object
@@ -2750,11 +2755,17 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 
 # }}}
 
+# {{{ closeDialog()
+proc closeDialog(a) =
+  koi.closeDialog()
+  a.dialog.activeDialog = dlgNone
+# }}}
+
 # }}}
 
 # {{{ About dialog
 proc openAboutDialog(a) =
-  a.dialog.aboutDialog.isOpen = true
+  a.dialog.activeDialog = dlgAboutDialog
 
 proc openUserManual(a)
 proc openWebsite(a)
@@ -2828,8 +2839,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 
   proc closeAction(dlg: var AboutDialogParams; a) =
     a.aboutLogo.updateLogoImage = true
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   # HACK, HACK, HACK!
@@ -2863,7 +2873,8 @@ proc openPreferencesDialog(a) =
   dlg.vsync             = a.prefs.vsync
   dlg.autosave          = a.prefs.autosave
   dlg.autosaveFreqMins  = $a.prefs.autosaveFreqMins
-  dlg.isOpen            = true
+
+  a.dialog.activeDialog = dlgPreferencesDialog
 
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
@@ -2986,12 +2997,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     saveAppConfig(a)
     setSwapInterval(a)
 
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
+
 
   proc cancelAction(dlg: var PreferencesDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -3029,7 +3039,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 proc openSaveDiscardMapDialog(action: proc (a: var AppContext); a) =
   alias(dlg, a.dialog.saveDiscardMapDialog)
   dlg.action = action
-  dlg.isOpen = true
+  a.dialog.activeDialog = dlgSaveDiscardMapDialog
 
 
 proc saveMap(a)
@@ -3060,19 +3070,16 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   )
 
   proc saveAction(dlg: var SaveDiscardMapDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
     saveMap(a)
     dlg.action(a)
 
   proc discardAction(dlg: var SaveDiscardMapDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
     dlg.action(a)
 
   proc cancelAction(dlg: var SaveDiscardMapDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
 
@@ -3124,7 +3131,8 @@ proc openNewMapDialog(a) =
     dlg.notes        = ""
 
   dlg.activeTab = 0
-  dlg.isOpen = true
+
+  a.dialog.activeDialog = dlgNewMapDialog
 
 
 proc newMapDialog(dlg: var NewMapDialogParams; a) =
@@ -3202,12 +3210,11 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     resetCursorAndViewStart(a)
     setStatusMessage(IconFile, "New map created", a)
 
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
+
 
   proc cancelAction(dlg: var NewMapDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -3259,7 +3266,8 @@ proc openEditMapPropsDialog(a) =
     dlg.columnStart = $columnStart
 
   dlg.notes = map.notes
-  dlg.isOpen = true
+
+  a.dialog.activeDialog = dlgEditMapPropsDialog
 
 
 proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
@@ -3330,14 +3338,11 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
                              coordOpts, dlg.notes, a.doc.undoManager)
 
     setStatusMessage(IconFile, "Map properties updated", a)
-
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   proc cancelAction(dlg: var EditMapPropsDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -3415,7 +3420,8 @@ proc openNewLevelDialog(a) =
   dlg.perRegionCoords = true
 
   dlg.activeTab = 0
-  dlg.isOpen = true
+
+  a.dialog.activeDialog = dlgNewLevelDialog
 
 
 proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
@@ -3522,14 +3528,11 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
     setCursor(cur, a)
 
     setStatusMessage(IconFile, fmt"New {rows}×{cols} level created", a)
-
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   proc cancelAction(dlg: var LevelPropertiesDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -3592,7 +3595,7 @@ proc openEditLevelPropsDialog(a) =
 
   dlg.notes = l.notes
 
-  dlg.isOpen = true
+  a.dialog.activeDialog = dlgEditLevelPropsDialog
 
 
 proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
@@ -3694,14 +3697,11 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
                                a.doc.undoManager)
 
     setStatusMessage(fmt"Level properties updated", a)
-
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   proc cancelAction(dlg: var LevelPropertiesDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -3742,7 +3742,8 @@ proc openResizeLevelDialog(a) =
   dlg.rows = $l.rows
   dlg.cols = $l.cols
   dlg.anchor = raCenter
-  dlg.isOpen = true
+
+  a.dialog.activeDialog = dlgResizeLevelDialog
 
 
 proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
@@ -3833,16 +3834,14 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
                                      align, a.doc.undoManager)
     moveCursorTo(newCur, a)
 
-    setStatusMessage(IconCrop, "Level resized", a)
-    koi.closeDialog()
-    dlg.isOpen = false
-
     a.opts.drawTrail = false
+
+    setStatusMessage(IconCrop, "Level resized", a)
+    closeDialog(a)
 
 
   proc cancelAction(dlg: var ResizeLevelDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
                 style=a.theme.buttonStyle):
@@ -3876,10 +3875,10 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 # }}}
 # {{{ Delete level dialog
 proc openDeleteLevelDialog(a) =
-  a.dialog.deleteLevelDialog.isOpen = true
+  a.dialog.activeDialog = dlgDeleteLevelDialog
 
 
-proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
+proc deleteLevelDialog(a) =
   alias(map, a.doc.map)
   alias(um, a.doc.undoManager)
 
@@ -3901,40 +3900,38 @@ proc deleteLevelDialog(dlg: var DeleteLevelDialogParams; a) =
   koi.label(x, y, DlgWidth, h, "Do you want to delete the current level?",
             style=a.theme.labelStyle)
 
-  proc deleteAction(dlg: var DeleteLevelDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
-
+  proc deleteAction(a) =
     a.opts.drawTrail = false
 
     let cur = actions.deleteLevel(map, a.ui.cursor, um)
-    setStatusMessage(IconTrash, "Level deleted", a)
     setCursor(cur, a)
 
+    setStatusMessage(IconTrash, "Level deleted", a)
+    closeDialog(a)
 
-  proc cancelAction(dlg: var DeleteLevelDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+
+  proc cancelAction(a) =
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Delete",
                 style=a.theme.buttonStyle):
-    deleteAction(dlg, a)
+    deleteAction(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
-    elif ke.isShortcutDown(scAccept): deleteAction(dlg, a)
+    if   ke.isShortcutDown(scCancel): cancelAction(a)
+    elif ke.isShortcutDown(scAccept): deleteAction(a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -3976,7 +3973,7 @@ proc openEditNoteDialog(a) =
     dlg.customId = ""
     dlg.text = ""
 
-  dlg.isOpen = true
+  a.dialog.activeDialog = dlgEditNoteDialog
 
 
 proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
@@ -4112,13 +4109,11 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
     setStatusMessage(IconComment, "Set cell note", a)
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   proc cancelAction(dlg: var EditNoteDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
@@ -4183,7 +4178,7 @@ proc openEditLabelDialog(a) =
     dlg.editMode = false
     dlg.text = ""
 
-  dlg.isOpen = true
+  a.dialog.activeDialog = dlgEditLabelDialog
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
@@ -4259,13 +4254,11 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     actions.setLabel(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
     setStatusMessage(IconComment, "Set label", a)
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   proc cancelAction(dlg: var EditLabelDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
@@ -4306,7 +4299,8 @@ proc openEditRegionPropertiesDialog(a) =
   let region = currRegion(a).get
   dlg.name  = region.name
   dlg.notes = region.notes
-  dlg.isOpen = true
+
+  a.dialog.activeDialog = dlgEditRegionPropsDialog
 
 
 proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
@@ -4381,21 +4375,18 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     alias(map, a.doc.map)
     let cur = a.ui.cursor
 
-    setStatusMessage(IconComment, "Region properties updated", a)
-
     let regionCoords = map.getRegionCoords(cur)
     let region = Region(name: dlg.name, notes: dlg.notes)
 
     actions.setRegionProperties(map, cur, regionCoords, region,
                                 a.doc.undoManager)
 
-    koi.closeDialog()
-    dlg.isOpen = false
+    setStatusMessage(IconComment, "Region properties updated", a)
+    closeDialog(a)
 
 
   proc cancelAction(dlg: var EditRegionPropsParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -4431,7 +4422,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
   alias(dlg, a.dialog.saveDiscardThemeDialog)
   dlg.action = action
-  dlg.isOpen = true
+  a.dialog.activeDialog = dlgSaveDiscardThemeDialog
 
 
 proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
@@ -4460,19 +4451,16 @@ proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
   )
 
   proc saveAction(dlg: var SaveDiscardThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
     saveTheme(a)
     dlg.action(a)
 
   proc discardAction(dlg: var SaveDiscardThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
     dlg.action(a)
 
   proc cancelAction(dlg: var SaveDiscardThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
 
@@ -4512,7 +4500,8 @@ proc openOverwriteThemeDialog(themeName: string,
 
   dlg.themeName = themeName
   dlg.action = action
-  dlg.isOpen = true
+
+  a.dialog.activeDialog = dlgOverwriteThemeDialog
 
 
 proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
@@ -4542,13 +4531,11 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
   )
 
   proc overwriteAction(dlg: var OverwriteThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
     dlg.action(a)
 
   proc cancelAction(dlg: var OverwriteThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -4583,7 +4570,7 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
 proc openCopyThemeDialog(a) =
   alias(dlg, a.dialog.copyThemeDialog)
   dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
-  dlg.isOpen = true
+  a.dialog.activeDialog = dlgCopyThemeDialog
 
 
 proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
@@ -4640,9 +4627,6 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
 
   proc copyAction(dlg: var CopyThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
-
     let dlg = dlg
     let newThemePath = a.path.userThemesDir / addFileExt(dlg.newThemeName,
                                                          ThemeExt)
@@ -4656,10 +4640,12 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     else:
       copyTheme(a)
 
+    closeDialog(a)
+
+
 
   proc cancelAction(dlg: var CopyThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -4695,7 +4681,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 proc openRenameThemeDialog(a) =
   alias(dlg, a.dialog.renameThemeDialog)
   dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
-  dlg.isOpen = true
+  a.dialog.activeDialog = dlgRenameThemeDialog
 
 
 proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
@@ -4752,9 +4738,6 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 
 
   proc renameAction(dlg: var RenameThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
-
     let dlg = dlg
     let newThemePath = a.path.userThemesDir / addFileExt(dlg.newThemeName,
                                                          ThemeExt)
@@ -4768,10 +4751,12 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     else:
       renameTheme(a)
 
+    closeDialog(a)
+
+
 
   proc cancelAction(dlg: var RenameThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+    closeDialog(a)
 
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -4805,10 +4790,10 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 # {{{ Delete theme dialog
 
 proc openDeleteThemeDialog(a) =
-  a.dialog.deleteThemeDialog.isOpen = true
+  a.dialog.activeDialog = dlgDeleteThemeDialog
 
 
-proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
+proc deleteThemeDialog(a) =
   const
     DlgWidth  = ConfirmDlgWidth
     DlgHeight = ConfirmDlgHeight
@@ -4829,37 +4814,37 @@ proc deleteThemeDialog(dlg: var DeleteThemeDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc deleteAction(dlg: var DeleteThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+  proc deleteAction(a) =
     if deleteTheme(a.currThemeName, a):
       buildThemeList(a)
       with a.theme:
         nextThemeIndex = min(currThemeIndex, themeNames.high).Natural.some
 
+    closeDialog(a)
 
-  proc cancelAction(dlg: var DeleteThemeDialogParams; a) =
-    koi.closeDialog()
-    dlg.isOpen = false
+
+  proc cancelAction(a) =
+    closeDialog(a)
+
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Delete",
                 style = a.theme.buttonStyle):
-    deleteAction(dlg, a)
+    deleteAction(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
-    elif ke.isShortcutDown(scAccept): deleteAction(dlg, a)
+    if   ke.isShortcutDown(scCancel): cancelAction(a)
+    elif ke.isShortcutDown(scAccept): deleteAction(a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -7498,7 +7483,6 @@ proc renderQuickReference(a) =
         y += sepaH
 
   let
-    ds = a.theme.dialogStyle
     uiWidth = drawAreaWidth(a)
     uiHeight = drawAreaHeight(a)
     yOffs = max((uiHeight - 750) * 0.5, 0)
@@ -7645,56 +7629,59 @@ proc renderRegionDropDown(a) =
 proc renderDialogs(a) =
   alias(dlg, a.dialog)
 
-  if dlg.aboutDialog.isOpen:
+  case dlg.activeDialog:
+  of dlgNone: discard
+
+  of dlgAboutDialog:
     aboutDialog(dlg.aboutDialog, a)
 
-  elif dlg.preferencesDialog.isOpen:
+  of dlgPreferencesDialog:
     preferencesDialog(dlg.preferencesDialog, a)
 
-  elif dlg.saveDiscardMapDialog.isOpen:
+  of dlgSaveDiscardMapDialog:
     saveDiscardMapDialog(dlg.saveDiscardMapDialog, a)
 
-  elif dlg.newMapDialog.isOpen:
+  of dlgNewMapDialog:
     newMapDialog(dlg.newMapDialog, a)
 
-  elif dlg.editMapPropsDialog.isOpen:
+  of dlgEditMapPropsDialog:
     editMapPropsDialog(dlg.editMapPropsDialog, a)
 
-  elif dlg.newLevelDialog.isOpen:
+  of dlgNewLevelDialog:
     newLevelDialog(dlg.newLevelDialog, a)
 
-  elif dlg.deleteLevelDialog.isOpen:
-    deleteLevelDialog(dlg.deleteLevelDialog, a)
+  of dlgDeleteLevelDialog:
+    deleteLevelDialog(a)
 
-  elif dlg.editLevelPropsDialog.isOpen:
+  of dlgEditLevelPropsDialog:
     editLevelPropsDialog(dlg.editLevelPropsDialog, a)
 
-  elif dlg.editNoteDialog.isOpen:
+  of dlgEditNoteDialog:
     editNoteDialog(dlg.editNoteDialog, a)
 
-  elif dlg.editLabelDialog.isOpen:
+  of dlgEditLabelDialog:
     editLabelDialog(dlg.editLabelDialog, a)
 
-  elif dlg.resizeLevelDialog.isOpen:
+  of dlgResizeLevelDialog:
     resizeLevelDialog(dlg.resizeLevelDialog, a)
 
-  elif dlg.editRegionPropsDialog.isOpen:
+  of dlgEditRegionPropsDialog:
     editRegionPropsDialog(dlg.editRegionPropsDialog, a)
 
-  elif dlg.saveDiscardThemeDialog.isOpen:
+  of dlgSaveDiscardThemeDialog:
     saveDiscardThemeDialog(dlg.saveDiscardThemeDialog, a)
 
-  elif dlg.copyThemeDialog.isOpen:
+  of dlgCopyThemeDialog:
     copyThemeDialog(dlg.copyThemeDialog, a)
 
-  elif dlg.renameThemeDialog.isOpen:
+  of dlgRenameThemeDialog:
     renameThemeDialog(dlg.renameThemeDialog, a)
 
-  elif dlg.overwriteThemeDialog.isOpen:
+  of dlgOverwriteThemeDialog:
     overwriteThemeDialog(dlg.overwriteThemeDialog, a)
 
-  elif dlg.deleteThemeDialog.isOpen:
-    deleteThemeDialog(dlg.deleteThemeDialog, a)
+  of dlgDeleteThemeDialog:
+    deleteThemeDialog(a)
 
 # }}}
 # {{{ renderUI()
@@ -8170,16 +8157,30 @@ proc initPaths(a) =
   const ImagesDir = "Images"
 
   p.appDir = getAppDir()
-  p.dataDir   = p.appDir / "Data"
-  p.manualDir = p.appDir / "Manual"
-  p.themesDir = p.appDir / "Themes"
-  p.themeImagesDir = p.themesDir / ImagesDir
 
   const ConfigDir = "Config"
   let portableMode = dirExists(p.appDir / ConfigDir)
 
-  p.userDataDir = if portableMode: p.appDir
-                  else: getConfigDir() / "Gridmonger"
+  let resourcesDir = if portableMode:
+    p.appDir
+  else:
+    when defined(macosx):
+      normalizedPath(p.appDir / ".." / "Resources")
+    else:
+      p.appDir
+
+  p.dataDir   = resourcesDir / "Data"
+  p.manualDir = resourcesDir / "Manual"
+  p.themesDir = resourcesDir / "Themes"
+  p.themeImagesDir = p.themesDir / ImagesDir
+
+  p.userDataDir = if portableMode:
+    p.appDir
+  else:
+    when defined(macosx):
+      getHomeDir() / "Library/Application Support/Gridmonger"
+    else:
+      getConfigDir() / "Gridmonger"
 
   p.configDir = p.userDataDir / ConfigDir
   p.configFile = p.configDir / "gridmonger.cfg"
@@ -8292,9 +8293,9 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
                     else: cfg.getStringOrDefault("last-state.last-document", "")
 
   if mapFileName != "":
-    discard loadMap(mapFileName, a):
-  else:
-    setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
+    discard loadMap(mapFileName, a)
+
+  setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
   restoreUIStateFromConfig(cfg, a)
 
@@ -8385,7 +8386,7 @@ proc crashHandler(e: ref Exception, a) =
       msg &= "The map has been successfully autosaved as '" &
              crashAutosavePath
 
-  msg &= "\n\nIf the problem persists, please refer to the 'Get Involved!' " &
+  msg &= "\n\nIf the problem persists, please refer to the 'Get Involved' " &
          "section on the website."
 
   when not defined(DEBUG):
@@ -8402,16 +8403,18 @@ proc crashHandler(e: ref Exception, a) =
 
 # {{{ main()
 proc main() =
-  var serverInitOk = false
-  if ipc.isAppInstanceAlreadyRunning():
-    if ipc.initClient():
-      if paramCount() == 0:
-        ipc.sendFocusMessage()
-      else:
-        ipc.sendOpenFileMessage(paramStr(1))
-    quit()
-  else:
-    serverInitOk = ipc.initServer()
+  # Multiple application instance handling
+  when defined(windows):
+    var serverInitOk = false
+    if ipc.isAppInstanceAlreadyRunning():
+      if ipc.initClient():
+        if paramCount() == 0:
+          ipc.sendFocusMessage()
+        else:
+          ipc.sendOpenFileMessage(paramStr(1))
+      quit()
+    else:
+      serverInitOk = ipc.initServer()
 
   g_app = new AppContext
   var a = g_app
@@ -8465,19 +8468,21 @@ proc main() =
 
       handleAutoSaveMap(a)
 
-      if serverInitOk:
-        let msg = ipc.tryReceiveMessage()
-        if msg.isSome:
-          let msg = msg.get
-          case msg.kind
-          of mkFocus:
-            a.win.restore()
-            a.win.focus()
+      # Multiple application instance handling
+      when defined(windows):
+        if serverInitOk:
+          let msg = ipc.tryReceiveMessage()
+          if msg.isSome:
+            let msg = msg.get
+            case msg.kind
+            of mkFocus:
+              a.win.restore()
+              a.win.focus()
 
-          of mkOpenFile:
-            a.win.restore()
-            a.win.focus()
-            openMap(msg.filename, a)
+            of mkOpenFile:
+              a.win.restore()
+              a.win.focus()
+              openMap(msg.filename, a)
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
