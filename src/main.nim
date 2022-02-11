@@ -1524,6 +1524,52 @@ proc moveSelStart(dir: CardinalDir; a) =
 
 # }}}
 
+# {{{ exitMovePreviewMode()
+#
+proc undoAction(a)
+
+proc exitMovePreviewMode(a) =
+  undoAction(a)
+  a.doc.undoManager.truncateUndoState()
+  a.ui.editMode = emNormal
+  clearStatusMessage(a)
+
+# }}}
+# {{{ exitNudgePreviewMode()
+proc exitNudgePreviewMode(a) =
+  alias(ui, a.ui)
+  alias(map, a.doc.map)
+
+  let cur = a.ui.cursor
+
+  ui.editMode = emNormal
+  map.levels[cur.level] = ui.nudgeBuf.get.level
+  ui.nudgeBuf = SelectionBuffer.none
+  clearStatusMessage(a)
+
+# }}}
+# {{{ returnToNormalMode()
+proc returnToNormalMode(a) =
+  alias(ui, a.ui)
+
+  case ui.editMode
+  of emNormal: discard
+
+  of emMovePreview:
+    exitMovePreviewMode(a)
+
+  of emNudgePreview:
+    exitNudgePreviewMode(a)
+
+  of emSelect, emSelectDraw, emSelectErase, emSelectRect:
+    exitSelectMode(a)
+
+  else:
+    ui.editMode = emNormal
+    clearStatusMessage(a)
+
+# }}}
+
 # }}}
 # {{{ Graphics helpers
 
@@ -2759,6 +2805,7 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 proc closeDialog(a) =
   koi.closeDialog()
   a.dialogs.activeDialog = dlgNone
+
 # }}}
 
 # }}}
@@ -6012,10 +6059,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
 
       elif ke.isShortcutDown(scCancel):
-        undoAction(a)
-        a.doc.undoManager.truncateUndoState()
-        ui.editMode = emNormal
-        clearStatusMessage(a)
+        exitMovePreviewMode(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
         openUserManual(a)
@@ -6040,10 +6084,7 @@ proc handleGlobalKeyEvents(a) =
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
       elif ke.isShortcutDown(scCancel):
-        ui.editMode = emNormal
-        map.levels[cur.level] = ui.nudgeBuf.get.level
-        ui.nudgeBuf = SelectionBuffer.none
-        clearStatusMessage(a)
+        exitNudgePreviewMode(a)
 
       elif ke.isShortcutDown(scOpenUserManual):
         openUserManual(a)
@@ -8480,9 +8521,11 @@ proc main() =
               a.win.focus()
 
             of mkOpenFile:
+              closeDialog(a)
+              returnToNormalMode(a)
+              openMap(msg.filename, a)
               a.win.restore()
               a.win.focus()
-              openMap(msg.filename, a)
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():

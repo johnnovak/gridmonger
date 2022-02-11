@@ -55,7 +55,7 @@ proc commonInit(): bool =
 
 # {{{ isAppInstanceAlreadyRunning*()
 proc isAppInstanceAlreadyRunning*(): bool =
-  let res = CreateMutex(nil, true, "Global\\Gridmonger")
+  discard CreateMutex(nil, true, "Global\\Gridmonger")
   result = GetLastError() == ErrorAlreadyExists
 
 # }}}
