@@ -1,6 +1,5 @@
-import logging
 import options
-import strformat
+#import strformat
 
 import winim/lean
 
@@ -47,7 +46,7 @@ proc commonInit(): bool =
     nil   # unnamed event object
   )
   if g_overlapped.hEvent == 0:
-    #debug(fmt"CreateEvent failed, error code: {GetLastError()}")
+    #echo fmt"CreateEvent failed, error code: {GetLastError()}"
     discard
   else:
     result = true
@@ -77,7 +76,7 @@ proc initClient*(): bool =
     0
   )
   if g_pipe == InvalidHandleValue:
-    #debug(fmt"Cannot open named pipe, error code: {GetLastError()}")
+    #echo fmt"Cannot open named pipe, error code: {GetLastError()}"
     discard
   else:
     result = true
@@ -123,7 +122,7 @@ proc initServer*(): bool =
     nil  # use default security attributes
   )
   if g_pipe == InvalidHandleValue:
-    #debug(fmt"Cannot create named pipe, error code: {GetLastError()}")
+    #echo fmt"Cannot create named pipe, error code: {GetLastError()}"
     discard
   else:
     result = true
@@ -142,7 +141,7 @@ proc tryReceiveMessage*(): Option[Message] =
       # connect
       discard DisconnectNamedPipe(g_pipe)
     else:
-      #debug(fmt"Cannot connect to named pipe, error code: {GetLastError()}")
+      #echo fmt"Cannot connect to named pipe, error code: {GetLastError()}"
       discard
 
   # Because the last `wait` arg is set to false, this will only succeed
@@ -151,7 +150,7 @@ proc tryReceiveMessage*(): Option[Message] =
   if GetOverlappedResult(g_pipe, g_overlapped.addr,
                          numBytesTransferred.addr, false) == 0:
 
-    #debug(fmt"Error getting overlapped result, error code: {GetLastError()}")
+    #echo fmt"Error getting overlapped result, error code: {GetLastError()}"
     discard
   else:
     let msgKind = cast[MessageKind](g_buffer[0])
