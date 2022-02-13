@@ -34,6 +34,8 @@ https://gridmonger.johnnovak.net/"""
 
 
 proc quitWithError(msg: string) {.noReturn.} =
+  when defined(windows):
+    echo ""
   quit(fmt"Error: {msg}", QuitFailure)
 
 

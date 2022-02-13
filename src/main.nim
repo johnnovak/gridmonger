@@ -46,6 +46,7 @@ import utils
 
 when defined(windows):
   import platform/windows/ipc
+  import platform/windows/console
 
 # }}}
 
@@ -8458,6 +8459,9 @@ proc main() =
       quit()
     else:
       serverInitOk = ipc.initServer()
+
+    let res = attachOutputToConsole()
+
 
   g_app = new AppContext
   var a = g_app
