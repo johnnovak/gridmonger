@@ -4,6 +4,9 @@ import options
 import winim/lean
 
 
+# Adapted from
+# https://peter.bloomfield.online/introduction-to-win32-named-pipes-cpp/
+
 type
   MessageKind* = enum
     mkFocus, mkOpenFile

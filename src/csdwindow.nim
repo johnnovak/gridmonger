@@ -4,9 +4,9 @@ import glfw
 import icons
 import koi
 import nanovg
-import with
 
 import common
+import deps/with
 import utils
 
 # {{{ Constants

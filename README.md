@@ -7,12 +7,11 @@
 ## Dependencies
 
 * koi
-* nim-glfw
+* nim-glfw (`gridmonger` branch)
 * nim-nanovg
 * nim-osdialog
 * nim-riff
 * winim
-* with
 
 ## License
 

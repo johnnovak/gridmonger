@@ -3,9 +3,8 @@ import options
 import sequtils
 import strformat
 
-import with
-
 import common
+import deps/with
 import level
 import links
 import rect

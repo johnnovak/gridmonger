@@ -2,6 +2,8 @@ import std/exitprocs
 
 import winim
 
+# Adapted from
+# https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
 
 proc sendReturnKeypress() =
   let h = GetConsoleWindow()

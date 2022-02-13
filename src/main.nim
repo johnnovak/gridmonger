@@ -16,6 +16,7 @@ import strutils
 import tables
 import times
 
+import deps/with
 import glad/gl
 import glfw
 from glfw/wrapper import IconImageObj
@@ -24,7 +25,6 @@ import koi/undomanager
 from koi/utils as koiUtils import lerp, invLerp
 import nanovg
 when not defined(DEBUG): import osdialog
-import with
 
 import actions
 import cfghelper
@@ -62,8 +62,12 @@ when defined(windows):
 const
   ThemeExt = "gmtheme"
   MapFileExt = "gmm"
-  CrashAutosaveFilename = addFileExt("Crash Autosave", MapFileExt)
-  GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
+
+when not defined(DEBUG):
+  const
+    GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
+
+    CrashAutosaveFilename = addFileExt("Crash Autosave", MapFileExt)
 
 const
   CursorJump   = 5
@@ -663,6 +667,8 @@ const
   AllWasdMoveKeys = {keyQ, keyW, keyE, keyA, Key.keyS, keyD}
 
 
+# TODO
+#[
 type DiagonalKeys = object
   upLeft, upRight, downLeft, downRight: set[Key]
 
@@ -673,7 +679,7 @@ const
     downLeft  : {keyKp1, keyB},
     downRight : {keyKp3, keyN}
   )
-
+]#
 
 type AppShortcut = enum
   # General
@@ -2346,20 +2352,23 @@ proc handleAutoSaveMap(a) =
 
 # }}}
 # {{{ autoSaveMapOnCrash()
-proc autoSaveMapOnCrash(a): string =
-  var fname: string
-  if a.doc.filename == "":
-    let (path, _, _) = splitFile(a.doc.filename)
-    fname = path
-  else:
-    fname = a.paths.autosaveDir
 
-  fname = fname / CrashAutosaveFilename
+when not defined(DEBUG):
 
-  info(fmt"Auto-saving map to '{fname}'")
-  saveMap(fname, autosave=false, a)
+  proc autoSaveMapOnCrash(a): string =
+    var fname: string
+    if a.doc.filename == "":
+      let (path, _, _) = splitFile(a.doc.filename)
+      fname = path
+    else:
+      fname = a.paths.autosaveDir
 
-  result = fname
+    fname = fname / CrashAutosaveFilename
+
+    info(fmt"Auto-saving map to '{fname}'")
+    saveMap(fname, autosave=false, a)
+
+    result = fname
 
 # }}}
 
@@ -8408,38 +8417,40 @@ proc cleanup(a) =
     a.logFile.close()
 
 # }}}
-
 # {{{ crashHandler() =
-proc crashHandler(e: ref Exception, a) =
-  let doAutosave = a.doc.filename != ""
-  var crashAutosavePath = ""
 
-  if doAutosave:
-    try:
-      crashAutosavePath = autoSaveMapOnCrash(a)
-    except Exception as e:
-      if a.logFile != nil:
-        logError(e, "Error autosaving map on crash")
+when not defined(DEBUG):
 
-  var msg = "A fatal error has occured, Gridmonger will now exit.\n\n"
+  proc crashHandler(e: ref Exception, a) =
+    let doAutosave = a.doc.filename != ""
+    var crashAutosavePath = ""
 
-  if doAutoSave:
-    if crashAutosavePath == "":
-      msg &= "Autosaving the map has been unsuccesful.\n\n"
-    else:
-      msg &= "The map has been successfully autosaved as '" &
-             crashAutosavePath
+    if doAutosave:
+      try:
+        crashAutosavePath = autoSaveMapOnCrash(a)
+      except Exception as e:
+        if a.logFile != nil:
+          logError(e, "Error autosaving map on crash")
 
-  msg &= "\n\nIf the problem persists, please refer to the 'Get Involved' " &
-         "section on the website."
+    var msg = "A fatal error has occured, Gridmonger will now exit.\n\n"
 
-  when not defined(DEBUG):
-    discard osdialog_message(mblError, mbbOk, msg.cstring)
+    if doAutoSave:
+      if crashAutosavePath == "":
+        msg &= "Autosaving the map has been unsuccesful.\n\n"
+      else:
+        msg &= "The map has been successfully autosaved as '" &
+               crashAutosavePath
 
-  if a.logFile != nil:
-    logError(e, "An unexpected error has occured, exiting")
+    msg &= "\n\nIf the problem persists, please refer to the 'Get Involved' " &
+           "section on the website."
 
-  quit(QuitFailure)
+    when not defined(DEBUG):
+      discard osdialog_message(mblError, mbbOk, msg.cstring)
+
+    if a.logFile != nil:
+      logError(e, "An unexpected error has occured, exiting")
+
+    quit(QuitFailure)
 
 # }}}
 
@@ -8460,7 +8471,7 @@ proc main() =
     else:
       serverInitOk = ipc.initServer()
 
-    let res = attachOutputToConsole()
+    discard attachOutputToConsole()
 
 
   g_app = new AppContext

@@ -91,18 +91,6 @@ type
   HoconTokeniserError* = object of IOError
 
 
-proc `==`(a, b: Token): bool =
-  if a.kind == b.kind and
-     a.line == b.line and
-     a.column == b.column:
-    case a.kind
-    of tkString: a.str == b.str
-    of tkNumber: a.num == b.num
-    else: true
-  else:
-    false
-
-
 const validQuotedStringRuneRange = 0x0020..0x10fff
 
 const whitespaceRunes = @[
