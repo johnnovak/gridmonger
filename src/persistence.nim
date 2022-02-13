@@ -11,12 +11,12 @@ import unicode
 import riff
 
 import annotations
-import bitable
 import common
 import drawlevel
 import fieldlimits
 import icons
 import level
+import links
 import map
 import regions
 import rle
@@ -275,7 +275,7 @@ proc readAppState_v1(rr; m: Map): AppState =
 
 # }}}
 # {{{ readLinks_v1()
-proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
+proc readLinks_v1(rr; levels: seq[Level]): Links =
   debug(fmt"Reading links...")
 
   var numLinks = rr.read(uint16).int
@@ -299,7 +299,9 @@ proc readLinks_v1(rr; levels: seq[Level]): BiTable[Location, Location] =
     checkValueRange(dest.row, "lnks.destRow", max=levels[dest.level].cols-1)
     checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.level].cols-1)
 
+    result.set(src, dest)
     dec(numLinks)
+
 
 # }}}
 # {{{ readLevelProperties_v1()
@@ -903,7 +905,7 @@ proc writeAppState_v1(rw; s: AppState) =
 
 # }}}
 # {{{ writeLinks_v1()
-proc writeLinks_v1(rw; links: BiTable[Location, Location]) =
+proc writeLinks_v1(rw; links: Links) =
   rw.beginChunk(FourCC_GRDM_lnks)
   rw.write(links.len.uint16)
 
