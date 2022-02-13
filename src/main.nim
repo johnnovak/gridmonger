@@ -1661,18 +1661,23 @@ proc isKeyDown(ev: Event, key: Key,
 # }}}
 # {{{ checkShortcut()
 proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
-                   actions: set[KeyAction]): bool =
+                   actions: set[KeyAction], ignoreMods=false): bool =
   if ev.kind == ekKey:
     if ev.action in actions:
       let currShortcut = mkKeyShortcut(ev.key, ev.mods)
       for sc in shortcuts:
-        if currShortcut in g_appShortcuts[sc]:
-          return true
+        if ignoreMods:
+          for asc in g_appShortcuts[sc]:
+            if asc.key == ev.key:
+              return true
+        else:
+          if currShortcut in g_appShortcuts[sc]:
+            return true
 
 # }}}
 # {{{ isShortcutDown()
 proc isShortcutDown(ev: Event, shortcuts: set[AppShortcut],
-                     repeat=false): bool =
+                    repeat=false): bool =
   let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
   checkShortcut(ev, shortcuts, actions)
 
@@ -1682,7 +1687,7 @@ proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
 # }}}
 # {{{ isShortcutUp()
 proc isShortcutUp(ev: Event, shortcuts: set[AppShortcut]): bool =
-  checkShortcut(ev, shortcuts, actions={kaUp})
+  checkShortcut(ev, shortcuts, actions={kaUp}, ignoreMods=true)
 
 proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
   isShortcutUp(ev, {shortcut})
