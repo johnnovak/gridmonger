@@ -72,7 +72,9 @@ VIFileVersion 0.9.0.0
 ;--------------------------------
 ;Pages
 
-!define MUI_WELCOMEPAGE_TITLE "Welcome to the Gridmonger setup"
+; Installer
+
+!define MUI_WELCOMEPAGE_TITLE "Welcome to Gridmonger setup"
 !define welcome1 "This wizard will guide you through the installation of Gridmonger.$\r$\n$\r$\n"
 !define welcome2 "Please close all running instances of Gridmonger before proceeding.$\r$\n$\r$\n"
 !define welcome3 "Click Next to continue."
@@ -87,6 +89,15 @@ VIFileVersion 0.9.0.0
 
 !define MUI_FINISHPAGE_RUN $INSTDIR\${APP_EXE}
 !insertmacro MUI_PAGE_FINISH
+
+; Uninstaller
+
+!define MUI_WELCOMEPAGE_TITLE "Welcome to Gridmonger uninstall"
+!define unwelcome1 "This wizard will guide you through the uninstallation of Gridmonger.$\r$\n$\r$\n"
+!define unwelcome2 "No data will be removed from your Gridmonger user folder (user themes, configuration, etc.)$\r$\n$\r$\n"
+!define unwelcome3 "Please close all running instances of the program before proceeding.$\r$\n$\r$\n"
+!define unwelcome4 "Click Next to continue."
+!define MUI_WELCOMEPAGE_TEXT "${unwelcome1}${unwelcome2}${unwelcome3}${unwelcome4}"
 
 !insertmacro MUI_UNPAGE_WELCOME
 !insertmacro MUI_UNPAGE_CONFIRM

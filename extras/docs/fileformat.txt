@@ -1,16 +1,9 @@
-                       Gridmonger map file format
-                       ==========================
-                               Version 1
+                      Gridmonger map file format
+                      ==========================
+                              Version 1
 
 
-RIFF ('GRDM'          # Gridmonger map file
-    LIST ('INFO'
-        'INAM'        # Name
-        'IART'        # Artist
-        'ICMT'        # Comments
-        'ICRD'        # Creation Date
-        'ISFT'        # Software
-    )
+RIFF ('GRMM'          # Gridmonger map file
     LIST ('map '      # Map
         'prop'        # Map properties
         'coor'        # Global coordinate options
@@ -18,58 +11,50 @@ RIFF ('GRDM'          # Gridmonger map file
     LIST ('lvls'      # List of levels (min=0, max=999)
         LIST ('lvl '  # Level
             'prop'    # Level properties
-            'coor'    # Coordinate options
-            'cell'    # Level cells
-            'note'    # Notes
+            'coor'    # Level coordinate options
+            'cell'    # Cells
+            'anno'    # Annotation
             'regn'    # Regions
-            )
+        )
             ...
     )
     'lnks'            # Map links
-
     'stat'            # App state (optional)
 )
 
 
-'prop' (Map)
-    UINT16  version
+Note:
+-----
+  Strings that have their length specified with minRuneLen & maxRuneLen are in
+  UTF-8. A single UTF-8 rune is encoded as a 1 to 4 byte sequence, so the byte
+  limits of UTF-8 strings are (minRuneLen*4) to (maxRuneLen*4).
+
+
+'prop' (map)
+    UINT16  version           (min=1, max=1)
     WSTR    title             (minRuneLen=1, maxRuneLen=100)
     WSTR    game              (maxRuneLen=100)
     WSTR    author            (maxRuneLen=100)
-    BSTR    creationTime      (len=19)
-    WSTR    notes             (maxRuneLen=2000)
+    BSTR    creationTime      (len=19, local time as 'YYYY-MM-DD HH:mm:ss')
+    WSTR    notes             (maxRuneLen=8000)
 
 
-'coor'
-    UINT8   origin            (0=northeast, 1=southeast)
+'coor' (map or level)
+    UINT8   origin            (0=north-west, 1=south-west)
     UINT8   rowStyle          (0=number, 1=letter)
     UINT8   columnStyle       (0=number, 1=letter)
     INT16   rowStart          (min=-9999, max=9999)
     INT16   columnStart       (min=-9999, max=9999)
 
 
-'prop' (Level)
+'prop' (level)
     WSTR    locationName      (minRuneLen=1, maxRuneLen=100)
     WSTR    levelName         (maxRuneLen=100)
     INT16   elevation         (min=-200, max=200)
     UINT16  numRows           (min=1, max=6666)
     UINT16  numColums         (min=1, max=6666)
     UINT8   overrideCoordOpts (0=off, 1=on)
-    WSTR    notes             (maxRuneLen=2000)
-
-'regn'
-    UINT8   enableRegions     (0=off, 1=on)
-    UINT16  rowsPerRegion     (min=2, max=3333)
-    UINT16  columnsPerRegion  (min=2, max=3333)
-    UINT16  numRegions
-
-    numRegion times:
-    UINT16  row*              (max=3332)
-    UINT16  column*           (max=3332)
-    WSTR    name              (minRuneLen=1, maxRuneLen=100)
-    WSTR    notes             (maxRuneLen=2000)
-
-    * row & column are not cell, but region coordinates
+    WSTR    notes             (maxRuneLen=8000)
 
 
 'cell'
@@ -77,11 +62,11 @@ RIFF ('GRDM'          # Gridmonger map file
     Each layer can use a different compressions method.
     The data stored per layer, and the order of layers are as follows:
 
-      UINT8   floor             (see Floor in common.nim for mappings)
+      UINT8   floor             (see Floor enum in common.nim for mappings)
       UINT8   floorOrientation  (0=horiz, 1=vert)
       UINT8   floorColor        (max=9)
-      UINT8   wallNorth         (see Wall in common.nim for mappings)
-      UINT8   wallWest          (see Wall in common.nim for mappings)
+      UINT8   wallNorth         (see Wall enum in common.nim for mappings)
+      UINT8   wallWest          (see Wall enum in common.nim for mappings)
       UINT8   trail             (0=off, 1=on)
 
     Layer format:
@@ -97,58 +82,78 @@ RIFF ('GRDM'          # Gridmonger map file
 
         The compression uses simple RLE encoding:
 
-        - Values less than 0x80 are literal Values
+        - Values less than 0x80 are literal values
         - Values greater than or equal to 0x80 are header values, followed
           by a single data byte. The lower 7-bits of the header is
-          (repeatCount - 1); the data byte should be repeated repeatCount times.
+          (repeatCount - 1); the data byte should be repeated repeatCount
+          times.
 
-      if compressionType == 2 (all zeros)
+      if compressionType == 2 (zeroes)
         no data; the whole layer should be filled with zeroes
 
 
-'note'
-    UINT16  numNotes          (max=10000)
+'anno'
+    UINT16  numAnnotations      (max=9999)
 
-    numNotes records of:
+    numAnnotations records of:
 
-    UINT16  row               (max=numRows-1    of the given level)
-    UINT16  column            (max=numColumns-1 of the given level)
-    UINT8   kind
+      UINT16  row               (max=numRows-1    of the given level)
+      UINT16  column            (max=numColumns-1 of the given level)
+      UINT8   kind
 
-    if kind == 0 (comment)
+      if kind == 0 (comment)
 
-    if kind == 1 (indexed)
-        UINT16  index         (max=9999)
-        UINT8   indexColor    (max=3)
+      if kind == 1 (indexed)
+          UINT16  index         (max=9999)
+          UINT8   indexColor    (max=3)
 
-    if kind == 2 (icon)
-        UINT8   icon          (max=39, see NoteIcons in icons.nim for mappings)
+      if kind == 2 (icon)
+          UINT8   icon          (max=39, see NoteIcons in icons.nim
+                                         for mappings)
+      if kind == 3 (customId)
+          BSTR    custom ID     (minLen=1, maxLen=2, only alphanumeric)
 
-    if kind == 3 (customId)
-        BSTR    custom ID     (minLen=1, maxLen=2, only alphanumeric)
+      if kind == 4 (label)
+          UINT8   labelColor    (max=3)
 
-    if kind == 4 (label)
-        UINT8   labelColor    (max=3)
+      WSTR    text              (minRuneLen=1, maxRuneLen=4000)
 
-    WSTR    text              (minRuneLen=1, maxRuneLen=4000)
+
+'regn'
+    UINT8   enableRegions     (0=off, 1=on)
+    UINT16  rowsPerRegion     (min=2, max=3333)
+    UINT16  columnsPerRegion  (min=2, max=3333)
+    UINT16  numRegions
+
+    numRegion times:
+    UINT16  row*              (max=3332)
+    UINT16  column*           (max=3332)
+    WSTR    name              (minRuneLen=1, maxRuneLen=100)
+    WSTR    notes             (maxRuneLen=8000)
+
+    * row & column are not cell but region coordinates
 
 
 'lnks'
-    UINT16  numLinks          (max=10000)
+    UINT16  numLinks          (max=9999)
 
     numLinks records of:
 
-    UINT16  srcLevel          (max=numLevels-1)
-    UINT16  srcRow            (max=numRows-1    of the given level)
-    UINT16  srcColumn         (max=numColumns-1 of the given level)
+      UINT16  srcLevel        (max=numLevels-1)
+      UINT16  srcRow          (max=numRows-1    of the given level)
+      UINT16  srcColumn       (max=numColumns-1 of the given level)
 
-    UINT16  destLevel         (max=numLevel-1)
-    UINT16  destRow           (max=numRows-1    of the given level)
-    UINT16  destColumn        (max=numColumns-1 of the given level)
+      UINT16  destLevel       (max=numLevel-1)
+      UINT16  destRow         (max=numRows-1    of the given level)
+      UINT16  destColumn      (max=numColumns-1 of the given level)
 
 
 'stat'
-    BSTR    themeName         (minLen=1, maxLen=200, only alphanumeric)
+    BSTR    themeName*        (minLen=1, maxLen=100)
+
+    * Cannot start or end with a space or '.'
+      The following characters are disallowed:
+        '/', '\', ':', '*', '?', '"', '<', '>', '|', '^', <zero byte>
 
     UINT8   zoomLevel         (min=1, max=20)
     UINT8   currentLevel      (max=numLevels-1)

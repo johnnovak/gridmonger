@@ -32,7 +32,7 @@ const
   MapAuthorLimits*         = strLimits(minRuneLen=0,  maxRuneLen=100)
   MapCreationTimeLimits*   = strLimits(minRuneLen=19, maxRuneLen=19)
 
-  NotesLimits*             = strLimits(minRuneLen=0, maxRuneLen=2000)
+  NotesLimits*             = strLimits(minRuneLen=0, maxRuneLen=8000)
 
   NumLevelsLimits*         = intLimits(min=0, max=999)
   LevelLocationNameLimits* = strLimits(minRuneLen=1, maxRuneLen=100)
@@ -53,7 +53,7 @@ const
   CellFloorColorLimits*    = intLimits(min=0,
                                        max=LevelStyle.floorBackgroundColor.len)
 
-  NumAnnotationsLimits*    = intLimits(min=0, max=10_000)
+  NumAnnotationsLimits*    = intLimits(min=0, max=9999)
   NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=4000)
   NoteIconTextLimits*      = strLimits(minRuneLen=0, maxRuneLen=4000)
   NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
@@ -63,9 +63,9 @@ const
 
   NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
 
-  NumLinksLimits*          = intLimits(min=0, max=10_000)
+  NumLinksLimits*          = intLimits(min=0, max=9999)
 
-  ThemeNameLimits*         = strLimits(minRuneLen=1, maxRuneLen=200)
+  ThemeNameLimits*         = strLimits(minRuneLen=1, maxRuneLen=100)
 
   ZoomLevelLimits*         = intLimits(min=MinZoomLevel, max=MaxZoomLevel)
 
@@ -97,17 +97,17 @@ type
 # }}}
 # {{{ FourCCs
 const
-  FourCC_GRDM      = "GRMM"
-  FourCC_GRDM_cell = "cell"
-  FourCC_GRDM_coor = "coor"
-  FourCC_GRDM_stat = "stat"
-  FourCC_GRDM_lnks = "lnks"
-  FourCC_GRDM_lvl  = "lvl "
-  FourCC_GRDM_lvls = "lvls"
-  FourCC_GRDM_map  = "map "
-  FourCC_GRDM_anno = "anno"
-  FourCC_GRDM_prop = "prop"
-  FourCC_GRDM_regn = "regn"
+  FourCC_GRMM      = "GRMM"
+  FourCC_GRMM_cell = "cell"
+  FourCC_GRMM_coor = "coor"
+  FourCC_GRMM_stat = "stat"
+  FourCC_GRMM_lnks = "lnks"
+  FourCC_GRMM_lvl  = "lvl "
+  FourCC_GRMM_lvls = "lvls"
+  FourCC_GRMM_map  = "map "
+  FourCC_GRMM_anno = "anno"
+  FourCC_GRMM_prop = "prop"
+  FourCC_GRMM_regn = "regn"
 # }}}
 
 # {{{ Read
@@ -580,7 +580,7 @@ proc readLevelRegions_v1(rr): (RegionOptions, Regions) =
 proc readLevel_v1(rr): Level =
   debug(fmt"Reading level...")
 
-  let groupChunkId = FourCC_GRDM_lvls.some
+  let groupChunkId = FourCC_GRMM_lvls.some
   var
     propCursor = Cursor.none
     coorCursor = Cursor.none
@@ -589,40 +589,40 @@ proc readLevel_v1(rr): Level =
     annoCursor = Cursor.none
 
   if not rr.hasSubChunks():
-    raiseMapReadError(fmt"'{FourCC_GRDM_lvl}' group chunk is empty")
+    raiseMapReadError(fmt"'{FourCC_GRMM_lvl}' group chunk is empty")
 
   var ci = rr.enterGroup()
 
   while true:
     if ci.kind == ckChunk:
       case ci.id
-      of FourCC_GRDM_prop:
+      of FourCC_GRMM_prop:
         if propCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_prop, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRMM_prop, groupChunkId)
         propCursor = rr.cursor.some
 
-      of FourCC_GRDM_coor:
+      of FourCC_GRMM_coor:
         if coorCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_coor, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRMM_coor, groupChunkId)
         coorCursor = rr.cursor.some
 
-      of FourCC_GRDM_regn:
+      of FourCC_GRMM_regn:
         if regnCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_regn, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRMM_regn, groupChunkId)
         regnCursor = rr.cursor.some
 
-      of FourCC_GRDM_cell:
+      of FourCC_GRMM_cell:
         if cellCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_cell, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRMM_cell, groupChunkId)
         cellCursor = rr.cursor.some
 
-      of FourCC_GRDM_anno:
+      of FourCC_GRMM_anno:
         if annoCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_anno, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRMM_anno, groupChunkId)
         annoCursor = rr.cursor.some
 
       else:
-        invalidChunkError(ci.id, FourCC_GRDM_lvls)
+        invalidChunkError(ci.id, FourCC_GRMM_lvls)
 
     else: # group chunk
       invalidChunkError(ci.id, groupChunkId.get)
@@ -631,10 +631,10 @@ proc readLevel_v1(rr): Level =
       ci = rr.nextChunk()
     else: break
 
-  if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_prop)
-  if coorCursor.isNone: chunkNotFoundError(FourCC_GRDM_coor)
-  if regnCursor.isNone: chunkNotFoundError(FourCC_GRDM_regn)
-  if cellCursor.isNone: chunkNotFoundError(FourCC_GRDM_cell)
+  if propCursor.isNone: chunkNotFoundError(FourCC_GRMM_prop)
+  if coorCursor.isNone: chunkNotFoundError(FourCC_GRMM_coor)
+  if regnCursor.isNone: chunkNotFoundError(FourCC_GRMM_regn)
+  if cellCursor.isNone: chunkNotFoundError(FourCC_GRMM_cell)
 
   rr.cursor = propCursor.get
   var level = readLevelProperties_v1(rr)
@@ -671,7 +671,7 @@ proc readLevelList_v1(rr): seq[Level] =
     while true:
       if ci.kind == ckGroup:
         case ci.formatTypeId
-        of FourCC_GRDM_lvl:
+        of FourCC_GRMM_lvl:
           if levels.len > NumLevelsLimits.maxInt:
             raiseMapReadError(
               fmt"Map cannot contain more than {NumLevelsLimits.maxInt} levels"
@@ -680,10 +680,10 @@ proc readLevelList_v1(rr): seq[Level] =
           levels.add(readLevel_v1(rr))
           rr.exitGroup()
         else:
-          invalidListChunkError(ci.formatTypeId, FourCC_GRDM_lvls)
+          invalidListChunkError(ci.formatTypeId, FourCC_GRMM_lvls)
 
       else: # not group chunk
-        invalidChunkError(ci.id, FourCC_GRDM_lvls)
+        invalidChunkError(ci.id, FourCC_GRMM_lvls)
 
       if rr.hasNextChunk():
         ci = rr.nextChunk()
@@ -728,33 +728,33 @@ proc readMapProperties_v1(rr): Map =
 # }}}
 # {{{ readMap_v1()
 proc readMap_v1(rr): Map =
-  debug(fmt"Reading GRDM.map chunk...")
+  debug(fmt"Reading GRMM.map chunk...")
 
-  let groupChunkId = FourCC_GRDM_map.some
+  let groupChunkId = FourCC_GRMM_map.some
   var
     propCursor = Cursor.none
     coorCursor = Cursor.none
 
   if not rr.hasSubChunks():
-    raiseMapReadError(fmt"'{FourCC_GRDM_map}' group chunk is empty")
+    raiseMapReadError(fmt"'{FourCC_GRMM_map}' group chunk is empty")
 
   var ci = rr.enterGroup()
 
   while true:
     if ci.kind == ckChunk:
       case ci.id
-      of FourCC_GRDM_prop:
+      of FourCC_GRMM_prop:
         if propCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_prop, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRMM_prop, groupChunkId)
         propCursor = rr.cursor.some
 
-      of FourCC_GRDM_coor:
+      of FourCC_GRMM_coor:
         if coorCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRDM_coor, groupChunkId)
+          chunkOnlyOnceError(FourCC_GRMM_coor, groupChunkId)
         coorCursor = rr.cursor.some
 
       else:
-        invalidChunkError(ci.id, FourCC_GRDM_lvls)
+        invalidChunkError(ci.id, FourCC_GRMM_lvls)
 
     else: # group chunk
       invalidChunkError(ci.id, groupChunkId.get)
@@ -763,8 +763,8 @@ proc readMap_v1(rr): Map =
       ci = rr.nextChunk()
     else: break
 
-  if propCursor.isNone: chunkNotFoundError(FourCC_GRDM_prop)
-  if coorCursor.isNone: chunkNotFoundError(FourCC_GRDM_coor)
+  if propCursor.isNone: chunkNotFoundError(FourCC_GRMM_prop)
+  if coorCursor.isNone: chunkNotFoundError(FourCC_GRMM_coor)
 
   rr.cursor = propCursor.get
   var map = readMapProperties_v1(rr)
@@ -783,7 +783,7 @@ proc readMapFile*(filename: string): (Map, Option[AppState]) =
     rr = openRiffFile(filename)
 
     let riffChunk = rr.currentChunk
-    if riffChunk.formatTypeId != FourCC_GRDM:
+    if riffChunk.formatTypeId != FourCC_GRMM:
       raiseMapReadError(
         fmt"Not a Gridmonger map file, " &
         fmt"RIFF formatTypeId: {fourCCToCharStr(riffChunk.formatTypeId)}"
@@ -806,18 +806,14 @@ proc readMapFile*(filename: string): (Map, Option[AppState]) =
     while true:
       if ci.kind == ckGroup:
         case ci.formatTypeId
-        of FourCC_INFO:
-          debug(fmt"INFO chunk found")
-          discard  # TODO
-
-        of FourCC_GRDM_map:
-          debug(fmt"GRDM.map group chunk found")
-          if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_map)
+        of FourCC_GRMM_map:
+          debug(fmt"GRMM.map group chunk found")
+          if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_map)
           mapCursor = rr.cursor.some
 
-        of FourCC_GRDM_lvls:
-          debug(fmt"GRDM.lvls group chunk found")
-          if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lvls)
+        of FourCC_GRMM_lvls:
+          debug(fmt"GRMM.lvls group chunk found")
+          if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_lvls)
           levelListCursor = rr.cursor.some
 
         else: discard   # skip unknown top level group chunks
@@ -825,14 +821,14 @@ proc readMapFile*(filename: string): (Map, Option[AppState]) =
       elif ci.kind == ckChunk:
         case ci.id
 
-        of FourCC_GRDM_lnks:
-          debug(fmt"GRDM.lnks chunk found")
-          if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_lnks)
+        of FourCC_GRMM_lnks:
+          debug(fmt"GRMM.lnks chunk found")
+          if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_lnks)
           linksCursor = rr.cursor.some
 
-        of FourCC_GRDM_stat:
-          debug(fmt"GRDM.stat chunk found")
-          if appStateCursor.isSome: chunkOnlyOnceError(FourCC_GRDM_stat)
+        of FourCC_GRMM_stat:
+          debug(fmt"GRMM.stat chunk found")
+          if appStateCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_stat)
           appStateCursor = rr.cursor.some
 
         else:
@@ -844,9 +840,9 @@ proc readMapFile*(filename: string): (Map, Option[AppState]) =
       else: break
 
     # Check for mandatory chunks
-    if mapCursor.isNone:       chunkNotFoundError(FourCC_GRDM_map)
-    if levelListCursor.isNone: chunkNotFoundError(FourCC_GRDM_lvls)
-    if linksCursor.isNone:     chunkNotFoundError(FourCC_GRDM_lnks)
+    if mapCursor.isNone:       chunkNotFoundError(FourCC_GRMM_map)
+    if levelListCursor.isNone: chunkNotFoundError(FourCC_GRMM_lvls)
+    if linksCursor.isNone:     chunkNotFoundError(FourCC_GRMM_lnks)
 
     # Load chunks
     rr.cursor = mapCursor.get
@@ -883,7 +879,7 @@ var g_runLengthEncoder: RunLengthEncoder
 
 # {{{ writeAppState_v1()
 proc writeAppState_v1(rw; s: AppState) =
-  rw.beginChunk(FourCC_GRDM_stat)
+  rw.beginChunk(FourCC_GRMM_stat)
 
   rw.writeBStr(s.themeName)
 
@@ -906,7 +902,7 @@ proc writeAppState_v1(rw; s: AppState) =
 # }}}
 # {{{ writeLinks_v1()
 proc writeLinks_v1(rw; links: Links) =
-  rw.beginChunk(FourCC_GRDM_lnks)
+  rw.beginChunk(FourCC_GRMM_lnks)
   rw.write(links.len.uint16)
 
   var sortedKeys = collect(newSeqOfCap(links.len)):
@@ -929,7 +925,7 @@ proc writeLinks_v1(rw; links: Links) =
 # }}}
 # {{{ writeCoordinateOptions_v1()
 proc writeCoordinateOptions_v1(rw; co: CoordinateOptions) =
-  rw.beginChunk(FourCC_GRDM_coor)
+  rw.beginChunk(FourCC_GRMM_coor)
 
   rw.write(co.origin.uint8)
   rw.write(co.rowStyle.uint8)
@@ -942,7 +938,7 @@ proc writeCoordinateOptions_v1(rw; co: CoordinateOptions) =
 # }}}
 # {{{ writeLevelRegions_v1()
 proc writeLevelRegions_v1(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_regn)
+  rw.beginChunk(FourCC_GRMM_regn)
 
   rw.write(l.regionOpts.enabled.uint8)
   rw.write(l.regionOpts.rowsPerRegion.uint16)
@@ -962,7 +958,7 @@ proc writeLevelRegions_v1(rw; l: Level) =
 # }}}
 # # {{{ writeLevelProperties_v1()
 proc writeLevelProperties_v1(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_prop)
+  rw.beginChunk(FourCC_GRMM_prop)
 
   rw.writeWStr(l.locationName)
   rw.writeWStr(l.levelName)
@@ -1014,7 +1010,7 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
           rw.write(field.uint)
 
 
-  rw.beginChunk(FourCC_GRDM_cell)
+  rw.beginChunk(FourCC_GRMM_cell)
 
   writeLayer: c.floor
   writeLayer: c.floorOrientation
@@ -1028,7 +1024,7 @@ proc writeLevelCells_v1(rw; cells: seq[Cell]) =
 # }}}
 # {{{ writeLevelAnnotations_v1()
 proc writeLevelAnnotations_v1(rw; l: Level) =
-  rw.beginChunk(FourCC_GRDM_anno)
+  rw.beginChunk(FourCC_GRMM_anno)
 
   rw.write(l.numAnnotations.uint16)
 
@@ -1059,7 +1055,7 @@ proc writeLevelAnnotations_v1(rw; l: Level) =
 # }}}
 # {{{ writeLevel_v1()
 proc writeLevel_v1(rw; l: Level) =
-  rw.beginListChunk(FourCC_GRDM_lvl)
+  rw.beginListChunk(FourCC_GRMM_lvl)
 
   writeLevelProperties_v1(rw, l)
   writeCoordinateOptions_v1(rw, l.coordOpts)
@@ -1072,7 +1068,7 @@ proc writeLevel_v1(rw; l: Level) =
 # }}}
 # {{{ writeLevelList_v1()
 proc writeLevelList_v1(rw; levels: seq[Level]) =
-  rw.beginListChunk(FourCC_GRDM_lvls)
+  rw.beginListChunk(FourCC_GRMM_lvls)
 
   for l in levels:
     writeLevel_v1(rw, l)
@@ -1082,7 +1078,7 @@ proc writeLevelList_v1(rw; levels: seq[Level]) =
 # }}}
 # {{{ writeMapProperties_v1()
 proc writeMapProperties_v1(rw; m: Map) =
-  rw.beginChunk(FourCC_GRDM_prop)
+  rw.beginChunk(FourCC_GRMM_prop)
 
   rw.write(CurrentMapVersion.uint16)
   rw.writeWStr(m.title)
@@ -1096,7 +1092,7 @@ proc writeMapProperties_v1(rw; m: Map) =
 # }}}
 # {{{ writeMap_v1()
 proc writeMap_v1(rw; m: Map) =
-  rw.beginListChunk(FourCC_GRDM_map)
+  rw.beginListChunk(FourCC_GRMM_map)
 
   writeMapProperties_v1(rw, m)
   writeCoordinateOptions_v1(rw, m.coordOpts)
@@ -1108,7 +1104,7 @@ proc writeMap_v1(rw; m: Map) =
 proc writeMapFile*(m: Map, appState: AppState, filename: string) =
   var rw: RiffWriter
   try:
-    rw = createRiffFile(filename, FourCC_GRDM)
+    rw = createRiffFile(filename, FourCC_GRMM)
 
     writeMap_v1(rw, m)
     writeLevelList_v1(rw, m.levels)

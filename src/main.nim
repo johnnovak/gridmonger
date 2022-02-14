@@ -62,6 +62,7 @@ when defined(windows):
 const
   ThemeExt = "gmtheme"
   MapFileExt = "gmm"
+  BackupFileExt = "bak"
 
 when not defined(DEBUG):
   const
@@ -2305,7 +2306,7 @@ proc loadMap(filename: string; a): bool =
 
 # }}}
 # {{{ saveMap()
-proc saveMap(filename: string, autosave: bool = false; a) =
+proc saveMap(filename: string, autosave, createBackup: bool; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let cur = a.ui.cursor
@@ -2327,6 +2328,16 @@ proc saveMap(filename: string, autosave: bool = false; a) =
   )
 
   info(fmt"Saving map to '{filename}'")
+
+  if createBackup:
+    try:
+      if fileExists(filename):
+        moveFile(filename, fmt"{filename}.{BackupFileExt}")
+    except CatchableError as e:
+      logError(e, "Error creating backup file")
+      setStatusMessage(IconWarning, fmt"Error creating backup file: {e.msg}", a)
+      a.logFile.flushFile()
+      return
 
   try:
     writeMapFile(a.doc.map, appState, filename)
@@ -2352,7 +2363,7 @@ proc handleAutoSaveMap(a) =
                        a.paths.autosaveDir / addFileExt("Untitled", MapFileExt)
                      else: a.doc.filename
 
-      saveMap(filename, autosave=true, a)
+      saveMap(filename, autosave=true, createBackup=true, a)
       a.doc.lastAutosaveTime = getMonoTime()
 
 # }}}
@@ -2371,7 +2382,7 @@ when not defined(DEBUG):
     fname = fname / CrashAutosaveFilename
 
     info(fmt"Auto-saving map to '{fname}'")
-    saveMap(fname, autosave=false, a)
+    saveMap(fname, autosave=false, createBackup=false, a)
 
     result = fname
 
@@ -5063,14 +5074,16 @@ proc saveMapAs(a) =
     if filename != "":
       filename = addFileExt(filename, MapFileExt)
 
-      saveMap(filename, autosave=false, a)
+      saveMap(filename, autosave=false, createBackup=false, a)
       a.doc.filename = filename
 
 # }}}
 # {{{ saveMap()
 proc saveMap(a) =
-  if a.doc.filename != "": saveMap(a.doc.filename, autosave=false, a)
-  else: saveMapAs(a)
+  if a.doc.filename != "":
+    saveMap(a.doc.filename, autosave=false, createBackup=true, a)
+  else:
+    saveMapAs(a)
 
 # }}}
 
