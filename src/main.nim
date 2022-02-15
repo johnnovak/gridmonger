@@ -301,7 +301,9 @@ type
     emColorFloor,
     emDrawClearFloor,
     emDrawSpecialWall,
+    emDrawSpecialWallRepeat,
     emDrawWall,
+    emDrawWallRepeat,
     emEraseCell,
     emEraseTrail,
     emExcavateTunnel,
@@ -5811,6 +5813,7 @@ proc handleGlobalKeyEvents(a) =
           let w = if map.getWall(cur, dir) == wWall: wNone
                   else: wWall
           actions.setWall(map, cur, dir, w, um)
+          startDrawWallAction(a)
         else:
           setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
@@ -5819,6 +5822,10 @@ proc handleGlobalKeyEvents(a) =
       if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
         clearStatusMessage(a)
+
+    # {{{ emDrawWallRepeat
+    of emDrawWallRepeat:
+      discard
 
     # }}}
     # {{{ emDrawSpecialWall
@@ -5844,6 +5851,7 @@ proc handleGlobalKeyEvents(a) =
                   else: curSpecWall
 
           actions.setWall(map, cur, dir, w, um)
+          startDrawSpecialWallAction(a)
         else:
           setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
 
@@ -5852,6 +5860,11 @@ proc handleGlobalKeyEvents(a) =
       if ke.isShortcutUp(scDrawSpecialWall):
         ui.editMode = emNormal
         clearStatusMessage(a)
+
+    # }}}
+    # {{{ emDrawSpecialWallRepeat
+    of emDrawSpecialWallRepeat:
+      discard
 
     # }}}
     # {{{ emSelect
