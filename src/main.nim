@@ -4143,7 +4143,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   # Validation
   var validationErrors: seq[string] = @[]
 
-  if dlg.kind in {akComment, akIndexed, akCustomId}:
+  if dlg.kind in {akComment, akIndexed}:
     if dlg.text == "":
       validationErrors.add(mkValidationError("Text is mandatory"))
   if dlg.kind == akCustomId:
