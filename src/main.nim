@@ -270,6 +270,8 @@ type
     currSpecialWall:   Natural
     currFloorColor:    Natural
 
+    drawWallRepeatAction:      DrawWallRepeatAction
+    drawWallRepeatOrientation: Orientation
 
     manualNoteTooltipState: ManualNoteTooltipState
 
@@ -315,6 +317,11 @@ type
     emSelectErase,
     emSelectRect,
     emSetCellLink
+
+  DrawWallRepeatAction = enum
+    dwaNone  = (0, "none"),
+    dwaSet   = (1, "set"),
+    dwaClear = (2, "clear")
 
   Theme = object
     config:                 HoconNode
@@ -753,7 +760,9 @@ type AppShortcut = enum
   scSelectFloorColor10,
 
   scDrawWall,
+  scDrawWallRepeat,
   scDrawSpecialWall,
+  scDrawSpecialWallRepeat,
   scPreviousSpecialWall,
   scNextSpecialWall,
 
@@ -908,7 +917,10 @@ let g_appShortcuts = {
   scSelectFloorColor9:         @[mkKeyShortcut(key9,      {mkCtrl})],
   scSelectFloorColor10:        @[mkKeyShortcut(key0,      {mkCtrl})],
 
-  scDrawWall:                  @[mkKeyShortcut(keyW,            {})],
+  scDrawWall:                  @[mkKeyShortcut(keyW,          {})],
+  scDrawWallRepeat:            @[mkKeyShortcut(keyLeftShift,  {mkShift}),
+                                 mkKeyShortcut(keyRightShift, {mkShift})],
+
   scDrawSpecialWall:           @[mkKeyShortcut(keyR,            {})],
   scPreviousSpecialWall:       @[mkKeyShortcut(keyLeftBracket,  {})],
   scNextSpecialWall:           @[mkKeyShortcut(keyRightBracket, {})],
@@ -5011,9 +5023,31 @@ proc startDrawWallAction(a) =
   setStatusMessage("", "Draw wall", @[IconArrowsAll, "set/clear"], a)
 
 # }}}
+# {{{ startDrawWallRepeatAction()
+proc startDrawWallRepeatAction(a) =
+  let icon = if a.ui.drawWallRepeatOrientation == Horiz: IconArrowsHoriz
+             else: IconArrowsVert
+
+  let action = $a.ui.drawWallRepeatAction
+
+  setStatusMessage("", "Draw wall repeat",
+                   @[icon, fmt"repeat {action} wall"], a)
+
+# }}}
 # {{{ startDrawSpecialWallAction()
 proc startDrawSpecialWallAction(a) =
   setStatusMessage("", "Draw special wall", @[IconArrowsAll, "set/clear"], a)
+
+# }}}
+# {{{ startDrawSpecialWallRepeatAction()
+proc startDrawSpecialWallRepeatAction(a) =
+  let icon = if a.ui.drawWallRepeatOrientation == Horiz: IconArrowsHoriz
+             else: IconArrowsVert
+
+  let action = $a.ui.drawWallRepeatAction
+
+  setStatusMessage("", "Draw special wall repeat",
+                   @[icon, fmt"repeat {action} special wall"], a)
 
 # }}}
 
@@ -5466,6 +5500,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif not opts.wasdMode and ke.isShortcutDown(scDrawWall):
         ui.editMode = emDrawWall
+        ui.drawWallRepeatAction = dwaNone
         startDrawWallAction(a)
 
       elif ke.isShortcutDown(scDrawSpecialWall):
@@ -5794,7 +5829,7 @@ proc handleGlobalKeyEvents(a) =
           if not map.isEmpty(cur):
             actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
-      if not opts.wasdMode and ke.isShortcutUp(scExcavateTunnel):
+      if ke.isShortcutUp(scExcavateTunnel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -5812,6 +5847,14 @@ proc handleGlobalKeyEvents(a) =
         if map.canSetWall(cur, dir):
           let w = if map.getWall(cur, dir) == wWall: wNone
                   else: wWall
+
+          a.ui.drawWallRepeatAction = if w == wNone: dwaClear
+                                      else:          dwaSet
+
+          a.ui.drawWallRepeatOrientation = case dir
+                                           of dirE, dirW: Vert
+                                           of dirN, dirS: Horiz
+
           actions.setWall(map, cur, dir, w, um)
           startDrawWallAction(a)
         else:
@@ -5819,13 +5862,30 @@ proc handleGlobalKeyEvents(a) =
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
-      if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
+      if ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
+      elif ke.isShortcutDown(scDrawWallRepeat):
+        if a.ui.drawWallRepeatAction == dwaNone:
+          setStatusMessage(IconWarning,
+                           "Set or clear wall in current cell first", a)
+        else:
+          ui.editMode = emDrawWallRepeat
+          startDrawWallRepeatAction(a)
+
+      elif ke.isShortcutUp(scDrawWallRepeat):
+        startDrawWallAction(a)
+
     # {{{ emDrawWallRepeat
     of emDrawWallRepeat:
-      discard
+      if ke.isShortcutUp(scDrawWallRepeat):
+        ui.editMode = emDrawWall
+        startDrawWallAction(a)
+
+      if ke.isShortcutUp(scDrawWall):
+        ui.editMode = emNormal
+        clearStatusMessage(a)
 
     # }}}
     # {{{ emDrawSpecialWall
@@ -5864,7 +5924,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emDrawSpecialWallRepeat
     of emDrawSpecialWallRepeat:
-      discard
+      startDrawSpecialWallRepeatAction(a)
 
     # }}}
     # {{{ emSelect
