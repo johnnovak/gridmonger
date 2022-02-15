@@ -1116,9 +1116,13 @@ proc rollLogFile(a) =
 proc initLogger(a) =
   rollLogFile(a)
   a.logFile = open(a.paths.logFile, fmWrite)
-  var fileLog = newFileLogger(a.logFile,
-                              fmtStr="[$levelname] $date $time - ",
-                              levelThreshold=lvlDebug)
+
+  var fileLog = newFileLogger(
+    a.logFile,
+    fmtStr = "[$levelname] $date $time - ",
+    levelThreshold = if defined(DEBUG): lvlDebug else: lvlInfo
+  )
+
   addHandler(fileLog)
 
 # }}}
@@ -2230,7 +2234,6 @@ proc saveAppConfig(a) =
   cfg.set(p & "option.show-notes-pane",  a.opts.showNotesPane)
   cfg.set(p & "option.wasd-mode",        a.opts.wasdMode)
   cfg.set(p & "option.walk-mode",        a.opts.walkMode)
-  cfg.set(p & "option.draw-trail",       a.opts.drawTrail)
 
   p = "last-state.window."
   cfg.set(p & "maximized",      a.win.maximized)
@@ -2272,7 +2275,7 @@ proc loadMap(filename: string; a): bool =
         showNotesPane = s.optShowNotesPane
         wasdMode      = s.optWasdMode
         walkMode      = s.optWalkMode
-        drawTrail     = s.optDrawTrail
+        drawTrail     = false
 
       with a.ui.drawLevelParams:
         viewStartRow   = s.viewStartRow
@@ -2324,7 +2327,6 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
     optShowNotesPane  : a.opts.showNotesPane,
     optWasdMode       : a.opts.wasdMode,
     optWalkMode       : a.opts.walkMode,
-    optDrawTrail      : a.opts.drawTrail
   )
 
   info(fmt"Saving map to '{filename}'")
@@ -5194,7 +5196,14 @@ proc selectNextFloorColor(a) =
 # }}}
 # {{{ pickFloorColor()
 proc pickFloorColor(a) =
-  a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor)
+  var floor = a.doc.map.getFloor(a.ui.cursor)
+
+  if floor != fEmpty:
+    a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor)
+    setStatusMessage(NoIcon, "Picked floor colour", a)
+  else:
+    setStatusMessage(IconWarning,
+                     "Cannot pick floor colour of an empty cell", a)
 
 # }}}
 # {{{ selectFloorColor()
@@ -5431,13 +5440,19 @@ proc handleGlobalKeyEvents(a) =
         actions.drawClearFloor(map, cur, ui.currFloorColor, um)
 
       elif ke.isShortcutDown(scToggleFloorOrientation):
-        actions.toggleFloorOrientation(map, cur, um)
-        if map.getFloorOrientation(cur) == Horiz:
-          setStatusMessage(IconArrowsHoriz,
-                           "Floor orientation set to horizontal", a)
+        let floor = map.getFloor(cur)
+
+        if floor != fEmpty:
+          actions.toggleFloorOrientation(map, cur, um)
+          if map.getFloorOrientation(cur) == Horiz:
+            setStatusMessage(IconArrowsHoriz,
+                             "Floor orientation set to horizontal", a)
+          else:
+            setStatusMessage(IconArrowsVert,
+                             "Floor orientation set to vertical", a)
         else:
-          setStatusMessage(IconArrowsVert,
-                           "Floor orientation set to vertical", a)
+          setStatusMessage(IconWarning,
+                           "Cannot set floor orientation of an empty cell", a)
 
       elif ke.isShortcutDown(scSetFloorColor):
         ui.editMode = emColorFloor
@@ -7043,7 +7058,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Outer Shadow",       p & "outer.color")
         floatProp("Outer Shadow Width", p & "outer.width-factor", SWLimits)
 
-    if koi.subSectionHeader("Floor Colors", te.sectionFloorColors):
+    if koi.subSectionHeader("Floor Colours", te.sectionFloorColors):
       p = "level.floor."
       boolProp("Transparent?", p & "transparent")
 
@@ -8304,7 +8319,6 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
   with a.opts:
     showNotesPane = uiCfg.getBoolOrDefault("option.show-notes-pane", true)
     showToolsPane = uiCfg.getBoolOrDefault("option.show-tools-pane", true)
-    drawTrail     = uiCfg.getBoolOrDefault("option.draw-trail",      false)
     walkMode      = uiCfg.getBoolOrDefault("option.walk-mode",       false)
     wasdMode      = uiCfg.getBoolOrDefault("option.wasd-mode",       false)
 

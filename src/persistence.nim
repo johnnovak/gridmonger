@@ -92,7 +92,6 @@ type
     optShowNotesPane*:  bool
     optWasdMode*:       bool
     optWalkMode*:       bool
-    optDrawTrail*:      bool
 
 # }}}
 # {{{ FourCCs
@@ -254,9 +253,6 @@ proc readAppState_v1(rr; m: Map): AppState =
   let optWalkMode = rr.read(uint8)
   checkBool(optWalkMode, "stat.optWalkMode")
 
-  let optDrawTrail = rr.read(uint8)
-  checkBool(optDrawTrail, "stat.optDrawTrail")
-
   AppState(
     themeName:         themeName,
     zoomLevel:         zoomLevel,
@@ -269,8 +265,7 @@ proc readAppState_v1(rr; m: Map): AppState =
     optShowToolsPane:  optShowToolsPane.bool,
     optShowNotesPane:  optShowNotesPane.bool,
     optWasdMode:       optWasdMode.bool,
-    optWalkMode:       optWalkMode.bool,
-    optDrawTrail:      optDrawTrail.bool
+    optWalkMode:       optWalkMode.bool
   )
 
 # }}}
@@ -895,7 +890,6 @@ proc writeAppState_v1(rw; s: AppState) =
   rw.write(s.optShowNotesPane.uint8)
   rw.write(s.optWasdMode.uint8)
   rw.write(s.optWalkMode.uint8)
-  rw.write(s.optDrawTrail.uint8)
 
   rw.endChunk()
 

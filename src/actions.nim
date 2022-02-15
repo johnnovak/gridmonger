@@ -93,7 +93,7 @@ proc drawClearFloor*(map; loc: Location, floorColor: Natural; um) =
 # {{{ setFloorColor*()
 proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
 
-  singleCellAction(map, loc, um, fmt"Set floor color {EnDash} {floorColor}", m):
+  singleCellAction(map, loc, um, fmt"Set floor colour {EnDash} {floorColor}", m):
     m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -383,7 +383,7 @@ proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
   let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
 
   cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
-                 "Set floor color of selection", m):
+                 "Set floor colour of selection", m):
 
     var loc = Location(level: level)
 
