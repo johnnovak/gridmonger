@@ -275,6 +275,8 @@ type
     drawWallRepeatWall:      Wall
     drawWallRepeatDirection: CardinalDir
 
+    mouseCanStartExcavateAction: bool
+
     manualNoteTooltipState: ManualNoteTooltipState
 
     levelTopPad:       float
@@ -2326,6 +2328,7 @@ proc loadMap(filename: string; a): bool =
         col   = s.cursorCol
 
       a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, s.zoomLevel)
+      a.ui.mouseCanStartExcavateAction = true
 
     else:
       resetCursorAndViewStart(a)
@@ -5066,9 +5069,9 @@ proc setDrawWallActionMessage(a) =
 # {{{ setDrawWallActionRepeatMessage()
 proc doSetDrawWallActionRepeatMessage(name: string, a) =
   let icon = if a.ui.drawWallRepeatDirection.orientation == Horiz:
-               IconArrowsHoriz
-             else:
                IconArrowsVert
+             else:
+               IconArrowsHoriz
 
   setStatusMessage("", fmt"Draw {name} repeat",
                    @[icon, mkRepeatWallActionString(name, a)], a)
@@ -5297,6 +5300,18 @@ proc resetManualNoteTooltip(a) =
     my = -1
 
 # }}}
+
+# {{{ enterDrawWallMode()
+proc enterDrawWallMode(specialWall: bool; a) =
+  a.ui.editMode = if specialWall: emDrawSpecialWall else: emDrawWall
+  a.ui.drawWallRepeatAction = dwaNone
+
+  if specialWall:
+    setDrawSpecialWallActionMessage(a)
+  else:
+    setDrawWallActionMessage(a)
+
+# }}}
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents(a) =
   alias(ui, a.ui)
@@ -5310,15 +5325,17 @@ proc handleLevelMouseEvents(a) =
   if a.opts.wasdMode:
     if ui.editMode == emNormal:
       if koi.mbLeftDown():
-        if koi.shiftDown():
-          moveCursorToMousePos(a)
-        else:
-          ui.editMode = emExcavateTunnel
-          startExcavateTunnelAction(a)
+        if ui.mouseCanStartExcavateAction:
+          if koi.shiftDown():
+            moveCursorToMousePos(a)
+          else:
+            ui.editMode = emExcavateTunnel
+            startExcavateTunnelAction(a)
+      else:
+        ui.mouseCanStartExcavateAction = true
 
-      elif koi.mbRightDown():
-        ui.editMode = emDrawWall
-        setDrawWallActionMessage(a)
+      if koi.mbRightDown():
+        enterDrawWallMode(specialWall = false, a)
 
       elif koi.mbMiddleDown():
         ui.editMode = emEraseCell
@@ -5335,17 +5352,16 @@ proc handleLevelMouseEvents(a) =
         clearStatusMessage(a)
       else:
         if koi.mbLeftDown():
-          ui.editMode = emDrawSpecialWall
-          setDrawSpecialWallActionMessage(a)
+          enterDrawWallMode(specialWall = true, a)
 
     elif ui.editMode == emDrawSpecialWall:
       if not koi.mbRightDown():
         ui.editMode = emNormal
+        ui.mouseCanStartExcavateAction = false
         clearStatusMessage(a)
       else:
         if not koi.mbLeftDown():
-          ui.editMode = emDrawWall
-          setDrawWallActionMessage(a)
+          enterDrawWallMode(specialWall = false, a)
 
     elif ui.editMode == emEraseCell:
       if not koi.mbMiddleDown():
@@ -5557,13 +5573,10 @@ proc handleGlobalKeyEvents(a) =
           actions.setFloorColor(map, cur, ui.currFloorColor, um)
 
       elif not opts.wasdMode and ke.isShortcutDown(scDrawWall):
-        ui.editMode = emDrawWall
-        ui.drawWallRepeatAction = dwaNone
-        setDrawWallActionMessage(a)
+        enterDrawWallMode(specialWall = false, a)
 
       elif ke.isShortcutDown(scDrawSpecialWall):
-        ui.editMode = emDrawSpecialWall
-        setDrawSpecialWallActionMessage(a)
+        enterDrawWallMode(specialWall = true, a)
 
 
       elif ke.isShortcutDown(scCycleFloorGroup1Forward):
@@ -5938,7 +5951,7 @@ proc handleGlobalKeyEvents(a) =
       var ke = ke
       ke.mods = {}
 
-      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=true,
                      drawWallRepeatMoveKeyHandler)
 
       if ke.isShortcutUp(scDrawWallRepeat):
@@ -6006,7 +6019,7 @@ proc handleGlobalKeyEvents(a) =
       var ke = ke
       ke.mods = {}
 
-      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=true,
                      drawWallRepeatMoveKeyHandler)
 
       if ke.isShortcutUp(scDrawWallRepeat):
@@ -8571,7 +8584,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   restoreUIStateFromConfig(cfg, a)
 
   updateLastCursorViewCoords(a)
-
+  
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
   a.splash.show = a.prefs.showSplash
