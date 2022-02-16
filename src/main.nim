@@ -929,8 +929,8 @@ let g_appShortcuts = {
   scSelectFloorColor9:         @[mkKeyShortcut(key9,      {mkCtrl})],
   scSelectFloorColor10:        @[mkKeyShortcut(key0,      {mkCtrl})],
 
-  scDrawWall:                  @[mkKeyShortcut(keyW,          {})],
-  scDrawSpecialWall:           @[mkKeyShortcut(keyR,            {})],
+  scDrawWall:                  @[mkKeyShortcut(keyW,      {})],
+  scDrawSpecialWall:           @[mkKeyShortcut(keyR,      {})],
 
   scDrawWallRepeat:            @[mkKeyShortcut(keyLeftShift,  {mkShift}),
                                  mkKeyShortcut(keyRightShift, {mkShift})],
@@ -5929,7 +5929,7 @@ proc handleGlobalKeyEvents(a) =
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
-      if ke.isShortcutUp(scDrawWall):
+      if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -5958,7 +5958,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emDrawWall
         setDrawWallActionMessage(a)
 
-      if ke.isShortcutUp(scDrawWall):
+      if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
