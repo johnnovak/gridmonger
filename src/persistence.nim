@@ -55,7 +55,7 @@ const
 
   NumAnnotationsLimits*    = intLimits(min=0, max=9999)
   NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=4000)
-  NoteIconTextLimits*      = strLimits(minRuneLen=0, maxRuneLen=4000)
+  NoteOptionalTextLimits*  = strLimits(minRuneLen=0, maxRuneLen=4000)
   NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
 
   NoteColorLimits*      = intLimits(min=0,
@@ -478,8 +478,12 @@ proc readLevelAnnotations_v1(rr; l: Level) =
     let text = rr.readWStr()
     debug(fmt"    text: {text}")
 
-    let textLimits = if anno.kind == akIcon: NoteIconTextLimits
-                     else: NoteTextLimits
+    let textLimits = case anno.kind
+                     of akComment:  NoteTextLimits
+                     of akIndexed:  NoteTextLimits
+                     of akCustomId: NoteOptionalTextLimits
+                     of akIcon:     NoteOptionalTextLimits
+                     of akLabel:    NoteTextLimits
 
     checkStringLength(text, "lvl.anno.text", textLimits)
 

@@ -111,6 +111,9 @@ const
   WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
 
 const
+  WarningMessageTimeout = initDuration(seconds = 3)
+
+const
   SpecialWalls = @[
     wDoor,
     wLockedDoor,
@@ -263,15 +266,14 @@ type
     cutToBuffer:       bool
     moveUndoLocation:  Location
 
-    statusIcon:        string
-    statusMessage:     string
-    statusCommands:    seq[string]
+    status:            StatusMessage
 
     currSpecialWall:   Natural
     currFloorColor:    Natural
 
-    drawWallRepeatAction:      DrawWallRepeatAction
-    drawWallRepeatOrientation: Orientation
+    drawWallRepeatAction:    DrawWallRepeatAction
+    drawWallRepeatWall:      Wall
+    drawWallRepeatDirection: CardinalDir
 
     manualNoteTooltipState: ManualNoteTooltipState
 
@@ -296,6 +298,15 @@ type
     location: Location
     mx:       float
     my:       float
+
+  StatusMessage = object
+    icon:      string
+    message:   string
+    commands:  seq[string]
+    warning:   string
+    warningT0: MonoTime
+
+    keepMessageAfterWarningExpired:  bool
 
 
   EditMode = enum
@@ -762,7 +773,6 @@ type AppShortcut = enum
   scDrawWall,
   scDrawWallRepeat,
   scDrawSpecialWall,
-  scDrawSpecialWallRepeat,
   scPreviousSpecialWall,
   scNextSpecialWall,
 
@@ -918,10 +928,11 @@ let g_appShortcuts = {
   scSelectFloorColor10:        @[mkKeyShortcut(key0,      {mkCtrl})],
 
   scDrawWall:                  @[mkKeyShortcut(keyW,          {})],
+  scDrawSpecialWall:           @[mkKeyShortcut(keyR,            {})],
+
   scDrawWallRepeat:            @[mkKeyShortcut(keyLeftShift,  {mkShift}),
                                  mkKeyShortcut(keyRightShift, {mkShift})],
 
-  scDrawSpecialWall:           @[mkKeyShortcut(keyR,            {})],
   scPreviousSpecialWall:       @[mkKeyShortcut(keyLeftBracket,  {})],
   scNextSpecialWall:           @[mkKeyShortcut(keyRightBracket, {})],
 
@@ -1196,24 +1207,38 @@ func coordOptsForCurrLevel(a): CoordinateOptions =
 
 # }}}
 
-# {{{ clearStatusMessage()
-proc clearStatusMessage(a) =
-  a.ui.statusIcon = NoIcon
-  a.ui.statusMessage = ""
-  a.ui.statusCommands = @[]
-
-# }}}
 # {{{ setStatusMessage()
 proc setStatusMessage(icon, msg: string, commands: seq[string]; a) =
-  a.ui.statusIcon = icon
-  a.ui.statusMessage = msg
-  a.ui.statusCommands = commands
+  alias(s, a.ui.status)
+
+  s.icon = icon
+  s.message = msg
+  s.warning = ""
+  s.commands = commands
+
 
 proc setStatusMessage(icon, msg: string; a) =
   setStatusMessage(icon, msg, commands = @[], a)
 
 proc setStatusMessage(msg: string; a) =
   setStatusMessage(NoIcon, msg, commands = @[], a)
+
+# }}}
+# {{{ clearStatusMessage()
+proc clearStatusMessage(a) =
+  setStatusMessage(NoIcon, msg = "", commands = @[], a)
+
+# }}}
+# {{{ setWarningMessage()
+proc setWarningMessage(msg: string, keepStatusMessage: bool; a) =
+  alias(s, a.ui.status)
+
+  s.warning = msg
+  s.warningT0 = getMonoTime()
+  s.keepMessageAfterWarningExpired = keepStatusMessage
+
+proc setWarningMessage(msg: string; a) =
+  setWarningMessage(msg, keepStatusMessage = false, a)
 
 # }}}
 # {{{ setSelectModeSelectMessage()
@@ -1813,9 +1838,8 @@ proc saveTheme(a) =
 
   except CatchableError as e:
     logError(e, "Error saving theme")
-    setStatusMessage(IconWarning,
-                     fmt"Cannot save theme '{a.currThemeName.name}': {e.msg}",
-                     a)
+    setWarningMessage(fmt"Cannot save theme '{a.currThemeName.name}': {e.msg}",
+                      a)
   finally:
     a.logFile.flushFile()
 
@@ -1832,7 +1856,7 @@ proc deleteTheme(theme: ThemeName; a): bool =
       result = true
     except CatchableError as e:
       logError(e, "Error deleting theme")
-      setStatusMessage(IconWarning, fmt"Error deleting theme: {e.msg}", a)
+      setWarningMessage(fmt"Error deleting theme: {e.msg}", a)
 
 # }}}
 # {{{ copyTheme()
@@ -1842,7 +1866,7 @@ proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
     result = true
   except CatchableError as e:
     logError(e, "Error copying theme")
-    setStatusMessage(IconWarning, fmt"Error copying theme: {e.msg}", a)
+    setWarningMessage(fmt"Error copying theme: {e.msg}", a)
 
 # }}}
 # {{{ renameTheme()
@@ -1852,7 +1876,7 @@ proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
     result = true
   except CatchableError as e:
     logError(e, "Error renaming theme")
-    setStatusMessage(IconWarning, fmt"Error renaming theme: {e.msg}", a)
+    setWarningMessage(fmt"Error renaming theme: {e.msg}", a)
 
 # }}}
 
@@ -2317,7 +2341,7 @@ proc loadMap(filename: string; a): bool =
 
   except CatchableError as e:
     logError(e, "Error loading map")
-    setStatusMessage(IconWarning, fmt"Error loading map: {e.msg}", a)
+    setWarningMessage(fmt"Error loading map: {e.msg}", a)
   finally:
     a.logFile.flushFile()
 
@@ -2351,7 +2375,7 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
         moveFile(filename, fmt"{filename}.{BackupFileExt}")
     except CatchableError as e:
       logError(e, "Error creating backup file")
-      setStatusMessage(IconWarning, fmt"Error creating backup file: {e.msg}", a)
+      setWarningMessage(fmt"Error creating backup file: {e.msg}", a)
       a.logFile.flushFile()
       return
 
@@ -2365,7 +2389,7 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
   except CatchableError as e:
     logError(e, "Error saving map")
     let prefix = if autosave: "Autosave failed: " else: ""
-    setStatusMessage(IconWarning, fmt"{prefix}Error saving map: {e.msg}", a)
+    setWarningMessage(fmt"{prefix}Error saving map: {e.msg}", a)
   finally:
     a.logFile.flushFile()
 
@@ -3298,7 +3322,6 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
     resetCursorAndViewStart(a)
     setStatusMessage(IconFile, "New map created", a)
-
     closeDialog(a)
 
 
@@ -4956,7 +4979,7 @@ proc undoAction(a) =
       moveCursorTo(undoStateData.location, a)
     setStatusMessage(IconUndo, fmt"Undid action: {undoStateData.actionName}", a)
   else:
-    setStatusMessage(IconWarning, "Nothing to undo", a)
+    setWarningMessage("Nothing to undo", a)
 
 # }}}
 # {{{ redoAction()
@@ -4969,7 +4992,7 @@ proc redoAction(a) =
     setStatusMessage(IconRedo,
                      fmt"Redid action: {undoStateData.actionName}", a)
   else:
-    setStatusMessage(IconWarning, "Nothing to redo", a)
+    setWarningMessage("Nothing to redo", a)
 # }}}
 
 # {{{ setFloorAction()
@@ -4994,7 +5017,7 @@ proc cycleFloorGroupAction(floors: seq[Floor], forward: bool; a) =
 
     setFloorAction(floor, a)
   else:
-    setStatusMessage(IconWarning, "Cannot set floor type of an empty cell", a)
+    setWarningMessage("Cannot set floor type of an empty cell", a)
 
 # }}}
 # {{{ startExcavateTunnelAction()
@@ -5018,36 +5041,51 @@ proc startEraseTrailAction(a) =
   setStatusMessage(IconEraser, "Erase trail", @[IconArrowsAll, "erase"], a)
 
 # }}}
-# {{{ startDrawWallAction()
-proc startDrawWallAction(a) =
-  setStatusMessage("", "Draw wall", @[IconArrowsAll, "set/clear"], a)
 
-# }}}
-# {{{ startDrawWallRepeatAction()
-proc startDrawWallRepeatAction(a) =
-  let icon = if a.ui.drawWallRepeatOrientation == Horiz: IconArrowsHoriz
-             else: IconArrowsVert
+# {{{ setDrawWallActionMessage()
 
+proc mkRepeatWallActionString(name: string; a): string =
   let action = $a.ui.drawWallRepeatAction
+  fmt"repeat {action} {name}"
 
-  setStatusMessage("", "Draw wall repeat",
-                   @[icon, fmt"repeat {action} wall"], a)
+
+proc doSetDrawWallActionMessage(name: string; a) =
+  var commands = @[IconArrowsAll, "set/clear"]
+
+  if a.ui.drawWallRepeatAction != dwaNone:
+    commands.add("Shift")
+    commands.add(mkRepeatWallActionString(name, a))
+
+  setStatusMessage("", fmt"Draw {name}", commands, a)
+
+
+proc setDrawWallActionMessage(a) =
+  doSetDrawWallActionMessage(name = "wall", a)
 
 # }}}
-# {{{ startDrawSpecialWallAction()
-proc startDrawSpecialWallAction(a) =
-  setStatusMessage("", "Draw special wall", @[IconArrowsAll, "set/clear"], a)
+# {{{ setDrawWallActionRepeatMessage()
+proc doSetDrawWallActionRepeatMessage(name: string, a) =
+  let icon = if a.ui.drawWallRepeatDirection.orientation == Horiz:
+               IconArrowsHoriz
+             else:
+               IconArrowsVert
+
+  setStatusMessage("", fmt"Draw {name} repeat",
+                   @[icon, mkRepeatWallActionString(name, a)], a)
+
+
+proc setDrawWallActionRepeatMessage(a) =
+  doSetDrawWallActionRepeatMessage(name = "wall", a)
 
 # }}}
-# {{{ startDrawSpecialWallRepeatAction()
-proc startDrawSpecialWallRepeatAction(a) =
-  let icon = if a.ui.drawWallRepeatOrientation == Horiz: IconArrowsHoriz
-             else: IconArrowsVert
+# {{{ setDrawSpecialWallActionMessage()
+proc setDrawSpecialWallActionMessage(a) =
+  doSetDrawWallActionMessage(name = "special wall", a)
 
-  let action = $a.ui.drawWallRepeatAction
-
-  setStatusMessage("", "Draw special wall repeat",
-                   @[icon, fmt"repeat {action} special wall"], a)
+# }}}
+# {{{ setDrawSpecialWallActionRepeatMessage()
+proc setDrawSpecialWallActionRepeatMessage(a) =
+  doSetDrawWallActionRepeatMessage(name = "special wall", a)
 
 # }}}
 
@@ -5238,8 +5276,7 @@ proc pickFloorColor(a) =
     a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor)
     setStatusMessage(NoIcon, "Picked floor colour", a)
   else:
-    setStatusMessage(IconWarning,
-                     "Cannot pick floor colour of an empty cell", a)
+    setWarningMessage("Cannot pick floor colour of an empty cell", a)
 
 # }}}
 # {{{ selectFloorColor()
@@ -5281,7 +5318,7 @@ proc handleLevelMouseEvents(a) =
 
       elif koi.mbRightDown():
         ui.editMode = emDrawWall
-        startDrawWallAction(a)
+        setDrawWallActionMessage(a)
 
       elif koi.mbMiddleDown():
         ui.editMode = emEraseCell
@@ -5299,7 +5336,7 @@ proc handleLevelMouseEvents(a) =
       else:
         if koi.mbLeftDown():
           ui.editMode = emDrawSpecialWall
-          startDrawSpecialWallAction(a)
+          setDrawSpecialWallActionMessage(a)
 
     elif ui.editMode == emDrawSpecialWall:
       if not koi.mbRightDown():
@@ -5308,7 +5345,7 @@ proc handleLevelMouseEvents(a) =
       else:
         if not koi.mbLeftDown():
           ui.editMode = emDrawWall
-          startDrawWallAction(a)
+          setDrawWallActionMessage(a)
 
     elif ui.editMode == emEraseCell:
       if not koi.mbMiddleDown():
@@ -5434,6 +5471,28 @@ proc handleGlobalKeyEvents(a) =
     result = false
 
 
+  proc drawWallRepeatMoveKeyHandler(dir: CardinalDir; a) =
+    let cur = ui.cursor
+    let drawDir = ui.drawWallRepeatDirection
+
+    if dir.orientation == drawDir.orientation.opposite:
+      let newCur = stepCursor(cur, dir, steps=1, a)
+      if newCur != cur:
+        if map.canSetWall(newCur, drawDir):
+          setCursor(newCur, a)
+
+          actions.setWall(map, newCur, drawDir, ui.drawWallRepeatWall, um)
+          setDrawWallActionMessage(a)
+        else:
+          setWarningMessage("Cannot set wall of an empty cell",
+                            keepStatusMessage=true, a)
+    else:
+      setWarningMessage(
+        fmt"Can only repeat in {dir.orientation.opposite} direction",
+        keepStatusMessage=true, a
+      )
+
+
   if hasKeyEvent():
     let ke = koi.currEvent()
     # TODO eventHandled is not set here, but it's not actually needed (yet)
@@ -5458,7 +5517,7 @@ proc handleGlobalKeyEvents(a) =
       if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
       elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
 
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
       if not opts.wasdMode and ke.isShortcutDown(scExcavateTunnel):
         ui.editMode = emExcavateTunnel
@@ -5487,8 +5546,7 @@ proc handleGlobalKeyEvents(a) =
             setStatusMessage(IconArrowsVert,
                              "Floor orientation set to vertical", a)
         else:
-          setStatusMessage(IconWarning,
-                           "Cannot set floor orientation of an empty cell", a)
+          setWarningMessage("Cannot set floor orientation of an empty cell", a)
 
       elif ke.isShortcutDown(scSetFloorColor):
         ui.editMode = emColorFloor
@@ -5501,11 +5559,11 @@ proc handleGlobalKeyEvents(a) =
       elif not opts.wasdMode and ke.isShortcutDown(scDrawWall):
         ui.editMode = emDrawWall
         ui.drawWallRepeatAction = dwaNone
-        startDrawWallAction(a)
+        setDrawWallActionMessage(a)
 
       elif ke.isShortcutDown(scDrawSpecialWall):
         ui.editMode = emDrawSpecialWall
-        startDrawSpecialWallAction(a)
+        setDrawSpecialWallActionMessage(a)
 
 
       elif ke.isShortcutDown(scCycleFloorGroup1Forward):
@@ -5584,7 +5642,7 @@ proc handleGlobalKeyEvents(a) =
                              groupWithPrev=true, actionName="Excavate trail")
           setStatusMessage(IconEraser, "Trail excavated", a)
         else:
-          setStatusMessage(IconWarning, "No trail to excavate", a)
+          setWarningMessage("No trail to excavate", a)
 
       elif ke.isShortcutDown(scClearTrail):
         let bbox = l.calcTrailBoundingBox()
@@ -5592,7 +5650,7 @@ proc handleGlobalKeyEvents(a) =
           actions.clearTrail(map, cur, bbox.get, um)
           setStatusMessage(IconEraser, "Trail cleared", a)
         else:
-          setStatusMessage(IconWarning, "No trail to clear", a)
+          setWarningMessage("No trail to clear", a)
 
       elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
         selectPrevFloorColor(a)
@@ -5628,7 +5686,7 @@ proc handleGlobalKeyEvents(a) =
 
           setStatusMessage(IconPaste, "Buffer pasted", a)
         else:
-          setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
+          setWarningMessage("Cannot paste, buffer is empty", a)
 
       elif ke.isShortcutDown(scPastePreview):
         if ui.copyBuf.isSome:
@@ -5641,7 +5699,7 @@ proc handleGlobalKeyEvents(a) =
                            @[IconArrowsAll, "placement",
                            "Enter/P", "paste", "Esc", "cancel"], a)
         else:
-          setStatusMessage(IconWarning, "Cannot paste, buffer is empty", a)
+          setWarningMessage("Cannot paste, buffer is empty", a)
 
       elif ke.isShortcutDown(scNudgePreview):
         let sel = newSelection(l.rows, l.cols)
@@ -5669,7 +5727,7 @@ proc handleGlobalKeyEvents(a) =
         if otherLoc.isSome:
           moveCursorTo(otherLoc.get, a)
         else:
-          setStatusMessage(IconWarning, "Not a linked cell", a)
+          setWarningMessage("Not a linked cell", a)
 
       elif ke.isShortcutDown(scLinkCell):
         let floor = map.getFloor(cur)
@@ -5678,7 +5736,7 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emSetCellLink
           setSetLinkDestinationMessage(floor, a)
         else:
-          setStatusMessage(IconWarning, "Cannot link current cell", a)
+          setWarningMessage("Cannot link current cell", a)
 
       elif ke.isShortcutDown(scZoomIn, repeat=true):
         zoomIn(a)
@@ -5692,7 +5750,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scEditNote):
         if map.isEmpty(cur):
-          setStatusMessage(IconWarning, "Cannot attach note to empty cell", a)
+          setWarningMessage("Cannot attach note to empty cell", a)
         else:
           openEditNoteDialog(a)
 
@@ -5701,7 +5759,7 @@ proc handleGlobalKeyEvents(a) =
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
         else:
-          setStatusMessage(IconWarning, "No note to erase in cell", a)
+          setWarningMessage("No note to erase in cell", a)
 
       elif ke.isShortcutDown(scEditLabel):
         openEditLabelDialog(a)
@@ -5711,7 +5769,7 @@ proc handleGlobalKeyEvents(a) =
           actions.eraseLabel(map, cur, um)
           setStatusMessage(IconEraser, "Label erased", a)
         else:
-          setStatusMessage(IconWarning, "No label to erase in cell", a)
+          setWarningMessage("No label to erase in cell", a)
 
       elif ke.isShortcutDown(scShowNoteTooltip):
         if ui.manualNoteTooltipState.show:
@@ -5730,8 +5788,7 @@ proc handleGlobalKeyEvents(a) =
         if map.levels.len < NumLevelsLimits.maxInt:
           openNewLevelDialog(a)
         else:
-          setStatusMessage(
-            IconWarning,
+          setWarningMessage(
             "Cannot add new level: maximum number of levels has been reached " &
             fmt"({NumLevelsLimits.maxInt})", a
           )
@@ -5752,8 +5809,7 @@ proc handleGlobalKeyEvents(a) =
         if l.regionOpts.enabled:
           openEditRegionPropertiesDialog(a)
         else:
-          setStatusMessage(
-            IconWarning,
+          setWarningMessage(
             "Cannot edit region properties: regions are not enabled for level",
             a
           )
@@ -5810,9 +5866,9 @@ proc handleGlobalKeyEvents(a) =
       else:
         discard handleMoveCursor(ke, allowPan=false, allowJump=false,
                                  allowWasdKeys=true, a)
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
-      if cur != a.ui.lastCursor:
+      if cur != ui.lastCursor:
         if   ui.editMode == emExcavateTunnel:
           actions.excavateTunnel(map, cur, ui.currFloorColor, um)
 
@@ -5842,23 +5898,21 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emDrawWall
     of emDrawWall:
       proc handleMoveKey(dir: CardinalDir; a) =
-        let cur = a.ui.cursor
+        let cur = ui.cursor
 
         if map.canSetWall(cur, dir):
           let w = if map.getWall(cur, dir) == wWall: wNone
                   else: wWall
 
-          a.ui.drawWallRepeatAction = if w == wNone: dwaClear
-                                      else:          dwaSet
-
-          a.ui.drawWallRepeatOrientation = case dir
-                                           of dirE, dirW: Vert
-                                           of dirN, dirS: Horiz
+          ui.drawWallRepeatAction = if w == wNone: dwaClear else: dwaSet
+          ui.drawWallRepeatWall = w
+          ui.drawWallRepeatDirection = dir
 
           actions.setWall(map, cur, dir, w, um)
-          startDrawWallAction(a)
+          setDrawWallActionMessage(a)
         else:
-          setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
+          setWarningMessage("Cannot set wall of an empty cell",
+                            keepStatusMessage=true, a)
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
@@ -5867,21 +5921,29 @@ proc handleGlobalKeyEvents(a) =
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scDrawWallRepeat):
-        if a.ui.drawWallRepeatAction == dwaNone:
-          setStatusMessage(IconWarning,
-                           "Set or clear wall in current cell first", a)
+        if ui.drawWallRepeatAction == dwaNone:
+          setWarningMessage("Set or clear wall in current cell first",
+                            keepStatusMessage=true, a)
         else:
           ui.editMode = emDrawWallRepeat
-          startDrawWallRepeatAction(a)
+          setDrawWallActionRepeatMessage(a)
 
       elif ke.isShortcutUp(scDrawWallRepeat):
-        startDrawWallAction(a)
+        setDrawWallActionMessage(a)
 
+    # }}}
     # {{{ emDrawWallRepeat
     of emDrawWallRepeat:
+      # HACK remove shift modifier
+      var ke = ke
+      ke.mods = {}
+
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
+                     drawWallRepeatMoveKeyHandler)
+
       if ke.isShortcutUp(scDrawWallRepeat):
         ui.editMode = emDrawWall
-        startDrawWallAction(a)
+        setDrawWallActionMessage(a)
 
       if ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
@@ -5891,7 +5953,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emDrawSpecialWall
     of emDrawSpecialWall:
       proc handleMoveKey(dir: CardinalDir; a) =
-        let cur = a.ui.cursor
+        let cur = ui.cursor
 
         if map.canSetWall(cur, dir):
           var curSpecWall = SpecialWalls[ui.currSpecialWall]
@@ -5909,11 +5971,16 @@ proc handleGlobalKeyEvents(a) =
 
           let w = if map.getWall(cur, dir) == curSpecWall: wNone
                   else: curSpecWall
+ 
+          ui.drawWallRepeatAction = if w == wNone: dwaClear else: dwaSet
+          ui.drawWallRepeatWall = w
+          ui.drawWallRepeatDirection = dir
 
           actions.setWall(map, cur, dir, w, um)
-          startDrawSpecialWallAction(a)
+          setDrawSpecialWallActionMessage(a)
         else:
-          setStatusMessage(IconWarning, "Cannot set wall of an empty cell", a)
+          setWarningMessage("Cannot set wall of an empty cell",
+                            keepStatusMessage=true, a)
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
@@ -5921,17 +5988,41 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
+      elif ke.isShortcutDown(scDrawWallRepeat):
+        if ui.drawWallRepeatAction == dwaNone:
+          setWarningMessage("Set or clear wall in current cell first",
+                            keepStatusMessage=true, a)
+        else:
+          ui.editMode = emDrawSpecialWallRepeat
+          setDrawSpecialWallActionRepeatMessage(a)
+
+      elif ke.isShortcutUp(scDrawWallRepeat):
+        setDrawSpecialWallActionMessage(a)
+
     # }}}
     # {{{ emDrawSpecialWallRepeat
     of emDrawSpecialWallRepeat:
-      startDrawSpecialWallRepeatAction(a)
+      # HACK remove shift modifier
+      var ke = ke
+      ke.mods = {}
+
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
+                     drawWallRepeatMoveKeyHandler)
+
+      if ke.isShortcutUp(scDrawWallRepeat):
+        ui.editMode = emDrawSpecialWall
+        setDrawSpecialWallActionMessage(a)
+
+      if ke.isShortcutUp(scDrawSpecialWall):
+        ui.editMode = emNormal
+        clearStatusMessage(a)
 
     # }}}
     # {{{ emSelect
     of emSelect:
       discard handleMoveCursor(ke, allowPan=true, allowJump=true,
                                allowWasdKeys=false, a)
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
       if   koi.ctrlDown(): setSelectModeActionMessage(a)
       else:                setSelectModeSelectMessage(a)
@@ -6087,7 +6178,7 @@ proc handleGlobalKeyEvents(a) =
     of emSelectDraw, emSelectErase:
       discard handleMoveCursor(ke, allowPan=false, allowJump=false,
                                allowWasdKeys=false, a)
-      let cur = a.ui.cursor
+      let cur = ui.cursor
       ui.selection.get[cur.row, cur.col] = ui.editMode == emSelectDraw
 
       if ke.isShortcutUp({scSelectionDraw, scSelectionErase}):
@@ -6098,7 +6189,7 @@ proc handleGlobalKeyEvents(a) =
     of emSelectRect:
       discard handleMoveCursor(ke, allowPan=false, allowJump=false,
                                allowWasdKeys=false, a)
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
       var r1,c1, r2,c2: Natural
       if ui.selRect.get.startRow <= cur.row:
@@ -6127,10 +6218,10 @@ proc handleGlobalKeyEvents(a) =
     of emPastePreview:
       discard handleMoveCursor(ke, allowPan=true, allowJump=true,
                                allowWasdKeys=false, a)
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
-      a.ui.drawLevelParams.selStartRow = cur.row
-      a.ui.drawLevelParams.selStartCol = cur.col
+      dp.selStartRow = cur.row
+      dp.selStartCol = cur.col
 
       if ke.isShortcutDown(scPasteAccept):
         actions.pasteSelection(map, cur, ui.copyBuf.get,
@@ -6157,10 +6248,10 @@ proc handleGlobalKeyEvents(a) =
     of emMovePreview:
       discard handleMoveCursor(ke, allowPan=true, allowJump=true,
                                allowWasdKeys=false, a)
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
-      a.ui.drawLevelParams.selStartRow = cur.row
-      a.ui.drawLevelParams.selStartCol = cur.col
+      dp.selStartRow = cur.row
+      dp.selStartCol = cur.col
 
       if ke.isShortcutDown(scPasteAccept):
         actions.pasteSelection(map, cur, ui.nudgeBuf.get,
@@ -6186,7 +6277,7 @@ proc handleGlobalKeyEvents(a) =
       # TODO add ctrl-jump support
       handleMoveKeys(ke, allowWasdKeys=false, allowRepeat=true, moveSelStart)
 
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
       if   ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
@@ -6216,20 +6307,20 @@ proc handleGlobalKeyEvents(a) =
       if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
       elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
 
-      let cur = a.ui.cursor
+      let cur = ui.cursor
 
-      if cur != a.ui.lastCursor:
+      if cur != ui.lastCursor:
         let floor = map.getFloor(ui.linkSrcLocation)
         setSetLinkDestinationMessage(floor, a)
 
       if ke.isShortcutDown(scAccept):
         if map.isEmpty(cur):
-          setStatusMessage(IconWarning,
-                           "Cannot set link destination to an empty cell", a)
+          setWarningMessage("Cannot set link destination to an empty cell",
+                            keepStatusMessage=true, a)
 
         elif cur == ui.linkSrcLocation:
-          setStatusMessage(IconWarning,
-                           "Cannot set link destination to the source cell", a)
+          setWarningMessage("Cannot set link destination to the source cell",
+                            keepStatusMessage=true, a)
         else:
           actions.setLink(map, src=ui.linkSrcLocation, dest=cur,
                           ui.currFloorColor, um)
@@ -6321,6 +6412,7 @@ proc handleQuickRefKeyEvents(a) =
 
 # }}}
 
+# }}}
 # {{{ Rendering
 
 # {{{ renderNoteTooltip()
@@ -6788,6 +6880,7 @@ proc renderCommand(x, y: float; command: string; a): float =
 # {{{ renderStatusBar()
 proc renderStatusBar(y: float, winWidth: float; a) =
   alias(vg, a.vg)
+  alias(status, a.ui.status)
 
   let s = a.theme.statusBarStyle
 
@@ -6809,8 +6902,9 @@ proc renderStatusBar(y: float, winWidth: float; a) =
       l = currLevel(a)
       coordOpts = coordOptsForCurrLevel(a)
 
-      row = formatRowCoord(a.ui.cursor.row, l.rows, coordOpts, l.regionOpts)
-      col = formatColumnCoord(a.ui.cursor.col, l.cols, coordOpts, l.regionOpts)
+      cur = a.ui.cursor
+      row = formatRowCoord(cur.row, l.rows, coordOpts, l.regionOpts)
+      col = formatColumnCoord(cur.col, l.cols, coordOpts, l.regionOpts)
 
       cursorPos = fmt"({col}, {row})"
       tw = vg.textWidth(cursorPos)
@@ -6821,7 +6915,7 @@ proc renderStatusBar(y: float, winWidth: float; a) =
 
     vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
 
-  # Display icon & message
+  # Display status message or warning
   const
     IconPosX = 10
     MessagePosX = 30
@@ -6831,22 +6925,41 @@ proc renderStatusBar(y: float, winWidth: float; a) =
 
   var x = 10.0
 
-  vg.fillColor(s.textColor)
-  discard vg.text(IconPosX, ty, a.ui.statusIcon)
+  # Clear expired warning messages
+  if status.warning != "":
+    let dt = getMonoTime() - status.warningT0
+    if dt > WarningMessageTimeout:
+      status.warning = ""
 
-  let tx = vg.text(MessagePosX, ty, a.ui.statusMessage)
-  x = tx + MessagePadX
+      if not status.keepMessageAfterWarningExpired:
+        clearStatusMessage(a)
 
-  # Display commands, if present
-  for i, cmd in a.ui.statusCommands:
-    if i mod 2 == 0:
-      let w = renderCommand(x, ty, cmd, a)
-      x += w + CommandLabelPadX
-    else:
-      let text = cmd
-      vg.fillColor(s.textColor)
-      let tw = vg.text(round(x), round(ty), text)
-      x = tw + CommandTextPadX
+  # Display message
+  if status.warning == "":
+    vg.fillColor(s.textColor)
+    discard vg.text(IconPosX, ty, status.icon)
+
+    let tx = vg.text(MessagePosX, ty, status.message)
+    x = tx + MessagePadX
+
+    # Display commands, if present
+    for i, cmd in status.commands:
+      if i mod 2 == 0:
+        let w = renderCommand(x, ty, cmd, a)
+        x += w + CommandLabelPadX
+      else:
+        let text = cmd
+        vg.fillColor(s.textColor)
+        let tw = vg.text(round(x), round(ty), text)
+        x = tw + CommandTextPadX
+
+  # Display warning
+  else:
+    # TODO
+    vg.fillColor(a.theme.warningLabelStyle.color)
+
+    discard vg.text(IconPosX, ty, IconWarning)
+    discard vg.text(MessagePosX, ty, status.warning)
 
   vg.restore()
 
@@ -7934,7 +8047,7 @@ proc renderFramePre(a) =
     except CatchableError as e:
       logError(e, "Error loading theme when switching theme")
       let name = a.theme.themeNames[themeIndex].name
-      setStatusMessage(IconWarning, fmt"Cannot load theme '{name}': {e.msg}", a)
+      setWarningMessage(fmt"Cannot load theme '{name}': {e.msg}", a)
       a.theme.nextThemeIndex = Natural.none
 
     # nextThemeIndex will be reset at the start of the current frame after
@@ -8452,8 +8565,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   if mapFileName != "":
     discard loadMap(mapFileName, a)
-
-  setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
+  else:
+    setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
   restoreUIStateFromConfig(cfg, a)
 

@@ -3,6 +3,7 @@
 ._*
 *.swp
 *.exe
+*.bak
 
 /Autosaves
 /Config
@@ -11,7 +12,6 @@
 /Logs
 
 /gridmonger
-/gridmonger.ini
 /*.gmm
 /*.log
 /*.log.bak?

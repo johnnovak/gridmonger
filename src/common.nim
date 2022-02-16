@@ -31,14 +31,9 @@ const
 
 
 type
-  Orientation* = enum
-    Horiz = (0, "horiz")
-    Vert  = (1, "vert")
-
   Location* = object
     level*:     Natural
     row*, col*: Natural
-
 
 type
   CardinalDir* = enum
@@ -49,6 +44,10 @@ type
 
   Direction* = set[CardinalDir]
 
+  Orientation* = enum
+    Horiz = (0, "horizontal")
+    Vert  = (1, "vertical")
+
 const
   North*     = {dirN}
   NorthEast* = {dirN, dirE}
@@ -58,6 +57,16 @@ const
   SouthWest* = {dirS, dirW}
   West*      = {dirW}
   NorthWest* = {dirN, dirW}
+
+proc orientation*(dir: CardinalDir): Orientation =
+  case dir
+  of dirE, dirW: Horiz
+  of dirN, dirS: Vert
+
+proc opposite*(o: Orientation): Orientation =
+  case o
+  of Horiz: Vert
+  of Vert:  Horiz
 
 
 type
