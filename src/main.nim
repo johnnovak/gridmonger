@@ -5354,6 +5354,11 @@ proc handleLevelMouseEvents(a) =
         if koi.mbLeftDown():
           enterDrawWallMode(specialWall = true, a)
 
+    elif ui.editMode == emDrawWallRepeat:
+      if not koi.mbRightDown():
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+
     elif ui.editMode == emDrawSpecialWall:
       if not koi.mbRightDown():
         ui.editMode = emNormal
@@ -5362,6 +5367,12 @@ proc handleLevelMouseEvents(a) =
       else:
         if not koi.mbLeftDown():
           enterDrawWallMode(specialWall = false, a)
+
+    elif ui.editMode == emDrawSpecialWallRepeat:
+      if not koi.mbRightDown():
+        ui.editMode = emNormal
+        ui.mouseCanStartExcavateAction = false
+        clearStatusMessage(a)
 
     elif ui.editMode == emEraseCell:
       if not koi.mbMiddleDown():
