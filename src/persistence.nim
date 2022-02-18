@@ -41,8 +41,8 @@ const
   LevelRowsLimits*         = intLimits(min=1, max=6666)
   LevelColumnsLimits*      = intLimits(min=1, max=6666)
 
-  RowStartLimits*          = intLimits(min= -9999, max=9999)
-  ColumnStartLimits*       = intLimits(min= -9999, max=9999)
+  CoordRowStartLimits*     = intLimits(min= -9999, max=9999)
+  CoordColumnStartLimits*  = intLimits(min= -9999, max=9999)
 
   RowsPerRegionLimits*     = intLimits(min=2, max=3333)
   ColumnsPerRegionLimits*  = intLimits(min=2, max=3333)
@@ -285,13 +285,13 @@ proc readLinks_v1(rr; levels: seq[Level]): Links =
     let src = readLocation(rr)
     debug(fmt"  src: {src}")
     checkValueRange(src.level, "lnks.srcLevel", max=maxLevelIndex)
-    checkValueRange(src.row, "lnks.srcRow", max=levels[src.level].rows-1)
+    checkValueRange(src.row, "lnks.srcRow",    max=levels[src.level].rows-1)
     checkValueRange(src.col, "lnks.srcColumh", max=levels[src.level].cols-1)
 
     let dest = readLocation(rr)
     debug(fmt"  dest: {dest}")
     checkValueRange(dest.level, "lnks.destLevel", max=maxLevelIndex)
-    checkValueRange(dest.row, "lnks.destRow", max=levels[dest.level].cols-1)
+    checkValueRange(dest.row, "lnks.destRow",    max=levels[dest.level].rows-1)
     checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.level].cols-1)
 
     result.set(src, dest)
@@ -448,8 +448,7 @@ proc readLevelAnnotations_v1(rr; l: Level) =
     of akIndexed:
       let index = rr.read(uint16)
       debug(fmt"    index: {index}")
-      checkValueRange(index, "lvl.anno.index",
-                      max=NumAnnotationsLimits.maxInt-1)
+      checkValueRange(index, "lvl.anno.index", NumAnnotationsLimits)
       anno.index = index
 
       let indexColor = rr.read(uint8)
@@ -505,11 +504,12 @@ proc readCoordinateOptions_v1(rr; parentChunk: string): CoordinateOptions =
   checkEnum(columnStyle, fmt"${parentChunk}.coor.columnStyle", CoordinateStyle)
 
   let rowStart = rr.read(int16)
-  checkValueRange(rowStart, fmt"${parentChunk}.coor.rowStart", RowStartLimits)
+  checkValueRange(rowStart, fmt"${parentChunk}.coor.rowStart",
+                  CoordRowStartLimits)
 
   let columnStart = rr.read(int16)
   checkValueRange(columnStart, fmt"${parentChunk}.coor.columnStart",
-                  ColumnStartLimits)
+                  CoordColumnStartLimits)
 
   result = CoordinateOptions(
     origin:      origin.CoordinateOrigin,
@@ -532,7 +532,7 @@ proc readLevelRegions_v1(rr): (RegionOptions, Regions) =
 
   let colsPerRegion = rr.read(uint16)
   checkValueRange(colsPerRegion, "lvl.regn.colsPerRegion",
-                                 ColumnsPerRegionLimits)
+                  ColumnsPerRegionLimits)
 
   let perRegionCoords = rr.read(uint8)
   checkBool(perRegionCoords, "lvl.cell.perRegionCoords")

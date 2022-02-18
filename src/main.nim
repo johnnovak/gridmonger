@@ -112,6 +112,7 @@ const
 
 const
   WarningMessageTimeout = initDuration(seconds = 3)
+  InfiniteDuration      = initDuration(seconds = int64.high)
 
 const
   SpecialWalls = @[
@@ -302,11 +303,12 @@ type
     my:       float
 
   StatusMessage = object
-    icon:      string
-    message:   string
-    commands:  seq[string]
-    warning:   string
-    warningT0: MonoTime
+    icon:           string
+    message:        string
+    commands:       seq[string]
+    warning:        string
+    warningT0:      MonoTime
+    warningTimeout: Duration
 
     keepMessageAfterWarningExpired:  bool
 
@@ -1232,15 +1234,14 @@ proc clearStatusMessage(a) =
 
 # }}}
 # {{{ setWarningMessage()
-proc setWarningMessage(msg: string, keepStatusMessage: bool; a) =
+proc setWarningMessage(msg: string, keepStatusMessage = false,
+                       autohide = true; a) =
   alias(s, a.ui.status)
 
   s.warning = msg
   s.warningT0 = getMonoTime()
+  s.warningTimeout = if autohide: WarningMessageTimeout else: InfiniteDuration
   s.keepMessageAfterWarningExpired = keepStatusMessage
-
-proc setWarningMessage(msg: string; a) =
-  setWarningMessage(msg, keepStatusMessage = false, a)
 
 # }}}
 # {{{ setSelectModeSelectMessage()
@@ -1602,24 +1603,26 @@ proc exitNudgePreviewMode(a) =
 
 # }}}
 # {{{ returnToNormalMode()
-proc returnToNormalMode(a) =
-  alias(ui, a.ui)
+when defined(windows):
 
-  case ui.editMode
-  of emNormal: discard
+  proc returnToNormalMode(a) =
+    alias(ui, a.ui)
 
-  of emMovePreview:
-    exitMovePreviewMode(a)
+    case ui.editMode
+    of emNormal: discard
 
-  of emNudgePreview:
-    exitNudgePreviewMode(a)
+    of emMovePreview:
+      exitMovePreviewMode(a)
 
-  of emSelect, emSelectDraw, emSelectErase, emSelectRect:
-    exitSelectMode(a)
+    of emNudgePreview:
+      exitNudgePreviewMode(a)
 
-  else:
-    ui.editMode = emNormal
-    clearStatusMessage(a)
+    of emSelect, emSelectDraw, emSelectErase, emSelectRect:
+      exitSelectMode(a)
+
+    else:
+      ui.editMode = emNormal
+      clearStatusMessage(a)
 
 # }}}
 
@@ -1745,7 +1748,7 @@ proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
 # {{{ Theme handling
 
 # {{{ currThemeName()
-func currThemeName(a): var ThemeName =
+func currThemeName(a): ThemeName =
   a.theme.themeNames[a.theme.currThemeIndex]
 
 # }}}
@@ -1841,7 +1844,7 @@ proc saveTheme(a) =
   except CatchableError as e:
     logError(e, "Error saving theme")
     setWarningMessage(fmt"Cannot save theme '{a.currThemeName.name}': {e.msg}",
-                      a)
+                      a=a)
   finally:
     a.logFile.flushFile()
 
@@ -1858,7 +1861,7 @@ proc deleteTheme(theme: ThemeName; a): bool =
       result = true
     except CatchableError as e:
       logError(e, "Error deleting theme")
-      setWarningMessage(fmt"Error deleting theme: {e.msg}", a)
+      setWarningMessage(fmt"Error deleting theme: {e.msg}", autohide=false, a=a)
 
 # }}}
 # {{{ copyTheme()
@@ -1868,7 +1871,7 @@ proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
     result = true
   except CatchableError as e:
     logError(e, "Error copying theme")
-    setWarningMessage(fmt"Error copying theme: {e.msg}", a)
+    setWarningMessage(fmt"Error copying theme: {e.msg}", autohide=false, a=a)
 
 # }}}
 # {{{ renameTheme()
@@ -1878,7 +1881,7 @@ proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
     result = true
   except CatchableError as e:
     logError(e, "Error renaming theme")
-    setWarningMessage(fmt"Error renaming theme: {e.msg}", a)
+    setWarningMessage(fmt"Error renaming theme: {e.msg}", autohide=false, a=a)
 
 # }}}
 
@@ -2344,7 +2347,7 @@ proc loadMap(filename: string; a): bool =
 
   except CatchableError as e:
     logError(e, "Error loading map")
-    setWarningMessage(fmt"Error loading map: {e.msg}", a)
+    setWarningMessage(fmt"Error loading map: {e.msg}", autohide=false, a=a)
   finally:
     a.logFile.flushFile()
 
@@ -2378,7 +2381,8 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
         moveFile(filename, fmt"{filename}.{BackupFileExt}")
     except CatchableError as e:
       logError(e, "Error creating backup file")
-      setWarningMessage(fmt"Error creating backup file: {e.msg}", a)
+      setWarningMessage(fmt"Error creating backup file: {e.msg}",
+                        autohide=false, a=a)
       a.logFile.flushFile()
       return
 
@@ -2392,7 +2396,8 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
   except CatchableError as e:
     logError(e, "Error saving map")
     let prefix = if autosave: "Autosave failed: " else: ""
-    setWarningMessage(fmt"{prefix}Error saving map: {e.msg}", a)
+    setWarningMessage(fmt"{prefix}Error saving map: {e.msg}", autohide=false,
+                      a=a)
   finally:
     a.logFile.flushFile()
 
@@ -2503,8 +2508,8 @@ template coordinateFields() =
       activate = dlg.activateFirstTextField,
       constraint = TextFieldConstraint(
         kind:   tckInteger,
-        minInt: ColumnStartLimits.minInt,
-        maxInt: ColumnStartLimits.maxInt
+        minInt: CoordColumnStartLimits.minInt,
+        maxInt: CoordColumnStartLimits.maxInt
       ).some,
       style = a.theme.textFieldStyle
     )
@@ -2525,8 +2530,8 @@ template coordinateFields() =
       dlg.rowStart,
       constraint = TextFieldConstraint(
         kind:   tckInteger,
-        minInt: RowStartLimits.minInt,
-        maxInt: RowStartLimits.maxInt
+        minInt: CoordRowStartLimits.minInt,
+        maxInt: CoordRowStartLimits.maxInt
       ).some,
       style = a.theme.textFieldStyle
     )
@@ -2557,12 +2562,11 @@ template regionFields() =
           activate = dlg.activateFirstTextField,
           constraint = TextFieldConstraint(
             kind:   tckInteger,
-            minInt: ColumnStartLimits.minInt,
-            maxInt: ColumnStartLimits.maxInt
+            minInt: RegionColumnLimits.minInt,
+            maxInt: RegionColumnLimits.maxInt
           ).some,
           style = a.theme.textFieldStyle
         )
-
 
         koi.label("Region rows", style=a.theme.labelStyle)
 
@@ -2571,8 +2575,8 @@ template regionFields() =
           dlg.rowsPerRegion,
           constraint = TextFieldConstraint(
             kind:   tckInteger,
-            minInt: LevelColumnsLimits.minInt,
-            maxInt: LevelColumnsLimits.maxInt
+            minInt: RegionRowLimits.minInt,
+            maxInt: RegionRowLimits.maxInt
           ).some,
           style = a.theme.textFieldStyle
         )
@@ -2887,7 +2891,7 @@ proc openUserManual(a)
 proc openWebsite(a)
 proc openForum(a)
 
-proc aboutDialog(dlg: var AboutDialogParams; a) =
+proc aboutDialog(a) =
   alias(al, a.aboutLogo)
   alias(vg, a.vg)
 
@@ -2953,7 +2957,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
                 style=a.theme.buttonStyle):
     openForum(a)
 
-  proc closeAction(dlg: var AboutDialogParams; a) =
+  proc closeAction(a) =
     a.aboutLogo.updateLogoImage = true
     closeDialog(a)
 
@@ -2963,14 +2967,14 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
     if not koi.hasHotItem() and koi.hasEvent():
       let ev = koi.currEvent()
       if ev.kind == ekMouseButton and ev.button == mbLeft and ev.pressed:
-        closeAction(dlg, a)
+        closeAction(a)
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
 
     if ke.isShortcutDown(scCancel) or ke.isShortcutDown(scAccept):
-      closeAction(dlg, a)
+      closeAction(a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -3101,7 +3105,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   koi.endView()
 
 
-  proc okAction(dlg: var PreferencesDialogParams; a) =
+  proc okAction(dlg: PreferencesDialogParams; a) =
     a.prefs.showSplash        = dlg.showSplash
     a.prefs.autoCloseSplash   = dlg.autoCloseSplash
     a.prefs.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
@@ -3116,7 +3120,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var PreferencesDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
@@ -3128,7 +3132,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
   dlg.activateFirstTextField = false
 
@@ -3142,7 +3146,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -3185,16 +3189,16 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc saveAction(dlg: var SaveDiscardMapDialogParams; a) =
+  proc saveAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
     saveMap(a)
     dlg.action(a)
 
-  proc discardAction(dlg: var SaveDiscardMapDialogParams; a) =
+  proc discardAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
     dlg.action(a)
 
-  proc cancelAction(dlg: var SaveDiscardMapDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
@@ -3211,14 +3215,14 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
+    if   ke.isShortcutDown(scCancel):  cancelAction(a)
     elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
     elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
     else: eventHandled = false
@@ -3303,7 +3307,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
               style=a.theme.errorLabelStyle)
 
 
-  proc okAction(dlg: var NewMapDialogParams; a) =
+  proc okAction(dlg: NewMapDialogParams; a) =
     if validationError != "": return
 
     a.opts.drawTrail = false
@@ -3328,7 +3332,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var NewMapDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -3341,7 +3345,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
   dlg.activateFirstTextField = false
 
@@ -3355,7 +3359,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -3437,7 +3441,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
               style=a.theme.errorLabelStyle)
 
 
-  proc okAction(dlg: var EditMapPropsDialogParams; a) =
+  proc okAction(dlg: EditMapPropsDialogParams; a) =
     if validationError != "": return
 
     let coordOpts = CoordinateOptions(
@@ -3456,7 +3460,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var EditMapPropsDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -3469,7 +3473,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
   dlg.activateFirstTextField = false
 
@@ -3483,7 +3487,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -3603,7 +3607,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
               style=a.theme.errorLabelStyle)
 
 
-  proc okAction(dlg: var LevelPropertiesDialogParams; a) =
+  proc okAction(dlg: LevelPropertiesDialogParams; a) =
     if validationError != "": return
 
     a.opts.drawTrail = false
@@ -3646,7 +3650,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var LevelPropertiesDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -3659,7 +3663,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
   dlg.activateFirstTextField = false
 
@@ -3673,7 +3677,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -3785,7 +3789,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
               style=a.theme.errorLabelStyle)
 
 
-  proc okAction(dlg: var LevelPropertiesDialogParams; a) =
+  proc okAction(dlg: LevelPropertiesDialogParams; a) =
     if validationError != "": return
 
     let elevation = parseInt(dlg.elevation)
@@ -3815,7 +3819,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var LevelPropertiesDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -3828,7 +3832,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
@@ -3840,7 +3844,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -3930,7 +3934,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   dlg.activateFirstTextField = false
 
 
-  proc okAction(dlg: var ResizeLevelDialogParams; a) =
+  proc okAction(dlg: ResizeLevelDialogParams; a) =
     let newRows = parseInt(dlg.rows)
     let newCols = parseInt(dlg.cols)
 
@@ -3955,7 +3959,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var ResizeLevelDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
@@ -3965,7 +3969,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
@@ -3979,7 +3983,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
     if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -4208,7 +4212,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
-  proc okAction(dlg: var EditNoteDialogParams; a) =
+  proc okAction(dlg: EditNoteDialogParams; a) =
     if validationErrors.len > 0: return
 
     var note = Annotation(
@@ -4227,7 +4231,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var EditNoteDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -4239,7 +4243,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
@@ -4264,7 +4268,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -4362,7 +4366,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
-  proc okAction(dlg: var EditLabelDialogParams; a) =
+  proc okAction(dlg: EditLabelDialogParams; a) =
     if validationError != "": return
 
     var note = Annotation(kind: akLabel, text: dlg.text, labelColor: dlg.color)
@@ -4372,7 +4376,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var EditLabelDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -4383,7 +4387,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
@@ -4397,7 +4401,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -4486,7 +4490,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     y += h
 
 
-  proc okAction(dlg: var EditRegionPropsParams; a) =
+  proc okAction(dlg: EditRegionPropsParams; a) =
     alias(map, a.doc.map)
     let cur = a.ui.cursor
 
@@ -4500,7 +4504,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     closeDialog(a)
 
 
-  proc cancelAction(dlg: var EditRegionPropsParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -4513,7 +4517,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
                 style=a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
@@ -4523,7 +4527,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     if ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
@@ -4540,7 +4544,7 @@ proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
   a.dialogs.activeDialog = dlgSaveDiscardThemeDialog
 
 
-proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
+proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
   const
     DlgWidth  = ConfirmDlgWidth
     DlgHeight = ConfirmDlgHeight
@@ -4565,16 +4569,16 @@ proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc saveAction(dlg: var SaveDiscardThemeDialogParams; a) =
+  proc saveAction(dlg: SaveDiscardThemeDialogParams; a) =
     closeDialog(a)
     saveTheme(a)
     dlg.action(a)
 
-  proc discardAction(dlg: var SaveDiscardThemeDialogParams; a) =
+  proc discardAction(dlg: SaveDiscardThemeDialogParams; a) =
     closeDialog(a)
     dlg.action(a)
 
-  proc cancelAction(dlg: var SaveDiscardThemeDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
@@ -4591,14 +4595,14 @@ proc saveDiscardThemeDialog(dlg: var SaveDiscardThemeDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel):  cancelAction(dlg, a)
+    if   ke.isShortcutDown(scCancel):  cancelAction(a)
     elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
     elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
     else: eventHandled = false
@@ -4619,7 +4623,7 @@ proc openOverwriteThemeDialog(themeName: string,
   a.dialogs.activeDialog = dlgOverwriteThemeDialog
 
 
-proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
+proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
   const
     DlgWidth  = ConfirmDlgWidth
     DlgHeight = ConfirmDlgHeight
@@ -4645,11 +4649,11 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc overwriteAction(dlg: var OverwriteThemeDialogParams; a) =
+  proc overwriteAction(dlg: OverwriteThemeDialogParams; a) =
     closeDialog(a)
     dlg.action(a)
 
-  proc cancelAction(dlg: var OverwriteThemeDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -4664,14 +4668,14 @@ proc overwriteThemeDialog(dlg: var OverwriteThemeDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    if   ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): overwriteAction(dlg, a)
     else: eventHandled = false
 
@@ -4741,8 +4745,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
               style=a.theme.warningLabelStyle)
 
 
-  proc copyAction(dlg: var CopyThemeDialogParams; a) =
-    let dlg = dlg
+  proc copyAction(dlg: CopyThemeDialogParams; a) =
     let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
                                                           ThemeExt)
     proc copyTheme(a) =
@@ -4759,7 +4762,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
 
 
-  proc cancelAction(dlg: var CopyThemeDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -4772,7 +4775,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
@@ -4782,7 +4785,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): copyAction(dlg, a)
     else: eventHandled = false
 
@@ -4852,8 +4855,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
               style=a.theme.warningLabelStyle)
 
 
-  proc renameAction(dlg: var RenameThemeDialogParams; a) =
-    let dlg = dlg
+  proc renameAction(dlg: RenameThemeDialogParams; a) =
     let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
                                                           ThemeExt)
     proc renameTheme(a) =
@@ -4870,7 +4872,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 
 
 
-  proc cancelAction(dlg: var RenameThemeDialogParams; a) =
+  proc cancelAction(a) =
     closeDialog(a)
 
 
@@ -4883,7 +4885,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
                 style = a.theme.buttonStyle):
-    cancelAction(dlg, a)
+    cancelAction(a)
 
 
   if hasKeyEvent():
@@ -4893,7 +4895,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     if   ke.isShortcutDown(scNextTextField):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(dlg, a)
+    elif ke.isShortcutDown(scCancel): cancelAction(a)
     elif ke.isShortcutDown(scAccept): renameAction(dlg, a)
     else: eventHandled = false
 
@@ -4982,7 +4984,7 @@ proc undoAction(a) =
       moveCursorTo(undoStateData.location, a)
     setStatusMessage(IconUndo, fmt"Undid action: {undoStateData.actionName}", a)
   else:
-    setWarningMessage("Nothing to undo", a)
+    setWarningMessage("Nothing to undo", a=a)
 
 # }}}
 # {{{ redoAction()
@@ -4995,7 +4997,7 @@ proc redoAction(a) =
     setStatusMessage(IconRedo,
                      fmt"Redid action: {undoStateData.actionName}", a)
   else:
-    setWarningMessage("Nothing to redo", a)
+    setWarningMessage("Nothing to redo", a=a)
 # }}}
 
 # {{{ setFloorAction()
@@ -5020,7 +5022,7 @@ proc cycleFloorGroupAction(floors: seq[Floor], forward: bool; a) =
 
     setFloorAction(floor, a)
   else:
-    setWarningMessage("Cannot set floor type of an empty cell", a)
+    setWarningMessage("Cannot set floor type of an empty cell", a=a)
 
 # }}}
 # {{{ startExcavateTunnelAction()
@@ -5135,15 +5137,16 @@ proc openMap(a) =
     doOpenMap(a)
 
 
-proc openMap(filename: string; a) =
+when not defined(DEBUG):
 
-  proc doOpenMap(a) =
-    discard loadMap(filename, a)
+  proc openMap(filename: string; a) =
+    proc doOpenMap(a) =
+      discard loadMap(filename, a)
 
-  if a.doc.undoManager.isModified:
-    openSaveDiscardMapDialog(action=doOpenMap, a)
-  else:
-    doOpenMap(a)
+    if a.doc.undoManager.isModified:
+      openSaveDiscardMapDialog(action=doOpenMap, a)
+    else:
+      doOpenMap(a)
 
 # }}}
 # {{{ saveMapAs()
@@ -5279,7 +5282,7 @@ proc pickFloorColor(a) =
     a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor)
     setStatusMessage(NoIcon, "Picked floor colour", a)
   else:
-    setWarningMessage("Cannot pick floor colour of an empty cell", a)
+    setWarningMessage("Cannot pick floor colour of an empty cell", a=a)
 
 # }}}
 # {{{ selectFloorColor()
@@ -5512,11 +5515,11 @@ proc handleGlobalKeyEvents(a) =
           setDrawWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
-                            keepStatusMessage=true, a)
+                            keepStatusMessage=true, a=a)
     else:
       setWarningMessage(
         fmt"Can only repeat in {dir.orientation.opposite} direction",
-        keepStatusMessage=true, a
+        keepStatusMessage=true, a=a
       )
 
 
@@ -5573,7 +5576,8 @@ proc handleGlobalKeyEvents(a) =
             setStatusMessage(IconArrowsVert,
                              "Floor orientation set to vertical", a)
         else:
-          setWarningMessage("Cannot set floor orientation of an empty cell", a)
+          setWarningMessage("Cannot set floor orientation of an empty cell",
+                            a=a)
 
       elif ke.isShortcutDown(scSetFloorColor):
         ui.editMode = emColorFloor
@@ -5666,7 +5670,7 @@ proc handleGlobalKeyEvents(a) =
                              groupWithPrev=true, actionName="Excavate trail")
           setStatusMessage(IconEraser, "Trail excavated", a)
         else:
-          setWarningMessage("No trail to excavate", a)
+          setWarningMessage("No trail to excavate", a=a)
 
       elif ke.isShortcutDown(scClearTrail):
         let bbox = l.calcTrailBoundingBox()
@@ -5674,7 +5678,7 @@ proc handleGlobalKeyEvents(a) =
           actions.clearTrail(map, cur, bbox.get, um)
           setStatusMessage(IconEraser, "Trail cleared", a)
         else:
-          setWarningMessage("No trail to clear", a)
+          setWarningMessage("No trail to clear", a=a)
 
       elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
         selectPrevFloorColor(a)
@@ -5710,7 +5714,7 @@ proc handleGlobalKeyEvents(a) =
 
           setStatusMessage(IconPaste, "Buffer pasted", a)
         else:
-          setWarningMessage("Cannot paste, buffer is empty", a)
+          setWarningMessage("Cannot paste, buffer is empty", a=a)
 
       elif ke.isShortcutDown(scPastePreview):
         if ui.copyBuf.isSome:
@@ -5723,7 +5727,7 @@ proc handleGlobalKeyEvents(a) =
                            @[IconArrowsAll, "placement",
                            "Enter/P", "paste", "Esc", "cancel"], a)
         else:
-          setWarningMessage("Cannot paste, buffer is empty", a)
+          setWarningMessage("Cannot paste, buffer is empty", a=a)
 
       elif ke.isShortcutDown(scNudgePreview):
         let sel = newSelection(l.rows, l.cols)
@@ -5751,7 +5755,7 @@ proc handleGlobalKeyEvents(a) =
         if otherLoc.isSome:
           moveCursorTo(otherLoc.get, a)
         else:
-          setWarningMessage("Not a linked cell", a)
+          setWarningMessage("Not a linked cell", a=a)
 
       elif ke.isShortcutDown(scLinkCell):
         let floor = map.getFloor(cur)
@@ -5760,7 +5764,7 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emSetCellLink
           setSetLinkDestinationMessage(floor, a)
         else:
-          setWarningMessage("Cannot link current cell", a)
+          setWarningMessage("Cannot link current cell", a=a)
 
       elif ke.isShortcutDown(scZoomIn, repeat=true):
         zoomIn(a)
@@ -5774,7 +5778,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scEditNote):
         if map.isEmpty(cur):
-          setWarningMessage("Cannot attach note to empty cell", a)
+          setWarningMessage("Cannot attach note to empty cell", a=a)
         else:
           openEditNoteDialog(a)
 
@@ -5783,7 +5787,7 @@ proc handleGlobalKeyEvents(a) =
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
         else:
-          setWarningMessage("No note to erase in cell", a)
+          setWarningMessage("No note to erase in cell", a=a)
 
       elif ke.isShortcutDown(scEditLabel):
         openEditLabelDialog(a)
@@ -5793,7 +5797,7 @@ proc handleGlobalKeyEvents(a) =
           actions.eraseLabel(map, cur, um)
           setStatusMessage(IconEraser, "Label erased", a)
         else:
-          setWarningMessage("No label to erase in cell", a)
+          setWarningMessage("No label to erase in cell", a=a)
 
       elif ke.isShortcutDown(scShowNoteTooltip):
         if ui.manualNoteTooltipState.show:
@@ -5814,7 +5818,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage(
             "Cannot add new level: maximum number of levels has been reached " &
-            fmt"({NumLevelsLimits.maxInt})", a
+            fmt"({NumLevelsLimits.maxInt})", a=a
           )
 
       elif ke.isShortcutDown(scDeleteLevel):
@@ -5835,7 +5839,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage(
             "Cannot edit region properties: regions are not enabled for level",
-            a
+            a=a
           )
 
       elif ke.isShortcutDown(scOpenMap):       openMap(a)
@@ -5936,7 +5940,7 @@ proc handleGlobalKeyEvents(a) =
           setDrawWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
-                            keepStatusMessage=true, a)
+                            keepStatusMessage=true, a=a)
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
@@ -5947,7 +5951,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scDrawWallRepeat):
         if ui.drawWallRepeatAction == dwaNone:
           setWarningMessage("Set or clear wall in current cell first",
-                            keepStatusMessage=true, a)
+                            keepStatusMessage=true, a=a)
         else:
           ui.editMode = emDrawWallRepeat
           setDrawWallActionRepeatMessage(a)
@@ -6004,7 +6008,7 @@ proc handleGlobalKeyEvents(a) =
           setDrawSpecialWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
-                            keepStatusMessage=true, a)
+                            keepStatusMessage=true, a=a)
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
@@ -6015,7 +6019,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scDrawWallRepeat):
         if ui.drawWallRepeatAction == dwaNone:
           setWarningMessage("Set or clear wall in current cell first",
-                            keepStatusMessage=true, a)
+                            keepStatusMessage=true, a=a)
         else:
           ui.editMode = emDrawSpecialWallRepeat
           setDrawSpecialWallActionRepeatMessage(a)
@@ -6340,11 +6344,11 @@ proc handleGlobalKeyEvents(a) =
       if ke.isShortcutDown(scAccept):
         if map.isEmpty(cur):
           setWarningMessage("Cannot set link destination to an empty cell",
-                            keepStatusMessage=true, a)
+                            keepStatusMessage=true, a=a)
 
         elif cur == ui.linkSrcLocation:
           setWarningMessage("Cannot set link destination to the source cell",
-                            keepStatusMessage=true, a)
+                            keepStatusMessage=true, a=a)
         else:
           actions.setLink(map, src=ui.linkSrcLocation, dest=cur,
                           ui.currFloorColor, um)
@@ -6952,7 +6956,7 @@ proc renderStatusBar(y: float, winWidth: float; a) =
   # Clear expired warning messages
   if status.warning != "":
     let dt = getMonoTime() - status.warningT0
-    if dt > WarningMessageTimeout:
+    if dt > status.warningTimeout:
       status.warning = ""
 
       if not status.keepMessageAfterWarningExpired:
@@ -7927,7 +7931,7 @@ proc renderDialogs(a) =
   of dlgNone: discard
 
   of dlgAboutDialog:
-    aboutDialog(dlg.aboutDialog, a)
+    aboutDialog(a)
 
   of dlgPreferencesDialog:
     preferencesDialog(dlg.preferencesDialog, a)
@@ -8071,7 +8075,10 @@ proc renderFramePre(a) =
     except CatchableError as e:
       logError(e, "Error loading theme when switching theme")
       let name = a.theme.themeNames[themeIndex].name
-      setWarningMessage(fmt"Cannot load theme '{name}': {e.msg}", a)
+
+      setWarningMessage(fmt"Cannot load theme '{name}': {e.msg}",
+                        autohide=false, a=a)
+
       a.theme.nextThemeIndex = Natural.none
 
     # nextThemeIndex will be reset at the start of the current frame after
