@@ -42,10 +42,10 @@ template cellAreaAction(map; loc: Location, rect: Rect[Natural];
 
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level].copyCellsAndAnnotationsFrom(
-      destRow = rect.r1,
-      destCol = rect.c1,
-      src     = undoLevel,
-      srcRect = rectN(0, 0, undoLevel.rows, undoLevel.cols)
+      destRow  = rect.r1,
+      destCol  = rect.c1,
+      srcLevel = undoLevel,
+      srcRect  = rectN(0, 0, undoLevel.rows, undoLevel.cols)
     )
     m.levels[loc.level].reindexNotes()
 
@@ -93,7 +93,8 @@ proc drawClearFloor*(map; loc: Location, floorColor: Natural; um) =
 # {{{ setFloorColor*()
 proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
 
-  singleCellAction(map, loc, um, fmt"Set floor colour {EnDash} {floorColor}", m):
+  singleCellAction(map, loc, um, fmt"Set floor colour {EnDash} {floorColor}",
+                   m):
     m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -119,6 +120,7 @@ proc toggleFloorOrientation*(map; loc: Location; um) =
 # }}}
 # {{{ eraseCell*()
 proc eraseCell*(map; loc: Location; um) =
+
   singleCellAction(map, loc, um, "Erase cell", m):
     m.eraseCell(loc)
 
@@ -132,12 +134,14 @@ proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 # }}}
 # {{{ eraseCellWalls*()
 proc eraseCellWalls*(map; loc: Location; um) =
+
   singleCellAction(map, loc, um, "Erase cell walls", m):
     m.eraseCellWalls(loc)
 
 # }}}
 # {{{ excavateTunnel*()
 proc excavateTunnel*(map; loc: Location, floorColor: Natural; um) =
+
   singleCellAction(map, loc, um, "Excavate tunnel", m):
     m.excavateTunnel(loc, floorColor)
 
@@ -153,6 +157,7 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural],
       for c in bbox.c1..<bbox.c2:
         loc.row = r
         loc.col = c
+
         if m.hasTrail(loc):
           if m.isEmpty(loc):
             m.excavateTunnel(loc, floorColor)
@@ -227,7 +232,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     location: Location(level: src.level, row: src.row, col: src.col)
   )
 
-  # Do Action
+  # Do action
   let action = proc (m: var Map): UndoStateData =
     let srcFloor = m.getFloor(src)
 
@@ -264,7 +269,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     m.levels[dest.level].reindexNotes()
     result = usd
 
-  # Undo Action
+  # Undo action
   let
     r = dest.row
     c = dest.col
@@ -289,10 +294,10 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
 
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[dest.level].copyCellsAndAnnotationsFrom(
-      destRow = rect.r1,
-      destCol = rect.c1,
-      src     = undoLevel,
-      srcRect = rectN(0, 0, 1, 1)  # single cell
+      destRow  = rect.r1,
+      destCol  = rect.c1,
+      srcLevel = undoLevel,
+      srcRect  = rectN(0, 0, 1, 1)  # single cell
     )
     m.levels[dest.level].reindexNotes()
 
@@ -303,6 +308,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     m.links.addAll(oldLinks)
 
     result = usd
+
 
   um.storeUndoState(action, undoAction)
   discard action(map)
@@ -392,6 +398,7 @@ proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
         if sel[r,c]:
           loc.row = r
           loc.col = c
+
           if not m.isEmpty(loc):
             m.setFloorColor(loc, floorColor)
 
@@ -452,6 +459,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
         if sel[r,c]:
           l.row = r
           l.col = c
+
           if not m.isEmpty(l):
             m.eraseCell(l)
 
@@ -468,6 +476,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
     pasteLoc.col,
     pasteLoc.row + sb.level.rows,
     pasteLoc.col + sb.level.cols
+
   ).intersect(
     rectN(
       0,
@@ -478,6 +487,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
   if rect.isSome:
     cellAreaAction(map, undoLoc, rect.get, um, groupWithPrev, actionName, m):
+
       let l = m.levels[pasteLoc.level]
 
       let destRect = l.paste(pasteLoc.row, pasteLoc.col,
@@ -518,8 +528,8 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
             # Add paste location offset
             src.level = pasteLoc.level
-            src.row += pasteLoc.row
-            src.col += pasteLoc.col
+            src.row  += pasteLoc.row
+            src.col  += pasteLoc.col
 
             # We need this check because the full paste rect might get clipped
             # if it cannot fit into the available map area
@@ -533,8 +543,8 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
 
             # Add paste location offset
             dest.level = pasteLoc.level
-            dest.row += pasteLoc.row
-            dest.col += pasteLoc.col
+            dest.row  += pasteLoc.row
+            dest.col  += pasteLoc.col
 
             # We need this check because the full paste rect might get clipped
             # if it cannot fit into the available map area
@@ -566,6 +576,7 @@ proc addNewLevel*(map; loc: Location,
 
   let usd = UndoStateData(actionName: "New level", location: loc)
 
+  # Do action
   let action = proc (m: var Map): UndoStateData =
     let newLevel = newLevel(locationName, levelName, elevation,
                             rows, cols,
@@ -578,7 +589,7 @@ proc addNewLevel*(map; loc: Location,
     usd.location.level = m.levels.high
     result = usd
 
-
+  # Undo action
   let undoAction = proc (m: var Map): UndoStateData =
     let level = m.levels.high
     m.delLevel(level)
@@ -587,6 +598,7 @@ proc addNewLevel*(map; loc: Location,
       m.links.delBySrc(src)
 
     result = usd
+
 
   um.storeUndoState(action, undoAction)
   action(map).location
@@ -599,12 +611,13 @@ proc deleteLevel*(map; loc: Location; um): Location =
 
   let oldLinks = map.links.filterByLevel(loc.level)
 
+  # Do action
   let action = proc (m: var Map): UndoStateData =
     let adjustLinks = loc.level < m.levels.high
 
     let currSortedLevelIdx = m.findSortedLevelIdxByLevelIdx(usd.location.level)
 
-    # if the deleted level wasn't the last, moves the last level into
+    # If the deleted level wasn't the last, moves the last level into
     # the "hole" created by the delete
     m.delLevel(loc.level)
 
@@ -627,6 +640,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
     result = usd
 
 
+  # Undo action
   let undoLevel = map.levels[loc.level].deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
@@ -635,7 +649,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
     if loc.level > m.levels.high:
       m.levels.add(restoredLevel)
     else:
-      # move to the end
+      # Move to the end
       let lastLevel = m.levels[loc.level]
       m.levels.add(lastLevel)
 
@@ -647,6 +661,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
 
     result = usd
 
+
   um.storeUndoState(action, undoAction)
   action(map).location
 
@@ -657,9 +672,9 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
   let usd = UndoStateData(actionName: "Resize level", location: loc)
 
+  # Do action
   let
     oldLinks = map.links.filterByLevel(loc.level)
-    oldRegions = map.levels[loc.level].regions
 
     (copyRect, destRow, destCol) =
       map.levels[loc.level].calcResizeParams(newRows, newCols, anchor)
@@ -692,7 +707,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
       m, loc.level, newRows, newCols, anchor
     )
 
-    newLevel.regions = initRegionsFrom(src=l.some, dest=newLevel,
+    newLevel.regions = initRegionsFrom(srcLevel=l.some, destLevel=newLevel,
                                        regionOffsRow, regionOffsCol)
     l = newLevel
 
@@ -703,7 +718,10 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     result = usd
 
 
-  let undoLevel = map.levels[loc.level].deepCopy
+  # Undo action
+  let
+    undoLevel = map.levels[loc.level].deepCopy
+    oldRegions = map.levels[loc.level].regions
 
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel.deepCopy
@@ -725,9 +743,9 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
   let usd = UndoStateData(actionName: "Crop level", location: loc)
 
+  # Do action
   let
     oldLinks = map.links.filterByLevel(loc.level)
-    oldRegions = map.levels[loc.level].regions
 
     newLevelRect = rectI(0, 0, cropRect.rows, cropRect.cols)
     rowOffs = -cropRect.r1
@@ -749,7 +767,10 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     result = usd
 
 
-  let undoLevel = map.levels[loc.level].deepCopy
+  # Undo action
+  let
+    undoLevel = map.levels[loc.level].deepCopy
+    oldRegions = map.levels[loc.level].regions
 
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel.deepCopy
@@ -778,6 +799,8 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   let newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
                                             levelRect)
 
+  # Do action
+  #
   # The level is cleared for the duration of the nudge operation and it is
   # stored temporarily in the SelectionBuffer
   let action = proc (m: var Map): UndoStateData =
@@ -801,6 +824,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     result = usd
 
 
+  # Undo action
   let undoLevel = sb.level.deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
@@ -825,6 +849,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 
   let usd = UndoStateData(actionName: "Edit level properties", location: loc)
 
+  # Do action
   let action = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.level]
 
@@ -867,6 +892,8 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     oldRegionOpts        = l.regionOpts
     oldRegions           = l.regions
 
+
+  # Undo action
   var undoAction = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.level]
 
@@ -886,6 +913,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     m.refreshSortedLevelNames()
     result = usd
 
+
   um.storeUndoState(action, undoAction)
   discard action(map)
 
@@ -897,6 +925,7 @@ proc setMapProperties*(map; loc: Location; title, game, author: string;
 
   let usd = UndoStateData(actionName: "Edit map properties", location: loc)
 
+  # Do action
   let action = proc (m: var Map): UndoStateData =
     let oldCoordOpts = m.coordOpts
 
@@ -915,18 +944,20 @@ proc setMapProperties*(map; loc: Location; title, game, author: string;
     result = usd
 
 
+  # Undo action
   let
-    oldTitle        = map.title
-    oldGame         = map.game
-    oldAuthor       = map.author
-    oldNotes        = map.notes
-    oldCoordOpts    = map.coordOpts
+    oldTitle     = map.title
+    oldGame      = map.game
+    oldAuthor    = map.author
+    oldNotes     = map.notes
+    oldCoordOpts = map.coordOpts
 
   var oldRegions = initTable[int, Regions]()
 
   for levelIdx, l in map.levels:
     if not l.overrideCoordOpts:
       oldRegions[levelIdx] = l.regions
+
 
   var undoAction = proc (m: var Map): UndoStateData =
     m.title        = oldTitle
@@ -941,6 +972,7 @@ proc setMapProperties*(map; loc: Location; title, game, author: string;
 
     result = usd
 
+
   um.storeUndoState(action, undoAction)
   discard action(map)
 
@@ -952,11 +984,13 @@ proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
 
   let usd = UndoStateData(actionName: "Edit region properties", location: loc)
 
+  # Do action
   let action = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.level]
     l.setRegion(rc, region)
     result = usd
 
+  # Undo action
   let l = map.levels[loc.level]
   let oldRegion = l.getRegion(rc).get
 

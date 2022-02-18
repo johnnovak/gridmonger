@@ -158,8 +158,8 @@ template allLabels*(l): (Natural, Natural, Annotation) =
 #
 # {{{ copyAnnotationsFrom*()
 proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
-                          src: Level, srcRect: Rect[Natural]) =
-  for (r,c, a) in src.annotations.allAnnotations:
+                          srcLevel: Level, srcRect: Rect[Natural]) =
+  for (r,c, a) in srcLevel.annotations.allAnnotations:
     if srcRect.contains(r,c):
       l.annotations.setAnnotation(destRow + r - srcRect.r1,
                                   destCol + c - srcRect.c1, a)
@@ -221,29 +221,29 @@ iterator allRegionCoords*(l): RegionCoords =
 # }}}
 
 # {{{ initRegionsFrom*()
-proc initRegionsFrom*(src: Option[Level] = Level.none, dest: Level,
+proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
                       regionRowOffs: int = 0,
                       regionColOffs: int = 0): Regions =
 
   var destRegions = initRegions()
   var index = 1
 
-  for destRegionCoord in dest.allRegionCoords:
+  for destRegionCoord in destLevel.allRegionCoords:
     let srcRegionRow = destRegionCoord.row.int + regionRowOffs
     let srcRegionCol = destRegionCoord.col.int + regionColOffs
 
-    let srcRegion = if src.isNone or srcRegionRow < 0 or srcRegionCol < 0:
+    let srcRegion = if srcLevel.isNone or srcRegionRow < 0 or srcRegionCol < 0:
                       Region.none
                     else:
-                      src.get.getRegion(RegionCoords(row: srcRegionRow,
-                                                     col: srcRegionCol))
+                      srcLevel.get.getRegion(RegionCoords(row: srcRegionRow,
+                                                          col: srcRegionCol))
 
     if srcRegion.isSome and not srcRegion.get.isUntitledRegion():
       destRegions.setRegion(destRegionCoord, srcRegion.get)
     else:
       destRegions.setRegion(
         destRegionCoord,
-        Region(name: dest.regions.nextUntitledRegionName(index))
+        Region(name: destLevel.regions.nextUntitledRegionName(index))
       )
 
   result = destRegions
@@ -298,24 +298,24 @@ proc eraseCell*(l; r,c: Natural) =
 
 # {{{ copyCellsAndAnnotationsFrom*(()
 proc copyCellsAndAnnotationsFrom*(l; destRow, destCol: Natural,
-                                  src: Level, srcRect: Rect[Natural]) =
+                                  srcLevel: Level, srcRect: Rect[Natural]) =
 
-  l.cellGrid.copyFrom(destRow, destCol, src.cellGrid, srcRect)
+  l.cellGrid.copyFrom(destRow, destCol, srcLevel.cellGrid, srcRect)
 
   l.annotations.delAnnotations(
     rectN(destRow, destCol, destRow + srcRect.rows, destCol + srcRect.cols)
   )
 
-  l.copyAnnotationsFrom(destRow, destCol, src, srcRect)
+  l.copyAnnotationsFrom(destRow, destCol, srcLevel, srcRect)
 
 # }}}
 # {{{ paste*()
-proc paste*(l; destRow, destCol: int, src: Level,
+proc paste*(l; destRow, destCol: int, srcLevel: Level,
             sel: Selection, pasteTrail: bool = false): Option[Rect[Natural]] =
 
   let destRect = rectI(
     destRow, destCol,
-    destRow + src.rows, destCol + src.cols
+    destRow + srcLevel.rows, destCol + srcLevel.cols
   ).intersect(
     rectI(0, 0, l.rows, l.cols)
   )
@@ -332,20 +332,20 @@ proc paste*(l; destRow, destCol: int, src: Level,
         if destCol < 0: inc(srcCol, -destCol)
 
         if sel[srcRow, srcCol]:
-          let floor = src.getFloor(srcRow, srcCol)
+          let floor = srcLevel.getFloor(srcRow, srcCol)
           l.setFloor(r,c, floor)
 
-          let floorColor = src.getFloorColor(srcRow, srcCol)
+          let floorColor = srcLevel.getFloorColor(srcRow, srcCol)
           l.setFloorColor(r,c, floorColor)
 
-          let ot = src.getFloorOrientation(srcRow, srcCol)
+          let ot = srcLevel.getFloorOrientation(srcRow, srcCol)
           l.setFloorOrientation(r,c, ot)
 
           if pasteTrail:
-            l.setTrail(r,c, src.hasTrail(srcRow, srcCol))
+            l.setTrail(r,c, srcLevel.hasTrail(srcRow, srcCol))
 
           template copyWall(dir: CardinalDir) =
-            let w = src.getWall(srcRow, srcCol, dir)
+            let w = srcLevel.getWall(srcRow, srcCol, dir)
             l.setWall(r,c, dir, w)
 
           if floor.isEmpty:
@@ -357,9 +357,9 @@ proc paste*(l; destRow, destCol: int, src: Level,
             copyWall(dirE)
 
           l.annotations.delAnnotation(r,c)
-          if src.annotations.hasAnnotation(srcRow, srcCol):
+          if srcLevel.annotations.hasAnnotation(srcRow, srcCol):
             l.annotations.setAnnotation(
-              r,c, src.annotations.getAnnotation(srcRow, srcCol).get
+              r,c, srcLevel.annotations.getAnnotation(srcRow, srcCol).get
             )
 
 # }}}
@@ -468,20 +468,20 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   l.notes = notes
 
   if initRegions and l.regionOpts.enabled:
-    l.regions = initRegionsFrom(dest=l)
+    l.regions = initRegionsFrom(destLevel=l)
 
   result = l
 
 # }}}
 # {{{ calcNewLevelFromParams*()
 proc calcNewLevelFromParams*(
-  src: Level, srcRect: Rect[Natural], border: Natural = 0
+  srcLevel: Level, srcRect: Rect[Natural], border: Natural = 0
 ): tuple[copyRect: Rect[Natural], destRow, destCol: Natural] =
 
-  assert srcRect.r1 < src.rows
-  assert srcRect.c1 < src.cols
-  assert srcRect.r2 <= src.rows
-  assert srcRect.c2 <= src.cols
+  assert srcRect.r1 < srcLevel.rows
+  assert srcRect.c1 < srcLevel.cols
+  assert srcRect.r2 <= srcLevel.rows
+  assert srcRect.c2 <= srcLevel.cols
 
   var
     copyRect: Rect[Natural]
@@ -513,20 +513,22 @@ proc calcNewLevelFromParams*(
 
 # NOTE: This method doesn't copy the regions.
 
-proc newLevelFrom*(src: Level, srcRect: Rect[Natural],
+proc newLevelFrom*(srcLevel: Level, srcRect: Rect[Natural],
                    border: Natural = 0): Level =
 
-  let (copyRect, destRow, destCol) = calcNewLevelFromParams(src, srcRect,
+  let (copyRect, destRow, destCol) = calcNewLevelFromParams(srcLevel, srcRect,
                                                             border)
 
-  result = newLevel(src.locationName, src.levelName, src.elevation,
-                    rows = srcRect.rows + border*2,
-                    cols = srcRect.cols + border*2,
-                    src.overrideCoordOpts, src.coordOpts, src.regionOpts,
-                    src.notes,
-                    initRegions=false)
+  result = newLevel(
+    srcLevel.locationName, srcLevel.levelName, srcLevel.elevation,
+    rows = srcRect.rows + border*2,
+    cols = srcRect.cols + border*2,
+    srcLevel.overrideCoordOpts, srcLevel.coordOpts, srcLevel.regionOpts,
+    srcLevel.notes,
+    initRegions=false
+  )
 
-  result.copyCellsAndAnnotationsFrom(destRow, destCol, src, copyRect)
+  result.copyCellsAndAnnotationsFrom(destRow, destCol, srcLevel, copyRect)
 
 # }}}
 
