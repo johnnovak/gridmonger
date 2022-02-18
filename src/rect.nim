@@ -7,6 +7,7 @@ type
   Rect*[T: RectType] = object
     r1*,c1*, r2*,c2*: T
 
+
 proc rectF*(r1,c1, r2,c2: float): Rect[float] =
   assert r1 < r2
   assert c1 < c2
@@ -16,6 +17,7 @@ proc rectF*(r1,c1, r2,c2: float): Rect[float] =
   result.r2 = r2
   result.c2 = c2
 
+
 proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
   assert r1 < r2
   assert c1 < c2
@@ -24,6 +26,7 @@ proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
   result.c1 = c1
   result.r2 = r2
   result.c2 = c2
+
 
 proc rectI*(r1,c1, r2,c2: int): Rect[int] =
   assert r1 < r2
@@ -71,7 +74,6 @@ proc expand*[T: RectType](a: var Rect[T], r,c: T) =
 proc shiftHoriz*[T: RectType](a: var Rect[T], d: int) =
   a.c1 += d
   a.c2 += d
-
 
 proc shiftVert*[T: RectType](a: var Rect[T], d: int) =
   a.r1 += d

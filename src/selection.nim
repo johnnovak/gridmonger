@@ -6,6 +6,7 @@ import rect
 
 using s: Selection
 
+# {{{ Indexing operators
 proc `[]=`*(s; r,c: Natural, v: bool) =
   assert r < s.rows
   assert c < s.cols
@@ -16,33 +17,24 @@ proc `[]`*(s; r,c: Natural): bool =
   assert c < s.cols
   result = s.cells[r*s.cols + c]
 
+# }}}
 
-proc fill*(s; rect: Rect[Natural], v: bool) =
-  assert rect.r1 < s.rows
-  assert rect.c1 < s.cols
-  assert rect.r2 <= s.rows
-  assert rect.c2 <= s.cols
-
-  for r in rect.r1..<rect.r2:
-    for c in rect.c1..<rect.c2:
-      s[r,c] = v
-
-
-proc fill*(s; v: bool) =
-  let r = rectN(0, 0, s.rows, s.cols)
-  s.fill(r, v)
-
+# {{{ initSelection()
 proc initSelection(s; rows, cols: Natural) =
   s.rows = rows
   s.cols = cols
   newSeq(s.cells, s.rows * s.cols)
 
+# }}}
+
+# {{{ newSelection*()
 proc newSelection*(rows, cols: Natural): Selection =
   var s = new Selection
   s.initSelection(rows, cols)
   result = s
 
-
+# }}}
+# {{{ copyFrom*()
 proc copyFrom*(dest: var Selection, destRow, destCol: Natural,
                src: Selection, srcRect: Rect[Natural]) =
   let
@@ -64,7 +56,8 @@ proc copyFrom*(dest: var Selection, destRow, destCol: Natural,
 proc copyFrom*(dest: var Selection, src: Selection) =
   dest.copyFrom(destRow=0, destCol=0, src, rectN(0, 0, src.rows, src.cols))
 
-
+# }}}
+# {{{ newSelectionFrom*()
 proc newSelectionFrom*(src: Selection, rect: Rect[Natural]): Selection =
   assert rect.r1 < src.rows
   assert rect.c1 < src.cols
@@ -80,7 +73,9 @@ proc newSelectionFrom*(src: Selection, rect: Rect[Natural]): Selection =
 proc newSelectionFrom*(s): Selection =
   newSelectionFrom(s, rectN(0, 0, s.rows, s.cols))
 
+# }}}
 
+# {{{ boundingBox*()
 proc boundingBox*(s): Option[Rect[Natural]] =
   proc isRowEmpty(r: Natural): bool =
     for c in 0..<s.cols:
@@ -108,8 +103,8 @@ proc boundingBox*(s): Option[Rect[Natural]] =
     return rectN(r1, c1, r2+1, c2+1).some
   else:
     return Rect[Natural].none
-
-
+# }}}
+# {{{ isNeighbourCellEmpty*()
 proc isNeighbourCellEmpty*(s; r,c: Natural, dir: CardinalDir): bool =
   assert r < s.rows
   assert c < s.cols
@@ -120,5 +115,24 @@ proc isNeighbourCellEmpty*(s; r,c: Natural, dir: CardinalDir): bool =
   of dirS: result = r == s.rows-1 or not s[r+1, c  ]
   of dirW: result = c == 0        or not s[  r, c-1]
 
+# }}}
+
+# {{{ fill*()
+proc fill*(s; rect: Rect[Natural], v: bool) =
+  assert rect.r1 < s.rows
+  assert rect.c1 < s.cols
+  assert rect.r2 <= s.rows
+  assert rect.c2 <= s.cols
+
+  for r in rect.r1..<rect.r2:
+    for c in rect.c1..<rect.c2:
+      s[r,c] = v
+
+
+proc fill*(s; v: bool) =
+  let r = rectN(0, 0, s.rows, s.cols)
+  s.fill(r, v)
+
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

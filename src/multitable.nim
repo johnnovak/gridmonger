@@ -47,6 +47,8 @@ proc delAll*[A, B](t: var SeqMultiTable[A, B], key: A) =
   t.table.del(key)
 
 
+# {{{ Tests
+
 when isMainModule:
   block:  # non-unique values
     var t = initMultiTable[int, string]()
@@ -122,3 +124,6 @@ when isMainModule:
     except KeyError as e:
       assert true
 
+# }}}
+
+# vim: et:ts=2:sw=2:fdm=marker
