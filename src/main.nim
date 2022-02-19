@@ -7715,7 +7715,7 @@ let g_quickRef_Dialogs = @[
     @[KeyShortcut(key: key1, mods: {mkCtrl}),
       KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
 
-    @[fmt"Ctrl-{IconArrowsHoriz}"].csc, "Switch current tab".desc,
+    @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Switch current tab".desc,
     QuickRefSepa,
 
     @[fmt"{IconArrowsAll}"].csc, "Change radio button selection".desc,
