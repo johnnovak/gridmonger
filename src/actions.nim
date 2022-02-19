@@ -268,12 +268,10 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
   let srcFloor = map.getFloor(src)
   let linkType = linkFloorToString(srcFloor)
 
-  let loc = Location(level: src.level, row: src.row, col: src.col)
-
   let usd = UndoStateData(
     actionName: fmt"Set link destination {EnDash} {linkType}",
-    location: loc,
-    undoLocation: loc
+    location: dest,
+    undoLocation: src
   )
 
   # Do action
@@ -510,38 +508,38 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
 # }}}
 # {{{ pasteSelection*()
-proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
-                     pasteBufferLevelIndex: Natural, undoLoc: Location; um;
+proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
+                     pasteBufferLevelIndex: Natural; um;
                      groupWithPrev = false,
                      pasteTrail = false,
                      actionName = "Pasted buffer") =
 
   let rect = rectN(
-    pasteLoc.row,
-    pasteLoc.col,
-    pasteLoc.row + sb.level.rows,
-    pasteLoc.col + sb.level.cols
+    loc.row,
+    loc.col,
+    loc.row + sb.level.rows,
+    loc.col + sb.level.cols
 
   ).intersect(
     rectN(
       0,
       0,
-      map.levels[pasteLoc.level].rows,
-      map.levels[pasteLoc.level].cols)
+      map.levels[loc.level].rows,
+      map.levels[loc.level].cols)
   )
 
   if rect.isSome:
-    cellAreaAction(map, undoLoc, undoLoc, rect.get, um, groupWithPrev,
+    cellAreaAction(map, loc, undoLoc, rect.get, um, groupWithPrev,
                    actionName, m):
 
-      let l = m.levels[pasteLoc.level]
+      let l = m.levels[loc.level]
 
-      let destRect = l.paste(pasteLoc.row, pasteLoc.col,
+      let destRect = l.paste(loc.row, loc.col,
                              sb.level, sb.selection, pasteTrail)
 
       if destRect.isSome:
         let destRect = destRect.get
-        var loc = Location(level: pasteLoc.level)
+        var loc = Location(level: loc.level)
 
         # Erase existing map links in the paste area (taking selection into
         # account)
@@ -573,9 +571,9 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
             linksToDeleteBySrc.add(src)
 
             # Add paste location offset
-            src.level = pasteLoc.level
-            src.row  += pasteLoc.row
-            src.col  += pasteLoc.col
+            src.level = loc.level
+            src.row  += loc.row
+            src.col  += loc.col
 
             # We need this check because the full paste rect might get clipped
             # if it cannot fit into the available map area
@@ -588,9 +586,9 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
             linksToDeleteByDest.add(dest)
 
             # Add paste location offset
-            dest.level = pasteLoc.level
-            dest.row  += pasteLoc.row
-            dest.col  += pasteLoc.col
+            dest.level = loc.level
+            dest.row  += loc.row
+            dest.col  += loc.col
 
             # We need this check because the full paste rect might get clipped
             # if it cannot fit into the available map area
@@ -607,7 +605,7 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
         # Recreate links between real map locations
         m.links.addAll(linksToAdd)
 
-        m.normaliseLinkedStairs(pasteLoc.level)
+        m.normaliseLinkedStairs(loc.level)
 
 # }}}
 

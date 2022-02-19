@@ -265,7 +265,7 @@ type
     copyBuf:           Option[SelectionBuffer]
     nudgeBuf:          Option[SelectionBuffer]
     cutToBuffer:       bool
-    moveUndoLocation:  Location
+    pasteUndoLocation: Location
 
     status:            StatusMessage
 
@@ -827,7 +827,6 @@ type AppShortcut = enum
   scSelectionAddRect,
   scSelectionSubRect,
   scSelectionCopy,
-  scSelectionCut,
   scSelectionMove,
   scSelectionEraseArea,
   scSelectionFillArea,
@@ -998,7 +997,6 @@ let g_appShortcuts = {
   scSelectionCopy:               @[mkKeyShortcut(keyC,        {}),
                                    mkKeyShortcut(keyY,        {})],
 
-  scSelectionCut:                @[mkKeyShortcut(keyX,        {})],
   scSelectionMove:               @[mkKeyShortcut(keyM,        {mkCtrl})],
   scSelectionEraseArea:          @[mkKeyShortcut(keyE,        {mkCtrl})],
   scSelectionFillArea:           @[mkKeyShortcut(keyF,        {mkCtrl})],
@@ -1255,7 +1253,6 @@ proc setSelectModeSelectMessage(a) =
       scSelectionAll.toStr(),     "mark all",
       scSelectionNone.toStr(),    "unmark all",
       scSelectionCopy.toStr(),    "copy",
-      scSelectionCut.toStr(),     "cut",
       "Ctrl",                     "special"],
     a
   )
@@ -1304,10 +1301,10 @@ proc toolsPaneWidth(a): float =
 # {{{ setCursor()
 proc setCursor(cur: Location; a) =
   with a:
-    if cur.level != ui.prevCursor.level:
+    if cur.level != ui.cursor.level:
       opts.drawTrail = false
 
-    if opts.drawTrail and cur != ui.prevCursor:
+    if opts.drawTrail and cur != ui.cursor:
       actions.drawTrail(doc.map, loc=cur, undoLoc=ui.prevCursor,
                         doc.undoManager)
     ui.cursor = cur
@@ -4984,14 +4981,18 @@ proc undoAction(a) =
   alias(um, a.doc.undoManager)
 
   if um.canUndo:
-    let drawTrail = a.opts.drawTrail
+    let
+      drawTrail = a.opts.drawTrail
+      undoStateData = um.undo(a.doc.map)
+      newCur = undoStateData.undoLocation
+      levelChange = newCur.level != a.ui.cursor.level
+
     a.opts.drawTrail = false
 
-    let undoStateData = um.undo(a.doc.map)
-    if a.doc.map.hasLevels:
-      moveCursorTo(undoStateData.undoLocation, a)
+    moveCursorTo(newCur, a)
 
-    a.opts.drawTrail = drawTrail
+    if not levelChange:
+      a.opts.drawTrail = drawTrail
 
     setStatusMessage(IconUndo, fmt"Undid action: {undoStateData.actionName}", a)
   else:
@@ -5003,13 +5004,18 @@ proc redoAction(a) =
   alias(um, a.doc.undoManager)
 
   if um.canRedo:
-    let drawTrail = a.opts.drawTrail
+    let
+      drawTrail = a.opts.drawTrail
+      undoStateData = um.redo(a.doc.map)
+      newCur = undoStateData.location
+      levelChange = newCur.level != a.ui.cursor.level
+
     a.opts.drawTrail = false
 
-    let undoStateData = um.redo(a.doc.map)
-    moveCursorTo(undoStateData.location, a)
+    moveCursorTo(newCur, a)
 
-    a.opts.drawTrail = drawTrail
+    if not levelChange:
+      a.opts.drawTrail = drawTrail
 
     setStatusMessage(IconRedo,
                      fmt"Redid action: {undoStateData.actionName}", a)
@@ -5736,9 +5742,10 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scPaste):
         if ui.copyBuf.isSome:
-          actions.pasteSelection(map, cur, ui.copyBuf.get,
+          actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
                                  pasteBufferLevelIndex=CopyBufferLevelIndex,
-                                 undoLoc=cur, um)
+                                 um)
+
           if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
           setStatusMessage(IconPaste, "Buffer pasted", a)
@@ -6118,34 +6125,6 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
-      elif ke.isShortcutDown(scSelectionCut):
-        let selection = ui.selection.get
-
-        # delete links from a previous cut to buffer operation if it hasn't
-        # been pasted yet
-        map.deleteLinksFromOrToLevel(CopyBufferLevelIndex)
-
-        let bbox = copySelection(ui.copyBuf, a)
-        if bbox.isSome:
-          let bbox = bbox.get
-          var bboxTopLeft = Location(
-            level: cur.level,
-            col: bbox.c1,
-            row: bbox.r1
-          )
-          actions.cutSelection(map, bboxTopLeft, bbox, selection,
-                               linkDestLevelIndex=CopyBufferLevelIndex, um)
-          ui.cutToBuffer = true
-
-          exitSelectMode(a)
-
-          var cur = cur
-          cur.row = bbox.r1
-          cur.col = bbox.c1
-          setCursor(cur, a)
-
-          setStatusMessage(IconCut, "Cut selection to buffer", a)
-
       elif ke.isShortcutDown(scSelectionMove):
         let selection = ui.selection.get
         let bbox = copySelection(ui.nudgeBuf, a)
@@ -6156,7 +6135,7 @@ proc handleGlobalKeyEvents(a) =
             col: bbox.c1,
             row: bbox.r1
           )
-          ui.moveUndoLocation = bboxTopLeft
+          ui.pasteUndoLocation = bboxTopLeft
 
           actions.cutSelection(map, bboxTopLeft, bbox, selection,
                                linkDestLevelIndex=MoveBufferLevelIndex, um)
@@ -6289,14 +6268,17 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartCol = cur.col
 
       if ke.isShortcutDown(scPasteAccept):
-        actions.pasteSelection(map, cur, ui.copyBuf.get,
+        actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
                                pasteBufferLevelIndex=CopyBufferLevelIndex,
-                               undoLoc=cur, um, pasteTrail=true)
+                               um, pasteTrail=true)
 
         if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
+
+      elif ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
@@ -6319,13 +6301,17 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartCol = cur.col
 
       if ke.isShortcutDown(scPasteAccept):
-        actions.pasteSelection(map, cur, ui.nudgeBuf.get,
+        actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
+                               ui.nudgeBuf.get,
                                pasteBufferLevelIndex=MoveBufferLevelIndex,
-                               undoLoc=ui.moveUndoLocation, um,
-                               groupWithPrev=true, actionName="Move selection")
+                               um, groupWithPrev=true,
+                               actionName="Move selection")
 
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
+
+      elif ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
@@ -6477,7 +6463,6 @@ proc handleQuickRefKeyEvents(a) =
 
 # }}}
 
-# }}}
 # {{{ Rendering
 
 # {{{ renderNoteTooltip()
