@@ -136,9 +136,10 @@ proc eraseCell*(map; loc, undoLoc: Location; um; groupWithPrev: bool) =
 
 # }}}
 # {{{ setWall*()
-proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
+proc setWall*(map; loc, undoLoc: Location, dir: CardinalDir, w: Wall; um;
+              groupWithPrev: bool) =
 
-  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev,
                    fmt"Set wall {EnDash} {w}", m):
     m.setWall(loc, dir, w)
 

@@ -5538,8 +5538,10 @@ proc handleGlobalKeyEvents(a) =
       if newCur != cur:
         if map.canSetWall(newCur, drawDir):
           setCursor(newCur, a)
+          actions.setWall(map, loc=newCur, undoLoc=cur, drawDir,
+                          ui.drawWallRepeatWall, um,
+                          groupWithPrev=opts.drawTrail)
 
-          actions.setWall(map, newCur, drawDir, ui.drawWallRepeatWall, um)
           setDrawWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
@@ -5957,7 +5959,7 @@ proc handleGlobalKeyEvents(a) =
                                   ui.currFloorColor,
                                   um, groupWithPrev=opts.drawTrail)
 
-      if ke.isShortcutUp(scExcavateTunnel):
+      if not opts.wasdMode and ke.isShortcutUp(scExcavateTunnel):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -5980,7 +5982,9 @@ proc handleGlobalKeyEvents(a) =
           ui.drawWallRepeatWall = w
           ui.drawWallRepeatDirection = dir
 
-          actions.setWall(map, cur, dir, w, um)
+          actions.setWall(map, loc=cur, undoLoc=cur, dir, w, um,
+                          groupWithPrev=false)
+
           setDrawWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
@@ -6048,7 +6052,9 @@ proc handleGlobalKeyEvents(a) =
           ui.drawWallRepeatWall = w
           ui.drawWallRepeatDirection = dir
 
-          actions.setWall(map, cur, dir, w, um)
+          actions.setWall(map, loc=cur, undoLoc=cur, dir, w, um,
+                          groupWithPrev=false)
+
           setDrawSpecialWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
