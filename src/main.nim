@@ -5055,7 +5055,9 @@ proc startExcavateTunnelAction(a) =
 # {{{ startEraseCellsAction()
 proc startEraseCellsAction(a) =
   let cur = a.ui.cursor
-  actions.eraseCell(a.doc.map, loc=cur, undoLoc=cur, a.doc.undoManager)
+  actions.eraseCell(a.doc.map, loc=cur, undoLoc=cur,
+                    a.doc.undoManager, groupWithPrev=false)
+
   setStatusMessage(IconEraser, "Erase cell", @[IconArrowsAll, "erase"], a)
 
 # }}}
@@ -5584,7 +5586,7 @@ proc handleGlobalKeyEvents(a) =
                          @[IconArrowsAll, "draw/clear"], a)
 
         actions.drawClearFloor(map, loc=cur, undoLoc=cur,
-                               ui.currFloorColor, um)
+                               ui.currFloorColor, um, groupWithPrev=false)
 
       elif ke.isShortcutDown(scToggleFloorOrientation):
         let floor = map.getFloor(cur)
@@ -5608,7 +5610,7 @@ proc handleGlobalKeyEvents(a) =
 
         if not map.isEmpty(cur):
           actions.setFloorColor(map, loc=cur, undoLoc=cur,
-                                ui.currFloorColor, um)
+                                ui.currFloorColor, um, groupWithPrev=false)
 
       elif not opts.wasdMode and ke.isShortcutDown(scDrawWall):
         enterDrawWallMode(specialWall = false, a)
@@ -5931,19 +5933,22 @@ proc handleGlobalKeyEvents(a) =
                                  um, groupWithPrev=opts.drawTrail)
 
         elif ui.editMode == emEraseCell:
-          actions.eraseCell(map, loc=cur, undoLoc=ui.prevCursor, um)
+          actions.eraseCell(map, loc=cur, undoLoc=ui.prevCursor,
+                            um, groupWithPrev=opts.drawTrail)
 
         elif ui.editMode == emEraseTrail:
           actions.eraseTrail(map, loc=cur, undoLoc=cur, um)
 
         elif ui.editMode == emDrawClearFloor:
           actions.drawClearFloor(map, loc=cur, undoLoc=ui.prevCursor,
-                                 ui.currFloorColor, um)
+                                 ui.currFloorColor,
+                                 um, groupWithPrev=opts.drawTrail)
 
         elif ui.editMode == emColorFloor:
           if not map.isEmpty(cur):
             actions.setFloorColor(map, loc=cur, undoLoc=ui.prevCursor,
-                                  ui.currFloorColor, um)
+                                  ui.currFloorColor,
+                                  um, groupWithPrev=opts.drawTrail)
 
       if ke.isShortcutUp(scExcavateTunnel):
         ui.editMode = emNormal

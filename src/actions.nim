@@ -80,9 +80,10 @@ template singleCellAction(map; loc, undoLoc: Location; um; groupWithPrev: bool,
 # }}}
 
 # {{{ drawClearFloor*()
-proc drawClearFloor*(map; loc, undoLoc: Location, floorColor: Natural; um) =
+proc drawClearFloor*(map; loc, undoLoc: Location, floorColor: Natural;
+                     um; groupWithPrev: bool) =
 
-  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev,
                    fmt"Draw/clear floor", m):
 
     let l = m.levels[loc.level]
@@ -93,9 +94,10 @@ proc drawClearFloor*(map; loc, undoLoc: Location, floorColor: Natural; um) =
 
 # }}}
 # {{{ setFloorColor*()
-proc setFloorColor*(map; loc, undoLoc: Location, floorColor: Natural; um) =
+proc setFloorColor*(map; loc, undoLoc: Location, floorColor: Natural;
+                    um; groupWithPrev: bool) =
 
-  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev,
                    fmt"Set floor colour {EnDash} {floorColor}", m):
 
     m.setFloorColor(loc, floorColor)
@@ -126,9 +128,9 @@ proc toggleFloorOrientation*(map; loc: Location; um) =
 
 # }}}
 # {{{ eraseCell*()
-proc eraseCell*(map; loc, undoLoc: Location; um) =
+proc eraseCell*(map; loc, undoLoc: Location; um; groupWithPrev: bool) =
 
-  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev,
                    "Erase cell", m):
     m.eraseCell(loc)
 
