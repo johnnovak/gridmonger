@@ -14,21 +14,21 @@ import utils
 
 
 type UndoStateData* = object
-  actionName*: string
-  location*: Location
+  actionName*:   string
+  location*:     Location
+  undoLocation*: Location
 
 using
   map: var Map
   um:  var UndoManager[Map, UndoStateData]
 
 # {{{ cellAreaAction()
-template cellAreaAction(map; loc: Location, rect: Rect[Natural];
+template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
                         um; groupWithPrev: bool,
                         actName: string, actionMap, actionBody: untyped) =
 
   let usd = UndoStateData(
-    actionName: actName,
-    location: loc
+    actionName: actName, location: loc, undoLocation: undoLoc
   )
 
   let action = proc (actionMap: var Map): UndoStateData =
@@ -67,22 +67,24 @@ template cellAreaAction(map; loc: Location, rect: Rect[Natural];
 
 # }}}
 # {{{ singleCellAction()
-template singleCellAction(map; loc: Location; um;
+template singleCellAction(map; loc, undoLoc: Location; um; groupWithPrev: bool,
                           actionName: string; actionMap, actionBody: untyped) =
   let
     c = loc.col
     r = loc.row
     cellRect = rectN(r, c, r+1, c+1)
 
-  cellAreaAction(map, loc, cellRect, um, groupWithPrev=false,
+  cellAreaAction(map, loc, undoLoc, cellRect, um, groupWithPrev,
                  actionName, actionMap, actionBody)
 
 # }}}
 
 # {{{ drawClearFloor*()
-proc drawClearFloor*(map; loc: Location, floorColor: Natural; um) =
+proc drawClearFloor*(map; loc, undoLoc: Location, floorColor: Natural; um) =
 
-  singleCellAction(map, loc, um, fmt"Draw/clear floor", m):
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+                   fmt"Draw/clear floor", m):
+
     let l = m.levels[loc.level]
     l.delAnnotation(loc.row, loc.col)
 
@@ -91,10 +93,11 @@ proc drawClearFloor*(map; loc: Location, floorColor: Natural; um) =
 
 # }}}
 # {{{ setFloorColor*()
-proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
+proc setFloorColor*(map; loc, undoLoc: Location, floorColor: Natural; um) =
 
-  singleCellAction(map, loc, um, fmt"Set floor colour {EnDash} {floorColor}",
-                   m):
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+                   fmt"Set floor colour {EnDash} {floorColor}", m):
+
     m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -102,7 +105,9 @@ proc setFloorColor*(map; loc: Location, floorColor: Natural; um) =
 proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
                        floorColor: Natural; um) =
 
-  singleCellAction(map, loc, um, fmt"Set floor {EnDash} {f}", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   fmt"Set floor {EnDash} {f}", m):
+
     m.setFloor(loc, f)
     m.setFloorOrientation(loc, ot)
 
@@ -113,44 +118,70 @@ proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
 # {{{ toggleFloorOrientation*()
 proc toggleFloorOrientation*(map; loc: Location; um) =
 
-  singleCellAction(map, loc, um, "Toggle floor orientation", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   "Toggle floor orientation", m):
+
     let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
     m.setFloorOrientation(loc, newOt)
 
 # }}}
 # {{{ eraseCell*()
-proc eraseCell*(map; loc: Location; um) =
+proc eraseCell*(map; loc, undoLoc: Location; um) =
 
-  singleCellAction(map, loc, um, "Erase cell", m):
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+                   "Erase cell", m):
     m.eraseCell(loc)
 
 # }}}
 # {{{ setWall*()
 proc setWall*(map; loc: Location, dir: CardinalDir, w: Wall; um) =
 
-  singleCellAction(map, loc, um, fmt"Set wall {EnDash} {w}", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   fmt"Set wall {EnDash} {w}", m):
     m.setWall(loc, dir, w)
 
 # }}}
 # {{{ eraseCellWalls*()
 proc eraseCellWalls*(map; loc: Location; um) =
 
-  singleCellAction(map, loc, um, "Erase cell walls", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   "Erase cell walls", m):
     m.eraseCellWalls(loc)
 
 # }}}
 # {{{ excavateTunnel*()
-proc excavateTunnel*(map; loc: Location, floorColor: Natural; um) =
+proc excavateTunnel*(map; loc, undoLoc: Location, floorColor: Natural; um;
+                     groupWithPrev: bool) =
 
-  singleCellAction(map, loc, um, "Excavate tunnel", m):
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev,
+                   "Excavate tunnel", m):
     m.excavateTunnel(loc, floorColor)
+
+# }}}
+
+# {{{ drawTrail*()
+proc drawTrail*(map; loc, undoLoc: Location; um) =
+
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+                   "Draw trail", m):
+    m.setTrail(loc, on)
+
+# }}}
+# {{{ eraseTrail*()
+proc eraseTrail*(map; loc, undoLoc: Location; um) =
+
+  singleCellAction(map, loc, undoLoc, um, groupWithPrev=false,
+                   "Erase trail", m):
+    m.setTrail(loc, off)
 
 # }}}
 # {{{ excavateTrail*()
 proc excavateTrail*(map; loc: Location, bbox: Rect[Natural],
                     floorColor: Natural; um) =
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Excavate trail", m):
+  cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
+                 "Excavate trail in level", m):
+
     var loc = loc
 
     for r in bbox.r1..<bbox.r2:
@@ -165,26 +196,28 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural],
             m.setFloorColor(loc, floorColor)
 
 # }}}
-# {{{ clearTrail*()
-proc clearTrail*(map; loc: Location, bbox: Rect[Natural]; um;
-                 groupWithPrev = false;
-                 actionName = "Clear trail") =
+# {{{ clearTrailInLevel*()
+proc clearTrailInLevel*(map; loc: Location, bbox: Rect[Natural]; um;
+                        groupWithPrev = false;
+                        actionName = "Clear trail in level") =
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev, actionName, m):
+  cellAreaAction(map, loc, loc, bbox, um, groupWithPrev, actionName, m):
     var loc = loc
 
     for r in bbox.r1..<bbox.r2:
       for c in bbox.c1..<bbox.c2:
         loc.row = r
         loc.col = c
-        m.setTrail(loc, false)
+        m.setTrail(loc, off)
 
 # }}}
 
 # {{{ setNote*()
 proc setNote*(map; loc: Location, n: Annotation; um) =
 
-  singleCellAction(map, loc, um, "Set note", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   "Set note", m):
+
     let l = m.levels[loc.level]
     if n.kind != akComment:
       m.setFloor(loc, fBlank)
@@ -195,7 +228,9 @@ proc setNote*(map; loc: Location, n: Annotation; um) =
 # {{{ eraseNote*()
 proc eraseNote*(map; loc: Location; um) =
 
-  singleCellAction(map, loc, um, "Erase note", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   "Erase note", m):
+
     let l = m.levels[loc.level]
     if m.hasNote(loc):
       l.delAnnotation(loc.row, loc.col)
@@ -204,7 +239,9 @@ proc eraseNote*(map; loc: Location; um) =
 # {{{ setLabel*()
 proc setLabel*(map; loc: Location, n: Annotation; um) =
 
-  singleCellAction(map, loc, um, "Set label", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   "Set label", m):
+
     if not m.isEmpty(loc):
       m.setFloor(loc, fBlank)
 
@@ -215,7 +252,9 @@ proc setLabel*(map; loc: Location, n: Annotation; um) =
 # {{{ eraseLabel*()
 proc eraseLabel*(map; loc: Location; um) =
 
-  singleCellAction(map, loc, um, "Erase label", m):
+  singleCellAction(map, loc, loc, um, groupWithPrev=false,
+                   "Erase label", m):
+
     let l = m.levels[loc.level]
     if m.hasLabel(loc):
       l.delAnnotation(loc.row, loc.col)
@@ -227,9 +266,12 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
   let srcFloor = map.getFloor(src)
   let linkType = linkFloorToString(srcFloor)
 
+  let loc = Location(level: src.level, row: src.row, col: src.col)
+
   let usd = UndoStateData(
     actionName: fmt"Set link destination {EnDash} {linkType}",
-    location: Location(level: src.level, row: src.row, col: src.col)
+    location: loc,
+    undoLocation: loc
   )
 
   # Do action
@@ -321,7 +363,7 @@ proc eraseSelection*(map; level: Natural, sel: Selection,
 
   let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
+  cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
                  "Erase selection", m):
 
     var loc = Location(level: level)
@@ -340,7 +382,7 @@ proc fillSelection*(map; level: Natural, sel: Selection,
 
   let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
+  cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
                  "Fill selection", m):
 
     var loc = Location(level: level)
@@ -361,7 +403,7 @@ proc surroundSelectionWithWalls*(map; level: Natural, sel: Selection,
 
   let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
+  cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
                  "Surround selection with walls", m):
 
     var loc = Location(level: level)
@@ -388,7 +430,7 @@ proc setSelectionFloorColor*(map; level: Natural, sel: Selection,
 
   let loc = Location(level: level, row: bbox.r1, col: bbox.c1)
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev=false,
+  cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
                  "Set floor colour of selection", m):
 
     var loc = Location(level: level)
@@ -444,7 +486,8 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
   let newLinks = transformAndCollectLinks(oldLinks, sel, bbox)
 
 
-  cellAreaAction(map, loc, bbox, um, groupWithPrev=false, "Cut selection", m):
+  cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
+                 "Cut selection", m):
 
     for s in oldLinks.keys:
       m.links.delBySrc(s)
@@ -486,7 +529,8 @@ proc pasteSelection*(map; pasteLoc: Location, sb: SelectionBuffer,
   )
 
   if rect.isSome:
-    cellAreaAction(map, undoLoc, rect.get, um, groupWithPrev, actionName, m):
+    cellAreaAction(map, undoLoc, undoLoc, rect.get, um, groupWithPrev,
+                   actionName, m):
 
       let l = m.levels[pasteLoc.level]
 
@@ -574,7 +618,9 @@ proc addNewLevel*(map; loc: Location,
                   notes: string;
                   um): Location =
 
-  let usd = UndoStateData(actionName: "New level", location: loc)
+  let usd = UndoStateData(
+    actionName: "New level", location: loc, undoLocation: loc
+  )
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
@@ -607,7 +653,9 @@ proc addNewLevel*(map; loc: Location,
 # {{{ deleteLevel*()
 proc deleteLevel*(map; loc: Location; um): Location =
 
-  let usd = UndoStateData(actionName: "Delete level", location: loc)
+  let usd = UndoStateData(
+    actionName: "Delete level", location: loc, undoLocation: loc
+  )
 
   let oldLinks = map.links.filterByLevel(loc.level)
 
@@ -670,7 +718,9 @@ proc deleteLevel*(map; loc: Location; um): Location =
 proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                   anchor: Direction; um): Location =
 
-  let usd = UndoStateData(actionName: "Resize level", location: loc)
+  let usd = UndoStateData(
+    actionName: "Resize level", location: loc, undoLocation: loc
+  )
 
   # Do action
   let
@@ -741,7 +791,9 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 # {{{ cropLevel*()
 proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
-  let usd = UndoStateData(actionName: "Crop level", location: loc)
+  let usd = UndoStateData(
+    actionName: "Crop level", location: loc, undoLocation: loc
+  )
 
   # Do action
   let
@@ -791,7 +843,9 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
                  sb: SelectionBuffer; um): Location =
 
-  let usd = UndoStateData(actionName: "Nudge level", location: loc)
+  let usd = UndoStateData(
+    actionName: "Nudge level", location: loc, undoLocation: loc
+  )
 
   let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
 
@@ -847,7 +901,9 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
                          notes: string;
                          um) =
 
-  let usd = UndoStateData(actionName: "Edit level properties", location: loc)
+  let usd = UndoStateData(
+    actionName: "Edit level properties", location: loc, undoLocation: loc
+  )
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
@@ -923,7 +979,9 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
 proc setMapProperties*(map; loc: Location; title, game, author: string;
                        coordOpts: CoordinateOptions; notes: string; um) =
 
-  let usd = UndoStateData(actionName: "Edit map properties", location: loc)
+  let usd = UndoStateData(
+    actionName: "Edit map properties", location: loc, undoLocation: loc
+  )
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
@@ -982,7 +1040,9 @@ proc setMapProperties*(map; loc: Location; title, game, author: string;
 proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
                           region: Region; um) =
 
-  let usd = UndoStateData(actionName: "Edit region properties", location: loc)
+  let usd = UndoStateData(
+    actionName: "Edit region properties", location: loc, undoLocation: loc
+  )
 
   # Do action
   let action = proc (m: var Map): UndoStateData =

@@ -253,12 +253,12 @@ type
 
   UIState = object
     cursor:            Location
-    lastCursor:        Location
+    prevCursor:        Location
     cursorOrient:      CardinalDir
     editMode:          EditMode
 
-    lastCursorViewX:   float
-    lastCursorViewY:   float
+    prevCursorViewX:   float
+    prevCursorViewY:   float
 
     selection:         Option[Selection]
     selRect:           Option[SelectionRect]
@@ -1303,13 +1303,14 @@ proc toolsPaneWidth(a): float =
 
 # {{{ setCursor()
 proc setCursor(cur: Location; a) =
-  a.ui.cursor = cur
+  with a:
+    if cur.level != ui.prevCursor.level:
+      opts.drawTrail = false
 
-  if a.ui.lastCursor.level != a.ui.cursor.level:
-    a.opts.drawTrail = false
-
-  if a.opts.drawTrail:
-    a.doc.map.setTrail(cur, true)
+    if opts.drawTrail and cur != ui.prevCursor:
+      actions.drawTrail(doc.map, loc=cur, undoLoc=ui.prevCursor,
+                        doc.undoManager)
+    ui.cursor = cur
 
 # }}}
 # {{{ stepCursor()
@@ -1456,16 +1457,14 @@ proc resetCursorAndViewStart(a) =
 proc updateLastCursorViewCoords(a) =
   alias(dp, a.ui.drawLevelParams)
 
-  a.ui.lastCursorViewX = dp.gridSize * viewCol(a)
-  a.ui.lastCursorViewY = dp.gridSize * viewRow(a)
+  a.ui.prevCursorViewX = dp.gridSize * viewCol(a)
+  a.ui.prevCursorViewY = dp.gridSize * viewRow(a)
 
 # }}}
 # {{{ updateViewStartAndCursorPosition()
 proc updateViewStartAndCursorPosition(a) =
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
-
-  var cur = a.ui.cursor
 
   let l = currLevel(a)
 
@@ -1509,10 +1508,16 @@ proc updateViewStartAndCursorPosition(a) =
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
   let viewEndCol = dp.viewStartCol + dp.viewCols - 1
 
-  cur.row = viewEndRow.clamp(dp.viewStartRow, cur.row)
-  cur.col = viewEndCol.clamp(dp.viewStartCol, cur.col)
+  let cur = a.ui.cursor
+  let newCur = Location(
+    level: cur.level,
+    col:   viewEndCol.clamp(dp.viewStartCol, cur.col),
+    row:   viewEndRow.clamp(dp.viewStartRow, cur.row)
+  )
 
-  setCursor(cur, a)
+  if newCur != cur:
+    setCursor(newCur, a)
+
   updateLastCursorViewCoords(a)
 
 # }}}
@@ -4979,9 +4984,15 @@ proc undoAction(a) =
   alias(um, a.doc.undoManager)
 
   if um.canUndo:
+    let drawTrail = a.opts.drawTrail
+    a.opts.drawTrail = false
+
     let undoStateData = um.undo(a.doc.map)
     if a.doc.map.hasLevels:
-      moveCursorTo(undoStateData.location, a)
+      moveCursorTo(undoStateData.undoLocation, a)
+
+    a.opts.drawTrail = drawTrail
+
     setStatusMessage(IconUndo, fmt"Undid action: {undoStateData.actionName}", a)
   else:
     setWarningMessage("Nothing to undo", a=a)
@@ -4992,8 +5003,14 @@ proc redoAction(a) =
   alias(um, a.doc.undoManager)
 
   if um.canRedo:
+    let drawTrail = a.opts.drawTrail
+    a.opts.drawTrail = false
+
     let undoStateData = um.redo(a.doc.map)
     moveCursorTo(undoStateData.location, a)
+
+    a.opts.drawTrail = drawTrail
+
     setStatusMessage(IconRedo,
                      fmt"Redid action: {undoStateData.actionName}", a)
   else:
@@ -5027,8 +5044,9 @@ proc cycleFloorGroupAction(floors: seq[Floor], forward: bool; a) =
 # }}}
 # {{{ startExcavateTunnelAction()
 proc startExcavateTunnelAction(a) =
-  actions.excavateTunnel(a.doc.map, a.ui.cursor, a.ui.currFloorColor,
-                         a.doc.undoManager)
+  let cur = a.ui.cursor
+  actions.excavateTunnel(a.doc.map, loc=cur, undoLoc=cur, a.ui.currFloorColor,
+                         a.doc.undoManager, groupWithPrev=false)
 
   setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll,
                    "excavate"], a)
@@ -5036,13 +5054,15 @@ proc startExcavateTunnelAction(a) =
 # }}}
 # {{{ startEraseCellsAction()
 proc startEraseCellsAction(a) =
-  actions.eraseCell(a.doc.map, a.ui.cursor, a.doc.undoManager)
+  let cur = a.ui.cursor
+  actions.eraseCell(a.doc.map, loc=cur, undoLoc=cur, a.doc.undoManager)
   setStatusMessage(IconEraser, "Erase cell", @[IconArrowsAll, "erase"], a)
 
 # }}}
 # {{{ startEraseTrailAction()
 proc startEraseTrailAction(a) =
-  a.doc.map.setTrail(a.ui.cursor, false)
+  let cur = a.ui.cursor
+  actions.eraseTrail(a.doc.map, loc=cur, undoLoc=cur, a.doc.undoManager)
   setStatusMessage(IconEraser, "Erase trail", @[IconArrowsAll, "erase"], a)
 
 # }}}
@@ -5137,7 +5157,7 @@ proc openMap(a) =
     doOpenMap(a)
 
 
-when not defined(DEBUG):
+when defined(windows):
 
   proc openMap(filename: string; a) =
     proc doOpenMap(a) =
@@ -5235,8 +5255,8 @@ proc centerCursorAfterZoom(a) =
   alias(dp, a.ui.drawLevelParams)
   let cur = a.ui.cursor
 
-  let viewCol = round(a.ui.lastCursorViewX / dp.gridSize).int
-  let viewRow = round(a.ui.lastCursorViewY / dp.gridSize).int
+  let viewCol = round(a.ui.prevCursorViewX / dp.gridSize).int
+  let viewRow = round(a.ui.prevCursorViewY / dp.gridSize).int
   dp.viewStartCol = max(cur.col - viewCol, 0)
   dp.viewStartRow = max(cur.row - viewRow, 0)
 
@@ -5562,7 +5582,9 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emDrawClearFloor
         setStatusMessage(IconEraser, "Draw/clear floor",
                          @[IconArrowsAll, "draw/clear"], a)
-        actions.drawClearFloor(map, cur, ui.currFloorColor, um)
+
+        actions.drawClearFloor(map, loc=cur, undoLoc=cur,
+                               ui.currFloorColor, um)
 
       elif ke.isShortcutDown(scToggleFloorOrientation):
         let floor = map.getFloor(cur)
@@ -5585,7 +5607,8 @@ proc handleGlobalKeyEvents(a) =
                          @[IconArrowsAll, "set colour"], a)
 
         if not map.isEmpty(cur):
-          actions.setFloorColor(map, cur, ui.currFloorColor, um)
+          actions.setFloorColor(map, loc=cur, undoLoc=cur,
+                                ui.currFloorColor, um)
 
       elif not opts.wasdMode and ke.isShortcutDown(scDrawWall):
         enterDrawWallMode(specialWall = false, a)
@@ -5659,24 +5682,28 @@ proc handleGlobalKeyEvents(a) =
         else: ui.currSpecialWall = 0
 
       elif ke.isShortcutDown(scEraseTrail):
-        ui.editMode = emEraseTrail
-        startEraseTrailAction(a)
+        if not opts.drawTrail:
+          ui.editMode = emEraseTrail
+          startEraseTrailAction(a)
+        else:
+          setWarningMessage("Cannot erase trail when draw trail is on", a=a)
 
       elif ke.isShortcutDown(scExcavateTrail):
         let bbox = l.calcTrailBoundingBox()
         if bbox.isSome:
           actions.excavateTrail(map, cur, bbox.get, ui.currFloorColor, um)
-          actions.clearTrail(map, cur, bbox.get, um,
-                             groupWithPrev=true, actionName="Excavate trail")
-          setStatusMessage(IconEraser, "Trail excavated", a)
+          actions.clearTrailInLevel(map, cur, bbox.get, um, groupWithPrev=true,
+                                    actionName="Excavate trail in level")
+
+          setStatusMessage(IconPencil, "Trail excavated in level", a)
         else:
           setWarningMessage("No trail to excavate", a=a)
 
       elif ke.isShortcutDown(scClearTrail):
         let bbox = l.calcTrailBoundingBox()
         if bbox.isSome:
-          actions.clearTrail(map, cur, bbox.get, um)
-          setStatusMessage(IconEraser, "Trail cleared", a)
+          actions.clearTrailInLevel(map, cur, bbox.get, um)
+          setStatusMessage(IconEraser, "Cleared trail in level", a)
         else:
           setWarningMessage("No trail to clear", a=a)
 
@@ -5881,7 +5908,8 @@ proc handleGlobalKeyEvents(a) =
         toggleOnOffOption(opts.wasdMode, IconMouse, "WASD mode", a)
 
       elif ke.isShortcutDown(scToggleDrawTrail):
-        map.setTrail(cur, true)
+        if not opts.drawTrail:
+          actions.drawTrail(map, loc=cur, undoLoc=cur, um)
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
       elif ke.isShortcutDown(scToggleTitleBar):
@@ -5896,22 +5924,26 @@ proc handleGlobalKeyEvents(a) =
                                  allowWasdKeys=true, a)
       let cur = ui.cursor
 
-      if cur != ui.lastCursor:
+      if cur != ui.prevCursor:
         if   ui.editMode == emExcavateTunnel:
-          actions.excavateTunnel(map, cur, ui.currFloorColor, um)
+          actions.excavateTunnel(map, loc=cur, undoLoc=ui.prevCursor,
+                                 ui.currFloorColor,
+                                 um, groupWithPrev=opts.drawTrail)
 
         elif ui.editMode == emEraseCell:
-          actions.eraseCell(map, cur, um)
+          actions.eraseCell(map, loc=cur, undoLoc=ui.prevCursor, um)
 
         elif ui.editMode == emEraseTrail:
-          map.setTrail(cur, false)
+          actions.eraseTrail(map, loc=cur, undoLoc=cur, um)
 
         elif ui.editMode == emDrawClearFloor:
-          actions.drawClearFloor(map, cur, ui.currFloorColor, um)
+          actions.drawClearFloor(map, loc=cur, undoLoc=ui.prevCursor,
+                                 ui.currFloorColor, um)
 
         elif ui.editMode == emColorFloor:
           if not map.isEmpty(cur):
-            actions.setFloorColor(map, cur, ui.currFloorColor, um)
+            actions.setFloorColor(map, loc=cur, undoLoc=ui.prevCursor,
+                                  ui.currFloorColor, um)
 
       if ke.isShortcutUp(scExcavateTunnel):
         ui.editMode = emNormal
@@ -6337,7 +6369,7 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = ui.cursor
 
-      if cur != ui.lastCursor:
+      if cur != ui.prevCursor:
         let floor = map.getFloor(ui.linkSrcLocation)
         setSetLinkDestinationMessage(floor, a)
 
@@ -6513,7 +6545,7 @@ proc renderLevel(a) =
 
   updateViewStartAndCursorPosition(a)
 
-  if ui.lastCursor != ui.cursor:
+  if ui.prevCursor != ui.cursor:
     resetManualNoteTooltip(a)
 
   let
@@ -6600,7 +6632,7 @@ proc renderLevel(a) =
     renderNoteTooltip(x, y, note.get, a)
 
 
-  a.ui.lastCursor = a.ui.cursor
+  a.ui.prevCursor = a.ui.cursor
 
 # }}}
 # {{{ renderEmptyMap()
