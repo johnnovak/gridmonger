@@ -5083,6 +5083,7 @@ proc mkRepeatWallActionString(name: string; a): string =
 
 
 proc doSetDrawWallActionMessage(name: string; a) =
+  echo getStackTrace()
   var commands = @[IconArrowsAll, "set/clear"]
 
   if a.ui.drawWallRepeatAction != dwaNone:
@@ -5541,8 +5542,6 @@ proc handleGlobalKeyEvents(a) =
           actions.setWall(map, loc=newCur, undoLoc=cur, drawDir,
                           ui.drawWallRepeatWall, um,
                           groupWithPrev=opts.drawTrail)
-
-          setDrawWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
                             keepStatusMessage=true, a=a)
