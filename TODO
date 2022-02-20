@@ -1,79 +1,70 @@
 BUGS
 ====
 
-- should load default theme when theme cannot be found
-- save curr special wall & colour into map
+  - should load default theme when theme cannot be found
 
 
-ENHANCEMENTS
-============
-
-  - thick wall style (for Companion style)
-  - log memory access crashes? (or division by zero)
-
-
-TODO for v0.9
-=============
+TODO
+====
 
   - OS X:
-      - finish OS X package
-      - gridmonger document icon
-
-  - finalise all themes
-
-  - failure tests:
-    - invalid map file
-    - invalid config
+    - finish OS X package
+    - gridmonger document icon
 
 
 FEATURE & ENHANCEMENT IDEAS
 ===========================
 
-  - window not visible after disconnecting external screen
-    - reset window position shortcut
+  - new features:
+    - export map as PNG
+    - full screen borderless
+    - legend / locations / notes window
 
-  - colorpicker:
-    - display floats in HSV mode
-    - right-click cancel in triangle & hue circle
-  - theme editor: undo
-  - show current color / tool in statusbar when toolbar is not visible
+    - levels:
+      - change level size: add preserve coordinates option
+      - set coordinate origin action
+      - infinite levels
+      - align levels to each other based on coords
+      - action for aligning two levels
 
-  - theme editor: undo
+    - onion skin?
+    - map selector dialog?
 
-  - onion skin?
+  - enhancements:
+    - log memory access crashes somehow? (also division by zero)
 
-  - wand selection?
-  - fill selection?
-  - paint selection with mouse?
+    - show current color / tool in statusbar when toolbar is not visible ?
 
-  - mouse: hand tool, scroll wheel zoom
+    - level selector popup
+    - theme selector popup/window
 
-  - export map as PNG
+    - window not visible after disconnecting external screen
+      - reset window position shortcut?
 
-  - full screen borderless
-
-  - map selector dialog
-
-  - more themes:
-      emerald-theme.psd
-      slate-theme.psd
-      overworld1.psd
-      overworld4.psd
-      golden-boxes themes
-
-  - change level size: add preserve coordinates option
-  - set coordinate origin action
-  - infinite levels
-  - align levels to each other based on coords
-  - action for aligning two levels
-
-  - legend / locations / notes window
-
-  - level selector popup
-  - theme selector popup/window
+  - selections:
+    - wand selection?
+    - fill selection?
+    - paint selection with mouse?
 
   - theme editor
     - hex color: only accept hex chars
+    - colorpicker:
+      - display floats in HSV mode
+      - right-click cancel in triangle & hue circle
+    - undo
+
+  - themes:
+    - thick wall style (for Companion style)
+
+    - more themes:
+        emerald-theme.psd
+        slate-theme.psd
+        overworld1.psd
+        overworld4.psd
+        golden-boxes themes
+
+  - mouse:
+    - hand tool, scroll wheel zoom
 
   - linux package?
 
@@ -87,9 +78,6 @@ LOW PRIORITY BUGS & ENHANCEMENTS
     destination
 
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
-
-  - undo after cut/erase/etc selection should restore cursor to selection to
-    left corner, not bottom right (too hard?)
 
   - better undo manager
 
