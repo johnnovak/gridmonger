@@ -218,28 +218,15 @@ proc excavateTunnel*(m; loc: Location, floorColor: Natural) =
   m.setFloor(loc, fBlank)
   m.setFloorColor(loc, floorColor)
 
+  # Preserve label
   if label.isSome:
     l.setAnnotation(loc.row, loc.col, label.get)
 
-  if r == 0 or l.isEmpty(r-1, c):
-    m.setWall(loc, dirN, wWall)
-  else:
-    m.setWall(loc, dirN, wNone)
-
-  if c == 0 or l.isEmpty(r, c-1):
-    m.setWall(loc, dirW, wWall)
-  else:
-    m.setWall(loc, dirW, wNone)
-
-  if r == l.rows-1 or l.isEmpty(r+1, c):
-    m.setWall(loc, dirS, wWall)
-  else:
-    m.setWall(loc, dirS, wNone)
-
-  if c == l.cols-1 or l.isEmpty(r, c+1):
-    m.setWall(loc, dirE, wWall)
-  else:
-    m.setWall(loc, dirE, wNone)
+  for dir in @[dirN, dirS, dirE, dirW]:
+    if l.isNeighbourCellEmpty(r, c, {dir}):
+      m.setWall(loc, dir, wWall)
+    else:
+      m.setWall(loc, dir, wNone)
 
 # }}}
 
