@@ -7469,8 +7469,14 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
     disabled = buttonsDisabled
   )
 
-  if themeIndex != a.theme.currThemeIndex:
+  proc switchTheme(a) =
     a.theme.nextThemeIndex = themeIndex.some
+
+  if themeIndex != a.theme.currThemeIndex:
+    if a.themeEditor.modified:
+      openSaveDiscardThemeDialog(action=switchTheme, a)
+    else:
+      switchTheme(a)
 
   # User theme indicator
   cx += 201
