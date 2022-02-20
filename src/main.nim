@@ -6904,25 +6904,30 @@ proc renderNotesPane(x, y, w, h: float; a) =
 # }}}
 
 # {{{ renderCommand()
-proc renderCommand(x, y: float; command: string; a): float =
+proc renderCommand(x, y: float; command: string; bgColor, textColor: Color;
+                   a): float =
   alias(vg, a.vg)
 
   let w = vg.textWidth(command)
-
-  # TODO
-  let s = a.theme.statusBarStyle
-
   let (x, y) = (round(x), round(y))
 
   vg.beginPath()
   vg.roundedRect(x, y-10, w+10, 18, 3)
-  vg.fillColor(s.commandBackgroundColor)
+  vg.fillColor(bgColor)
   vg.fill()
 
-  vg.fillColor(s.commandTextColor)
+  vg.fillColor(textColor)
   discard vg.text(x+5, y, command)
 
   result = w
+
+
+proc renderCommand(x, y: float; command: string; a): float =
+  let s = a.theme.statusBarStyle
+
+  renderCommand(x, y, command,
+                bgColor=s.commandBackgroundColor, textColor=s.commandTextColor,
+                a)
 
 # }}}
 # {{{ renderStatusBar()
@@ -7200,6 +7205,11 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       p = "ui.quick-help."
       group:
         colorProp("Background",        p & "background")
+        colorProp("Title",             p & "title")
+        colorProp("Text",              p & "text")
+      group:
+        colorProp("Command Background",p & "command.background")
+        colorProp("Command",           p & "command.text")
 
     if koi.subSectionHeader("Splash Image", te.sectionSplashImage):
       group:
@@ -7739,7 +7749,14 @@ proc renderQuickReference(a) =
     sepaH = 14.0
     defaultColWidth = 105.0
 
-  let textColor = a.theme.statusBarStyle.textColor
+  let
+    p = "ui.quick-help."
+    bgColor          = cfg.getColorOrDefault(p & "background")
+    textColor        = cfg.getColorOrDefault(p & "text")
+    titleColor       = cfg.getColorOrDefault(p & "title")
+    commandBgColor   = cfg.getColorOrDefault(p & "command.background")
+    commandTextColor = cfg.getColorOrDefault(p & "command.text")
+
 
   proc renderSection(x, y: float; items: seq[QuickRefItem];
                      colWidth: float; a) =
@@ -7759,7 +7776,8 @@ proc renderQuickReference(a) =
         var ys = y
         for sc in shortcuts:
           let shortcut = sc.toStr()
-          discard renderCommand(x, ys, shortcut, a)
+          discard renderCommand(x, ys, shortcut,
+                                commandBgColor, commandTextColor, a)
           ys += h
           heightInc += h
         if shortcuts.len > 1: heightInc += sepaH
@@ -7769,7 +7787,8 @@ proc renderQuickReference(a) =
         var sx = x
         for idx, sc in item.keyShortcuts:
           let shortcut = sc.toStr()
-          var xa = renderCommand(sx, y, shortcut, a)
+          var xa = renderCommand(sx, y, shortcut,
+                                 commandBgColor, commandTextColor, a)
           if idx < item.keyShortcuts.high:
             sx += xa + 13
             vg.fillColor(textColor)
@@ -7781,7 +7800,8 @@ proc renderQuickReference(a) =
       of qkCustomShortcuts:
         var sx = x
         for idx, shortcut in item.customShortcuts:
-          var xa = renderCommand(sx, y, shortcut, a)
+          var xa = renderCommand(sx, y, shortcut,
+                                 commandBgColor, commandTextColor, a)
           if idx < item.customShortcuts.high:
             sx += xa + 13
             vg.fillColor(textColor)
@@ -7813,12 +7833,12 @@ proc renderQuickReference(a) =
     # Background
     vg.beginPath()
     vg.rect(0, 0, uiWidth, uiHeight)
-    vg.fillColor(cfg.getColorOrDefault("ui.quick-help.background"))
+    vg.fillColor(bgColor)
     vg.fill()
 
     # Title
     vg.setFont(20, "sans-bold")
-    vg.fillColor(textColor.withAlpha(0.6))
+    vg.fillColor(titleColor)
     vg.textAlign(haCenter, vaMiddle)
     discard vg.text(round(uiWidth*0.5), 60+yOffs, "Quick Keyboard Reference")
 

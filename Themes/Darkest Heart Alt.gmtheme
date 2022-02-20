@@ -87,11 +87,11 @@ ui {
 
   status-bar {
     background = "#000000ff"
-    text = "#808080ff"
+    text = "#8b8b8bff"
     coordinates = "#666666ff"
 
     command {
-      background = "#806000ff"
+      background = "#8e6a00ff"
       text = "#000000ff"
     }
   }
@@ -110,6 +110,14 @@ ui {
 
   quick-help {
     background = "#171717ff"
+    text = "#8a8a8aff"
+
+    command {
+      background = "#b08300ff"
+      text = "#000000ff"
+    }
+
+    title = "#5d5d5dff"
   }
 
   splash-image {

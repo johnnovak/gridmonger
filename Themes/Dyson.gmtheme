@@ -91,7 +91,7 @@ ui {
     coordinates = "#999999ff"
 
     command {
-      background = "#d29300ff"
+      background = "#d99800ff"
       text = "#232323ff"
     }
   }
@@ -109,7 +109,15 @@ ui {
   }
 
   quick-help {
-    background = "#4a4a4aff"
+    background = "#474747ff"
+    text = "#ccccccff"
+
+    command {
+      background = "#e09d00ff"
+      text = "#333333ff"
+    }
+
+    title = "#969696ff"
   }
 
   splash-image {

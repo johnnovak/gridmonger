@@ -110,6 +110,14 @@ ui {
 
   quick-help {
     background = "#292929ff"
+    text = "#b1b1b1ff"
+
+    command {
+      background = "#db8d00ff"
+      text = "#1a1a1aff"
+    }
+
+    title = "#7d7d7dff"
   }
 
   splash-image {

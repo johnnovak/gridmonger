@@ -128,6 +128,13 @@ const DefaultThemeString = """
 
     quick-help {
       background = "#ff00ffff"
+      text = "#d9d9d9ff"
+      text = "#d9d9d9ff"
+
+      command {
+        background = "#ffa600e9"
+        text = "#333333ff"
+      }
     }
 
     splash-image {

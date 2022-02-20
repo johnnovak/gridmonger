@@ -92,7 +92,7 @@ ui {
 
     command {
       background = "#bc820dff"
-      text = "#472e06ff"
+      text = "#2c261ce3"
     }
   }
 
@@ -110,6 +110,14 @@ ui {
 
   quick-help {
     background = "#4b4031ff"
+    text = "#cbb6a0ff"
+
+    command {
+      background = "#c7890eff"
+      text = "#2c261ce3"
+    }
+
+    title = "#95846fff"
   }
 
   splash-image {
