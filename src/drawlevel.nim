@@ -90,7 +90,7 @@ type
     drawCursorGuides*: bool
 
     # internal
-    zoomLevel:          Natural
+    zoomLevel:          range[MinZoomLevel..MaxZoomLevel]
     gridSize:           float
     cellCoordsFontSize: float
 

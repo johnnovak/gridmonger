@@ -150,6 +150,4 @@ const NoteIcons* = @[
   IconTower
 ]
 
-const NoteIconMax* = NoteIcons.len - 1
-
 # vim: et:ts=2:sw=2:fdm=marker

@@ -3,58 +3,72 @@
                               Version 1
 
 
-RIFF ('GRMM'          # Gridmonger map file
-    LIST ('map '      # Map
-        'prop'        # Map properties
-        'coor'        # Global coordinate options
-    )
-    LIST ('lvls'      # List of levels (min=0, max=999)
-        LIST ('lvl '  # Level
-            'prop'    # Level properties
-            'coor'    # Level coordinate options
-            'cell'    # Cells
-            'anno'    # Annotation
-            'regn'    # Regions
-        )
-            ...
-    )
-    'lnks'            # Map links
-    'stat'            # App state (optional)
-)
+1. File format & structure
+--------------------------
+
+Gridmonger map files (.gmm extension) are stored in the generic RIFF container
+format with the form type ID 'GRMM'.
+
+The structure of a GRMM RIFF file is as follows:
+
+  RIFF ('GRMM'          # Gridmonger map file
+      LIST ('map '      # Map
+          'prop'        # Map properties
+          'coor'        # Global coordinate options
+      )
+      LIST ('lvls'      # List of levels (min=0, max=999)
+          LIST ('lvl '  # Level
+              'prop'    # Level properties
+              'coor'    # Level coordinate options
+              'cell'    # Cells
+              'anno'    # Annotation
+              'regn'    # Regions
+          )
+              ...       (repeat number of levels times)
+      )
+      'lnks'            # Map links
+      'stat'            # App state (optional)
+  )
 
 
-Note:
------
-  Strings that have their length specified with minRuneLen & maxRuneLen are in
-  UTF-8. A single UTF-8 rune is encoded as a 1 to 4 byte sequence, so the byte
-  limits of UTF-8 strings are (minRuneLen*4) to (maxRuneLen*4).
+2. Description of GRMM chunks
+-----------------------------
+
+Notes:
+
+  - Strings that have their lengths specified with 'minRuneLen' & 'maxRuneLen'
+    are in UTF-8. A single UTF-8 rune is encoded as a 1 to 4 byte sequence, so
+    the byte limits of UTF-8 strings are (minRuneLen*4) to (maxRuneLen*4).
+
+  - Strings that have their lengths specified with 'len', 'minLen' & 'maxLen'
+    are regular ASCII string.
 
 
 'prop' (map)
-    UINT16  version           (min=1, max=1)
-    WSTR    title             (minRuneLen=1, maxRuneLen=100)
-    WSTR    game              (maxRuneLen=100)
-    WSTR    author            (maxRuneLen=100)
-    BSTR    creationTime      (len=19, local time as 'YYYY-MM-DD HH:mm:ss')
-    WSTR    notes             (maxRuneLen=8000)
+    UINT16  version             (min=1, max=1)
+    WSTR    title               (minRuneLen=1, maxRuneLen=100)
+    WSTR    game                (maxRuneLen=100)
+    WSTR    author              (maxRuneLen=100)
+    BSTR    creationTime        (len=19, local time as 'YYYY-MM-DD HH:mm:ss')
+    WSTR    notes               (maxRuneLen=8000)
 
 
 'coor' (map or level)
-    UINT8   origin            (0=north-west, 1=south-west)
-    UINT8   rowStyle          (0=number, 1=letter)
-    UINT8   columnStyle       (0=number, 1=letter)
-    INT16   rowStart          (min=-9999, max=9999)
-    INT16   columnStart       (min=-9999, max=9999)
+    UINT8   origin              (0=north-west, 1=south-west)
+    UINT8   rowStyle            (0=number, 1=letter)
+    UINT8   columnStyle         (0=number, 1=letter)
+    INT16   rowStart            (min=-9999, max=9999)
+    INT16   columnStart         (min=-9999, max=9999)
 
 
 'prop' (level)
-    WSTR    locationName      (minRuneLen=1, maxRuneLen=100)
-    WSTR    levelName         (maxRuneLen=100)
-    INT16   elevation         (min=-200, max=200)
-    UINT16  numRows           (min=1, max=6666)
-    UINT16  numColums         (min=1, max=6666)
-    UINT8   overrideCoordOpts (0=off, 1=on)
-    WSTR    notes             (maxRuneLen=8000)
+    WSTR    locationName        (minRuneLen=1, maxRuneLen=100)
+    WSTR    levelName           (maxRuneLen=100)
+    INT16   elevation           (min=-200, max=200)
+    UINT16  numRows             (min=1, max=6666)
+    UINT16  numColums           (min=1, max=6666)
+    UINT8   overrideCoordOpts   (0=off, 1=on)
+    WSTR    notes               (maxRuneLen=8000)
 
 
 'cell'
@@ -73,10 +87,10 @@ Note:
 
       UINT8   compressionType
 
-      if compressionType == 0 (uncompressed)
+      if compressionType == 0   (uncompressed)
         uncompressed data as (numRows * numColums) bytes
 
-      if compressionType == 1 (run-length encoded)
+      if compressionType == 1   (run-length encoded)
         UINT32   length     length of compressed data in bytes
         (UINT8 * length)    RLE compressed data
 
@@ -88,7 +102,7 @@ Note:
           (repeatCount - 1); the data byte should be repeated repeatCount
           times.
 
-      if compressionType == 2 (zeroes)
+      if compressionType == 2   (zeroes)
         no data; the whole layer should be filled with zeroes
 
 
@@ -120,51 +134,55 @@ Note:
 
 
 'regn'
-    UINT8   enableRegions     (0=off, 1=on)
-    UINT16  rowsPerRegion     (min=2, max=3333)
-    UINT16  columnsPerRegion  (min=2, max=3333)
+    UINT8   enableRegions       (0=off, 1=on)
+    UINT16  rowsPerRegion       (min=2, max=3333)
+    UINT16  columnsPerRegion    (min=2, max=3333)
     UINT16  numRegions
 
     numRegion times:
-    UINT16  row*              (max=3332)
-    UINT16  column*           (max=3332)
-    WSTR    name              (minRuneLen=1, maxRuneLen=100)
-    WSTR    notes             (maxRuneLen=8000)
+    UINT16  row*                (max=3332)
+    UINT16  column*             (max=3332)
+    WSTR    name                (minRuneLen=1, maxRuneLen=100)
+    WSTR    notes               (maxRuneLen=8000)
 
     * row & column are not cell but region coordinates
 
 
 'lnks'
-    UINT16  numLinks          (max=9999)
+    UINT16  numLinks            (max=9999)
 
     numLinks records of:
 
-      UINT16  srcLevel        (max=numLevels-1)
-      UINT16  srcRow          (max=numRows-1    of the given level)
-      UINT16  srcColumn       (max=numColumns-1 of the given level)
+      UINT16  srcLevel          (max=numLevels-1)
+      UINT16  srcRow            (max=numRows-1    of the given level)
+      UINT16  srcColumn         (max=numColumns-1 of the given level)
 
-      UINT16  destLevel       (max=numLevel-1)
-      UINT16  destRow         (max=numRows-1    of the given level)
-      UINT16  destColumn      (max=numColumns-1 of the given level)
+      UINT16  destLevel         (max=numLevel-1)
+      UINT16  destRow           (max=numRows-1    of the given level)
+      UINT16  destColumn        (max=numColumns-1 of the given level)
 
 
 'stat'
-    BSTR    themeName*        (minLen=1, maxLen=100)
+    BSTR    themeName*          (minLen=1, maxLen=100)
 
     * Cannot start or end with a space or '.'
       The following characters are disallowed:
         '/', '\', ':', '*', '?', '"', '<', '>', '|', '^', <zero byte>
 
-    UINT8   zoomLevel         (min=1, max=20)
-    UINT8   currentLevel      (max=numLevels-1)
-    UINT16  cursorRow         (max=numRows-1    of the given level)
-    UINT16  cursorColumn      (max=numColumns-1 of the given level)
-    UINT16  viewStartRow      (max=numRows-1    of the given level)
-    UINT16  viewStartColumn   (max=numColumns-1 of the given level)
+    UINT8   zoomLevel           (min=1, max=20)
+    UINT8   currLevel           (max=numLevels-1)
+    UINT16  cursorRow           (max=numRows-1    of the given level)
+    UINT16  cursorColumn        (max=numColumns-1 of the given level)
+    UINT16  viewStartRow        (max=numRows-1    of the given level)
+    UINT16  viewStartColumn     (max=numColumns-1 of the given level)
 
-    UINT8   optShowCellCoords (0=off, 1=on)
-    UINT8   optShowToolsPane  (0=off, 1=on)
-    UINT8   optShowNotesPane  (0=off, 1=on)
-    UINT8   optWasdMode       (0=off, 1=on)
-    UINT8   optWalkMode       (0=off, 1=on)
+    UINT8   optShowCellCoords   (0=off, 1=on)
+    UINT8   optShowToolsPane    (0=off, 1=on)
+    UINT8   optShowNotesPane    (0=off, 1=on)
+    UINT8   optWasdMode         (0=off, 1=on)
+    UINT8   optWalkMode         (0=off, 1=on)
+
+    UINT8   currFloorColor      (max=9)
+    UINT8   currSpecialWall     (max=11, see SpecialWalls array in main.nim
+                                         for mappings)
 

@@ -1,9 +1,8 @@
 BUGS
 ====
 
-- undo modified flag weirdness
 - should load default theme when theme cannot be found
-
+- save curr special wall & colour into map
 
 
 ENHANCEMENTS
@@ -16,15 +15,6 @@ ENHANCEMENTS
 TODO for v0.9
 =============
 
-  - debug level from config
-
-  - finalize example maps
-
-  - ignore theme on load
-
-  - window not visible after disconnecting external screen
-    - reset window position shortcut
-
   - OS X:
       - finish OS X package
       - gridmonger document icon
@@ -36,30 +26,32 @@ TODO for v0.9
     - invalid config
 
 
-FUTURE
-======
+FEATURE & ENHANCEMENT IDEAS
+===========================
 
-v1.0
-  - clean up icons
-  - finalise marker icon set
+  - window not visible after disconnecting external screen
+    - reset window position shortcut
 
-
-v1.1
   - colorpicker:
     - display floats in HSV mode
     - right-click cancel in triangle & hue circle
   - theme editor: undo
-  - pick color under cursor
-
   - show current color / tool in statusbar when toolbar is not visible
+
+  - theme editor: undo
+
   - onion skin?
+
   - wand selection?
   - fill selection?
   - paint selection with mouse?
+
   - mouse: hand tool, scroll wheel zoom
 
   - export map as PNG
+
   - full screen borderless
+
   - map selector dialog
 
   - more themes:
@@ -69,17 +61,11 @@ v1.1
       overworld4.psd
       golden-boxes themes
 
-  - allow negative coordinates
   - change level size: add preserve coordinates option
-
   - set coordinate origin action
   - infinite levels
   - align levels to each other based on coords
   - action for aligning two levels
-
-  - colours for text labels
-
-  - rethink save display params into file
 
   - legend / locations / notes window
 
@@ -87,33 +73,25 @@ v1.1
   - theme selector popup/window
 
   - theme editor
-    - image file loading
-    - scrollbars should always be visible
-    - action buttons should work
     - hex color: only accept hex chars
-
-  - display dialog on crash with instruction to file a bug report (print log
-    file location and backup file location)
 
   - linux package?
 
 
-LOW PRIORITY
-============
+LOW PRIORITY BUGS & ENHANCEMENTS
+================================
   - proper multi-window handling in csdwindow
   - better csdwindow separation (e.g. titlebar)
-
-  - undo after cut/erase/etc selection should restore cursor to selection to
-    left corner, not bottom right (too hard?, requires no undo system)
 
   - in paste preview mode, you cannot use "negative" col & row paste
     destination
 
   - left edge of spinner symbols is cut off on high zoom levels on retina screens
 
-  - better undo manager
+  - undo after cut/erase/etc selection should restore cursor to selection to
+    left corner, not bottom right (too hard?)
 
-  - 32 bit version?
+  - better undo manager
 
 
 FONTS

@@ -213,6 +213,22 @@ type
     wWritingNE     = (70, "writing")
     wWritingSW     = (71, "writing")
 
+const
+  SpecialWalls* = @[
+    wDoor,
+    wLockedDoor,
+    wArchway,
+    wSecretDoor,
+    wOneWayDoorNE,
+    wIllusoryWall,
+    wInvisibleWall,
+    wLeverSW,
+    wNicheSW,
+    wStatueSW,
+    wKeyhole,
+    wWritingSW
+  ]
+
 
 type
   # Selections always have the same dimensions as the level the selection was
@@ -270,7 +286,6 @@ const
   LinkDoors*           = {fEntranceDoor, fExitDoor}
 
   LinkSources* = LinkPitSources + LinkTeleports + LinkStairs + LinkDoors
-
 
 type
   WindowStyle* = ref object

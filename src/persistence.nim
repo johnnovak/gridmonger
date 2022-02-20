@@ -51,23 +51,20 @@ const
   RegionNameLimits*        = strLimits(minRuneLen=1, maxRuneLen=100)
 
   CellFloorColorLimits*    = intLimits(min=0,
-                                       max=LevelStyle.floorBackgroundColor.len)
+                                       max=LevelStyle.floorBackgroundColor.high)
 
   NumAnnotationsLimits*    = intLimits(min=0, max=9999)
   NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=4000)
   NoteOptionalTextLimits*  = strLimits(minRuneLen=0, maxRuneLen=4000)
   NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
-
-  NoteColorLimits*      = intLimits(min=0,
-                                    max=NotesPaneStyle.indexBackgroundColor.len)
-
-  NoteIconLimits*          = intLimits(min=0, max=NoteIconMax)
+  NoteColorLimits*         = intLimits(min=0,
+                                       max=LevelStyle.floorBackgroundColor.high)
+  NoteIconLimits*          = intLimits(min=0, max=NoteIcons.high)
 
   NumLinksLimits*          = intLimits(min=0, max=9999)
-
   ThemeNameLimits*         = strLimits(minRuneLen=1, maxRuneLen=100)
-
   ZoomLevelLimits*         = intLimits(min=MinZoomLevel, max=MaxZoomLevel)
+  SpecialWallLimits*       = intLimits(min=0, max=SpecialWalls.high)
 
 # }}}
 # {{{ Types
@@ -81,17 +78,22 @@ type
 
   AppState* = object
     themeName*:         string
-    zoomLevel*:         Natural
-    currentLevel*:      Natural
+
+    zoomLevel*:         range[MinZoomLevel..MaxZoomLevel]
+    currLevel*:         Natural
     cursorRow*:         Natural
     cursorCol*:         Natural
     viewStartRow*:      Natural
     viewStartCol*:      Natural
+
     optShowCellCoords*: bool
     optShowToolsPane*:  bool
     optShowNotesPane*:  bool
     optWasdMode*:       bool
     optWalkMode*:       bool
+
+    currFloorColor*:    range[0..LevelStyle.floorBackgroundColor.high]
+    currSpecialWall*:   range[0..SpecialWalls.high]
 
 # }}}
 # {{{ FourCCs
@@ -221,10 +223,10 @@ proc readAppState_v1(rr; m: Map): AppState =
   checkValueRange(zoomLevel, "stat.zoomLevel", ZoomLevelLimits)
 
   let maxLevelIndex = NumLevelsLimits.maxInt - 1
-  let currentLevel = rr.read(uint16).int
-  checkValueRange(currentLevel, "stat.currentLevel", max=maxLevelIndex)
+  let currLevel = rr.read(uint16).int
+  checkValueRange(currLevel, "stat.currLevel", max=maxLevelIndex)
 
-  let l = m.levels[currentLevel]
+  let l = m.levels[currLevel]
 
   let cursorRow = rr.read(uint16)
   checkValueRange(cursorRow, "stat.cursorRow", max=l.rows.uint16-1)
@@ -253,19 +255,30 @@ proc readAppState_v1(rr; m: Map): AppState =
   let optWalkMode = rr.read(uint8)
   checkBool(optWalkMode, "stat.optWalkMode")
 
+  let currFloorColor = rr.read(uint8)
+  checkValueRange(currFloorColor, "stat.currFloorColor", CellFloorColorLimits)
+
+  let currSpecialWall = rr.read(uint8)
+  checkValueRange(currSpecialWall, "stat.currSpecialWall", SpecialWallLimits)
+
   AppState(
     themeName:         themeName,
+
     zoomLevel:         zoomLevel,
-    currentLevel:      currentLevel,
+    currLevel:         currLevel,
     cursorRow:         cursorRow,
     cursorCol:         cursorCol,
     viewStartRow:      viewStartRow,
     viewStartCol:      viewStartCol,
+
     optShowCellCoords: optShowCellCoords.bool,
     optShowToolsPane:  optShowToolsPane.bool,
     optShowNotesPane:  optShowNotesPane.bool,
     optWasdMode:       optWasdMode.bool,
-    optWalkMode:       optWalkMode.bool
+    optWalkMode:       optWalkMode.bool,
+
+    currFloorColor:    currFloorColor,
+    currSpecialWall:   currSpecialWall
   )
 
 # }}}
@@ -883,7 +896,7 @@ proc writeAppState_v1(rw; s: AppState) =
   rw.writeBStr(s.themeName)
 
   rw.write(s.zoomLevel.uint8)
-  rw.write(s.currentLevel.uint16)
+  rw.write(s.currLevel.uint16)
   rw.write(s.cursorRow.uint16)
   rw.write(s.cursorCol.uint16)
   rw.write(s.viewStartRow.uint16)
@@ -894,6 +907,9 @@ proc writeAppState_v1(rw; s: AppState) =
   rw.write(s.optShowNotesPane.uint8)
   rw.write(s.optWasdMode.uint8)
   rw.write(s.optWalkMode.uint8)
+
+  rw.write(s.currFloorColor.uint8)
+  rw.write(s.currSpecialWall.uint8)
 
   rw.endChunk()
 

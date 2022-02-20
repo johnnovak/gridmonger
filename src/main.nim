@@ -115,21 +115,6 @@ const
   InfiniteDuration      = initDuration(seconds = int64.high)
 
 const
-  SpecialWalls = @[
-    wDoor,
-    wLockedDoor,
-    wArchway,
-    wSecretDoor,
-    wOneWayDoorNE,
-    wIllusoryWall,
-    wInvisibleWall,
-    wLeverSW,
-    wNicheSW,
-    wStatueSW,
-    wKeyhole,
-    wWritingSW
-  ]
-
   SpecialWallTooltips = SpecialWalls.mapIt(($it).title())
 
   FloorGroup1 = @[
@@ -234,43 +219,43 @@ type
 
 
   Document = object
-    filename:          string
-    map:               Map
-    undoManager:       UndoManager[Map, UndoStateData]
-    lastAutosaveTime:  MonoTime
+    filename:           string
+    map:                Map
+    undoManager:        UndoManager[Map, UndoStateData]
+    lastAutosaveTime:   MonoTime
 
   Options = object
-    showNotesPane:     bool
-    showToolsPane:     bool
+    showNotesPane:      bool
+    showToolsPane:      bool
 
-    drawTrail:         bool
-    walkMode:          bool
-    wasdMode:          bool
+    drawTrail:          bool
+    walkMode:           bool
+    wasdMode:           bool
 
-    showThemeEditor:   bool
+    showThemeEditor:    bool
     showQuickReference: bool
 
 
   UIState = object
-    cursor:            Location
-    prevCursor:        Location
-    cursorOrient:      CardinalDir
-    editMode:          EditMode
+    cursor:             Location
+    prevCursor:         Location
+    cursorOrient:       CardinalDir
+    editMode:           EditMode
 
-    prevCursorViewX:   float
-    prevCursorViewY:   float
+    prevCursorViewX:    float
+    prevCursorViewY:    float
 
-    selection:         Option[Selection]
-    selRect:           Option[SelectionRect]
-    copyBuf:           Option[SelectionBuffer]
-    nudgeBuf:          Option[SelectionBuffer]
-    cutToBuffer:       bool
-    pasteUndoLocation: Location
+    selection:          Option[Selection]
+    selRect:            Option[SelectionRect]
+    copyBuf:            Option[SelectionBuffer]
+    nudgeBuf:           Option[SelectionBuffer]
+    cutToBuffer:        bool
+    pasteUndoLocation:  Location
 
-    status:            StatusMessage
+    status:             StatusMessage
 
-    currSpecialWall:   Natural
-    currFloorColor:    Natural
+    currSpecialWall:    range[0..SpecialWalls.high]
+    currFloorColor:     range[0..LevelStyle.floorBackgroundColor.high]
 
     drawWallRepeatAction:    DrawWallRepeatAction
     drawWallRepeatWall:      Wall
@@ -280,20 +265,20 @@ type
 
     manualNoteTooltipState: ManualNoteTooltipState
 
-    levelTopPad:       float
-    levelRightPad:     float
-    levelBottomPad:    float
-    levelLeftPad:      float
+    levelTopPad:        float
+    levelRightPad:      float
+    levelBottomPad:     float
+    levelLeftPad:       float
 
-    linkSrcLocation:   Location
+    linkSrcLocation:    Location
 
-    drawLevelParams:   DrawLevelParams
-    toolbarDrawParams: DrawLevelParams
+    drawLevelParams:    DrawLevelParams
+    toolbarDrawParams:  DrawLevelParams
 
     levelDrawAreaWidth:  float
     levelDrawAreaHeight: float
 
-    backgroundImage:   Option[Paint]
+    backgroundImage:    Option[Paint]
 
 
   ManualNoteTooltipState = object
@@ -539,9 +524,9 @@ type
     col:          Natural
     kind:         AnnotationKind
     index:        Natural
-    indexColor:   Natural
+    indexColor:   range[0..LevelStyle.noteIndexBackgroundColor.high]
     customId:     string
-    icon:         Natural
+    icon:         range[0..NoteIcons.high]
     text:         string
 
 
@@ -2328,9 +2313,13 @@ proc loadMap(filename: string; a): bool =
         drawCellCoords = s.optShowCellCoords
 
       with a.ui.cursor:
-        level = s.currentLevel
+        level = s.currLevel
         row   = s.cursorRow
         col   = s.cursorCol
+
+      with a.ui:
+        currFloorColor  = s.currFloorColor
+        currSpecialWall = s.currSpecialWall
 
       a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, s.zoomLevel)
       a.ui.mouseCanStartExcavateAction = true
@@ -2362,17 +2351,22 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
 
   let appState = AppState(
     themeName         : a.currThemeName.name,
+
     zoomLevel         : dp.getZoomLevel(),
-    currentLevel      : cur.level,
+    currLevel         : cur.level,
     cursorRow         : cur.row,
     cursorCol         : cur.col,
     viewStartRow      : dp.viewStartRow,
     viewStartCol      : dp.viewStartCol,
+
     optShowCellCoords : dp.drawCellCoords,
     optShowToolsPane  : a.opts.showToolsPane,
     optShowNotesPane  : a.opts.showNotesPane,
     optWasdMode       : a.opts.wasdMode,
     optWalkMode       : a.opts.walkMode,
+
+    currFloorColor    : a.ui.currFloorColor,
+    currSpecialWall   : a.ui.currSpecialWall,
   )
 
   info(fmt"Saving map to '{filename}'")
@@ -5083,7 +5077,6 @@ proc mkRepeatWallActionString(name: string; a): string =
 
 
 proc doSetDrawWallActionMessage(name: string; a) =
-  echo getStackTrace()
   var commands = @[IconArrowsAll, "set/clear"]
 
   if a.ui.drawWallRepeatAction != dwaNone:
