@@ -2951,7 +2951,7 @@ proc aboutDialog(a) =
   y += 25
   koi.label(0, y, w, h, DevelopedByInfo, style=labelStyle)
 
-  x = (DlgWidth - (3*DlgButtonWidth + 2*DlgButtonPad)) * 0.5
+  x = (DlgWidth - (2*DlgButtonWidth + 1*DlgButtonPad)) * 0.5
   y += 50
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Manual",
                 style=a.theme.buttonStyle):
