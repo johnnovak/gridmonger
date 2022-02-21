@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#00291eff"
     text = "#00d39aff"
+    warning = "#ffffffec"
     coordinates = "#00daa0ff"
 
     command {
       background = "#00daa0ff"
       text = "#00281dff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {

@@ -255,7 +255,7 @@ type
     status:             StatusMessage
 
     currSpecialWall:    range[0..SpecialWalls.high]
-    currFloorColor:     range[0..LevelStyle.floorBackgroundColor.high]
+    currFloorColor:     range[0..LevelTheme.floorBackgroundColor.high]
 
     drawWallRepeatAction:    DrawWallRepeatAction
     drawWallRepeatWall:      Wall
@@ -292,6 +292,7 @@ type
     message:        string
     commands:       seq[string]
     warning:        string
+    warningColor:   Color
     warningT0:      MonoTime
     warningTimeout: Duration
 
@@ -332,18 +333,18 @@ type
     nextThemeIndex:         Option[Natural]
     hideThemeLoadedMessage: bool
     themeReloaded:          bool
-    updateThemeStyles:      bool
+    updateTheme:            bool
     loadBackgroundImage:    bool
 
     buttonStyle:            ButtonStyle
     checkBoxStyle:          CheckboxStyle
-    dialogStyle:            koi.DialogStyle
+    dialogStyle:            DialogStyle
     labelStyle:             LabelStyle
     radioButtonStyle:       RadioButtonsStyle
     textAreaStyle:          TextAreaStyle
-    textFieldStyle:         koi.TextFieldStyle
+    textFieldStyle:         TextFieldStyle
 
-    aboutDialogStyle:       koi.DialogStyle
+    aboutDialogStyle:       DialogStyle
     aboutButtonStyle:       ButtonStyle
 
     iconRadioButtonsStyle:  RadioButtonsStyle
@@ -353,11 +354,11 @@ type
     levelDropDownStyle:     DropDownStyle
     noteTextAreaStyle:      TextAreaStyle
 
-    windowStyle:            WindowStyle
-    statusBarStyle:         StatusBarStyle
-    notesPaneStyle:         NotesPaneStyle
-    toolbarPaneStyle:       ToolbarPaneStyle
-    levelStyle:             LevelStyle
+    windowTheme:            WindowTheme
+    statusBarTheme:         StatusBarTheme
+    notesPaneTheme:         NotesPaneTheme
+    toolbarPaneTheme:       ToolbarPaneTheme
+    levelTheme:             LevelTheme
 
 
   ThemeName = object
@@ -524,7 +525,7 @@ type
     col:          Natural
     kind:         AnnotationKind
     index:        Natural
-    indexColor:   range[0..LevelStyle.noteIndexBackgroundColor.high]
+    indexColor:   range[0..LevelTheme.noteIndexBackgroundColor.high]
     customId:     string
     icon:         range[0..NoteIcons.high]
     text:         string
@@ -677,7 +678,7 @@ const
   AllWasdMoveKeys = {keyQ, keyW, keyE, keyA, Key.keyS, keyD}
 
 
-# TODO
+# TODO for "Obitus mode"
 #[
 type DiagonalKeys = object
   upLeft, upRight, downLeft, downRight: set[Key]
@@ -836,8 +837,9 @@ type AppShortcut = enum
   scToggleQuickReference,
 
 
-# TODO some shortcuts win/mac specific?
-# TODO introduce shortcuts for everything
+# TODO Intoduce win/mac specific shorcuts, switchable at runtime via prefs?
+# (e.g. use Cmd instead of Ctrl in shortcuts on Mac; Mac specific text box
+# editing shortcuts, etc.)
 let g_appShortcuts = {
   # General
   scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
@@ -1217,14 +1219,24 @@ proc clearStatusMessage(a) =
 
 # }}}
 # {{{ setWarningMessage()
-proc setWarningMessage(msg: string, keepStatusMessage = false,
-                       autohide = true; a) =
+proc setWarningMessage(msg: string, keepStatusMessage = false; a) =
   alias(s, a.ui.status)
 
   s.warning = msg
   s.warningT0 = getMonoTime()
-  s.warningTimeout = if autohide: WarningMessageTimeout else: InfiniteDuration
+  s.warningTimeout = WarningMessageTimeout
+  s.warningColor = a.theme.statusBarTheme.warningTextColor
   s.keepMessageAfterWarningExpired = keepStatusMessage
+
+# }}}
+# {{{ setErrorMessage()
+proc setErrorMessage(msg: string; a) =
+  alias(s, a.ui.status)
+
+  s.warning = msg
+  s.warningTimeout = InfiniteDuration
+  s.warningColor = a.theme.statusBarTheme.errorTextColor
+  s.keepMessageAfterWarningExpired = false
 
 # }}}
 # {{{ setSelectModeSelectMessage()
@@ -1848,7 +1860,7 @@ proc deleteTheme(theme: ThemeName; a): bool =
       result = true
     except CatchableError as e:
       logError(e, "Error deleting theme")
-      setWarningMessage(fmt"Error deleting theme: {e.msg}", autohide=false, a=a)
+      setErrorMessage(fmt"Error deleting theme: {e.msg}", a)
 
 # }}}
 # {{{ copyTheme()
@@ -1858,7 +1870,7 @@ proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
     result = true
   except CatchableError as e:
     logError(e, "Error copying theme")
-    setWarningMessage(fmt"Error copying theme: {e.msg}", autohide=false, a=a)
+    setErrorMessage(fmt"Error copying theme: {e.msg}", a)
 
 # }}}
 # {{{ renameTheme()
@@ -1868,7 +1880,7 @@ proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
     result = true
   except CatchableError as e:
     logError(e, "Error renaming theme")
-    setWarningMessage(fmt"Error renaming theme: {e.msg}", autohide=false, a=a)
+    setErrorMessage(fmt"Error renaming theme: {e.msg}", a)
 
 # }}}
 
@@ -1891,7 +1903,7 @@ proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
 # }}}
 # {{{ loadBackgroundImage()
 proc loadBackgroundImage(theme: ThemeName; a) =
-  let bgImageName = a.theme.windowStyle.backgroundImage
+  let bgImageName = a.theme.windowTheme.backgroundImage
 
   if bgImageName != "":
     a.ui.backgroundImage = loadThemeImage(bgImageName, theme.userTheme, a)
@@ -2151,27 +2163,27 @@ proc updateWidgetStyles(a) =
       thumbFillColorDown  = c.withAlpha(0.6)
 
 # }}}
-# {{{ updateThemeStyles()
-proc updateThemeStyles(a) =
+# {{{ updateTheme()
+proc updateTheme(a) =
   alias(cfg, a.theme.config)
 
   updateWidgetStyles(a)
 
-  a.theme.statusBarStyle = cfg.getObjectOrEmpty("ui.status-bar")
-                              .toStatusBarStyle()
+  a.theme.statusBarTheme = cfg.getObjectOrEmpty("ui.status-bar")
+                              .toStatusBarTheme()
 
-  a.theme.toolbarPaneStyle = cfg.getObjectOrEmpty("pane.toolbar")
-                                .toToolbarPaneStyle()
+  a.theme.toolbarPaneTheme = cfg.getObjectOrEmpty("pane.toolbar")
+                                .toToolbarPaneTheme()
 
-  a.theme.notesPaneStyle = cfg.getObjectOrEmpty("pane.notes")
-                              .toNotesPaneStyle()
+  a.theme.notesPaneTheme = cfg.getObjectOrEmpty("pane.notes")
+                              .toNotesPaneTheme()
 
-  a.theme.levelStyle = cfg.getObjectOrEmpty("level").toLevelStyle()
+  a.theme.levelTheme = cfg.getObjectOrEmpty("level").toLevelTheme()
 
-  a.theme.windowStyle = cfg.getObjectOrEmpty("ui.window").toWindowStyle()
-  a.win.style = a.theme.windowStyle
+  a.theme.windowTheme = cfg.getObjectOrEmpty("ui.window").toWindowTheme()
+  a.win.theme = a.theme.windowTheme
 
-  a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelStyle, a.vg,
+  a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelTheme, a.vg,
                                            koi.getPxRatio())
 
 # }}}
@@ -2181,7 +2193,7 @@ proc switchTheme(themeIndex: Natural; a) =
   let theme = a.theme.themeNames[themeIndex]
   loadTheme(theme, a)
 
-  updateThemeStyles(a)
+  updateTheme(a)
   loadBackgroundImage(theme, a)
 
   a.theme.currThemeIndex = themeIndex
@@ -2321,7 +2333,7 @@ proc loadMap(filename: string; a): bool =
         currFloorColor  = s.currFloorColor
         currSpecialWall = s.currSpecialWall
 
-      a.ui.drawLevelParams.setZoomLevel(a.theme.levelStyle, s.zoomLevel)
+      a.ui.drawLevelParams.setZoomLevel(a.theme.levelTheme, s.zoomLevel)
       a.ui.mouseCanStartExcavateAction = true
 
     else:
@@ -2338,7 +2350,7 @@ proc loadMap(filename: string; a): bool =
 
   except CatchableError as e:
     logError(e, "Error loading map")
-    setWarningMessage(fmt"Error loading map: {e.msg}", autohide=false, a=a)
+    setErrorMessage(fmt"Error loading map: {e.msg}", a)
   finally:
     a.logFile.flushFile()
 
@@ -2377,8 +2389,7 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
         moveFile(filename, fmt"{filename}.{BackupFileExt}")
     except CatchableError as e:
       logError(e, "Error creating backup file")
-      setWarningMessage(fmt"Error creating backup file: {e.msg}",
-                        autohide=false, a=a)
+      setErrorMessage(fmt"Error creating backup file: {e.msg}", a)
       a.logFile.flushFile()
       return
 
@@ -2392,8 +2403,7 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
   except CatchableError as e:
     logError(e, "Error saving map")
     let prefix = if autosave: "Autosave failed: " else: ""
-    setWarningMessage(fmt"{prefix}Error saving map: {e.msg}", autohide=false,
-                      a=a)
+    setErrorMessage(fmt"{prefix}Error saving map: {e.msg}", a)
   finally:
     a.logFile.flushFile()
 
@@ -4092,7 +4102,7 @@ proc openEditNoteDialog(a) =
 
 
 proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
-  let ls = a.theme.levelStyle
+  let lt = a.theme.levelTheme
 
   const
     DlgWidth = 486.0
@@ -4133,7 +4143,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
   y += 108
 
-  let NumIndexColors = ls.noteIndexBackgroundColor.len
+  let NumIndexColors = lt.noteIndexBackgroundColor.len
   const IconsPerRow = 10
 
   case dlg.kind:
@@ -4142,12 +4152,12 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
     koi.radioButtons(
       x + LabelWidth, y, 28, 28,
-      labels = newSeq[string](ls.noteIndexBackgroundColor.len),
+      labels = newSeq[string](lt.noteIndexBackgroundColor.len),
       dlg.indexColor,
       tooltips = @[],
       layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
       drawProc = colorRadioButtonDrawProc(
-        ls.noteIndexBackgroundColor.toSeq,
+        lt.noteIndexBackgroundColor.toSeq,
         a.theme.radioButtonStyle.buttonFillColorActive
       ).some
     )
@@ -4297,7 +4307,7 @@ proc openEditLabelDialog(a) =
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
-  let ls = a.theme.levelStyle
+  let lt = a.theme.levelTheme
 
   const
     DlgWidth = 486.0
@@ -4329,17 +4339,17 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   y += 108
 
-  let NumIndexColors = ls.noteIndexBackgroundColor.len
+  let NumIndexColors = lt.noteIndexBackgroundColor.len
 
   koi.label(x, y, LabelWidth, h, "Color", style=a.theme.labelStyle)
   koi.radioButtons(
     x + LabelWidth, y, w=28, h=28,
-    labels = newSeq[string](ls.labelTextColor.len),
+    labels = newSeq[string](lt.labelTextColor.len),
     dlg.color,
     tooltips = @[],
     layout = RadioButtonsLayout(kind: rblGridHoriz, itemsPerRow: 4),
     drawProc = colorRadioButtonDrawProc(
-      ls.labelTextColor.toSeq,
+      lt.labelTextColor.toSeq,
       a.theme.radioButtonStyle.buttonFillColorActive
     ).some,
     style = a.theme.radioButtonStyle
@@ -5265,13 +5275,13 @@ proc centerCursorAfterZoom(a) =
 # }}}
 # {{{ zoomIn()
 proc zoomIn(a) =
-  incZoomLevel(a.theme.levelStyle, a.ui.drawLevelParams)
+  incZoomLevel(a.theme.levelTheme, a.ui.drawLevelParams)
   centerCursorAfterZoom(a)
 
 # }}}
 # {{{ zoomOut()
 proc zoomOut(a) =
-  decZoomLevel(a.theme.levelStyle, a.ui.drawLevelParams)
+  decZoomLevel(a.theme.levelTheme, a.ui.drawLevelParams)
   centerCursorAfterZoom(a)
 
 # }}}
@@ -5286,12 +5296,12 @@ proc selectSpecialWall(index: Natural; a) =
 # {{{ selectPrevFloorColor()
 proc selectPrevFloorColor(a) =
   if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
-  else: a.ui.currFloorColor = a.theme.levelStyle.floorBackgroundColor.high
+  else: a.ui.currFloorColor = a.theme.levelTheme.floorBackgroundColor.high
 
 # }}}
 # {{{ selectNextFloorColor()
 proc selectNextFloorColor(a) =
-  if a.ui.currFloorColor < a.theme.levelStyle.floorBackgroundColor.high:
+  if a.ui.currFloorColor < a.theme.levelTheme.floorBackgroundColor.high:
     inc(a.ui.currFloorColor)
   else: a.ui.currFloorColor = 0
 
@@ -5309,7 +5319,7 @@ proc pickFloorColor(a) =
 # }}}
 # {{{ selectFloorColor()
 proc selectFloorColor(index: Natural; a) =
-  assert index <= LevelStyle.floorBackgroundColor.high
+  assert index <= LevelTheme.floorBackgroundColor.high
   a.ui.currFloorColor = index
 
 # }}}
@@ -6468,7 +6478,7 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
   alias(dp, a.ui.drawLevelParams)
-  alias(ls, a.theme.levelStyle)
+  alias(lt, a.theme.levelTheme)
 
   if note.text != "":
     const PadX = 10
@@ -6508,15 +6518,15 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
       textY -= offs
 
     vg.drawShadow(noteBoxX, noteBoxY, noteBoxW, noteBoxH,
-                  ls.noteTooltipShadowStyle)
+                  lt.noteTooltipShadowStyle)
 
-    vg.fillColor(a.theme.levelStyle.noteTooltipBackgroundColor)
+    vg.fillColor(a.theme.levelTheme.noteTooltipBackgroundColor)
     vg.beginPath()
     vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH,
-                   r=ls.noteTooltipCornerRadius)
+                   r=lt.noteTooltipCornerRadius)
     vg.fill()
 
-    vg.fillColor(a.theme.levelStyle.noteTooltipTextColor)
+    vg.fillColor(a.theme.levelTheme.noteTooltipTextColor)
     vg.textBox(textX, textY, breakWidth, note.text)
 
 # }}}
@@ -6576,7 +6586,7 @@ proc renderLevel(a) =
     drawLevel(
       a.doc.map,
       ui.cursor.level,
-      DrawLevelContext(ls: a.theme.levelStyle, dp: dp, vg: a.vg)
+      DrawLevelContext(lt: a.theme.levelTheme, dp: dp, vg: a.vg)
     )
 
   # Draw note tooltip
@@ -6627,10 +6637,10 @@ proc renderLevel(a) =
 proc renderEmptyMap(a) =
   alias(vg, a.vg)
 
-  let ls = a.theme.levelStyle
+  let lt = a.theme.levelTheme
 
   vg.setFont(22, "sans-bold")
-  vg.fillColor(ls.foregroundNormalNormalColor)
+  vg.fillColor(lt.foregroundNormalNormalColor)
   vg.textAlign(haCenter, vaMiddle)
   var y = drawAreaHeight(a) * 0.5
   discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
@@ -6641,14 +6651,14 @@ proc renderModeAndOptionIndicators(a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
 
-  let ls = a.theme.levelStyle
+  let lt = a.theme.levelTheme
 
   var x = ui.levelLeftPad
   let y = a.win.titleBarHeight + 32
 
   vg.save()
 
-  vg.fillColor(ls.coordinatesHighlightColor)
+  vg.fillColor(lt.coordinatesHighlightColor)
 
   if a.opts.wasdMode:
     vg.setFont(15, "sans-bold")
@@ -6664,8 +6674,8 @@ proc renderModeAndOptionIndicators(a) =
 # {{{ renderToolsPane()
 
 # {{{ specialWallDrawProc()
-proc specialWallDrawProc(ls: LevelStyle,
-                         ts: ToolbarPaneStyle,
+proc specialWallDrawProc(lt: LevelTheme,
+                         tt: ToolbarPaneTheme,
                          dp: DrawLevelParams): RadioButtonsDrawProc =
 
   return proc (vg: NVGContext, buttonIdx: Natural, label: string,
@@ -6673,26 +6683,25 @@ proc specialWallDrawProc(ls: LevelStyle,
                x, y, w, h: float, style: RadioButtonsStyle) =
 
     var (bgCol, active) = case state
-                          of wsActive:      (ls.cursorColor,       true)
-                          of wsHover:       (ts.buttonHoverColor,  false)
-                          of wsActiveHover: (ls.cursorColor,       true)
-                          of wsDown:        (ls.cursorColor,       true)
-                          else:             (ts.buttonNormalColor, false)
+                          of wsActive:      (lt.cursorColor,       true)
+                          of wsHover:       (tt.buttonHoverColor,  false)
+                          of wsActiveHover: (lt.cursorColor,       true)
+                          of wsDown:        (lt.cursorColor,       true)
+                          else:             (tt.buttonNormalColor, false)
 
-    # TODO store on theme change?
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
     let
-      savedFloorColor = ls.floorBackgroundColor[0]
-      savedForegroundNormalNormalColor = ls.foregroundNormalNormalColor
-      savedForegroundLightNormalColor = ls.foregroundLightNormalColor
+      savedFloorColor = lt.floorBackgroundColor[0]
+      savedForegroundNormalNormalColor = lt.foregroundNormalNormalColor
+      savedForegroundLightNormalColor = lt.foregroundLightNormalColor
       savedBackgroundImage = dp.backgroundImage
 
-    ls.floorBackgroundColor[0] = lerp(ls.backgroundColor, bgCol, bgCol.a)
+    lt.floorBackgroundColor[0] = lerp(lt.backgroundColor, bgCol, bgCol.a)
                                  .withAlpha(1.0)
     if active:
-      ls.foregroundNormalNormalColor = ls.foregroundNormalCursorColor
-      ls.foregroundLightNormalColor = ls.foregroundLightCursorColor
+      lt.foregroundNormalNormalColor = lt.foregroundNormalCursorColor
+      lt.foregroundLightNormalColor  = lt.foregroundLightCursorColor
 
     dp.backgroundImage = Paint.none
 
@@ -6703,8 +6712,8 @@ proc specialWallDrawProc(ls: LevelStyle,
     vg.rect(x, y, w-Pad, h-Pad)
     vg.fill()
 
-    dp.setZoomLevel(ls, 4)
-    let ctx = DrawLevelContext(ls: ls, dp: dp, vg: vg)
+    dp.setZoomLevel(lt, 4)
+    let ctx = DrawLevelContext(lt: lt, dp: dp, vg: vg)
 
     var cx = x + 5
     var cy = y + 15
@@ -6712,10 +6721,10 @@ proc specialWallDrawProc(ls: LevelStyle,
     template drawAtZoomLevel(zl: Natural, body: untyped) =
       vg.save()
       # A bit messy... but so is life! =8)
-      dp.setZoomLevel(ls, zl)
+      dp.setZoomLevel(lt, zl)
       vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
       body
-      dp.setZoomLevel(ls, 4)
+      dp.setZoomLevel(lt, 4)
       vg.restore()
 
     let ot = Horiz
@@ -6752,16 +6761,16 @@ proc specialWallDrawProc(ls: LevelStyle,
     else: discard
 
     # ...aaaaand restore it!
-    ls.floorBackgroundColor[0] = savedFloorColor
-    ls.foregroundNormalNormalColor = savedForegroundNormalNormalColor
-    ls.foregroundLightNormalColor = savedForegroundLightNormalColor
+    lt.floorBackgroundColor[0] = savedFloorColor
+    lt.foregroundNormalNormalColor = savedForegroundNormalNormalColor
+    lt.foregroundLightNormalColor = savedForegroundLightNormalColor
     dp.backgroundImage = savedBackgroundImage
 
 # }}}
 
 proc renderToolsPane(x, y, w, h: float; a) =
   alias(ui, a.ui)
-  alias(ls, a.theme.levelStyle)
+  alias(lt, a.theme.levelTheme)
 
   var
     toolItemsPerColumn = 12
@@ -6794,15 +6803,15 @@ proc renderToolsPane(x, y, w, h: float; a) =
                                 itemsPerColumn: toolItemsPerColumn),
 
     drawProc = specialWallDrawProc(
-      a.theme.levelStyle, a.theme.toolbarPaneStyle, ui.toolbarDrawParams
+      a.theme.levelTheme, a.theme.toolbarPaneTheme, ui.toolbarDrawParams
     ).some
   )
 
   # Draw floor colors
-  var floorColors = newSeqOfCap[Color](ls.floorBackgroundColor.len)
+  var floorColors = newSeqOfCap[Color](lt.floorBackgroundColor.len)
 
-  for fc in 0..ls.floorBackgroundColor.high:
-    let c = calcBlendedFloorColor(fc, ls.floorTransparent, ls)
+  for fc in 0..lt.floorBackgroundColor.high:
+    let c = calcBlendedFloorColor(fc, lt.floorTransparent, lt)
     floorColors.add(c)
 
   koi.radioButtons(
@@ -6810,15 +6819,14 @@ proc renderToolsPane(x, y, w, h: float; a) =
     y = colorY,
     w = 30,
     h = 30,
-    labels = newSeq[string](ls.floorBackgroundColor.len),
+    labels = newSeq[string](lt.floorBackgroundColor.len),
     ui.currFloorColor,
     tooltips = @[],
 
     layout = RadioButtonsLayout(kind: rblGridVert,
                                 itemsPerColumn: colorItemsPerColum),
 
-    drawProc = colorRadioButtonDrawProc(floorColors,
-                                        ls.cursorColor).some
+    drawProc = colorRadioButtonDrawProc(floorColors, lt.cursorColor).some
   )
 
 # }}}
@@ -6856,7 +6864,7 @@ proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
 proc renderNotesPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
 
-  let s = a.theme.notesPaneStyle
+  let s = a.theme.notesPaneTheme
 
   let
     l = currLevel(a)
@@ -6874,7 +6882,7 @@ proc renderNotesPane(x, y, w, h: float; a) =
       drawIndexedNote(x, y-12, size=36,
                       bgColor=s.indexBackgroundColor[note.indexColor],
                       fgColor=s.indexColor,
-                      a.theme.levelStyle.notebackgroundShape,
+                      a.theme.levelTheme.notebackgroundShape,
                       note.index, a)
 
     of akCustomId:
@@ -6923,7 +6931,7 @@ proc renderCommand(x, y: float; command: string; bgColor, textColor: Color;
 
 
 proc renderCommand(x, y: float; command: string; a): float =
-  let s = a.theme.statusBarStyle
+  let s = a.theme.statusBarTheme
 
   renderCommand(x, y, command,
                 bgColor=s.commandBackgroundColor, textColor=s.commandTextColor,
@@ -6935,7 +6943,7 @@ proc renderStatusBar(y: float, winWidth: float; a) =
   alias(vg, a.vg)
   alias(status, a.ui.status)
 
-  let s = a.theme.statusBarStyle
+  let s = a.theme.statusBarTheme
 
   let ty = y + StatusBarHeight * TextVertAlignFactor
 
@@ -7008,9 +7016,7 @@ proc renderStatusBar(y: float, winWidth: float; a) =
 
   # Display warning
   else:
-    # TODO
-    vg.fillColor(a.theme.warningLabelStyle.color)
-
+    vg.fillColor(status.warningColor)
     discard vg.text(IconPosX, ty, IconWarning)
     discard vg.text(MessagePosX, ty, status.warning)
 
@@ -7184,6 +7190,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         colorProp("Background",        p & "background")
         colorProp("Text",              p & "text")
+        colorProp("Warning",           p & "warning")
+        colorProp("Error",             p & "error")
         colorProp("Coordinates",       p & "coordinates")
       group:
         colorProp("Command Background",p & "command.background")
@@ -7480,8 +7488,8 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   # User theme indicator
   cx += 201
-
   var labelStyle = getDefaultLabelStyle()
+
   if not a.currThemeName.userTheme:
     labelStyle.color = labelStyle.color.withAlpha(0.3)
 
@@ -7489,12 +7497,18 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   # User theme override indicator
   cx += 13
-
   labelStyle = getDefaultLabelStyle()
+
   if not a.currThemeName.override:
     labelStyle.color = labelStyle.color.withAlpha(0.3)
 
   koi.label(cx, cy, 20, wh, "O", style=labelStyle)
+
+  # Theme modified indicator
+  cx += 16
+
+  if a.themeEditor.modified:
+    koi.label(cx, cy, 20, wh, IconAsterisk, style=getDefaultLabelStyle())
 
   # Theme action buttons
   cx = x+15
@@ -7528,7 +7542,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   g_themeEditorPropsFocusCaptured = koi.focusCaptured()
   koi.setFocusCaptured(fc)
 
-  a.theme.updateThemeStyles = true
+  a.theme.updateTheme = true
 
 # }}}
 
@@ -8045,7 +8059,7 @@ proc renderUI(a) =
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
   else:
-    vg.fillColor(a.theme.windowStyle.backgroundColor)
+    vg.fillColor(a.theme.windowTheme.backgroundColor)
 
   vg.fill()
 
@@ -8122,8 +8136,7 @@ proc renderFramePre(a) =
       logError(e, "Error loading theme when switching theme")
       let name = a.theme.themeNames[themeIndex].name
 
-      setWarningMessage(fmt"Cannot load theme '{name}': {e.msg}",
-                        autohide=false, a=a)
+      setErrorMessage(fmt"Cannot load theme '{name}': {e.msg}", a)
 
       a.theme.nextThemeIndex = Natural.none
 
@@ -8137,9 +8150,9 @@ proc renderFramePre(a) =
   a.win.title = a.doc.map.title
   a.win.modified = a.doc.undoManager.isModified
 
-  if a.theme.updateThemeStyles:
-    a.theme.updateThemeStyles = false
-    updateThemeStyles(a)
+  if a.theme.updateTheme:
+    a.theme.updateTheme = false
+    updateTheme(a)
 
   if a.theme.loadBackgroundImage:
     a.theme.loadBackgroundImage = false
@@ -8586,7 +8599,7 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
     wasdMode      = uiCfg.getBoolOrDefault("option.wasd-mode",       false)
 
   a.ui.drawLevelParams.setZoomLevel(
-    a.theme.levelStyle,
+    a.theme.levelTheme,
     uiCfg.getNaturalOrDefault("zoom-level", 9).limit(ZoomLevelLimits)
   )
 

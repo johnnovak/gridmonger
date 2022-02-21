@@ -288,7 +288,7 @@ const
   LinkSources* = LinkPitSources + LinkTeleports + LinkStairs + LinkDoors
 
 type
-  WindowStyle* = ref object
+  WindowTheme* = ref object
     borderColor*:                  Color
     backgroundColor*:              Color
     backgroundImage*:              string
@@ -302,25 +302,27 @@ type
     buttonInactiveColor*:          Color
     modifiedFlagColor*:            Color
 
-  StatusBarStyle* = ref object
+  StatusBarTheme* = ref object
     backgroundColor*:              Color
     textColor*:                    Color
+    warningTextColor*:             Color
+    errorTextColor*:               Color
     coordinatesColor*:             Color
     commandBackgroundColor*:       Color
     commandTextColor*:             Color
 
-  NotesPaneStyle* = ref object
+  NotesPaneTheme* = ref object
     textColor*:                    Color
     scrollBarColor*:               Color
     indexColor*:                   Color
     indexBackgroundColor*:         array[4, Color]
 
-  ToolbarPaneStyle* = ref object
+  ToolbarPaneTheme* = ref object
     buttonNormalColor*:            Color
     buttonHoverColor*:             Color
 
 
-  LevelStyle* = ref object
+  LevelTheme* = ref object
     lineWidth*:                    LineWidth
     backgroundColor*:              Color
     cursorColor*:                  Color

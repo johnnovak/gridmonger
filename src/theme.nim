@@ -15,297 +15,11 @@ import utils
 
 # {{{ DefaultThemeConfig
 
-const DefaultThemeString = """
-  ui {
-    window {
-      modified-flag = "#ffffff40"
+# Determining if a theme has been modified requires that the Default theme has
+# all properties defined that are present in the theme editor. So when adding
+# a new theme property, make sure to add it to the Default theme first.
 
-      border {
-        color = "#1b1b1bff"
-      }
-      background {
-        color = "#666666ff"
-        image = ""
-      }
-      title {
-        background {
-          normal = "#2e2e2eff"
-          inactive = "#1a1a1aff"
-        }
-        text {
-          normal = "#ffffff80"
-          inactive = "#ffffff66"
-        }
-      }
-      button {
-        normal = "#ffffff73"
-        hover = "#ffffffb3"
-        down = "#ffffffe6"
-        inactive = "#00000080"
-      }
-    }
-
-    dialog {
-      corner-radius = 6
-      background = "#4d4d4dff"
-      label = "#ffffffb3"
-      warning = "#ffffffec"
-      error = "#ff6464ff"
-
-      title {
-        background = "#1a1a1aff"
-        text = "#d9d9d9ff"
-      }
-      inner-border {
-        color = "#00000000"
-        width = 0
-      }
-      outer-border {
-        color = "#00000000"
-        width = 0
-      }
-      shadow {
-        enabled = yes
-        color = "#000000a8"
-        feather = 24
-        x-offset = 2
-        y-offset = 3
-      }
-    }
-
-    widget {
-      corner-radius = 4
-
-      background {
-        normal = "#ffffff80"
-        hover = "#ffffffa1"
-        active = "#ffa600ff"
-        disabled = "#ffffff33"
-      }
-      foreground {
-        normal = "#000000b3"
-        active = "#0000009e"
-        disabled = "#00000059"
-      }
-    }
-
-    text-field {
-      cursor = "#ffbe00ff"
-      selection = "#c8820078"
-
-      edit {
-        background = "#ffffff33"
-        text = "#ffffffcc"
-      }
-      scroll-bar {
-        normal = "#00000000"
-        edit = "#ffffffcc"
-      }
-    }
-
-    status-bar {
-      background = "#262626ff"
-      text = "#d1d1d1ff"
-      coordinates = "#999999ff"
-
-      command {
-        background = "#ffa600e9"
-        text = "#333333ff"
-      }
-    }
-
-    about-button {
-      label {
-        normal = "#ffffff80"
-        hover = "#ffffffb3"
-        down = "#ffffffd9"
-      }
-    }
-
-    about-dialog {
-      logo = "#e6e6e6ff"
-    }
-
-    quick-help {
-      background = "#ff00ffff"
-      text = "#d9d9d9ff"
-      text = "#d9d9d9ff"
-
-      command {
-        background = "#ffa600e9"
-        text = "#333333ff"
-      }
-    }
-
-    splash-image {
-      logo = "#202020ff"
-      outline = "#e6e6e6ff"
-      shadow-alpha = 1
-    }
-  }
-
-  level {
-    general {
-      background = "#666666ff"
-      line-width = normal
-      cursor = "#ffa600ff"
-      cursor-guides = "#ffa60033"
-      link-marker = "#00b3c8ff"
-      selection = "#ff808066"
-      paste-preview = "#3399ff66"
-
-      trail {
-        normal = "#00000062"
-        cursor = "#00000062"
-      }
-      foreground {
-        normal {
-          normal = "#1a1a1aff"
-          cursor = "#1a1a1aff"
-        }
-        light {
-          normal = "#1a1a1a46"
-          cursor = "#1a1a1a46"
-        }
-      }
-      coordinates {
-        normal = "#e6e6e6ff"
-        highlight = "#ffbf00ff"
-      }
-      region-border {
-        normal = "#ff8080ff"
-        empty = "#ff808066"
-      }
-    }
-
-    background-hatch {
-      enabled = yes
-      color = "#00000066"
-      width = 1
-      spacing-factor = 2
-    }
-
-    grid {
-      background {
-        style = solid
-        grid = "#0000001a"
-      }
-      floor {
-        style = solid
-        grid = "#33333368"
-      }
-    }
-
-    outline {
-      style = cell
-      fill-style = solid
-      color = "#3d3d3dff"
-      width-factor = 0.5
-      overscan = no
-    }
-
-    shadow {
-      inner {
-        color = "#0000001a"
-        width-factor = 0
-      }
-      outer {
-        color = "#0000001a"
-        width-factor = 0
-      }
-    }
-
-    floor {
-      transparent = no
-      background = [
-        "#f2f2eeff"
-        "#6f000097"
-        "#ff290074"
-        "#ffb30080"
-        "#7c652192"
-        "#709a0092"
-        "#a6c41e63"
-        "#0c9ce047"
-        "#1c6fac83"
-        "#9c559fa6"
-      ]
-    }
-
-    note {
-      marker {
-        normal = "#1a1a1ab3"
-        cursor = "#1a1a1ab3"
-      }
-      comment = "#ff3300cc"
-      background-shape = circle
-      index = "#ffffffff"
-      index-background = [
-        "#f75c4aff"
-        "#ff9c6aff"
-        "#00b3c8ff"
-        "#13837fff"
-      ]
-
-      tooltip {
-        background = "#0d0d0dff"
-        text = "#e6e6e6ff"
-        corner-radius = 5
-
-        shadow {
-          color = "#00000064"
-        }
-      }
-    }
-
-    label {
-      text = [
-        "#353232ff"
-        "#ffffffff"
-        "#f75c4aff"
-        "#00b3c8ff"
-      ]
-    }
-
-    level-drop-down {
-      item-list-background = "#333333ff"
-      corner-radius = 5
-
-      button {
-        normal = "#00000000"
-        hover = "#00000047"
-        label = "#ffffffe6"
-      }
-      item {
-        normal = "#ffffffcc"
-        hover = "#000000b3"
-      }
-      shadow {
-        color = "#00000064"
-      }
-    }
-  }
-
-  pane {
-    notes {
-      text = "#e6e6e6ff"
-      scroll-bar = "#e6e6e6ff"
-      index = "#ffffffff"
-      index-background = [
-        "#f75c4aff"
-        "#fa8d64ff"
-        "#00b3c8ff"
-        "#1d8d89ff"
-      ]
-    }
-
-    toolbar {
-      button {
-        normal = "#e6e6e6ff"
-        hover = "#ffffffff"
-      }
-    }
-  }
-"""
+const DefaultThemeString = slurp("../User Themes/Default.gmtheme")
 
 let s = newStringStream(DefaultThemeString)
 var p = initHoconParser(s)
@@ -342,10 +56,10 @@ proc getColorOrDefaultArray(cfg: HoconNode, key: string, colors: var openArray[C
     c = cfg.getColorOrDefault(fmt"{key}.{i}")
 # }}}
 
-# {{{ toLevelStyle*()
-proc toLevelStyle*(cfg: HoconNode): LevelStyle =
+# {{{ toLevelTheme*()
+proc toLevelTheme*(cfg: HoconNode): LevelTheme =
   alias(s, result)
-  s = new LevelStyle
+  s = new LevelTheme
 
   var p = "general."
   s.lineWidth                   = cfg.getEnumOrDefault(p & "line-width", LineWidth)
@@ -419,10 +133,10 @@ proc toLevelStyle*(cfg: HoconNode): LevelStyle =
   cfg.getColorOrDefaultArray("label.text", s.labelTextColor)
 
 # }}}
-# {{{ toWindowStyle*()
-proc toWindowStyle*(cfg: HoconNode): WindowStyle =
+# {{{ toWindowTheme*()
+proc toWindowTheme*(cfg: HoconNode): WindowTheme =
   alias(s, result)
-  s = new WindowStyle
+  s = new WindowTheme
 
   s.borderColor                  = cfg.getColorOrDefault("border.color")
   s.backgroundColor              = cfg.getColorOrDefault("background.color")
@@ -438,22 +152,24 @@ proc toWindowStyle*(cfg: HoconNode): WindowStyle =
   s.buttonInactiveColor          = cfg.getColorOrDefault("button.inactive")
 
 # }}}
-# {{{ toStatusBarStyle*()
-proc toStatusBarStyle*(cfg: HoconNode): StatusBarStyle =
+# {{{ toStatusBarTheme*()
+proc toStatusBarTheme*(cfg: HoconNode): StatusBarTheme =
   alias(s, result)
-  s = new StatusBarStyle
+  s = new StatusBarTheme
 
   s.backgroundColor        = cfg.getColorOrDefault("background")
   s.textColor              = cfg.getColorOrDefault("text")
+  s.warningTextColor       = cfg.getColorOrDefault("warning")
+  s.errorTextColor         = cfg.getColorOrDefault("error")
   s.coordinatesColor       = cfg.getColorOrDefault("coordinates")
   s.commandBackgroundColor = cfg.getColorOrDefault("command.background")
   s.commandTextColor       = cfg.getColorOrDefault("command.text")
 
 # }}}
-# {{{ toNotesPaneStyle*()
-proc toNotesPaneStyle*(cfg: HoconNode): NotesPaneStyle =
+# {{{ toNotesPaneTheme*()
+proc toNotesPaneTheme*(cfg: HoconNode): NotesPaneTheme =
   alias(s, result)
-  s = new NotesPaneStyle
+  s = new NotesPaneTheme
 
   s.textColor      = cfg.getColorOrDefault("text")
   s.scrollBarColor = cfg.getColorOrDefault("scroll-bar")
@@ -462,10 +178,10 @@ proc toNotesPaneStyle*(cfg: HoconNode): NotesPaneStyle =
   cfg.getColorOrDefaultArray("index-background", s.indexBackgroundColor)
 
 # }}}
-# {{{ toToolbarPaneStyle*()
-proc toToolbarPaneStyle*(cfg: HoconNode): ToolbarPaneStyle =
+# {{{ toToolbarPaneTheme*()
+proc toToolbarPaneTheme*(cfg: HoconNode): ToolbarPaneTheme =
   alias(s, result)
-  s = new ToolbarPaneStyle
+  s = new ToolbarPaneTheme
 
   s.buttonNormalColor = cfg.getColorOrDefault("button.normal")
   s.buttonHoverColor  = cfg.getColorOrDefault("button.hover")

@@ -51,14 +51,14 @@ const
   RegionNameLimits*        = strLimits(minRuneLen=1, maxRuneLen=100)
 
   CellFloorColorLimits*    = intLimits(min=0,
-                                       max=LevelStyle.floorBackgroundColor.high)
+                                       max=LevelTheme.floorBackgroundColor.high)
 
   NumAnnotationsLimits*    = intLimits(min=0, max=9999)
   NoteTextLimits*          = strLimits(minRuneLen=1, maxRuneLen=4000)
   NoteOptionalTextLimits*  = strLimits(minRuneLen=0, maxRuneLen=4000)
   NoteCustomIdLimits*      = strLimits(minRuneLen=1, maxRuneLen=2)
   NoteColorLimits*         = intLimits(min=0,
-                                       max=LevelStyle.floorBackgroundColor.high)
+                                       max=LevelTheme.floorBackgroundColor.high)
   NoteIconLimits*          = intLimits(min=0, max=NoteIcons.high)
 
   NumLinksLimits*          = intLimits(min=0, max=9999)
@@ -92,7 +92,7 @@ type
     optWasdMode*:       bool
     optWalkMode*:       bool
 
-    currFloorColor*:    range[0..LevelStyle.floorBackgroundColor.high]
+    currFloorColor*:    range[0..LevelTheme.floorBackgroundColor.high]
     currSpecialWall*:   range[0..SpecialWalls.high]
 
 # }}}

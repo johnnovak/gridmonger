@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#3e3428ff"
     text = "#dacbb0d2"
+    warning = "#ffbe4eff"
     coordinates = "#ad9964eb"
 
     command {
       background = "#b38122ff"
       text = "#3e3428ff"
     }
+
+    error = "#ff6a3dff"
   }
 
   about-button {
@@ -117,8 +120,8 @@ ui {
       text = "#3e3428ff"
     }
 
-    logo = "#ff00ffff"
     title = "#dacbb098"
+    logo = "#ff00ffff"
   }
 
   splash-image {

@@ -28,7 +28,7 @@ const
 type
   CSDWindow* = ref object
     modified*: bool
-    style:    WindowStyle
+    theme:     WindowTheme
 
     w: Window  # the wrapper GLFW window
 
@@ -60,10 +60,9 @@ using win: CSDWindow
 
 # }}}
 # {{{ Default style
-# TODO will be removed
-var DefaultCSDWindowStyle = new WindowStyle
+var DefaultCSDWindowTheme = new WindowTheme
 
-with DefaultCSDWindowStyle:
+with DefaultCSDWindowTheme:
   titleBackgroundColor         = gray(0.2)
   titleBackgroundInactiveColor = gray(0.1)
   titleColor                   = gray(1.0, 0.7)
@@ -74,13 +73,11 @@ with DefaultCSDWindowStyle:
   buttonInactiveColor          = gray(1.0, 0.5)
   modifiedFlagColor            = gray(1.0, 0.45)
 
-proc getDefaultCSDWindowStyle*(): WindowStyle = DefaultCSDWindowStyle.deepCopy()
-
 # }}}
 #
-# # {{{ setStyle()
-proc setStyle(win; s: WindowStyle) =
-  win.style = s
+# # {{{ setTheme()
+proc setTheme(win; s: WindowTheme) =
+  win.theme = s
 
   win.buttonActiveStyle = koi.getDefaultButtonStyle()
   with win.buttonActiveStyle:
@@ -99,9 +96,9 @@ proc setStyle(win; s: WindowStyle) =
     label.colorDown  = s.buttonInactiveColor
 
 # }}}
-# # {{{ style*
-proc `style=`*(win; s: WindowStyle) =
-  win.setStyle(s)
+# # {{{ theme*
+proc `theme=`*(win; s: WindowTheme) =
+  win.setTheme(s)
 
 # }}}
 # {{{ newCSDWindow*()
@@ -122,7 +119,7 @@ proc newCSDWindow*(): CSDWindow =
     cfg.profile = opCoreProfile
 
   result.w = newWindow(cfg)
-  result.setStyle(DefaultCSDWindowStyle)
+  result.setTheme(DefaultCSDWindowTheme)
   result.showTitleBar = true
 
 # }}}
@@ -251,7 +248,7 @@ proc alignRight(win) =
 
 # {{{ renderTitleBar()
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
-  alias(s, win.style)
+  alias(s, win.theme)
 
   let (bgColor, textColor, buttonStyle) = if win.w.focused:
     (s.titleBackgroundColor, s.titleColor, win.buttonActiveStyle)
@@ -367,8 +364,6 @@ proc handleWindowDragEvents(win) =
             (win.posX0, win.posY0) = win.w.pos
             win.size0 = win.w.size
             win.dragState = wdsResizing
-            # TODO maybe hide on OSX only?
-#            hideCursor()
         else:
           setCursorShape(csArrow)
       else:
@@ -425,9 +420,6 @@ proc handleWindowDragEvents(win) =
       win.dragState = wdsNone
 
   of wdsResizing:
-    # TODO add support for resizing on edges
-    # More standard cursor shapes patch:
-    # https://github.com/glfw/glfw/commit/7dbdd2e6a5f01d2a4b377a197618948617517b0e
     if koi.mbLeftDown():
       let
         dx = (mx - win.mx0).int32
@@ -470,7 +462,6 @@ proc handleWindowDragEvents(win) =
       let (newWidth, newHeight) = (max(newW, WindowMinWidth),
                                    max(newH, WindowMinHeight))
 
-#      if newW >= newWidth and newH >= newHeight:
       (win.posX0, win.posY0) = (newX, newY)
       win.w.pos = (newX, newY)
 
@@ -522,7 +513,7 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   koi.addDrawLayer(layerWindowDecoration, vg):
     vg.beginPath()
     vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
-    vg.strokeColor(win.style.borderColor)
+    vg.strokeColor(win.theme.borderColor)
     vg.strokeWidth(1.0)
     vg.stroke()
 
