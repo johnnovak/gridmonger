@@ -19,11 +19,11 @@ import utils
 # all properties defined that are present in the theme editor. So when adding
 # a new theme property, make sure to add it to the Default theme first.
 
-const DefaultThemeString = slurp("../User Themes/Default.gmtheme")
+const DefaultThemeString = slurp("../Themes/Default.gmtheme")
 
 let s = newStringStream(DefaultThemeString)
 var p = initHoconParser(s)
-let DefaultThemeConfig = p.parse()
+let DefaultThemeConfig* = p.parse()
 
 # }}}
 

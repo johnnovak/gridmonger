@@ -8645,11 +8645,18 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   buildThemeList(a)
 
-  var themeIndex = findThemeIndex(
-    cfg.getStringOrDefault("last-state.theme-name", "Default"), a
-  )
+  const DefaultThemeName = "Default"
 
-  switchTheme(if themeIndex.isSome: themeIndex.get else: 0, a)
+  var themeIndex = findThemeIndex(
+    cfg.getStringOrDefault("last-state.theme-name", DefaultThemeName), a
+  )
+  if themeIndex.isNone:
+    themeIndex = findThemeIndex(DefaultThemeName, a)
+
+  if themeIndex.isSome:
+    switchTheme(themeIndex.get, a)
+  else:
+    a.theme.config = DefaultThemeConfig
 
   # Init map & load last map, or map from command line
   a.doc.map = newMap("Untitled Map", game="", author="",
