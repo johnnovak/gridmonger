@@ -1775,7 +1775,8 @@ proc makeUniqueThemeName(themeName: string; a): string =
     try:
       i = parseInt(s[1])
       basename = s[0]
-    except ValueError: discard
+    except ValueError:
+      discard
 
   while true:
     inc(i)
@@ -1811,7 +1812,7 @@ proc buildThemeList(a) =
   addThemeNames(a.paths.userThemesDir, userTheme=true)
 
   if themeNames.len == 0:
-    raise newException(IOError, "Could not find any themes, exiting")
+    raise newException(IOError, "Cannot find any themes, exiting")
 
   themeNames.sort(
     proc (a, b: ThemeName): int = cmp(a.name, b.name)
@@ -1841,9 +1842,9 @@ proc saveTheme(a) =
     a.themeEditor.modified = false
 
   except CatchableError as e:
-    logError(e, "Error saving theme")
-    setWarningMessage(fmt"Cannot save theme '{a.currThemeName.name}': {e.msg}",
-                      a=a)
+    let msgPrefix = fmt"Error saving theme '{a.currThemeName.name}'"
+    logError(e, msgPrefix)
+    setWarningMessage(fmt"{msgPrefix}: {e.msg}", a=a)
   finally:
     a.logFile.flushFile()
 
@@ -1859,8 +1860,9 @@ proc deleteTheme(theme: ThemeName; a): bool =
       a.logfile.flushFile()
       result = true
     except CatchableError as e:
-      logError(e, "Error deleting theme")
-      setErrorMessage(fmt"Error deleting theme: {e.msg}", a)
+      let msgPrefix = "Error deleting theme"
+      logError(e, msgPrefix)
+      setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
 
 # }}}
 # {{{ copyTheme()
@@ -1869,8 +1871,9 @@ proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
     copyFileWithPermissions(themePath(a.currThemeName, a), newThemePath)
     result = true
   except CatchableError as e:
-    logError(e, "Error copying theme")
-    setErrorMessage(fmt"Error copying theme: {e.msg}", a)
+    let msgPrefix = "Error copying theme"
+    logError(e, msgPrefix)
+    setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
 
 # }}}
 # {{{ renameTheme()
@@ -1879,8 +1882,9 @@ proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
     moveFile(themePath(a.currThemeName, a), newThemePath)
     result = true
   except CatchableError as e:
-    logError(e, "Error renaming theme")
-    setErrorMessage(fmt"Error renaming theme: {e.msg}", a)
+    let msgPrefix = "Error renaming theme"
+    logError(e, msgPrefix)
+    setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
 
 # }}}
 
@@ -1890,14 +1894,14 @@ proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
     let imgPath = a.paths.userThemeImagesDir / imageName
     result = loadImage(imgPath, a)
     if result.isNone:
-      info("Couldn't load image from user theme images directory: " &
+      info("Cannot load image from user theme images directory: " &
            fmt"'{imgPath}'. Attempting default theme images directory.")
 
   let imgPath = a.paths.themeImagesDir / imageName
   result = loadImage(imgPath, a)
   if result.isNone:
     logging.error(
-      "Couldn't load image from default theme images directory: '{imgPath}'"
+      "Cannot load image from default theme images directory: '{imgPath}'"
     )
 
 # }}}
@@ -2215,7 +2219,7 @@ proc loadAppConfigOrDefault(filename: string): HoconNode =
     result = p.parse()
   except CatchableError as e:
     logging.warn(
-      fmt"Couldn't load config file '{filename}', using default config. " &
+      fmt"Cannot load config file '{filename}', using default config. " &
       fmt"Error message: {e.msg}"
     )
     result = newHoconObject()
@@ -2231,7 +2235,7 @@ proc saveAppConfig(cfg: HoconNode, filename: string) =
     cfg.write(s)
   except CatchableError as e:
     logging.error(
-      fmt"Couldn't write config file '{filename}'. Error message: {e.msg}"
+      fmt"Cannot write config file '{filename}'. Error message: {e.msg}"
     )
   finally:
     if s != nil: s.close()
@@ -2349,8 +2353,8 @@ proc loadMap(filename: string; a): bool =
     result = true
 
   except CatchableError as e:
-    logError(e, "Error loading map")
-    setErrorMessage(fmt"Error loading map: {e.msg}", a)
+    logError(e)
+    setErrorMessage(e.msg, a)
   finally:
     a.logFile.flushFile()
 
@@ -2388,8 +2392,9 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
       if fileExists(filename):
         moveFile(filename, fmt"{filename}.{BackupFileExt}")
     except CatchableError as e:
-      logError(e, "Error creating backup file")
-      setErrorMessage(fmt"Error creating backup file: {e.msg}", a)
+      let msgPrefix = "Error creating backup file"
+      logError(e, msgPrefix)
+      setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
       a.logFile.flushFile()
       return
 
@@ -2401,9 +2406,9 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
       setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
 
   except CatchableError as e:
-    logError(e, "Error saving map")
+    logError(e)
     let prefix = if autosave: "Autosave failed: " else: ""
-    setErrorMessage(fmt"{prefix}Error saving map: {e.msg}", a)
+    setErrorMessage(fmt"{prefix}{e.msg}", a)
   finally:
     a.logFile.flushFile()
 
@@ -2895,7 +2900,6 @@ proc openAboutDialog(a) =
 
 proc openUserManual(a)
 proc openWebsite(a)
-proc openForum(a)
 
 proc aboutDialog(a) =
   alias(al, a.aboutLogo)
@@ -2958,10 +2962,6 @@ proc aboutDialog(a) =
                 style=a.theme.buttonStyle):
     openWebsite(a)
 
-  x += DlgButtonWidth + DlgButtonPad
-  if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Forum",
-                style=a.theme.buttonStyle):
-    openForum(a)
 
   proc closeAction(a) =
     a.aboutLogo.updateLogoImage = true
@@ -5135,11 +5135,6 @@ proc openUserManual(a) =
 # }}}
 # {{{ openWebsite()
 proc openWebsite(a) =
-  openDefaultBrowser("https://gridmonger.johnnovak.net")
-
-# }}}
-# {{{ openForum()
-proc openForum(a) =
   openDefaultBrowser("https://gridmonger.johnnovak.net")
 
 # }}}
@@ -8756,13 +8751,13 @@ when not defined(DEBUG):
 
     if doAutoSave:
       if crashAutosavePath == "":
-        msg &= "Autosaving the map has been unsuccesful.\n\n"
+        msg &= "Autosaving map has been unsuccesful.\n\n"
       else:
         msg &= "The map has been successfully autosaved as '" &
                crashAutosavePath
 
     msg &= "\n\nIf the problem persists, please refer to the 'Get Involved' " &
-           "section on the website."
+           "section on the website at https://gridmonger.johnnovak.net"
 
     when not defined(DEBUG):
       discard osdialog_message(mblError, mbbOk, msg.cstring)
@@ -8778,6 +8773,7 @@ when not defined(DEBUG):
 
 # {{{ main()
 proc main() =
+
   # Multiple application instance handling
   when defined(windows):
     var serverInitOk = false
@@ -8868,7 +8864,7 @@ proc main() =
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
-        glfw.waitEventsTimeout(0.1)
+        glfw.waitEventsTimeout(0.2)
 
     cleanup(a)
 
