@@ -440,7 +440,7 @@ type
 
 
   SaveDiscardMapDialogParams = object
-    action:       proc (a: var AppContext)
+    nextAction:   proc (a: var AppContext)
 
 
   NewMapDialogParams = object
@@ -546,7 +546,7 @@ type
     notes:        string
 
   SaveDiscardThemeDialogParams = object
-    action:       proc (a: var AppContext)
+    nextAction:   proc (a: var AppContext)
 
   CopyThemeDialogParams = object
     activateFirstTextField: bool
@@ -559,7 +559,7 @@ type
 
   OverwriteThemeDialogParams = object
     themeName:    string
-    action:       proc (a: var AppContext)
+    nextAction:   proc (a: var AppContext)
 
 
   ThemeEditor = object
@@ -3162,9 +3162,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 # }}}
 # {{{ Save/discard map changes dialog
-proc openSaveDiscardMapDialog(action: proc (a: var AppContext); a) =
+proc openSaveDiscardMapDialog(nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.saveDiscardMapDialog)
-  dlg.action = action
+  dlg.nextAction = nextAction
   a.dialogs.activeDialog = dlgSaveDiscardMapDialog
 
 
@@ -3191,18 +3191,18 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
 
   y += h
   koi.label(
-    x, y, DlgWidth, h, "Do you want to save the map first?",
+    x, y, DlgWidth, h, "Do you want to save the map?",
     style=a.theme.labelStyle
   )
 
   proc saveAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
     saveMap(a)
-    dlg.action(a)
+    dlg.nextAction(a)
 
   proc discardAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
-    dlg.action(a)
+    dlg.nextAction(a)
 
   proc cancelAction(a) =
     closeDialog(a)
@@ -4544,9 +4544,9 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 # }}}
 
 # {{{ Save/discard theme changes dialog
-proc openSaveDiscardThemeDialog(action: proc (a: var AppContext); a) =
+proc openSaveDiscardThemeDialog(nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.saveDiscardThemeDialog)
-  dlg.action = action
+  dlg.nextAction = nextAction
   a.dialogs.activeDialog = dlgSaveDiscardThemeDialog
 
 
@@ -4571,18 +4571,18 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
 
   y += h
   koi.label(
-    x, y, DlgWidth, h, "Do you want to save the theme first?",
+    x, y, DlgWidth, h, "Do you want to save the theme?",
     style=a.theme.labelStyle
   )
 
   proc saveAction(dlg: SaveDiscardThemeDialogParams; a) =
     closeDialog(a)
     saveTheme(a)
-    dlg.action(a)
+    dlg.nextAction(a)
 
   proc discardAction(dlg: SaveDiscardThemeDialogParams; a) =
     closeDialog(a)
-    dlg.action(a)
+    dlg.nextAction(a)
 
   proc cancelAction(a) =
     closeDialog(a)
@@ -4620,11 +4620,11 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
 # }}}
 # {{{ Overwrite theme dialog
 proc openOverwriteThemeDialog(themeName: string,
-                              action: proc (a: var AppContext); a) =
+                              nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.overwriteThemeDialog)
 
   dlg.themeName = themeName
-  dlg.action = action
+  dlg.nextAction = nextAction
 
   a.dialogs.activeDialog = dlgOverwriteThemeDialog
 
@@ -4657,7 +4657,7 @@ proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
 
   proc overwriteAction(dlg: OverwriteThemeDialogParams; a) =
     closeDialog(a)
-    dlg.action(a)
+    dlg.nextAction(a)
 
   proc cancelAction(a) =
     closeDialog(a)
@@ -4760,7 +4760,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
         a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
 
     if fileExists(newThemePath):
-      openOverwriteThemeDialog(dlg.newThemeName, action=copyTheme, a)
+      openOverwriteThemeDialog(dlg.newThemeName, nextAction = copyTheme, a)
     else:
       copyTheme(a)
 
@@ -4870,7 +4870,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
         a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
 
     if fileExists(newThemePath):
-      openOverwriteThemeDialog(dlg.newThemeName, action=renameTheme, a)
+      openOverwriteThemeDialog(dlg.newThemeName, nextAction = renameTheme, a)
     else:
       renameTheme(a)
 
@@ -5147,7 +5147,7 @@ proc openForum(a) =
 # {{{ newMap()
 proc newMap(a) =
   if a.doc.undoManager.isModified:
-    openSaveDiscardMapDialog(action=openNewMapDialog, a)
+    openSaveDiscardMapDialog(nextAction = openNewMapDialog, a)
   else:
     openNewMapDialog(a)
 
@@ -5155,7 +5155,7 @@ proc newMap(a) =
 # {{{ openMap()
 proc openMap(a) =
 
-  proc doOpenMap(a) =
+  proc requestOpenMap(a) =
     when defined(DEBUG): discard
     else:
       let filename = fileDialog(fdOpenFile,
@@ -5163,10 +5163,16 @@ proc openMap(a) =
       if filename != "":
         discard loadMap(filename, a)
 
-  if a.doc.undoManager.isModified:
-    openSaveDiscardMapDialog(action=doOpenMap, a)
+  proc handleMapModified(a) =
+    if a.doc.undoManager.isModified:
+      openSaveDiscardMapDialog(nextAction = requestOpenMap, a)
+    else:
+      requestOpenMap(a)
+
+  if a.themeEditor.modified:
+    openSaveDiscardThemeDialog(nextAction = handleMapModified, a)
   else:
-    doOpenMap(a)
+    handleMapModified(a)
 
 
 when defined(windows):
@@ -5176,7 +5182,7 @@ when defined(windows):
       discard loadMap(filename, a)
 
     if a.doc.undoManager.isModified:
-      openSaveDiscardMapDialog(action=doOpenMap, a)
+      openSaveDiscardMapDialog(nextAction = doOpenMap, a)
     else:
       doOpenMap(a)
 
@@ -5194,10 +5200,10 @@ proc saveMapAs(a) =
 # }}}
 # {{{ saveMap()
 proc saveMap(a) =
-  if a.doc.filename != "":
-    saveMap(a.doc.filename, autosave=false, createBackup=true, a)
-  else:
+  if a.doc.filename == "":
     saveMapAs(a)
+  else:
+    saveMap(a.doc.filename, autosave=false, createBackup=true, a)
 
 # }}}
 
@@ -5208,7 +5214,7 @@ proc reloadTheme(a) =
     a.theme.nextThemeIndex = a.theme.currThemeIndex.some
 
   if a.themeEditor.modified:
-    openSaveDiscardThemeDialog(action=doReloadTheme, a)
+    openSaveDiscardThemeDialog(nextAction = doReloadTheme, a)
   else:
     doReloadTheme(a)
 
@@ -5222,7 +5228,7 @@ proc selectPrevTheme(a) =
     a.theme.nextThemeIndex = i.some
 
   if a.themeEditor.modified:
-    openSaveDiscardThemeDialog(action=prevTheme, a)
+    openSaveDiscardThemeDialog(nextAction = prevTheme, a)
   else:
     prevTheme(a)
 
@@ -5237,7 +5243,7 @@ proc selectNextTheme(a) =
     a.theme.nextThemeIndex = i.some
 
   if a.themeEditor.modified:
-    openSaveDiscardThemeDialog(action=nextTheme, a)
+    openSaveDiscardThemeDialog(nextAction = nextTheme, a)
   else:
     nextTheme(a)
 
@@ -7482,7 +7488,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   if themeIndex != a.theme.currThemeIndex:
     if a.themeEditor.modified:
-      openSaveDiscardThemeDialog(action=switchTheme, a)
+      openSaveDiscardThemeDialog(nextAction = switchTheme, a)
     else:
       switchTheme(a)
 
@@ -8188,17 +8194,16 @@ proc renderFrame(a) =
       a.shouldClose = true
 
     proc handleMapModified(a) =
-      if not koi.isDialogOpen():
-        if a.doc.undoManager.isModified:
-          openSaveDiscardMapDialog(action=saveConfigAndExit, a)
-        else:
-          saveConfigAndExit(a)
+      if a.doc.undoManager.isModified:
+        openSaveDiscardMapDialog(nextAction = saveConfigAndExit, a)
+      else:
+        saveConfigAndExit(a)
 
     when defined(NO_QUIT_DIALOG):
       saveConfigAndExit(a)
     else:
       if a.themeEditor.modified:
-        openSaveDiscardThemeDialog(action=handleMapModified, a)
+        openSaveDiscardThemeDialog(nextAction = handleMapModified, a)
       else:
         handleMapModified(a)
 
