@@ -13,7 +13,7 @@ Usage:
   gridmonger [OPTIONS] [FILE]
 
 Options:
-  -c, --configFile            Use this config file
+  -c, --configFile:PATH       Use this config file
 
   -x, --xpos:INT              Override window X position
   -y, --ypos:INT              Override window Y position
