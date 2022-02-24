@@ -103,6 +103,7 @@ proc boundingBox*(s): Option[Rect[Natural]] =
     return rectN(r1, c1, r2+1, c2+1).some
   else:
     return Rect[Natural].none
+
 # }}}
 # {{{ isNeighbourCellEmpty*()
 proc isNeighbourCellEmpty*(s; r,c: Natural, dir: CardinalDir): bool =

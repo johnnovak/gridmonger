@@ -1555,27 +1555,6 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   result = bbox
 
 # }}}
-# {{{ moveSelStart()
-proc moveSelStart(dir: CardinalDir; a) =
-  alias(dp, a.ui.drawLevelParams)
-
-  let cols = a.ui.nudgeBuf.get.level.cols
-  let rows = a.ui.nudgeBuf.get.level.cols
-
-  case dir:
-  of dirE:
-    if dp.selStartCol < cols-1: inc(dp.selStartCol)
-
-  of dirS:
-    if dp.selStartRow < rows-1: inc(dp.selStartRow)
-
-  of dirW:
-    if dp.selStartCol + cols > 1: dec(dp.selStartCol)
-
-  of dirN:
-    if dp.selStartRow + rows > 1: dec(dp.selStartRow)
-
-# }}}
 
 # {{{ exitMovePreviewMode()
 #
@@ -5359,7 +5338,8 @@ proc handleLevelMouseEvents(a) =
       resetManualNoteTooltip(a)
 
   if a.opts.wasdMode:
-    if ui.editMode == emNormal:
+    case ui.editMode
+    of emNormal:
       if koi.mbLeftDown():
         if ui.mouseCanStartExcavateAction:
           if koi.shiftDown():
@@ -5377,12 +5357,10 @@ proc handleLevelMouseEvents(a) =
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
-    elif ui.editMode == emExcavateTunnel:
-      if not koi.mbLeftDown():
-        ui.editMode = emNormal
-        clearStatusMessage(a)
+    of emColorFloor, emDrawClearFloor:
+      discard
 
-    elif ui.editMode == emDrawWall:
+    of emDrawWall:
       if not koi.mbRightDown():
         ui.editMode = emNormal
         clearStatusMessage(a)
@@ -5390,12 +5368,12 @@ proc handleLevelMouseEvents(a) =
         if koi.mbLeftDown():
           enterDrawWallMode(specialWall = true, a)
 
-    elif ui.editMode == emDrawWallRepeat:
+    of emDrawWallRepeat:
       if not koi.mbRightDown():
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-    elif ui.editMode == emDrawSpecialWall:
+    of emDrawSpecialWall:
       if not koi.mbRightDown():
         ui.editMode = emNormal
         ui.mouseCanStartExcavateAction = false
@@ -5404,20 +5382,44 @@ proc handleLevelMouseEvents(a) =
         if not koi.mbLeftDown():
           enterDrawWallMode(specialWall = false, a)
 
-    elif ui.editMode == emDrawSpecialWallRepeat:
+    of emDrawSpecialWallRepeat:
       if not koi.mbRightDown():
         ui.editMode = emNormal
         ui.mouseCanStartExcavateAction = false
         clearStatusMessage(a)
 
-    elif ui.editMode == emEraseCell:
+    of emEraseCell:
       if not koi.mbMiddleDown():
         ui.editMode = emNormal
         clearStatusMessage(a)
 
+    of emEraseTrail:
+      discard
+
+    of emExcavateTunnel:
+      if not koi.mbLeftDown():
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+
+    of emMovePreview, emNudgePreview, emPastePreview:
+      discard
+
+    of emSelect, emSelectDraw, emSelectErase, emSelectRect,
+       emSetCellLink:
+
+      if koi.mbLeftDown():
+        moveCursorToMousePos(a)
+
   else:  # not WASD mode
-    if koi.mbLeftDown():
-      moveCursorToMousePos(a)
+    case ui.editMode
+    of emNormal,
+       emSelect, emSelectDraw, emSelectErase, emSelectRect,
+       emSetCellLink:
+
+      if koi.mbLeftDown():
+        moveCursorToMousePos(a)
+
+    else: discard
 
 # }}}
 # {{{ handleGlobalKeyEvents()
@@ -5499,10 +5501,14 @@ proc handleGlobalKeyEvents(a) =
     let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
             else: MoveKeysCursor
 
-    if   ke.isKeyDown(k.left,  repeat=allowRepeat): moveHandler(dirW, a)
-    elif ke.isKeyDown(k.right, repeat=allowRepeat): moveHandler(dirE, a)
-    elif ke.isKeyDown(k.up,    repeat=allowRepeat): moveHandler(dirN, a)
-    elif ke.isKeyDown(k.down,  repeat=allowRepeat): moveHandler(dirS, a)
+    let mods = ke.mods
+    var kk = ke
+    kk.mods = {}
+
+    if   kk.isKeyDown(k.left,  repeat=allowRepeat): moveHandler(dirW, mods, a)
+    elif kk.isKeyDown(k.right, repeat=allowRepeat): moveHandler(dirE, mods, a)
+    elif kk.isKeyDown(k.up,    repeat=allowRepeat): moveHandler(dirN, mods, a)
+    elif kk.isKeyDown(k.down,  repeat=allowRepeat): moveHandler(dirS, mods, a)
 
 
   proc handleMoveCursor(ke: Event; allowPan, allowJump, allowWasdKeys: bool;
@@ -5534,7 +5540,8 @@ proc handleGlobalKeyEvents(a) =
     result = false
 
 
-  proc drawWallRepeatMoveKeyHandler(dir: CardinalDir; a) =
+  proc drawWallRepeatMoveKeyHandler(dir: CardinalDir, mods: set[ModifierKey];
+                                    a) =
     let cur = ui.cursor
     let drawDir = ui.drawWallRepeatDirection
 
@@ -5974,7 +5981,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emDrawWall
     of emDrawWall:
-      proc handleMoveKey(dir: CardinalDir; a) =
+      proc handleMoveKey(dir: CardinalDir, mods: set[ModifierKey]; a) =
         let cur = ui.cursor
 
         if map.canSetWall(cur, dir):
@@ -5992,6 +5999,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("Cannot set wall of an empty cell",
                             keepStatusMessage=true, a=a)
+
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
@@ -6031,7 +6039,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emDrawSpecialWall
     of emDrawSpecialWall:
-      proc handleMoveKey(dir: CardinalDir; a) =
+      proc handleMoveKey(dir: CardinalDir, mods: set[ModifierKey]; a) =
         let cur = ui.cursor
 
         if map.canSetWall(cur, dir):
@@ -6062,6 +6070,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("Cannot set wall of an empty cell",
                             keepStatusMessage=true, a=a)
+
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
@@ -6334,8 +6343,22 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emNudgePreview
     of emNudgePreview:
-      # TODO add ctrl-jump support
-      handleMoveKeys(ke, allowWasdKeys=false, allowRepeat=true, moveSelStart)
+      proc handleMoveKey(dir: CardinalDir, mods: set[ModifierKey]; a) =
+        alias(dp, a.ui.drawLevelParams)
+
+        let cols = a.ui.nudgeBuf.get.level.cols
+        let rows = a.ui.nudgeBuf.get.level.cols
+
+        let step = if mkCtrl in mods: CursorJump else: 1
+
+        case dir:
+        of dirE: dp.selStartCol = min(dp.selStartCol + step,  cols-1)
+        of dirS: dp.selStartRow = min(dp.selStartRow + step,  rows-1)
+        of dirW: dp.selStartCol = max(dp.selStartCol - step, -cols+1)
+        of dirN: dp.selStartRow = max(dp.selStartRow - step, -rows+1)
+
+
+      handleMoveKeys(ke, allowWasdKeys=false, allowRepeat=true, handleMoveKey)
 
       let cur = ui.cursor
 
@@ -6599,6 +6622,7 @@ proc renderLevel(a) =
   var note: Option[Annotation]
 
   if koi.isHot(id) and
+     ui.editMode == emNormal and
      not (opts.wasdMode and isActive(id)) and
      (koi.mx() != ui.manualNoteTooltipState.mx or
       koi.my() != ui.manualNoteTooltipState.my):
@@ -7690,11 +7714,11 @@ let g_quickRef_Editing = @[
     scDrawSpecialWall.sc,     "Toggle special wall".desc,
 
     @[scPreviousSpecialWall,
-      scNextSpecialWall].sc,  "Prev/next special wall".desc,
+      scNextSpecialWall].sc,  "Previous/next special wall".desc,
     QuickRefSepa,
 
     @[scPreviousFloorColor,
-      scNextFloorColor].sc,   "Prev/next floor colour".desc,
+      scNextFloorColor].sc,   "Previous/next floor colour".desc,
 
     scSetFloorColor.sc,       "Set floor colour".desc,
     scPickFloorColor.sc,      "Pick floor colour".desc,
