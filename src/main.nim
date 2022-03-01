@@ -3174,7 +3174,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc saveAction(dlg: SaveDiscardMapDialogParams; a) =
+  proc okAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
     saveMap(a)
     dlg.nextAction(a)
@@ -3190,7 +3190,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Save",
                 style = a.theme.buttonStyle):
-    saveAction(dlg, a)
+    okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconTrash} Discard",
@@ -3209,7 +3209,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
 
     if   ke.isShortcutDown(scCancel):  cancelAction(a)
     elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
-    elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
+    elif ke.isShortcutDown(scAccept):  okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4004,7 +4004,7 @@ proc deleteLevelDialog(a) =
   koi.label(x, y, DlgWidth, h, "Do you want to delete the current level?",
             style=a.theme.labelStyle)
 
-  proc deleteAction(a) =
+  proc okAction(a) =
     a.opts.drawTrail = false
 
     let cur = actions.deleteLevel(map, a.ui.cursor, um)
@@ -4022,7 +4022,7 @@ proc deleteLevelDialog(a) =
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Delete",
                 style=a.theme.buttonStyle):
-    deleteAction(a)
+    okAction(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
@@ -4035,7 +4035,7 @@ proc deleteLevelDialog(a) =
     var eventHandled = true
 
     if   ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): deleteAction(a)
+    elif ke.isShortcutDown(scAccept): okAction(a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4554,7 +4554,7 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc saveAction(dlg: SaveDiscardThemeDialogParams; a) =
+  proc okAction(dlg: SaveDiscardThemeDialogParams; a) =
     closeDialog(a)
     saveTheme(a)
     dlg.nextAction(a)
@@ -4570,7 +4570,7 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Save",
                 style = a.theme.buttonStyle):
-    saveAction(dlg, a)
+    okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconTrash} Discard",
@@ -4589,7 +4589,7 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
 
     if   ke.isShortcutDown(scCancel):  cancelAction(a)
     elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
-    elif ke.isShortcutDown(scAccept):  saveAction(dlg, a)
+    elif ke.isShortcutDown(scAccept):  okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4634,7 +4634,7 @@ proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
     style=a.theme.labelStyle
   )
 
-  proc overwriteAction(dlg: OverwriteThemeDialogParams; a) =
+  proc okAction(dlg: OverwriteThemeDialogParams; a) =
     closeDialog(a)
     dlg.nextAction(a)
 
@@ -4647,7 +4647,7 @@ proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
   x -= 20
   if koi.button(x, y, DlgButtonWidth+20, h, fmt"{IconCheck} Overwrite",
                 style = a.theme.buttonStyle):
-    overwriteAction(dlg, a)
+    okAction(dlg, a)
 
   x += 20
   x += DlgButtonWidth + DlgButtonPad
@@ -4661,7 +4661,7 @@ proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
     var eventHandled = true
 
     if   ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): overwriteAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4730,7 +4730,8 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
               style=a.theme.warningLabelStyle)
 
 
-  proc copyAction(dlg: CopyThemeDialogParams; a) =
+  proc okAction(dlg: CopyThemeDialogParams; a) =
+    closeDialog(a)
     let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
                                                           ThemeExt)
     proc copyTheme(a) =
@@ -4743,8 +4744,6 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     else:
       copyTheme(a)
 
-    closeDialog(a)
-
 
 
   proc cancelAction(a) =
@@ -4755,7 +4754,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
                 disabled = validationError != "", style = a.theme.buttonStyle):
-    copyAction(dlg, a)
+    okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
@@ -4771,7 +4770,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): copyAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4840,7 +4839,8 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
               style=a.theme.warningLabelStyle)
 
 
-  proc renameAction(dlg: RenameThemeDialogParams; a) =
+  proc okAction(dlg: RenameThemeDialogParams; a) =
+    closeDialog(a)
     let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
                                                           ThemeExt)
     proc renameTheme(a) =
@@ -4853,9 +4853,6 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     else:
       renameTheme(a)
 
-    closeDialog(a)
-
-
 
   proc cancelAction(a) =
     closeDialog(a)
@@ -4865,7 +4862,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
                 disabled = validationError != "", style = a.theme.buttonStyle):
-    renameAction(dlg, a)
+    okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
@@ -4881,7 +4878,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): renameAction(dlg, a)
+    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4916,7 +4913,7 @@ proc deleteThemeDialog(a) =
     style=a.theme.labelStyle
   )
 
-  proc deleteAction(a) =
+  proc okAction(a) =
     if deleteTheme(a.currThemeName, a):
       buildThemeList(a)
       with a.theme:
@@ -4933,7 +4930,7 @@ proc deleteThemeDialog(a) =
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Delete",
                 style = a.theme.buttonStyle):
-    deleteAction(a)
+    okAction(a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
@@ -4946,7 +4943,7 @@ proc deleteThemeDialog(a) =
     var eventHandled = true
 
     if   ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): deleteAction(a)
+    elif ke.isShortcutDown(scAccept): okAction(a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
