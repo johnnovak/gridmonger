@@ -1,7 +1,9 @@
 ui {
   window {
-    modified-flag = "#ffffff66"
-
+    modified-flag {
+      normal = "#ffffff66"
+      inactive = "#ffffff35"
+    }
     border {
       color = "#1b1b1bff"
     }

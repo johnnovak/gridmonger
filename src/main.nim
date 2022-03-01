@@ -7143,7 +7143,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
       group:
         p = "ui.window."
-        colorProp("Modified Flag",    p & "modified-flag")
+        colorProp("Modified Flag Normal",      p & "modified-flag.normal")
+        colorProp("Modified Flag Inactive",    p & "modified-flag.inactive")
 
       group:
         p = "ui.window.button."

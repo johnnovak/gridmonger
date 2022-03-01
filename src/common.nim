@@ -301,6 +301,7 @@ type
     buttonDownColor*:              Color
     buttonInactiveColor*:          Color
     modifiedFlagColor*:            Color
+    modifiedFlagInactiveColor*:    Color
 
   StatusBarTheme* = ref object
     backgroundColor*:              Color

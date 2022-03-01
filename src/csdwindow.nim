@@ -250,11 +250,12 @@ proc alignRight(win) =
 proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   alias(s, win.theme)
 
-  let (bgColor, textColor, buttonStyle) = if win.w.focused:
-    (s.titleBackgroundColor, s.titleColor, win.buttonActiveStyle)
+  let (bgColor, textColor, modifiedFlagColor, buttonStyle) = if win.w.focused:
+    (s.titleBackgroundColor, s.titleColor,
+     s.modifiedFlagColor, win.buttonActiveStyle)
   else:
     (s.titleBackgroundInactiveColor, s.titleInactiveColor,
-     win.buttonInactiveStyle)
+     s.modifiedFlagInactiveColor, win.buttonInactiveStyle)
 
   let
     bw = TitleBarButtonWidth
@@ -276,7 +277,7 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
     let tx = vg.text(TitleBarTitlePosX, ty, win.title)
 
     if win.modified:
-      vg.fillColor(s.modifiedFlagColor)
+      vg.fillColor(modifiedFlagColor)
       discard vg.text(tx+10, ty, IconAsterisk)
 
 
@@ -302,6 +303,7 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   if koi.button(x, by, bw, bh,
                 if win.maximized: IconWindowRestore else: IconWindowMaximise,
                 style=buttonStyle):
+
     if not win.maximizing:  # workaround to avoid double-activation
       if win.maximized:
         win.unmaximize()

@@ -1,7 +1,9 @@
 ui {
   window {
-    modified-flag = "#ffffff38"
-
+    modified-flag {
+      normal = "#ffffff38"
+      inactive = "#ffffff38"
+    }
     border {
       color = "#1b1b1bff"
     }
@@ -88,12 +90,15 @@ ui {
   status-bar {
     background = "#000000ff"
     text = "#8b8b8bff"
+    warning = "#ffb300ff"
     coordinates = "#666666ff"
 
     command {
       background = "#8e6a00ff"
       text = "#000000ff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {
