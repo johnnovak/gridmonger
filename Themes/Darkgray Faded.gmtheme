@@ -135,10 +135,10 @@ level {
     background = "#25282fff"
     line-width = normal
     cursor = "#c79900ff"
-    cursor-guides = "#edb6001f"
+    cursor-guides = "#edb60030"
     link-marker = "#0dabb5ff"
-    selection = "#a151515a"
-    paste-preview = "#4574a35a"
+    selection = "#ff78784f"
+    paste-preview = "#5aacff3b"
 
     trail {
       normal = "#ffffff30"

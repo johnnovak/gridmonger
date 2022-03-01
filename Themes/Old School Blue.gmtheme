@@ -31,7 +31,7 @@ ui {
     corner-radius = 8
     background = "#225978ff"
     label = "#ffffffb3"
-    warning = "#ffbe4eff"
+    warning = "#ffb300ff"
     error = "#ff6464ff"
 
     title {
@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#00507dff"
     text = "#ffffffef"
+    warning = "#ffb300ff"
     coordinates = "#ffffff99"
 
     command {
       background = "#ffbe00e9"
       text = "#004673ff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {
@@ -109,7 +112,7 @@ ui {
   }
 
   quick-help {
-    background = "#2c627fff"
+    background = "#1c77aaff"
     text = "#ffffffef"
 
     command {
@@ -132,10 +135,10 @@ level {
     background = "#4293beff"
     line-width = normal
     cursor = "#ffbe00ff"
-    cursor-guides = "#ffb46f64"
+    cursor-guides = "#ffb65e54"
     link-marker = "#0096b4aa"
-    selection = "#ff808080"
-    paste-preview = "#1a338066"
+    selection = "#ff808083"
+    paste-preview = "#244fb174"
 
     trail {
       normal = "#0000004b"

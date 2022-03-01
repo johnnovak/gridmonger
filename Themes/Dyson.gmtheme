@@ -31,7 +31,7 @@ ui {
     corner-radius = 8
     background = "#464646ff"
     label = "#ffffffb3"
-    warning = "#ffbe4eff"
+    warning = "#ffb300ff"
     error = "#ff6464ff"
 
     title {
@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#333333ff"
     text = "#ccccccff"
+    warning = "#ffb300ff"
     coordinates = "#999999ff"
 
     command {
       background = "#d99800ff"
       text = "#232323ff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {
@@ -152,8 +155,8 @@ level {
       }
     }
     coordinates {
-      normal = "#222020ff"
-      highlight = "#222020ff"
+      normal = "#6a6464ff"
+      highlight = "#161616ff"
     }
     region-border {
       normal = "#fd7675ff"

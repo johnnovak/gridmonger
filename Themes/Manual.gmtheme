@@ -31,7 +31,7 @@ ui {
     corner-radius = 8
     background = "#55493aff"
     label = "#cbc1b5ff"
-    warning = "#ffbe4eff"
+    warning = "#ffb300ff"
     error = "#ff6464ff"
 
     title {
@@ -48,10 +48,10 @@ ui {
     }
     shadow {
       enabled = yes
-      color = "#000000f5"
-      feather = 25
-      x-offset = 2
-      y-offset = 3
+      color = "#000000ab"
+      feather = 16.2621359223301
+      x-offset = 3.941747572815526
+      y-offset = 3.194174757281562
     }
   }
 
@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#2c261cff"
     text = "#c1aa90ff"
+    warning = "#ffb300ff"
     coordinates = "#8c7748ff"
 
     command {
       background = "#bc820dff"
       text = "#2c261ce3"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {

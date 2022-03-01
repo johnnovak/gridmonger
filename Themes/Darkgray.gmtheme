@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#191b20ff"
     text = "#ccccccff"
+    warning = "#ffbe4eff"
     coordinates = "#ffffff6a"
 
     command {
       background = "#ae8600ff"
       text = "#202228ff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {
@@ -132,10 +135,10 @@ level {
     background = "#25282fff"
     line-width = normal
     cursor = "#c79900ff"
-    cursor-guides = "#edb6001f"
+    cursor-guides = "#edb60030"
     link-marker = "#0dabb5ff"
-    selection = "#a151515a"
-    paste-preview = "#4574a35a"
+    selection = "#ff78784f"
+    paste-preview = "#5aacff3b"
 
     trail {
       normal = "#ffffff30"

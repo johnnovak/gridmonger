@@ -31,7 +31,7 @@ ui {
     corner-radius = 0
     background = "#383838ff"
     label = "#ffffffb3"
-    warning = "#ffbe4eff"
+    warning = "#ffb300ff"
     error = "#ff6464ff"
 
     title {
@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#262626ff"
     text = "#ccccccff"
+    warning = "#ffb300ff"
     coordinates = "#999999ff"
 
     command {
       background = "#ffa600e9"
       text = "#262626ff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {

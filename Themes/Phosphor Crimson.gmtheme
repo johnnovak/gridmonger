@@ -3,10 +3,10 @@ ui {
     modified-flag = "#ff004876"
 
     border {
-      color = "#1b1b1bff"
+      color = "#000000ff"
     }
     background {
-      color = "#0f0500ff"
+      color = "#0f0004ff"
       image = ""
     }
     title {
@@ -31,8 +31,8 @@ ui {
     corner-radius = 0
     background = "#3d0011ff"
     label = "#e0104bff"
-    warning = "#ff851bff"
-    error = "#ff7099ff"
+    warning = "#f8726dff"
+    error = "#ff3f57ff"
 
     title {
       background = "#d8003dff"
@@ -88,15 +88,15 @@ ui {
   status-bar {
     background = "#280e00ff"
     text = "#f70045c9"
-    warning = "#ff851bff"
+    warning = "#f8726dff"
     coordinates = "#ab0030ff"
 
     command {
-      background = "#eb0042b3"
+      background = "#b23a5bff"
       text = "#000000d2"
     }
 
-    error = "#ff7099ff"
+    error = "#ff3f57ff"
   }
 
   about-button {
@@ -112,15 +112,15 @@ ui {
   }
 
   quick-help {
-    background = "#3a1400ff"
-    text = "#d9d9d9ff"
+    background = "#27000bff"
+    text = "#f72f67c9"
 
     command {
-      background = "#ffa600e9"
-      text = "#333333ff"
+      background = "#b24f6aff"
+      text = "#000000d2"
     }
 
-    title = "#000000ff"
+    title = "#f74677b1"
   }
 
   splash-image {
@@ -132,12 +132,12 @@ ui {
 
 level {
   general {
-    background = "#080002ff"
+    background = "#0f0004ff"
     line-width = thin
-    cursor = "#e0003fff"
-    cursor-guides = "#ffb4c92c"
+    cursor = "#bf355caf"
+    cursor-guides = "#ffb4c924"
     link-marker = "#f38800ff"
-    selection = "#a95d2a66"
+    selection = "#ffcb0040"
     paste-preview = "#5789da69"
 
     trail {

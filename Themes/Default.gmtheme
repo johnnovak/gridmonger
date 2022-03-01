@@ -31,7 +31,7 @@ ui {
     corner-radius = 6
     background = "#4d4d4dff"
     label = "#ffffffb3"
-    warning = "#ffbe4eff"
+    warning = "#ffb300ff"
     error = "#ff6464ff"
 
     title {
@@ -88,7 +88,7 @@ ui {
   status-bar {
     background = "#262626ff"
     text = "#d1d1d1ff"
-    warning = "#ffbe4eff"
+    warning = "#ffb300ff"
     coordinates = "#999999ff"
 
     command {

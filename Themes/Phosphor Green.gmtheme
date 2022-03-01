@@ -3,7 +3,7 @@ ui {
     modified-flag = "#00ff0066"
 
     border {
-      color = "#1b1b1bff"
+      color = "#000000ff"
     }
     background {
       color = "#0f0500ff"
@@ -61,12 +61,12 @@ ui {
     background {
       normal = "#00a8004c"
       hover = "#00a8008e"
-      active = "#bfff00ef"
+      active = "#b9ac00ef"
       disabled = "#00a80039"
     }
     foreground {
-      normal = "#12ff12ff"
-      active = "#394b00ff"
+      normal = "#6aff6aff"
+      active = "#000000bd"
       disabled = "#00191bad"
     }
   }
@@ -134,7 +134,7 @@ level {
   general {
     background = "#000800ff"
     line-width = thin
-    cursor = "#ffbe005a"
+    cursor = "#b9ac00ef"
     cursor-guides = "#ffb4003c"
     link-marker = "#7d0a1eff"
     selection = "#ccff0066"
@@ -147,7 +147,7 @@ level {
     foreground {
       normal {
         normal = "#00e000ff"
-        cursor = "#00e000ff"
+        cursor = "#000000bd"
       }
       light {
         normal = "#006400ff"

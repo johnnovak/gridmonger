@@ -31,7 +31,7 @@ ui {
     corner-radius = 0
     background = "#404040ff"
     label = "#ffffffb3"
-    warning = "#ffbe4eff"
+    warning = "#ffb300ff"
     error = "#ff6464ff"
 
     title {
@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#1a1a1aff"
     text = "#b1b1b1ff"
+    warning = "#ffb300ff"
     coordinates = "#666666ff"
 
     command {
       background = "#c07c00ff"
       text = "#1a1a1aff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {
@@ -110,6 +113,14 @@ ui {
 
   quick-help {
     background = "#292929ff"
+    text = "#b1b1b1ff"
+
+    command {
+      background = "#dc8f00ff"
+      text = "#333333ff"
+    }
+
+    title = "#969696ff"
   }
 
   splash-image {
@@ -144,8 +155,8 @@ level {
       }
     }
     coordinates {
-      normal = "#808080ff"
-      highlight = "#ccccccff"
+      normal = "#767676ff"
+      highlight = "#ffa600ff"
     }
     region-border {
       normal = "#ff8080ff"

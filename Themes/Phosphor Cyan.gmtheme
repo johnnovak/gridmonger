@@ -3,10 +3,10 @@ ui {
     modified-flag = "#00ffe966"
 
     border {
-      color = "#1b1b1bff"
+      color = "#000809ff"
     }
     background {
-      color = "#0f0500ff"
+      color = "#000809ff"
       image = ""
     }
     title {
@@ -132,7 +132,7 @@ ui {
 
 level {
   general {
-    background = "#000800ff"
+    background = "#000809ff"
     line-width = thin
     cursor = "#00d296ff"
     cursor-guides = "#b9ff2f23"

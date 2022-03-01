@@ -3,7 +3,7 @@ ui {
     modified-flag = "#ff640076"
 
     border {
-      color = "#1b1b1bff"
+      color = "#000000ff"
     }
     background {
       color = "#0f0500ff"
@@ -61,12 +61,12 @@ ui {
     background {
       normal = "#a8380050"
       hover = "#a8380065"
-      active = "#ff560072"
+      active = "#e89000ff"
       disabled = "#a8380039"
     }
     foreground {
       normal = "#ff5100ff"
-      active = "#ffb200ff"
+      active = "#00000096"
       disabled = "#000000a9"
     }
   }
@@ -87,12 +87,12 @@ ui {
 
   status-bar {
     background = "#280e00ff"
-    text = "#f75300c9"
+    text = "#f75300d8"
     warning = "#ee9400ff"
     coordinates = "#ab3600ff"
 
     command {
-      background = "#eb7900b3"
+      background = "#eb7900cb"
       text = "#000000d2"
     }
 
@@ -112,15 +112,15 @@ ui {
   }
 
   quick-help {
-    background = "#411700ff"
-    text = "#d9d9d9ff"
+    background = "#351100ff"
+    text = "#ff5600ff"
 
     command {
-      background = "#ffa600e9"
-      text = "#333333ff"
+      background = "#eb7900cb"
+      text = "#000000d2"
     }
 
-    title = "#000000ff"
+    title = "#ff510090"
   }
 
   splash-image {
@@ -134,11 +134,11 @@ level {
   general {
     background = "#0f0500ff"
     line-width = thin
-    cursor = "#e04700ff"
+    cursor = "#ff9300f0"
     cursor-guides = "#ff6e0032"
     link-marker = "#7d0a1eff"
-    selection = "#ff1e0078"
-    paste-preview = "#fff00028"
+    selection = "#ff331766"
+    paste-preview = "#129cff4f"
 
     trail {
       normal = "#ff46005c"

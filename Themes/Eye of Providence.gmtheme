@@ -88,12 +88,15 @@ ui {
   status-bar {
     background = "#3e3428ff"
     text = "#d0beaaff"
+    warning = "#ffbe4eff"
     coordinates = "#ad9964eb"
 
     command {
       background = "#9a793aff"
       text = "#3e3428ff"
     }
+
+    error = "#ff6464ff"
   }
 
   about-button {
@@ -132,10 +135,10 @@ level {
     background = "#a2843dff"
     line-width = normal
     cursor = "#ffa600ff"
-    cursor-guides = "#ffa60033"
+    cursor-guides = "#ffa60044"
     link-marker = "#7a592099"
-    selection = "#ff808066"
-    paste-preview = "#3399ff66"
+    selection = "#ff858591"
+    paste-preview = "#6ab4ff8e"
 
     trail {
       normal = "#4d1c3457"
@@ -152,7 +155,7 @@ level {
       }
     }
     coordinates {
-      normal = "#00000066"
+      normal = "#0000005d"
       highlight = "#000000cc"
     }
     region-border {
