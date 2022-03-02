@@ -86,8 +86,6 @@ VIFileVersion 0.9.0.0
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-
-!define MUI_FINISHPAGE_RUN $INSTDIR\${APP_EXE}
 !insertmacro MUI_PAGE_FINISH
 
 ; Uninstaller
@@ -270,7 +268,8 @@ Section "Uninstall"
   Call un.RemoveShellIntegration
 
   ; Remove directories
-  RMDir "$INSTDIR"
+  RMDir /r "$INSTDIR"
+  RMDir "$INSTDIR\.."
 
 SectionEnd
 
