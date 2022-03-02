@@ -16,26 +16,59 @@ task debug, "debug build":
   --d:debug
   setCommonCompileParams()
 
+
 task releaseFull, "release build (no stacktrace)":
   --d:release
   --app:gui
   setCommonCompileParams()
+
 
 task release, "release build (with stacktrace)":
   --stacktrace:on
   --linetrace:on
   releaseFullTask()
 
-task packageWin32, "create 32-bit Windows installer":
-  exec "strip gridmonger.exe"
+
+task strip, "strip executable":
+  when defined(windows):
+    exec "strip gridmonger.exe"
+  else:
+    exec "strip gridmonger"
+
+
+task packageWin32, "create Windows 32-bit installer":
+  stripTask()
   exec "makensis /DARCH32 gridmonger.nsi"
 
-task packageWin64, "create 64-bit Windows installer":
-  exec "strip gridmonger.exe"
+
+task packageWin64, "create Windows 64-bit installer":
+  stripTask()
   exec "makensis /DARCH64 gridmonger.nsi"
 
+
+task packageWinPortable, "create Windows portable package":
+  stripTask()
+
+  let outputDir = "dist/win-portable/Gridmonger"
+  rmDir outputDir
+  mkDir outputDir
+
+  # Create config dir
+  mkDir outputDir / "Config"
+
+  # Copy main executable
+  cpFile "gridmonger.exe", outputDir / "gridmonger.exe"
+
+  # Copy resources
+  cpDir "Data", outputDir / "Data"
+  cpDir "Example Maps", outputDir / "Example Maps"
+  cpDir "Manual", outputDir / "Manual"
+  cpDir "Themes", outputDir / "Themes"
+
+
 task packageMac, "create Mac app bundle":
-  let contentsDir = "dist/Gridmonger.app/Contents/"
+  let appBundleDir = "dist/Gridmonger.app"
+  let contentsDir = appBundleDir / "Contents"
   let macOsDir = contentsDir / "MacOS"
   let resourcesDir = contentsDir / "Resources"
 
@@ -44,6 +77,7 @@ task packageMac, "create Mac app bundle":
   let distName = "gridmonger-macosx"
   let version = "0.9"
 
+  rmDir appBundleDir
   mkDir contentsDir
 
   # Copy plist file & set version
@@ -71,4 +105,6 @@ task packageMac, "create Mac app bundle":
   #codesign --verify --deep --strict --verbose=2 dist/Gridmonger.app
 
   # Make distribution ZIP file
-#  cd dist && zip -q -9 -r $DIST_NAME.zip Gridmonger.app
+  cd "dist"
+  exec fmt"zip -q -9 -r {distName}.zip Gridmonger.app"
+
