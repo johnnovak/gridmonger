@@ -8874,6 +8874,7 @@ proc main() =
             of mkFocus:
               a.win.restore()
               a.win.focus()
+              koi.setFramesLeft()
 
             of mkOpenFile:
               closeDialog(a)
@@ -8881,6 +8882,7 @@ proc main() =
               openMap(msg.filename, a)
               a.win.restore()
               a.win.focus()
+              koi.setFramesLeft()
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
