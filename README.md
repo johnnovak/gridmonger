@@ -13,6 +13,37 @@
 * nim-riff
 * winim
 
+## Compiling
+
+Debug build (debug logging enabled, file dialogs disabled on Windows ):
+
+```
+nim debug
+```
+
+Release build:
+
+```
+nim release
+```
+
+## Packacing
+
+Create 32/64-bit Windows installers (required `makensis.exe` in the path):
+
+```
+nim packageWin32
+nim packageWin32Portable
+nim packageWin64
+nim packageWin64Portable
+```
+
+Create Mac OS X application bundle:
+
+```
+nim packageMac
+```
+
 ## License
 
 Developed by John Novak <<john@johnnovak.net>>, 2020-2022
