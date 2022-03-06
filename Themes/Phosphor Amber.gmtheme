@@ -138,13 +138,13 @@ level {
     line-width = thin
     cursor = "#ff9300f0"
     cursor-guides = "#ff6e0032"
-    link-marker = "#7d0a1eff"
+    link-marker = "#0090a2b8"
     selection = "#ff331766"
     paste-preview = "#129cff4f"
 
     trail {
-      normal = "#ff46005c"
-      cursor = "#ff46005c"
+      normal = "#ffdd003e"
+      cursor = "#00000044"
     }
     foreground {
       normal {
@@ -157,7 +157,7 @@ level {
       }
     }
     coordinates {
-      normal = "#6e1e00ff"
+      normal = "#872500ff"
       highlight = "#ff5000ff"
     }
     region-border {

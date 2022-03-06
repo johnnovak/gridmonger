@@ -91,7 +91,7 @@ ui {
     background = "#262626ff"
     text = "#d1d1d1ff"
     warning = "#ffb300ff"
-    coordinates = "#999999ff"
+    coordinates = "#ffffff79"
 
     command {
       background = "#ffa600e9"
@@ -143,8 +143,8 @@ level {
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#00000062"
-      cursor = "#00000062"
+      normal = "#85858594"
+      cursor = "#48484862"
     }
     foreground {
       normal {

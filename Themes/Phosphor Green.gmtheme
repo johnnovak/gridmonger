@@ -8,7 +8,7 @@ ui {
       color = "#000000ff"
     }
     background {
-      color = "#0f0500ff"
+      color = "#000800ff"
       image = ""
     }
     title {
@@ -138,13 +138,13 @@ level {
     line-width = thin
     cursor = "#b9ac00ef"
     cursor-guides = "#ffb4003c"
-    link-marker = "#7d0a1eff"
-    selection = "#ccff0066"
+    link-marker = "#008899f9"
+    selection = "#ff460066"
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#00e00052"
-      cursor = "#00e00052"
+      normal = "#9be09e52"
+      cursor = "#1f2c1f52"
     }
     foreground {
       normal {

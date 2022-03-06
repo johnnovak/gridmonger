@@ -91,7 +91,7 @@ ui {
     background = "#282832ff"
     text = "#ccccccff"
     warning = "#ffbe4eff"
-    coordinates = "#999999ff"
+    coordinates = "#ffffff79"
 
     command {
       background = "#b98900ff"
@@ -138,12 +138,12 @@ level {
     line-width = normal
     cursor = "#ffbe00ff"
     cursor-guides = "#ffb46f3c"
-    link-marker = "#78328caa"
+    link-marker = "#00a8bdeb"
     selection = "#ff808066"
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#411b3c4f"
+      normal = "#ab96a8aa"
       cursor = "#411b3c4f"
     }
     foreground {

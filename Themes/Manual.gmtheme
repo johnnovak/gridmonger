@@ -143,8 +143,8 @@ level {
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#0000005c"
-      cursor = "#0000005c"
+      normal = "#92836f96"
+      cursor = "#1815124c"
     }
     foreground {
       normal {
@@ -157,7 +157,7 @@ level {
       }
     }
     coordinates {
-      normal = "#eae3daff"
+      normal = "#fff7ee9e"
       highlight = "#ffbf00ff"
     }
     region-border {

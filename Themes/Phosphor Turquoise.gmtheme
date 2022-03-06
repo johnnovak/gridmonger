@@ -91,7 +91,7 @@ ui {
     background = "#00291eff"
     text = "#00d39aff"
     warning = "#c3df00ff"
-    coordinates = "#00daa0ff"
+    coordinates = "#00daa092"
 
     command {
       background = "#00dc5bff"
@@ -103,14 +103,14 @@ ui {
 
   about-button {
     label {
-      normal = "#c84600ff"
-      hover = "#eb6400ff"
-      down = "#f5b400ff"
+      normal = "#008863ff"
+      hover = "#00a679ff"
+      down = "#18c194ff"
     }
   }
 
   about-dialog {
-    logo = "#00000000"
+    logo = "#00b080ff"
   }
 
   quick-help {
@@ -136,15 +136,15 @@ level {
   general {
     background = "#00140dff"
     line-width = thin
-    cursor = "#008737ff"
-    cursor-guides = "#ffc02a36"
-    link-marker = "#7d0a1eff"
-    selection = "#ccff0066"
+    cursor = "#b9ac00ef"
+    cursor-guides = "#ffb4003c"
+    link-marker = "#00bfd7f9"
+    selection = "#ff500061"
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#00e0a48f"
-      cursor = "#00e0a48f"
+      normal = "#e0804a65"
+      cursor = "#8a320083"
     }
     foreground {
       normal {

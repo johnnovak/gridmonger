@@ -91,7 +91,7 @@ ui {
     background = "#13223bff"
     text = "#ffffffdd"
     warning = "#ffbe4eff"
-    coordinates = "#bfd3f4c5"
+    coordinates = "#ffffff79"
 
     command {
       background = "#e8b20ee7"
@@ -143,8 +143,8 @@ level {
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#ffffff36"
-      cursor = "#123e8748"
+      normal = "#ff959567"
+      cursor = "#1e128748"
     }
     foreground {
       normal {
@@ -157,7 +157,7 @@ level {
       }
     }
     coordinates {
-      normal = "#ffffff80"
+      normal = "#ffffff68"
       highlight = "#ffbe00ff"
     }
     region-border {

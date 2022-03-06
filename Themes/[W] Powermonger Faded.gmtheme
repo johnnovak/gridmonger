@@ -138,12 +138,12 @@ level {
     line-width = normal
     cursor = "#ffb300ff"
     cursor-guides = "#ffb30033"
-    link-marker = "#00b3c8ff"
-    selection = "#ff808080"
+    link-marker = "#00a8bdeb"
+    selection = "#ff808084"
     paste-preview = "#3399ff80"
 
     trail {
-      normal = "#00000051"
+      normal = "#988578ce"
       cursor = "#00000051"
     }
     foreground {
@@ -157,8 +157,8 @@ level {
       }
     }
     coordinates {
-      normal = "#ffe69996"
-      highlight = "#ffe164ff"
+      normal = "#ffe6995a"
+      highlight = "#ffad4aff"
     }
     region-border {
       normal = "#00000000"

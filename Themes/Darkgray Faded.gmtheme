@@ -143,8 +143,8 @@ level {
     paste-preview = "#5aacff3b"
 
     trail {
-      normal = "#ffffff30"
-      cursor = "#25282f4e"
+      normal = "#edfffb2a"
+      cursor = "#3736305d"
     }
     foreground {
       normal {
@@ -262,11 +262,11 @@ level {
     button {
       normal = "#00000000"
       hover = "#ffffff15"
-      label = "#ffffffd8"
+      label = "#bfc1c3ff"
     }
     item {
-      normal = "#ffffffcc"
-      hover = "#000000b3"
+      normal = "#edeff2ff"
+      hover = "#191b20ff"
     }
     shadow {
       color = "#00000064"

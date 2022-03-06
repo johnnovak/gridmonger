@@ -143,8 +143,8 @@ level {
     paste-preview = "#0066ff66"
 
     trail {
-      normal = "#cfcfcf2b"
-      cursor = "#ffffff2b"
+      normal = "#515151bc"
+      cursor = "#c3c3c361"
     }
     foreground {
       normal {

@@ -138,13 +138,13 @@ level {
     line-width = normal
     cursor = "#ffa600ff"
     cursor-guides = "#ffa60039"
-    link-marker = "#0000004d"
+    link-marker = "#007381ed"
     selection = "#ff80806f"
     paste-preview = "#3f9fff70"
 
     trail {
-      normal = "#0000004a"
-      cursor = "#0000004a"
+      normal = "#49292961"
+      cursor = "#49292961"
     }
     foreground {
       normal {

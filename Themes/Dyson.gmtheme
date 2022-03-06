@@ -91,7 +91,7 @@ ui {
     background = "#333333ff"
     text = "#ccccccff"
     warning = "#ffb300ff"
-    coordinates = "#999999ff"
+    coordinates = "#ffffff79"
 
     command {
       background = "#d99800ff"

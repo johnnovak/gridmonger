@@ -91,7 +91,7 @@ ui {
     background = "#13223bff"
     text = "#ffffffdd"
     warning = "#ffbe4eff"
-    coordinates = "#bfd3f4c5"
+    coordinates = "#ffffff79"
 
     command {
       background = "#e8b20ee7"
@@ -138,13 +138,13 @@ level {
     line-width = normal
     cursor = "#e8b20eff"
     cursor-guides = "#ffb46f3c"
-    link-marker = "#00b3c8ff"
+    link-marker = "#00b3c8c7"
     selection = "#ff808066"
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#ff8c135a"
-      cursor = "#123e8748"
+      normal = "#ff8c1375"
+      cursor = "#42128751"
     }
     foreground {
       normal {
@@ -157,7 +157,7 @@ level {
       }
     }
     coordinates {
-      normal = "#ffffff4d"
+      normal = "#ffffff68"
       highlight = "#ffbe00ff"
     }
     region-border {
