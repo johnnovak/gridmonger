@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+  
+
+  <title>Gridmonger</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link href="../_static/css/docs.css" rel="stylesheet">
+  <link href="../_static/css/glightbox.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="../index.html"><img src="../_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+
+    <nav class="toc-link">
+      <a href="../index.html" >Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../themes.html">Themes</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user-data-folder.html">User data folder</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Advanced usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#command-line-usage">Command line usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#map-file-format">Map file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#theme-configuration-formats">Theme &amp; configuration formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reporting-issues.html">Reporting issues</a></li>
+</ul>
+
+    </nav>
+  </header>
+
+  <article>
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="user-data-folder.html">User data folder</a></li>
+    <li class="next"><a href="reporting-issues.html">Reporting issues</a></li>
+  </ul>
+</nav>
+    
+
+    
+  <section id="advanced-usage">
+<h1>Advanced usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h1>
+<section id="command-line-usage">
+<h2>Command line usage<a class="headerlink" href="#command-line-usage" title="Permalink to this headline">¶</a></h2>
+<p>If you start Gridmonger from the command line, you have the option to override
+various window related settings or to use a different config file. This might
+come in handy for power users who want to use a script to start an emulator
+and Gridmonger side by side.</p>
+<p>Please run <code class="docutils literal notranslate"><span class="pre">gridmonger</span> <span class="pre">-h</span></code> to see the full list of available options.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Options requiring a value need to be specified in <code class="docutils literal notranslate"><span class="pre">option:VALUE</span></code> format,
+e.g. to set the window size to 1200×800, you would use <code class="docutils literal notranslate"><span class="pre">--width:1200</span>
+<span class="pre">--height:800</span></code> (or the shorthand <code class="docutils literal notranslate"><span class="pre">-W:1200</span> <span class="pre">-H:800</span></code>).</p>
+</div>
+</section>
+<section id="map-file-format">
+<h2>Map file format<a class="headerlink" href="#map-file-format" title="Permalink to this headline">¶</a></h2>
+<p>Gridmonger maps have the <code class="docutils literal notranslate"><span class="pre">.gmm</span></code> extension and are stored in the generic
+<a class="reference external" href="https://en.wikipedia.org/wiki/Resource_Interchange_File_Format">RIFF</a>
+container format. One of the reasons for this choice was admittedly nostalgic;
+I wanted to honor the outstanding <a class="reference external" href="https://en.wikipedia.org/wiki/Interchange_File_Format">Interchange File Format (IFF)</a> invented by
+Electronic Arts and Commodore for the <a class="reference external" href="https://en.wikipedia.org/wiki/Amiga">Amiga</a> in 1985, the greatest personal
+computer of all time. It’s a great hierarchical container format, as evidenced
+by its many different incarnations and derivatives (WAV, AVI, PNG,
+JPEG, WebP, just to name a few).</p>
+<p>The details of the map format are described in <a class="reference external" href="https://github.com/johnnovak/gridmonger/blob/master/extras/docs/fileformat.txt">fileformat.txt</a>
+in the GitHub repository.</p>
+</section>
+<section class="style7 big" id="theme-configuration-formats">
+<h2>Theme &amp; configuration formats<a class="headerlink" href="#theme-configuration-formats" title="Permalink to this headline">¶</a></h2>
+<p>Themes and the configuration are stored in a very minimal subset of the <a class="reference external" href="https://github.com/lightbend/config">HOCON
+configuration format</a>. Currently, there
+is no exact specification for this — if you want to write these files by
+hand or would like to manipulate them programmatically, just follow the syntax
+and structure of the existing files and you’ll be fine.</p>
+</section>
+</section>
+
+
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="user-data-folder.html">User data folder</a></li>
+    <li class="next"><a href="reporting-issues.html">Reporting issues</a></li>
+  </ul>
+</nav>
+    
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2022. All wrongs reserved.</p>
+      
+    </footer>
+  </article>
+
+  <script src="../_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>

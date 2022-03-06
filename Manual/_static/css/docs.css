@@ -5,35 +5,35 @@
   src: url("../font/subset-Alegreya-Medium.woff2") format("woff2"), url("../font/subset-Alegreya-Medium.woff") format("woff");
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Alegreya";
   src: url("../font/subset-Alegreya-MediumItalic.woff2") format("woff2"), url("../font/subset-Alegreya-MediumItalic.woff") format("woff");
   font-weight: 500;
   font-style: italic;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Alegreya";
   src: url("../font/subset-Alegreya-Bold.woff2") format("woff2"), url("../font/subset-Alegreya-Bold.woff") format("woff");
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Alegreya";
   src: url("../font/subset-Alegreya-BoldItalic.woff2") format("woff2"), url("../font/subset-Alegreya-BoldItalic.woff") format("woff");
   font-weight: 700;
   font-style: italic;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Alegreya";
   src: url("../font/subset-Alegreya-ExtraBold.woff2") format("woff2"), url("../font/subset-Alegreya-ExtraBold.woff") format("woff");
   font-weight: 800;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 /* Alegreya SC */
 @font-face {
@@ -41,44 +41,44 @@
   src: url("../font/subset-AlegreyaSC-Medium.woff2") format("woff2"), url("../font/subset-AlegreyaSC-Medium.woff") format("woff");
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Alegreya SC";
   src: url("../font/subset-AlegreyaSC-MediumItalic.woff2") format("woff2"), url("../font/subset-AlegreyaSC-MediumItalic.woff") format("woff");
   font-weight: 500;
   font-style: italic;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Alegreya SC";
   src: url("../font/subset-AlegreyaSC-Bold.woff2") format("woff2"), url("../font/subset-AlegreyaSC-Bold.woff") format("woff");
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Alegreya SC";
   src: url("../font/subset-AlegreyaSC-BoldItalic.woff2") format("woff2"), url("../font/subset-AlegreyaSC-BoldItalic.woff") format("woff");
   font-weight: 700;
   font-style: italic;
-  font-display: swap;
+  font-display: block;
 }
-/* Fertigo Pro */
+/* Noto Serif Bold */
 @font-face {
-  font-family: "Fertigo Pro";
-  src: url("../font/subset-FertigoPro-Regular.woff2") format("woff2"), url("../font/subset-FertigoPro-Regular.woff") format("woff");
+  font-family: "Noto Serif";
+  src: url("../font/subset-NotoSerif-Bold.woff2") format("woff2"), url("../font/subset-NotoSerif-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+/* Icons */
+@font-face {
+  font-family: "icons";
+  src: url("../font/icons.woff") format("woff2"), url("../font/icons.woff") format("woff");
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
-}
-/* DejaVu Sans */
-@font-face {
-  font-family: "DejaVu Sans";
-  src: url("../font/subset-DejaVuSans.woff2") format("woff2"), url("../font/subset-DejaVuSans.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 html {
   font: 500 17px/1.5em "Alegreya", serif;
@@ -92,42 +92,62 @@ body {
   color: #4e4336;
 }
 
-.section:after {
+section:after {
   display: block;
   width: 100%;
   margin: 0.7em 0 0.22em 0;
-  font-family: "Fertigo Pro";
-  font-size: 3rem;
+  font-family: "icons";
+  font-size: 2.4rem;
   font-weight: normal;
   text-align: center;
   opacity: 0.2;
 }
-.section.style1:after {
+section.style1:after {
   content: "∆";
 }
-.section.style2:after {
+section.style2:after {
   content: "Ω";
 }
-.section.style3:after {
+section.style3:after {
   content: "∫";
 }
-.section.style4:after {
+section.style4:after {
   content: "∞";
 }
-.section.style5:after {
+section.style5:after {
   content: "∑";
 }
-.section.style6:after {
+section.style6:after {
   content: "∂";
 }
-.section.style7:after {
+section.style7:after {
   content: "¬";
 }
-.section.big:after {
-  margin: 4rem auto;
-  font-size: 7.5rem;
+section.style8:after {
+  content: "*";
 }
-.section h2 {
+section.style9:after {
+  content: "μ";
+}
+section.style10:after {
+  content: "∏";
+}
+section.style11:after {
+  content: "◊";
+}
+section.style12:after {
+  content: "√";
+}
+section.big:after {
+  margin: 4rem auto;
+  font-size: 5.5rem;
+}
+section.small:after {
+  margin: 0;
+  font-size: 1rem;
+  content: "ΩΩΩ";
+}
+section h2 {
   display: inline-block;
   margin: 0.75em 0 0 1.25em;
   padding: 0;
@@ -136,67 +156,74 @@ body {
   font-size: 30px;
   text-indent: -1.25em;
 }
-.section h3 {
+section h3 {
   padding: 0;
   font-weight: 700;
+  font-size: 22px;
+}
+section h4 {
+  padding: 0;
+  margin: 0;
   font-size: 20px;
 }
-.section .headerlink {
+section .headerlink {
   display: none;
 }
-.section .headerlink:before {
+section .headerlink:before {
   content: " ";
 }
-.section h2:hover .headerlink, .section h3:hover .headerlink, .section h4:hover .headerlink {
+section h2:hover .headerlink, section h3:hover .headerlink, section h4:hover .headerlink {
   display: inline;
 }
-.section ul {
+section ul {
   padding-left: 2.4em;
 }
-.section ul > li {
+section ul > li {
   list-style-type: none;
   text-indent: -1.5em;
 }
-.section ul > li:before {
-  padding-right: 0.65em;
-  font-family: "Fertigo Pro";
-  opacity: 0.6;
+section ul > li:before {
+  padding-right: 0.68em;
+  font-family: "icons";
+  font-size: 83%;
+  line-height: 1;
+  opacity: 0.45;
   content: "∑";
 }
-.section ul > li p {
+section ul > li p {
   display: inline;
   margin: 0;
   padding: 0;
   text-indent: 0;
 }
-.section ul.multiline > li {
-  margin-bottom: 0.3em;
+section ul.multiline > li {
+  margin-bottom: 0.4em;
 }
-.section dl {
+section dl {
   margin: 1.5em 0;
 }
-.section dl > dt {
+section dl > dt {
   font-weight: 800;
 }
-.section dl > dd {
+section dl > dd {
   margin-bottom: 1em;
 }
-.section dl > dd > p:first-child {
+section dl > dd > p:first-child {
   margin: 0;
 }
-.section figure {
+section figure {
   margin: 2em auto;
   text-align: center;
 }
-.section figure img {
+section figure img {
   width: 90%;
 }
-.section figure > figcaption {
+section figure > figcaption {
   font-size: 19px;
   font-style: italic;
   text-align: center;
 }
-.section p {
+section p {
   -webkit-hyphens: auto;
   -webkit-hyphenate-limit-before: 3;
   -webkit-hyphenate-limit-after: 3;
@@ -220,81 +247,96 @@ body {
   hyphenate-limit-last: always;
   hyphenate-limit-zone: 8%;
 }
-.section em {
+section em {
   font-weight: 500;
 }
-.section strong {
+section strong {
   font-weight: 800;
 }
-.section code {
+section code {
   font-family: "Alegreya SC", serif;
   font-size: 90%;
   background: rgba(78, 67, 54, 0.13);
   border-radius: 5px;
   padding: 0 0.4em;
 }
-.section .sc {
+section .sc {
   font-family: "Alegreya SC", serif;
   padding-right: 4px;
 }
-.section > div.thumbnails {
+section > div.thumbnails {
   line-height: 0;
 }
-.section > div.thumbnails > a > img {
+section > div.thumbnails > a > img {
   display: inline-block;
   width: 23%;
   padding-right: 2%;
   padding-bottom: 2%;
 }
-.section span.circled-number {
+section span.circled-number {
   line-height: 1em;
-  font-family: "DejaVu Symbols";
+  font-family: "icons";
   font-size: 0;
 }
-.section span.circled-number:before {
+section span.circled-number:before {
   position: relative;
   font-size: 0.9rem;
   opacity: 0.75;
 }
-.section span.circled-number.num1:before {
+section span.circled-number.num1:before {
   content: "❶";
 }
-.section span.circled-number.num2:before {
+section span.circled-number.num2:before {
   content: "❷";
 }
-.section span.circled-number.num3:before {
+section span.circled-number.num3:before {
   content: "❸";
 }
-.section span.circled-number.num4:before {
+section span.circled-number.num4:before {
   content: "❹";
 }
-.section span.circled-number.num5:before {
+section span.circled-number.num5:before {
   content: "❺";
 }
-.section span.circled-number.num6:before {
+section span.circled-number.num6:before {
   content: "❻";
 }
-.section span.circled-number.num7:before {
+section span.circled-number.num7:before {
   content: "❼";
 }
-.section span.circled-number.num8:before {
+section span.circled-number.num8:before {
   content: "❽";
 }
-.section span.circled-number.num9:before {
+section span.circled-number.num9:before {
   content: "❾";
 }
-.section span.circled-number.num10:before {
+section span.circled-number.num10:before {
   content: "❿";
 }
 
-.section a,
+a.external:after {
+  font-family: "icons" !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  font-size: 65%;
+  content: "   ";
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+section a,
 footer a {
   display: inline;
   font-family: "Alegreya SC", serif;
   text-decoration: none;
   color: #b86622;
 }
-.section a:hover,
+section a:hover,
 footer a:hover {
   text-decoration: underline;
   color: #9d5111;
@@ -315,10 +357,10 @@ header > h1 {
   padding: 0;
   margin: 0;
 }
-header > h1 > img {
+header > h1 img {
   width: 100%;
 }
-header > h1 > span {
+header > h1 span {
   display: block;
   margin: -0.2em 0 0 0;
   padding: 0;
@@ -328,14 +370,30 @@ header > h1 > span {
   text-transform: uppercase;
   letter-spacing: 0.5em;
 }
-header > h1 > span:before, header > h1 > span:after {
-  padding-right: 0.15em;
-  font-family: "Fertigo Pro";
+header > h1 span:before, header > h1 span:after {
+  position: relative;
+  top: -1.3em;
+  font-family: "icons";
+  font-size: 0.15em;
   content: "~";
 }
 
 nav.table-of-contents {
   display: none;
+}
+nav.toc-link {
+  text-align: center;
+  margin-top: 1.5em;
+}
+nav.toc-link a {
+  display: inline;
+  font-family: "Alegreya SC", serif;
+  text-decoration: none;
+  color: #b86622;
+}
+nav.toc-link a:hover {
+  text-decoration: underline;
+  color: #9d5111;
 }
 
 article {
@@ -343,21 +401,36 @@ article {
   margin: 0 auto;
 }
 article h1 {
-  margin: 1.5em 0 1em 0;
+  margin: 0 0 1em 0;
+  padding-top: 1em;
   font-family: "Alegreya SC", serif;
   font-size: 6vw;
   font-weight: 500;
   line-height: 1em;
   letter-spacing: 0.1em;
   text-align: center;
+  clear: both;
 }
 article img {
   display: block;
   width: 100%;
   margin: 2em auto;
 }
+article a {
+  display: inline;
+  font-family: "Alegreya SC", serif;
+  text-decoration: none;
+  color: #b86622;
+}
+article a:hover {
+  text-decoration: underline;
+  color: #9d5111;
+}
+article dl > dt > kbd {
+  padding-left: 0.5em;
+}
 article nav {
-  margin: 1.5em 0 1em 0;
+  margin: 1em 0 1em 0;
   font-size: 16px;
 }
 article nav > ul {
@@ -389,6 +462,22 @@ article nav > ul > li.next {
 article nav > ul > li.next > a:after {
   content: "  →";
 }
+article nav.bottom {
+  position: relative;
+  top: -9.5em;
+}
+article .figure {
+  margin-top: 2.2em;
+}
+article .figure img {
+  margin-bottom: 0;
+}
+article .figure .caption {
+  font-style: italic;
+  text-align: center;
+  margin-top: 0.8em;
+  margin-bottom: 2.2em;
+}
 article table {
   width: 100%;
   margin: 1em auto 0;
@@ -403,15 +492,17 @@ article table > caption {
   font-size: 1rem;
 }
 article table > caption:before, article table > caption:after {
-  font-family: "DejaVu Symbols";
+  font-family: "icons";
+  font-size: 70%;
+  line-height: 1;
   margin: 0 0.6em;
   opacity: 0.4;
 }
 article table > caption:before {
-  content: "☙";
+  content: "❧";
 }
 article table > caption:after {
-  content: "❧";
+  content: "❨";
 }
 article table > thead > tr > th {
   font-family: "Alegreya SC", serif;
@@ -426,7 +517,7 @@ article table > tbody > tr > td {
   padding: 0.25em 0.2em;
 }
 article table > tbody > tr > td > p {
-  margin: 0;
+  margin: 0.5em 0 0 0;
   font-style: italic;
   font-size: 95%;
   opacity: 0.6;
@@ -577,8 +668,35 @@ article kbd:not(.compound).move {
   background: none;
   box-shadow: none;
 }
+article span.asterisk {
+  font-size: 1.2em;
+  font-style: normal;
+  line-height: 1;
+}
+article span.dagger {
+  position: relative;
+  top: -0.4em;
+  font-family: serif;
+  font-weight: bold;
+  font-style: normal;
+  font-size: 0.8em;
+  padding-left: 0.07em;
+  line-height: 1;
+}
+article p.quote {
+  margin: 1.4em 0;
+  padding-left: 2em;
+}
+article section.big:after {
+  margin: 7rem auto 3rem auto;
+}
+
+#table-of-contents li:before {
+  content: none;
+}
 
 footer {
+  clear: both;
   margin: 2rem 0 1.3rem 0;
 }
 
@@ -589,7 +707,6 @@ footer {
   }
 
   article nav {
-    margin-top: 6vw;
     font-size: 18px;
   }
   article table.floors {
@@ -605,14 +722,7 @@ footer {
   }
 
   article nav {
-    margin-top: 8vw;
     font-size: 19px;
-  }
-  article img {
-    width: 73%;
-  }
-  article img.full {
-    width: 100%;
   }
   article kbd {
     font-size: 16px;
@@ -634,7 +744,6 @@ footer {
   }
 
   article nav {
-    margin-top: 2.5em;
     font-size: 20px;
   }
   article table.floors {
@@ -642,10 +751,6 @@ footer {
   }
   article table.walls {
     width: 45%;
-  }
-
-  .section.big:after {
-    margin: 5rem auto;
   }
 }
 /*--------------------------------------------------------------------------*/
@@ -685,16 +790,16 @@ footer {
 }
 /*--------------------------------------------------------------------------*/
 @media (min-width: 800px) {
-  .section {
+  section > section {
     position: relative;
   }
-  .section h2:before {
+  section > section h2:before {
     position: absolute;
-    left: -10px;
-    font-family: "DejaVu Symbols";
-    font-size: 40px;
+    left: -6px;
+    font-family: "icons";
+    font-size: 21px;
     opacity: 0.3;
-    content: "☙";
+    content: "❧";
   }
 }
 /*--------------------------------------------------------------------------*/
@@ -708,85 +813,105 @@ footer {
   header > h1 > span {
     font-size: 19px;
   }
-
-  nav.table-of-contents,
-div.toctree-wrapper {
+  header nav.table-of-contents,
+header div.toctree-wrapper {
     display: block;
-    margin-top: 2.5em;
+    margin-top: 0em;
   }
-  nav.table-of-contents li:before,
-div.toctree-wrapper li:before {
+  header nav.table-of-contents li:before,
+header div.toctree-wrapper li:before {
     content: none;
   }
-  nav.table-of-contents li > a,
-div.toctree-wrapper li > a {
+  header nav.table-of-contents li > a,
+header div.toctree-wrapper li > a {
     font-family: "Alegreya SC", serif;
     font-weight: 500;
     color: #4e4336;
     text-decoration: none;
   }
-  nav.table-of-contents li > a:hover,
-div.toctree-wrapper li > a:hover {
+  header nav.table-of-contents li > a:hover,
+header div.toctree-wrapper li > a:hover {
     opacity: 0.7;
   }
-  nav.table-of-contents li.current > a,
-div.toctree-wrapper li.current > a {
+  header nav.table-of-contents li.current > a,
+header div.toctree-wrapper li.current > a {
     color: #b86622;
   }
-  nav.table-of-contents li.current > a:after,
-div.toctree-wrapper li.current > a:after {
+  header nav.table-of-contents li.current > a:after,
+header div.toctree-wrapper li.current > a:after {
     content: " ❦";
     padding-left: 0.2em;
   }
-  nav.table-of-contents li.current > a:hover,
-div.toctree-wrapper li.current > a:hover {
+  header nav.table-of-contents li.current > a:hover,
+header div.toctree-wrapper li.current > a:hover {
     color: #9d5111;
   }
-  nav.table-of-contents ul,
-div.toctree-wrapper ul {
+  header nav.table-of-contents ul,
+header div.toctree-wrapper ul {
     margin: 0;
     padding: 0;
     font-size: 20px;
     line-height: 1.5em;
     list-style: none;
   }
-  nav.table-of-contents ul:nth-of-type(2),
-div.toctree-wrapper ul:nth-of-type(2) {
+  header nav.table-of-contents ul:nth-of-type(2),
+header div.toctree-wrapper ul:nth-of-type(2) {
     margin-top: 1.5em;
   }
-  nav.table-of-contents ul > li,
-div.toctree-wrapper ul > li {
+  header nav.table-of-contents ul > li,
+header div.toctree-wrapper ul > li {
     text-indent: 0;
   }
-  nav.table-of-contents ul > li > a:before,
-div.toctree-wrapper ul > li > a:before {
+  header nav.table-of-contents ul > li > a:before,
+header div.toctree-wrapper ul > li > a:before {
     display: inline-block;
     width: 1.9em;
     margin-right: 0.7em;
     text-align: right;
   }
-  nav.table-of-contents ul li > ul,
-div.toctree-wrapper ul li > ul {
+  header nav.table-of-contents ul li > ul,
+header div.toctree-wrapper ul li > ul {
     margin-top: 0.2em;
     margin-bottom: 0.6em;
     padding-left: 1.4em;
     line-height: 1.3em;
     list-style: none;
   }
-  nav.table-of-contents ul li > ul > li,
-div.toctree-wrapper ul li > ul > li {
+  header nav.table-of-contents ul li > ul > li,
+header div.toctree-wrapper ul li > ul > li {
     font-size: 90%;
     margin-left: 2.6em;
     margin-bottom: 0.3em;
     line-height: 1.1em;
     text-indent: -2.6em;
   }
-  nav.table-of-contents ul li > ul > li > a:before,
-div.toctree-wrapper ul li > ul > li > a:before {
+  header nav.table-of-contents ul li > ul > li > a:before,
+header div.toctree-wrapper ul li > ul > li > a:before {
     display: inline-block;
     width: 1.9em;
     margin-right: 0.7em;
     text-align: right;
+  }
+
+  nav.toc-link {
+    text-align: left;
+    font-size: 20px;
+  }
+  nav.toc-link a {
+    color: #4e4336;
+  }
+  nav.toc-link a:hover {
+    text-decoration: none;
+  }
+  nav.toc-link a.current {
+    color: #b86622;
+  }
+  nav.toc-link a.current:after {
+    content: " ❦";
+    padding-left: 0.2em;
+  }
+  nav.toc-link a.current:hover {
+    color: #9d5111;
   }
 
   article {
@@ -808,12 +933,17 @@ div.toctree-wrapper ul li > ul > li > a:before {
   article > nav > ul > li.toc {
     display: none;
   }
-  article h1 {
-    margin-top: 2.9em;
+  article > nav.bottom {
+    display: none;
   }
-
-  div[id] {
-    scroll-margin-top: 92px;
+  article h1 {
+    margin-top: 1.9em;
+  }
+  article section[id] {
+    scroll-margin-top: 112px;
+  }
+  article section.big:after {
+    margin: 5rem auto;
   }
 }
 /*--------------------------------------------------------------------------*/

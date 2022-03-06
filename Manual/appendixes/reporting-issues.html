@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+  
+
+  <title>Gridmonger</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link href="../_static/css/docs.css" rel="stylesheet">
+  <link href="../_static/css/glightbox.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="../index.html"><img src="../_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+
+    <nav class="toc-link">
+      <a href="../index.html" >Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../themes.html">Themes</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user-data-folder.html">User data folder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced-usage.html">Advanced usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reporting issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-to-include">What to include</a></li>
+</ul>
+</li>
+</ul>
+
+    </nav>
+  </header>
+
+  <article>
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="advanced-usage.html">Advanced usage</a></li>
+  </ul>
+</nav>
+    
+
+    
+  <section class="style2 big" id="reporting-issues">
+<h1>Reporting issues<a class="headerlink" href="#reporting-issues" title="Permalink to this headline">¶</a></h1>
+<p>Although I’m doing my best to test Gridmonger thoroughly, all software has
+bugs, and this program is no exception. If you’ve encountered an issue that
+you believe is a bug, or worse, you’ve experienced a crash, please file a
+report so I can investigate it.</p>
+<p>Sadly, in real life I am not a magician; I can only fix problems that I can
+reproduce on my machine. Therefore, please make sure to include as much
+relevant detail about the issue as you can; this will <em>greatly</em> increase the
+chances of me finding the root cause and coming up with a fix!</p>
+<p>Before submitting a report, please make sure you’re using the latest version
+of the program, and that you’ve read the relevant sections of the manual
+carefully.</p>
+<p>If you still believe you’ve found a bug, you can report it in email at
+<a class="reference external" href="mailto:gridmonger&#37;&#52;&#48;johnnovak&#46;net">gridmonger<span>&#64;</span>johnnovak<span>&#46;</span>net</a>, or if you’re a GitHub
+user, raise a new ticket in the project’s <a class="reference external" href="https://github.com/johnnovak/gridmonger/issues">issue tracker</a>.</p>
+<section id="what-to-include">
+<h2>What to include<a class="headerlink" href="#what-to-include" title="Permalink to this headline">¶</a></h2>
+<p>At the very minimum, every report should contain the following information:</p>
+<ul class="simple">
+<li><p>Type and version of your operating system (e.g. <code class="docutils literal notranslate"><span class="pre">Windows</span> <span class="pre">10</span> <span class="pre">Pro</span> <span class="pre">64-bit</span></code>,
+or <code class="docutils literal notranslate"><span class="pre">Mac</span> <span class="pre">OS</span> <span class="pre">X</span> <span class="pre">Big</span> <span class="pre">Sur</span> <span class="pre">11.6.2</span></code>)</p></li>
+<li><p>Gridmonger version as displayed in the about dialog (e.g. <code class="docutils literal notranslate"><span class="pre">Version</span> <span class="pre">1.0</span></code>)</p></li>
+<li><p>Whether you’re using portable mode</p></li>
+<li><p>Brief description of the problem, expected outcome, and actual results</p></li>
+<li><p>Steps describing how to reproduce the issue (to make sure you’re not leaving
+out any important detail, imagine you’re explaining this to someone who has
+never used the program before)</p></li>
+</ul>
+<p>Additionally, reports may include attached files to help clarify the problem
+at hand (generally speaking, the more of these you include, the better):</p>
+<ul class="simple">
+<li><p>In case of a crash, the file <code class="docutils literal notranslate"><span class="pre">Crash</span> <span class="pre">Autosave.gmm</span></code> from the <code class="docutils literal notranslate"><span class="pre">Autosaves</span></code>
+subfolder in your <a class="reference internal" href="user-data-folder.html#user-data-folder"><span class="std std-ref">User data folder</span></a> (if
+Gridmonger was able to save it)</p></li>
+<li><p>All log files from your <code class="docutils literal notranslate"><span class="pre">Logs</span></code> folder (especially important for reporting
+crashes and map loading/saving related errors; if there wasn’t a crash, you
+should close the program first, <em>then</em> copy the log file)</p></li>
+<li><p>Map file to use as a starting point to trigger the issue, or
+problematic map files that became corrupted somehow and cannot be loaded
+anymore</p></li>
+<li><p>Screenshots to illustrate the problem</p></li>
+<li><p>Relevant theme files for theme related issues</p></li>
+<li><p>Program configuration (<code class="docutils literal notranslate"><span class="pre">Config/gridmonger.cfg</span></code>)</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If the program has crashed, <em>do not</em> start it again before having collected
+all the files necessary for filing a report (some of these files might be
+overwritten when the program starts).</p>
+</div>
+</section>
+</section>
+
+
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="advanced-usage.html">Advanced usage</a></li>
+  </ul>
+</nav>
+    
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2022. All wrongs reserved.</p>
+      
+    </footer>
+  </article>
+
+  <script src="../_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>

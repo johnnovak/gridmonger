@@ -5,18 +5,23 @@
   <title>Gridmonger</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Gridmonger homepage.">
+  <meta name="description" content="Gridmonger manual">
 
   <link href="_static/css/docs.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet">
 </head>
 
 <body>
 
   <header>
     <h1>
-      <img src="_static/img/gridmonger-logo.png" alt="Gridmonger">
+      <a href="index.html"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
       <span>Manual</span>
     </h1>
+
+    <nav class="toc-link">
+      <a href="index.html" >Table of contents</a>
+    </nav>
 
     <nav class="table-of-contents">
       <ul class="current">
@@ -24,6 +29,7 @@
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maps-and-levels.html">Map &amp; level basics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
 <li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Advanced editing</a><ul>
@@ -37,176 +43,223 @@
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/user-data-folder.html">User data folder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/advanced-usage.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/reporting-issues.html">Reporting issues</a></li>
 </ul>
 
-
-      <ul>
-        <li ><a href="genindex.html">Index</a></li>
-      </ul>
     </nav>
   </header>
 
   <article>
-    <nav class="top">
-      <ul>
-        <li class="prev"><a href="annotations.html">Annotations</a></li>
-
-        <li class="toc"><a href="contents.html">Table of contents</a></li>
-        <li class="next"><a href="regions.html">Regions</a></li>
-      </ul>
-    </nav>
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="annotations.html">Annotations</a></li>
+    <li class="next"><a href="regions.html">Regions</a></li>
+  </ul>
+</nav>
+    
 
     
-  <div class="section" id="advanced-editing">
+  <section id="advanced-editing">
 <h1>Advanced editing<a class="headerlink" href="#advanced-editing" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="cell-links">
+<section id="cell-links">
 <h2>Cell links<a class="headerlink" href="#cell-links" title="Permalink to this headline">¶</a></h2>
-<p>One handy advantage of Gridmonger over paper-and-pencil mapping is the ability
-to create links between cells. Links can be created between the following cell
-types:</p>
+<p>A very handy advantage of Gridmonger over pencil-and-paper mapping is the
+ability to establish links between cells. Links can be created between the
+following cell types:</p>
 <ul class="simple">
 <li><p>pits and ceiling pits</p></li>
 <li><p>teleport sources and destinations</p></li>
 <li><p>upward and downward stairs</p></li>
 <li><p>entrance and exit doors</p></li>
 </ul>
-<p>You can easily jump between linked cells, which is a great help when
-navigating through complex, interlocking multi-level dungeons.</p>
+<p>You can jump between linked cells by pressing the <kbd class="kbd docutils literal notranslate">G</kbd> key, which is very
+useful when navigating through complex, interlocking multi-level dungeons. The
+included <code class="docutils literal notranslate"><span class="pre">Eye</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">Beholder</span> <span class="pre">I</span></code> and <code class="docutils literal notranslate"><span class="pre">The</span> <span class="pre">Dark</span> <span class="pre">Heart</span> <span class="pre">of</span> <span class="pre">Uukrul</span></code> example
+maps are great demonstrations of this.</p>
 <p>To create a link, first move the cursor to the source cell and press
-<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">G</kbd></kbd> to enter <em>set link destination</em> mode. Now move the cursor to
-the target cell, then press <kbd class="kbd docutils literal notranslate">Enter</kbd> to create the link, or <kbd class="kbd docutils literal notranslate">Esc</kbd> to
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">G</kbd></kbd> to enter <em>Set Link Destination Mode</em>. Now move the cursor to
+the target cell, then press <kbd class="kbd docutils literal notranslate">Enter</kbd> to create the link or <kbd class="kbd docutils literal notranslate">Esc</kbd> to
 cancel. All the common navigation shortcuts are available in this mode, so you
 can change the current level, zoom in and out, etc.</p>
 <p>The destination cell will be overwritten, but any existing note will be
-preserved (and potentially converted to a <strong>None</strong> note type).  Once a link
-has been created, you can see a small triangle in the bottom-left corner of
-the two linked cells:</p>
-<p>&lt;image&gt;</p>
-<p>To jump back and forth between two linked cells, place the cursor at either
+preserved (and potentially converted to a <strong>None</strong> marker type). Once a link
+has been created, you can see small triangles in the bottom-left corner of
+the two linked cells.</p>
+<div class="figure">
+  <a href="_static/img/cell-links.png" class="glightbox">
+    <img alt="Examples of linked cells" src="_static/img/cell-links.png"
+    style="width: 35%">
+  </a>
+    <p class="caption">
+      <span>Examples of linked cells</span>
+    </p>
+</div><p>To jump back and forth between two linked cells, place the cursor at either
 end of the link, then press <kbd class="kbd docutils literal notranslate">G</kbd>.</p>
 <p>If you delete a cell that is part of a link, the other end will be unlinked,
 but otherwise left intact. In fact, this is the easiest way to break a link.</p>
 <p>The exact rules for creating links vary per linkable cell type:</p>
 <dl class="simple">
 <dt>Pits</dt><dd><p>The link source must be a closed, open or hidden pit. The link destination
-is always a ceiling pit.</p>
+is always set to a ceiling pit.</p>
 </dd>
 <dt>Teleports</dt><dd><p>The link source can be either a teleport source or a teleport destination.
 The destination cell is automatically set to the other teleport type.</p>
 </dd>
 <dt>Stairs</dt><dd><p>The link source can be either a downward or an upward stairs cell. The the
 direction of the stairs will be automatically adjusted based on the
-elevations of the involved levels.</p>
+elevation of the involved levels.</p>
 </dd>
-<dt>Doors</dt><dd><p>The link source can be either an entrace or an exit door.  The destination
-cell is automatically set to the other door type.</p>
+<dt>Doors</dt><dd><p>The link source can be either an entrance or an exit door.  The
+destination cell is automatically set to the other door type.</p>
 </dd>
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A cell cannot be both a link source and destination, so you cannot create
-chain-linked teleport cells, for example.  Furthermore, links can only be
-created between exactly two cells. So, for instance, you cannot have two
-teleport sources that are linked to the same teleport destination cell.
-Likewise, you cannot have a teleport source that is linked to multiple
-destinations (e.g. for teleports that would take the player to a randomly
-chosen location).</p>
-<p>All this is enforced at link creation time: if either the source or the
-destination cell is already part of a link, those links will be broken
-before creating the new link.</p>
+<p>A cell cannot be both a link source and a destination, so you cannot
+create things like chain-linked teleport cells or multi-level staircases.
+Furthermore, links can only be created between exactly two cells. So, for
+instance, you cannot have two teleport sources that are linked to the same
+destination cell. Likewise, you cannot have a teleport source that is
+linked to multiple destinations (e.g. for teleports that would take the
+player to a randomly chosen location).</p>
+<p>All these constraints are enforced at link creation time: if either the
+source or the destination cell is already part of a link, those links will
+be severed before creating the new one.</p>
 </div>
-</div>
-<div class="section" id="selections">
+</section>
+<section class="style3" id="selections">
 <h2>Selections<a class="headerlink" href="#selections" title="Permalink to this headline">¶</a></h2>
-<p>TODO</p>
-<p>To make a selection, first you need to enter <em>select (mark) mode</em> by pressing
-<kbd class="kbd docutils literal notranslate">M</kbd>. The cursor turns into a crosshair in this mode, and you can see the
-list of available actions for manipulating the selection in the status bar.</p>
+<p>The idea behind selections is simple: you select a number of cells first, then
+perform some action on them.</p>
+<p>All editing actions presented so far have to be invoked from <em>Edit Mode</em>,
+which is the default operational mode of the program. To make a selection,
+you need to enter <em>Select (Mark) Mode</em> by pressing <kbd class="kbd docutils literal notranslate">M</kbd>. The cursor
+will turn into a crosshair, and you will see the list of available actions for
+manipulating the selection in the status bar.</p>
 <p>To add a rectangular area to the selection, hold <kbd class="kbd docutils literal notranslate">R</kbd> and use the movement
-keys. For simplicity’s sake, you can only use the <em>normal mode</em> movement keys
-when working with selections. Selected cells are tinted pink (in most themes,
-the actual color is theme-dependent).  To subtract a rectangular area from the
-current selection, hold <kbd class="kbd docutils literal notranslate">S</kbd> and use the movement keys.</p>
+keys. For simplicity’s sake, you can only use <a class="reference internal" href="moving-around.html#normal-mode"><span class="std std-ref">Normal Mode</span></a> movement keys when working with selections, regardless of the currently
+active editing mode (<a class="reference internal" href="moving-around.html#wasd-mode"><span class="std std-ref">WASD Mode</span></a>, <a class="reference internal" href="moving-around.html#walk-mode"><span class="std std-ref">Walk Mode</span></a>, etc.) Selected cells are tinted pink (in most themes; the actual colour
+is theme-dependent).  To subtract a rectangular area from the current
+selection, hold <kbd class="kbd docutils literal notranslate">S</kbd> and use the movement keys.</p>
 <p>Similarly, you can “draw” the selection or “erase” from it by using the
 <kbd class="kbd docutils literal notranslate">D</kbd> and <kbd class="kbd docutils literal notranslate">E</kbd> modifier keys with the movement keys, respectively.
-<kbd class="kbd docutils literal notranslate">A</kbd> selects the whole level (<em>select all</em>), and <kbd class="kbd docutils literal notranslate">U</kbd> clears the
-selection (<em>unselect all</em>).</p>
-<p>When you’re happy with your selection, it’s time to perform an operation on
-it. <kbd class="kbd docutils literal notranslate">C</kbd> (or <kbd class="kbd docutils literal notranslate">Y</kbd>) copies (yanks) the selection into the paste buffer
-and returns to normal mode. To cut the selection into the buffer, press
-<kbd class="kbd docutils literal notranslate">X</kbd> instead.  You can paste the contents of the buffer at the current
-cursor location by pressing <kbd class="kbd docutils literal notranslate">P</kbd>. By pressing <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd>, you enter
-<em>paste preview mode</em> where you can place the selection interactively with the
-movement keys (usually shown in a light-blue overlay, which is, again,
-theme-dependent), then perform the paste operation by pressing <kbd class="kbd docutils literal notranslate">Enter</kbd>,
-or cancel it with <kbd class="kbd docutils literal notranslate">Esc</kbd>.</p>
-<p>There is an important difference between copy and cut: when copying, links are
-not copied, but you can paste the copied content as many times as you wish.
-Whereas when cutting, the links will be preserved, but you may paste the cut
-content only once. This restriction is necessary to maintain the integrity of
-the links.</p>
+<kbd class="kbd docutils literal notranslate">A</kbd> selects the whole level (<em>Select All</em>), and <kbd class="kbd docutils literal notranslate">U</kbd> clears the
+selection (<em>Unselect All</em>).</p>
 <div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>You can left-click with the mouse to set the cursor location in <em>Select
+Mode</em> too. This opens up some interesting possibilities, e.g. you can draw
+selections with the mouse when used in conjunction with the <kbd class="kbd docutils literal notranslate">D</kbd> and
+<kbd class="kbd docutils literal notranslate">E</kbd> modifiers.</p>
+</div>
+<div class="figure">
+  <a href="_static/img/selections.png" class="glightbox">
+    <img alt="Marking a non-contiguous area in Select Mode" src="_static/img/selections.png" style="width: 77%;">
+  </a>
+    <p class="caption">
+      <span>Marking a non-contiguous area in Select Mode</span>
+    </p>
+</div><p>When you’re happy with your selection, it’s time to perform an action on it.
+<kbd class="kbd docutils literal notranslate">C</kbd> (or <kbd class="kbd docutils literal notranslate">Y</kbd>) copies (yanks) the selected cells into the paste buffer
+and returns to <em>Edit Mode</em>.</p>
+<p>You can paste the contents of the buffer at the current cursor position by
+pressing <kbd class="kbd docutils literal notranslate">P</kbd>. It is important to note that links are <em>not</em> copied, but
+you can paste the copied content as many times as you wish. This restriction
+is necessary to maintain the integrity of the links.</p>
+<p>If you press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd>, you’ll enter <em>Paste Preview Mode</em> where you can
+position the selection interactively with the movement keys (usually shown in
+a light-blue overlay, which is, again, theme-dependent), then perform the
+paste action by pressing <kbd class="kbd docutils literal notranslate">Enter</kbd>, or cancel it with <kbd class="kbd docutils literal notranslate">Esc</kbd>. Note that
+you can also switch the current level in <em>Paste Preview Mode</em>.</p>
+<div class="figure">
+  <a href="_static/img/paste-preview.png" class="glightbox">
+    <img alt="Positioning the selection in Paste Preview Mode" src="_static/img/paste-preview.png" style="width: 77%;">
+  </a>
+    <p class="caption">
+      <span>Positioning the selection in Paste Preview Mode</span>
+    </p>
+</div><div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>The contents of the paste buffer is preserved when opening another map file.
 Although you can only edit a single map at a given time, this enables you to
-copy-paste level contents between two different map files.</p>
+copy-paste whole or partial levels between two maps.</p>
 </div>
-<p>Holding <kbd class="kbd docutils literal notranslate">Ctrl</kbd> in select mode will reveal a list of further special
+<p>Holding <kbd class="kbd docutils literal notranslate">Ctrl</kbd> in <em>Select Mode</em> will reveal a list of further special
 actions in the status bar:</p>
 <dl class="simple">
-<dt>Move (cut &amp; paste) <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">M</kbd></kbd></dt><dd><p>This is basically a shortcut for cutting and then invoking <em>paste preview
-mode</em> (because of cutting, this is operation is link preserving).</p>
+<dt>Move <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">M</kbd></kbd></dt><dd><p>The <em>link-preserving</em> alternative to the copy action: the selected cells
+will be cut first, then you will be automatically taken into <em>Paste
+Preview Mode</em> where you can reposition the selection. Note that the move
+action will leave the contents of the paste buffer intact (it uses a
+dedicated “move buffer” under the hood).</p>
 </dd>
-<dt>Erase <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd></dt><dd><p>Erase the selected cells.</p>
+<dt>Erase <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd></dt><dd><p>Equivalent of using the <em>erase cell</em> action on the selected cells.</p>
 </dd>
-<dt>Fill <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">F</kbd></kbd></dt><dd><p>Equivalent of using the <cite>draw floor</cite> action on the selected cells (using
-the current color).</p>
+<dt>Fill <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">F</kbd></kbd></dt><dd><p>Equivalent of using the <em>draw/clear floor</em> action on the selected cells.</p>
 </dd>
-<dt>Set color <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd></kbd></dt><dd><p>Set the floor color of the selected cells to the current color.</p>
+<dt>Set colour <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd></kbd></dt><dd><p>Set the floor colour of the selected cells to the current colour.</p>
 </dd>
 <dt>Surround <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd></dt><dd><p>Surround the selected cells with solid walls (you can use this with the
-<em>select rectangle</em> action to draw rectangles quickly).</p>
+<em>select rectangle</em> action to draw rectangular rooms quickly).</p>
 </dd>
 <dt>Crop <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">R</kbd></kbd></dt><dd><p>Crop the level to the bounding box of the selection.</p>
 </dd>
 </dl>
-</div>
-<div class="section" id="special-level-actions">
+</section>
+<section id="special-level-actions">
 <h2>Special level actions<a class="headerlink" href="#special-level-actions" title="Permalink to this headline">¶</a></h2>
 <p>There are a few special actions that operate on the whole level. These can be
-invoked from <em>normal mode</em>.</p>
-<div class="section" id="resize-level">
+invoked from <em>Edit Mode</em>.</p>
+<section id="resize-level">
 <h3>Resize level<a class="headerlink" href="#resize-level" title="Permalink to this headline">¶</a></h3>
 <p>The <em>resize level</em> action, invoked by <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd>, lets you to shrink or
-expand the dimensions of the current level. You need to select an anchor point
-for the operation. It’s probably easiest to illustrate the role of the anchor
-point through a few examples:</p>
-<ul class="simple">
-<li><p>Making the level 2 rows and 3 colums larger using the top-left anchor point
-adds 2 extra empty columns at the left side of the level, and 3 extra
+expand the dimensions of the current level. You’ll need to select an anchor
+point for the action. It’s probably easiest to illustrate the role of the
+anchor point through a few examples:</p>
+<ul class="multiline simple">
+<li><p>Making the level 2 columns and 3 rows larger using the top-left anchor point
+will add 2 extra empty columns at the right side of the level, and 3 extra
 empty rows at the bottom.</p></li>
-<li><p>Making the level 4 rows and 4 columns smaller using the center anchor
-point removes a 2-cell wide “stripe” from around the level.</p></li>
+<li><p>Making the level 4 columns and 4 rows smaller using the centre anchor point
+will remove a 2-cell wide “stripe” from around the level.</p></li>
 </ul>
-</div>
-<div class="style6 big section" id="nudge-level">
+</section>
+<section class="style1 big" id="nudge-level">
 <h3>Nudge level<a class="headerlink" href="#nudge-level" title="Permalink to this headline">¶</a></h3>
-<p>You can move the contents of the level around without changing the level
-dimensions with the <em>nudge level</em> action.</p>
-<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd> to enter <em>nudge mode</em>, then use the movement keys to
-reposition the level’s contents. Accept the changes by pressing <kbd class="kbd docutils literal notranslate">Enter</kbd>, or
-discard them with <kbd class="kbd docutils literal notranslate">Esc</kbd>.</p>
-</div>
-</div>
-</div>
+<p>You can shift the contents of the level around without changing its dimensions
+with the <em>nudge level</em> action.</p>
+<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd> to enter <em>Nudge Preview Mode</em>, then use the movement keys
+to reposition the level’s contents. Accept the changes by pressing
+<kbd class="kbd docutils literal notranslate">Enter</kbd>, or discard them with <kbd class="kbd docutils literal notranslate">Esc</kbd>.</p>
+</section>
+</section>
+</section>
 
 
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="annotations.html">Annotations</a></li>
+    <li class="next"><a href="regions.html">Regions</a></li>
+  </ul>
+</nav>
+    
 
     <footer>
-      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2019-2021. All wrongs reserved.</p>
-      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2022. All wrongs reserved.</p>
+      
     </footer>
   </article>
+
+  <script src="_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
 
   </body>
 </html>

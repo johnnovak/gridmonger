@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+  
+
+  <title>Gridmonger</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link href="../_static/css/docs.css" rel="stylesheet">
+  <link href="../_static/css/glightbox.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="../index.html"><img src="../_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+
+    <nav class="toc-link">
+      <a href="../index.html" >Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../themes.html">Themes</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User data folder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced-usage.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reporting-issues.html">Reporting issues</a></li>
+</ul>
+
+    </nav>
+  </header>
+
+  <article>
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+    <li class="next"><a href="advanced-usage.html">Advanced usage</a></li>
+  </ul>
+</nav>
+    
+
+    
+  <section class="style6 big" id="user-data-folder">
+<h1>User data folder<a class="headerlink" href="#user-data-folder" title="Permalink to this headline">¶</a></h1>
+<p>The <em>user data folder</em> stores data such as your program settings, user
+themes, auto saves, and the log file.</p>
+<p>The location of the <em>user data folder</em> is
+<code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;USERNAME&gt;\AppData\Roaming\Gridmonger</span></code> on Windows, and
+<code class="docutils literal notranslate"><span class="pre">/Users/&lt;USERNAME&gt;/Library/Application</span> <span class="pre">Support/Gridmonger</span></code> on Mac OS X. For
+portable installations, it is the application folder where the executable
+is located.</p>
+<p>The user data folder contains a number of subfolders (they will be created by
+the program if they don’t exist):</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Autosaves</span></code></dt><dd><p>If autosaves are enabled, and the current map hasn’t been saved to a file
+yet, the autosave file <code class="docutils literal notranslate"><span class="pre">Untitled.gmm</span></code> will go into this folder. Also, in
+the rare event of a program crash, unsaved maps are automatically saved
+here too as <code class="docutils literal notranslate"><span class="pre">Crash</span> <span class="pre">Autosave.gmm</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Config</span></code></dt><dd><p>The configuration file <code class="docutils literal notranslate"><span class="pre">gridmonger.cfg</span></code> that contains the application’s
+settings resides here.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Logs</span></code></dt><dd><p>The logs from the last run are written to the file <code class="docutils literal notranslate"><span class="pre">gridmonger.log</span></code> in
+this folder. Log files from the last three runs can be found under the
+names <code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak1</span></code>, <code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak3</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Manual</span></code></dt><dd><p>The included HTML user manual.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Themes</span></code></dt><dd><p>User themes are saved into this folder. This is where you should put
+themes shared by other users.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Themes/Images</span></code></dt><dd><p>Images used by the user themes go here.</p>
+</dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If the application folder contains a subfolder named <code class="docutils literal notranslate"><span class="pre">Config</span></code>, Gridmonger
+will attempt to start in portable mode. Technically, you can convert a
+standard installation into a portable one by moving the contents of your
+user data folder into the application folder. You can also convert a
+portable installation into a standard one by doing the reverse, but in
+practice you’re better off just using the standard installer, as that also
+sets up default file associations for Gridmonger map files (<code class="docutils literal notranslate"><span class="pre">.gmm</span></code>), and
+provides a standard uninstaller script.</p>
+</div>
+</section>
+
+
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+    <li class="next"><a href="advanced-usage.html">Advanced usage</a></li>
+  </ul>
+</nav>
+    
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2022. All wrongs reserved.</p>
+      
+    </footer>
+  </article>
+
+  <script src="../_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>
