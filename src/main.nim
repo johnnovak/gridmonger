@@ -4737,7 +4737,12 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     proc copyTheme(a) =
       if copyTheme(a.currThemeName, newThemePath, a):
         buildThemeList(a)
-        a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
+        # We need to set the current theme index directly (instead of setting
+        # nextThemeIndex) to prevent reloading the theme, thus avoid losing
+        # any unsaved changed
+        let idx = findThemeIndex(dlg.newThemeName, a)
+        if idx.isSome:
+          a.theme.currThemeIndex = idx.get
 
     if fileExists(newThemePath):
       openOverwriteThemeDialog(dlg.newThemeName, nextAction = copyTheme, a)
@@ -4846,7 +4851,12 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     proc renameTheme(a) =
       if renameTheme(a.currThemeName, newThemePath, a):
         buildThemeList(a)
-        a.theme.nextThemeIndex = findThemeIndex(dlg.newThemeName, a)
+        # We need to set the current theme index directly (instead of setting
+        # nextThemeIndex) to prevent reloading the theme, thus avoid losing
+        # any unsaved changed
+        let idx = findThemeIndex(dlg.newThemeName, a)
+        if idx.isSome:
+          a.theme.currThemeIndex = idx.get
 
     if fileExists(newThemePath):
       openOverwriteThemeDialog(dlg.newThemeName, nextAction = renameTheme, a)
