@@ -227,12 +227,12 @@ level {
 
     comment = "#ff3300cc"
     background-shape = circle
-    index = "#ffffffa4"
+    index = "#ffffffaf"
     index-background = [
-      "#503b25a1"
-      "#903e2cd5"
-      "#2c6c90d5"
-      "#4f6949d5"
+      "#5c452cb7"
+      "#9f4531ff"
+      "#1b6f9dfc"
+      "#466c3cff"
       "#443823f0"
     ]
 
@@ -249,10 +249,10 @@ level {
 
   label {
     text = [
-      "#000000a1"
-      "#00000000"
-      "#00000000"
-      "#00000000"
+      "#4e4432ff"
+      "#ffe7bedd"
+      "#864100ff"
+      "#ffb635e4"
     ]
   }
 

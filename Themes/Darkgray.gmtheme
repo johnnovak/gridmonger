@@ -207,15 +207,15 @@ level {
     transparent = no
     background = [
       "#353c44ff"
-      "#6f000097"
-      "#ff290074"
-      "#ffb30080"
-      "#7c652192"
-      "#679f1f92"
-      "#d2ed3a80"
+      "#6f000079"
+      "#ff290067"
+      "#cd900080"
+      "#655a3c92"
+      "#59891b92"
+      "#d2ed3a63"
       "#00a36c6f"
-      "#1c6fac83"
-      "#9c559fa6"
+      "#1e79bb83"
+      "#dc78e068"
     ]
   }
 
@@ -227,12 +227,12 @@ level {
 
     comment = "#ff3300cc"
     background-shape = circle
-    index = "#ffffffcc"
+    index = "#ffffffe8"
     index-background = [
-      "#257479ff"
-      "#565d90ff"
-      "#845b73ff"
-      "#796b25ff"
+      "#0e828aff"
+      "#5a63abff"
+      "#a55986ff"
+      "#947d09ff"
     ]
 
     tooltip {
@@ -248,10 +248,10 @@ level {
 
   label {
     text = [
-      "#babfc3ff"
-      "#f5e3c5a1"
-      "#d18bb4fa"
-      "#9ca6f4f2"
+      "#b2b7bbff"
+      "#f5e4c8e2"
+      "#de7db6fa"
+      "#9ba6f3fd"
     ]
   }
 

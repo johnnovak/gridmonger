@@ -138,13 +138,13 @@ level {
     line-width = normal
     cursor = "#ffbe00ff"
     cursor-guides = "#ffb65e54"
-    link-marker = "#00a5c6f1"
+    link-marker = "#00738aae"
     selection = "#ff808083"
     paste-preview = "#244fb174"
 
     trail {
-      normal = "#00000034"
-      cursor = "#0000003c"
+      normal = "#0000005a"
+      cursor = "#0000005a"
     }
     foreground {
       normal {
@@ -210,7 +210,7 @@ level {
       "#c5003072"
       "#ff001534"
       "#ffba002e"
-      "#5450175e"
+      "#635d0c58"
       "#0078476d"
       "#55e12846"
       "#3ebdc967"
@@ -230,9 +230,9 @@ level {
     index = "#e6e6e6ff"
     index-background = [
       "#f5628dff"
-      "#a389cdff"
-      "#70ace6ff"
-      "#ababb4ff"
+      "#8c6cc0ff"
+      "#3e91e1ff"
+      "#88888fff"
     ]
 
     tooltip {

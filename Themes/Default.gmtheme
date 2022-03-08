@@ -138,13 +138,13 @@ level {
     line-width = normal
     cursor = "#ffa600ff"
     cursor-guides = "#ffa60033"
-    link-marker = "#00b3c8ff"
+    link-marker = "#00a4b7ff"
     selection = "#ff808066"
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#85858594"
-      cursor = "#48484862"
+      normal = "#00000074"
+      cursor = "#00000064"
     }
     foreground {
       normal {
@@ -225,7 +225,7 @@ level {
       cursor = "#1a1a1ab3"
     }
 
-    comment = "#ff3300cc"
+    comment = "#ff3300da"
     background-shape = circle
     index = "#ffffffff"
     index-background = [

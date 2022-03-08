@@ -138,12 +138,12 @@ level {
     line-width = normal
     cursor = "#ffbe00ff"
     cursor-guides = "#ffb46f3c"
-    link-marker = "#00a8bdeb"
+    link-marker = "#008595ff"
     selection = "#ff808066"
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#ab96a8aa"
+      normal = "#00000054"
       cursor = "#411b3c4f"
     }
     foreground {
@@ -152,7 +152,7 @@ level {
         cursor = "#282841ff"
       }
       light {
-        normal = "#1818a159"
+        normal = "#2d2d7253"
         cursor = "#1818a159"
       }
     }
@@ -207,14 +207,14 @@ level {
     transparent = no
     background = [
       "#e6e6f0ff"
-      "#83002092"
+      "#83002088"
       "#bf2c6b5e"
       "#fa894383"
       "#6d460e85"
       "#2d7c008f"
       "#8ec40d60"
-      "#0071a376"
-      "#1c34ac9e"
+      "#0071a361"
+      "#1c34ac6a"
       "#86559fce"
     ]
   }
@@ -230,9 +230,9 @@ level {
     index = "#e6e6e6ff"
     index-background = [
       "#f5628dff"
-      "#a389d7ff"
-      "#66a2dcff"
-      "#9797a0ff"
+      "#a186d9ff"
+      "#64a4e1ff"
+      "#6c6c73ff"
     ]
 
     tooltip {

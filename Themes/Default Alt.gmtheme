@@ -138,7 +138,7 @@ level {
     line-width = normal
     cursor = "#ffa600ff"
     cursor-guides = "#ffa60033"
-    link-marker = "#00b3c8ff"
+    link-marker = "#00a4b7ff"
     selection = "#ff808066"
     paste-preview = "#3399ff66"
 

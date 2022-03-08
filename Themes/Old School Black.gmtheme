@@ -138,12 +138,12 @@ level {
     line-width = normal
     cursor = "#ffa600ff"
     cursor-guides = "#ffa60033"
-    link-marker = "#00b3c8ff"
+    link-marker = "#008696c2"
     selection = "#ff808066"
     paste-preview = "#3399ff66"
 
     trail {
-      normal = "#7474749b"
+      normal = "#565656e0"
       cursor = "#00000056"
     }
     foreground {
@@ -207,15 +207,15 @@ level {
     transparent = no
     background = [
       "#d9d9d5ff"
-      "#6f000097"
-      "#ff290074"
+      "#99000073"
+      "#ff290047"
       "#ffb30080"
       "#7c652192"
-      "#709a0092"
+      "#6b930092"
       "#a6c41e63"
-      "#00a36c6f"
+      "#00ceee51"
       "#1c6fac83"
-      "#9c559fa6"
+      "#9f57a27b"
     ]
   }
 
