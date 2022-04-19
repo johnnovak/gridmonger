@@ -31,14 +31,14 @@ ui {
 
   dialog {
     corner-radius = 8
-    background = "#404040ff"
-    label = "#ffffffb3"
+    background = "#403c37ff"
+    label = "#fff2ddb7"
     warning = "#ffbe4eff"
     error = "#ff6464ff"
 
     title {
-      background = "#1a1a1aff"
-      text = "#d9d9d9ff"
+      background = "#221f1dff"
+      text = "#fff2dde0"
     }
     inner-border {
       color = "#00000000"
@@ -61,15 +61,15 @@ ui {
     corner-radius = 5
 
     background {
-      normal = "#ffffff80"
-      hover = "#ffffffa1"
+      normal = "#fff2dd85"
+      hover = "#fff2ddae"
       active = "#ff8b00ff"
-      disabled = "#ffffff33"
+      disabled = "#fff2dd24"
     }
     foreground {
       normal = "#000000b3"
       active = "#000000a7"
-      disabled = "#00000059"
+      disabled = "#3a3732ff"
     }
   }
 
@@ -134,7 +134,7 @@ ui {
 
 level {
   general {
-    background = "#897b6d00"
+    background = "#63594f00"
     line-width = normal
     cursor = "#ff8b00ff"
     cursor-guides = "#ffb30033"
@@ -289,8 +289,8 @@ pane {
 
   toolbar {
     button {
-      normal = "#ffe6b496"
-      hover = "#fffffcff"
+      normal = "#8d7b69ff"
+      hover = "#a08d79ff"
     }
   }
 }
