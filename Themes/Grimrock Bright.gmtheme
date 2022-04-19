@@ -276,7 +276,7 @@ level {
 
 pane {
   notes {
-    text = "#ffffffcc"
+    text = "#000000af"
     scroll-bar = "#d3c5b8ff"
     index = "#ffffffcc"
     index-background = [
@@ -289,8 +289,8 @@ pane {
 
   toolbar {
     button {
-      normal = "#ffffff42"
-      hover = "#ffffff66"
+      normal = "#ab916aff"
+      hover = "#c0a377ff"
     }
   }
 }
