@@ -628,23 +628,44 @@ proc drawCursorGuides(ctx) =
   alias(vg, ctx.vg)
 
   let
-    x = cellX(dp.cursorCol - dp.viewStartCol, dp)
-    y = cellY(dp.cursorRow - dp.viewStartRow, dp)
+    cursorViewCol = dp.cursorCol - dp.viewStartCol
+    cursorViewRow = dp.cursorRow - dp.viewStartRow
+    x = cellX(cursorViewCol, dp)
+    y = cellY(cursorViewRow, dp)
     w = dp.gridSize * dp.viewCols
     h = dp.gridSize * dp.viewRows
+
 
   vg.fillColor(lt.cursorGuidesColor)
   vg.strokeColor(lt.cursorGuidesColor)
   let sw = UltraThinStrokeWidth
   vg.strokeWidth(sw)
 
+  # vert
   vg.beginPath()
-  vg.rect(snap(x, sw), snap(dp.startY, sw), dp.gridSize, h)
+  vg.rect(x=snap(x, sw),
+          y=snap(dp.startY, sw),
+          w=dp.gridSize,
+          h=dp.gridSize * cursorViewRow)
+
+  vg.rect(x=snap(x, sw),
+          y=snap(dp.startY + dp.gridSize * (cursorViewRow+1), sw),
+          w=dp.gridSize,
+          h=dp.gridSize * (dp.viewRows - cursorViewRow-1))
   vg.fill()
   vg.stroke()
 
+  # horiz
   vg.beginPath()
-  vg.rect(snap(dp.startX, sw), snap(y, sw), w, dp.gridSize)
+  vg.rect(x=snap(dp.startX, sw),
+          y=snap(y, sw),
+          w=dp.gridSize * cursorViewCol,
+          h=dp.gridSize)
+
+  vg.rect(x=snap(dp.startX + dp.gridSize * (cursorViewCol+1), sw),
+          y=snap(y, sw),
+          w=dp.gridSize * (dp.viewCols - cursorViewCol-1),
+          h=dp.gridSize)
   vg.fill()
   vg.stroke()
 
