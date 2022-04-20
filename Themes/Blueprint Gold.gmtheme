@@ -262,10 +262,10 @@ level {
     button {
       normal = "#acb9d100"
       hover = "#acb9d133"
-      label = "#e8b20eff"
+      label = "#ffffffee"
     }
     item {
-      normal = "#e8b20eed"
+      normal = "#ffffffce"
       hover = "#102d5cff"
     }
     shadow {

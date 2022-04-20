@@ -1,7 +1,9 @@
 ui {
   window {
-    modified-flag = "#d2c3a978"
-
+    modified-flag {
+      normal = "#d2c3a978"
+      inactive = "#ffffff40"
+    }
     border {
       color = "#1b1b1bff"
     }
@@ -88,11 +90,11 @@ ui {
   status-bar {
     background = "#3e3428ff"
     text = "#d0beaaff"
-    warning = "#ffb300ff"
+    warning = "#ffbe4eff"
     coordinates = "#ad9964eb"
 
     command {
-      background = "#b2852eff"
+      background = "#9a793aff"
       text = "#3e3428ff"
     }
 
@@ -135,14 +137,14 @@ level {
     background = "#a2843dff"
     line-width = normal
     cursor = "#ffa600ff"
-    cursor-guides = "#e8a42672"
-    link-marker = "#7a592099"
-    selection = "#ff80807a"
-    paste-preview = "#3399ff73"
+    cursor-guides = "#ffa60044"
+    link-marker = "#00b3c8ff"
+    selection = "#ff858591"
+    paste-preview = "#6ab4ff8e"
 
     trail {
-      normal = "#4d1c3457"
-      cursor = "#4d1c3457"
+      normal = "#452b3857"
+      cursor = "#5039446e"
     }
     foreground {
       normal {
@@ -155,7 +157,7 @@ level {
       }
     }
     coordinates {
-      normal = "#00000066"
+      normal = "#0000005d"
       highlight = "#000000cc"
     }
     region-border {
@@ -289,7 +291,7 @@ pane {
   toolbar {
     button {
       normal = "#d8bd9479"
-      hover = "#d8bd94d3"
+      hover = "#d8bd94cd"
     }
   }
 }

@@ -134,7 +134,7 @@ ui {
 
 level {
   general {
-    background = "#9f845400"
+    background = "#62626200"
     line-width = normal
     cursor = "#ffb300ff"
     cursor-guides = "#ffb30033"
@@ -276,7 +276,7 @@ level {
 
 pane {
   notes {
-    text = "#000000af"
+    text = "#2d2a2aff"
     scroll-bar = "#00000000"
     index = "#ffffffff"
     index-background = [
@@ -289,8 +289,8 @@ pane {
 
   toolbar {
     button {
-      normal = "#ba9f5eff"
-      hover = "#cbb06fff"
+      normal = "#ffe1af78"
+      hover = "#ffe1afbe"
     }
   }
 }
