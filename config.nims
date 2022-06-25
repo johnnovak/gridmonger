@@ -67,6 +67,8 @@ task packageWinPortable, "create Windows portable package":
 
 
 task packageMac, "create Mac app bundle":
+  stripTask()
+
   let appBundleDir = "dist/Gridmonger.app"
   let contentsDir = appBundleDir / "Contents"
   let macOsDir = contentsDir / "MacOS"
