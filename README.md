@@ -6,7 +6,9 @@
 
 [https://gridmonger.johnnovak.net/](https://gridmonger.johnnovak.net/)
 
-## Dependencies
+## Build instructions
+
+### Dependencies
 
 * [koi](https://github.com/johnnovak/koi)
 * [nim-glfw](https://github.com/johnnovak/nim-glfw) (`gridmonger` branch)
@@ -15,7 +17,18 @@
 * [nim-riff](https://github.com/johnnovak/nim-riff)
 * [winim](https://github.com/khchen/winim)
 
-## Compiling
+You can install most of the dependencies with [Nimble](https://github.com/nim-lang/nimble):
+
+```
+nimble install nanovg osdialog riff winim
+```
+
+For `koi` and `nim-glfw`, clone their Git repositories, check out the
+`gridmonger` branch in `koi`, then install both with `nimble develop` for
+local development.
+
+
+### Compiling
 
 Debug build (debug logging enabled, file dialogs disabled on Windows ):
 
@@ -29,7 +42,7 @@ Release build:
 nim release
 ```
 
-## Packaging
+### Packaging
 
 Run `nim release` first to create a release build.
 
