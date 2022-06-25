@@ -73,7 +73,7 @@ nim packageWinPortable
 
 Run `nim release` first to create a release build.
 
-To create macOS application bundle:
+To create the macOS application bundle:
 
 ```
 nim packageMac
