@@ -1,17 +1,15 @@
 <img src="extras/logo/logo-big-bw.png" width="100%" alt="Gridmonger" />
 
-<p align="center"><em>Your trusty old-school cRPG companion</em></p>
-
-<p align="center"><b>Work in progress, not ready for public use yet!</b></p>
+<p align="center"><em>Your trusty old-school cRPG mapping companion</em></p>
 
 ## Dependencies
 
-* koi
-* nim-glfw (`gridmonger` branch)
-* nim-nanovg
-* nim-osdialog
-* nim-riff
-* winim
+* [koi](https://github.com/johnn)
+* [nim-glfw](https://github.com/johnnovak/nim-glfw) (`gridmonger` branch)
+* [nim-nanovg](https://github.com/johnnovak/nim-nanovg/)
+* [nim-osdialog](https://github.com/johnnovak/nim-osdialog)
+* [nim-riff](https://github.com/johnnovak/nim-riff)
+* [winim](https://github.com/khchen/winim)
 
 ## Compiling
 
@@ -27,18 +25,21 @@ Release build:
 nim release
 ```
 
-## Packacing
+## Packaging
 
-Create 32/64-bit Windows installers (required `makensis.exe` in the path):
+Run `nim release` first to create a release build.
+
+To create 32/64-bit Windows installers (requires `makensis.exe` on the path):
 
 ```
 nim packageWin32
 nim packageWin32Portable
+
 nim packageWin64
 nim packageWin64Portable
 ```
 
-Create Mac OS X application bundle:
+To create Mac OS X application bundle:
 
 ```
 nim packageMac
