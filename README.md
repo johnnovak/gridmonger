@@ -4,7 +4,7 @@
 
 ## Dependencies
 
-* [koi](https://github.com/johnn)
+* [koi](https://github.com/johnnovak/koi)
 * [nim-glfw](https://github.com/johnnovak/nim-glfw) (`gridmonger` branch)
 * [nim-nanovg](https://github.com/johnnovak/nim-nanovg/)
 * [nim-osdialog](https://github.com/johnnovak/nim-osdialog)
