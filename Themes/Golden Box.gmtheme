@@ -229,10 +229,10 @@ level {
     background-shape = circle
     index = "#ffffffaf"
     index-background = [
-      "#5c452cb7"
-      "#9f4531ff"
-      "#1b6f9dfc"
-      "#466c3cff"
+      "#735323ff"
+      "#bf462bff"
+      "#1573a7fc"
+      "#427834ff"
       "#443823f0"
     ]
 

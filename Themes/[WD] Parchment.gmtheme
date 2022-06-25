@@ -232,7 +232,7 @@ level {
       "#cc6600ff"
       "#c88720ff"
       "#78822aff"
-      "#765e1cff"
+      "#82671fff"
     ]
 
     tooltip {
@@ -277,7 +277,7 @@ level {
 pane {
   notes {
     text = "#00000099"
-    scroll-bar = "#00000000"
+    scroll-bar = "#715f2cff"
     index = "#ffffffb3"
     index-background = [
       "#ba5400ff"
@@ -290,7 +290,7 @@ pane {
   toolbar {
     button {
       normal = "#ffffff33"
-      hover = "#ffffff4f"
+      hover = "#ffffff65"
     }
   }
 }

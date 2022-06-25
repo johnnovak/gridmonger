@@ -290,7 +290,7 @@ pane {
   toolbar {
     button {
       normal = "#353c44ff"
-      hover = "#495058ff"
+      hover = "#505860ff"
     }
   }
 }

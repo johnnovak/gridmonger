@@ -227,12 +227,12 @@ level {
 
     comment = "#ff3300cc"
     background-shape = circle
-    index = "#ffffffff"
+    index = "#ffffffd9"
     index-background = [
-      "#fd4948ff"
-      "#32b6e5ff"
-      "#a0a2a2ff"
-      "#4c4e4eff"
+      "#cc6600ff"
+      "#c3971fff"
+      "#78822aff"
+      "#765e1cff"
     ]
 
     tooltip {

@@ -229,10 +229,10 @@ level {
     background-shape = circle
     index = "#ffffffff"
     index-background = [
-      "#fd4948ff"
-      "#32b6e5ff"
-      "#a0a2a2ff"
-      "#4c4e4eff"
+      "#d36900ff"
+      "#c3971fff"
+      "#899818ff"
+      "#765e1cff"
     ]
 
     tooltip {

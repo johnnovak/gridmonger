@@ -1,7 +1,9 @@
 ui {
   window {
-    modified-flag = "#d2c3a978"
-
+    modified-flag {
+      normal = "#d2c3a978"
+      inactive = "#ffffff38"
+    }
     border {
       color = "#1b1b1bff"
     }
@@ -288,8 +290,8 @@ pane {
 
   toolbar {
     button {
-      normal = "#d8bd9479"
-      hover = "#d8bd94d3"
+      normal = "#baa064ff"
+      hover = "#d4bb7eff"
     }
   }
 }

@@ -289,8 +289,8 @@ pane {
 
   toolbar {
     button {
-      normal = "#e6e6e6ff"
-      hover = "#ffffffff"
+      normal = "#b0b0b0ff"
+      hover = "#e0e0e0ff"
     }
   }
 }

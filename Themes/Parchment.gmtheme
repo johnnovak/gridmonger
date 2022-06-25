@@ -233,7 +233,7 @@ level {
       "#cc6600ff"
       "#c88720ff"
       "#78822aff"
-      "#765e1cff"
+      "#82671fff"
     ]
 
     tooltip {
@@ -291,7 +291,7 @@ pane {
   toolbar {
     button {
       normal = "#ffffff33"
-      hover = "#ffffff4f"
+      hover = "#ffffff65"
     }
   }
 }

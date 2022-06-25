@@ -231,8 +231,8 @@ level {
     index-background = [
       "#fd4948ff"
       "#32b6e5ff"
-      "#a0a2a2ff"
-      "#4c4e4eff"
+      "#4d8b41ff"
+      "#876b20ff"
     ]
 
     tooltip {

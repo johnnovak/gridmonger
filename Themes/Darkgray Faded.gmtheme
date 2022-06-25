@@ -229,10 +229,10 @@ level {
     background-shape = circle
     index = "#ffffffcc"
     index-background = [
-      "#0e828aff"
-      "#5a63abff"
-      "#a55986ff"
-      "#947d09ff"
+      "#0e858dff"
+      "#5c69ceff"
+      "#b94e8dff"
+      "#8a7408ff"
     ]
 
     tooltip {
@@ -290,7 +290,7 @@ pane {
   toolbar {
     button {
       normal = "#353c44ff"
-      hover = "#495058ff"
+      hover = "#505860ff"
     }
   }
 }

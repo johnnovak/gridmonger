@@ -230,9 +230,9 @@ level {
     index = "#ffffffff"
     index-background = [
       "#fd4948ff"
-      "#32b6e5ff"
-      "#a0a2a2ff"
-      "#4c4e4eff"
+      "#ff9c6aff"
+      "#00b3c8ff"
+      "#13837fff"
     ]
 
     tooltip {
@@ -289,8 +289,8 @@ pane {
 
   toolbar {
     button {
-      normal = "#f2f2eeff"
-      hover = "#fffffcff"
+      normal = "#eeeeeeff"
+      hover = "#dadadaff"
     }
   }
 }

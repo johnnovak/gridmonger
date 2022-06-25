@@ -227,12 +227,12 @@ level {
 
     comment = "#ff3300cc"
     background-shape = circle
-    index = "#ffffffff"
+    index = "#ffffffe8"
     index-background = [
       "#fd4948ff"
       "#32b6e5ff"
-      "#a0a2a2ff"
-      "#4c4e4eff"
+      "#4d8b41ff"
+      "#876b20ff"
     ]
 
     tooltip {
@@ -290,7 +290,7 @@ pane {
   toolbar {
     button {
       normal = "#8d7b69ff"
-      hover = "#a08d79ff"
+      hover = "#ad9983ff"
     }
   }
 }

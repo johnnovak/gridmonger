@@ -9,7 +9,7 @@ ui {
     }
     background {
       color = "#584e44ff"
-      image = ""
+      image = llh
     }
     title {
       background {
@@ -231,8 +231,8 @@ level {
     index-background = [
       "#fd4948ff"
       "#32b6e5ff"
-      "#a0a2a2ff"
-      "#4c4e4eff"
+      "#4d8b41ff"
+      "#876b20ff"
     ]
 
     tooltip {
@@ -290,7 +290,7 @@ pane {
   toolbar {
     button {
       normal = "#887969ff"
-      hover = "#9f8e7bff"
+      hover = "#a4927fff"
     }
   }
 }
