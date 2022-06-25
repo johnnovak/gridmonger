@@ -56,6 +56,9 @@ nim packageWin64
 nim packageWin64Portable
 ```
 
+You'll need to use the correct 32/64-bit Nim compiler & GCC toolchain to
+compile the 32 and 64 versions, respectively.
+
 To create Mac OS X application bundle:
 
 ```
