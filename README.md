@@ -8,6 +8,8 @@
 
 ## Build instructions
 
+Requires [Nim](https://nim-lang.org/) 1.6.6+
+
 ### Dependencies
 
 * [koi](https://github.com/johnnovak/koi)
