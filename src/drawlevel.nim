@@ -632,9 +632,6 @@ proc drawCursorGuides(ctx) =
     cursorViewRow = dp.cursorRow - dp.viewStartRow
     x = cellX(cursorViewCol, dp)
     y = cellY(cursorViewRow, dp)
-    w = dp.gridSize * dp.viewCols
-    h = dp.gridSize * dp.viewRows
-
 
   vg.fillColor(lt.cursorGuidesColor)
   vg.strokeColor(lt.cursorGuidesColor)
