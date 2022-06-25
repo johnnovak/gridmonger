@@ -44,9 +44,9 @@ nim release
 
 ### Packaging
 
-#### Windows
-
 Run `nim release` first to create a release build.
+
+#### Windows
 
 To create 32/64-bit Windows installers (requires `makensis.exe` on the path):
 
@@ -62,8 +62,6 @@ You'll need to use the correct 32/64-bit Nim compiler & GCC toolchain to
 compile the 32 and 64 versions, respectively.
 
 #### macOS
-
-Run `nim release` first to create a release build.
 
 To create macOS application bundle:
 
