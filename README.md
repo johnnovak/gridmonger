@@ -63,6 +63,8 @@ compile the 32 and 64 versions, respectively.
 
 #### macOS
 
+Run `nim release` first to create a release build.
+
 To create macOS application bundle:
 
 ```
