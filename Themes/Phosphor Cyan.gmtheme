@@ -149,11 +149,11 @@ level {
     foreground {
       normal {
         normal = "#00d0e0ff"
-        cursor = "#000800ff"
+        cursor = "#080002c1"
       }
       light {
         normal = "#005f66ff"
-        cursor = "#0008005c"
+        cursor = "#0008005e"
       }
     }
     coordinates {
@@ -207,38 +207,38 @@ level {
     transparent = no
     background = [
       "#000708ff"
-      "#335ca242"
-      "#3d8be750"
-      "#6c39ac42"
-      "#895fe94c"
-      "#97006142"
-      "#d9289e48"
+      "#97006159"
+      "#d9289e70"
+      "#895fe981"
+      "#6c39ac5d"
       "#308d9a37"
-      "#36b8a649"
-      "#00000000"
+      "#36b8a661"
+      "#3d8be786"
+      "#335ca257"
+      "#282828ff"
     ]
   }
 
   note {
     marker {
       normal = "#00e6f7ff"
-      cursor = "#001719b8"
+      cursor = "#004b36ff"
     }
 
     comment = "#ff3300b3"
     background-shape = circle
     index = "#000000f2"
     index-background = [
-      "#00cc7fff"
+      "#00dbdfff"
       "#d53765ff"
       "#9dcc00ff"
       "#7b4ecfff"
     ]
 
     tooltip {
-      background = "#00090aff"
+      background = "#001112ff"
       text = "#8ee2e8ff"
-      corner-radius = 5
+      corner-radius = 3
 
       shadow {
         color = "#00000064"
@@ -280,10 +280,10 @@ pane {
     scroll-bar = "#00b7c5ff"
     index = "#000000f2"
     index-background = [
+      "#00dbdfff"
+      "#d53765ff"
       "#9dcc00ff"
-      "#397500ff"
-      "#cc8000ff"
-      "#00000000"
+      "#7b4ecfff"
     ]
   }
 

@@ -149,7 +149,7 @@ level {
     foreground {
       normal {
         normal = "#e0003fff"
-        cursor = "#080002ff"
+        cursor = "#080002bc"
       }
       light {
         normal = "#64001dff"
@@ -207,15 +207,15 @@ level {
     transparent = no
     background = [
       "#080002ff"
-      "#335ca242"
-      "#3d8be750"
-      "#6c39ac42"
-      "#895fe94c"
-      "#97006142"
-      "#d9289e48"
-      "#308d9a37"
-      "#36b8a649"
-      "#00000000"
+      "#71000092"
+      "#ff68003e"
+      "#ffb30043"
+      "#32290dbc"
+      "#6d900051"
+      "#bde81243"
+      "#00a15b4a"
+      "#0067b352"
+      "#9600b452"
     ]
   }
 
@@ -232,13 +232,13 @@ level {
       "#ff0049ff"
       "#dc7200ff"
       "#a2017cff"
-      "#933dd0ff"
+      "#36b95dff"
     ]
 
     tooltip {
-      background = "#443823f0"
-      text = "#e6cb99fa"
-      corner-radius = 5
+      background = "#1a030aff"
+      text = "#fc5382ff"
+      corner-radius = 3
 
       shadow {
         color = "#00000064"
@@ -280,10 +280,10 @@ pane {
     scroll-bar = "#a4003080"
     index = "#000000f2"
     index-background = [
-      "#9dcc00ff"
-      "#397500ff"
-      "#cc8000ff"
-      "#b65700ff"
+      "#ff0049ff"
+      "#dc7200ff"
+      "#a2017cff"
+      "#36b95dff"
     ]
   }
 

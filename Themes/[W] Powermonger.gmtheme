@@ -236,8 +236,8 @@ level {
     ]
 
     tooltip {
-      background = "#000000e8"
-      text = "#ffffffe6"
+      background = "#272622ff"
+      text = "#f3e1bffa"
       corner-radius = 5
 
       shadow {
@@ -281,9 +281,9 @@ pane {
     index = "#ffffffff"
     index-background = [
       "#fd4948ff"
-      "#1e98c7ff"
-      "#878989ff"
-      "#4c4e4eff"
+      "#32b6e5ff"
+      "#4d8b41ff"
+      "#876b20ff"
     ]
   }
 

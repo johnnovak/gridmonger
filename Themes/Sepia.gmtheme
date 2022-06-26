@@ -207,15 +207,15 @@ level {
     transparent = no
     background = [
       "#e7e7e4ff"
-      "#335ca242"
-      "#3d8be750"
-      "#6c39ac42"
-      "#895fe94c"
-      "#97006142"
-      "#d9289e48"
-      "#308d9a37"
-      "#36b8a649"
-      "#00000000"
+      "#4010108c"
+      "#b44f3c7e"
+      "#b08f4a6e"
+      "#897844b1"
+      "#708238ad"
+      "#9bae3e86"
+      "#3f7e6253"
+      "#205b4887"
+      "#6e334e89"
     ]
   }
 
@@ -229,14 +229,14 @@ level {
     background-shape = circle
     index = "#00000099"
     index-background = [
-      "#fd7c7cff"
-      "#f7a265ff"
-      "#ebd746ff"
-      "#aab566ff"
+      "#fd7979ff"
+      "#ffb580ff"
+      "#ebd21cff"
+      "#aac600ff"
     ]
 
     tooltip {
-      background = "#000000e8"
+      background = "#3f3f38ff"
       text = "#ffffffe6"
       corner-radius = 5
 
@@ -280,10 +280,10 @@ pane {
     scroll-bar = "#665d56ff"
     index = "#00000099"
     index-background = [
-      "#da9091ff"
-      "#b1a195ff"
-      "#da9740ff"
-      "#a5ae69ff"
+      "#fd7979ff"
+      "#ffb580ff"
+      "#ebd21cff"
+      "#aac600ff"
     ]
   }
 

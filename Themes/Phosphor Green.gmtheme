@@ -149,7 +149,7 @@ level {
     foreground {
       normal {
         normal = "#00e000ff"
-        cursor = "#000000bd"
+        cursor = "#000000a8"
       }
       light {
         normal = "#006400ff"
@@ -207,38 +207,38 @@ level {
     transparent = no
     background = [
       "#000800ff"
-      "#335ca242"
-      "#3d8be750"
-      "#6c39ac42"
-      "#895fe94c"
-      "#97006142"
-      "#d9289e48"
-      "#308d9a37"
-      "#36b8a649"
-      "#00000000"
+      "#97006178"
+      "#d9289e88"
+      "#895fe989"
+      "#6c39ac5d"
+      "#308d9a58"
+      "#36b8a668"
+      "#3d8be786"
+      "#335ca257"
+      "#2b2b2bff"
     ]
   }
 
   note {
     marker {
-      normal = "#00000000"
-      cursor = "#00000000"
+      normal = "#9dcc00ff"
+      cursor = "#000000a8"
     }
 
     comment = "#ff3300b3"
     background-shape = circle
     index = "#000000f2"
     index-background = [
-      "#9dcc00ff"
-      "#397500ff"
+      "#f33200ff"
+      "#5bba00ff"
       "#cc8000ff"
-      "#b65700ff"
+      "#00bda8ff"
     ]
 
     tooltip {
-      background = "#443823f0"
-      text = "#e6cb99fa"
-      corner-radius = 5
+      background = "#001400ff"
+      text = "#54ff54ff"
+      corner-radius = 3
 
       shadow {
         color = "#00000064"
@@ -280,10 +280,10 @@ pane {
     scroll-bar = "#00a500ff"
     index = "#000000f2"
     index-background = [
-      "#9dcc00ff"
-      "#397500ff"
+      "#f33200ff"
+      "#5bba00ff"
       "#cc8000ff"
-      "#b65700ff"
+      "#00bda8ff"
     ]
   }
 

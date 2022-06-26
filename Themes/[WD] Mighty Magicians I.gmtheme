@@ -229,15 +229,15 @@ level {
     background-shape = circle
     index = "#ffffffff"
     index-background = [
-      "#d36900ff"
-      "#c3971fff"
+      "#cc6600ff"
+      "#c19500ff"
       "#899818ff"
       "#765e1cff"
     ]
 
     tooltip {
-      background = "#000000e8"
-      text = "#ffffffe6"
+      background = "#3a3428ff"
+      text = "#e6cb99fa"
       corner-radius = 5
 
       shadow {
@@ -280,10 +280,10 @@ pane {
     scroll-bar = "#00000000"
     index = "#ffffffff"
     index-background = [
-      "#fd4948ff"
-      "#1e98c7ff"
-      "#878989ff"
-      "#4c4e4eff"
+      "#d36900ff"
+      "#9f7b00ff"
+      "#78822aff"
+      "#765e1cff"
     ]
   }
 

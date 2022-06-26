@@ -236,8 +236,8 @@ level {
     ]
 
     tooltip {
-      background = "#121212e8"
-      text = "#ffffffe9"
+      background = "#171717ff"
+      text = "#f5f5f5ff"
       corner-radius = 5
 
       shadow {

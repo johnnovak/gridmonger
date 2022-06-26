@@ -149,7 +149,7 @@ level {
     foreground {
       normal {
         normal = "#d9e5ffff"
-        cursor = "#123e87ff"
+        cursor = "#0b2550ba"
       }
       light {
         normal = "#d9e4ff46"
@@ -222,7 +222,7 @@ level {
   note {
     marker {
       normal = "#a2acb9ff"
-      cursor = "#123e87ff"
+      cursor = "#0b2550ad"
     }
 
     comment = "#ff3300cc"
@@ -232,12 +232,12 @@ level {
       "#d5346cff"
       "#1a87cdff"
       "#9b6b55ff"
-      "#546ff7ff"
+      "#139739ff"
     ]
 
     tooltip {
-      background = "#000000e8"
-      text = "#ffffffe6"
+      background = "#071733ff"
+      text = "#f5fbffff"
       corner-radius = 5
 
       shadow {
@@ -278,12 +278,12 @@ pane {
   notes {
     text = "#ffffffe6"
     scroll-bar = "#bebebeff"
-    index = "#ffffffff"
+    index = "#ffffffe6"
     index-background = [
-      "#d2336aff"
-      "#238bcdff"
-      "#946e5cff"
-      "#202864ff"
+      "#d5346cff"
+      "#1a87cdff"
+      "#9b6b55ff"
+      "#139739ff"
     ]
   }
 

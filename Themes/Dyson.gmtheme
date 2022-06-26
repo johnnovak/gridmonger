@@ -230,13 +230,13 @@ level {
     index = "#ffffffff"
     index-background = [
       "#fd4948ff"
-      "#ff9c6aff"
+      "#eb9062ff"
       "#00b3c8ff"
       "#13837fff"
     ]
 
     tooltip {
-      background = "#0a0a0ae8"
+      background = "#323232ff"
       text = "#ffffffe6"
       corner-radius = 5
 
@@ -281,9 +281,9 @@ pane {
     index = "#ffffffff"
     index-background = [
       "#fd4948ff"
-      "#1e98c7ff"
-      "#878989ff"
-      "#4c4e4eff"
+      "#eb9062ff"
+      "#00b3c8ff"
+      "#13837fff"
     ]
   }
 

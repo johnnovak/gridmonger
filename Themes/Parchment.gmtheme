@@ -237,7 +237,7 @@ level {
     ]
 
     tooltip {
-      background = "#443823e4"
+      background = "#3a3428ff"
       text = "#e6cb99fa"
       corner-radius = 5
 
@@ -279,9 +279,9 @@ pane {
   notes {
     text = "#00000099"
     scroll-bar = "#715f2cff"
-    index = "#ffffffb3"
+    index = "#ffffffd9"
     index-background = [
-      "#ba5400ff"
+      "#c06000ff"
       "#b4730fff"
       "#78822aff"
       "#765e1cff"
