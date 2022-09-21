@@ -161,8 +161,8 @@ level {
       highlight = "#ccccccff"
     }
     region-border {
-      normal = "#bf601cff"
-      empty = "#b75c1b8a"
+      normal = "#9c690bff"
+      empty = "#9c690b7d"
     }
   }
 
