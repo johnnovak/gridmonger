@@ -6,7 +6,6 @@ TODO
 ====
 
   - OS X:
-    - finish OS X package
     - gridmonger document icon
 
 
@@ -14,6 +13,8 @@ FEATURE & ENHANCEMENT IDEAS
 ===========================
 
   - new features:
+	- add support for teleport destinations with multiple sources
+
     - export map as PNG
     - full screen borderless
     - legend / locations / notes window
