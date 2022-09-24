@@ -920,8 +920,8 @@ let g_appShortcuts = {
   scDrawWall:                  @[mkKeyShortcut(keyW,      {})],
   scDrawSpecialWall:           @[mkKeyShortcut(keyR,      {})],
 
-  scDrawWallRepeat:            @[mkKeyShortcut(keyLeftShift,  {mkShift}),
-                                 mkKeyShortcut(keyRightShift, {mkShift})],
+  scDrawWallRepeat:            @[mkKeyShortcut(keyLeftShift,  {}),
+                                 mkKeyShortcut(keyRightShift, {})],
 
   scPreviousSpecialWall:       @[mkKeyShortcut(keyLeftBracket,  {})],
   scNextSpecialWall:           @[mkKeyShortcut(keyRightBracket, {})],
@@ -1704,12 +1704,13 @@ proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
 # }}}
 # {{{ isShortcutDown()
 proc isShortcutDown(ev: Event, shortcuts: set[AppShortcut],
-                    repeat=false): bool =
+                    repeat=false, ignoreMods=false): bool =
   let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  checkShortcut(ev, shortcuts, actions)
+  checkShortcut(ev, shortcuts, actions, ignoreMods)
 
-proc isShortcutDown(ev: Event, shortcut: AppShortcut, repeat=false): bool =
-  isShortcutDown(ev, {shortcut}, repeat)
+proc isShortcutDown(ev: Event, shortcut: AppShortcut,
+                    repeat=false, ignoreMods=false): bool =
+  isShortcutDown(ev, {shortcut}, repeat, ignoreMods)
 
 # }}}
 # {{{ isShortcutUp()
@@ -6014,7 +6015,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isShortcutDown(scDrawWallRepeat):
+      elif ke.isShortcutDown(scDrawWallRepeat, ignoreMods=true):
         if ui.drawWallRepeatAction == dwaNone:
           setWarningMessage("Set or clear wall in current cell first",
                             keepStatusMessage=true, a=a)
@@ -6085,7 +6086,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isShortcutDown(scDrawWallRepeat):
+      elif ke.isShortcutDown(scDrawWallRepeat, ignoreMods=true):
         if ui.drawWallRepeatAction == dwaNone:
           setWarningMessage("Set or clear wall in current cell first",
                             keepStatusMessage=true, a=a)
