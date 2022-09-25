@@ -1,9 +1,10 @@
 # Changelog
 
-## v0.9.1 - 2020-09-22
+## v0.91.0 - 2022-09-25
 
-- FIX: Fix "Draw Wall Repeat" modifier handling on Linux
+- Fix "Draw Wall Repeat" modifier handling on Linux
+- Add preferences option to enable movement wrap-around
 
-## v0.9.0 - 2020-09-21
+## v0.9.0 - 2022-09-21
 
 - First public release

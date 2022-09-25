@@ -199,6 +199,8 @@ type
     autosave*:          bool
     autosaveFreqMins:   Natural
 
+    movementWrapAround: bool
+
 
   Paths = object
     appDir:             string
@@ -430,13 +432,17 @@ type
     activeTab:          Natural
     activateFirstTextField: bool
 
+    # Startup tab
     showSplash:         bool
     autoCloseSplash:    bool
     splashTimeoutSecs:  string
     loadLastMap:        bool
-    vsync:              bool
+
+    # General tab
     autosave:           bool
     autosaveFreqMins:   string
+    movementWrapAround: bool
+    vsync:              bool
 
 
   SaveDiscardMapDialogParams = object
@@ -1308,6 +1314,8 @@ proc setCursor(cur: Location; a) =
 
 # }}}
 # {{{ stepCursor()
+proc moveCursorTo(loc: Location; a)
+
 proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   alias(dp, a.ui.drawLevelParams)
 
@@ -1315,17 +1323,48 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   let sm = ScrollMargin
   var cur = cur
 
+  let wrapAround = a.prefs.movementWrapAround
+
+  template stepSE(curPos: Natural, maxPos: Natural) =
+    let newPos = curPos + steps
+    if newPos > maxPos:
+      if wrapAround:
+        curPos = newPos
+        while true:
+          curPos -= (maxPos + 1)
+          if curPos <= maxPos: break
+        moveCursorTo(cur, a)
+      else:
+        curPos = maxPos
+    else:
+      curPos = newPos
+
+  template stepNW(curPos: Natural, maxPos: Natural) =
+    let newPos = curPos - steps
+    let minPos = 0
+    if newPos < minPos:
+      if wrapAround:
+        var pos = newPos
+        while true:
+          pos += (maxPos + 1)
+          if pos >= minPos: break
+        curPos = pos
+        moveCursorTo(cur, a)
+    else:
+      curPos = newPos
+
   case dir:
   of dirE:
-    cur.col = min(cur.col + steps, l.cols-1)
+    stepSE(cur.col, maxPos=(l.cols - 1))
+
     let viewCol = viewCol(cur.col, a)
     let viewColMax = dp.viewCols-1 - sm
     if viewCol > viewColMax:
       dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol +
                                                         (viewCol - viewColMax))
-
   of dirS:
-    cur.row = min(cur.row + steps, l.rows-1)
+    stepSE(cur.row, maxPos=(l.rows - 1))
+
     let viewRow = viewRow(cur.row, a)
     let viewRowMax = dp.viewRows-1 - sm
     if viewRow > viewRowMax:
@@ -1333,13 +1372,15 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
                                                         (viewRow - viewRowMax))
 
   of dirW:
-    cur.col = max(cur.col - steps, 0)
+    stepNW(cur.col, maxPos=(l.cols - 1))
+
     let viewCol = viewCol(cur.col, a)
     if viewCol < sm:
       dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
 
   of dirN:
-    cur.row = max(cur.row - steps, 0)
+    stepNW(cur.row, maxPos=(l.rows - 1))
+
     let viewRow = viewRow(cur.row, a)
     if viewRow < sm:
       dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
@@ -2241,6 +2282,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
   cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
+  cfg.set(p & "movement-wrap-around",           a.prefs.movementWrapAround)
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
 
   p = "last-state."
@@ -2971,13 +3013,15 @@ proc aboutDialog(a) =
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialogs.preferencesDialog)
 
-  dlg.showSplash        = a.prefs.showSplash
-  dlg.autoCloseSplash   = a.prefs.autoCloseSplash
-  dlg.splashTimeoutSecs = $a.prefs.splashTimeoutSecs
-  dlg.loadLastMap       = a.prefs.loadLastMap
-  dlg.vsync             = a.prefs.vsync
-  dlg.autosave          = a.prefs.autosave
-  dlg.autosaveFreqMins  = $a.prefs.autosaveFreqMins
+  dlg.showSplash         = a.prefs.showSplash
+  dlg.autoCloseSplash    = a.prefs.autoCloseSplash
+  dlg.splashTimeoutSecs  = $a.prefs.splashTimeoutSecs
+  dlg.loadLastMap        = a.prefs.loadLastMap
+
+  dlg.autosave           = a.prefs.autosave
+  dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
+  dlg.movementWrapAround = a.prefs.movementWrapAround
+  dlg.vsync              = a.prefs.vsync
 
   a.dialogs.activeDialog = dlgPreferencesDialog
 
@@ -2985,7 +3029,7 @@ proc openPreferencesDialog(a) =
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
     DlgWidth = 370.0
-    DlgHeight = 296.0
+    DlgHeight = 306.0
     TabWidth = 180.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
@@ -3080,6 +3124,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         ).some,
         style = a.theme.textFieldStyle
       )
+    group:
+      koi.label("Movement wrap-around", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.movementWrapAround, style = a.theme.checkBoxStyle)
 
     group:
       koi.label("Enable vertical sync", style=a.theme.labelStyle)
@@ -3091,13 +3140,15 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 
   proc okAction(dlg: PreferencesDialogParams; a) =
-    a.prefs.showSplash        = dlg.showSplash
-    a.prefs.autoCloseSplash   = dlg.autoCloseSplash
-    a.prefs.splashTimeoutSecs = parseInt(dlg.splashTimeoutSecs).Natural
-    a.prefs.loadLastMap       = dlg.loadLastMap
-    a.prefs.vsync             = dlg.vsync
-    a.prefs.autosave          = dlg.autosave
-    a.prefs.autosaveFreqMins  = parseInt(dlg.autosaveFreqMins).Natural
+    a.prefs.showSplash         = dlg.showSplash
+    a.prefs.autoCloseSplash    = dlg.autoCloseSplash
+    a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
+    a.prefs.loadLastMap        = dlg.loadLastMap
+
+    a.prefs.autosave           = dlg.autosave
+    a.prefs.autosaveFreqMins   = parseInt(dlg.autosaveFreqMins).Natural
+    a.prefs.movementWrapAround = dlg.movementWrapAround
+    a.prefs.vsync              = dlg.vsync
 
     saveAppConfig(a)
     setSwapInterval(a)
@@ -8603,21 +8654,25 @@ proc initPreferences(cfg: HoconNode; a) =
   let prefs = cfg.getObjectOrEmpty("preferences")
 
   with a.prefs:
-    showSplash        = prefs.getBoolOrDefault("splash.show-at-startup", true)
+    showSplash         = prefs.getBoolOrDefault("splash.show-at-startup", true)
 
-    autoCloseSplash   = prefs.getBoolOrDefault("splash.auto-close", false)
+    autoCloseSplash    = prefs.getBoolOrDefault("splash.auto-close", false)
 
-    splashTimeoutSecs = prefs.getNaturalOrDefault(
-                          "splash.auto-close-timeout-secs", 3
-                        ).limit(SplashTimeoutSecsLimits)
+    splashTimeoutSecs  = prefs.getNaturalOrDefault(
+                           "splash.auto-close-timeout-secs", 3
+                         ).limit(SplashTimeoutSecsLimits)
 
-    loadLastMap       = prefs.getBoolOrDefault("load-last-map", true)
-    vsync             = prefs.getBoolOrDefault("video.vsync", true)
+    loadLastMap        = prefs.getBoolOrDefault("load-last-map", true)
 
-    autosave          = prefs.getBoolOrDefault("auto-save.enabled", true)
+    autosave           = prefs.getBoolOrDefault("auto-save.enabled", true)
 
-    autosaveFreqMins  = prefs.getNaturalOrDefault("auto-save.frequency-mins", 2)
-                             .limit(AutosaveFreqMinsLimits)
+    autosaveFreqMins   = prefs.getNaturalOrDefault(
+                           "auto-save.frequency-mins", 2
+                         ).limit(AutosaveFreqMinsLimits)
+
+    movementWrapAround = prefs.getBoolOrDefault("movement-wrap-around", false)
+
+    vsync              = prefs.getBoolOrDefault("video.vsync", true)
 
 # }}}
 # {{{ restoreUIStateFromConfig()
