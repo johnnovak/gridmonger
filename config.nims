@@ -77,7 +77,7 @@ task packageMac, "create Mac app bundle":
   let exeName = "Gridmonger"
   let distExePath = macOsDir / exeName
   let distName = "gridmonger-mac"
-  let version = "0.9"
+  let version = "0.91.0"
 
   rmDir appBundleDir
   mkDir contentsDir

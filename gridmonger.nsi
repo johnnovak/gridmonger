@@ -5,7 +5,7 @@
 !include Integration.nsh
 
 !define NAME          "Gridmonger"
-!define VERSION       "0.9"
+!define VERSION       "0.91.0"
 
 !define APP_EXE       "gridmonger.exe"
 !define UNINSTALL_EXE "uninstall.exe"
@@ -47,14 +47,14 @@ OutFile "gridmonger-${VERSION}-win${ARCH}-setup.exe"
 !endif
 
 VIAddVersionKey "ProductName" "${NAME}"
-VIAddVersionKey "ProductVersion" "0.9.0.0"
-VIAddVersionKey "LegalCopyright" "(c) John Novak 2019-2021"
+VIAddVersionKey "ProductVersion" "0.91.0.0"
+VIAddVersionKey "LegalCopyright" "(c) John Novak 2019-2022"
 VIAddVersionKey "FileDescription" "${NAME} installer"
-VIAddVersionKey "FileVersion" "0.9.0.0"
+VIAddVersionKey "FileVersion" "0.91.0.0"
 
-VIProductVersion 0.9.0.0
+VIProductVersion 0.91.0.0
 
-VIFileVersion 0.9.0.0
+VIFileVersion 0.91.0.0
 
 
 ;--------------------------------

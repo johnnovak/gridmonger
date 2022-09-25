@@ -10,7 +10,7 @@ import rect
 
 
 const
-  AppVersion* = "0.9"
+  AppVersion* = "0.91.0"
 
   BuildGitHash* = strutils.strip(staticExec("git rev-parse --short HEAD"))
 
