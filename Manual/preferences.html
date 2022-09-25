@@ -29,7 +29,11 @@
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maps-and-levels.html">Map &amp; level basics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moving-around.html">Moving around</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Preferences</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Preferences</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#startup-tab">Startup tab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#general-tab">General tab</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
@@ -60,26 +64,39 @@
   <div class="style7 big section" id="preferences">
 <h1>Preferences<a class="headerlink" href="#preferences" title="Permalink to this heading">¶</a></h1>
 <p>Before continuing with editing, let’s quickly have a look at the preferences
-settings.</p>
-<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">U</kbd></kbd> to bring up the preferences dialog. On the <strong>Startup</strong>
-tab you have the option to toggle the displaying of the splash screen, and to
+settings. Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">U</kbd></kbd> to bring up the preferences dialog.</p>
+<div class="section" id="startup-tab">
+<h2>Startup tab<a class="headerlink" href="#startup-tab" title="Permalink to this heading">¶</a></h2>
+<p>On the <strong>Startup</strong>
+tab you have the option to toggle the display of the splash screen, and to
 have it auto-closed after a set number of seconds.</p>
 <p>Another important setting is the <strong>Load last map</strong> option. This is enabled by
-default, so you can continue from where you left off after starting the
-program again.</p>
+default, so you can continue from where you left off in your next Gridmonger
+session.</p>
+</div>
+<div class="section" id="general-tab">
+<h2>General tab<a class="headerlink" href="#general-tab" title="Permalink to this heading">¶</a></h2>
 <p>On the <strong>General</strong> tab you will find the autosave settings. By default, the
 map gets automatically saved every two minutes. This is great in general, but
 you need to exercise some caution in order not to accidentally lose your work
-(e.g. by deleting some levels, then autosave kicks in, and then you quit the
-program, which won’t display a warning at this point because the changes have
-already been saved…) Also, if you’re going to experiment with the editing
-functions on the included example maps, it’s best to either turn autosave off,
-or create backup copies of the example maps first.</p>
+(e.g. by deleting some levels, after which autosave kicks in, then you
+quit the program, and this won’t display a warning at this point because the
+changes have already been saved…) Also, if you’re going to experiment with
+the editing functions on the included example maps, it’s best to either turn
+autosave off, or create backup copies of the example maps first.</p>
+<p>Some cunningly crafted dungeons feature maps that “wrap around” from one side
+to the other — you step off the edge of the map, and you’ll find yourself
+entering on the opposite side (e.g. the first level of <a class="reference external" href="https://en.wikipedia.org/wiki/Wizardry:_Proving_Grounds_of_the_Mad_Overlord">Wizardry: Proving Grounds of the Mad Overlord</a>,
+or the fourth spider-infested level of <a class="reference external" href="https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)">Eye of the Beholder</a>).
+You can enable this behaviour by ticking the <strong>Movement wrap-around</strong>
+checkbox. For consistency, this enables wrap-around cursor movement in all
+modes.</p>
 <p>Finally, you have the option to <strong>Enable vertical sync</strong>. The program does its
 drawing just like a game engine; it’s locked to your desktop refresh rate if
 vertical sync is on. Disabling it may increase the responsiveness of the UI,
 but at the cost of potentially much higher CPU consumption. Generally, you
 should leave it on.</p>
+</div>
 </div>
 
 
