@@ -9,6 +9,7 @@ import math
 import options
 import os
 import sequtils
+import sets
 import std/monotimes
 import streams
 import strformat
@@ -5847,9 +5848,10 @@ proc handleGlobalKeyEvents(a) =
 
 
       elif ke.isShortcutDown(scJumpToLinkedCell):
-        let otherLoc = map.getLinkedLocation(cur)
-        if otherLoc.isSome:
-          moveCursorTo(otherLoc.get, a)
+        let otherLocs = map.getLinkedLocations(cur)
+        if otherLocs.len > 0:
+          # TODO: Offer a choice if there's more than 1
+          moveCursorTo(otherLocs.first.get, a)
         else:
           setWarningMessage("Not a linked cell", a=a)
 

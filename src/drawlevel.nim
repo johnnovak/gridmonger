@@ -1,13 +1,14 @@
 import lenientops
 import math
 import options
+import sequtils
+import sets
 
 import glad/gl
 import koi
 import nanovg
 
 import annotations
-import bitable
 import cellgrid
 import common
 import icons
@@ -2241,7 +2242,7 @@ proc drawLinkMarkers(map: Map, level: Natural; ctx) =
     let destLoc = map.links.getByDest(loc)
 
     if (srcLoc.isSome  and not isSpecialLevelIndex(srcLoc.get.level)) or
-       (destLoc.isSome and not isSpecialLevelIndex(destLoc.get.level)):
+       (destLoc.isSome and destLoc.get.anyIt(not isSpecialLevelIndex(it.level))):
 
       let x = cellX(viewCol, dp)
       let y = cellY(viewRow, dp)

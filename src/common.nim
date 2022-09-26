@@ -1,3 +1,4 @@
+import sets
 import strformat
 import strutils
 import tables
@@ -5,7 +6,6 @@ import tables
 import koi
 import nanovg
 
-import bitable
 import rect
 
 
@@ -86,7 +86,11 @@ type
     sortedLevelIdxToLevelIdx*: Table[Natural, Natural]
 
 
-  Links* = BiTable[Location, Location]
+  Links* = object
+    # TODO: Maybe use a fixed size array instead of HashSet?
+    srcToDest*: Table[Location, Location]
+    destToSrcs*: Table[Location, HashSet[Location]]
+
 
   CoordinateOptions* = object
     origin*:                 CoordinateOrigin

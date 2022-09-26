@@ -290,7 +290,7 @@ proc readLinks_v1(rr; levels: seq[Level]): Links =
   debug(fmt"  numLinks: {numLinks}")
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
 
-  result = initBiTable[Location, Location](nextPowerOfTwo(numLinks))
+  result = initLinks(nextPowerOfTwo(numLinks))
 
   let maxLevelIndex = NumLevelsLimits.maxInt - 1
 
@@ -920,7 +920,7 @@ proc writeLinks_v1(rw; links: Links) =
   rw.write(links.len.uint16)
 
   var sortedKeys = collect(newSeqOfCap(links.len)):
-    for k in links.keys(): k
+    for k in links.sources: k
 
   sort(sortedKeys)
 
@@ -930,7 +930,7 @@ proc writeLinks_v1(rw; links: Links) =
     rw.write(loc.col.uint16)
 
   for src in sortedKeys:
-    let dest = links[src].get
+    let dest = links.getBySrc(src).get
     writeLocation(src)
     writeLocation(dest)
 

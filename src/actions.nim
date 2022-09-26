@@ -1,4 +1,5 @@
 import options
+import sets
 import strformat
 
 import koi/undomanager
@@ -56,7 +57,7 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
       rect.r1 + undoLevel.rows,
       rect.c1 + undoLevel.cols
     )
-    for src in m.links.filterByInRect(loc.level, delRect).keys:
+    for src in m.links.filterByInRect(loc.level, delRect).sources:
       m.links.delBySrc(src)
 
     m.links.addAll(oldLinks)
@@ -306,7 +307,12 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
       else:
         destFloor = if srcFloor == fStairsUp: fStairsDown else: fStairsUp
 
-    m.setFloor(dest, destFloor)
+    # Don't reset the floor if we are linking to an existing teleport
+    # destination. This allows for multiple teleport sources leading to the same
+    # destination. TODO: Do we want to allow this for other link sources?
+    if not (destFloor == fTeleportDestination and
+            m.getFloor(dest) == destFloor):
+      m.setFloor(dest, destFloor)
 
     m.links.set(src, dest)
     m.levels[dest.level].reindexNotes()
@@ -322,17 +328,19 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
 
   var oldLinks = initLinks()
 
-  var old = map.links.getBySrc(dest)
-  if old.isSome: oldLinks.set(dest, old.get)
+  var oldDest = map.links.getBySrc(dest)
+  if oldDest.isSome: oldLinks.set(dest, oldDest.get)
 
-  old = map.links.getByDest(dest)
-  if old.isSome: oldLinks.set(old.get, dest)
+  var oldSrcs = map.links.getByDest(dest)
+  if oldSrcs.isSome:
+    for oldSrc in oldSrcs.get: oldLinks.set(oldSrc, dest)
 
-  old = map.links.getBySrc(src)
-  if old.isSome: oldLinks.set(src, old.get)
+  oldDest = map.links.getBySrc(src)
+  if oldDest.isSome: oldLinks.set(src, oldDest.get)
 
-  old = map.links.getByDest(src)
-  if old.isSome: oldLinks.set(old.get, src)
+  oldSrcs = map.links.getByDest(src)
+  if oldSrcs.isSome:
+    for oldSrc in oldSrcs.get: oldLinks.set(oldSrc, src)
 
 
   let undoAction = proc (m: var Map): UndoStateData =
@@ -490,7 +498,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
   cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
                  "Cut selection", m):
 
-    for s in oldLinks.keys:
+    for s in oldLinks.sources:
       m.links.delBySrc(s)
 
     m.links.addAll(newLinks)
@@ -597,7 +605,7 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
             addLink = true
 
           if addLink and srcInside and destInside:
-            linksToAdd[src] = dest
+            linksToAdd.set(src, dest)
 
         # Delete paste buffer links
         for s in linksToDeleteBySrc:  m.links.delBySrc(s)
@@ -641,7 +649,7 @@ proc addNewLevel*(map; loc: Location,
     let level = m.levels.high
     m.delLevel(level)
 
-    for src in m.links.filterByLevel(level).keys:
+    for src in m.links.filterByLevel(level).sources:
       m.links.delBySrc(src)
 
     result = usd
@@ -670,7 +678,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
     # the "hole" created by the delete
     m.delLevel(loc.level)
 
-    for src in oldLinks.keys:
+    for src in oldLinks.sources:
       m.links.delBySrc(src)
 
     if adjustLinks:
@@ -750,7 +758,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
 
     # Adjust links
-    for src in oldLinks.keys: m.links.delBySrc(src)
+    for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
     # Adjut regions
@@ -777,7 +785,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel.deepCopy
 
-    for src in newLinks.keys: m.links.delBySrc(src)
+    for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
 
     m.levels[loc.level].regions = oldRegions
@@ -811,7 +819,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     m.levels[loc.level] = m.newLevelFrom(loc.level, cropRect)
 
     # Adjust links
-    for src in oldLinks.keys: m.links.delBySrc(src)
+    for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -828,7 +836,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel.deepCopy
 
-    for src in newLinks.keys: m.links.delBySrc(src)
+    for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
 
     m.levels[loc.level].regions = oldRegions
@@ -870,7 +878,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
     m.levels[loc.level] = l
 
-    for src in oldLinks.keys: m.links.delBySrc(src)
+    for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
     var usd = usd
@@ -885,7 +893,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = undoLevel.deepCopy
 
-    for src in newLinks.keys: m.links.delBySrc(src)
+    for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
 
     result = usd
