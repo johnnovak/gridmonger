@@ -1327,31 +1327,20 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
   template stepSE(curPos: Natural, maxPos: Natural) =
     let newPos = curPos + steps
-    if newPos > maxPos:
-      if wrapAround:
-        curPos = newPos
-        while true:
-          curPos -= (maxPos + 1)
-          if curPos <= maxPos: break
-        moveCursorTo(cur, a)
-      else:
-        curPos = maxPos
+    if newPos > maxPos and wrapAround:
+      curPos = floorMod(newPos, maxPos + 1)
+      moveCursorTo(cur, a)
     else:
-      curPos = newPos
+      curPos = min(newPos, maxPos)
 
   template stepNW(curPos: Natural, maxPos: Natural) =
     let newPos = curPos - steps
     let minPos = 0
-    if newPos < minPos:
-      if wrapAround:
-        var pos = newPos
-        while true:
-          pos += (maxPos + 1)
-          if pos >= minPos: break
-        curPos = pos
-        moveCursorTo(cur, a)
+    if newPos < minPos and wrapAround:
+      curPos = floorMod(newPos, maxPos + 1)
+      moveCursorTo(cur, a)
     else:
-      curPos = newPos
+      curPos = max(minPos, newPos)
 
   case dir:
   of dirE:
