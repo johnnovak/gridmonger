@@ -70,6 +70,9 @@ proc delByDest*(vl; dest: Location) =
 # {{{ set*()
 proc set*(vl; src, dest: Location) =
   vl.delBySrc(src)
+  vl.delByDest(src)
+  # Clear dest only if it's a source
+  vl.delBySrc(dest)
   vl.srcToDest[src] = dest
   vl.destToSrcs.mgetOrPut(dest, initHashSet[Location]()).incl(src)
 
@@ -220,6 +223,86 @@ proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
 
     result.set(src, dest)
 
+# }}}
+
+# {{{ Tests
+when isMainModule:
+  let loc1 = Location(level: 0, row: 0, col: 0)
+  let loc2 = Location(level: 0, row: 1, col: 0)
+  let loc3 = Location(level: 0, row: 0, col: 1)
+  var l = initLinks()
+
+  assert l.len == 0
+  assert l.hasWithSrc(loc1) == false
+  assert l.hasWithSrc(loc2) == false
+  assert l.hasWithDest(loc1) == false
+  assert l.hasWithDest(loc2) == false
+  assert l.getBySrc(loc1).isNone
+  assert l.getBySrc(loc2).isNone
+  assert l.getByDest(loc1).isNone
+  assert l.getByDest(loc2).isNone
+  l.delBySrc(loc1)
+  l.delByDest(loc1)
+
+  l.set(loc1, loc2)
+  assert l.len == 1
+  assert l.hasWithSrc(loc1)
+  assert l.hasWithSrc(loc2) == false
+  assert l.hasWithDest(loc1) == false
+  assert l.hasWithDest(loc2)
+  assert l.getBySrc(loc1) == loc2.some
+  assert l.getBySrc(loc2).isNone
+  assert l.getByDest(loc1).isNone
+  assert l.getByDest(loc2) == [loc1].toHashSet.some
+
+  l.set(loc3, loc2)
+  assert l.len == 2
+  assert l.hasWithSrc(loc3)
+  assert l.hasWithDest(loc2)
+  assert l.getBySrc(loc3) == loc2.some
+  assert l.getBySrc(loc3) == l.getBySrc(loc1)
+  assert l.getByDest(loc2) == [loc1, loc3].toHashSet.some
+
+  l.delByDest(loc2)
+  assert l.len == 0
+
+  l.set(loc1, loc2)
+  l.set(loc3, loc2)
+  assert l.len == 2
+  l.set(loc2, loc1)
+  assert l.len == 1
+  assert l.getBySrc(loc1).isNone
+  assert l.getBySrc(loc2) == loc1.some
+  assert l.getBySrc(loc3).isNone
+  assert l.getByDest(loc1) == [loc2].toHashSet.some
+  assert l.getByDest(loc2).isNone
+  assert l.getByDest(loc3).isNone
+
+  l.delBySrc(loc2)
+  assert l.len == 0
+
+  l.set(loc1, loc2)
+  l.set(loc3, loc2)
+  assert l.len == 2
+  l.set(loc3, loc1)
+  assert l.len == 1
+  assert l.getBySrc(loc1).isNone
+  assert l.getBySrc(loc2).isNone
+  assert l.getBySrc(loc3) == loc1.some
+  assert l.getByDest(loc1) == [loc3].toHashSet.some
+  assert l.getByDest(loc2).isNone
+  assert l.getByDest(loc3).isNone
+
+  l.set(loc2, loc1)
+  assert l.len == 2
+  l.delBySrc(loc3)
+  assert l.len == 1
+  assert l.getBySrc(loc1).isNone
+  assert l.getBySrc(loc2) == loc1.some
+  assert l.getBySrc(loc3).isNone
+  assert l.getByDest(loc1) == [loc2].toHashSet.some
+  assert l.getByDest(loc2).isNone
+  assert l.getByDest(loc3).isNone
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
