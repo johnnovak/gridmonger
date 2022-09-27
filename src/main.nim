@@ -6108,7 +6108,7 @@ proc handleGlobalKeyEvents(a) =
 
           let w = if map.getWall(cur, dir) == curSpecWall: wNone
                   else: curSpecWall
- 
+
           ui.drawWallRepeatAction = if w == wNone: dwaClear else: dwaSet
           ui.drawWallRepeatWall = w
           ui.drawWallRepeatDirection = dir
@@ -8747,7 +8747,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   restoreUIStateFromConfig(cfg, a)
 
   updateLastCursorViewCoords(a)
-  
+
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
   a.splash.show = a.prefs.showSplash
