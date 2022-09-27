@@ -280,11 +280,6 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
   let action = proc (m: var Map): UndoStateData =
     let srcFloor = m.getFloor(src)
 
-    # Edge case: support for overwriting existing link
-    # (delete existing links originating from src)
-    m.links.delBySrc(src)
-    m.links.delByDest(src)
-
     var destFloor: Floor
     if   srcFloor in LinkPitSources:       destFloor = fCeilingPit
     elif srcFloor == fTeleportSource:      destFloor = fTeleportDestination
@@ -314,7 +309,12 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
             m.getFloor(dest) == destFloor):
       m.setFloor(dest, destFloor)
 
-    m.links.set(src, dest)
+    if srcFloor == fTeleportDestination:
+      assert destFloor == fTeleportSource
+      # Reverse set to allow teleport destination having multiple sources.
+      m.links.set(dest, src)
+    else:
+      m.links.set(src, dest)
     m.levels[dest.level].reindexNotes()
     result = usd
 

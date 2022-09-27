@@ -275,6 +275,10 @@ type
 
     linkSrcLocation:    Location
 
+    jumpToSrcLocation:   Location
+    jumpToDestinations:  seq[Location]
+    jumpToDestinationIx: Natural
+
     drawLevelParams:    DrawLevelParams
     toolbarDrawParams:  DrawLevelParams
 
@@ -320,7 +324,8 @@ type
     emSelectDraw,
     emSelectErase,
     emSelectRect,
-    emSetCellLink
+    emSetCellLink,
+    emSelectJumpToLink
 
   DrawWallRepeatAction = enum
     dwaNone  = (0, "none"),
@@ -5459,6 +5464,9 @@ proc handleLevelMouseEvents(a) =
       if koi.mbLeftDown():
         moveCursorToMousePos(a)
 
+    of emSelectJumpToLink:
+      discard
+
   else:  # not WASD mode
     case ui.editMode
     of emNormal,
@@ -5469,6 +5477,15 @@ proc handleLevelMouseEvents(a) =
         moveCursorToMousePos(a)
 
     else: discard
+
+# }}}
+
+# {{{ setSelectJumptoLinkActionMessage()
+proc setSelectJumptoLinkActionMessage(a) =
+  let currIx = a.ui.jumpToDestinationIx + 1
+  let count = a.ui.jumpToDestinations.len
+  setStatusMessage(NoIcon, fmt"Select destination ({currIx} of {count})",
+                   @[IconArrowsAll, "next/prev", "Enter", "confirm", "Esc", "cancel"], a)
 
 # }}}
 # {{{ handleGlobalKeyEvents()
@@ -5849,9 +5866,16 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scJumpToLinkedCell):
         let otherLocs = map.getLinkedLocations(cur)
-        if otherLocs.len > 0:
-          # TODO: Offer a choice if there's more than 1
+        if otherLocs.len == 1:
           moveCursorTo(otherLocs.first.get, a)
+        elif otherLocs.len > 1:
+          ui.jumpToSrcLocation = cur
+          ui.jumpToDestinations = otherLocs.toSeq
+          sort(ui.jumpToDestinations)
+          ui.jumpToDestinationIx = 0
+          moveCursorTo(ui.jumpToDestinations[ui.jumpToDestinationIx], a)
+          ui.editMode = emSelectJumpToLink
+          setSelectJumptoLinkActionMessage(a)
         else:
           setWarningMessage("Not a linked cell", a=a)
 
@@ -6474,6 +6498,31 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scOpenUserManual):
         openUserManual(a)
+
+    # }}}
+    # {{{ emSelectJumpToLink
+    of emSelectJumpToLink:
+      proc handleMoveKey(dir: CardinalDir, mods: set[ModifierKey]; a) =
+        var destIx: int
+        case dir:
+        of dirE, dirN:
+          destIx = ui.jumpToDestinationIx + 1
+        of dirW, dirS:
+          destIx = ui.jumpToDestinationIx - 1
+        ui.jumpToDestinationIx = destIx.floorMod(ui.jumpToDestinations.len)
+        moveCursorTo(ui.jumpToDestinations[ui.jumpToDestinationIx], a)
+        setSelectJumptoLinkActionMessage(a)
+
+
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
+
+      if ke.isShortcutDown(scAccept):
+        ui.editMode = emNormal
+        clearStatusMessage(a)
+      elif ke.isShortcutDown(scCancel):
+        moveCursorTo(ui.jumpToSrcLocation, a)
+        ui.editMode = emNormal
+        clearStatusMessage(a)
 
     # }}}
 

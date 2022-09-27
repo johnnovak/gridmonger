@@ -69,6 +69,8 @@ proc delByDest*(vl; dest: Location) =
 # }}}
 # {{{ set*()
 proc set*(vl; src, dest: Location) =
+  # Edge case: support for overwriting existing link
+  # (delete existing links originating from src)
   vl.delBySrc(src)
   vl.delByDest(src)
   # Clear dest only if it's a source
