@@ -246,6 +246,7 @@ proc getLinkedLocations*(m; loc: Location): HashSet[Location] =
         result.incl(src)
 
 # }}}
+
 # {{{ normaliseLinkedStairs*()
 proc normaliseLinkedStairs*(m; level: Natural) =
   let l = m.levels[level]

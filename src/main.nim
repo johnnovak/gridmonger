@@ -275,9 +275,10 @@ type
 
     linkSrcLocation:    Location
 
-    jumpToDestLocation:   Location
-    jumpToSrcLocation:    seq[Location]
-    jumpToSrcLocationIdx: Natural
+    jumpToDestLocation:    Location
+    jumpToSrcLocation:     seq[Location]
+    jumpToSrcLocationIdx:  Natural
+    lastJumpToSrcLocation: Location
 
     drawLevelParams:    DrawLevelParams
     toolbarDrawParams:  DrawLevelParams
@@ -5487,7 +5488,7 @@ proc setSelectJumpToLinkSrcActionMessage(a) =
   let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
   setStatusMessage(NoIcon,
                    fmt"Select {linkFloorToString(floor)} source ({currIx} of {count})",
-                   @[IconArrowsAll, "next/prev", "Enter", "confirm", "Esc", "cancel"],
+                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"],
                    a)
 
 # }}}
@@ -5870,13 +5871,28 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scJumpToLinkedCell):
         let otherLocs = map.getLinkedLocations(cur)
         if otherLocs.len == 1:
-          moveCursorTo(otherLocs.first.get, a)
+          let otherLoc = otherLocs.first.get
+          if map.getLinkedLocations(otherLoc).len > 1:
+            ui.lastJumpToSrcLocation = cur
+          moveCursorTo(otherLoc, a)
         elif otherLocs.len > 1:
-          ui.jumpToDestLocation = cur
           ui.jumpToSrcLocation = otherLocs.toSeq
           sort(ui.jumpToSrcLocation)
-          ui.jumpToSrcLocationIdx = 0
-          moveCursorTo(ui.jumpToSrcLocation[ui.jumpToSrcLocationIdx], a)
+          if ui.jumpToDestLocation == cur:
+            # Last time we jumped to multiple sources we used this destination,
+            # so continue selecting sources from the source we left at.
+            let oldIdx = ui.jumpToSrcLocation.find(ui.lastJumpToSrcLocation)
+            if oldIdx == -1:
+              # The source we left at last time no longer exists (e.g. the user
+              # deleted it), so reset from beginning.
+              ui.jumpToSrcLocationIdx = 0
+            else:
+              ui.jumpToSrcLocationIdx = oldIdx
+          else:
+            ui.jumpToSrcLocationIdx = 0
+          ui.jumpToDestLocation = cur
+          ui.lastJumpToSrcLocation = ui.jumpToSrcLocation[ui.jumpToSrcLocationIdx]
+          moveCursorTo(ui.lastJumpToSrcLocation, a)
           ui.editMode = emSelectJumpToLinkSrc
           setSelectJumpToLinkSrcActionMessage(a)
         else:
@@ -6513,16 +6529,17 @@ proc handleGlobalKeyEvents(a) =
         of dirW, dirS:
           destIx = ui.jumpToSrcLocationIdx - 1
         ui.jumpToSrcLocationIdx = destIx.floorMod(ui.jumpToSrcLocation.len)
-        moveCursorTo(ui.jumpToSrcLocation[ui.jumpToSrcLocationIdx], a)
+        ui.lastJumpToSrcLocation = ui.jumpToSrcLocation[ui.jumpToSrcLocationIdx]
+        moveCursorTo(ui.lastJumpToSrcLocation, a)
         setSelectJumpToLinkSrcActionMessage(a)
 
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
 
-      if ke.isShortcutDown(scAccept):
+      if ke.isShortcutDown(scAccept) or ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
         clearStatusMessage(a)
-      elif ke.isShortcutDown(scCancel):
+      elif ke.isShortcutDown(scJumpToLinkedCell):
         moveCursorTo(ui.jumpToDestLocation, a)
         ui.editMode = emNormal
         clearStatusMessage(a)
