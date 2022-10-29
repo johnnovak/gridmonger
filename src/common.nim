@@ -87,8 +87,7 @@ type
 
 
   Links* = object
-    # TODO: Maybe use a fixed size array instead of HashSet?
-    srcToDest*: Table[Location, Location]
+    srcToDest*:  Table[Location, Location]
     destToSrcs*: Table[Location, HashSet[Location]]
 
 

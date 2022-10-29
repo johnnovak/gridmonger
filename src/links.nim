@@ -235,10 +235,10 @@ when isMainModule:
   var l = initLinks()
 
   assert l.len == 0
-  assert l.hasWithSrc(loc1) == false
-  assert l.hasWithSrc(loc2) == false
-  assert l.hasWithDest(loc1) == false
-  assert l.hasWithDest(loc2) == false
+  assert not l.hasWithSrc(loc1)
+  assert not l.hasWithSrc(loc2)
+  assert not l.hasWithDest(loc1)
+  assert not l.hasWithDest(loc2)
   assert l.getBySrc(loc1).isNone
   assert l.getBySrc(loc2).isNone
   assert l.getByDest(loc1).isNone
@@ -249,8 +249,8 @@ when isMainModule:
   l.set(loc1, loc2)
   assert l.len == 1
   assert l.hasWithSrc(loc1)
-  assert l.hasWithSrc(loc2) == false
-  assert l.hasWithDest(loc1) == false
+  assert not l.hasWithSrc(loc2)
+  assert not l.hasWithDest(loc1)
   assert l.hasWithDest(loc2)
   assert l.getBySrc(loc1) == loc2.some
   assert l.getBySrc(loc2).isNone

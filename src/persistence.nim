@@ -23,7 +23,7 @@ import rle
 import utils
 
 
-const CurrentMapVersion = 1
+const CurrentMapVersion = 2
 
 # {{{ Field limits
 const
@@ -289,8 +289,6 @@ proc readLinks_v1(rr; levels: seq[Level]): Links =
   var numLinks = rr.read(uint16).int
   debug(fmt"  numLinks: {numLinks}")
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
-
-  result = initLinks(nextPowerOfTwo(numLinks))
 
   let maxLevelIndex = NumLevelsLimits.maxInt - 1
 
