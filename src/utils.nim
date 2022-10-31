@@ -1,7 +1,8 @@
 import hashes
-import typetraits
+import options
 import strutils
 import times
+import typetraits
 
 import common
 
@@ -132,6 +133,13 @@ func isValidFilename*(filename: string): bool =
 # {{{ currentLocalDatetimeString*()
 proc currentLocalDatetimeString*(): string =
   now().format("yyyy-MM-dd HH:mm:ss")
+
+# }}}
+
+# {{{ first*()
+func first*[T](iterable: T): auto =
+  for v in iterable:
+    return v.some
 
 # }}}
 

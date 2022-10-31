@@ -23,7 +23,7 @@ import rle
 import utils
 
 
-const CurrentMapVersion = 1
+const CurrentMapVersion = 2
 
 # {{{ Field limits
 const
@@ -289,8 +289,6 @@ proc readLinks_v1(rr; levels: seq[Level]): Links =
   var numLinks = rr.read(uint16).int
   debug(fmt"  numLinks: {numLinks}")
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
-
-  result = initBiTable[Location, Location](nextPowerOfTwo(numLinks))
 
   let maxLevelIndex = NumLevelsLimits.maxInt - 1
 
@@ -920,7 +918,7 @@ proc writeLinks_v1(rw; links: Links) =
   rw.write(links.len.uint16)
 
   var sortedKeys = collect(newSeqOfCap(links.len)):
-    for k in links.keys(): k
+    for k in links.sources: k
 
   sort(sortedKeys)
 
@@ -930,7 +928,7 @@ proc writeLinks_v1(rw; links: Links) =
     rw.write(loc.col.uint16)
 
   for src in sortedKeys:
-    let dest = links[src].get
+    let dest = links.getBySrc(src).get
     writeLocation(src)
     writeLocation(dest)
 

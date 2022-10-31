@@ -1,6 +1,7 @@
 import algorithm
 import options
 import sequtils
+import sets
 import strformat
 
 import common
@@ -230,19 +231,22 @@ proc excavateTunnel*(m; loc: Location, floorColor: Natural) =
 
 # }}}
 
-# {{{ getLinkedLocation*()
-proc getLinkedLocation*(m; loc: Location): Option[Location] =
-  var other = m.links.getBySrc(loc)
-  if other.isNone:
-    other = m.links.getByDest(loc)
-
-  if other.isSome:
-    if isSpecialLevelIndex(other.get.level):
-      result = Location.none
-    else:
-      result = other
+# {{{ getLinkedLocations*()
+proc getLinkedLocations*(m; loc: Location): HashSet[Location] =
+  let dest = m.links.getBySrc(loc)
+  if dest.isSome:
+    if not isSpecialLevelIndex(dest.get.level):
+      result.incl(dest.get)
+  else:
+    let srcs = m.links.getByDest(loc)
+    if srcs.isSome:
+      for src in srcs.get:
+        if isSpecialLevelIndex(src.level):
+          continue
+        result.incl(src)
 
 # }}}
+
 # {{{ normaliseLinkedStairs*()
 proc normaliseLinkedStairs*(m; level: Natural) =
   let l = m.levels[level]
@@ -253,9 +257,10 @@ proc normaliseLinkedStairs*(m; level: Natural) =
 
       if f in LinkStairs:
         let this = Location(level: level, row: r, col: c)
-        let that = m.getLinkedLocation(this)
-        if that.isSome:
-          let that = that.get
+        let that = m.getLinkedLocations(this)
+        if that.len > 0:
+          assert that.len == 1, "Stairs should not have linked multiple locations"
+          let that = that.first.get
 
           let thisElevation = m.levels[this.level].elevation
           let thatElevation = m.levels[that.level].elevation
@@ -271,7 +276,7 @@ proc normaliseLinkedStairs*(m; level: Natural) =
 # {{{ deleteLinksFromOrToLevel*()
 proc deleteLinksFromOrToLevel*(m; level: Natural) =
   var linksToDelete = m.links.filterByLevel(level)
-  for src in linksToDelete.keys:
+  for src in linksToDelete.sources:
     m.links.delBySrc(src)
 
 # }}}

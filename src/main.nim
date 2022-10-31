@@ -9,6 +9,7 @@ import math
 import options
 import os
 import sequtils
+import sets
 import std/monotimes
 import streams
 import strformat
@@ -274,6 +275,12 @@ type
 
     linkSrcLocation:    Location
 
+    jumpToDestLocation:    Location
+    jumpToSrcLocations:    seq[Location]
+    jumpToSrcLocationIdx:  Natural
+    lastJumpToSrcLocation: Location
+    wasDrawingTrail:       bool
+
     drawLevelParams:    DrawLevelParams
     toolbarDrawParams:  DrawLevelParams
 
@@ -319,7 +326,8 @@ type
     emSelectDraw,
     emSelectErase,
     emSelectRect,
-    emSetCellLink
+    emSetCellLink,
+    emSelectJumpToLinkSrc
 
   DrawWallRepeatAction = enum
     dwaNone  = (0, "none"),
@@ -5458,6 +5466,9 @@ proc handleLevelMouseEvents(a) =
       if koi.mbLeftDown():
         moveCursorToMousePos(a)
 
+    of emSelectJumpToLinkSrc:
+      discard
+
   else:  # not WASD mode
     case ui.editMode
     of emNormal,
@@ -5468,6 +5479,18 @@ proc handleLevelMouseEvents(a) =
         moveCursorToMousePos(a)
 
     else: discard
+
+# }}}
+
+# {{{ setSelectJumpToLinkActionMessage()
+proc setSelectJumpToLinkSrcActionMessage(a) =
+  let currIdx = a.ui.jumpToSrcLocationIdx + 1
+  let count = a.ui.jumpToSrcLocations.len
+  let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
+  setStatusMessage(NoIcon,
+                   fmt"Select {linkFloorToString(floor)} source ({currIdx} of {count})",
+                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"],
+                   a)
 
 # }}}
 # {{{ handleGlobalKeyEvents()
@@ -5847,9 +5870,30 @@ proc handleGlobalKeyEvents(a) =
 
 
       elif ke.isShortcutDown(scJumpToLinkedCell):
-        let otherLoc = map.getLinkedLocation(cur)
-        if otherLoc.isSome:
-          moveCursorTo(otherLoc.get, a)
+        let otherLocs = map.getLinkedLocations(cur)
+        if otherLocs.len == 1:
+          let otherLoc = otherLocs.first.get
+          if map.getLinkedLocations(otherLoc).len > 1:
+            ui.lastJumpToSrcLocation = cur
+          moveCursorTo(otherLoc, a)
+        elif otherLocs.len > 1:
+          ui.jumpToSrcLocations = otherLocs.toSeq
+          sort(ui.jumpToSrcLocations)
+          # Try to continue selecting sources from the last source we left at.
+          let oldIdx = ui.jumpToSrcLocations.find(ui.lastJumpToSrcLocation)
+          if oldIdx == -1:
+            # The source we left at last time doesn't exist (e.g. the user deleted
+            # it or wasn't linked to this destination), so reset from beginning.
+            ui.jumpToSrcLocationIdx = 0
+          else:
+            ui.jumpToSrcLocationIdx = oldIdx
+          ui.jumpToDestLocation = cur
+          ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
+          ui.wasDrawingTrail = opts.drawTrail
+          opts.drawTrail = false
+          moveCursorTo(ui.lastJumpToSrcLocation, a)
+          ui.editMode = emSelectJumpToLinkSrc
+          setSelectJumpToLinkSrcActionMessage(a)
         else:
           setWarningMessage("Not a linked cell", a=a)
 
@@ -6106,7 +6150,7 @@ proc handleGlobalKeyEvents(a) =
 
           let w = if map.getWall(cur, dir) == curSpecWall: wNone
                   else: curSpecWall
- 
+
           ui.drawWallRepeatAction = if w == wNone: dwaClear else: dwaSet
           ui.drawWallRepeatWall = w
           ui.drawWallRepeatDirection = dir
@@ -6472,6 +6516,37 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scOpenUserManual):
         openUserManual(a)
+
+    # }}}
+    # {{{ emSelectJumpToLinkSrc
+    of emSelectJumpToLinkSrc:
+      proc handleMoveKey(dir: CardinalDir, mods: set[ModifierKey]; a) =
+        var destIx: int
+        case dir:
+        of dirE, dirN:
+          destIx = ui.jumpToSrcLocationIdx + 1
+        of dirW, dirS:
+          destIx = ui.jumpToSrcLocationIdx - 1
+        ui.jumpToSrcLocationIdx = destIx.floorMod(ui.jumpToSrcLocations.len)
+        ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
+        moveCursorTo(ui.lastJumpToSrcLocation, a)
+        setSelectJumpToLinkSrcActionMessage(a)
+
+
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
+
+      if ke.isShortcutDown(scAccept) or ke.isShortcutDown(scCancel):
+        ui.editMode = emNormal
+        if ui.wasDrawingTrail:
+          actions.drawTrail(map, loc=ui.cursor, undoLoc=ui.jumpToDestLocation, um)
+          opts.drawTrail = true
+        clearStatusMessage(a)
+      elif ke.isShortcutDown(scJumpToLinkedCell):
+        moveCursorTo(ui.jumpToDestLocation, a)
+        ui.editMode = emNormal
+        if ui.wasDrawingTrail:
+          opts.drawTrail = true
+        clearStatusMessage(a)
 
     # }}}
 
@@ -8745,7 +8820,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   restoreUIStateFromConfig(cfg, a)
 
   updateLastCursorViewCoords(a)
-  
+
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
   a.splash.show = a.prefs.showSplash
