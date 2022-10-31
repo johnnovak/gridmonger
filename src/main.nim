@@ -276,7 +276,7 @@ type
     linkSrcLocation:    Location
 
     jumpToDestLocation:    Location
-    jumpToSrcLocation:     seq[Location]
+    jumpToSrcLocations:    seq[Location]
     jumpToSrcLocationIdx:  Natural
     lastJumpToSrcLocation: Location
 
@@ -5483,11 +5483,11 @@ proc handleLevelMouseEvents(a) =
 
 # {{{ setSelectJumpToLinkActionMessage()
 proc setSelectJumpToLinkSrcActionMessage(a) =
-  let currIx = a.ui.jumpToSrcLocationIdx + 1
-  let count = a.ui.jumpToSrcLocation.len
+  let currIdx = a.ui.jumpToSrcLocationIdx + 1
+  let count = a.ui.jumpToSrcLocations.len
   let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
   setStatusMessage(NoIcon,
-                   fmt"Select {linkFloorToString(floor)} source ({currIx} of {count})",
+                   fmt"Select {linkFloorToString(floor)} source ({currIdx} of {count})",
                    @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"],
                    a)
 
@@ -5876,12 +5876,12 @@ proc handleGlobalKeyEvents(a) =
             ui.lastJumpToSrcLocation = cur
           moveCursorTo(otherLoc, a)
         elif otherLocs.len > 1:
-          ui.jumpToSrcLocation = otherLocs.toSeq
-          sort(ui.jumpToSrcLocation)
+          ui.jumpToSrcLocations = otherLocs.toSeq
+          sort(ui.jumpToSrcLocations)
           if ui.jumpToDestLocation == cur:
             # Last time we jumped to multiple sources we used this destination,
             # so continue selecting sources from the source we left at.
-            let oldIdx = ui.jumpToSrcLocation.find(ui.lastJumpToSrcLocation)
+            let oldIdx = ui.jumpToSrcLocations.find(ui.lastJumpToSrcLocation)
             if oldIdx == -1:
               # The source we left at last time no longer exists (e.g. the user
               # deleted it), so reset from beginning.
@@ -5891,7 +5891,7 @@ proc handleGlobalKeyEvents(a) =
           else:
             ui.jumpToSrcLocationIdx = 0
           ui.jumpToDestLocation = cur
-          ui.lastJumpToSrcLocation = ui.jumpToSrcLocation[ui.jumpToSrcLocationIdx]
+          ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
           moveCursorTo(ui.lastJumpToSrcLocation, a)
           ui.editMode = emSelectJumpToLinkSrc
           setSelectJumpToLinkSrcActionMessage(a)
@@ -6528,8 +6528,8 @@ proc handleGlobalKeyEvents(a) =
           destIx = ui.jumpToSrcLocationIdx + 1
         of dirW, dirS:
           destIx = ui.jumpToSrcLocationIdx - 1
-        ui.jumpToSrcLocationIdx = destIx.floorMod(ui.jumpToSrcLocation.len)
-        ui.lastJumpToSrcLocation = ui.jumpToSrcLocation[ui.jumpToSrcLocationIdx]
+        ui.jumpToSrcLocationIdx = destIx.floorMod(ui.jumpToSrcLocations.len)
+        ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
         moveCursorTo(ui.lastJumpToSrcLocation, a)
         setSelectJumpToLinkSrcActionMessage(a)
 
