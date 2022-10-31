@@ -5878,18 +5878,14 @@ proc handleGlobalKeyEvents(a) =
         elif otherLocs.len > 1:
           ui.jumpToSrcLocations = otherLocs.toSeq
           sort(ui.jumpToSrcLocations)
-          if ui.jumpToDestLocation == cur:
-            # Last time we jumped to multiple sources we used this destination,
-            # so continue selecting sources from the source we left at.
-            let oldIdx = ui.jumpToSrcLocations.find(ui.lastJumpToSrcLocation)
-            if oldIdx == -1:
-              # The source we left at last time no longer exists (e.g. the user
-              # deleted it), so reset from beginning.
-              ui.jumpToSrcLocationIdx = 0
-            else:
-              ui.jumpToSrcLocationIdx = oldIdx
-          else:
+          # Try to continue selecting sources from the last source we left at.
+          let oldIdx = ui.jumpToSrcLocations.find(ui.lastJumpToSrcLocation)
+          if oldIdx == -1:
+            # The source we left at last time doesn't exist (e.g. the user deleted
+            # it or wasn't linked to this destination), so reset from beginning.
             ui.jumpToSrcLocationIdx = 0
+          else:
+            ui.jumpToSrcLocationIdx = oldIdx
           ui.jumpToDestLocation = cur
           ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
           moveCursorTo(ui.lastJumpToSrcLocation, a)
