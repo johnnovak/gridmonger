@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
+          # - ubuntu-latest
           - windows-latest
           - macOS-latest
     steps:
@@ -16,5 +16,8 @@ jobs:
       - uses: jiro4989/setup-nim-action@v1
         with:
           nim-version: '1.6.8'
+      - run: nimble update
+      - run: nimble install glfw@#gridmonger 
+      - run: nimble -n install nanovg osdialog riff winim https://github.com/johnnovak/koi/
       - run: nim debug
       - run: nim release
