@@ -279,6 +279,7 @@ type
     jumpToSrcLocations:    seq[Location]
     jumpToSrcLocationIdx:  Natural
     lastJumpToSrcLocation: Location
+    wasDrawingTrail:       bool
 
     drawLevelParams:    DrawLevelParams
     toolbarDrawParams:  DrawLevelParams
@@ -5888,6 +5889,8 @@ proc handleGlobalKeyEvents(a) =
             ui.jumpToSrcLocationIdx = oldIdx
           ui.jumpToDestLocation = cur
           ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
+          ui.wasDrawingTrail = opts.drawTrail
+          opts.drawTrail = false
           moveCursorTo(ui.lastJumpToSrcLocation, a)
           ui.editMode = emSelectJumpToLinkSrc
           setSelectJumpToLinkSrcActionMessage(a)
@@ -6534,10 +6537,15 @@ proc handleGlobalKeyEvents(a) =
 
       if ke.isShortcutDown(scAccept) or ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
+        if ui.wasDrawingTrail:
+          actions.drawTrail(map, loc=ui.cursor, undoLoc=ui.jumpToDestLocation, um)
+          opts.drawTrail = true
         clearStatusMessage(a)
       elif ke.isShortcutDown(scJumpToLinkedCell):
         moveCursorTo(ui.jumpToDestLocation, a)
         ui.editMode = emNormal
+        if ui.wasDrawingTrail:
+          opts.drawTrail = true
         clearStatusMessage(a)
 
     # }}}
