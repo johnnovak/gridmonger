@@ -1,6 +1,10 @@
 BUGS
 ====
 
+- trail mode in combination with undo/redo acts a bit weird (enable trail
+  mode, move a few steps, disable trail mode, move a few steps, repeat a few
+  times, then undo back to the beginning)
+
 
 TODO
 ====
