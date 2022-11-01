@@ -10,14 +10,15 @@ import rect
 
 
 const
-  AppVersion* = "0.91.0"
+  AppVersion* = staticRead("../CURRENT_VERSION").strip
+  CompileYear* = CompileDate[0..3]
 
   BuildGitHash* = strutils.strip(staticExec("git rev-parse --short HEAD"))
 
   VersionInfo* = fmt"Version {AppVersion} ({BuildGitHash})"
   FullVersionInfo* = fmt"Gridmonger {VersionInfo} [{hostOS}/{hostCPU}]"
   CompiledAtInfo* = fmt"Compiled at {CompileDate} {CompileTime}"
-  DevelopedByInfo* = fmt"Developed by John Novak, 2020-{CompileDate[0..3]}"
+  DevelopedByInfo* = fmt"Developed by John Novak, 2020-{CompileYear}"
 
 const
   EnDash* = "\u2013"
