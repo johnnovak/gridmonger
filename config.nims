@@ -46,11 +46,23 @@ task packageWin64, "create Windows 64-bit installer":
   exec "makensis /DARCH64 gridmonger.nsi"
 
 
-task buildDocs, "build documentation package":
-  # TODO make this more flexible, or merge the two repos
-  cd "../gridmonger-site/"
-  exec "make gen_html"
-  exec "make dist_html"
+task manual, "build manual":
+  cd "sphinx-docs"
+  exec "make build_manual"
+
+
+task site, "build website":
+  cd "sphinx-docs"
+  exec "make build_site"
+  cd ".."
+  exec "extras/scripts/indexer.py -r docs/files"
+
+
+task packageManual, "build manual":
+  let outputDir = "Gridmonger Manual"
+  cpDir "Manual", outputDir
+  exec fmt"zip -q -9 -r gridmonger-manual.zip '{outputDir}'"
+  rmDir outputDir
 
 
 task packageWinPortable, "create Windows portable package":
