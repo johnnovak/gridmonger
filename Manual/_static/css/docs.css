@@ -92,7 +92,7 @@ body {
   color: #4e4336;
 }
 
-div.section:after {
+section:after {
   display: block;
   width: 100%;
   margin: 0.7em 0 0.22em 0;
@@ -102,52 +102,52 @@ div.section:after {
   text-align: center;
   opacity: 0.2;
 }
-div.section.style1:after {
+section.style1:after {
   content: "∆";
 }
-div.section.style2:after {
+section.style2:after {
   content: "Ω";
 }
-div.section.style3:after {
+section.style3:after {
   content: "∫";
 }
-div.section.style4:after {
+section.style4:after {
   content: "∞";
 }
-div.section.style5:after {
+section.style5:after {
   content: "∑";
 }
-div.section.style6:after {
+section.style6:after {
   content: "∂";
 }
-div.section.style7:after {
+section.style7:after {
   content: "¬";
 }
-div.section.style8:after {
+section.style8:after {
   content: "*";
 }
-div.section.style9:after {
+section.style9:after {
   content: "μ";
 }
-div.section.style10:after {
+section.style10:after {
   content: "∏";
 }
-div.section.style11:after {
+section.style11:after {
   content: "◊";
 }
-div.section.style12:after {
+section.style12:after {
   content: "√";
 }
-div.section.big:after {
+section.big:after {
   margin: 4rem auto;
   font-size: 5.5rem;
 }
-div.section.small:after {
+section.small:after {
   margin: 0;
   font-size: 1rem;
   content: "ΩΩΩ";
 }
-div.section h2 {
+section h2 {
   display: inline-block;
   margin: 0.75em 0 0 1.25em;
   padding: 0;
@@ -156,33 +156,33 @@ div.section h2 {
   font-size: 30px;
   text-indent: -1.25em;
 }
-div.section h3 {
+section h3 {
   padding: 0;
   font-weight: 700;
   font-size: 22px;
 }
-div.section h4 {
+section h4 {
   padding: 0;
   margin: 0;
   font-size: 20px;
 }
-div.section .headerlink {
+section .headerlink {
   display: none;
 }
-div.section .headerlink:before {
+section .headerlink:before {
   content: " ";
 }
-div.section h2:hover .headerlink, div.section h3:hover .headerlink, div.section h4:hover .headerlink {
+section h2:hover .headerlink, section h3:hover .headerlink, section h4:hover .headerlink {
   display: inline;
 }
-div.section ul {
+section ul {
   padding-left: 2.4em;
 }
-div.section ul > li {
+section ul > li {
   list-style-type: none;
   text-indent: -1.5em;
 }
-div.section ul > li:before {
+section ul > li:before {
   padding-right: 0.68em;
   font-family: "icons";
   font-size: 83%;
@@ -190,40 +190,40 @@ div.section ul > li:before {
   opacity: 0.45;
   content: "∑";
 }
-div.section ul > li p {
+section ul > li p {
   display: inline;
   margin: 0;
   padding: 0;
   text-indent: 0;
 }
-div.section ul.multiline > li {
+section ul.multiline > li {
   margin-bottom: 0.4em;
 }
-div.section dl {
+section dl {
   margin: 1.5em 0;
 }
-div.section dl > dt {
+section dl > dt {
   font-weight: 800;
 }
-div.section dl > dd {
+section dl > dd {
   margin-bottom: 1em;
 }
-div.section dl > dd > p:first-child {
+section dl > dd > p:first-child {
   margin: 0;
 }
-div.section figure {
+section figure {
   margin: 2em auto;
   text-align: center;
 }
-div.section figure img {
+section figure img {
   width: 90%;
 }
-div.section figure > figcaption {
+section figure > figcaption {
   font-size: 19px;
   font-style: italic;
   text-align: center;
 }
-div.section p {
+section p {
   -webkit-hyphens: auto;
   -webkit-hyphenate-limit-before: 3;
   -webkit-hyphenate-limit-after: 3;
@@ -247,70 +247,70 @@ div.section p {
   hyphenate-limit-last: always;
   hyphenate-limit-zone: 8%;
 }
-div.section em {
+section em {
   font-weight: 500;
 }
-div.section strong {
+section strong {
   font-weight: 800;
 }
-div.section code {
+section code {
   font-family: "Alegreya SC", serif;
   font-size: 90%;
   background: rgba(78, 67, 54, 0.13);
   border-radius: 5px;
   padding: 0 0.4em;
 }
-div.section .sc {
+section .sc {
   font-family: "Alegreya SC", serif;
   padding-right: 4px;
 }
-div.section > div.thumbnails {
+section > div.thumbnails {
   line-height: 0;
 }
-div.section > div.thumbnails > a > img {
+section > div.thumbnails > a > img {
   display: inline-block;
   width: 23%;
   padding-right: 2%;
   padding-bottom: 2%;
 }
-div.section span.circled-number {
+section span.circled-number {
   line-height: 1em;
   font-family: "icons";
   font-size: 0;
 }
-div.section span.circled-number:before {
+section span.circled-number:before {
   position: relative;
   font-size: 0.9rem;
   opacity: 0.75;
 }
-div.section span.circled-number.num1:before {
+section span.circled-number.num1:before {
   content: "❶";
 }
-div.section span.circled-number.num2:before {
+section span.circled-number.num2:before {
   content: "❷";
 }
-div.section span.circled-number.num3:before {
+section span.circled-number.num3:before {
   content: "❸";
 }
-div.section span.circled-number.num4:before {
+section span.circled-number.num4:before {
   content: "❹";
 }
-div.section span.circled-number.num5:before {
+section span.circled-number.num5:before {
   content: "❺";
 }
-div.section span.circled-number.num6:before {
+section span.circled-number.num6:before {
   content: "❻";
 }
-div.section span.circled-number.num7:before {
+section span.circled-number.num7:before {
   content: "❼";
 }
-div.section span.circled-number.num8:before {
+section span.circled-number.num8:before {
   content: "❽";
 }
-div.section span.circled-number.num9:before {
+section span.circled-number.num9:before {
   content: "❾";
 }
-div.section span.circled-number.num10:before {
+section span.circled-number.num10:before {
   content: "❿";
 }
 
@@ -323,13 +323,14 @@ a.external:after {
   text-transform: none;
   line-height: 1;
   font-size: 65%;
-  content: "  \e900 ";
+  content: "   ";
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 div.section a,
+section a,
 footer a {
   display: inline;
   font-family: "Alegreya SC", serif;
@@ -337,6 +338,7 @@ footer a {
   color: #b86622;
 }
 div.section a:hover,
+section a:hover,
 footer a:hover {
   text-decoration: underline;
   color: #9d5111;
@@ -687,7 +689,7 @@ article p.quote {
   margin: 1.4em 0;
   padding-left: 2em;
 }
-article div.section.big:after {
+article section.big:after {
   margin: 7rem auto 3rem auto;
 }
 
@@ -705,6 +707,7 @@ footer {
   html {
     font-size: 18px;
   }
+
   article nav {
     font-size: 18px;
   }
@@ -719,6 +722,7 @@ footer {
   html {
     font-size: 19px;
   }
+
   article nav {
     font-size: 19px;
   }
@@ -736,9 +740,11 @@ footer {
   html {
     font-size: 20px;
   }
+
   header > h1 > span {
     font-size: 25px;
   }
+
   article nav {
     font-size: 20px;
   }
@@ -754,9 +760,11 @@ footer {
   html {
     font-size: 21px;
   }
+
   header > h1 {
     font-size: 64px;
   }
+
   article > nav {
     font-size: 21px;
   }
@@ -784,10 +792,10 @@ footer {
 }
 /*--------------------------------------------------------------------------*/
 @media (min-width: 800px) {
-  div.section > div.section {
+  section > section {
     position: relative;
   }
-  div.section > div.section h2:before {
+  section > section h2:before {
     position: absolute;
     left: -6px;
     font-family: "icons";
@@ -886,6 +894,7 @@ header div.toctree-wrapper ul li > ul > li > a:before {
     margin-right: 0.7em;
     text-align: right;
   }
+
   nav.toc-link {
     text-align: left;
     font-size: 20px;
@@ -906,6 +915,7 @@ header div.toctree-wrapper ul li > ul > li > a:before {
   nav.toc-link a.current:hover {
     color: #9d5111;
   }
+
   article {
     margin-left: 382px;
   }
@@ -931,10 +941,10 @@ header div.toctree-wrapper ul li > ul > li > a:before {
   article h1 {
     margin-top: 1.9em;
   }
-  article div.section[id] {
+  article section[id] {
     scroll-margin-top: 112px;
   }
-  article div.section.big:after {
+  article section.big:after {
     margin: 5rem auto;
   }
 }
