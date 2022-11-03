@@ -2,7 +2,7 @@
 .DS_Store
 ._*
 *.swp
-*.exe
+/*.exe
 *.bak
 *.ods
 
