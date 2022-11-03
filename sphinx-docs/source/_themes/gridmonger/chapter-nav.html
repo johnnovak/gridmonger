@@ -1,0 +1,11 @@
+<nav class="{{ chapter_nav_class }}">
+  <ul>
+    {%- if prev %}
+    <li class="prev"><a href="{{ prev.link|e }}">{{ prev.title|striptags|e }}</a></li>
+    {%- endif %}
+
+    {%- if next %}
+    <li class="next"><a href="{{ next.link|e }}">{{ next.title|striptags|e }}</a></li>
+    {%- endif %}
+  </ul>
+</nav>

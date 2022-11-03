@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+  
+
+  <title>Gridmonger</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link href="_static/css/docs.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="contents.html"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+
+    <nav class="toc-link">
+      <a href="contents.html" >Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Themes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#theme-conventions">Theme conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#theme-editor">Theme editor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#theme-files">Theme files</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/user-data-folder.html">User data folder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/advanced-usage.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/reporting-issues.html">Reporting issues</a></li>
+</ul>
+
+    </nav>
+  </header>
+
+  <article>
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="regions.html">Regions</a></li>
+    <li class="next"><a href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+  </ul>
+</nav>
+    
+
+    
+  <section id="themes">
+<h1>Themes<a class="headerlink" href="#themes" title="Permalink to this heading">¶</a></h1>
+<p>One of the best features of Gridmonger is that it comes with 32 high-quality
+themes out-of-the-box. Furthermore, the program also allows the modification
+of the built-in themes and the creation of entirely new ones.</p>
+<p>You can cycle through the themes in forward or reverse alphabetical order with
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgUp</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgDown</kbd></kbd> in <em>Edit Mode</em>. The name of the
+theme in use is saved into your map file; when loading a map, the theme will
+be restored, or if it cannot be found, the <code class="docutils literal notranslate"><span class="pre">Default</span></code> theme will be used.</p>
+<section id="theme-conventions">
+<h2>Theme conventions<a class="headerlink" href="#theme-conventions" title="Permalink to this heading">¶</a></h2>
+<p>All built-in themes follow a few simple conventions: themes prefixed with
+<code class="docutils literal notranslate"><span class="pre">[W]</span></code> are designed for world maps, while the ones starting with <code class="docutils literal notranslate"><span class="pre">[WD]</span></code> are
+meant for mixed world &amp; dungeon maps. Unprefixed themes are best suited for
+regular dungeons.</p>
+<p>The differences between them basically come down to the selection of floor
+colours: world map themes feature colours suited to represent different types
+of terrain, while in regular themes they are just different accent colours.
+Colours are generally consistent across themes belonging to the same type,
+e.g. in regular dungeon themes colour #2 is always a reddish colour, #3 a
+bright red/orange, #4 a yellowish one, and so on. This makes it a bit easier
+to switch themes in the middle of a mapping session. A few themes even include
+variations that don’t conform to these conventions (e.g. <code class="docutils literal notranslate"><span class="pre">Darkest</span>
+<span class="pre">Heart</span> <span class="pre">Alt</span></code>).</p>
+</section>
+<section id="theme-editor">
+<h2>Theme editor<a class="headerlink" href="#theme-editor" title="Permalink to this heading">¶</a></h2>
+<p>While it is certainly possible to edit or create theme files only with a text
+editor, Gridmonger features a fully-fledged theme editor that makes theme
+management a breeze.</p>
+<p>You can toggle the theme editor side panel with the <kbd class="kbd docutils literal notranslate">F12</kbd> key in <em>Edit
+Mode</em>. Note that it is not possible to toggle the editor while a dialog is
+open, or in any other modes (e.g. <em>Select Mode</em> or <em>Paste Preview Mode</em>). You
+can, however, enter any of these modes while the theme editor is <em>already</em>
+open, which makes editing aspects of the themes related to these modes a lot
+easier.</p>
+<div class="figure">
+  <a href="_static/img/theme-editor.png" class="glightbox">
+    <img alt="The theme editor in action" src="_static/img/theme-editor.png">
+  </a>
+    <p class="caption">
+      <span>
+        The theme editor in action
+      </span>
+    </p>
+</div><p>At the top, there is a drop-down indicating the current theme. You can change
+this any time, except when a dialog is open. Naturally, if you try to switch
+to a different theme and the current one has unsaved changes, the program will
+display a warning dialog.</p>
+<p>To the right of the drop-down are two state indicators:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">U</span></code> – User theme</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">O</span></code> – Overridden built-in theme</p></li>
+</ul>
+<p>Below the drop-down are four action buttons — let’s look at what these do
+first, which will also clarify the purpose of the indicators:</p>
+<dl>
+<dt>Save</dt><dd><p>Saves any changes you’ve made to the current theme.</p>
+<p>Built-in themes can never be changed, so if this is a built-in theme
+(<code class="docutils literal notranslate"><span class="pre">U</span></code> and <code class="docutils literal notranslate"><span class="pre">O</span></code> are inactive), a new <em>user theme</em> will be created with the
+same name, and therefore the <code class="docutils literal notranslate"><span class="pre">U</span></code> indicator will become active. This user theme
+<em>overrides</em> (or <em>shadows</em>) the built-in theme, making the built-in theme
+unavailable, therefore the <code class="docutils literal notranslate"><span class="pre">O</span></code> indicator will also become active.</p>
+<p>Overriding a built-in theme is useful when you only want to make a few
+tweaks to it; your map files will still reference the name of the built-in
+theme, but the program will use the overridden user theme instead.</p>
+</dd>
+<dt>Copy</dt><dd><p>Creates a copy of an existing theme under a different name.</p>
+<p>This is the action to use if you don’t want to override a built-in theme
+(e.g. you want to create a new tweaked version under a different name), or
+if you want to design your own theme: just pick a theme you want to use as
+your starting point and hit <strong>Copy</strong>.</p>
+<p>You’ll be asked for a new theme name, and you’ll get a warning if the name
+you’ve chosen would override (shadow) that of an existing built-in theme,
+or would overwrite another user theme. Naturally, you can make copies of
+both built-in and user themes.</p>
+</dd>
+<dt>Rename</dt><dd><p>Renames a user theme.</p>
+<p>Similarly to <strong>Copy</strong>, you’ll be asked for a new name, and you’ll get
+warnings about any possible naming conflicts. This button is disabled
+for built-in themes.</p>
+</dd>
+<dt>Delete</dt><dd><p>Deletes a user theme.</p>
+<p>You can only delete user themes; for built-in themes, this button is
+disabled.</p>
+</dd>
+</dl>
+<p>The rest of the editor should be pretty straightforward. The best way to get
+familiar with theming is to experiment! There are, however, a few things that
+are bit harder to figure out, so let’s say a few words about them:</p>
+<ul class="multiline simple">
+<li><p>Hold <kbd class="kbd docutils literal notranslate">Ctrl</kbd> while clicking on the little triangle before a section’s name
+to open all its child sections as well.</p></li>
+<li><p>Hold <kbd class="kbd docutils literal notranslate">Shift</kbd> for finer adjustments when changing value sliders by
+click-dragging, and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd></kbd> for super-fine adjustments.</p></li>
+<li><p>When adjusting a value slider by click-dragging, you can right-click
+before releasing the left mouse button to cancel the change.</p></li>
+<li><p>To copy a colour, hover over the source colour widget, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd></kbd>,
+then hover over the destination and press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">V</kbd></kbd>.</p></li>
+<li><p>To use a background image, first copy the image to the <code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Themes/Images</span></code>
+folder, then enter the filename (without the path part) in the <strong>Window /
+Background Image</strong> text field, and press the <strong>Reload</strong> button.</p></li>
+<li><p>To display the splash image for theming purposes, tick the <strong>Show Splash</strong>
+checkbox under <strong>User Interface / Splash Image</strong>, then untick it when you’re
+done.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There is an input lag of one extra frame when the theme editor is open.
+This limitation might be removed in a future version; for now, just keep in
+mind that it’s best to keep the theme editor closed when you’re not using
+it.</p>
+</div>
+</section>
+<section class="style3 big" id="theme-files">
+<h2>Theme files<a class="headerlink" href="#theme-files" title="Permalink to this heading">¶</a></h2>
+<p>Themes are text files with the <code class="docutils literal notranslate"><span class="pre">.gmtheme</span></code> extension. Built-in themes are
+stored in the <code class="docutils literal notranslate"><span class="pre">Themes</span></code> subfolder in the application folder. The
+<code class="docutils literal notranslate"><span class="pre">Themes/Images</span></code> subfolder contains the background images used by some themes
+(at double-resolution to support high-DPI displays).</p>
+<p>User themes live in the <a class="reference internal" href="appendixes/user-data-folder.html#user-data-folder"><span class="std std-ref">User data folder</span></a>.
+They have their own <code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Themes/Images</span></code> folder; the loading of user theme
+images are first attempted from here, then if that fails, from the
+<code class="docutils literal notranslate"><span class="pre">Themes/Images</span></code> folder. Because of this, when you make some adjustments to a
+built-in theme (creating an user theme that shadows the built-in theme in the
+process), the images files do not need to be copied.</p>
+</section>
+</section>
+
+
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="regions.html">Regions</a></li>
+    <li class="next"><a href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+  </ul>
+</nav>
+    
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2022. All wrongs reserved.</p>
+      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+    </footer>
+  </article>
+
+  <script src="_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>

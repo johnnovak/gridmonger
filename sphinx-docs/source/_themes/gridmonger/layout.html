@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+
+  {%- set url_root = pathto('', 1) %}
+  {# URL root should never be #, then all links are fragments #}
+  {%- if url_root == '#' %}{% set url_root = '' %}{% endif %}
+
+  <title>Gridmonger</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link href="{{ pathto('_static/css/docs.css', 1) }}" rel="stylesheet">
+  <link href="{{ pathto('_static/css/glightbox.min.css', 1) }}" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="{{ pathto('contents') }}"><img src="{{ pathto('_static/img/gridmonger-logo.png', 1) }}" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+
+    <nav class="toc-link">
+      <a href="{{ pathto('contents') }}" {% if pagename == "contents" %}class="current"{% endif %}>Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      {{ toctree() }}
+    </nav>
+  </header>
+
+  <article>
+    {% with chapter_nav_class='top' %}
+      {% include 'chapter-nav.html' %}
+    {% endwith %}
+
+    {% block body %} {% endblock %}
+
+    {% with chapter_nav_class='bottom' %}
+      {% include 'chapter-nav.html' %}
+    {% endwith %}
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2022. All wrongs reserved.</p>
+      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+    </footer>
+  </article>
+
+  <script src="{{ pathto('_static/js/glightbox.min.js', 1) }}"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>
+
