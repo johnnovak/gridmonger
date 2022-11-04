@@ -7,6 +7,7 @@ proc setCommonCompileParams() =
   --gc:orc
   --deepcopy:on
   --d:nimPreviewFloatRoundtrip
+  --hint:"Name:off"
   --d:nvgGL3
   --d:glfwStaticLib
   switch "out", "gridmonger".toExe
