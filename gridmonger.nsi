@@ -4,14 +4,9 @@
 !include WinCore.nsh
 !include Integration.nsh
 
-!include Utils.nsh
-
 !define NAME "Gridmonger"
 
-FileOpen  $0 "CURRENT_VERSION" r
-FileRead  $0 $VERSION
-FileClose $0
-${Trim} $VERSION $VERSION
+!searchparse /file CURRENT_VERSION '' VERSION
 
 !define APP_EXE       "gridmonger.exe"
 !define UNINSTALL_EXE "uninstall.exe"
