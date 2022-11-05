@@ -8,12 +8,13 @@
 
 /Autosaves
 /Config
-/dist
-/User Themes
-/Logs
 /Gridmonger Manual
+/Logs
+/Manual
+/User Themes
+/dist
 
-/gridmonger
 /*.gmm
 /*.log
 /*.log.bak?
+/gridmonger
