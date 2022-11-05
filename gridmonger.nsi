@@ -56,9 +56,9 @@ VIAddVersionKey "LegalCopyright" "(c) John Novak 2019-${CURRENT_YEAR}"
 VIAddVersionKey "FileDescription" "${NAME} installer"
 VIAddVersionKey "FileVersion" "${VERSION}"
 
-VIProductVersion ${VERSION}
+VIProductVersion ${VERSION}.0
 
-VIFileVersion ${VERSION}
+VIFileVersion ${VERSION}.0
 
 
 ;--------------------------------
