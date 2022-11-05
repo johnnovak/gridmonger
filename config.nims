@@ -18,8 +18,8 @@ const distDir    = "dist"
 const distWinDir = distDir / "win"
 const distMacDir = distDir / "mac"
 
-const distManualName = distDir / "gridmonger-manual.zip"
-const distMapsName = distDir / "gridmonger-example-maps.zip"
+const distManualName = "gridmonger-manual.zip"
+const distMapsName = "gridmonger-example-maps.zip"
 
 const siteDir = "docs"
 const siteFilesDir = siteDir / "files"
@@ -41,8 +41,8 @@ proc setCommonCompileParams() =
   switch "out", exeName
   setCommand "c", "src/main"
 
-proc createZip(zipName, srcPath: string) =
-  exec fmt"zip -q -9 -r {zipName} {srcPath}"
+proc createZip(zipName, srcPath: string, extraArgs = "") =
+  exec fmt"zip -q -9 -r ""{zipName}"" ""{srcPath}"" {extraArgs}"
 
 type Arch = enum
   Arch32 = (0, "32")
@@ -82,13 +82,16 @@ task strip, "strip executable":
 
 task packageWin, "create Windows installer":
   stripTask()
+  mkdir distWinDir
   exec fmt"makensis /DARCH{arch} gridmonger.nsi"
 
 
 task packageWinPortable, "create Windows portable package":
   stripTask()
 
-  let packageDir = fmt"{distWinDir}/Gridmonger"
+  mkdir distWinDir
+  let packageName = "Gridmonger"
+  let packageDir = distWinDir / packageName
   rmDir packageDir
   mkDir packageDir
 
@@ -105,9 +108,10 @@ task packageWinPortable, "create Windows portable package":
   cpDir themesDir, packageDir / themesDir
 
   let zipName = getWinPortablePackageName(arch)
-
   withDir distWinDir:
-    createZip(zipName, srcPath=packageDir)
+    createZip(zipName, srcPath=packageName)
+
+  rmDir packageDir
 
 
 task publishPackageWin, "publish Windows packages":
@@ -122,7 +126,6 @@ task packageMac, "create Mac app bundle":
   stripTask()
 
   let appBundleName = "Gridmonger.app"
-
   let appBundleDir = distMacDir / appBundleName
   let contentsDir = appBundleDir / "Contents"
   let macOsDir = contentsDir / "MacOS"
@@ -173,17 +176,20 @@ task manual, "build manual":
 task packageManual, "build manual":
   let outputDir = "Gridmonger Manual"
   cpDir manualDir, outputDir
-  createZip(zipName=distManualName, srcPath=outputDir)
+  mkdir distDir
+  rmFile distDir / distManualName
+  createZip(zipName=distDir / distManualName, srcPath=outputDir)
   rmDir outputDir
 
 
 task packageMaps, "package maps":
-  createZip(zipName=distMapsName, srcPath=exampleMapsDir)
+  rmFile distDir / distMapsName
+  createZip(zipName=distDir / distMapsName, srcPath=exampleMapsDir, extraArgs="-i *.gmm")
 
 
 task publishExtras, "publish extras":
-  cpFile distManualName, siteExtrasDir / distManualName
-  cpFile distMapsName, siteExtrasDir / distMapsName
+  cpFile distDir / distManualName, siteExtrasDir / distManualName
+  cpFile distDir / distMapsName, siteExtrasDir / distMapsName
 
 
 task site, "build website":
@@ -194,7 +200,9 @@ task site, "build website":
 
 
 task clean, "clean everything":
+  rmFile exeName
   rmDir distDir
+  rmDir manualDir
   withDir sphinxDocsDir:
     exec "make clean"
 
