@@ -6,7 +6,6 @@ SOURCEDIR    = source
 BUILDDIR     = build
 SITEDIR      = ../docs
 MANUALDIR    = ../Manual
-SED          = gsed
 
 .PHONY: clean
 
@@ -53,8 +52,8 @@ build_manual: gen_html
 	rm "$(MANUALDIR)/index.html"
 	mv "$(MANUALDIR)/contents.html" "$(MANUALDIR)/index.html"
 
-	cd "$(MANUALDIR)" && find . -type f -name '*.html' -exec $(SED) -i 's|contents.html|index.html|g' {} +
-	cd "$(MANUALDIR)" && find . -type f -name '*.html' -exec $(SED) -i 's|<p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>||g' {} + 
+	cd "$(MANUALDIR)" && find . -type f -name '*.html' -exec sed -i 's|contents.html|index.html|g' {} +
+	cd "$(MANUALDIR)" && find . -type f -name '*.html' -exec sed -i 's|<p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>||g' {} + 
 
 
 generate_css:
