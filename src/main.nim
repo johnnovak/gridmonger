@@ -6521,13 +6521,13 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emSelectJumpToLinkSrc
     of emSelectJumpToLinkSrc:
       proc handleMoveKey(dir: CardinalDir, mods: set[ModifierKey]; a) =
-        var destIx: int
+        var destIdx: int
         case dir:
         of dirE, dirN:
-          destIx = ui.jumpToSrcLocationIdx + 1
+          destIdx = ui.jumpToSrcLocationIdx + 1
         of dirW, dirS:
-          destIx = ui.jumpToSrcLocationIdx - 1
-        ui.jumpToSrcLocationIdx = destIx.floorMod(ui.jumpToSrcLocations.len)
+          destIdx = ui.jumpToSrcLocationIdx - 1
+        ui.jumpToSrcLocationIdx = destIdx.floorMod(ui.jumpToSrcLocations.len)
         ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
         moveCursorTo(ui.lastJumpToSrcLocation, a)
         setSelectJumpToLinkSrcActionMessage(a)
