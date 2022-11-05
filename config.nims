@@ -3,6 +3,34 @@ import strformat
 import strutils
 
 
+const exeName = "gridmonger".toExe
+const rootDir = getCurrentDir()
+const version = staticRead("CURRENT_VERSION").strip
+
+const macPackageName = fmt"gridmonger-v{version}-mac.zip"
+
+const dataDir = "Data"
+const exampleMapsDir = "Example Maps"
+const manualDir = "Manual"
+const themesDir = "Themes"
+
+const distDir    = "dist"
+const distWinDir = distDir / "win"
+const distMacDir = distDir / "mac"
+
+const distManualName = distDir / "gridmonger-manual.zip"
+const distMapsName = distDir / "gridmonger-example-maps.zip"
+
+const siteDir = "docs"
+const siteFilesDir = siteDir / "files"
+const siteReleasesDir = siteFilesDir / "releases"
+const siteReleasesMacDir = siteReleasesDir / "macos"
+const siteReleasesWinDir = siteReleasesDir / "windows"
+const siteExtrasDir = siteFilesDir / "extras"
+
+const sphinxDocsDir = "sphinx-docs"
+
+
 proc setCommonCompileParams() =
   --gc:orc
   --deepcopy:on
@@ -10,8 +38,26 @@ proc setCommonCompileParams() =
   --hint:"Name:off"
   --d:nvgGL3
   --d:glfwStaticLib
-  switch "out", "gridmonger".toExe
+  switch "out", exeName
   setCommand "c", "src/main"
+
+proc createZip(zipName, srcPath: string) =
+  exec fmt"zip -q -9 -r {zipName} {srcPath}"
+
+type Arch = enum
+  Arch32 = (0, "32")
+  Arch64 = (1, "64")
+
+let arch = if hostCPU == "i386": Arch32 else: Arch64
+
+proc getWinInstallerPackageName(arch: Arch): string =
+  fmt"gridmonger-v{version}-win{arch}-setup.zip"
+
+proc getWinPortablePackageName(arch: Arch): string =
+  fmt"gridmonger-v{version}-win{arch}-portable.zip"
+
+
+# All tasks must be executed from the project root directory!
 
 task debug, "debug build":
   --d:debug
@@ -31,73 +77,58 @@ task release, "release build (with stacktrace)":
 
 
 task strip, "strip executable":
-  when defined(windows):
-    exec "strip gridmonger.exe"
-  else:
-    exec "strip gridmonger"
+  exec fmt"strip -S {exeName}"
 
 
-task packageWin32, "create Windows 32-bit installer":
+task packageWin, "create Windows installer":
   stripTask()
-  exec "makensis /DARCH32 gridmonger.nsi"
-
-
-task packageWin64, "create Windows 64-bit installer":
-  stripTask()
-  exec "makensis /DARCH64 gridmonger.nsi"
-
-
-task manual, "build manual":
-  cd "sphinx-docs"
-  exec "make build_manual"
-
-
-task site, "build website":
-  cd "sphinx-docs"
-  exec "make build_site"
-  cd ".."
-  exec "extras/scripts/indexer.py -r docs/files"
-
-
-task packageManual, "build manual":
-  let outputDir = "Gridmonger Manual"
-  cpDir "Manual", outputDir
-  exec fmt"zip -q -9 -r gridmonger-manual.zip '{outputDir}'"
-  rmDir outputDir
+  exec fmt"makensis /DARCH{arch} gridmonger.nsi"
 
 
 task packageWinPortable, "create Windows portable package":
   stripTask()
 
-  let outputDir = "dist/win-portable/Gridmonger"
-  rmDir outputDir
-  mkDir outputDir
+  let packageDir = fmt"{distWinDir}/Gridmonger"
+  rmDir packageDir
+  mkDir packageDir
 
   # Create config dir
-  mkDir outputDir / "Config"
+  mkDir packageDir / "Config"
 
   # Copy main executable
-  cpFile "gridmonger.exe", outputDir / "gridmonger.exe"
+  cpFile exeName, packageDir / exeName
 
   # Copy resources
-  cpDir "Data", outputDir / "Data"
-  cpDir "Example Maps", outputDir / "Example Maps"
-  cpDir "Manual", outputDir / "Manual"
-  cpDir "Themes", outputDir / "Themes"
+  cpDir dataDir, packageDir / dataDir
+  cpDir exampleMapsDir, packageDir / exampleMapsDir
+  cpDir manualDir, packageDir / manualDir
+  cpDir themesDir, packageDir / themesDir
+
+  let zipName = getWinPortablePackageName(arch)
+
+  withDir distWinDir:
+    createZip(zipName, srcPath=packageDir)
+
+
+task publishPackageWin, "publish Windows packages":
+  let installerName = getWinInstallerPackageName(arch)
+  cpFile distWinDir / installerName, siteReleasesWinDir / installerName
+
+  let portableName = getWinPortablePackageName(arch)
+  cpFile distWinDir / portableName, siteReleasesWinDir / portableName
 
 
 task packageMac, "create Mac app bundle":
   stripTask()
 
-  let appBundleDir = "dist/Gridmonger.app"
+  let appBundleName = "Gridmonger.app"
+
+  let appBundleDir = distMacDir / appBundleName
   let contentsDir = appBundleDir / "Contents"
   let macOsDir = contentsDir / "MacOS"
   let resourcesDir = contentsDir / "Resources"
 
-  let exeName = "Gridmonger"
-  let distExePath = macOsDir / exeName
-  let distName = "gridmonger-mac"
-  let version = "0.91.0"
+  let distExePath = macOsDir / exeName.capitalizeAscii
 
   rmDir appBundleDir
   mkDir contentsDir
@@ -112,21 +143,58 @@ task packageMac, "create Mac app bundle":
 
   # Copy resources
   mkDir resourcesDir
-  cpDir "Data", resourcesDir / "Data"
-  cpDir "Example Maps", resourcesDir / "Example Maps"
-  cpDir "Manual", resourcesDir / "Manual"
-  cpDir "Themes", resourcesDir / "Themes"
+  cpDir dataDir, resourcesDir / dataDir
+  cpDir exampleMapsDir, resourcesDir / exampleMapsDir
+  cpDir manualDir, resourcesDir / manualDir
+  cpDir themesDir, resourcesDir / themesDir
   cpFile "extras/appicons/mac/gridmonger.icns", resourcesDir / "gridmonger.icns"
 
-  # Clean executable
+  # Set executable flags
   exec "chmod +x " & distExePath
-  exec "strip -S " & distExePath
   exec "xattr -cr " & distExePath
 
-  #codesign --verbose --sign "Developer ID Application: John Novak (VRF26934X5)" --options runtime --entitlements Entitlements.plist --deep dist/Gridmonger.app
-  #codesign --verify --deep --strict --verbose=2 dist/Gridmonger.app
+  #codesign --verbose --sign fmt"Developer ID Application: John Novak (VRF26934X5)" --options runtime --entitlements Entitlements.plist --deep {appBundleDir}"
+  #codesign --verify --deep --strict --verbose=2 appBundleDir
 
   # Make distribution ZIP file
-  cd "dist"
-  exec fmt"zip -q -9 -r {distName}.zip Gridmonger.app"
+  withDir distMacDir:
+    createZip(zipName=macPackageName, srcPath=appBundleName)
+
+
+task publishPackageMac, "publish Mac app bundle":
+  cpFile distMacDir / macPackageName, siteReleasesMacDir / macPackageName
+
+
+task manual, "build manual":
+  withDir sphinxDocsDir:
+    exec "make build_manual"
+
+
+task packageManual, "build manual":
+  let outputDir = "Gridmonger Manual"
+  cpDir manualDir, outputDir
+  createZip(zipName=distManualName, srcPath=outputDir)
+  rmDir outputDir
+
+
+task packageMaps, "package maps":
+  createZip(zipName=distMapsName, srcPath=exampleMapsDir)
+
+
+task publishExtras, "publish extras":
+  cpFile distManualName, siteExtrasDir / distManualName
+  cpFile distMapsName, siteExtrasDir / distMapsName
+
+
+task site, "build website":
+  withDir sphinxDocsDir:
+    exec "make build_site"
+
+  exec "extras/scripts/indexer.py -r docs/files"
+
+
+task clean, "clean everything":
+  rmDir distDir
+  withDir sphinxDocsDir:
+    exec "make clean"
 
