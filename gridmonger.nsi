@@ -8,8 +8,11 @@
 
 !searchparse /file CURRENT_VERSION '' VERSION
 
+!define /date CURRENT_YEAR "%Y"
+
 !define APP_EXE       "gridmonger.exe"
 !define UNINSTALL_EXE "uninstall.exe"
+!define OUT_PATH      "dist/win"
 
 !define ASSOC_EXT     ".gmm"
 !define ASSOC_PROGID  "${NAME}"
@@ -38,8 +41,8 @@ Function .onInit
 FunctionEnd
 
 Name "${NAME}"
-Caption "${NAME} ${VERSION} Setup - ${ARCH}-bit"
-OutFile "gridmonger-${VERSION}-win${ARCH}-setup.exe"
+Caption "${NAME} v${VERSION} Setup - ${ARCH}-bit"
+OutFile "${OUT_PATH}/gridmonger-v${VERSION}-win${ARCH}-setup.exe"
 
 !ifdef ARCH32
   InstallDir "$PROGRAMFILES32\${NAME}"
@@ -48,14 +51,14 @@ OutFile "gridmonger-${VERSION}-win${ARCH}-setup.exe"
 !endif
 
 VIAddVersionKey "ProductName" "${NAME}"
-VIAddVersionKey "ProductVersion" "0.91.0.0"
-VIAddVersionKey "LegalCopyright" "(c) John Novak 2019-2022"
+VIAddVersionKey "ProductVersion" "${VERSION}"
+VIAddVersionKey "LegalCopyright" "(c) John Novak 2019-${CURRENT_YEAR}"
 VIAddVersionKey "FileDescription" "${NAME} installer"
-VIAddVersionKey "FileVersion" "0.91.0.0"
+VIAddVersionKey "FileVersion" "${VERSION}"
 
-VIProductVersion 0.91.0.0
+VIProductVersion ${VERSION}
 
-VIFileVersion 0.91.0.0
+VIFileVersion ${VERSION}
 
 
 ;--------------------------------
