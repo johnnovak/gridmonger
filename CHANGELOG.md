@@ -1,11 +1,24 @@
 # Changelog
 
-## v0.91.0 - 2022-09-25
+## v1.0.0 - 2022-11-06
+
+### New features
+
+- Add preferences option to enable movement wrap-around
+- Allow multiple source links for teleporters (Teon Banek)
+
+### Fixes
 
 - Fix "Draw Wall Repeat" modifier handling on Linux
-- Add preferences option to enable movement wrap-around
+- Fix cursor jump when cursor is close to the level edges (Teon Banek)
 
-## v0.90.0 — 2020-09-21
+### Contributors
+
+- Teon "Th30n" Banek <<theongugl@gmail.com>>
+
+---
+
+## v0.9 — 2020-09-21
 
 - First public release
 
