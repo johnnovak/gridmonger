@@ -30,9 +30,11 @@ Before releasing anything, make sure that:
 
 All commands below must be executed from the project root directory.
 
+
 ### 1. Update current version
 
-Bump up the version in `CURRENT_VERSION`.
+Bump up the version in `CURRENT_VERSION`, commit the change, and push it up to
+the repo.
 
 
 ### 2. Build the manual
@@ -48,24 +50,16 @@ packages include the manual.
 
 Every package must be built on their respective OSes.
 
-#### Windows 32-bit
+#### Windows
 
-Make sure to use the 32-bit compiler chain from [here](https://nim-lang.org/install_windows.html).
-Execute the following commands in the project root directory:
+Make sure to use the 32/64-bit compiler chain from [here](https://nim-lang.org/install_windows.html).
 
-* `nim -f release`
-* `nim packageWin32`
-* `nim packageWinPortable`
-
-#### Windows 64-bit
-
-Make sure to use the 64-bit compiler chain from [here](https://nim-lang.org/install_windows.html).
-
-Execute the following commands in the project root directory:
+Execute the following commands twice, once for 32-bit, then for 64-bit:
 
 * `nim -f release`
-* `nim packageWin64`
+* `nim packageWin`
 * `nim packageWinPortable`
+
 
 #### macOS Intel
 
