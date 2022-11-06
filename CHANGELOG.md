@@ -6,6 +6,7 @@
 
 - Add preferences option to enable movement wrap-around
 - Allow multiple source links for teleporters (Teon Banek)
+- New Werdna theme (designed for the PC/CGA version of Wizardry 1-5)
 
 ### Fixes
 
