@@ -64,16 +64,16 @@ task debug, "debug build":
   setCommonCompileParams()
 
 
-task releaseFull, "release build (no stacktrace)":
+task releaseNoStacktrace, "release build (no stacktrace)":
   --d:release
   --app:gui
   setCommonCompileParams()
 
 
-task release, "release build (with stacktrace)":
+task release, "release build":
   --stacktrace:on
   --linetrace:on
-  releaseFullTask()
+  releaseNoStacktraceTask()
 
 
 task strip, "strip executable":
@@ -122,7 +122,7 @@ task publishPackageWin, "publish Windows packages":
   cpFile distWinDir / portableName, siteReleasesWinDir / portableName
 
 
-task packageMac, "create Mac app bundle":
+task packageMac, "create macOS app bundle":
   stripTask()
 
   let appBundleName = "Gridmonger.app"
@@ -164,7 +164,7 @@ task packageMac, "create Mac app bundle":
     createZip(zipName=macPackageName, srcPath=appBundleName)
 
 
-task publishPackageMac, "publish Mac app bundle":
+task publishPackageMac, "publish macOS app bundle":
   cpFile distMacDir / macPackageName, siteReleasesMacDir / macPackageName
 
 
@@ -173,7 +173,7 @@ task manual, "build manual":
     exec "make build_manual"
 
 
-task packageManual, "build manual":
+task packageManual, "create zipped manual package":
   let outputDir = "Gridmonger Manual"
   cpDir manualDir, outputDir
   mkdir distDir
@@ -182,12 +182,12 @@ task packageManual, "build manual":
   rmDir outputDir
 
 
-task packageMaps, "package maps":
+task packageExampleMaps, "create zipped example maps package":
   rmFile distDir / distMapsName
   createZip(zipName=distDir / distMapsName, srcPath=exampleMapsDir, extraArgs="-i *.gmm")
 
 
-task publishExtras, "publish extras":
+task publishExtras, "publish extra packages":
   cpFile distDir / distManualName, siteExtrasDir / distManualName
   cpFile distDir / distMapsName, siteExtrasDir / distMapsName
 
