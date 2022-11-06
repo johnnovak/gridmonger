@@ -1,0 +1,297 @@
+ui {
+  window {
+    modified-flag {
+      normal = "#ffffff38"
+      inactive = "#ffffff38"
+    }
+    border {
+      color = "#000000ff"
+    }
+    background {
+      color = "#000000ff"
+      image = ""
+    }
+    title {
+      background {
+        normal = "#1a1a1aff"
+        inactive = "#000000ff"
+      }
+      text {
+        normal = "#ffffff64"
+        inactive = "#ffffff4c"
+      }
+    }
+    button {
+      normal = "#ffffff4d"
+      hover = "#ffffff66"
+      down = "#ffffff80"
+      inactive = "#ffffff33"
+    }
+  }
+
+  dialog {
+    corner-radius = 0
+    background = "#2c2c2cff"
+    label = "#ffffff8e"
+    warning = "#ffbe4eff"
+    error = "#ff6464ff"
+
+    title {
+      background = "#121212ff"
+      text = "#d9d9d9ff"
+    }
+    inner-border {
+      color = "#000000ff"
+      width = 1
+    }
+    outer-border {
+      color = "#00000000"
+      width = 0
+    }
+    shadow {
+      enabled = yes
+      color = "#000000fd"
+      feather = 30
+      x-offset = 0
+      y-offset = 0
+    }
+  }
+
+  widget {
+    corner-radius = 4.7
+
+    background {
+      normal = "#ffffff5b"
+      hover = "#ffffff86"
+      active = "#ff4d4dec"
+      disabled = "#ffffff33"
+    }
+    foreground {
+      normal = "#000000b3"
+      active = "#000000b3"
+      disabled = "#00000059"
+    }
+  }
+
+  text-field {
+    cursor = "#ffbe00ff"
+    selection = "#c882005f"
+
+    edit {
+      background = "#ffffff33"
+      text = "#ffffffca"
+    }
+    scroll-bar {
+      normal = "#00000000"
+      edit = "#ffffff00"
+    }
+  }
+
+  status-bar {
+    background = "#000000ff"
+    text = "#8b8b8bff"
+    warning = "#ffbe4eff"
+    coordinates = "#666666ff"
+
+    command {
+      background = "#ff4d4dff"
+      text = "#170707d7"
+    }
+
+    error = "#ff6464ff"
+  }
+
+  about-button {
+    label {
+      normal = "#ffffff66"
+      hover = "#ffffff80"
+      down = "#ffffffb3"
+    }
+  }
+
+  about-dialog {
+    logo = "#8d8d8dff"
+  }
+
+  quick-help {
+    background = "#111111ff"
+    text = "#878787ff"
+
+    command {
+      background = "#ff4d4dd7"
+      text = "#170707d7"
+    }
+
+    title = "#d8d8d8ff"
+  }
+
+  splash-image {
+    logo = "#25252500"
+    outline = "#808080ff"
+    shadow-alpha = 1
+  }
+}
+
+level {
+  general {
+    background = "#000000ff"
+    line-width = thin
+    cursor = "#ff4d4db6"
+    cursor-guides = "#729cc14e"
+    link-marker = "#00d0d0ff"
+    selection = "#ff4d4d62"
+    paste-preview = "#0066ff66"
+
+    trail {
+      normal = "#515151bc"
+      cursor = "#c3c3c361"
+    }
+    foreground {
+      normal {
+        normal = "#9f9f9fff"
+        cursor = "#000000ff"
+      }
+      light {
+        normal = "#b6b6b640"
+        cursor = "#0000006c"
+      }
+    }
+    coordinates {
+      normal = "#595959ff"
+      highlight = "#d5d5d5ff"
+    }
+    region-border {
+      normal = "#ff4d4db6"
+      empty = "#ff4d4d51"
+    }
+  }
+
+  background-hatch {
+    enabled = no
+    color = "#81818148"
+    width = 1
+    spacing-factor = 3
+  }
+
+  grid {
+    background {
+      style = none
+      grid = "#00000000"
+    }
+    floor {
+      style = solid
+      grid = "#66666664"
+    }
+  }
+
+  outline {
+    style = cell
+    fill-style = solid
+    color = "#171717ff"
+    width-factor = 0.30097087378640774
+    overscan = no
+  }
+
+  shadow {
+    inner {
+      color = "#00000000"
+      width-factor = 0
+    }
+    outer {
+      color = "#00000000"
+      width-factor = 0
+    }
+  }
+
+  floor {
+    transparent = no
+    background = [
+      "#000000ff"
+      "#ff45453c"
+      "#ff45456c"
+      "#9e45ff66"
+      "#6c39ac5d"
+      "#308d9a37"
+      "#36b8a661"
+      "#00a7d06e"
+      "#00a7d04c"
+      "#222222ff"
+    ]
+  }
+
+  note {
+    marker {
+      normal = "#ffffffb6"
+      cursor = "#000000ca"
+    }
+
+    comment = "#ff4545ff"
+    background-shape = circle
+    index = "#000000ff"
+    index-background = [
+      "#ff4545ff"
+      "#e79e5fff"
+      "#00d0d0ff"
+      "#177badff"
+    ]
+
+    tooltip {
+      background = "#000000ff"
+      text = "#fffffff5"
+      corner-radius = 3
+
+      shadow {
+        color = "#00000064"
+      }
+    }
+  }
+
+  label {
+    text = [
+      "#b6b6b6ff"
+      "#ff4545ff"
+      "#00c6c6ff"
+      "#ff9c6aff"
+    ]
+  }
+
+  level-drop-down {
+    item-list-background = "#292929ff"
+    corner-radius = 0
+
+    button {
+      normal = "#00000000"
+      hover = "#ffffff1a"
+      label = "#ffffffa1"
+    }
+    item {
+      normal = "#ffffffa3"
+      hover = "#000000cc"
+    }
+    shadow {
+      color = "#000000ae"
+    }
+  }
+}
+
+pane {
+  notes {
+    text = "#808080ff"
+    scroll-bar = "#56565600"
+    index = "#000000ff"
+    index-background = [
+      "#ff4545ff"
+      "#e79e5fff"
+      "#00d0d0ff"
+      "#177badff"
+    ]
+  }
+
+  toolbar {
+    button {
+      normal = "#000000ff"
+      hover = "#2b2b2bff"
+    }
+  }
+}
+
