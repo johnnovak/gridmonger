@@ -74,7 +74,7 @@ Commit and push the changes in `docs/`.
 
 ### 4. Package and publish extras
 
-* `nim packageMaps`
+* `nim packageExampleMaps`
 * `nim packageManual`
 * `nim publishExtras`
 
