@@ -25,10 +25,11 @@ the target cell, then press :kbd:`Enter` to create the link or :kbd:`Esc` to
 cancel. All the common navigation shortcuts are available in this mode, so you
 can change the current level, zoom in and out, etc.
 
-The destination cell will be overwritten, but any existing note will be
-preserved (and potentially converted to a **None** marker type). Once a link
-has been created, you can see small triangles in the bottom-left corner of
-the two linked cells.
+The destination cell will be overwritten (if it doesn't contain the
+destination cell type already), but any existing note will be preserved (and
+potentially converted to a **None** marker type). Once a link has been
+created, you can see small triangles in the bottom-left corners of the
+linked cells.
 
 
 .. raw:: html
@@ -45,10 +46,18 @@ the two linked cells.
 
 
 To jump back and forth between two linked cells, place the cursor at either
-end of the link, then press :kbd:`G`.
+end of the link, then press :kbd:`G`. Some cells may have multiple linked
+locations to jump to. This is currently only possible by linking multiple
+teleport sources to a single destination. In such cases, you will be able to
+select the jump location with the movement keys. To exit from location
+selection mode, press :kbd:`Enter` or :kbd:`Esc`, or press :kbd:`G` again to
+return to the destination cell. The included ``Wizardry`` example
+map contains such multi-source teleports.
 
 If you delete a cell that is part of a link, the other end will be unlinked,
 but otherwise left intact. In fact, this is the easiest way to break a link.
+Again, multi-source teleports are an exception --- deleting a single source
+will leave the other source-destination links intact.
 
 The exact rules for creating links vary per linkable cell type:
 
@@ -59,9 +68,11 @@ Pits
 Teleports
     The link source can be either a teleport source or a teleport destination.
     The destination cell is automatically set to the other teleport type.
+    Teleport destination is the only cell type that can be linked to multiple
+    sources.
 
 Stairs
-    The link source can be either a downward or an upward stairs cell. The the
+    The link source can be either a downward or an upward stairs cell. The
     direction of the stairs will be automatically adjusted based on the
     elevation of the involved levels.
 
@@ -72,17 +83,17 @@ Doors
 
 .. note::
 
-    A cell cannot be both a link source and a destination, so you cannot
-    create things like chain-linked teleport cells or multi-level staircases.
-    Furthermore, links can only be created between exactly two cells. So, for
-    instance, you cannot have two teleport sources that are linked to the same
-    destination cell. Likewise, you cannot have a teleport source that is
-    linked to multiple destinations (e.g. for teleports that would take the
-    player to a randomly chosen location).
+    A cell cannot be both a link source and a destination at the same time, so
+    you cannot create things like chain-linked teleport cells or multi-level
+    staircases. Furthermore, with the exception of multiple teleport sources
+    linking to the same destination, links can only be created between exactly
+    two cells.
 
     All these constraints are enforced at link creation time: if either the
     source or the destination cell is already part of a link, those links will
-    be severed before creating the new one.
+    be severed before creating the new one. Teleport destination is the only
+    cell type that will preserve the links to its previous source cells when
+    being linked to a new teleport source.
 
 
 .. rst-class:: style3
