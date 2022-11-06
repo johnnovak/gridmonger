@@ -26,7 +26,7 @@ nimble install nanovg osdialog riff winim
 ```
 
 For `koi` and `nim-glfw`, clone their Git repositories, check out the
-`gridmonger` branch in `koi`, then install both with `nimble develop` for
+`gridmonger` branch in `nim-glfw`, then install both with `nimble develop` for
 local development.
 
 
@@ -71,19 +71,19 @@ The website is published from the `/docs` directory in the `master` branch.
 - To build the manual, run `nim manual`
 
 - To create the zipped distribution package of the manual from the generated
-  files, run `nim packageManual`.
+  files, run `nim packageManual`
 
 
 #### Theme development
 
-For theme development, you can run `make watch_docs_css` or `make
-watch_frontpage_css` from the `sphinx-doc` directory to regenerate the CSS
-when the SASS files are changed.
+You can run `make watch_docs_css` or `make watch_frontpage_css` from the
+`sphinx-doc` directory to regenerate the CSS when the SASS files are changed
+during theme development.
 
 
 ### Packaging & release process
 
-See [RELEASE.md](/RELEASE.md).
+See [RELEASE.md](/RELEASE.md)
 
 
 ## License

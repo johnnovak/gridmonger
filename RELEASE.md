@@ -52,6 +52,9 @@ they include the manual.*
 Execute the following commands twice, once with the 32-bit toolchain, then
 with the 64-bit:
 
+*NOTE: Nim 1.6.6 must be used to build the win32 build, as the 32-bit variant
+of 1.6.8 is broken!*
+
 * `nim -f release`
 * `nim packageWin`
 * `nim packageWinPortable`
