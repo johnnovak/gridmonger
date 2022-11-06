@@ -84,10 +84,11 @@ maps are great demonstrations of this.</p>
 the target cell, then press <kbd class="kbd docutils literal notranslate">Enter</kbd> to create the link or <kbd class="kbd docutils literal notranslate">Esc</kbd> to
 cancel. All the common navigation shortcuts are available in this mode, so you
 can change the current level, zoom in and out, etc.</p>
-<p>The destination cell will be overwritten, but any existing note will be
-preserved (and potentially converted to a <strong>None</strong> marker type). Once a link
-has been created, you can see small triangles in the bottom-left corner of
-the two linked cells.</p>
+<p>The destination cell will be overwritten (if it doesn’t contain the
+destination cell type already), but any existing note will be preserved (and
+potentially converted to a <strong>None</strong> marker type). Once a link has been
+created, you can see small triangles in the bottom-left corners of the
+linked cells.</p>
 <div class="figure">
   <a href="_static/img/cell-links.png" class="glightbox">
     <img alt="Examples of linked cells" src="_static/img/cell-links.png"
@@ -97,18 +98,28 @@ the two linked cells.</p>
       <span>Examples of linked cells</span>
     </p>
 </div><p>To jump back and forth between two linked cells, place the cursor at either
-end of the link, then press <kbd class="kbd docutils literal notranslate">G</kbd>.</p>
+end of the link, then press <kbd class="kbd docutils literal notranslate">G</kbd>. Some cells may have multiple linked
+locations to jump to. This is currently only possible by linking multiple
+teleport sources to a single destination. In such cases, you will be able to
+select the jump location with the movement keys. To exit from location
+selection mode, press <kbd class="kbd docutils literal notranslate">Enter</kbd> or <kbd class="kbd docutils literal notranslate">Esc</kbd>, or press <kbd class="kbd docutils literal notranslate">G</kbd> again to
+return to the destination cell. The included <code class="docutils literal notranslate"><span class="pre">Wizardry</span></code> example
+map contains such multi-source teleports.</p>
 <p>If you delete a cell that is part of a link, the other end will be unlinked,
-but otherwise left intact. In fact, this is the easiest way to break a link.</p>
+but otherwise left intact. In fact, this is the easiest way to break a link.
+Again, multi-source teleports are an exception — deleting a single source
+will leave the other source-destination links intact.</p>
 <p>The exact rules for creating links vary per linkable cell type:</p>
 <dl class="simple">
 <dt>Pits</dt><dd><p>The link source must be a closed, open or hidden pit. The link destination
 is always set to a ceiling pit.</p>
 </dd>
 <dt>Teleports</dt><dd><p>The link source can be either a teleport source or a teleport destination.
-The destination cell is automatically set to the other teleport type.</p>
+The destination cell is automatically set to the other teleport type.
+Teleport destination is the only cell type that can be linked to multiple
+sources.</p>
 </dd>
-<dt>Stairs</dt><dd><p>The link source can be either a downward or an upward stairs cell. The the
+<dt>Stairs</dt><dd><p>The link source can be either a downward or an upward stairs cell. The
 direction of the stairs will be automatically adjusted based on the
 elevation of the involved levels.</p>
 </dd>
@@ -118,16 +129,16 @@ destination cell is automatically set to the other door type.</p>
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A cell cannot be both a link source and a destination, so you cannot
-create things like chain-linked teleport cells or multi-level staircases.
-Furthermore, links can only be created between exactly two cells. So, for
-instance, you cannot have two teleport sources that are linked to the same
-destination cell. Likewise, you cannot have a teleport source that is
-linked to multiple destinations (e.g. for teleports that would take the
-player to a randomly chosen location).</p>
+<p>A cell cannot be both a link source and a destination at the same time, so
+you cannot create things like chain-linked teleport cells or multi-level
+staircases. Furthermore, with the exception of multiple teleport sources
+linking to the same destination, links can only be created between exactly
+two cells.</p>
 <p>All these constraints are enforced at link creation time: if either the
 source or the destination cell is already part of a link, those links will
-be severed before creating the new one.</p>
+be severed before creating the new one. Teleport destination is the only
+cell type that will preserve the links to its previous source cells when
+being linked to a new teleport source.</p>
 </div>
 </section>
 <section class="style3" id="selections">
