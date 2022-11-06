@@ -42,7 +42,7 @@
     <string>##VERSION##</string>
 
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © John Novak, 2019-##YEAR##</string>
+    <string>Copyright © John Novak, 2020-##YEAR##</string>
 
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>

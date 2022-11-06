@@ -52,7 +52,7 @@ OutFile "${OUT_PATH}/gridmonger-v${VERSION}-win${ARCH}-setup.exe"
 
 VIAddVersionKey "ProductName" "${NAME}"
 VIAddVersionKey "ProductVersion" "${VERSION}"
-VIAddVersionKey "LegalCopyright" "(c) John Novak 2019-${CURRENT_YEAR}"
+VIAddVersionKey "LegalCopyright" "(c) John Novak 2020-${CURRENT_YEAR}"
 VIAddVersionKey "FileDescription" "${NAME} installer"
 VIAddVersionKey "FileVersion" "${VERSION}"
 

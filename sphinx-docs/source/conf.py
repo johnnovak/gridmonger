@@ -2,7 +2,7 @@ from datetime import date
 current_year = date.today().year
 
 project = 'Gridmonger'
-copyright = f'2019-{current_year}, John Novak'
+copyright = f'2020-{current_year}, John Novak'
 author = 'John Novak'
 
 f = open('../../CURRENT_VERSION', 'r')

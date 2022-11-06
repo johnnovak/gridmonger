@@ -52,7 +52,7 @@ type Arch = enum
 let arch = if hostCPU == "i386": Arch32 else: Arch64
 
 proc getWinInstallerPackageName(arch: Arch): string =
-  fmt"gridmonger-v{version}-win{arch}-setup.zip"
+  fmt"gridmonger-v{version}-win{arch}-setup.exe"
 
 proc getWinPortablePackageName(arch: Arch): string =
   fmt"gridmonger-v{version}-win{arch}-portable.zip"
