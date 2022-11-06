@@ -87,3 +87,8 @@ Commit and push the changes in `docs/`.
 
 Commit and push the changes in `docs/`.
 
+
+### 6. Tag the release
+
+* `git tag vX.Y.Z && git push --tags`
+
