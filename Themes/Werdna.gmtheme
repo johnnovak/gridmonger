@@ -63,7 +63,7 @@ ui {
     background {
       normal = "#ffffff5b"
       hover = "#ffffff86"
-      active = "#ff4d4dec"
+      active = "#ff4d4de3"
       disabled = "#ffffff33"
     }
     foreground {
@@ -94,7 +94,7 @@ ui {
     coordinates = "#666666ff"
 
     command {
-      background = "#ff4d4dff"
+      background = "#ff4d4de3"
       text = "#170707d7"
     }
 
