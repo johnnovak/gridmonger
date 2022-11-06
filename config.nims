@@ -35,9 +35,9 @@ proc setCommonCompileParams() =
   --gc:orc
   --deepcopy:on
   --d:nimPreviewFloatRoundtrip
-  --hint:"Name:off"
   --d:nvgGL3
   --d:glfwStaticLib
+  --hint:"Name:off"
   switch "out", exeName
   setCommand "c", "src/main"
 
