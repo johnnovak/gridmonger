@@ -6,6 +6,7 @@ import strutils
 const exeName = "gridmonger".toExe
 const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
+const currYear = CompileDate[0..3]
 
 const macPackageName = fmt"gridmonger-v{version}-mac.zip"
 
@@ -137,8 +138,7 @@ task packageMac, "create macOS app bundle":
   mkDir contentsDir
 
   # Copy plist file & set version
-#  sed "s/{VERSION}/$VERSION/g" Info.plist >$contentsDir/Info.plist
-  cpFile "Info.plist", contentsDir / "Info.plist"
+  exec fmt"sed 's/##VERSION##/{version}/g;s/##YEAR##/{currYear}/g' Info.plist >{contentsDir}/Info.plist"
 
   # Copy main executable
   mkDir macOsDir
@@ -162,6 +162,7 @@ task packageMac, "create macOS app bundle":
   # Make distribution ZIP file
   withDir distMacDir:
     createZip(zipName=macPackageName, srcPath=appBundleName)
+    rmDir appBundleName
 
 
 task publishPackageMac, "publish macOS app bundle":

@@ -21,10 +21,10 @@
     <string>net.johnnovak.gridmonger</string>
 
     <key>CFBundleVersion</key>
-    <string>{VERSION}</string>
+    <string>##VERSION##</string>
 
     <key>CFBundleGetInfoString</key>
-    <string>{VERSION}, John Novak</string>
+    <string>##VERSION##, John Novak</string>
 
     <key>CFBundlePackageType</key>
     <string>APPL</string>
@@ -39,10 +39,10 @@
     <string>gridmonger.icns</string>
 
     <key>CFBundleShortVersionString</key>
-    <string>{VERSION}</string>
+    <string>##VERSION##</string>
 
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © John Novak</string>
+    <string>Copyright © John Novak, 2019-##YEAR##</string>
 
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
