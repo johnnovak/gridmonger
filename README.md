@@ -44,19 +44,47 @@ Release build:
 nim release
 ```
 
-See `config.nims` for further build tasks.
+Run `nim help` for the full list of build tasks.
 
 
-### Packaging
+### Building the manual & website
 
-
-
-### Documentation
-
-The [website](https://gridmonger.johnnovak.net) and
+The [website](https://gridmonger.johnnovak.net) (GitHub Pages site) and
 [manual](https://gridmonger.johnnovak.net/manual/contents.html) are generated
-from [Sphinx](https://www.sphinx-doc.org) sources. Please see the
-https://github.com/johnnovak/gridmonger-site repo for further details.
+from [Sphinx](https://www.sphinx-doc.org) sources.
+
+The website is published from the `/docs` directory in the `master` branch.
+
+#### Requirements
+
+- [Sphinx](https://www.sphinx-doc.org/en/master/usage/installation.html) 5.3+
+- [Sass](https://sass-lang.com/) 1.37+
+- [Make](https://www.gnu.org/software/make/) 3.8+
+- [GNU sed](https://www.gnu.org/software/sed/) 4.8+
+- Zip 3.0+
+
+
+#### Building
+
+- To build the website, run `nim site`
+
+- To build the manual, run `nim manual`
+
+- To create the zipped distribution package of the manual from the generated
+  files, run `nim packageManual`.
+
+
+#### Theme development
+
+For theme development, you can run `make watch_docs_css` or `make
+watch_frontpage_css` from the `sphinx-doc` directory to regenerate the CSS
+when the SASS files are changed.
+
+
+### Packaging & release process
+
+See [RELEASE.md](/RELEASE.md).
+
 
 ## License
 
