@@ -16,8 +16,8 @@ const manualDir = "Manual"
 const themesDir = "Themes"
 
 const distDir    = "dist"
-const distWinDir = distDir / "win"
-const distMacDir = distDir / "mac"
+const distMacDir = distDir / "macos"
+const distWinDir = distDir / "windows"
 
 const distManualName = "gridmonger-manual.zip"
 const distMapsName = "gridmonger-example-maps.zip"
@@ -156,8 +156,9 @@ task packageMac, "create macOS app bundle":
   exec "chmod +x " & distExePath
   exec "xattr -cr " & distExePath
 
-  #codesign --verbose --sign fmt"Developer ID Application: John Novak (VRF26934X5)" --options runtime --entitlements Entitlements.plist --deep {appBundleDir}"
-  #codesign --verify --deep --strict --verbose=2 appBundleDir
+  let sign = "\"-\""
+  exec fmt"codesign --verbose --sign {sign} --options runtime --entitlements Entitlements.plist --deep {appBundleDir}"
+  exec fmt"codesign --verify --deep --strict --verbose=2 {appBundleDir}"
 
   # Make distribution ZIP file
   withDir distMacDir:
