@@ -156,8 +156,7 @@ task packageMac, "create macOS app bundle":
   exec "chmod +x " & distExePath
   exec "xattr -cr " & distExePath
 
-  let sign = "\"-\""
-  exec fmt"codesign --verbose --sign {sign} --options runtime --entitlements Entitlements.plist --deep {appBundleDir}"
+  exec fmt"codesign --verbose --sign '-' --options runtime --deep {appBundleDir}"
   exec fmt"codesign --verify --deep --strict --verbose=2 {appBundleDir}"
 
   # Make distribution ZIP file
