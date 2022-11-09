@@ -5,6 +5,8 @@ BUGS
   mode, move a few steps, disable trail mode, move a few steps, repeat a few
   times, then undo back to the beginning)
 
+- notes pane should fill the window horizontally when the tools pane is hidden
+
 
 TODO
 ====
