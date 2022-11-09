@@ -3,7 +3,10 @@ import strformat
 import strutils
 
 
-const exeName = "gridmonger".toExe
+var exeName = "gridmonger".toExe
+var exeNameMacArm64 = exeName & "-arm64"
+var exeNameMacX64 = exeName & "-x64"
+
 const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
 const currYear = CompileDate[0..3]
@@ -75,6 +78,26 @@ task release, "release build":
   --stacktrace:on
   --linetrace:on
   releaseNoStacktraceTask()
+
+
+task releaseMacArm64, "release build (macOS arm64)":
+  --l:"-target arm64-apple-macos11"
+  --t:"-target arm64-apple-macos11"
+  exeName = exeNameMacArm64
+  releaseTask()
+
+
+task releaseMacX64, "release build (macOS x86-64)":
+  --l:"-target x86_64-apple-macos10.12"
+  --t:"-target x86_64-apple-macos10.12"
+  exeName = exeNameMacX64
+  releaseTask()
+
+
+task releaseMacUniversal, "create macOS universal binary":
+  exec fmt"strip -S {exeNameMacX64}"
+  exec fmt"strip -S {exeNameMacArm64}"
+  exec fmt"lipo {exeNameMacX64} {exeNameMacArm64} -create -output {exeName}"
 
 
 task strip, "strip executable":
@@ -202,6 +225,8 @@ task site, "build website":
 
 task clean, "clean everything":
   rmFile exeName
+  rmFile exeNameMacArm64
+  rmFile exeNameMacX64
   rmDir distDir
   rmDir manualDir
   withDir sphinxDocsDir:
