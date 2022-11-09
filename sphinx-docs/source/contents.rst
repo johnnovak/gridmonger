@@ -4,6 +4,10 @@
 Table of contents
 #################
 
+.. rst-class:: version
+
+Version |version|
+
 Chapters
 ========
 

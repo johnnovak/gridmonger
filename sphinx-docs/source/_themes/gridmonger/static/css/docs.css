@@ -702,6 +702,11 @@ footer {
   margin: 2rem 0 1.3rem 0;
 }
 
+.version {
+  text-align: center;
+  font-size: 120%;
+}
+
 /*--------------------------------------------------------------------------*/
 @media (min-width: 400px) {
   html {

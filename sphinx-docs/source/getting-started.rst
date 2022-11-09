@@ -34,7 +34,7 @@ Requirements
 Gridmonger requires very little hard drive space, only around 6-8 megabytes.
 Windows 7 & 10 and macOS Mojave or later (10.14+) are supported, although
 in all likelihood it will work just fine on Windows XP and much earlier macOS
-versions. Currently, only Intel binaries are provided for macOS.
+versions.
 
 The program uses OpenGL for all its rendering; it works very similarly to a
 game engine. You'll need a graphics card that supports OpenGL 3.2 core
@@ -73,6 +73,14 @@ Just grab the program from the `Downloads
 ``Applications`` folder. This is an unsigned application, so the usual advice
 for running such apps applies (you'll need to grant the necessary permissions,
 etc.)
+
+Linux
+-----
+
+No Linux builds are provided yet, but you can build it yourself by following
+the `build instructions <https://github.com/johnnovak/gridmonger#build-instructions>`_.
+There are some graphical glitches when resizing and moving the application
+window, but otherwise the program works perfectly.
 
 
 .. rst-class:: style4 big
