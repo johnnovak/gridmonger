@@ -220,7 +220,8 @@ task site, "build website":
   withDir sphinxDocsDir:
     exec "make build_site"
 
-  exec "extras/scripts/indexer.py -r docs/files"
+  withDir siteDir:
+    exec "../extras/scripts/indexer.py -r files"
 
 
 task clean, "clean everything":
