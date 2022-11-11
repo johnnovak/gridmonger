@@ -8503,6 +8503,7 @@ proc createSplashWindow(mousePassthru: bool = false; a) =
     cfg.profile = opCoreProfile
 
   s.win = newWindow(cfg)
+  s.win.title = "Gridmonger Splash Image"
   s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
 
 # }}}
