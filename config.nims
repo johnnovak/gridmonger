@@ -7,6 +7,8 @@ var exeName = "gridmonger".toExe
 var exeNameMacArm64 = exeName & "-arm64"
 var exeNameMacX64 = exeName & "-x64"
 
+const mingw32Dir = r"C:\dev\mingw32"
+
 const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
 const currYear = CompileDate[0..3]
@@ -36,6 +38,11 @@ const sphinxDocsDir = "sphinx-docs"
 
 
 proc setCommonCompileParams() =
+  if hostOS == "windows" and hostCPU == "i386":
+    let mingw32BinDir = mingw32Dir / "bin"
+    put "gcc.path", mingw32BinDir
+    put "gcc.cpp.path", mingw32BinDir
+
   --gc:orc
   --deepcopy:on
   --d:nimPreviewFloatRoundtrip
