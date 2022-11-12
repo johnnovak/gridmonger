@@ -1,6 +1,6 @@
                       Gridmonger map file format
                       ==========================
-                              Version 1
+                             Versions 1-2
 
 
 1. File format & structure
