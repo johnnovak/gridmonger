@@ -47,6 +47,11 @@ nim release
 Run `nim help` for the full list of build tasks.
 
 
+**NOTE:** Create an empty directory `Config` in the project root directory to
+enable portable mode (that's what you normally want to use during
+development).
+
+
 ### Building the manual & website
 
 The [website](https://gridmonger.johnnovak.net) (GitHub Pages site) and
