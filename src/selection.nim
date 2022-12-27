@@ -95,7 +95,7 @@ proc boundingBox*(s): Option[Rect[Natural]] =
 
   while r1 < s.rows and isRowEmpty(r1): inc(r1)
 
-  if r1 < s.rows-1:
+  if r1 < s.rows:
     while c1 < s.cols and isColEmpty(c1): inc(c1)
     while c2 > 0      and isColEmpty(c2): dec(c2)
     while r2 > 0      and isRowEmpty(r2): dec(r2)
@@ -134,6 +134,43 @@ proc fill*(s; v: bool) =
   let r = rectN(0, 0, s.rows, s.cols)
   s.fill(r, v)
 
+# }}}
+
+# {{{ Tests
+when isMainModule:
+  var s = newSelection(3, 4)
+  assert s.boundingBox == Rect[Natural].none
+
+  s[0,0] = true
+  assert s.boundingBox == rectN(0,0, 1,1).some
+
+  s[0,0] = false
+  s[1,1] = true
+  assert s.boundingBox == rectN(1,1, 2,2).some
+
+  s[1,2] = true
+  assert s.boundingBox == rectN(1,1, 2,3).some
+
+  s[2,3] = true
+  assert s.boundingBox == rectN(1,1, 3,4).some
+
+  s.fill(false)
+  assert s.boundingBox == Rect[Natural].none
+
+  s.fill(true)
+  assert s.boundingBox == rectN(0,0, 3,4).some
+
+  s.fill(false)
+  s[2,2] = true
+  assert s.boundingBox == rectN(2,2, 3,3).some
+
+  s.fill(false)
+  s[2,3] = true
+  assert s.boundingBox == rectN(2,3, 3,4).some
+
+  s.fill(false)
+  s[0,3] = true
+  assert s.boundingBox == rectN(0,3, 1,4).some
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
