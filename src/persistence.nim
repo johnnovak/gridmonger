@@ -25,6 +25,23 @@ import utils
 
 const CurrentMapVersion = 2
 
+# {{{ Debug logging helper
+const DebugIndent = 2
+var currDebugIndent = 0
+
+proc initDebugIndent() =
+  currDebugIndent = 0
+
+proc pushDebugIndent() =
+  currDebugIndent += DebugIndent
+
+proc popDebugIndent() =
+  currDebugIndent = max(currDebugIndent - DebugIndent, 0)
+
+template debug(s: string) =
+  debug(" ".repeat(currDebugIndent) & s)
+
+# }}}
 # {{{ Field limits
 const
   MapTitleLimits*          = strLimits(minRuneLen=1,  maxRuneLen=100)
@@ -161,7 +178,10 @@ proc invalidListChunkError(formatTypeId, groupChunkId: string) =
 # }}}
 
 # {{{ checkStringLength()
-proc checkStringLength(s: string, name: string, limit: FieldLimits) =
+proc checkStringLength(s: string, name: string, limit: FieldLimits,
+                       debugLog = true) =
+  if debugLog:
+    debug(fmt"{name}: {s}")
   if s.runeLen < limit.minRuneLen or s.runeLen > limit.maxRuneLen:
     raiseMapReadError(
       fmt"The length of string '{name}' must be between {limit.minRuneLen} " &
@@ -172,19 +192,24 @@ proc checkStringLength(s: string, name: string, limit: FieldLimits) =
 # }}}
 # {{{ checkValueRange()
 proc checkValueRange[T: SomeInteger](v: T, name: string,
-                                     min: T = 0, max: T = 0) =
+                                     min: T = 0, max: T = 0, debugLog = true) =
+  if debugLog:
+    debug(fmt"{name}: {v}")
   if v < min or v > max:
     raiseMapReadError(
       fmt"The value of integer '{name}' must be between {min} and {max}, " &
       fmt"actual value: {v}"
     )
 
-proc checkValueRange[T: SomeInteger](v: T, name: string, limit: FieldLimits) =
-  checkValueRange(v, name, T(limit.minInt), T(limit.maxInt))
+proc checkValueRange[T: SomeInteger](v: T, name: string,
+                                     limit: FieldLimits, debugLog = true) =
+  checkValueRange(v, name, T(limit.minInt), T(limit.maxInt), debugLog)
 
 # }}}
 # {{{ checkBool()
-proc checkBool(b: uint8, name: string) =
+proc checkBool(b: uint8, name: string, debugLog = true) =
+  if debugLog:
+    debug(fmt"{name}: {b}")
   if b > 1:
     raiseMapReadError(
       fmt"The value of boolean '{name}' must be either 0 or 1, " &
@@ -195,7 +220,10 @@ proc checkBool(b: uint8, name: string) =
 # {{{ checkEnum()
 {.push warning[HoleEnumConv]:off.}
 
-proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum]) =
+proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum],
+               debugLog = true) =
+  if debugLog:
+    debug(fmt"{name}: {v}")
   try:
     discard E(v).symbolRank
   except IndexDefect:
@@ -215,6 +243,7 @@ proc readLocation(rr): Location =
 # {{{ readAppState_v1_v2()
 proc readAppState_v1_v2(rr; m: Map): AppState =
   debug(fmt"Reading app state...")
+  pushDebugIndent()
 
   let themeName = rr.readBStr()
   checkStringLength(themeName, "stat.themeName", ThemeNameLimits)
@@ -261,7 +290,7 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
   let currSpecialWall = rr.read(uint8)
   checkValueRange(currSpecialWall, "stat.currSpecialWall", SpecialWallLimits)
 
-  AppState(
+  result = AppState(
     themeName:         themeName,
 
     zoomLevel:         zoomLevel,
@@ -281,26 +310,28 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
     currSpecialWall:   currSpecialWall
   )
 
+  popDebugIndent()
+
 # }}}
 # {{{ readLinks_v1_v2()
 proc readLinks_v1_v2(rr; levels: seq[Level]): Links =
   debug(fmt"Reading links...")
+  pushDebugIndent()
 
   var numLinks = rr.read(uint16).int
-  debug(fmt"  numLinks: {numLinks}")
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
 
   let maxLevelIndex = NumLevelsLimits.maxInt - 1
 
   while numLinks > 0:
+    pushDebugIndent()
+
     let src = readLocation(rr)
-    debug(fmt"  src: {src}")
     checkValueRange(src.level, "lnks.srcLevel", max=maxLevelIndex)
     checkValueRange(src.row, "lnks.srcRow",    max=levels[src.level].rows-1)
     checkValueRange(src.col, "lnks.srcColumh", max=levels[src.level].cols-1)
 
     let dest = readLocation(rr)
-    debug(fmt"  dest: {dest}")
     checkValueRange(dest.level, "lnks.destLevel", max=maxLevelIndex)
     checkValueRange(dest.row, "lnks.destRow",    max=levels[dest.level].rows-1)
     checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.level].cols-1)
@@ -308,44 +339,43 @@ proc readLinks_v1_v2(rr; levels: seq[Level]): Links =
     result.set(src, dest)
     dec(numLinks)
 
+    popDebugIndent()
+
+  popDebugIndent()
 
 # }}}
 # {{{ readLevelProperties_v1_v2()
 proc readLevelProperties_v1_v2(rr): Level =
   debug(fmt"Reading level properties...")
+  pushDebugIndent()
 
   let locationName = rr.readWStr()
-  debug(fmt"  locationName: {locationName}")
   checkStringLength(locationName, "lvl.prop.locationName",
                     LevelLocationNameLimits)
 
   let levelName = rr.readWStr()
-  debug(fmt"  levelName: {levelName}")
   checkStringLength(levelName, "lvl.prop.levelName", LevelNameLimits)
 
   let elevation = rr.read(int16).int
-  debug(fmt"  elevation: {elevation}")
   checkValueRange(elevation, "lvl.prop.elevation", LevelElevationLimits)
 
   let numRows = rr.read(uint16)
-  debug(fmt"  numRows: {numRows}")
   checkValueRange(numRows, "lvl.prop.numRows", LevelRowsLimits)
 
   let numColumns = rr.read(uint16)
-  debug(fmt"  numColumns: {numColumns}")
   checkValueRange(numColumns, "lvl.prop.numColumns", LevelColumnsLimits)
 
   let overrideCoordOpts = rr.read(uint8)
-  debug(fmt"  overrideCoordOpts: {overrideCoordOpts}")
   checkBool(overrideCoordOpts, "lvl.prop.overrideCoordOpts")
 
   let notes = rr.readWStr()
-  debug(fmt"  notes: {notes}")
   checkStringLength(notes, "lvl.prop.notes", NotesLimits)
 
   result = newLevel(locationName, levelName, elevation, numRows, numColumns)
   result.overrideCoordOpts = overrideCoordOpts.bool
   result.notes = notes
+
+  popDebugIndent()
 
 # }}}
 # {{{ readLevelCells_v1_v2()
@@ -354,6 +384,9 @@ proc readLevelProperties_v1_v2(rr): Level =
 proc readLevelCells_v1_v2(rr; numCells: Natural): seq[Cell] =
 
   template readLayer(fieldType: typedesc, field, checkField: untyped) =
+    debug("Reading layer: " & $fieldType)
+    pushDebugIndent()
+
     let ct = rr.read(uint8)
     checkEnum(ct, "lvl.cell.compressionType", CompressionType)
 
@@ -396,7 +429,11 @@ proc readLevelCells_v1_v2(rr; numCells: Natural): seq[Cell] =
       for c {.inject.} in cells.mitems:
         field = fieldType(0)
 
+    popDebugIndent()
+
   debug(fmt"Reading level cells...")
+  pushDebugIndent()
+  debug(fmt"numCells: {numCells}")
 
   var cells: seq[Cell]
   newSeq[Cell](cells, numCells)
@@ -404,24 +441,26 @@ proc readLevelCells_v1_v2(rr; numCells: Natural): seq[Cell] =
   var compressedBuf: seq[byte]
 
   readLayer(Floor): c.floor
-  do: checkEnum(data, "lvl.cell.floor", Floor)
+  do: checkEnum(data, "lvl.cell.floor", Floor, debugLog=off)
 
   readLayer(Orientation): c.floorOrientation
-  do: checkEnum(data, "lvl.cell.floorOrientation", Orientation)
+  do: checkEnum(data, "lvl.cell.floorOrientation", Orientation, debugLog=off)
 
   readLayer(byte): c.floorColor
-  do: checkValueRange(data, "lvl.cell.floorColor", CellFloorColorLimits)
+  do: checkValueRange(data, "lvl.cell.floorColor", CellFloorColorLimits, debugLog=off)
 
   readLayer(Wall): c.wallN
-  do: checkEnum(data, "lvl.cell.wallN", Wall)
+  do: checkEnum(data, "lvl.cell.wallN", Wall, debugLog=off)
 
   readLayer(Wall): c.wallW
-  do: checkEnum(data, "lvl.cell.wallW", Wall)
+  do: checkEnum(data, "lvl.cell.wallW", Wall, debugLog=off)
 
   readLayer(bool): c.trail
-  do: checkBool(data, "lvl.cell.trail")
+  do: checkBool(data, "lvl.cell.trail", debugLog=off)
 
   result = cells
+
+  popDebugIndent()
 
 {.pop}
 
@@ -429,25 +468,23 @@ proc readLevelCells_v1_v2(rr; numCells: Natural): seq[Cell] =
 # {{{ readLevelAnnotations_v1_v2()
 proc readLevelAnnotations_v1_v2(rr; l: Level) =
   debug(fmt"Reading level annotations...")
+  pushDebugIndent()
 
   let numAnnotations = rr.read(uint16).Natural
-  debug(fmt"  numAnnotations: {numAnnotations}")
   checkValueRange(numAnnotations, "lvl.anno.numAnnotations",
                   NumAnnotationsLimits)
 
   for i in 0..<numAnnotations:
-    debug(fmt"  annotation index: {i}")
+    debug(fmt"index: {i}")
+    pushDebugIndent()
 
     let row = rr.read(uint16)
-    debug(fmt"  row: {row}")
     checkValueRange(row, "lvl.anno.row", max=l.rows.uint16-1)
 
     let col = rr.read(uint16)
-    debug(fmt"  col: {col}")
     checkValueRange(col, "lvl.anno.col", max=l.cols.uint16-1)
 
     let kind = rr.read(uint8)
-    debug(fmt"  kind: {kind}")
     checkEnum(kind, "lvl.anno.kind", AnnotationKind)
 
     var anno = Annotation(kind: AnnotationKind(kind))
@@ -458,35 +495,29 @@ proc readLevelAnnotations_v1_v2(rr; l: Level) =
 
     of akIndexed:
       let index = rr.read(uint16)
-      debug(fmt"    index: {index}")
       checkValueRange(index, "lvl.anno.index", NumAnnotationsLimits)
       anno.index = index
 
       let indexColor = rr.read(uint8)
-      debug(fmt"    indexColor: {indexColor}")
       checkValueRange(indexColor, "lvl.anno.indexColor", NoteColorLimits)
       anno.indexColor = indexColor
 
     of akIcon:
       let icon = rr.read(uint8)
-      debug(fmt"    icon: {icon}")
       checkValueRange(icon, "lvl.anno.icon", NoteIconLimits)
       anno.icon = icon
 
     of akCustomId:
       let customId = rr.readBStr()
-      debug(fmt"    customId: {customId}")
       checkStringLength(customId, "lvl.anno.customId", NoteCustomIdLimits)
       anno.customId = customId
 
     of akLabel:
       let labelColor = rr.read(uint8)
-      debug(fmt"    labelColor: {labelColor}")
       checkValueRange(labelColor, "lvl.anno.labelColor", NoteColorLimits)
       anno.labelColor = labelColor
 
     let text = rr.readWStr()
-    debug(fmt"    text: {text}")
 
     let textLimits = case anno.kind
                      of akComment:  NoteTextLimits
@@ -500,26 +531,33 @@ proc readLevelAnnotations_v1_v2(rr; l: Level) =
     anno.text = text
     l.setAnnotation(row, col, anno)
 
+    popDebugIndent()
+
+  popDebugIndent()
+
 # }}}
 # {{{ readCoordinateOptions_v1_v2*()
 proc readCoordinateOptions_v1_v2(rr; parentChunk: string): CoordinateOptions =
   debug(fmt"Reading coordinate options...")
+  pushDebugIndent()
+
+  var parentChunk = strutils.strip(parentChunk)
 
   let origin = rr.read(uint8)
-  checkEnum(origin, fmt"${parentChunk}.coor.origin", CoordinateOrigin)
+  checkEnum(origin, fmt"{parentChunk}.coor.origin", CoordinateOrigin)
 
   let rowStyle = rr.read(uint8)
-  checkEnum(rowStyle, fmt"${parentChunk}.coor.rowStyle", CoordinateStyle)
+  checkEnum(rowStyle, fmt"{parentChunk}.coor.rowStyle", CoordinateStyle)
 
   let columnStyle = rr.read(uint8)
-  checkEnum(columnStyle, fmt"${parentChunk}.coor.columnStyle", CoordinateStyle)
+  checkEnum(columnStyle, fmt"{parentChunk}.coor.columnStyle", CoordinateStyle)
 
   let rowStart = rr.read(int16)
-  checkValueRange(rowStart, fmt"${parentChunk}.coor.rowStart",
+  checkValueRange(rowStart, fmt"{parentChunk}.coor.rowStart",
                   CoordRowStartLimits)
 
   let columnStart = rr.read(int16)
-  checkValueRange(columnStart, fmt"${parentChunk}.coor.columnStart",
+  checkValueRange(columnStart, fmt"{parentChunk}.coor.columnStart",
                   CoordColumnStartLimits)
 
   result = CoordinateOptions(
@@ -530,10 +568,13 @@ proc readCoordinateOptions_v1_v2(rr; parentChunk: string): CoordinateOptions =
     columnStart: columnStart
   )
 
+  popDebugIndent()
+
 # }}}
 # {{{ readLevelRegions_v1_v2*()
 proc readLevelRegions_v1_v2(rr): (RegionOptions, Regions) =
   debug(fmt"Reading level regions...")
+  pushDebugIndent()
 
   let enabled = rr.read(uint8)
   checkBool(enabled, "lvl.regn.enabled")
@@ -555,14 +596,15 @@ proc readLevelRegions_v1_v2(rr): (RegionOptions, Regions) =
     perRegionCoords: perRegionCoords.bool
   )
 
-  debug(fmt"  Regions opts: {regionOpts}")
-
   let numRegions = rr.read(uint16).Natural
-  debug(fmt"  Num regions: {numRegions}")
+  debug(fmt"numRegions: {numRegions}")
 
   var regions: Regions = initRegions()
 
   for i in 0..<numRegions:
+    debug(fmt"index: {i}")
+    pushDebugIndent()
+
     let row = rr.read(uint16)
     checkValueRange(row, "lvl.regn.region.row", RegionRowLimits)
 
@@ -575,20 +617,22 @@ proc readLevelRegions_v1_v2(rr): (RegionOptions, Regions) =
     let notes = rr.readWStr()
     checkStringLength(notes, "lvl.regn.region.notes", NotesLimits)
 
-    debug(fmt"    regionIndex: {i}, row: {row}, col: {col}, name: {name}, " &
-          fmt"notes: {notes}")
-
     regions.setRegion(
       RegionCoords(row: row, col: col),
       Region(name: name, notes: notes)
     )
 
+    popDebugIndent()
+
   result = (regionOpts, regions)
+
+  popDebugIndent()
 
 # }}}
 # {{{ readLevel_v1_v2()
 proc readLevel_v1_v2(rr): Level =
   debug(fmt"Reading level...")
+  pushDebugIndent()
 
   let groupChunkId = FourCC_GRMM_lvls.some
   var
@@ -668,10 +712,13 @@ proc readLevel_v1_v2(rr): Level =
 
   result = level
 
+  popDebugIndent()
+
 # }}}
 # {{{ readLevelList_v1_v2()
 proc readLevelList_v1_v2(rr): seq[Level] =
   debug(fmt"Reading level list...")
+  pushDebugIndent()
 
   var levels = newSeq[Level]()
 
@@ -699,46 +746,49 @@ proc readLevelList_v1_v2(rr): seq[Level] =
         ci = rr.nextChunk()
       else: break
 
+  debug(fmt"{levels.len} levels read")
+
   result = levels
+
+  popDebugIndent()
 
 # }}}
 # {{{ readMapProperties_v1_v2()
 proc readMapProperties_v1_v2(rr): Map =
   debug(fmt"Reading map properties...")
+  pushDebugIndent()
 
   let version = rr.read(uint16)
-  debug(fmt"  version: {version}")
+  debug(fmt"map.prop.version: {version}")
   if version > CurrentMapVersion:
     raiseMapReadError(fmt"Unsupported map file version: {version}")
 
   let title = rr.readWStr()
-  debug(fmt"  title: {title}")
   checkStringLength(title, "map.prop.title", MapTitleLimits)
 
   let game = rr.readWStr()
-  debug(fmt"  game: {game}")
   checkStringLength(game, "map.prop.game", MapGameLimits)
 
   let author = rr.readWStr()
-  debug(fmt"  author: {author}")
   checkStringLength(author, "map.prop.author", MapAuthorLimits)
 
   let creationTime = rr.readBStr()
-  debug(fmt"  creationTime: {creationTime}")
   checkStringLength(creationTime, "map.prop.creationTime",
                     MapCreationTimeLimits)
 
   let notes = rr.readWStr()
-  debug(fmt"  notes: {notes}")
   checkStringLength(notes, "map.prop.notes", NotesLimits)
 
   result = newMap(title, game, author, creationTime)
   result.notes = notes
 
+  popDebugIndent()
+
 # }}}
 # {{{ readMap_v1_v2()
 proc readMap_v1_v2(rr): Map =
   debug(fmt"Reading GRMM.map chunk...")
+  pushDebugIndent()
 
   let groupChunkId = FourCC_GRMM_map.some
   var
@@ -784,10 +834,14 @@ proc readMap_v1_v2(rr): Map =
 
   result = map
 
+  popDebugIndent()
+
 # }}}
 # # {{{ readMapFile*()
 # TODO return display related info and info chunk data as well
 proc readMapFile*(filename: string): (Map, Option[AppState]) =
+  initDebugIndent()
+
   var rr: RiffReader
   try:
     rr = openRiffFile(filename)
@@ -843,7 +897,7 @@ proc readMapFile*(filename: string): (Map, Option[AppState]) =
 
         else:
           debug(fmt"Skiping unknown top level chunk, " &
-               fmt"chunkId: {fourCCToCharStr(ci.id)}")
+                fmt"chunkId: {fourCCToCharStr(ci.id)}")
 
       if rr.hasNextChunk():
         ci = rr.nextChunk()
@@ -1114,6 +1168,8 @@ proc writeMap(rw; m: Map) =
 # }}}
 # {{{ writeMapFile*()
 proc writeMapFile*(m: Map, appState: AppState, filename: string) =
+  initDebugIndent()
+
   var rw: RiffWriter
   try:
     rw = createRiffFile(filename, FourCC_GRMM)
