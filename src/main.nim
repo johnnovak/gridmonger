@@ -1308,6 +1308,45 @@ proc toolsPaneWidth(a): float =
   else: ToolsPaneWidthNarrow
 
 # }}}
+# {{{ updatePaneCoords()
+proc updatePaneCoords(a) =
+  alias(dp, a.ui.drawLevelParams)
+  alias(ui, a.ui)
+
+  let l = currLevel(a)
+
+  if dp.drawCellCoords:
+    a.ui.levelTopPad    = LevelTopPad_Coords
+    a.ui.levelRightPad  = LevelRightPad_Coords
+    a.ui.levelBottomPad = LevelBottomPad_Coords
+    a.ui.levelLeftPad   = LevelLeftPad_Coords
+  else:
+    a.ui.levelTopPad    = LevelTopPad_NoCoords
+    a.ui.levelRightPad  = LevelRightPad_NoCoords
+    a.ui.levelBottomPad = LevelBottomPad_NoCoords
+    a.ui.levelLeftPad   = LevelLeftPad_NoCoords
+
+  if l.regionOpts.enabled:
+    a.ui.levelTopPad += LevelTopPad_Regions
+
+  dp.startX = ui.levelLeftPad
+  dp.startY = a.win.titleBarHeight + ui.levelTopPad
+
+  ui.levelDrawAreaWidth = drawAreaWidth(a) - a.ui.levelLeftPad -
+                                             a.ui.levelRightPad
+
+  ui.levelDrawAreaHeight = drawAreaHeight(a) - a.ui.levelTopPad -
+                                               a.ui.levelBottomPad -
+                                               StatusBarHeight
+
+  if a.opts.showNotesPane:
+   ui.levelDrawAreaHeight -= NotesPaneTopPad + NotesPaneHeight +
+                             NotesPaneBottomPad
+
+  if a.opts.showToolsPane:
+    ui.levelDrawAreaWidth -= toolsPaneWidth(a)
+
+# }}}
 
 # {{{ setCursor()
 proc setCursor(cur: Location; a) =
@@ -1493,46 +1532,14 @@ proc updateLastCursorViewCoords(a) =
   a.ui.prevCursorViewY = dp.gridSize * viewRow(a)
 
 # }}}
-# {{{ updateViewStartAndCursorPosition()
-proc updateViewStartAndCursorPosition(a) =
+# {{{ updateViewAndCursorPos()
+proc updateViewAndCursorPos(a) =
   alias(dp, a.ui.drawLevelParams)
-  alias(ui, a.ui)
 
   let l = currLevel(a)
 
-  if dp.drawCellCoords:
-    a.ui.levelTopPad    = LevelTopPad_Coords
-    a.ui.levelRightPad  = LevelRightPad_Coords
-    a.ui.levelBottomPad = LevelBottomPad_Coords
-    a.ui.levelLeftPad   = LevelLeftPad_Coords
-  else:
-    a.ui.levelTopPad    = LevelTopPad_NoCoords
-    a.ui.levelRightPad  = LevelRightPad_NoCoords
-    a.ui.levelBottomPad = LevelBottomPad_NoCoords
-    a.ui.levelLeftPad   = LevelLeftPad_NoCoords
-
-  if l.regionOpts.enabled:
-    a.ui.levelTopPad += LevelTopPad_Regions
-
-  dp.startX = ui.levelLeftPad
-  dp.startY = a.win.titleBarHeight + ui.levelTopPad
-
-  ui.levelDrawAreaWidth = drawAreaWidth(a) - a.ui.levelLeftPad -
-                                             a.ui.levelRightPad
-
-  ui.levelDrawAreaHeight = drawAreaHeight(a) - a.ui.levelTopPad -
-                                               a.ui.levelBottomPad -
-                                               StatusBarHeight
-
-  if a.opts.showNotesPane:
-   ui.levelDrawAreaHeight -= NotesPaneTopPad + NotesPaneHeight +
-                             NotesPaneBottomPad
-
-  if a.opts.showToolsPane:
-    ui.levelDrawAreaWidth -= toolsPaneWidth(a)
-
-  dp.viewRows = min(dp.numDisplayableRows(ui.levelDrawAreaHeight), l.rows)
-  dp.viewCols = min(dp.numDisplayableCols(ui.levelDrawAreaWidth), l.cols)
+  dp.viewRows = min(dp.numDisplayableRows(a.ui.levelDrawAreaHeight), l.rows)
+  dp.viewCols = min(dp.numDisplayableCols(a.ui.levelDrawAreaWidth), l.cols)
 
   dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow)
   dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol)
@@ -1549,8 +1556,6 @@ proc updateViewStartAndCursorPosition(a) =
 
   if newCur != cur:
     setCursor(newCur, a)
-
-  updateLastCursorViewCoords(a)
 
 # }}}
 
@@ -6688,7 +6693,10 @@ proc renderLevel(a) =
   let i = instantiationInfo(fullPaths=true)
   let id = koi.generateId(i.filename, i.line, "gridmonger-level")
 
-  updateViewStartAndCursorPosition(a)
+  updatePaneCoords(a)
+
+  updateViewAndCursorPos(a)
+  updateLastCursorViewCoords(a)
 
   if ui.prevCursor != ui.cursor:
     resetManualNoteTooltip(a)
