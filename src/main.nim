@@ -1504,7 +1504,6 @@ proc moveLevel(dir: CardinalDir, steps: Natural = 1; a) =
   var cur = a.ui.cursor
   cur.row = cur.row + viewRow(newViewStartRow, a)
   cur.col = cur.col + viewCol(newViewStartCol, a)
-
   setCursor(cur, a)
 
   dp.viewStartRow = newViewStartRow
@@ -5879,17 +5878,19 @@ proc handleGlobalKeyEvents(a) =
                          @[IconArrowsAll, "nudge",
                          "Enter", "confirm", "Esc", "cancel"], a)
 
-
       elif ke.isShortcutDown(scJumpToLinkedCell):
         let otherLocs = map.getLinkedLocations(cur)
+
         if otherLocs.len == 1:
           let otherLoc = otherLocs.first.get
           if map.getLinkedLocations(otherLoc).len > 1:
             ui.lastJumpToSrcLocation = cur
           moveCursorTo(otherLoc, a)
+
         elif otherLocs.len > 1:
           ui.jumpToSrcLocations = otherLocs.toSeq
           sort(ui.jumpToSrcLocations)
+
           # Try to continue selecting sources from the last source we left at.
           let oldIdx = ui.jumpToSrcLocations.find(ui.lastJumpToSrcLocation)
           if oldIdx == -1:
@@ -5898,10 +5899,12 @@ proc handleGlobalKeyEvents(a) =
             ui.jumpToSrcLocationIdx = 0
           else:
             ui.jumpToSrcLocationIdx = oldIdx
+
           ui.jumpToDestLocation = cur
           ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
           ui.wasDrawingTrail = opts.drawTrail
           opts.drawTrail = false
+
           moveCursorTo(ui.lastJumpToSrcLocation, a)
           ui.editMode = emSelectJumpToLinkSrc
           setSelectJumpToLinkSrcActionMessage(a)
