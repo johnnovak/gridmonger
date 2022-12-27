@@ -1349,15 +1349,22 @@ proc updatePaneCoords(a) =
 # }}}
 
 # {{{ setCursor()
-proc setCursor(cur: Location; a) =
+proc setCursor(newCur: Location; a) =
   with a:
-    if cur.level != ui.cursor.level:
+    if newCur.level != ui.cursor.level:
       opts.drawTrail = false
 
-    if opts.drawTrail and cur != ui.cursor:
-      actions.drawTrail(doc.map, loc=cur, undoLoc=ui.prevCursor,
+    if opts.drawTrail and newCur != ui.cursor:
+      actions.drawTrail(doc.map, loc=newCur, undoLoc=ui.prevCursor,
                         doc.undoManager)
-    ui.cursor = cur
+
+    let l = doc.map.levels[newCur.level]
+
+    ui.cursor = Location(
+      level: newCur.level,
+      row: newCur.row.clamp(0, l.rows - 1),
+      col: newCur.col.clamp(0, l.cols - 1)
+    )
 
 # }}}
 # {{{ stepCursor()
