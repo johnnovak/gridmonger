@@ -251,6 +251,7 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
   let zoomLevel = rr.read(uint8)
   checkValueRange(zoomLevel, "stat.zoomLevel", ZoomLevelLimits)
 
+  # Cursor position
   let maxLevelIndex = NumLevelsLimits.maxInt - 1
   let currLevel = rr.read(uint16).int
   checkValueRange(currLevel, "stat.currLevel", max=maxLevelIndex)
@@ -269,6 +270,7 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
   let viewStartCol = rr.read(uint16)
   checkValueRange(viewStartCol, "stat.viewStartCol", max=l.cols.uint16-1)
 
+  # Options
   let optShowCellCoords = rr.read(uint8)
   checkBool(optShowCellCoords, "stat.optShowCellCoords")
 
@@ -284,6 +286,7 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
   let optWalkMode = rr.read(uint8)
   checkBool(optWalkMode, "stat.optWalkMode")
 
+  # Tools pane state
   let currFloorColor = rr.read(uint8)
   checkValueRange(currFloorColor, "stat.currFloorColor", CellFloorColorLimits)
 
@@ -947,6 +950,7 @@ proc writeAppState(rw; s: AppState) =
 
   rw.writeBStr(s.themeName)
 
+  # Cursor position
   rw.write(s.zoomLevel.uint8)
   rw.write(s.currLevel.uint16)
   rw.write(s.cursorRow.uint16)
@@ -954,12 +958,14 @@ proc writeAppState(rw; s: AppState) =
   rw.write(s.viewStartRow.uint16)
   rw.write(s.viewStartCol.uint16)
 
+  # Options
   rw.write(s.optShowCellCoords.uint8)
   rw.write(s.optShowToolsPane.uint8)
   rw.write(s.optShowNotesPane.uint8)
   rw.write(s.optWasdMode.uint8)
   rw.write(s.optWalkMode.uint8)
 
+  # Tools pane state
   rw.write(s.currFloorColor.uint8)
   rw.write(s.currSpecialWall.uint8)
 
