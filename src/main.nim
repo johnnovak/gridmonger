@@ -1541,8 +1541,14 @@ proc updateViewAndCursorPos(a) =
   dp.viewRows = min(dp.numDisplayableRows(a.ui.levelDrawAreaHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(a.ui.levelDrawAreaWidth), l.cols)
 
-  dp.viewStartRow = (l.rows - dp.viewRows).clamp(0, dp.viewStartRow)
-  dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol)
+  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
+  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
+
+  if maxViewStartRow < dp.viewStartRow:
+    dp.viewStartRow = maxViewStartRow
+
+  if maxViewStartCol < dp.viewStartCol:
+    dp.viewStartCol = maxViewStartCol
 
   let viewEndRow = dp.viewStartRow + dp.viewRows - 1
   let viewEndCol = dp.viewStartCol + dp.viewCols - 1
