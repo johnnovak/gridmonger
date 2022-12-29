@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.1 – 2022-12-29
+
+### Fixes
+
+- Fix bug where no operation can be performed on the selection in "Mark mode"
+  if only cells from the bottom row are selected
+
+- Fix a very obscure bug where the auto-saved map can get occasionally
+  corrupted when creating a level with smaller dimensions than the current one.
+
+
 ## v1.0.0 – 2022-11-06
 
 ### New features
