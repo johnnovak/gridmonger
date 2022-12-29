@@ -12,7 +12,7 @@
 
 !define APP_EXE       "gridmonger.exe"
 !define UNINSTALL_EXE "uninstall.exe"
-!define OUT_PATH      "dist/win"
+!define OUT_PATH      "dist/windows"
 
 !define ASSOC_EXT     ".gmm"
 !define ASSOC_PROGID  "${NAME}"
