@@ -323,7 +323,7 @@ a.external:after {
   text-transform: none;
   line-height: 1;
   font-size: 65%;
-  content: "   ";
+  content: "  \e900 ";
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -431,7 +431,6 @@ p.aim {
   html {
     font-size: 21px;
   }
-
   header > h1 {
     font-size: 64px;
   }
@@ -454,7 +453,6 @@ p.aim {
     opacity: 0.4;
     content: "Ω";
   }
-
   section > h2 {
     font-size: 34px;
   }
@@ -470,7 +468,6 @@ p.aim {
   header > h1 {
     font-size: 64px;
   }
-
   section {
     position: relative;
   }
