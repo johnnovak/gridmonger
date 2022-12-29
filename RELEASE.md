@@ -76,6 +76,7 @@ Commit and push the changes in `docs/`.
 * `nim -f releaseMacX64`
 * `nim -f releaseMacArm64`
 * `nim releaseMacUniversal`
+* `nim packageMac`
 * `nim publishPackageMac`
 
 Commit and push the changes in `docs/`.
