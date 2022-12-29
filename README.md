@@ -8,7 +8,7 @@
 
 ## Build instructions
 
-Requires [Nim](https://nim-lang.org/) 1.6.6+
+Requires [Nim](https://nim-lang.org/) 1.6.10+
 
 ### Dependencies
 
