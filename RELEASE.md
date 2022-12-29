@@ -42,7 +42,9 @@ Bump up the version in `CURRENT_VERSION`, commit and push the change.
 *NOTE: It is important to build the manual before the release packages as
 they include the manual.*
 
-* `nim manual`
+```
+nim manual
+```
 
 
 ### 3. Build, package and publish the release packages
@@ -51,54 +53,77 @@ they include the manual.*
 
 #### Windows
 
-Execute the following commands twice to compile the 32 and 64 versions of the
-program, respectively.
-
 **64-bit**
 
-* `nim -f release`
-* `nim packageWin`
-* `nim packageWinPortable`
-* `nim publishPackageWin`
+```
+nim -f release
+nim packageWin
+nim packageWinPortable
+nim publishPackageWin
+```
 
 **32-bit**
 
-* `nim -f --cpu:i386 release`
-* `nim --cpu:i386 packageWin`
-* `nim --cpu:i386 packageWinPortable`
-* `nim --cpu:i386 publishPackageWin`
+```
+nim -f --cpu:i386 release
+nim --cpu:i386 packageWin
+nim --cpu:i386 packageWinPortable
+nim --cpu:i386 publishPackageWin
+```
+
+(Or execute `scripts/build-win.bat`)
 
 Commit and push the changes in `docs/`.
 
 
 #### macOS
 
-* `nim -f releaseMacX64`
-* `nim -f releaseMacArm64`
-* `nim releaseMacUniversal`
-* `nim packageMac`
-* `nim publishPackageMac`
+```
+nim -f releaseMacX64
+nim -f releaseMacArm64
+nim releaseMacUniversal
+nim packageMac
+nim publishPackageMac
+```
+
+(Or execute `scripts/build-mac.sh`)
 
 Commit and push the changes in `docs/`.
 
 
 ### 4. Package and publish extras
 
-* `nim packageExampleMaps`
-* `nim packageManual`
-* `nim publishExtras`
+```
+nim packageExampleMaps
+nim packageManual
+nim publishExtras
+```
+
+(Or execute `scripts/build-extras.sh` or `scripts/build-extras.bat`)
 
 Commit and push the changes in `docs/`.
 
 
 ### 5. Build and publish the website
 
-* `nim site`
+```
+nim site
+```
 
 Commit and push the changes in `docs/`.
 
 
 ### 6. Tag the release
 
-* `git tag vX.Y.Z && git push --tags`
+```
+git tag vX.Y.Z && git push --tags
+```
+
+
+### 7. Create release branch
+
+```
+git checkout -b release-vX.Y.Z
+git push --set-upstream origin release-vX.Y.Z
+```
 
