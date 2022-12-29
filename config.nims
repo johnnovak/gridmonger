@@ -228,7 +228,7 @@ task site, "build website":
     exec "make build_site"
 
   withDir siteDir:
-    exec "../extras/scripts/indexer.py -r files"
+    exec "../scripts/indexer.py -r files"
 
 
 task clean, "clean everything":
