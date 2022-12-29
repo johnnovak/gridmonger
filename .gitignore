@@ -3,6 +3,7 @@
 ._*
 *.swp
 /*.exe
+/src/*.exe
 *.bak
 *.ods
 
