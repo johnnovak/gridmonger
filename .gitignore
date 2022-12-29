@@ -2,7 +2,6 @@
 .DS_Store
 ._*
 *.swp
-<<<<<<< HEAD
 /*.exe
 /src/*.exe
 *.bak
