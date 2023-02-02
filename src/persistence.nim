@@ -23,7 +23,7 @@ import rle
 import utils
 
 
-const CurrentMapVersion = 2
+const CurrentMapVersion = 3
 
 # {{{ Debug logging helper
 const DebugIndent = 2

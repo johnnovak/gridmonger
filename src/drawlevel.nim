@@ -1970,6 +1970,20 @@ proc drawTeleportDestination(x, y: float; isCursorActive: bool; ctx) =
            fontSizeFactor=0.7, ctx.vg)
 
 # }}}
+# {{{ drawColumn()
+proc drawColumn(x, y: float; isCursorActive: bool; ctx) =
+  drawIcon(x, y, -0.01, -0.025, IconCircleInv, ctx.dp.gridSize,
+           getForegroundNormalColor(isCursorActive, ctx),
+           fontSizeFactor=0.5, ctx.vg)
+
+# }}}
+# {{{ drawStatue()
+proc drawStatue(x, y: float; isCursorActive: bool; ctx) =
+  drawIcon(x, y, -0.01, -0.025, IconCircleDot, ctx.dp.gridSize,
+           getForegroundNormalColor(isCursorActive, ctx),
+           fontSizeFactor=0.5, ctx.vg)
+
+# }}}
 # {{{ drawInvisibleBarrier()
 proc drawInvisibleBarrier(x, y: float; isCursorActive: bool; ctx) =
   drawIcon(x, y, 0, 0.015, IconBarrier, ctx.dp.gridSize,
@@ -2156,6 +2170,8 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   of fTeleportDestination: draw(drawTeleportDestination)
   of fInvisibleBarrier:    draw(drawInvisibleBarrier)
   of fBridge:              drawOriented(drawBridge, offsetFactor=0)
+  of fColumn:              draw(drawColumn)
+  of fStatue:              draw(drawStatue)
 
   vg.restore()
 

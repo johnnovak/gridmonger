@@ -17,6 +17,7 @@ const
   IconCheckboxOff* = "\uea53"
   IconCheckboxOn* = "\uea52"
   IconCircleInv* = "\uf111"
+  IconCircleDot* = "\ue913"
   IconClose* = "\ue901"
   IconCog* = "\ue906"
   IconComment* = "\uf27b"

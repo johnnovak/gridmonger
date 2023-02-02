@@ -195,6 +195,8 @@ type
     fTeleportDestination = (71, "teleport destination"),
     fInvisibleBarrier    = (80, "invisible barrier")
     fBridge              = (90, "bridge")
+    fColumn              = (100, "column")
+    fStatue              = (110, "statue")
 
   Wall* = enum
     wNone          = ( 0, "none")

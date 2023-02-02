@@ -161,6 +161,11 @@ const
     fBridge
   ]
 
+  FloorGroup8 = @[
+    fColumn,
+    fStatue
+  ]
+
 # }}}
 # {{{ App context
 
@@ -744,6 +749,7 @@ type AppShortcut = enum
   scCycleFloorGroup5Forward,
   scCycleFloorGroup6Forward,
   scCycleFloorGroup7Forward,
+  scCycleFloorGroup8Forward,
 
   scCycleFloorGroup1Backward,
   scCycleFloorGroup2Backward,
@@ -752,6 +758,7 @@ type AppShortcut = enum
   scCycleFloorGroup5Backward,
   scCycleFloorGroup6Backward,
   scCycleFloorGroup7Backward,
+  scCycleFloorGroup8Backward,
 
   scExcavateTunnel,
   scEraseCell,
@@ -901,6 +908,7 @@ let g_appShortcuts = {
   scCycleFloorGroup5Forward:   @[mkKeyShortcut(key5,      {})],
   scCycleFloorGroup6Forward:   @[mkKeyShortcut(key6,      {})],
   scCycleFloorGroup7Forward:   @[mkKeyShortcut(key7,      {})],
+  scCycleFloorGroup8Forward:   @[mkKeyShortcut(key8,      {})],
 
   scCycleFloorGroup1Backward:  @[mkKeyShortcut(key1,      {mkShift})],
   scCycleFloorGroup2Backward:  @[mkKeyShortcut(key2,      {mkShift})],
@@ -909,6 +917,7 @@ let g_appShortcuts = {
   scCycleFloorGroup5Backward:  @[mkKeyShortcut(key5,      {mkShift})],
   scCycleFloorGroup6Backward:  @[mkKeyShortcut(key6,      {mkShift})],
   scCycleFloorGroup7Backward:  @[mkKeyShortcut(key7,      {mkShift})],
+  scCycleFloorGroup8Backward:  @[mkKeyShortcut(key8,      {mkShift})],
 
   scExcavateTunnel:            @[mkKeyShortcut(keyD,      {})],
   scEraseCell:                 @[mkKeyShortcut(keyE,      {})],
@@ -5746,6 +5755,9 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scCycleFloorGroup7Forward):
         cycleFloorGroupAction(FloorGroup7, forward=true, a)
 
+      elif ke.isShortcutDown(scCycleFloorGroup8Forward):
+        cycleFloorGroupAction(FloorGroup8, forward=true, a)
+
 
       elif ke.isShortcutDown(scCycleFloorGroup1Backward):
         cycleFloorGroupAction(FloorGroup1, forward=false, a)
@@ -5767,6 +5779,9 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scCycleFloorGroup7Backward):
         cycleFloorGroupAction(FloorGroup7, forward=false, a)
+
+      elif ke.isShortcutDown(scCycleFloorGroup8Backward):
+        cycleFloorGroupAction(FloorGroup8, forward=false, a)
 
       elif ke.isShortcutDown(scSelectSpecialWall1):  selectSpecialWall(0, a)
       elif ke.isShortcutDown(scSelectSpecialWall2):  selectSpecialWall(1, a)
@@ -7842,6 +7857,10 @@ let g_quickRef_Editing = @[
 
     @[scCycleFloorGroup7Forward,
       scCycleFloorGroup7Backward].sc, "Draw bridge".desc,
+
+    @[scCycleFloorGroup8Forward,
+      scCycleFloorGroup8Backward].sc, "Cycle column/statue".desc,
+
     QuickRefSepa,
 
     scSelectSpecialWall1.sc,  "Special wall: Open door".desc,
