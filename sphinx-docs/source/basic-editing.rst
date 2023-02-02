@@ -210,6 +210,18 @@ key multiple times repeatedly, and backward by pressing the key with the
         </tr>
       </tbody>
 
+      <tbody>
+        <tr>
+          <td class="key" rowspan="2"><kbd>8</kbd></td>
+          <td class="icon"><img src="_static/img/floor-column.png" alt="column"></td>
+          <td class="name">column</td>
+        </tr>
+        <tr>
+          <td class="icon"><img src="_static/img/floor-statue.png" alt="statue"></td>
+          <td class="name">statue</td>
+        </tr>
+      </tbody>
+
     </table>
 
 

@@ -652,6 +652,12 @@ Edit mode
           </td>
           <td>Draw bridge</td>
         </tr>
+        <tr>
+          <td>
+            <kbd>8</kbd> / <kbd class="compound "><kbd>Shift</kbd>+<kbd>8</kbd></kbd>
+          </td>
+          <td>Cycle column/statue</td>
+        </tr>
       </tbody>
 
       <tbody>
