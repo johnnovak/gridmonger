@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.0 – 2023-02-02
+
+### New features
+
+- Add Column and Statue floor types
+
+
 ## v1.0.1 – 2022-12-29
 
 ### Fixes
