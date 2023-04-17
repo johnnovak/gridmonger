@@ -8889,11 +8889,11 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   let height = mergedWinCfg.getNaturalOrDefault("height", 800)
                            .limit(WindowWidthLimits)
 
-  var xpos = mergedWinCfg.getIntOrDefault("x-position", -1)
-  if xpos < 0: xpos = (maxWidth - width) div 2
+  let defaultXPos = (maxWidth - width) div 2
+  var xpos = mergedWinCfg.getIntOrDefault("x-position", defaultXPos)
 
-  var ypos = mergedWinCfg.getIntOrDefault("y-position", -1)
-  if ypos < 0: ypos = (maxHeight - height) div 2
+  let defaultYPos = (maxHeight - height) div 2
+  var ypos = mergedWinCfg.getIntOrDefault("y-position", defaultYPos)
 
   a.win.size = (width.int, height.int)
   a.win.pos = (xpos, ypos)
