@@ -7245,19 +7245,19 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     prop(label, path):
       var val = cfg.getStringOrDefault(path)
       koi.textfield(val)
-      cfg.set(path, $val)
+      hocon.set(cfg, path, $val)
 
   template colorProp(label: string, path: string) =
     prop(label, path):
       var val = cfg.getColorOrDefault(path)
       koi.color(val)
-      cfg.set(path, $val)
+      hocon.set(cfg, path, $val)
 
   template boolProp(label: string, path: string) =
     prop(label, path):
       var val = cfg.getBoolOrDefault(path)
       koi.checkBox(val)
-      cfg.set(path, val)
+      hocon.set(cfg, path, val)
 
   template floatProp(label: string, path: string, limits: FieldLimits) =
     prop(label, path):
@@ -7266,13 +7266,13 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
                       endVal=limits.maxFloat,
                       val,
                       style=ThemeEditorSliderStyle)
-      cfg.set(path, val)
+      hocon.set(cfg, path, val)
 
   template enumProp(label: string, path: string, T: typedesc[enum]) =
     prop(label, path):
       var val = cfg.getEnumOrDefault(path, T)
       koi.dropDown(val)
-      cfg.set(path, enumToDashCase($val))
+      hocon.set(cfg, path, enumToDashCase($val))
 
 
   koi.beginScrollView(x, y, w, h, style=ThemeEditorScrollViewStyle)
@@ -9066,7 +9066,7 @@ proc main() =
 
     cleanup(a)
 
-  except Exception as e:
+  except CatchableError as e:
     when defined(DEBUG): raise e
     else: crashHandler(e, a)
 

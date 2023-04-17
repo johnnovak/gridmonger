@@ -51,7 +51,7 @@ proc parseNaturalOpt(opt, arg: string): Natural =
     if i < 0:
       quitWithError(fmt"argument for option '{opt}' must be positive: {arg}")
     i.Natural
-  except:
+  except CatchableError:
     quitWithError(fmt"invalid integer argument for option '{opt}': {arg}")
 
 
@@ -59,7 +59,7 @@ proc parseBoolOpt(opt, arg: string): bool =
   checkOptArgumentProvided(opt, arg)
   try:
     parseBool(arg)
-  except:
+  except CatchableError:
     quitWithError(fmt"invalid boolean argument for option '{opt}': {arg}")
 
 
