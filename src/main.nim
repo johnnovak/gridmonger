@@ -43,7 +43,7 @@ import rect
 import selection
 import theme
 import unicode
-import utils
+import utils as gmUtils
 
 when defined(windows):
   import platform/windows/ipc
@@ -1360,6 +1360,9 @@ proc updatePaneCoords(a) =
 # {{{ setCursor()
 proc setCursor(newCur: Location; a) =
   with a:
+    if not doc.map.hasLevels:
+      return
+
     if newCur.level != ui.cursor.level:
       opts.drawTrail = false
 
@@ -1380,6 +1383,9 @@ proc setCursor(newCur: Location; a) =
 proc moveCursorTo(loc: Location; a)
 
 proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
+  if not a.doc.map.hasLevels:
+    return
+
   alias(dp, a.ui.drawLevelParams)
 
   let l = a.doc.map.levels[cur.level]
@@ -4782,7 +4788,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 
   # Validation
   var validationError = ""
-  if not utils.isValidFilename(dlg.newThemeName):
+  if not gmUtils.isValidFilename(dlg.newThemeName):
     validationError = "Theme name is invalid"
 
   var validationWarning = ""
@@ -4896,7 +4902,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 
   # Validation
   var validationError = ""
-  if not utils.isValidFilename(dlg.newThemeName):
+  if not gmUtils.isValidFilename(dlg.newThemeName):
     validationError = "Theme name is invalid"
 
   var validationWarning = ""
