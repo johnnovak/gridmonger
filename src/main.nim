@@ -23,7 +23,7 @@ import glfw
 from glfw/wrapper import IconImageObj
 import koi
 import koi/undomanager
-from koi/utils as koiUtils import lerp, invLerp
+from koi/utils as koiUtils import lerp, invLerp, remap
 import nanovg
 when not defined(DEBUG): import osdialog
 
@@ -250,6 +250,9 @@ type
     cursorOrient:       CardinalDir
     editMode:           EditMode
 
+    # to restore the previous edit mode when exiting emPanLevel
+    prevEditMode:       EditMode
+
     prevCursorViewX:    float
     prevCursorViewY:    float
 
@@ -270,6 +273,11 @@ type
     drawWallRepeatDirection: CardinalDir
 
     mouseCanStartExcavateAction: bool
+
+    mouseDragStartX:    float
+    mouseDragStartY:    float
+
+    panLevelMode:       PanLevelMode
 
     manualNoteTooltipState: ManualNoteTooltipState
 
@@ -332,7 +340,15 @@ type
     emSelectErase,
     emSelectRect,
     emSetCellLink,
-    emSelectJumpToLinkSrc
+    emSelectJumpToLinkSrc,
+
+    # Special "momentary" mode; after exiting emPanLevel, the previous edit
+    # mode is restored.
+    emPanLevel
+
+  PanLevelMode = enum
+    dlmCtrlLeftButton
+    dlmMiddleButton
 
   DrawWallRepeatAction = enum
     dwaNone  = (0, "none"),
@@ -1484,7 +1500,7 @@ proc centerCursorAt(loc: Location; a) =
 
 # }}}
 # {{{ locationAtMouse()
-proc locationAtMouse(a): Option[Location] =
+proc locationAtMouse(clampToBounds=false, a): Option[Location] =
   alias(dp, a.ui.drawLevelParams)
 
   let
@@ -1494,16 +1510,24 @@ proc locationAtMouse(a): Option[Location] =
     mouseRow = dp.viewStartRow + mouseViewRow
     mouseCol = dp.viewStartCol + mouseViewCol
 
-  if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
-     mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
-
+  if clampToBounds:
     result = Location(
       level: a.ui.cursor.level,
-      row: mouseRow,
-      col: mouseCol
+      row: mouseRow.clamp(dp.viewStartRow, dp.viewStartRow + dp.viewRows-1),
+      col: mouseCol.clamp(dp.viewStartCol, dp.viewStartCol + dp.viewCols-1)
     ).some
+
   else:
-    result = Location.none
+    if mouseViewRow >= 0 and mouseRow < dp.viewStartRow + dp.viewRows and
+       mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
+
+      result = Location(
+        level: a.ui.cursor.level,
+        row: mouseRow,
+        col: mouseCol
+      ).some
+    else:
+      result = Location.none
 
 # }}}
 # {{{ moveLevel()
@@ -5420,13 +5444,95 @@ proc enterDrawWallMode(specialWall: bool; a) =
 # }}}
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents(a) =
+
+  # {{{ moveCursorToMousePos()
+  proc moveCursorToMousePos(a) =
+    alias(dp, a.ui.drawLevelParams)
+    alias(ui, a.ui)
+
+    let loc = locationAtMouse(clampToBounds=true, a)
+    if loc.isSome:
+      resetManualNoteTooltip(a)
+      a.ui.cursor = loc.get
+      if ui.editMode in {emPastePreview, emMovePreview}:
+        dp.selStartRow = ui.cursor.row
+        dp.selStartCol = ui.cursor.col
+
+  # }}}
+  # {{{ enterPanLevelMode()
+  proc enterPanLevelMode(mode: PanLevelMode; a) =
+    alias(ui, a.ui)
+    ui.prevEditMode = ui.editMode
+    ui.editMode = emPanLevel;
+    ui.mouseDragStartX = koi.mx()
+    ui.mouseDragStartY = koi.my()
+    ui.panLevelMode = mode
+
+  # }}}
+  # {{{ handleMoveCursorOrPanSimple()
+  proc handleMoveCursorOrPanSimple(a) =
+    if koi.mbLeftDown():
+      if koi.ctrlDown():
+        enterPanLevelMode(dlmCtrlLeftButton, a)
+      else:
+        moveCursorToMousePos(a)
+    elif koi.mbMiddleDown():
+      enterPanLevelMode(dlmMiddleButton, a)
+
+  # }}}
+  # {{{ handlePanLevel()
+  proc handlePanLevel(a) =
+    alias(ui, a.ui)
+    alias(dp, a.ui.drawLevelParams)
+
+    let dx = ui.mouseDragStartX - koi.mx()
+    let dy = ui.mouseDragStartY - koi.my()
+
+    const SensitivityMin = 10
+    const SensitivityMax = 35
+
+    let sensitivity = remap(
+      inMin=MinZoomLevel.float, inMax=MaxZoomLevel.float,
+      outMin=SensitivityMin, outMax=SensitivityMax,
+      dp.getZoomLevel().float
+    )
+    let colSteps = (dx / sensitivity).int
+    let rowSteps = (dy / sensitivity).int
+
+    if colSteps == 0: discard
+    else:
+      ui.mouseDragStartX = koi.mx()
+      if colSteps > 0: moveLevel(dirE,  colSteps, a)
+      else:            moveLevel(dirW, -colSteps, a)
+
+    if rowSteps == 0: discard
+    else:
+      ui.mouseDragStartY = koi.my()
+      if rowSteps > 0: moveLevel(dirS,  rowSteps, a)
+      else:            moveLevel(dirN, -rowSteps, a)
+
+    if ui.editMode == emPanLevel and
+      ui.prevEditMode in {emPastePreview, emMovePreview}:
+      dp.selStartRow = ui.cursor.row
+      dp.selStartCol = ui.cursor.col
+
+  # }}}
+  # {{{ handlePanLevelExit()
+  proc handlePanLevelExit(a) =
+    alias(ui, a.ui)
+    case ui.panLevelMode
+    of dlmCtrlLeftButton:
+      if not koi.ctrlDown() or not koi.mbLeftDown():
+        ui.editMode = ui.prevEditMode
+    of dlmMiddleButton:
+      if not koi.mbMiddleDown():
+        ui.editMode = ui.prevEditMode
+
+  # }}}
+
   alias(ui, a.ui)
 
-  proc moveCursorToMousePos(a) =
-    let loc = locationAtMouse(a)
-    if loc.isSome:
-      a.ui.cursor = loc.get
-      resetManualNoteTooltip(a)
+  # {{{ WASD mode
 
   if a.opts.wasdMode:
     case ui.editMode
@@ -5434,7 +5540,10 @@ proc handleLevelMouseEvents(a) =
       if koi.mbLeftDown():
         if ui.mouseCanStartExcavateAction:
           if koi.shiftDown():
-            moveCursorToMousePos(a)
+            if koi.ctrlDown():
+              enterPanLevelMode(dlmCtrlLeftButton, a)
+            else:
+              moveCursorToMousePos(a)
           else:
             ui.editMode = emExcavateTunnel
             startExcavateTunnelAction(a)
@@ -5445,8 +5554,11 @@ proc handleLevelMouseEvents(a) =
         enterDrawWallMode(specialWall = false, a)
 
       elif koi.mbMiddleDown():
-        ui.editMode = emEraseCell
-        startEraseCellsAction(a)
+        if koi.shiftDown():
+          enterPanLevelMode(dlmMiddleButton, a)
+        else:
+          ui.editMode = emEraseCell
+          startEraseCellsAction(a)
 
     of emColorFloor, emDrawClearFloor:
       discard
@@ -5492,28 +5604,40 @@ proc handleLevelMouseEvents(a) =
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-    of emMovePreview, emNudgePreview, emPastePreview:
+    of emNudgePreview:
       discard
 
-    of emSelect, emSelectDraw, emSelectErase, emSelectRect,
-       emSetCellLink:
+    of emSelect, emSetCellLink, emPastePreview, emMovePreview:
+      handleMoveCursorOrPanSimple(a)
 
+    of emSelectDraw, emSelectErase, emSelectRect:
       if koi.mbLeftDown():
         moveCursorToMousePos(a)
 
     of emSelectJumpToLinkSrc:
       discard
 
-  else:  # not WASD mode
-    case ui.editMode
-    of emNormal,
-       emSelect, emSelectDraw, emSelectErase, emSelectRect,
-       emSetCellLink:
+    of emPanLevel:
+      handlePanLevel(a)
+      handlePanLevelExit(a)
 
+  # }}}
+  # {{{ Normal mode
+  else:
+    case ui.editMode
+    of emNormal, emSelect, emSetCellLink, emPastePreview, emMovePreview:
+      handleMoveCursorOrPanSimple(a)
+
+    of emSelectDraw, emSelectErase, emSelectRect:
       if koi.mbLeftDown():
         moveCursorToMousePos(a)
 
+    of emPanLevel:
+      handlePanLevel(a)
+      handlePanLevelExit(a)
+
     else: discard
+  # }}}
 
 # }}}
 
@@ -6594,6 +6718,8 @@ proc handleGlobalKeyEvents(a) =
         clearStatusMessage(a)
 
     # }}}
+    of emPanLevel:
+      discard
 
 # }}}
 # {{{ handleGlobalKeyEvents_NoLevels()
@@ -6754,7 +6880,7 @@ proc renderLevel(a) =
        (koi.mbLeftDown() or koi.mbRightDown() or koi.mbMiddleDown()):
       koi.setActive(id)
 
-  if koi.isHot(id) and isActive(id):
+  if isActive(id):
     handleLevelMouseEvents(a)
 
   # Draw level
@@ -6764,19 +6890,28 @@ proc renderLevel(a) =
     dp.cellCoordOpts = coordOptsForCurrLevel(a)
     dp.regionOpts = l.regionOpts
 
-    dp.cursorOrient = CardinalDir.none
     if opts.walkMode and
-       ui.editMode in {emNormal, emExcavateTunnel, emEraseCell,
-                       emDrawClearFloor}:
+       ((ui.editMode in {emNormal, emExcavateTunnel, emEraseCell,
+                         emDrawClearFloor}) or
+        (ui.editMode == emPanLevel and ui.prevEditMode == emNormal)):
       dp.cursorOrient = ui.cursorOrient.some
+    else:
+      dp.cursorOrient = CardinalDir.none
 
     dp.selection = ui.selection
     dp.selectionRect = ui.selRect
 
-    dp.selectionBuffer =
-      if   ui.editMode == emPastePreview: ui.copyBuf
-      elif ui.editMode in {emMovePreview, emNudgePreview}: ui.nudgeBuf
+    dp.selectionBuffer = (
+      if ui.editMode == emPastePreview or
+        (ui.editMode == emPanLevel and
+         ui.prevEditMode == emPastePreview): ui.copyBuf
+
+      elif ui.editMode in {emMovePreview, emNudgePreview} or
+        (ui.editMode == emPanLevel and
+         ui.prevEditMode in {emMovePreview, emNudgePreview}): ui.nudgeBuf
+
       else: SelectionBuffer.none
+    )
 
     drawLevel(
       a.doc.map,
@@ -6798,7 +6933,7 @@ proc renderLevel(a) =
      (koi.mx() != ui.manualNoteTooltipState.mx or
       koi.my() != ui.manualNoteTooltipState.my):
 
-    let loc = locationAtMouse(a)
+    let loc = locationAtMouse(clampToBounds=false, a)
     if loc.isSome:
       let loc = loc.get
 

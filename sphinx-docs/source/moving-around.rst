@@ -136,9 +136,16 @@ coordinates around the level with :kbd:`Alt+C`. If you wish to change how the
 coordinates are displayed, you can do so in the :ref:`maps-and-levels:Map
 Properties` or :ref:`maps-and-levels:Level Properties` dialogs.
 
+Mouse support
+-------------
+
 Changing the cursor location can be done with the mouse as well: left-click on
 a cell within the level and the cursor will jump to that location. You can
 even click-drag to move the cursor continuously.
+
+To pan the level with the mouse, hold down the middle button over the level
+and move the mouse pointer. Alternatively, you can left-click and move the
+pointer while holding down the :kbd:`Shift` key.
 
 
 Walk Mode

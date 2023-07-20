@@ -1052,8 +1052,8 @@ Select (Mark) Mode
 
 .. rst-class:: style3
 
-Paste/Nudge/Move Preview Mode
-=============================
+Paste & Nudge Preview Modes
+===========================
 
 .. raw:: html
 
