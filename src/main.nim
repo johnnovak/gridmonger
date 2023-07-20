@@ -8995,6 +8995,8 @@ proc main() =
   g_app = new AppContext
   var a = g_app
 
+  a.doc.lastAutosaveTime = getMonoTime()
+
   try:
     let (configFile, mapFile, winCfg) = parseCommandLineParams()
 
