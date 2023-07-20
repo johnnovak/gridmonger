@@ -3175,6 +3175,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
     a.prefs.loadLastMap        = dlg.loadLastMap
 
+    if not a.prefs.autoSave and dlg.autoSave:
+      a.doc.lastAutosaveTime = getMonoTime()
+
     a.prefs.autosave           = dlg.autosave
     a.prefs.autosaveFreqMins   = parseInt(dlg.autosaveFreqMins).Natural
     a.prefs.movementWrapAround = dlg.movementWrapAround
