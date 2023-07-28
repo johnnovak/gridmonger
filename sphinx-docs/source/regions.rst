@@ -79,7 +79,7 @@ properties dialog, or adjust the regions' dimensions.
 
   Although partial regions are handled correctly (in a mathematical sense),
   their usage is generally discouraged as one can get quite unintuitive
-  results when performing certain actions on them (e.g. when changing the
+  results when performing certain actions on them (e.g., when changing the
   origin, or resizing the level, the region borders could "shift around" in
   unexpected (but always deterministic) ways).
 

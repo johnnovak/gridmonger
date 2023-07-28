@@ -452,7 +452,7 @@ The trail data for all levels is saved into the map file.
 .. note::
 
     *Trail Mode* is turned off automatically when performing an action that
-    would yield confusing or unwanted results with it being on (e.g. creating
+    would yield confusing or unwanted results with it being on (e.g., creating
     or deleting levels, changing the current level, entering *Select Mode*,
     etc.)
 
@@ -485,14 +485,20 @@ To draw special walls, make sure to press then right mouse button first,
 Naturally, the :ref:`basic-editing:Draw wall repeat` tool is available in this
 mode too.
 
-If you hold the :kbd:`Shift` key, you can move the cursor by left-clicking
-somewhere inside the level like in *Normal Mode*.
+As the mouse buttons act as editing modifiers in *WASD Mode*, you need to hold
+:kbd:`Shift` to unlock the :ref:`moving-around:Mouse movement actions`:
+
+- Hold :kbd:`Shift` and left-click somewhere inside the level to move the
+  cursor there.
+- Hold :kbd:`Shift+Ctrl` and the left button, or :kbd:`Shift` and the middle
+  button and move the mouse to pan the level.
+
 
 .. tip::
 
     Some games, such as the renowned `Eye of the Beholder series
-    <https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)>`_,
-    don't support WASD-style navigation. Luckily, most emulators (e.g. `DosBox
+    <https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)>`_, don't
+    support WASD-style navigation. Luckily, most emulators (e.g., `DosBox
     <https://www.dosbox.com/>`_ and `WinUAE <https://www.winuae.net/>`_)
     provide a way to remap the cursor keys to the WASD keys in these games.
 

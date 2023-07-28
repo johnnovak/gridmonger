@@ -136,8 +136,8 @@ coordinates around the level with :kbd:`Alt+C`. If you wish to change how the
 coordinates are displayed, you can do so in the :ref:`maps-and-levels:Map
 Properties` or :ref:`maps-and-levels:Level Properties` dialogs.
 
-Mouse support
--------------
+Mouse movement actions
+======================
 
 Changing the cursor location can be done with the mouse as well: left-click on
 a cell within the level and the cursor will jump to that location. You can
@@ -145,7 +145,7 @@ even click-drag to move the cursor continuously.
 
 To pan the level with the mouse, hold down the middle button over the level
 and move the mouse pointer. Alternatively, you can left-click and move the
-pointer while holding down the :kbd:`Shift` key.
+pointer while holding down the :kbd:`Ctrl` key.
 
 
 Walk Mode
@@ -218,10 +218,9 @@ navigation is not available (it would be too confusing):
       </tbody>
     </table>
 
-Similarly to *Normal Mode*, you can use the :kbd:`Ctrl` and :kbd:`Shift`
-modifiers to perform jumps or pan the level, respectively, and you can also
-left-click on a cell to move the cursor there.
-
+Just like in *Normal Mode*, you can use the :kbd:`Ctrl` and :kbd:`Shift`
+modifiers to perform jumps or pan the level, respectively, and the same
+:ref:`moving-around:Mouse movement actions` are also available.
 
 WASD Mode
 =========
@@ -250,9 +249,10 @@ in the top-left corner of the window when *WASD Mode* is on.
 
 When it comes to navigation, this mode is the same as *Normal Mode*, with the
 addition that you can also use the :kbd:`W`:kbd:`A`:kbd:`S`:kbd:`D` keys for
-cursor movement. Editing, however, is a little different --- see
-:ref:`basic-editing:Editing in WASD Mode` to learn more about editing with the
-mouse in this mode.
+cursor movement. Editing, however, is a little different --- as you'll learn
+in the :ref:`basic-editing:Editing in WASD Mode` section, the mouse buttons
+are repurposed for editing in this mode, so you need to hold the :kbd:`Shift`
+modifier to use the :ref:`moving-around:Mouse movement actions`.
 
 .. note::
 
@@ -261,10 +261,6 @@ mouse in this mode.
    interfere with other shortcuts. You can, however, use the :kbd:`Shift`
    modifier with them, and both the :kbd:`Ctrl` and :kbd:`Shift` modifiers are
    available with the other movement keys.
-
-   As we'll see in the :ref:`basic-editing:Editing in WASD Mode` section, the
-   mouse buttons are used for editing actions in this mode, so you need to
-   hold :kbd:`Shift` while left-clicking to move the cursor.
 
 
 .. rst-class:: style2
@@ -360,7 +356,7 @@ To switch between tabs, hold :kbd:`Ctrl` and press the left or right
 navigation key. To jump to the *N*\ th tab, press :kbd:`Ctrl`\ +\ *N*, where
 *N* is a number key (from the top row of the keyboard).
 
-In some dialogs, you need to select something from a list of options (e.g. an
+In some dialogs, you need to select something from a list of options (e.g., an
 icon or a colour). You can use the navigation keys to do that. (You will see
 examples of this later.)
 

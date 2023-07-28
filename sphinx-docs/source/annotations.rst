@@ -66,14 +66,14 @@ you'll be editing it. To erase a note, press :kbd:`Shift+N`.
 
 Press :kbd:`Shift+Enter` to insert line breaks when editing the note text.
 
-If the cell's floor is non-empty (e.g. it contains a pressure plate or a
+If the cell's floor is non-empty (e.g., it contains a pressure plate or a
 teleport), placing a note of type **Number**, **ID** or **Icon** will clear
 its content. If you want to preserve the cell's content, use the **None**
 marker type, which will only display a little triangle in the top-right corner
 of the cell while keeping its content intact.
 
 Conversely, if you overwrite a note of type **Number**, **ID** or **Icon**
-with some cell content (e.g. a teleport), the note won't be deleted, but it
+with some cell content (e.g., a teleport), the note won't be deleted, but it
 will be converted to the **None** marker type, so the new cell content and the
 note can coexist.
 

@@ -10,21 +10,20 @@ traditional pencil-and-paper mapping. Unfortunately, none of the readily
 available solutions were to my liking.  Spreadsheet applications (a popular
 choice among many cRPG enthusiasts) are too fiddly and slow to work with, and
 the dungeon mapping tools I could find were either overcomplicated, too
-bare-bones, unattractive, or just didn't have the type of keyboard-driven
-interface I was looking for.
+bare-bones, unattractive, or didn't have the type of keyboard-driven interface
+I was looking for.
 
-And that last point is the critical one. A grid-based cRPG with say ten 32×32
-dungeons has 10,240 cells in total. Supposing only 30--50% of those are cells
-that you can actually visit, that's still three to five thousand little
-squares to map during the course of a single playthrough. You can easily spend
-20--40 hours to complete a classic cRPG, and often much longer! Because of
-this, it's reasonable to expect the same level of efficiency and ergonomics
-from any dungeon mapping tool that one would from any professional editing
-software.
+And that last point is the critical one. A grid-based cRPG with, say, ten
+32×32 dungeons has a total number 10,240 cells. Supposing only 30--50% of
+those are cells you can actually visit, that's still three to five thousand
+little squares to map during a single playthrough. You can easily spend 20--40
+hours to complete a classic cRPG, and often much longer! Because of this, it's
+reasonable to expect the same level of efficiency and ergonomics from any
+dungeon mapping tool that one would from any professional editing software.
 
 When designing Gridmonger, my main goal was to make map creation an as
 efficient and enjoyable experience as possible. The basic idea was simple:
-most classic cRPGs are keyboard-driven, therefore mapping them has to be
+most classic cRPGs are keyboard-driven, so mapping them has to be
 keyboard-driven as well. Ideally, you would not even have to lift your fingers
 from the keyboard while simultaneously playing and mapping the game!
 

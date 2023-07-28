@@ -23,7 +23,8 @@ To create a link, first move the cursor to the source cell and press
 :kbd:`Shift+G` to enter *Set Link Destination Mode*. Now move the cursor to
 the target cell, then press :kbd:`Enter` to create the link or :kbd:`Esc` to
 cancel. All the common navigation shortcuts are available in this mode, so you
-can change the current level, zoom in and out, etc.
+can change the current level, zoom in and out, etc. The
+:ref:`moving-around:Mouse movement actions` can be accessed too.
 
 The destination cell will be overwritten (if it doesn't contain the
 destination cell type already), but any existing note will be preserved (and
@@ -126,10 +127,10 @@ selection (*Unselect All*).
 
 .. tip::
 
-  You can left-click with the mouse to set the cursor location in *Select
-  Mode* too. This opens up some interesting possibilities, e.g. you can draw
-  selections with the mouse when used in conjunction with the :kbd:`D` and
-  :kbd:`E` modifiers.
+  The :ref:`moving-around:Mouse movement actions` are available in *Select
+  Mode* too to move the cursor or pan the level. This opens up some
+  interesting possibilities; e.g., you can draw selections with the mouse when
+  used in conjunction with the :kbd:`D` and :kbd:`E` modifiers.
 
 
 .. raw:: html
@@ -157,7 +158,8 @@ If you press :kbd:`Shift+P`, you'll enter *Paste Preview Mode* where you can
 position the selection interactively with the movement keys (usually shown in
 a light-blue overlay, which is, again, theme-dependent), then perform the
 paste action by pressing :kbd:`Enter`, or cancel it with :kbd:`Esc`. Note that
-you can also switch the current level in *Paste Preview Mode*.
+you can also switch the current level in *Paste Preview Mode*. Naturally, the
+:ref:`moving-around:Mouse movement actions` are available too.
 
 
 .. raw:: html
@@ -174,9 +176,9 @@ you can also switch the current level in *Paste Preview Mode*.
 
 .. tip::
 
-  The contents of the paste buffer is preserved when opening another map file.
-  Although you can only edit a single map at a given time, this enables you to
-  copy-paste whole or partial levels between two maps.
+  The contents of the paste buffer are preserved when opening another map
+  file. Although you can only edit a single map at a given time, this enables
+  you to copy-paste whole or partial levels between two maps.
 
 
 Holding :kbd:`Ctrl` in *Select Mode* will reveal a list of further special

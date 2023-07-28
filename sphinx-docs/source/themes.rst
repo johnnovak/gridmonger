@@ -22,12 +22,12 @@ regular dungeons.
 The differences between them basically come down to the selection of floor
 colours: world map themes feature colours suited to represent different types
 of terrain, while in regular themes they are just different accent colours.
-Colours are generally consistent across themes belonging to the same type,
-e.g. in regular dungeon themes colour #2 is always a reddish colour, #3 a
+Colours are generally consistent across themes belonging to the same type;
+e.g., in regular dungeon themes, colour #2 is always a reddish colour, #3 a
 bright red/orange, #4 a yellowish one, and so on. This makes it a bit easier
 to switch themes in the middle of a mapping session. A few themes even include
-variations that don't conform to these conventions (e.g. ``Darkest
-Heart Alt``).
+variations that don't conform to these conventions (e.g., ``Darkest Heart
+Alt``).
 
 
 Theme editor
@@ -39,7 +39,7 @@ management a breeze.
 
 You can toggle the theme editor side panel with the :kbd:`F12` key in *Edit
 Mode*. Note that it is not possible to toggle the editor while a dialog is
-open, or in any other modes (e.g. *Select Mode* or *Paste Preview Mode*). You
+open, or in any other modes (e.g., *Select Mode* or *Paste Preview Mode*). You
 can, however, enter any of these modes while the theme editor is *already*
 open, which makes editing aspects of the themes related to these modes a lot
 easier.
@@ -88,12 +88,12 @@ Copy
     Creates a copy of an existing theme under a different name.
 
     This is the action to use if you don't want to override a built-in theme
-    (e.g. you want to create a new tweaked version under a different name), or
-    if you want to design your own theme: just pick a theme you want to use as
-    your starting point and hit **Copy**.
+    (e.g., if you want to create a new tweaked version under a different
+    name), or if you want to design your own theme --- just pick a theme you
+    want to use as your starting point and hit **Copy**.
 
     You'll be asked for a new theme name, and you'll get a warning if the name
-    you've chosen would override (shadow) that of an existing built-in theme,
+    you've chosen would override (*shadow*) that of an existing built-in theme,
     or would overwrite another user theme. Naturally, you can make copies of
     both built-in and user themes.
 

@@ -44,8 +44,8 @@ it would make little sense to name the level.
 
 **Elevation** is the vertical position of the level in relation to the ground.
 An elevation of zero means ground level (displayed as ``G`` in the level
-name). Negative numbers are underground (e.g. the levels of a mine), and
-positive numbers are above the ground (e.g. the floors of a castle or a
+name). Negative numbers are underground (e.g., the levels of a mine), and
+positive numbers are above the ground (e.g., the floors of a castle or a
 tower). As this game takes place entirely in an underground dungeon, all
 numbers are negative.
 
