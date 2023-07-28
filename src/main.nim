@@ -108,8 +108,8 @@ const
 const
   SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
   AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
-  WindowWidthLimits*       = intLimits(WindowMinWidth, max=20_000)
-  WindowHeightLimits*      = intLimits(WindowMinHeight, max=20_000)
+  WindowWidthLimits*       = intLimits(MinWindowWidth, max=20_000)
+  WindowHeightLimits*      = intLimits(MinWindowHeight, max=20_000)
 
 const
   WarningMessageTimeout = initDuration(seconds = 3)
@@ -8199,7 +8199,7 @@ proc renderQuickReference(a) =
     discard vg.text(round(uiWidth*0.5), 60+yOffs, "Quick Keyboard Reference")
 
   let
-    t = invLerp(WindowMinWidth.float, 800.0, uiWidth).clamp(0.0, 1.0)
+    t = invLerp(MinWindowWidth.float, 800.0, uiWidth).clamp(0.0, 1.0)
     viewWidth = lerp(622.0, 680.0, t)
     columnWidth = lerp(300.0, 330.0, t)
     tabWidth = 420.0
@@ -8698,7 +8698,7 @@ proc createSplashWindow(mousePassthru: bool = false; a) =
 proc showSplash(a) =
   alias(s, g_app.splash)
 
-  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
+  let (_, _, maxWidth, maxHeight) = g_app.win.findCurrentMonitor().workArea
   let w = (maxWidth * 0.6).int32
   let h = (w/s.logo.width * s.logo.height).int32
 
@@ -9020,10 +9020,9 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   # Init window
   a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(g_app)
   a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
+  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
 
   # Set window size & position
-  let (_, _, maxWidth, maxHeight) = getPrimaryMonitor().workArea
-
   let mergedWinCfg = cfg.getObjectOrEmpty("last-state.window")
   mergedWinCfg.merge(winCfg)
 
@@ -9033,10 +9032,12 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   let height = mergedWinCfg.getNaturalOrDefault("height", 800)
                            .limit(WindowWidthLimits)
 
-  let defaultXPos = (maxWidth - width) div 2
+  let (_, _, defaultMaxWidth, defaultMaxHeight) = getPrimaryMonitor().workArea
+
+  let defaultXPos = (defaultMaxWidth - width) div 2
   var xpos = mergedWinCfg.getIntOrDefault("x-position", defaultXPos)
 
-  let defaultYPos = (maxHeight - height) div 2
+  let defaultYPos = (defaultMaxHeight - height) div 2
   var ypos = mergedWinCfg.getIntOrDefault("y-position", defaultYPos)
 
   a.win.size = (width.int, height.int)
@@ -9046,7 +9047,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
     a.win.maximize()
 
   a.win.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar", true)
-
+  a.win.snapWindowToVisibleArea()
   a.win.show()
 
 # }}}

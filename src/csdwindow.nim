@@ -1,4 +1,5 @@
 import lenientops
+import logging
 
 import glfw
 import icons
@@ -7,22 +8,26 @@ import nanovg
 
 import common
 import deps/with
+import rect
 import utils
+import strformat
 
 # {{{ Constants
 const
-  TitleBarFontSize = 14.0
-  TitleBarHeight* = 26.0
-  TitleBarTitlePosX = 16.0
+  TitleBarFontSize    = 14.0
+  TitleBarHeight*     = 26.0
+  TitleBarTitlePosX   = 16.0
   TitleBarButtonWidth = 22.0
+
   TitleBarWindowStandardButtonsLeftPad = 20.0
-  TitleBarWindowButtonsRightPad = 6.0
+  TitleBarWindowButtonsRightPad        =  6.0
+
   TitleBarWindowButtonsTotalWidth = TitleBarButtonWidth*5 +
                                     TitleBarWindowStandardButtonsLeftPad +
                                     TitleBarWindowButtonsRightPad
-
-  WindowResizeEdgeWidth = 7.0
+  WindowResizeEdgeWidth  =  7.0
   WindowResizeCornerSize = 20.0
+
 # }}}
 #  {{{ CSDWindow
 type
@@ -58,6 +63,8 @@ type
 
 using win: CSDWindow
 
+var g_window: CSDWindow
+
 # }}}
 # {{{ Default style
 var DefaultCSDWindowTheme = new WindowTheme
@@ -74,7 +81,118 @@ with DefaultCSDWindowTheme:
   modifiedFlagColor            = gray(1.0, 0.45)
 
 # }}}
-#
+
+# {{{ GLFW Window adapters
+# Just for the functions that actually get used in the app
+
+proc glfwWin*(win): Window =
+  win.w
+
+proc title*(win): string =
+  win.title
+
+proc `title=`*(win; title: string) =
+  if win.title != title:
+    win.title = title
+    win.w.title = title
+
+proc pos*(win): tuple[x, y: int32] =
+  win.w.pos
+
+proc `pos=`*(win; pos: tuple[x, y: int32]) =
+  win.w.pos = pos
+
+proc size*(win): tuple[w, h: int32] =
+  win.w.size
+
+proc `size=`*(win; size: tuple[w, h: int32]) =
+  win.w.size = size
+
+proc framebufferSize*(win): tuple[w, h: int32] =
+  win.w.framebufferSize
+
+proc cursorPos*(win): tuple[x, y: float64] =
+  win.w.cursorPos
+
+proc show*(win) =
+  win.w.show()
+
+proc hide*(win) =
+  win.w.hide()
+
+proc focus*(win) =
+  win.w.focus()
+
+proc restore*(win) =
+  win.w.restore()
+
+proc shouldClose*(win): bool =
+  win.w.shouldClose
+
+proc `shouldClose=`*(win; state: bool) =
+  win.w.shouldClose = state
+
+proc maximized*(win): bool =
+  win.maximized
+
+# }}}
+# {{{ rect()
+proc rect(win): Rect[int] =
+  let (x1, y1) = win.pos
+  let (x2, y2) = (x1 + win.size.w, y1 + win.size.h)
+  coordRectI(x1, y1, x2, y2)
+
+# }}}
+
+# {{{ workAreaRect()
+proc workAreaRect(m: Monitor): Rect[int] =
+  let wa = m.workArea
+  let (x1, y1) = (wa.x, wa.y)
+  let (x2, y2) = (x1 + wa.w, y1 + wa.h)
+  coordRectI(x1, y1, x2, y2)
+
+# }}}
+# {{{ findMonitorByCoord()
+proc findMonitorByCoord(x, y: int32): Monitor =
+  for m in monitors():
+    let r = m.workAreaRect
+    if r.contains(x, y):
+      return m
+
+  # Use the primary monitor as fallback
+  getPrimaryMonitor()
+
+# }}}
+# {{{ findCurrentMonitor()
+proc findCurrentMonitor*(win): Monitor =
+  findMonitorByCoord(win.pos.x, win.pos.y)
+
+# }}}
+# {{{ snapWindowToVisibleArea*()
+proc snapWindowToVisibleArea*(win) =
+  let currMonitor = win.findCurrentMonitor()
+  let workAreaRect = currMonitor.workAreaRect
+  let (w, h) = win.size
+
+  if not workAreaRect.contains(win.rect):
+
+    # Clamp window size to the extents of the current monitor
+    if w > workAreaRect.w or
+       h > workAreaRect.h or
+       w < MinWindowWidth or
+       h < MinWindowHeight:
+      win.size = (w.clamp(MinWindowWidth,  workAreaRect.w.int32),
+                  h.clamp(MinWindowHeight, workAreaRect.h.int32))
+
+    # Center window
+    let (cx, cy) = (workAreaRect.x1 + (workAreaRect.w div 2),
+                    workAreaRect.y1 + (workAreaRect.h div 2))
+
+    win.pos = (cx - (win.size.w div 2),
+               cy - (win.size.h div 2))
+
+# }}}
+
 # # {{{ setTheme()
 proc setTheme(win; s: WindowTheme) =
   win.theme = s
@@ -122,6 +240,14 @@ proc newCSDWindow*(): CSDWindow =
   result.setTheme(DefaultCSDWindowTheme)
   result.showTitleBar = true
 
+  setMonitorCb:
+    proc(m: Monitor, connected: bool) =
+      let state = if connected: "connected" else: "disconnected"
+      logging.info(fmt"Monitor '{m.name}' has been {state}")
+
+      if not connected:
+        snapWindowToVisibleArea(g_window)
+
 # }}}
 # {{{ showTitleBar*
 proc showTitleBar*(win): bool =
@@ -146,66 +272,9 @@ proc unmaximizedSize*(win): tuple[w, h: int32] =
   win.unmaximizedSize
 
 # }}}
-# {{{ GLFW Window adapters
-# Just for the functions that actually get used in the app
 
-proc glfwWin*(win): Window = win.w
-
-proc title*(win): string =
-  win.title
-
-proc `title=`*(win; title: string) =
-  if win.title != title:
-    win.title = title
-    win.w.title = title
-
-proc pos*(win): tuple[x, y: int32] =
-  win.w.pos
-
-proc `pos=`*(win; pos: tuple[x, y: int32]) =
-  win.w.pos = pos
-
-proc size*(win): tuple[w, h: int32] =
-  win.w.size
-
-proc `size=`*(win; size: tuple[w, h: int32]) =
-  win.w.size = size
-
-proc framebufferSize*(win): tuple[w, h: int32] =
-  win.w.framebufferSize
-
-proc show*(win) =
-  win.w.show()
-
-proc hide*(win) =
-  win.w.hide()
-
-proc focus*(win) =
-  win.w.focus()
-
-proc restore*(win) =
-  win.w.restore()
-
-proc shouldClose*(win): bool =
-  win.w.shouldClose
-
-proc `shouldClose=`*(win; state: bool) =
-  win.w.shouldClose = state
-
-proc maximized*(win): bool =
-  win.maximized
-
-# }}}
-
-# {{{ getScreenSize()
-proc getScreenSize(): (int, int) =
-  # TODO This logic needs to be a bit more sophisticated to support
-  # multiple monitors
-  let (_, _, w, h) = getPrimaryMonitor().workArea
-  (w.int, h.int)
-# }}}
-# {{{ unmaximize()
-proc unmaximize(win) =
+# {{{ unmaximize*()
+proc unmaximize*(win) =
   if win.maximized:
     win.w.pos = win.unmaximizedPos
     win.w.size = win.unmaximizedSize
@@ -215,34 +284,37 @@ proc unmaximize(win) =
 # {{{ maximize*()
 proc maximize*(win) =
   if not (win.maximized or win.maximizing):
-    let (w, h) = getScreenSize()
+    let (x, y, w, h) = win.findCurrentMonitor().workArea
     win.unmaximizedPos = win.w.pos
     win.unmaximizedSize = win.w.size
 
     win.maximized = true
     win.maximizing = true
 
-    win.w.pos = (0, 0)
+    win.w.pos = (x, y)
     win.w.size = (w, h)
 
     win.maximizing = false
 
 # }}}
-# {{{ alignLeft()
-proc alignLeft(win) =
+# {{{ alignLeft*()
+proc alignLeft*(win) =
   win.unmaximize()
-  let (w, h) = getScreenSize()
-  win.w.pos = (0, 0)
-  win.w.size = (w div 2, h)
+
+  let wa = win.findCurrentMonitor().workArea
+  let windowWidth = wa.w div 2
+  win.w.pos = (wa.x, wa.y)
+  win.w.size = (windowWidth, wa.h)
 
 # }}}
-# {{{ alignRight()
-proc alignRight(win) =
+# {{{ alignRight*()
+proc alignRight*(win) =
   win.unmaximize()
-  let (w, h) = getScreenSize()
-  let x = w div 2
-  win.w.pos = (x, 0)
-  win.w.size = (w-x, h)
+
+  let wa = win.findCurrentMonitor().workArea
+  let windowWidth = wa.w div 2
+  win.w.pos = (wa.x + windowWidth, wa.y)
+  win.w.size = (windowWidth, wa.h)
 
 # }}}
 
@@ -393,7 +465,7 @@ proc handleWindowDragEvents(win) =
           # the restored window's width. This is needed so when we're in the
           # "else" branch on the next frame when dragging the restored window,
           # there won't be an unwanted window position jump.
-          win.mx0 = oldWidth*0.5
+          win.mx0 = oldWidth * 0.5
           win.my0 = my
 
           # ...but we also want to clamp the window position to the visible
@@ -403,9 +475,7 @@ proc handleWindowDragEvents(win) =
             win.mx0 += win.posX0.float
             win.posX0 = 0
 
-          # TODO This logic needs to be a bit more sophisticated to support
-          # multiple monitors
-          let (_, _, workAreaWidth, _) = getPrimaryMonitor().workArea
+          let (_, _, workAreaWidth, _) = win.findCurrentMonitor().workArea
           let dx = win.posX0 + oldWidth - workAreaWidth
           if dx > 0:
             win.posX0 = workAreaWidth - oldWidth
@@ -461,8 +531,8 @@ proc handleWindowDragEvents(win) =
       of wrdNone:
         discard
 
-      let (newWidth, newHeight) = (max(newW, WindowMinWidth),
-                                   max(newH, WindowMinHeight))
+      let (newWidth, newHeight) = (max(newW, MinWindowWidth),
+                                   max(newH, MinWindowHeight))
 
       (win.posX0, win.posY0) = (newX, newY)
       win.w.pos = (newX, newY)
@@ -486,7 +556,6 @@ proc handleWindowDragEvents(win) =
 type RenderFramePreProc = proc (win: CSDWindow)
 type RenderFrameProc = proc (win: CSDWindow)
 
-var g_window: CSDWindow
 var g_renderFramePreProc: RenderFramePreProc
 var g_renderFrameProc: RenderFrameProc
 
