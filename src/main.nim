@@ -76,6 +76,9 @@ const
   ScrollMargin = 3
 
 const
+  DefaultWindowWidth      = 700
+  DefaultWindowHeight     = 800
+
   StatusBarHeight         = 26.0
 
   LevelTopPad_Regions     = 28.0
@@ -9026,10 +9029,10 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   let mergedWinCfg = cfg.getObjectOrEmpty("last-state.window")
   mergedWinCfg.merge(winCfg)
 
-  let width  = mergedWinCfg.getNaturalOrDefault("width", 700)
+  let width  = mergedWinCfg.getNaturalOrDefault("width", DefaultWindowWidth)
                            .limit(WindowWidthLimits)
 
-  let height = mergedWinCfg.getNaturalOrDefault("height", 800)
+  let height = mergedWinCfg.getNaturalOrDefault("height", DefaultWindowHeight)
                            .limit(WindowWidthLimits)
 
   let (_, _, defaultMaxWidth, defaultMaxHeight) = getPrimaryMonitor().workArea
