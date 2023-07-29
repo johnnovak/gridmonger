@@ -473,8 +473,10 @@ type
     # General tab
     autosave:           bool
     autosaveFreqMins:   string
-    movementWrapAround: bool
     vsync:              bool
+
+    # Editing tab
+    movementWrapAround: bool
 
 
   SaveDiscardMapDialogParams = object
@@ -3085,9 +3087,9 @@ proc openPreferencesDialog(a) =
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
-    DlgWidth = 370.0
+    DlgWidth  = 370.0
     DlgHeight = 306.0
-    TabWidth = 180.0
+    TabWidth  = 240.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
                   x = calcDialogX(DlgWidth, a).some,
@@ -3098,7 +3100,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  let tabLabels = @["Startup", "General"]
+  let tabLabels = @["Startup", "General", "Editing"]
 
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
@@ -3182,16 +3184,17 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         style = a.theme.textFieldStyle
       )
     group:
-      koi.label("Movement wrap-around", style=a.theme.labelStyle)
-
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.movementWrapAround, style = a.theme.checkBoxStyle)
-
-    group:
       koi.label("Enable vertical sync", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.vsync, style = a.theme.checkBoxStyle)
+
+  elif dlg.activeTab == 2:  # Editing
+    group:
+      koi.label("Movement wrap-around", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.movementWrapAround, style = a.theme.checkBoxStyle)
 
   koi.endView()
 
