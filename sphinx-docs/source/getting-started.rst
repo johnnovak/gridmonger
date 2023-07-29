@@ -97,6 +97,14 @@ For the impatient among you, here's a few notes to get you started.
    tools you're trying to use.
 
 
+**Help**
+
+.. rst-class:: multiline
+
+- Press :kbd:`Shift+/` to display the quick keyboard reference
+- Press :kbd:`F1` to open this manual in your default browser
+
+
 **Maps & levels**
 
 .. rst-class:: multiline
@@ -136,12 +144,5 @@ For the impatient among you, here's a few notes to get you started.
   repeatedly to cycle through all floor types assigned to that key (hold
   :kbd:`Shift` to cycle backwards)
 - Press :kbd:`N` to create or edit notes
-
-**Help**
-
-.. rst-class:: multiline
-
-- Press :kbd:`Shift+/` to display the quick keyboard reference
-- Press :kbd:`F1` to open the manual in your default browser
 
 
