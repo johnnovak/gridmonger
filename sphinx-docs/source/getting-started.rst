@@ -130,7 +130,8 @@ For the impatient among you, here's a few notes to get you started.
 
 .. rst-class:: multiline
 
-- Use the arrow keys or :kbd:`H`:kbd:`J`:kbd:`K`:kbd:`L` for movement
+- Use the arrow keys, the numeric keypad, or :kbd:`H`:kbd:`J`:kbd:`K`:kbd:`L`
+  for movement
 - Set the zoom level with :kbd:`-`/:kbd:`=`
 - Undo with :kbd:`U` or :kbd:`Ctrl+Z`; redo with :kbd:`Ctrl+R` or :kbd:`Ctrl+Y`
 - Hold :kbd:`D` and use the movement keys to draw (excavate)
