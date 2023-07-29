@@ -297,8 +297,8 @@ proc maximize*(win) =
     win.maximizing = false
 
 # }}}
-# {{{ alignLeft*()
-proc alignLeft*(win) =
+# {{{ snapToLeft*()
+proc snapToLeft*(win) =
   win.unmaximize()
 
   let wa = win.findCurrentMonitor().workArea
@@ -307,8 +307,8 @@ proc alignLeft*(win) =
   win.w.size = (windowWidth, wa.h)
 
 # }}}
-# {{{ alignRight*()
-proc alignRight*(win) =
+# {{{ snapToRight*()
+proc snapToRight*(win) =
   win.unmaximize()
 
   let wa = win.findCurrentMonitor().workArea
@@ -361,11 +361,11 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   var x = winWidth - TitleBarWindowButtonsTotalWidth
 
   if koi.button(x, by, bw, bh, IconWindowLeft, style=buttonStyle):
-    win.alignLeft()
+    win.snapToLeft()
 
   x += bw
   if koi.button(x, by, bw, bh, IconWindowRight, style=buttonStyle):
-    win.alignRight()
+    win.snapToRight()
 
   x += bw + TitleBarWindowStandardButtonsLeftPad
   if koi.button(x, by, bw, bh, IconWindowMinimise, style=buttonStyle):
