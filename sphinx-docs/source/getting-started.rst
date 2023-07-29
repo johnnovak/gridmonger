@@ -132,7 +132,7 @@ For the impatient among you, here's a few notes to get you started.
   cell
 - Hold :kbd:`R` and use the movement keys to draw/clear special walls; change
   the current special wall with :kbd:`[`/:kbd:`]`
-- Use :kbd:`1`-:kbd:`7` to place various floor types; press a number key
+- Use :kbd:`1`-:kbd:`8` to place various floor types; press a number key
   repeatedly to cycle through all floor types assigned to that key (hold
   :kbd:`Shift` to cycle backwards)
 - Press :kbd:`N` to create or edit notes
