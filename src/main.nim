@@ -1566,8 +1566,8 @@ proc moveLevel(dir: CardinalDir, steps: Natural = 1; a) =
 proc resetCursorAndViewStart(a) =
   with a.ui.cursor:
     level = 0
-    row = 0
-    col = 0
+    row   = 0
+    col   = 0
 
   with a.ui.drawLevelParams:
     viewStartRow = 0
@@ -8958,9 +8958,7 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
     let currLevel = uiCfg.getNaturalOrDefault("current-level", 0)
 
     if currLevel > a.doc.map.levels.high:
-      level = 0
-      row   = 0
-      col   = 0
+      resetCursorAndViewStart(a)
     else:
       level = currLevel
       row   = uiCfg.getNaturalOrDefault("cursor.row",    0)
