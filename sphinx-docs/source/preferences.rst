@@ -10,9 +10,8 @@ settings. Press :kbd:`Ctrl+Alt+U` to bring up the preferences dialog.
 Startup tab
 ===========
 
-On the **Startup**
-tab you have the option to toggle the display of the splash screen, and to
-have it auto-closed after a set number of seconds.
+On the **Startup** tab you have the option to toggle the display of the splash
+screen, and to have it auto-closed after a set number of seconds.
 
 Another important setting is the **Load last map** option. This is enabled by
 default, so you can continue from where you left off in your next Gridmonger
@@ -39,13 +38,8 @@ consumption. Generally, you should leave it on.
 Editing tab
 ===========
 
-Some cunningly crafted dungeons feature maps that "wrap around" from one side
-to the other --- you step off the edge of the map, and you'll find yourself
-entering on the opposite side (e.g., the first level of
-`Wizardry: Proving Grounds of the Mad Overlord <https://en.wikipedia.org/wiki/Wizardry:_Proving_Grounds_of_the_Mad_Overlord>`_,
-or the fourth spider-infested level of
-`Eye of the Beholder <https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)>`_).
-You can enable this behaviour by ticking the **Movement wrap-around**
-checkbox. For consistency, this enables wrap-around cursor movement in all
-modes.
+This tab contains options that affect the workings of the editing operations.
 
+**Movement-wrap around** controls whether the cursor should appear on the
+opposite side when moved past the edges of the level (see the
+:ref:`moving-around:Movement wrap-around` for more details).

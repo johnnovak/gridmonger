@@ -130,11 +130,30 @@ To move in 5-cell jumps, hold down :kbd:`Ctrl` while using the movement keys.
 Similarly, you can pan the level by holding down :kbd:`Shift`. This can be
 combined with :kbd:`Ctrl` to pan in 5-cell increments.
 
-Note how the current coordinates change in right corner of the status bar as
-you're moving the cursor. You can toggle the display of cell
-coordinates around the level with :kbd:`Alt+C`. If you wish to change how the
-coordinates are displayed, you can do so in the :ref:`maps-and-levels:Map
-Properties` or :ref:`maps-and-levels:Level Properties` dialogs.
+Observe how the current coordinates change in the right corner of the status
+bar as you move the cursor. You can toggle the display of cell coordinates
+around the level with :kbd:`Alt+C`. If you wish to change how the coordinates
+are displayed, you can do so in the :ref:`maps-and-levels:Map Properties` or
+:ref:`maps-and-levels:Level Properties` dialogs.
+
+
+Movement wrap-around
+====================
+
+Some cunningly crafted dungeons feature maps that "wrap around" from one side
+to the other --- you step off the edge of the map, and you'll find yourself
+entering on the opposite side (e.g., the first level of `Wizardry: Proving
+Grounds of the Mad Overlord
+<https://en.wikipedia.org/wiki/Wizardry:_Proving_Grounds_of_the_Mad_Overlord>`_,
+or the fourth spider-infested level of `Eye of the Beholder
+<https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)>`_).
+
+By default, you cannot move past the edges of the level but you can enable
+this behaviour by ticking the **Movement wrap-around** checkbox in the
+:ref:`preferences:Editing tab` of the :ref:`preferences:Preferences` dialog.
+For consistency, this enables wrap-around cursor movement in all editing modes
+(you'll learn about these modes below and in later chapters).
+
 
 Mouse movement actions
 ======================
@@ -221,6 +240,7 @@ navigation is not available (it would be too confusing):
 Just like in *Normal Mode*, you can use the :kbd:`Ctrl` and :kbd:`Shift`
 modifiers to perform jumps or pan the level, respectively, and the same
 :ref:`moving-around:Mouse movement actions` are also available.
+
 
 WASD Mode
 =========
