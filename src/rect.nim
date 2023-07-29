@@ -7,6 +7,29 @@ type
   Rect*[T: RectType] = object
     r1*,c1*, r2*,c2*: T
 
+# {{{ Getters
+func rows*[T: RectType](r: Rect[T]): T = r.r2 - r.r1
+func cols*[T: RectType](r: Rect[T]): T = r.c2 - r.c1
+
+func x1*[T: RectType](r: Rect[T]): T = r.c1
+func y1*[T: RectType](r: Rect[T]): T = r.r1
+
+func x2*[T: RectType](r: Rect[T]): T = r.c2
+func y2*[T: RectType](r: Rect[T]): T = r.r2
+
+func w*[T: RectType](r: Rect[T]): T = r.cols
+func h*[T: RectType](r: Rect[T]): T = r.rows
+
+# }}}
+# {{{ Setters
+func `x1=`*[T: RectType](r: var Rect[T], x1: T) = r.c1 = x1
+func `y1=`*[T: RectType](r: var Rect[T], y1: T) = r.r1 = y1
+
+func `x2=`*[T: RectType](r: var Rect[T], x2: T) = r.c2 = x2
+func `y2=`*[T: RectType](r: var Rect[T], y2: T) = r.r2 = y2
+
+# }}}
+
 # {{{ rectN*()
 proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
   assert r1 < r2
@@ -29,19 +52,15 @@ proc rectI*(r1,c1, r2,c2: int): Rect[int] =
   result.c2 = c2
 
 # }}}
+# {{{ coordRectI*()
+proc coordRectI*(x1,y1, x2,y2: int): Rect[int] =
+  assert x1 < x2
+  assert x1 < x2
 
-# {{{ Getters
-func rows*[T: RectType](r: Rect[T]): T = r.r2 - r.r1
-func cols*[T: RectType](r: Rect[T]): T = r.c2 - r.c1
-
-func x1*[T: RectType](r: Rect[T]): T = r.c1
-func y1*[T: RectType](r: Rect[T]): T = r.r1
-
-func x2*[T: RectType](r: Rect[T]): T = r.c2
-func y2*[T: RectType](r: Rect[T]): T = r.r2
-
-func w*[T: RectType](r: Rect[T]): T = r.cols
-func h*[T: RectType](r: Rect[T]): T = r.rows
+  result.x1 = x1
+  result.y1 = y1
+  result.x2 = x2
+  result.y2 = y2
 
 # }}}
 
