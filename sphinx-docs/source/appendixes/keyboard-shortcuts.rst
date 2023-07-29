@@ -391,7 +391,7 @@ Edit mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>N</kbd>
+              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>
             </kbd>
           </td>
           <td>New level</td>

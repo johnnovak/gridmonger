@@ -104,7 +104,8 @@ For the impatient among you, here's a few notes to get you started.
 - :kbd:`Ctrl+O` opens a map, :kbd:`Ctrl+S` saves the current map
 - :kbd:`Ctrl+Alt+N` creates a new map; :kbd:`Ctrl+Alt+P` opens the map
   properties
-- :kbd:`Ctrl+N` creates a new level; :kbd:`Ctrl+P` opens the level properties
+- :kbd:`Ctrl+Shift+N` creates a new level; :kbd:`Ctrl+P` opens the level
+  properties
 - :kbd:`Ctrl+D` deletes the current level
 - Cycle through levels with :kbd:`Ctrl+-`/:kbd:`Ctrl+=` or
   :kbd:`PgUp`/:kbd:`PgDn`

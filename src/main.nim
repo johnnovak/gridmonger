@@ -908,7 +908,7 @@ let g_appShortcuts = {
   scEditMapProps:       @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
 
   # Levels
-  scNewLevel:           @[mkKeyShortcut(keyN,             {mkCtrl})],
+  scNewLevel:           @[mkKeyShortcut(keyN,             {mkCtrl, mkShift})],
   scDeleteLevel:        @[mkKeyShortcut(keyD,             {mkCtrl})],
   scEditLevelProps:     @[mkKeyShortcut(keyP,             {mkCtrl})],
   scResizeLevel:        @[mkKeyShortcut(keyE,             {mkCtrl})],
