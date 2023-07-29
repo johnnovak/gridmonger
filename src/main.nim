@@ -6614,7 +6614,7 @@ proc handleGlobalKeyEvents(a) =
         alias(dp, a.ui.drawLevelParams)
 
         let cols = a.ui.nudgeBuf.get.level.cols
-        let rows = a.ui.nudgeBuf.get.level.cols
+        let rows = a.ui.nudgeBuf.get.level.rows
 
         let step = if mkCtrl in mods: CursorJump else: 1
 
