@@ -177,7 +177,7 @@ you can also switch the current level in *Paste Preview Mode*. Naturally, the
 .. tip::
 
   The contents of the paste buffer are preserved when opening another map
-  file. Although you can only edit a single map at a given time, this enables
+  file. Although you can only edit a single map at a given time, this allows
   you to copy-paste whole or partial levels between two maps.
 
 
