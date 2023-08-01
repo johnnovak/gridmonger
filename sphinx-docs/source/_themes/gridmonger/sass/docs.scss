@@ -412,6 +412,10 @@ article {
       margin: 7rem auto 3rem auto;
     }
   }
+
+  span.highlighted {
+    background-color: yellow;
+  }
 }
 
 #table-of-contents {
@@ -422,7 +426,7 @@ article {
 
 footer {
   clear: both;
-  margin: 2rem 0 1.3rem 0;
+  margin: 5rem 0 1.3rem 0;
 }
 
 .version {
@@ -430,9 +434,73 @@ footer {
   font-size: 120%;
 }
 
+#searchbox {
+  margin: 2em 0;
+  text-align: center;
+}
+
+form {
+  input {
+    border: none;
+    font: $medium 16px $body-font;
+    border-radius: 0.2em;
+  }
+  input[type=text] {
+    padding: 0.1em 0.3em;
+    opacity: 0.6;
+    color: $fg-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+    &:focus {
+      opacity: 1.0;
+      outline: 0;
+    }
+  }
+
+  input[type=submit] {
+    padding: 0.1em 0.5em;
+    margin-left: 0.2em;
+    background: $accent-color;
+    color: $bg-color;
+
+    &:hover {
+      opacity: 0.9;
+      cursor: pointer;
+    }
+  }
+}
+
+section.search {
+  margin-top: 2em;
+}
+
+#search-results {
+  ul {
+    li {
+      padding: 1em 0;
+
+      &:not(:last-child) {
+        border-bottom: 1px dashed mix($fg-color, $bg-color, 50%);
+      }
+
+      p {
+        display: block;
+      }
+    }
+  }
+}
+
 /*--------------------------------------------------------------------------*/
 @media (min-width: 400px) {
   html { font-size: 18px }
+
+  form {
+    input {
+      font-size: 17px;
+    }
+  }
 
   article {
     nav {
@@ -448,6 +516,12 @@ footer {
 
 @media (min-width: 500px) {
   html { font-size: 19px }
+
+  form {
+    input {
+      font-size: 18px;
+    }
+  }
 
   article {
     nav {
@@ -520,8 +594,8 @@ footer {
 /*--------------------------------------------------------------------------*/
 @media (min-width: 800px) {
 
-  //div.section > div.section {
-  section > section {
+  section > section,
+  section.search {
     @include section-h2-ornament;
   }
 }
@@ -529,6 +603,17 @@ footer {
 /*--------------------------------------------------------------------------*/
 @media (min-width: 1110px) {
   $header-nav-height: 92px;
+
+  #searchbox {
+    margin: 1em 0;
+    text-align: left;
+  }
+
+  form {
+    input[type=text] {
+      width: 10em;
+    }
+  }
 
   header {
     position: fixed;
@@ -628,6 +713,7 @@ footer {
   nav.toc-link {
     text-align: left;
     font-size: 20px;
+    margin-bottom: 1em;
     a {
       color: $fg-color;
 

@@ -1,17 +1,38 @@
 <!DOCTYPE html>
+{# URL root should never be #, then all links are fragments #}
+{%- if not embedded and docstitle %}
+  {%- set titlesuffix = " &#8212; "|safe + docstitle|e %}
+{%- else %}
+  {%- set titlesuffix = "" %}
+{%- endif %}
+
+{%- macro script() %}
+    {%- for js in script_files %}
+    {{ js_tag(js) }}
+    {%- endfor %}
+{%- endmacro %}
+
 <html lang="en-AU">
 
-  {%- set url_root = pathto('', 1) %}
-  {# URL root should never be #, then all links are fragments #}
-  {%- if url_root == '#' %}{% set url_root = '' %}{% endif %}
+  {%- block htmltitle %}
+  <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
+  {%- endblock %}
 
-  <title>Gridmonger</title>
+  {%- if not embedded %}
+  {%- block scripts %}
+  {{- script() }}
+  {%- endblock %}
+  {%- endif %}
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Gridmonger manual">
 
+  <link rel="icon" href="{{ favicon_url|e }}"/>
+
   <link href="{{ pathto('_static/css/docs.css', 1) }}" rel="stylesheet">
   <link href="{{ pathto('_static/css/glightbox.min.css', 1) }}" rel="stylesheet">
+  {%- block extrahead %} {% endblock %}
 </head>
 
 <body>
@@ -22,6 +43,10 @@
       <span>Manual</span>
     </h1>
 
+    {%- block sidebarsearch %}
+    {%- include "searchbox.html" %}
+    {%- endblock %}
+
     <nav class="toc-link">
       <a href="{{ pathto('contents') }}" {% if pagename == "contents" %}class="current"{% endif %}>Table of contents</a>
     </nav>
@@ -31,7 +56,7 @@
     </nav>
   </header>
 
-  <article>
+  <article role="main">
     {% with chapter_nav_class='top' %}
       {% include 'chapter-nav.html' %}
     {% endwith %}

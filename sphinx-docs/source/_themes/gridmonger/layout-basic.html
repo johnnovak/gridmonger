@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+{# URL root should never be #, then all links are fragments #}
+{%- if not embedded and docstitle %}
+  {%- set titlesuffix = " &#8212; "|safe + docstitle|e %}
+{%- else %}
+  {%- set titlesuffix = "" %}
+{%- endif %}
+
+{%- macro script() %}
+    {%- for js in script_files %}
+    {{ js_tag(js) }}
+    {%- endfor %}
+{%- endmacro %}
+
+<html lang="en-AU">
+  <head>
+    <meta charset="{{ encoding }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {{- metatags }}
+    <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
+
+    {%- if not embedded %}
+    {%- block scripts %}
+    {{- script() }}
+    {%- endblock %}
+    {%- endif %}
+
+{%- block extrahead %} {% endblock %}
+  </head>
+  {%- block body_tag %}<body>{% endblock %}
+  {%- block header %}{% endblock %}
+
+  {%- block content %}
+
+  {%- block document %}
+  <div role="main">
+	{% block body %} {% endblock %}
+  </div>
+  {%- endblock %}
+
+  <div class="clearer"></div>
+  {%- endblock %}
+
+  </body>
+</html>

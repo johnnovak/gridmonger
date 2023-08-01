@@ -25,7 +25,6 @@ build_site: gen_html
 	mkdir "$(SITEDIR)/manual"
 	cp "$(BUILDDIR)/html/"*html "$(SITEDIR)/manual"
 	cp -R "$(BUILDDIR)/html/appendixes" "$(SITEDIR)/manual"
-	rm "$(SITEDIR)/manual/search.html"
 
 	rm -rf "$(SITEDIR)/_static"
 	cp -R "$(BUILDDIR)/html/_static" "$(SITEDIR)/_static"
@@ -37,7 +36,6 @@ build_manual: gen_html
 	mkdir -p "$(MANUALDIR)"
 	cp "$(BUILDDIR)/html/"*html "$(MANUALDIR)"
 	cp -R $(BUILDDIR)/html/appendixes "$(MANUALDIR)/appendixes"
-	rm "$(MANUALDIR)/search.html"
 
 	mkdir -p "$(MANUALDIR)/_static/css"
 	cp -R "$(BUILDDIR)/html/_static/css/docs.css" "$(MANUALDIR)/_static/css"
