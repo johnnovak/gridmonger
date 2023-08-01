@@ -72,7 +72,7 @@ standard cursor keys or the keypad for now. But I do recommend you to read the
 :ref:`About Vim <about-vim>` side-note at the end; you might find it
 interesting enough to explore this topic further.
 
-The following table summarises all the movement keys you can use in *Normal
+The following table summarises the standard movement keys available in *Normal
 Mode*:
 
 .. raw:: html
@@ -139,7 +139,7 @@ are displayed, you can do so in the :ref:`maps-and-levels:Map Properties` or
 
 
 Movement wrap-around
-====================
+~~~~~~~~~~~~~~~~~~~~
 
 Some cunningly crafted dungeons feature maps that "wrap around" from one side
 to the other --- you step off the edge of the map, and you'll find yourself
@@ -156,8 +156,47 @@ For consistency, this enables wrap-around cursor movement in all editing modes
 (you'll learn about these modes below and in later chapters).
 
 
+Diagonal movement
+~~~~~~~~~~~~~~~~~
+
+.. raw:: html
+
+    <table class="shortcuts std-move-keys">
+      <thead>
+        <tr>
+          <th>Keypad</th>
+          <th>Vim</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td><kbd>kp 7</kbd></td>
+          <td><kbd>Y</kbd></td>
+          <td>Up &amp; left</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 9</kbd></td>
+          <td><kbd>U</kbd></td>
+          <td>Up &amp; right</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 1</kbd></td>
+          <td><kbd>B</kbd></td>
+          <td>Down &amp; left</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 3</kbd></td>
+          <td><kbd>N</kbd></td>
+          <td>Down &amp; right</td>
+        </tr>
+      </tbody>
+    </table>
+
+
 Mouse movement actions
-======================
+~~~~~~~~~~~~~~~~~~~~~~
 
 Changing the cursor location can be done with the mouse as well: left-click on
 a cell within the level and the cursor will jump to that location. You can

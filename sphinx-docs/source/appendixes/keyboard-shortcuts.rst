@@ -87,12 +87,69 @@ Movement/direction keys
     </table>
 
     <table class="shortcuts std-move-keys">
+      <caption>Diagonal movement keys</caption>
+      <thead>
+        <tr>
+          <th>Keypad</th>
+          <th>Vim</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tfoot>
+        <tr>
+          <td colspan="4">
+            <p>
+              These keys are referred to as <span class="sc">&laquo;Diag move&raquo;</span> from now on.
+            </p>
+            <p>
+              <span class="asterisk">*</span>
+              <span class="sc">NumLock</span> must be off to use the numeric keypad for navigation.<br>
+              Combine with <kbd>Ctrl</kbd> for 5 cell jumps, or <kbd>Shift</kbd> for pan.
+            <p>
+            <p>
+              <span class="dagger">†</span>
+              Only if <span class="sc">YUBN diagonal movement</span> is enabled in preferences.<br>
+              Cannot be combined with <kbd>Ctrl</kbd> for jumps or
+              <kbd>Shift</kbd> for pan because that would interfere with other
+              shortcuts.
+            </p>
+            <p>
+          </td>
+        </tr>
+      </tfoot>
+
+      <tbody class="no-padding">
+        <tr>
+          <td><kbd>kp 7</kbd><span class="asterisk">*</span></td>
+          <td><kbd>Y</kbd><span class="dagger">†</span></td>
+          <td>Up &amp; left</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 9</kbd><span class="asterisk">*</span></td>
+          <td><kbd>U</kbd><span class="dagger">†</span></td>
+          <td>Up &amp; right</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 1</kbd><span class="asterisk">*</span></td>
+          <td><kbd>B</kbd><span class="dagger">†</span></td>
+          <td>Down &amp; left</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 3</kbd><kbd>kp 5</kbd><span class="asterisk">*</span></td>
+          <td><kbd>N</kbd><span class="dagger">†</span></td>
+          <td>Down &amp; right</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="shortcuts">
       <caption>Normal Mode</caption>
       <tfoot>
         <tr>
           <td>
-            <p>All <span class="sc">Std move</span> keys are available in
-            this mode.<br></p>
+            <p>All <span class="sc">Std &amp; Diag move</span> keys are available in this
+            mode.<br></p>
           </td>
         </tr>
       </tfoot>
@@ -165,11 +222,18 @@ Movement/direction keys
       <tfoot>
         <tr>
           <td colspan="4">
-            <p>All <span class="sc">Std move</span> keys are available in
-            this mode.</p>
+            <p>All <span class="sc">Std &amp; Diag move</span> keys are available in this
+            mode.<br></p>
 
-            <p><span class="sc">WASD keys</span> cannot be combined with
-            <kbd>Ctrl</kbd> for jumps because they would interfere with other shortcuts.</p>
+            <p>
+              <span class="sc">WASD keys</span> can be combined with <kbd>Shift</kbd> for pan.
+            </p>
+
+            <p>
+              <span class="sc">WASD keys</span> cannot be combined with
+              <kbd>Ctrl</kbd> for jumps because that would interfere with
+              other shortcuts.
+            </p>
           </td>
         </tr>
       </tfoot>
@@ -276,7 +340,7 @@ Edit mode
           </td>
           <td>
             Move cursor (5 cells)
-            <p>Except for <span class="sc">WASD keys</span></p>
+            <p>Except for <span class="sc">WASD &amp; YUBN keys</span></p>
           </td>
         </tr>
         <tr>
@@ -295,7 +359,7 @@ Edit mode
           </td>
           <td>
             Pan level (5 cells)
-            <p>Except for <span class="sc">WASD keys</span></p>
+            <p>Except for <span class="sc">WASD &amp; YUBN keys</span></p>
           </td>
         </tr>
       </tbody>
@@ -502,10 +566,19 @@ Edit mode
               <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>Z</kbd></kbd> or
             </span>
             <span class="group">
-              <kbd>U</kbd>
+              <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>U</kbd></kbd> or
+            </span>
+            <span class="group">
+              <kbd>U</kbd><span class="asterisk">*</span>
             </span>
           </td>
-          <td>Undo last action</td>
+          <td>
+            Undo last action
+            <p>
+              <span class="asterisk">*</span>
+              Except for <span class="sc">YUBN keys</span>
+            </p>
+          </td>
         </tr>
         <tr>
           <td>
@@ -816,9 +889,20 @@ Edit mode
       <tbody>
         <tr>
           <td>
-            <kbd>N</kbd>
+            <span class="group">
+              <kbd>Ctrl</kbd>+<kbd>N</kbd> or
+            </span>
+            <span class="group">
+              <kbd>N</kbd><span class="asterisk">*</span>
+            </span>
           </td>
-          <td>Create/edit note</td>
+          <td>
+            Create/edit note
+            <p>
+              <span class="asterisk">*</span>
+              Except for <span class="sc">YUBN keys</span>
+            </p>
+          </td>
         </tr>
         <tr>
           <td>
@@ -895,33 +979,42 @@ Select (Mark) Mode
       <tbody>
         <tr>
           <td>
-            <kbd class="move">Std move</kbd>
+            <kbd class="move">Std &amp; Diag move</kbd>
           </td>
           <td>Move cursor (1 cell)</td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>Ctrl</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
-          <td>Move cursor (5 cells)</td>
+          <td>
+            Move cursor (5 cells)
+            <p>Except for <span class="sc">YUBN keys</span></p>
+          </td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
-          <td>Pan level (1 cell)</td>
+          <td>
+            Pan level (1 cell)
+            <p>Except for <span class="sc">YUBN keys</span></p>
+          </td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
-          <td>Pan level (5 cells)</td>
+          <td>
+            Pan level (5 cells)
+            <p>Except for <span class="sc">YUBN keys</span></p>
+          </td>
         </tr>
         <tr>
           <td>
@@ -946,7 +1039,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>D</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>D</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
           <td>Draw selection</td>
@@ -954,7 +1047,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>E</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>E</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
           <td>Erase from selection</td>
@@ -962,7 +1055,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>R</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>R</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
           <td>Add rectangular area to selection</td>
@@ -970,7 +1063,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>S</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>S</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
           <td>Subtract rectangular area from selection</td>
@@ -983,19 +1076,40 @@ Select (Mark) Mode
         </tr>
         <tr>
           <td>
-            <kbd>U</kbd>
+            <span class="group">
+              <kbd>U</kbd><span class="asterisk">*</span> or
+            </span>
+            <span class="group">
+              <kbd>X</kbd>
+            </span>
           </td>
-          <td>Clear selection (unmark all)</td>
+          <td>
+            Clear selection (unmark all)
+            <p>
+              <span class="asterisk">*</span>
+              Except for <span class="sc">YUBN keys</span>
+            </p>
+          </td>
         </tr>
       </tbody>
 
       <tbody class="no-padding">
         <tr>
           <td>
-            <kbd>C</kbd> or
-            <kbd>Y</kbd>
+            <span class="group">
+              <kbd>C</kbd> or
+            </span>
+            <span class="group">
+              <kbd>Y</kbd><span class="asterisk">*</span>
+            </span>
           </td>
-          <td>Copy (yank) selection</td>
+          <td>
+            Copy (yank) selection
+            <p>
+              <span class="asterisk">*</span>
+              Except for <span class="sc">YUBN keys</span>
+            </p>
+          </td>
         </tr>
         <tr>
           <td>
@@ -1073,33 +1187,42 @@ Paste & Nudge Preview Modes
       <tbody>
         <tr>
           <td>
-            <kbd class="move">Std move</kbd>
+            <kbd class="move">Std &amp; Diag move</kbd>
           </td>
           <td>Move selection (1 cell)</td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>Ctrl</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
-          <td>Move selection (5 cells)</td>
+          <td>
+            Move selection (5 cells)
+            <p>Except for <span class="sc">YUBN keys</span></p>
+          </td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
-          <td>Pan level (1 cell)<span class="asterisk">*</span></td>
+          <td>
+            Pan level (1 cell)
+            <p>Except for <span class="sc">YUBN keys</span></p>
+          </td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Std move</kbd>
+              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
             </kbd>
           </td>
-          <td>Pan level (5 cells)<span class="asterisk">*</span></td>
+          <td>
+            Pan level (5 cells)
+            <p>Except for <span class="sc">YUBN keys</span></p>
+          </td>
         </tr>
       </tbody>
 

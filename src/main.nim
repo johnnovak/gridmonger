@@ -209,6 +209,7 @@ type
     autosaveFreqMins:   Natural
 
     movementWrapAround: bool
+    yubnMovementKeys:   bool
 
 
   Paths = object
@@ -477,6 +478,7 @@ type
 
     # Editing tab
     movementWrapAround: bool
+    yubnMovementKeys:   bool
 
 
   SaveDiscardMapDialogParams = object
@@ -691,6 +693,16 @@ const
     down  : MoveKeysCursor.down  + {Key.keyS}
   )
 
+type DiagonalMoveKeys = object
+  upLeft, upRight, downLeft, downRight: set[Key]
+
+const
+  DiagonalMoveKeysCursor = DiagonalMoveKeys(
+    upLeft    : {keyY, keyKp7},
+    upRight   : {keyU, keyKp9},
+    downLeft  : {keyB, keyKp1},
+    downRight : {keyN, keyKp3}
+  )
 
 type WalkKeys = object
   forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
@@ -716,21 +728,8 @@ const
 
 const
   AllWasdMoveKeys = {keyQ, keyW, keyE, keyA, Key.keyS, keyD}
+  DiagonalMoveLetterKeys = {keyY, keyU, keyB, keyN}
 
-
-# TODO for "Obitus mode"
-#[
-type DiagonalKeys = object
-  upLeft, upRight, downLeft, downRight: set[Key]
-
-const
-  DiagonalKeysWall = DiagonalKeys(
-    upLeft    : {keyKp7, keyY},
-    upRight   : {keyKp9, keyU},
-    downLeft  : {keyKp1, keyB},
-    downRight : {keyKp3, keyN}
-  )
-]#
 
 type AppShortcut = enum
   # General
@@ -739,6 +738,7 @@ type AppShortcut = enum
   scCancel,
   scDiscard,
   scUndo,
+  scUndo_YubnDisabled,
   scRedo,
 
   # Maps
@@ -841,6 +841,7 @@ type AppShortcut = enum
   scPasteAccept,
 
   scEditNote,
+  scEditNote_YubnDisabled,
   scEraseNote,
   scEditLabel,
   scEraseLabel,
@@ -895,7 +896,9 @@ let g_appShortcuts = {
   scDiscard:            @[mkKeyShortcut(keyD,             {mkAlt})],
 
   scUndo:               @[mkKeyShortcut(keyZ,             {mkCtrl}),
-                          mkKeyShortcut(keyU,             {})],
+                          mkKeyShortcut(keyU,             {mkCtrl})],
+
+  scUndo_YubnDisabled:  @[mkKeyShortcut(keyU,             {})],
 
   scRedo:               @[mkKeyShortcut(keyY,             {mkCtrl}),
                           mkKeyShortcut(keyR,             {mkCtrl})],
@@ -1010,7 +1013,8 @@ let g_appShortcuts = {
                                  mkKeyShortcut(keyEnter,      {}),
                                  mkKeyShortcut(keyKpEnter,    {})],
 
-  scEditNote:                  @[mkKeyShortcut(keyN,          {})],
+  scEditNote:                  @[mkKeyShortcut(keyN,          {mkCtrl})],
+  scEditNote_YubnDisabled:     @[mkKeyShortcut(keyN,          {})],
   scEraseNote:                 @[mkKeyShortcut(keyN,          {mkShift})],
   scEditLabel:                 @[mkKeyShortcut(keyT,          {mkCtrl})],
   scEraseLabel:                @[mkKeyShortcut(keyT,          {mkShift})],
@@ -2341,7 +2345,8 @@ proc saveAppConfig(a) =
   cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
   cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
-  cfg.set(p & "movement-wrap-around",           a.prefs.movementWrapAround)
+  cfg.set(p & "editing.movement-wrap-around",   a.prefs.movementWrapAround)
+  cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
 
   p = "last-state."
@@ -3080,6 +3085,7 @@ proc openPreferencesDialog(a) =
   dlg.autosave           = a.prefs.autosave
   dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
   dlg.movementWrapAround = a.prefs.movementWrapAround
+  dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
   dlg.vsync              = a.prefs.vsync
 
   a.dialogs.activeDialog = dlgPreferencesDialog
@@ -3184,7 +3190,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         style = a.theme.textFieldStyle
       )
     group:
-      koi.label("Enable vertical sync", style=a.theme.labelStyle)
+      koi.label("Vertical sync", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.vsync, style = a.theme.checkBoxStyle)
@@ -3192,26 +3198,35 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   elif dlg.activeTab == 2:  # Editing
     group:
       koi.label("Movement wrap-around", style=a.theme.labelStyle)
-
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.movementWrapAround, style = a.theme.checkBoxStyle)
+
+      koi.label("YUBN diagonal movement",
+                 style=a.theme.labelStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.yubnMovementKeys, style = a.theme.checkBoxStyle)
 
   koi.endView()
 
 
   proc okAction(dlg: PreferencesDialogParams; a) =
+    # Startup
     a.prefs.showSplash         = dlg.showSplash
     a.prefs.autoCloseSplash    = dlg.autoCloseSplash
     a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
     a.prefs.loadLastMap        = dlg.loadLastMap
 
+    # General
     if not a.prefs.autoSave and dlg.autoSave:
       a.doc.lastAutosaveTime = getMonoTime()
 
     a.prefs.autosave           = dlg.autosave
     a.prefs.autosaveFreqMins   = parseInt(dlg.autosaveFreqMins).Natural
-    a.prefs.movementWrapAround = dlg.movementWrapAround
     a.prefs.vsync              = dlg.vsync
+
+    # Editing
+    a.prefs.movementWrapAround = dlg.movementWrapAround
+    a.prefs.yubnMovementKeys   = dlg.yubnMovementKeys
 
     saveAppConfig(a)
     setSwapInterval(a)
@@ -5704,6 +5719,7 @@ proc handleGlobalKeyEvents(a) =
   template left():     auto = turnLeft(ui.cursorOrient)
   template right():    auto = turnRight(ui.cursorOrient)
 
+  # {{{ handleMoveWalk()
   proc handleMoveWalk(ke: Event; a) =
     const mkS = {mkShift}
 
@@ -5731,9 +5747,16 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.forward,     mkS, repeat=true): moveLevel(ui.cursorOrient, s, a)
     elif ke.isKeyDown(k.backward,    mkS, repeat=true): moveLevel(backward(), s, a)
 
-
+  # }}}
+  # {{{ handleMoveKeys()
   template handleMoveKeys(ke: Event, allowWasdKeys, allowRepeat: bool,
-                          moveHandler: untyped) =
+                          allowDiagonal: bool, moveHandler: untyped) =
+
+    if allowDiagonal:
+      # Ignore Y/U/B/N keys if YUBN movement is not enabled in the prefs
+      if not a.prefs.yubnMovementKeys and ke.key in DiagonalMoveLetterKeys:
+        return
+
     let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
             else: MoveKeysCursor
 
@@ -5746,17 +5769,53 @@ proc handleGlobalKeyEvents(a) =
     elif kk.isKeyDown(k.up,    repeat=allowRepeat): moveHandler(dirN, mods, a)
     elif kk.isKeyDown(k.down,  repeat=allowRepeat): moveHandler(dirS, mods, a)
 
+    if allowDiagonal:
+      let d = DiagonalMoveKeysCursor
 
-  proc handleMoveCursor(ke: Event; allowPan, allowJump, allowWasdKeys: bool;
-                        a): bool =
+      if ke.isKeyDown(d.upLeft, repeat=allowRepeat):
+        moveHandler(dirN, mods, a)
+        moveHandler(dirW, mods, a)
 
-    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
-            else: MoveKeysCursor
+      elif ke.isKeyDown(d.upRight, repeat=allowRepeat):
+        moveHandler(dirN, mods, a)
+        moveHandler(dirE, mods, a)
+
+      elif ke.isKeyDown(d.downLeft, repeat=allowRepeat):
+        moveHandler(dirS, mods, a)
+        moveHandler(dirW, mods, a)
+
+      elif ke.isKeyDown(d.downRight, repeat=allowRepeat):
+        moveHandler(dirS, mods, a)
+        moveHandler(dirE, mods, a)
+
+  # }}}
+  # {{{ handleMoveCursor()
+  proc handleMoveCursor(ke: Event; allowPan, allowJump, allowWasdKeys: bool,
+                        allowDiagonal: bool; a): bool =
+
+    if allowDiagonal:
+      # Ignore Y/U/B/N keys if YUBN movement is not enabled in the prefs
+      if not a.prefs.yubnMovementKeys and ke.key in DiagonalMoveLetterKeys:
+        return
 
     var s = 1
     if allowJump and mkCtrl in ke.mods:
-      if ke.key in AllWasdMoveKeys: return
+      if ke.key in AllWasdMoveKeys:
+        # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with shorcuts
+        return
+
+      elif ke.key in DiagonalMoveLetterKeys:
+        # Disallow Ctrl+Y/U/B/N panning as it would interfere with shorcuts
+        return
       else: s = CursorJump
+
+    if allowPan and mkShift in ke.mods:
+      if ke.key in DiagonalMoveLetterKeys:
+        # Disallow Shift+Y/U/B/N panning as it would interfere with shorcuts
+        return
+
+    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
+            else: MoveKeysCursor
 
     var ke = ke
     ke.mods = ke.mods - {mkCtrl}
@@ -5773,9 +5832,29 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, s, a)
       elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, s, a)
 
+    if allowDiagonal:
+      let d = DiagonalMoveKeysCursor
+
+      if ke.isKeyDown(d.upLeft, repeat=true):
+        moveCursor(dirN, s, a)
+        moveCursor(dirW, s, a)
+
+      elif ke.isKeyDown(d.upRight, repeat=true):
+        moveCursor(dirN, s, a)
+        moveCursor(dirE, s, a)
+
+      elif ke.isKeyDown(d.downLeft, repeat=true):
+        moveCursor(dirS, s, a)
+        moveCursor(dirW, s, a)
+
+      elif ke.isKeyDown(d.downRight, repeat=true):
+        moveCursor(dirS, s, a)
+        moveCursor(dirE, s, a)
+
     result = false
 
-
+  # }}}
+  # {{{ drawWallRepeatMoveKeyHandler()
   proc drawWallRepeatMoveKeyHandler(dir: CardinalDir, mods: set[ModifierKey];
                                     a) =
     let cur = ui.cursor
@@ -5798,7 +5877,8 @@ proc handleGlobalKeyEvents(a) =
         keepStatusMessage=true, a=a
       )
 
-
+  # }}}
+ 
   if hasKeyEvent():
     let ke = koi.currEvent()
     # TODO eventHandled is not set here, but it's not actually needed (yet)
@@ -5817,7 +5897,7 @@ proc handleGlobalKeyEvents(a) =
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         if handleMoveCursor(ke, allowPan=true, allowJump=true,
-                            allowWasdKeys=true, a):
+                            allowWasdKeys=true, allowDiagonal=true, a):
           setStatusMessage("moved", a)
 
       if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
@@ -6209,7 +6289,7 @@ proc handleGlobalKeyEvents(a) =
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         discard handleMoveCursor(ke, allowPan=false, allowJump=false,
-                                 allowWasdKeys=true, a)
+                                 allowWasdKeys=true, allowDiagonal=true, a)
       let cur = ui.cursor
 
       if cur != ui.prevCursor:
@@ -6268,7 +6348,8 @@ proc handleGlobalKeyEvents(a) =
                             keepStatusMessage=true, a=a)
 
 
-      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
+                     allowDiagonal=false, handleMoveKey)
 
       if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
         ui.editMode = emNormal
@@ -6293,7 +6374,7 @@ proc handleGlobalKeyEvents(a) =
       ke.mods = {}
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=true,
-                     drawWallRepeatMoveKeyHandler)
+                     allowDiagonal=false, drawWallRepeatMoveKeyHandler)
 
       if ke.isShortcutUp(scDrawWallRepeat):
         ui.editMode = emDrawWall
@@ -6339,7 +6420,8 @@ proc handleGlobalKeyEvents(a) =
                             keepStatusMessage=true, a=a)
 
 
-      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
+                     allowDiagonal=false, handleMoveKey)
 
       if ke.isShortcutUp(scDrawSpecialWall):
         ui.editMode = emNormal
@@ -6364,7 +6446,7 @@ proc handleGlobalKeyEvents(a) =
       ke.mods = {}
 
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=true,
-                     drawWallRepeatMoveKeyHandler)
+                     allowDiagonal=false, drawWallRepeatMoveKeyHandler)
 
       if ke.isShortcutUp(scDrawWallRepeat):
         ui.editMode = emDrawSpecialWall
@@ -6378,7 +6460,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emSelect
     of emSelect:
       discard handleMoveCursor(ke, allowPan=true, allowJump=true,
-                               allowWasdKeys=false, a)
+                               allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
 
       if   koi.ctrlDown(): setSelectModeActionMessage(a)
@@ -6506,7 +6588,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emSelectDraw, emSelectErase
     of emSelectDraw, emSelectErase:
       discard handleMoveCursor(ke, allowPan=false, allowJump=false,
-                               allowWasdKeys=false, a)
+                               allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
       ui.selection.get[cur.row, cur.col] = ui.editMode == emSelectDraw
 
@@ -6517,7 +6599,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emSelectRect
     of emSelectRect:
       discard handleMoveCursor(ke, allowPan=false, allowJump=false,
-                               allowWasdKeys=false, a)
+                               allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
 
       var r1,c1, r2,c2: Natural
@@ -6546,7 +6628,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emPastePreview
     of emPastePreview:
       discard handleMoveCursor(ke, allowPan=true, allowJump=true,
-                               allowWasdKeys=false, a)
+                               allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
 
       dp.selStartRow = cur.row
@@ -6579,7 +6661,7 @@ proc handleGlobalKeyEvents(a) =
     # {{{ emMovePreview
     of emMovePreview:
       discard handleMoveCursor(ke, allowPan=true, allowJump=true,
-                               allowWasdKeys=false, a)
+                               allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
 
       dp.selStartRow = cur.row
@@ -6625,7 +6707,8 @@ proc handleGlobalKeyEvents(a) =
         of dirN: dp.selStartRow = max(dp.selStartRow - step, -rows+1)
 
 
-      handleMoveKeys(ke, allowWasdKeys=false, allowRepeat=true, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=false, allowRepeat=true,
+                     allowDiagonal=true, handleMoveKey)
 
       let cur = ui.cursor
 
@@ -6652,7 +6735,7 @@ proc handleGlobalKeyEvents(a) =
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         discard handleMoveCursor(ke, allowPan=true, allowJump=true,
-                                 allowWasdKeys=true, a)
+                                 allowWasdKeys=true, allowDiagonal=false, a)
 
       if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
       elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
@@ -6702,13 +6785,16 @@ proc handleGlobalKeyEvents(a) =
           destIdx = ui.jumpToSrcLocationIdx + 1
         of dirW, dirS:
           destIdx = ui.jumpToSrcLocationIdx - 1
+
         ui.jumpToSrcLocationIdx = destIdx.floorMod(ui.jumpToSrcLocations.len)
         ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
+
         moveCursorTo(ui.lastJumpToSrcLocation, a)
         setSelectJumpToLinkSrcActionMessage(a)
 
 
-      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false, handleMoveKey)
+      handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
+                     allowDiagonal=false, handleMoveKey)
 
       if ke.isShortcutDown(scAccept) or ke.isShortcutDown(scCancel):
         ui.editMode = emNormal
@@ -7884,7 +7970,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # }}}
 
-# {{{ Quick reference definition
+# {{{ Quick keyboard reference definitions
 type
   QuickRefItemKind = enum
     qkShortcut, qkKeyShortcuts, qkCustomShortcuts, qkDescription, qkSeparator
@@ -8208,7 +8294,7 @@ proc renderQuickReference(a) =
     t = invLerp(MinWindowWidth.float, 800.0, uiWidth).clamp(0.0, 1.0)
     viewWidth = lerp(622.0, 680.0, t)
     columnWidth = lerp(300.0, 330.0, t)
-    tabWidth = 420.0
+    tabWidth = 400.0
 
   let radioButtonX = (uiWidth - tabWidth)*0.5
 
@@ -8929,9 +9015,14 @@ proc initPreferences(cfg: HoconNode; a) =
                            "auto-save.frequency-mins", 2
                          ).limit(AutosaveFreqMinsLimits)
 
-    movementWrapAround = prefs.getBoolOrDefault("movement-wrap-around", false)
+    const MovementWrapAroundKey = "editing.movement-wrap-around"
+    if prefs.getOpt(MovementWrapAroundKey).isSome:
+      movementWrapAround = prefs.getBoolOrDefault(MovementWrapAroundKey, false)
+    else:
+      # deprecated; support for the old key will be dropped eventually
+      movementWrapAround = prefs.getBoolOrDefault("movement-wrap-around", false)
 
-    vsync              = prefs.getBoolOrDefault("video.vsync", true)
+    vsync = prefs.getBoolOrDefault("video.vsync", true)
 
 # }}}
 # {{{ restoreUIStateFromConfig()
