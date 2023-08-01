@@ -116,16 +116,6 @@ Mode*:
     </table>
 
 
-You can use the :kbd:`8`:kbd:`4`:kbd:`5`:kbd:`6` keys on they keypad for
-right-handed `WASD style
-<https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys>`_ navigation.
-
-.. note::
-
-  *NumLock* must be off if you want to use the number keys on the numeric
-  keypad for navigation.
-
-
 To move in 5-cell jumps, hold down :kbd:`Ctrl` while using the movement keys.
 Similarly, you can pan the level by holding down :kbd:`Shift`. This can be
 combined with :kbd:`Ctrl` to pan in 5-cell increments.
@@ -135,6 +125,17 @@ bar as you move the cursor. You can toggle the display of cell coordinates
 around the level with :kbd:`Alt+C`. If you wish to change how the coordinates
 are displayed, you can do so in the :ref:`maps-and-levels:Map Properties` or
 :ref:`maps-and-levels:Level Properties` dialogs.
+
+.. note::
+
+  *NumLock* must be off if you want to use the number keys on the numeric
+  keypad for navigation.
+
+.. tip::
+
+  You can use the :kbd:`8`:kbd:`4`:kbd:`5`:kbd:`6` keys on they keypad for
+  right-handed `WASD style
+  <https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys>`_ navigation.
 
 
 Movement wrap-around

@@ -90,7 +90,7 @@ Quickstart
 
 For the impatient among you, here's a few notes to get you started.
 
-.. important::
+.. tip::
 
    Always have an eye on the *status bar messages* at the bottom of the
    window, as they contain important context-dependent information about the
