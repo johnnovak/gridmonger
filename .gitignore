@@ -18,8 +18,7 @@
 /*.gmm
 /*.log
 /*.log.bak?
-/gridmonger
 
-gridmonger
-gridmonger-arm64
-gridmonger-x64
+/gridmonger
+/gridmonger-arm64
+/gridmonger-x64
