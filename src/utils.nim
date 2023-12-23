@@ -9,7 +9,7 @@ import common
 
 # {{{ alias*()
 template alias*(newName: untyped, call: untyped) =
-  template newName(): untyped = call
+  template newName(): untyped {.redefine.} = call
 
 # }}}
 # {{{ durationToFloatMillis*()

@@ -1164,7 +1164,8 @@ func regionBorderYAdjustment(orientation: Orientation,
 
 # {{{ drawSolidWallHoriz*()
 proc drawSolidWallHoriz*(x, y: float; orientation: Orientation,
-                         isCursorActive, regionBorder: bool = false; ctx) =
+                         isCursorActive: bool = false,
+                         regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1183,7 +1184,8 @@ proc drawSolidWallHoriz*(x, y: float; orientation: Orientation,
 # }}}
 # {{{ drawIllusoryWallHoriz*()
 proc drawIllusoryWallHoriz*(x, y: float; orientation: Orientation;
-                            isCursorActive, regionBorder: bool = false; ctx) =
+                            isCursorActive: bool = false;
+                            regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1210,7 +1212,8 @@ proc drawIllusoryWallHoriz*(x, y: float; orientation: Orientation;
 # }}}
 # {{{ drawInvisibleWallHoriz*()
 proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
-                             isCursorActive, regionBorder: bool = false; ctx) =
+                             isCursorActive: bool = false;
+                             regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1240,7 +1243,8 @@ proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
 # }}}
 # {{{ drawDoorHoriz*()
 proc drawDoorHoriz*(x, y: float; orientation: Orientation;
-                    isCursorActive, regionBorder, fill: bool = false; ctx) =
+                    isCursorActive: bool = false; regionBorder: bool = false;
+                    fill: bool = false; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1294,14 +1298,16 @@ proc drawDoorHoriz*(x, y: float; orientation: Orientation;
 # }}}
 # {{{ drawLockedDoorHoriz*()
 proc drawLockedDoorHoriz*(x, y: float; orientation: Orientation;
-                          isCursorActive, regionBorder: bool = false; ctx) =
+                          isCursorActive: bool = false;
+                          regionBorder: bool = false; ctx) =
   drawDoorHoriz(x, y, orientation, isCursorActive, regionBorder, fill=true,
                 ctx)
 
 # }}}
 # {{{ drawSecretDoorHoriz*()
 proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
-                          isCursorActive, regionBorder: bool = false; ctx) =
+                          isCursorActive: bool = false;
+                          regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1336,7 +1342,8 @@ proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
 # }}}
 # {{{ drawArchwayHoriz*()
 proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
-                       isCursorActive, regionBorder: bool = false; ctx) =
+                       isCursorActive: bool = false;
+                       regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
@@ -1431,12 +1438,14 @@ proc drawOneWayDoorHoriz*(x, y: float; orientation: Orientation;
 
 
 proc drawOneWayDoorHorizNE*(x, y: float; orientation: Orientation;
-                            isCursorActive, regionBorder: bool = false; ctx) =
+                            isCursorActive: bool = false;
+                            regionBorder: bool = false; ctx) =
   drawOneWayDoorHoriz(x, y, orientation, isCursorActive, regionBorder,
                       northEast=true, ctx)
 
 proc drawOneWayDoorHorizSW*(x, y: float; orientation: Orientation;
-                            isCursorActive, regionBorder: bool = false; ctx) =
+                            isCursorActive: bool = false;
+                            regionBorder: bool = false; ctx) =
   drawOneWayDoorHoriz(x, y, orientation, isCursorActive, regionBorder,
                       northEast=false, ctx)
 
@@ -1473,12 +1482,14 @@ proc drawLeverHoriz*(x, y: float; orientation: Orientation;
 
 
 proc drawLeverHorizNE*(x, y: float; orientation: Orientation;
-                       isCursorActive, regionBorder: bool = false; ctx) =
+                       isCursorActive: bool = false;
+                       regionBorder: bool = false; ctx) =
   drawLeverHoriz(x, y, orientation, isCursorActive, regionBorder,
                  northEast=true, ctx)
 
 proc drawLeverHorizSW*(x, y: float; orientation: Orientation;
-                       isCursorActive, regionBorder: bool = false; ctx) =
+                       isCursorActive: bool = false;
+                       regionBorder: bool = false; ctx) =
   drawLeverHoriz(x, y, orientation, isCursorActive, regionBorder,
                  northEast=false, ctx)
 
@@ -1547,13 +1558,15 @@ proc drawNicheHoriz*(x, y: float; orientation: Orientation;
 
 proc drawNicheHorizNE*(x, y: float; orientation: Orientation;
                        floorColor: Natural;
-                       isCursorActive, regionBorder: bool = false; ctx) =
+                       isCursorActive: bool = false;
+                       regionBorder: bool = false; ctx) =
   drawNicheHoriz(x, y, orientation, regionBorder, northEast=true, floorColor,
                  ctx)
 
 proc drawNicheHorizSW*(x, y: float; orientation: Orientation;
                        floorColor: Natural;
-                       isCursorActive, regionBorder: bool = false; ctx) =
+                       isCursorActive: bool = false;
+                       regionBorder: bool = false; ctx) =
   drawNicheHoriz(x, y, orientation, regionBorder, northEast=false, floorColor,
                  ctx)
 
@@ -1590,19 +1603,22 @@ proc drawStatueHoriz*(x, y: float; orientation: Orientation;
 
 
 proc drawStatueHorizNE*(x, y: float; orientation: Orientation;
-                        isCursorActive, regionBorder: bool = false; ctx) =
+                        isCursorActive: bool = false;
+                        regionBorder: bool = false; ctx) =
   drawStatueHoriz(x, y, orientation, isCursorActive, regionBorder,
                  northEast=true, ctx)
 
 proc drawStatueHorizSW*(x, y: float; orientation: Orientation;
-                        isCursorActive, regionBorder: bool = false; ctx) =
+                        isCursorActive: bool = false;
+                        regionBorder: bool = false; ctx) =
   drawStatueHoriz(x, y, orientation, isCursorActive, regionBorder,
                   northEast=false, ctx)
 
 # }}}
 # {{{ drawKeyholeHoriz*()
 proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
-                       isCursorActive, regionBorder: bool = false; ctx) =
+                       isCursorActive: bool = false;
+                       regionBorder: bool = false; ctx) =
   alias(lt, ctx.lt)
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1683,12 +1699,14 @@ proc drawWritingHoriz*(x, y: float; orientation: Orientation;
            fontSizeFactor=0.7, vg)
 
 proc drawWritingHorizNE*(x, y: float; orientation: Orientation;
-                         isCursorActive, regionBorder: bool = false; ctx) =
+                         isCursorActive: bool = false;
+                         regionBorder: bool = false; ctx) =
   drawWritingHoriz(x, y, orientation, isCursorActive, regionBorder,
                    northEast=true, ctx)
 
 proc drawWritingHorizSW*(x, y: float; orientation: Orientation;
-                         isCursorActive, regionBorder: bool = false; ctx) =
+                         isCursorActive: bool = false;
+                         regionBorder: bool = false; ctx) =
   drawWritingHoriz(x, y, orientation, isCursorActive, regionBorder,
                    northEast=false, ctx)
 
