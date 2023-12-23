@@ -1,5 +1,5 @@
-import math
-import options
+import std/math
+import std/options
 
 import annotations
 import common

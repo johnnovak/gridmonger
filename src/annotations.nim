@@ -1,6 +1,6 @@
-import algorithm
-import options
-import tables
+import std/algorithm
+import std/options
+import std/tables
 
 import common
 import rect

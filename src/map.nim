@@ -1,8 +1,8 @@
-import algorithm
-import options
-import sequtils
-import sets
-import strformat
+import std/algorithm
+import std/options
+import std/sequtils
+import std/sets
+import std/strformat
 
 import common
 import deps/with

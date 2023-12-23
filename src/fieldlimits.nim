@@ -1,4 +1,4 @@
-import unicode
+import std/unicode
 
 type
   FieldLimitsKind* = enum

@@ -1,8 +1,8 @@
-import lenientops
-import math
-import options
-import sequtils
-import sets
+import std/lenientops
+import std/math
+import std/options
+import std/sequtils
+import std/sets
 
 import glad/gl
 import koi

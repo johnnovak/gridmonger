@@ -1,6 +1,6 @@
-import options
-import sets
-import tables
+import std/options
+import std/sets
+import std/tables
 
 import common
 import rect

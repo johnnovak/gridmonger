@@ -1,6 +1,6 @@
-import options
-import sets
-import strformat
+import std/options
+import std/sets
+import std/strformat
 
 import koi/undomanager
 

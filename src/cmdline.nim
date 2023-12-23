@@ -1,7 +1,7 @@
-import options
-import parseopt
-import strformat
-import strutils
+import std/options
+import std/parseopt
+import std/strformat
+import std/strutils
 
 import common
 import hocon

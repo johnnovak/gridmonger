@@ -1,4 +1,4 @@
-import options
+import std/options
 
 type
   RectType = SomeInteger | Natural

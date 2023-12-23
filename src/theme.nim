@@ -1,6 +1,6 @@
-import options
-import streams
-import strformat
+import std/options
+import std/streams
+import std/strformat
 
 import koi
 import nanovg

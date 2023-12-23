@@ -1,8 +1,8 @@
-import hashes
-import options
-import strutils
-import times
-import typetraits
+import std/hashes
+import std/options
+import std/strutils
+import std/times
+import std/typetraits
 
 import common
 

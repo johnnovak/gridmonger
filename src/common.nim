@@ -1,7 +1,7 @@
-import sets
-import strformat
-import strutils
-import tables
+import std/sets
+import std/strformat
+import std/strutils
+import std/tables
 
 import koi
 import nanovg

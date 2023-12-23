@@ -1,5 +1,5 @@
-import lenientops
-import logging
+import std/lenientops
+import std/logging
 
 import glfw
 import icons

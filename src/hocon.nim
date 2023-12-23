@@ -1,11 +1,11 @@
-import deques
-import math
-import options
-import unicode
-import streams
-import strformat
-import strutils
-import tables
+import std/deques
+import std/math
+import std/options
+import std/unicode
+import std/streams
+import std/strformat
+import std/strutils
+import std/tables
 
 # {{{ UnicodeScanner
 

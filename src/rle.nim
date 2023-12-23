@@ -1,4 +1,4 @@
-import options
+import std/options
 
 # {{{ RLE encoder
 

@@ -1,12 +1,12 @@
-import algorithm
-import math
-import logging except Level
-import options
+import std/algorithm
+import std/math
+import std/logging except Level
+import std/options
 import std/enumutils
-import strformat
-import strutils
-import sugar
-import unicode
+import std/strformat
+import std/strutils
+import std/sugar
+import std/unicode
 
 import riff
 

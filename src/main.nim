@@ -1,21 +1,21 @@
 # {{{ Imports
 
-import algorithm
-import browsers
-import lenientops
-import logging
-import macros
-import math
-import options
-import os
-import sequtils
-import sets
+import std/algorithm
+import std/browsers
+import std/lenientops
+import std/logging
+import std/macros
+import std/math
+import std/options
+import std/os
+import std/sequtils
+import std/sets
 import std/monotimes
-import streams
-import strformat
-import strutils
-import tables
-import times
+import std/streams
+import std/strformat
+import std/strutils
+import std/tables
+import std/times
 
 import deps/with
 import glad/gl
@@ -8037,7 +8037,6 @@ proc desc(s: string): QuickRefItem =
 const QuickRefSepa = QuickRefItem(kind: qkSeparator)
 
 # {{{ General
-# TODO YUBN key support
 let g_quickRef_General = @[
   @[
     scNewMap.sc,            "New map".desc,
