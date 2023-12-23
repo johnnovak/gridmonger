@@ -60,9 +60,10 @@ Icon
     </div>
 
 
-To create a note, press the :kbd:`N` key in a non-empty cell. A cell cannot
-have more than one note; if you press :kbd:`N` in a cell that already has one,
-you'll be editing it. To erase a note, press :kbd:`Shift+N`.
+To create a note, press :kbd:`N` or :kbd:`Ctrl+N` in a non-empty cell. A cell
+cannot have more than one note; if you use the shortcut in a cell that already
+has a note, you'll be editing it. To erase a note, press :kbd:`Shift+N` or
+:kbd:`Ctrl+Shift+N`.
 
 Press :kbd:`Shift+Enter` to insert line breaks when editing the note text.
 

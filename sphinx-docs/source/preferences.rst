@@ -41,5 +41,9 @@ Editing tab
 This tab contains options that affect the workings of the editing operations.
 
 **Movement-wrap around** controls whether the cursor should appear on the
-opposite side when moved past the edges of the level (see the
-:ref:`moving-around:Movement wrap-around` for more details).
+opposite side when moved past the edges of the level (see
+:ref:`moving-around:Movement wrap-around`).
+
+**YUBN diagonal movement** enables moving the cursor in the intercardinal
+directions via the YUBN keys in addition to the numeric keypad (see
+:ref:`moving-around:Diagonal movement`).

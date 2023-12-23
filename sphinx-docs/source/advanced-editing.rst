@@ -121,8 +121,8 @@ selection, hold :kbd:`S` and use the movement keys.
 
 Similarly, you can "draw" the selection or "erase" from it by using the
 :kbd:`D` and :kbd:`E` modifier keys with the movement keys, respectively.
-:kbd:`A` selects the whole level (*Select All*), and :kbd:`U` clears the
-selection (*Unselect All*).
+:kbd:`A` selects the whole level (*Select All*), and :kbd:`U` or :kbd:`X`
+clears the selection (*Unselect All*).
 
 
 .. tip::

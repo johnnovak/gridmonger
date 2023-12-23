@@ -24,9 +24,9 @@ The level-related navigational keys are the same in every mode.
 You can zoom the view in and out with the :kbd:`=` and :kbd:`-` keys,
 respectively. There are 20 zoom levels in total.
 
-To change the current level, you can use the drop-down above the level, or
-:kbd:`Ctrl+-`/:kbd:`Ctrl+=`, :kbd:`PgUp`/:kbd:`PgDn` or :kbd:`Kp-`/:kbd:`Kp+`
-to go to the previous or next level.
+To change the current level of the map, you can use the drop-down above the
+level, or :kbd:`Ctrl+-`/:kbd:`Ctrl+=`, :kbd:`PgUp`/:kbd:`PgDn` or
+:kbd:`Kp-`/:kbd:`Kp+` to go to the previous or next level.
 
 .. note::
 
@@ -92,25 +92,25 @@ Mode*:
           <td><kbd>&larr;</kbd></td>
           <td><kbd>kp 4</kbd></td>
           <td><kbd>H</kbd></td>
-          <td>Left</td>
+          <td>Left (West)</td>
         </tr>
         <tr>
           <td><kbd>&rarr;</kbd></td>
           <td><kbd>kp 6</kbd></td>
           <td><kbd>L</kbd></td>
-          <td>Right</td>
+          <td>Right (East)</td>
         </tr>
         <tr>
           <td><kbd>&uarr;</kbd></td>
           <td><kbd>kp 8</kbd></td>
           <td><kbd>K</kbd></td>
-          <td>Up</td>
+          <td>Up (North)</td>
         </tr>
         <tr>
           <td><kbd>&darr;</kbd></td>
           <td><kbd>kp 2</kbd><kbd>kp 5</kbd></td>
           <td><kbd>J</kbd></td>
-          <td>Down</td>
+          <td>Down (South)</td>
         </tr>
       </tbody>
     </table>
@@ -120,16 +120,15 @@ To move in 5-cell jumps, hold down :kbd:`Ctrl` while using the movement keys.
 Similarly, you can pan the level by holding down :kbd:`Shift`. This can be
 combined with :kbd:`Ctrl` to pan in 5-cell increments.
 
-Observe how the current coordinates change in the right corner of the status
-bar as you move the cursor. You can toggle the display of cell coordinates
-around the level with :kbd:`Alt+C`. If you wish to change how the coordinates
-are displayed, you can do so in the :ref:`maps-and-levels:Map Properties` or
-:ref:`maps-and-levels:Level Properties` dialogs.
+Observe how the current coordinates change in the bottom right corner of the
+window as you move the cursor. You can toggle the display of cell
+coordinates around the level with :kbd:`Alt+C`. If you wish to change how the
+coordinates are displayed, you can do so in the :ref:`maps-and-levels:Map
+Properties` or :ref:`maps-and-levels:Level Properties` dialogs.
 
 .. note::
 
-  *NumLock* must be off if you want to use the number keys on the numeric
-  keypad for navigation.
+  *NumLock* must be off if you want to use the numeric keypad for navigation.
 
 .. tip::
 
@@ -159,6 +158,11 @@ For consistency, this enables wrap-around cursor movement in all editing modes
 Diagonal movement
 ~~~~~~~~~~~~~~~~~
 
+It's also possible to move the cursor diagonally in the intercardinal
+directions by using the numeric keypad or the :kbd:`Y`:kbd:`U`:kbd:`B`:kbd:`N`
+keys which might be familiar to some from `Rogue
+<https://en.wikipedia.org/wiki/Rogue_(video_game)>`_:
+
 .. raw:: html
 
     <table class="shortcuts std-move-keys">
@@ -166,7 +170,7 @@ Diagonal movement
         <tr>
           <th>Keypad</th>
           <th>Vim</th>
-          <th></th>
+          <th width="45%"></th>
         </tr>
       </thead>
 
@@ -174,25 +178,40 @@ Diagonal movement
         <tr>
           <td><kbd>kp 7</kbd></td>
           <td><kbd>Y</kbd></td>
-          <td>Up &amp; left</td>
+          <td>Up &amp; left (Northwest)</td>
         </tr>
         <tr>
           <td><kbd>kp 9</kbd></td>
           <td><kbd>U</kbd></td>
-          <td>Up &amp; right</td>
+          <td>Up &amp; right (Northeast)</td>
         </tr>
         <tr>
           <td><kbd>kp 1</kbd></td>
           <td><kbd>B</kbd></td>
-          <td>Down &amp; left</td>
+          <td>Down &amp; left (Southwest)</td>
         </tr>
         <tr>
           <td><kbd>kp 3</kbd></td>
           <td><kbd>N</kbd></td>
-          <td>Down &amp; right</td>
+          <td>Down &amp; right (Southeast)</td>
         </tr>
       </tbody>
     </table>
+
+YUBN navigation is off by default as these keys clash with some other
+shortcuts. You need to enable **YUBN diagonal movement** explicitly in the
+:ref:`preferences:Editing tab` of the :ref:`preferences:Preferences` dialog if
+you wish to use it. Actions whose shortcuts clash with the
+:kbd:`Y`:kbd:`U`:kbd:`B`:kbd:`N` keys also have alternative secondary
+shortcuts; with YUBN navigation enabled, you can only access these actions via
+their secondary shortcuts.
+
+The :kbd:`Shift` modifier to pan the level is available with
+the :kbd:`Y`:kbd:`U`:kbd:`B`:kbd:`N` keys too.
+
+The :kbd:`Ctrl` modifier for 5-cell jumps, however, only works with the
+diagonal movement keys on the numeric keypad to prevent further shortcut
+clashes.
 
 
 Mouse movement actions
@@ -281,6 +300,9 @@ Just like in *Normal Mode*, you can use the :kbd:`Ctrl` and :kbd:`Shift`
 modifiers to perform jumps or pan the level, respectively, and the same
 :ref:`moving-around:Mouse movement actions` are also available.
 
+Diagonal movement is not available in *Walk Mode* as it's not compatible with
+the concept, and the numeric keys are used for other purposes anyway. 
+
 
 WASD Mode
 =========
@@ -309,10 +331,13 @@ in the top-left corner of the window when *WASD Mode* is on.
 
 When it comes to navigation, this mode is the same as *Normal Mode*, with the
 addition that you can also use the :kbd:`W`:kbd:`A`:kbd:`S`:kbd:`D` keys for
-cursor movement. Editing, however, is a little different --- as you'll learn
-in the :ref:`basic-editing:Editing in WASD Mode` section, the mouse buttons
-are repurposed for editing in this mode, so you need to hold the :kbd:`Shift`
+cursor movement. All diagonal movement keys are available in *WASD mode*.
+Editing, however, is a little different --- as you'll learn in the
+:ref:`basic-editing:Editing in WASD Mode` section, the mouse buttons are
+repurposed for editing in this mode, so you need to hold the :kbd:`Shift`
 modifier to use the :ref:`moving-around:Mouse movement actions`.
+
+
 
 .. note::
 
@@ -381,7 +406,6 @@ movement keys become a bit more interesting:
         </tr>
       </tbody>
     </table>
-
 
 Admittedly, this is the most complex mode, and while some people might find it
 really useful, if it doesn't click with you, don't feel compelled to use it.

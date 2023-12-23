@@ -111,14 +111,14 @@ You can attach notes to individual levels as well under the **Notes** tab.
 Managing maps &  levels
 =======================
 
-To add a new level, press :kbd:`Ctrl+Shift+N` to bring up the **New Level**
-dialog. This is almost exactly the same as the **Edit Level Properties**
-dialog, the only difference being that here you must specify the level's
-dimensions. The maximum allowed size is 6,666×6,666 --- hopefully, you'll
-never ever come across a level this big, but some kind of upper limit had to
-be introduced and this is as good as any! Don't worry if you don't get the
-level size quite right initially; you can always change it later with the
-resize and crop actions, as you'll see.
+To add a new level, press :kbd:`Ctrl+N` to bring up the **New Level** dialog.
+This is almost exactly the same as the **Edit Level Properties** dialog, the
+only difference being that here you must specify the level's dimensions. The
+maximum allowed size is 6,666×6,666 --- hopefully, you'll never ever come
+across a level this big, but some kind of upper limit had to be introduced and
+this is as good as any! Don't worry if you don't get the level size quite
+right initially; you can always change it later with the resize and crop
+actions, as you'll see.
 
 To delete the current level, press :kbd:`Ctrl+D`. If you accidentally deleted
 a level, no problem, you can always undo it by pressing :kbd:`U` or

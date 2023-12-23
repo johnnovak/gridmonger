@@ -61,9 +61,10 @@ and :kbd:`.` keys. To "pick" the floor colour from the current cell, press
 :kbd:`I`.
 
 Gridmonger has a virtually unlimited undo history (only limited by your
-computer's memory). You can undo most actions with :kbd:`Ctrl+Z` or :kbd:`U`,
-and redo them with :kbd:`Ctrl+Y` or :kbd:`Ctrl+R`. The only action that cannot
-be undone is the creation of a new map which discards the current map.
+computer's memory). You can undo most actions with :kbd:`Ctrl+Z`, :kbd:`U`, or
+:kbd:`Ctrl+U` and redo them with :kbd:`Ctrl+Y` or :kbd:`Ctrl+R`. The only
+action that cannot be undone is the creation of a new map which discards the
+current map.
 
 
 Floor types

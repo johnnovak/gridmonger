@@ -109,21 +109,21 @@ For the impatient among you, here's a few notes to get you started.
 
 .. rst-class:: multiline
 
-- :kbd:`Ctrl+O` opens a map, :kbd:`Ctrl+S` saves the current map
-- :kbd:`Ctrl+Alt+N` creates a new map; :kbd:`Ctrl+Alt+P` opens the map
-  properties
-- :kbd:`Ctrl+Shift+N` creates a new level; :kbd:`Ctrl+P` opens the level
-  properties
+- :kbd:`Ctrl+O` opens a map, :kbd:`Ctrl+S` saves the map
+- :kbd:`Ctrl+Alt+N` creates a new map
+- :kbd:`Ctrl+Alt+P` opens the map properties
+- :kbd:`Ctrl+N` creates a new level
+- :kbd:`Ctrl+P` opens the level properties
 - :kbd:`Ctrl+D` deletes the current level
-- Cycle through levels with :kbd:`Ctrl+-`/:kbd:`Ctrl+=` or
-  :kbd:`PgUp`/:kbd:`PgDn`
+- Cycle through the levels of the map with :kbd:`Ctrl+-` and :kbd:`Ctrl+=`,
+  or :kbd:`PgUp` and :kbd:`PgDn`
 
 
 **Themes**
 
 .. rst-class:: multiline
 
-- Use :kbd:`Ctrl+PgUp`/:kbd:`Ctrl+PgDn` to cycle through the themes
+- Use :kbd:`Ctrl+PgUp` and :kbd:`Ctrl+PgDn` to cycle through the themes
 
 
 **Editing**
@@ -131,19 +131,21 @@ For the impatient among you, here's a few notes to get you started.
 .. rst-class:: multiline
 
 - Use the arrow keys, the numeric keypad, or :kbd:`H`:kbd:`J`:kbd:`K`:kbd:`L`
-  for movement
-- Set the zoom level with :kbd:`-`/:kbd:`=`
-- Undo with :kbd:`U` or :kbd:`Ctrl+Z`; redo with :kbd:`Ctrl+R` or :kbd:`Ctrl+Y`
-- Hold :kbd:`D` and use the movement keys to draw (excavate)
+  to move the cursor (these are the *movement keys*)
+- Adjust the zoom level with :kbd:`-` and :kbd:`=`
+- Undo with with :kbd:`U`, :kbd:`Ctrl+U`, or :kbd:`Ctrl+Z`
+- Redo with :kbd:`Ctrl+R` or :kbd:`Ctrl+Y`
+- Hold :kbd:`D` and use the *movement keys* to draw (excavate)
   tunnels
-- Hold :kbd:`E` and use the movement keys to erase cells
-- Hold :kbd:`W` and use the movement keys to draw/clear walls in the current
-  cell
-- Hold :kbd:`R` and use the movement keys to draw/clear special walls; change
-  the current special wall with :kbd:`[`/:kbd:`]`
-- Use :kbd:`1`-:kbd:`8` to place various floor types; press a number key
+- Hold :kbd:`E` and use the *movement keys* to erase cells
+- Hold :kbd:`W` and use the *movement keys* to draw/clear walls around a cell
+- Hold :kbd:`R` and use the *movement keys* to draw/clear special walls; change
+  the current special wall with :kbd:`[` and :kbd:`]`
+- Use :kbd:`1`–:kbd:`8` to place various floor types; press a number key
   repeatedly to cycle through all floor types assigned to that key (hold
   :kbd:`Shift` to cycle backwards)
-- Press :kbd:`N` to create or edit notes
+- Press :kbd:`N` or :kbd:`;` to add a note to a cell or to edit an existing
+  note
+- Press :kbd:`Shift+N` or :kbd:`Shift+;` to remove a note
 
 

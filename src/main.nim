@@ -738,7 +738,7 @@ type AppShortcut = enum
   scCancel,
   scDiscard,
   scUndo,
-  scUndo_YubnDisabled,
+  scUndo_YubnMode,
   scRedo,
 
   # Maps
@@ -750,6 +750,7 @@ type AppShortcut = enum
 
   # Levels
   scNewLevel,
+  scNewLevel_YubnMode,
   scDeleteLevel,
   scEditLevelProps,
   scResizeLevel,
@@ -841,8 +842,9 @@ type AppShortcut = enum
   scPasteAccept,
 
   scEditNote,
-  scEditNote_YubnDisabled,
+  scEditNote_YubnMode,
   scEraseNote,
+  scEraseNote_YubnMode,
   scEditLabel,
   scEraseLabel,
 
@@ -853,6 +855,7 @@ type AppShortcut = enum
   scSelectionErase,
   scSelectionAll,
   scSelectionNone,
+  scSelectionNone_YubnMode,
   scSelectionAddRect,
   scSelectionSubRect,
   scSelectionCopy,
@@ -896,9 +899,10 @@ let g_appShortcuts = {
   scDiscard:            @[mkKeyShortcut(keyD,             {mkAlt})],
 
   scUndo:               @[mkKeyShortcut(keyZ,             {mkCtrl}),
-                          mkKeyShortcut(keyU,             {mkCtrl})],
+                          mkKeyShortcut(keyU,             {})],
 
-  scUndo_YubnDisabled:  @[mkKeyShortcut(keyU,             {})],
+  scUndo_YubnMode:      @[mkKeyShortcut(keyZ,             {mkCtrl}),
+                          mkKeyShortcut(keyU,             {mkCtrl})],
 
   scRedo:               @[mkKeyShortcut(keyY,             {mkCtrl}),
                           mkKeyShortcut(keyR,             {mkCtrl})],
@@ -911,10 +915,11 @@ let g_appShortcuts = {
   scEditMapProps:       @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
 
   # Levels
-  scNewLevel:           @[mkKeyShortcut(keyN,             {mkCtrl, mkShift})],
-  scDeleteLevel:        @[mkKeyShortcut(keyD,             {mkCtrl})],
-  scEditLevelProps:     @[mkKeyShortcut(keyP,             {mkCtrl})],
-  scResizeLevel:        @[mkKeyShortcut(keyE,             {mkCtrl})],
+  scNewLevel:              @[mkKeyShortcut(keyN,          {mkCtrl})],
+  scNewLevel_YubnMode:     @[mkKeyShortcut(keyN,          {mkCtrl, mkShift})],
+  scDeleteLevel   :        @[mkKeyShortcut(keyD,          {mkCtrl})],
+  scEditLevelProps:        @[mkKeyShortcut(keyP,          {mkCtrl})],
+  scResizeLevel:           @[mkKeyShortcut(keyE,          {mkCtrl})],
 
   # Regions
   scEditRegionProps:    @[mkKeyShortcut(keyR,             {mkCtrl, mkAlt})],
@@ -1013,9 +1018,10 @@ let g_appShortcuts = {
                                  mkKeyShortcut(keyEnter,      {}),
                                  mkKeyShortcut(keyKpEnter,    {})],
 
-  scEditNote:                  @[mkKeyShortcut(keyN,          {mkCtrl})],
-  scEditNote_YubnDisabled:     @[mkKeyShortcut(keyN,          {})],
+  scEditNote:                  @[mkKeyShortcut(keyN,          {})],
+  scEditNote_YubnMode:         @[mkKeyShortcut(keyN,          {mkCtrl})],
   scEraseNote:                 @[mkKeyShortcut(keyN,          {mkShift})],
+  scEraseNote_YubnMode:        @[mkKeyShortcut(keyX,          {mkCtrl})],
   scEditLabel:                 @[mkKeyShortcut(keyT,          {mkCtrl})],
   scEraseLabel:                @[mkKeyShortcut(keyT,          {mkShift})],
 
@@ -1025,7 +1031,10 @@ let g_appShortcuts = {
   scSelectionDraw:               @[mkKeyShortcut(keyD,        {})],
   scSelectionErase:              @[mkKeyShortcut(keyE,        {})],
   scSelectionAll:                @[mkKeyShortcut(keyA,        {})],
+
   scSelectionNone:               @[mkKeyShortcut(keyU,        {})],
+  scSelectionNone_YubnMode:      @[mkKeyShortcut(keyX,        {})],
+
   scSelectionAddRect:            @[mkKeyShortcut(keyR,        {})],
   scSelectionSubRect:            @[mkKeyShortcut(Key.keyS,    {})],
 
@@ -1289,6 +1298,8 @@ proc setErrorMessage(msg: string; a) =
 # }}}
 # {{{ setSelectModeSelectMessage()
 proc setSelectModeSelectMessage(a) =
+  let selectionNone = if a.prefs.yubnMovementKeys: scSelectionNone_YubnMode
+                      else: scSelectionNone
   setStatusMessage(
     IconSelection, "Mark selection",
     @[scSelectionDraw.toStr(),    "draw",
@@ -1296,7 +1307,7 @@ proc setSelectModeSelectMessage(a) =
       scSelectionAddRect.toStr(), "add rect",
       scSelectionSubRect.toStr(), "sub rect",
       scSelectionAll.toStr(),     "mark all",
-      scSelectionNone.toStr(),    "unmark all",
+      selectionNone.toStr(),      "unmark all",
       scSelectionCopy.toStr(),    "copy",
       "Ctrl",                     "special"],
     a
@@ -5709,6 +5720,8 @@ proc handleGlobalKeyEvents(a) =
 
   var l = currLevel(a)
 
+  let yubnMode = a.prefs.yubnMovementKeys
+
   proc turnLeft(dir: CardinalDir): CardinalDir =
     CardinalDir(floorMod(ord(dir) - 1, ord(CardinalDir.high) + 1))
 
@@ -5754,7 +5767,7 @@ proc handleGlobalKeyEvents(a) =
 
     if allowDiagonal:
       # Ignore Y/U/B/N keys if YUBN movement is not enabled in the prefs
-      if not a.prefs.yubnMovementKeys and ke.key in DiagonalMoveLetterKeys:
+      if not yubnMode and ke.key in DiagonalMoveLetterKeys:
         return
 
     let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
@@ -5795,7 +5808,7 @@ proc handleGlobalKeyEvents(a) =
 
     if allowDiagonal:
       # Ignore Y/U/B/N keys if YUBN movement is not enabled in the prefs
-      if not a.prefs.yubnMovementKeys and ke.key in DiagonalMoveLetterKeys:
+      if not yubnMode and ke.key in DiagonalMoveLetterKeys:
         return
 
     var s = 1
@@ -6068,7 +6081,10 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scSelectFloorColor9):  selectFloorColor(8, a)
       elif ke.isShortcutDown(scSelectFloorColor10): selectFloorColor(9, a)
 
-      elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
+      elif (not yubnMode and ke.isShortcutDown(scUndo,          repeat=true)) or
+           (    yubnMode and ke.isShortcutDown(scUndo_YubnMode, repeat=true)):
+        undoAction(a)
+
       elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
 
       elif ke.isShortcutDown(scMarkSelection):
@@ -6171,13 +6187,15 @@ proc handleGlobalKeyEvents(a) =
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
-      elif ke.isShortcutDown(scEditNote):
+      elif (not yubnMode and ke.isShortcutDown(scEditNote)) or
+           (    yubnMode and ke.isShortcutDown(scEditNote_YubnMode)):
         if map.isEmpty(cur):
           setWarningMessage("Cannot attach note to empty cell", a=a)
         else:
           openEditNoteDialog(a)
 
-      elif ke.isShortcutDown(scEraseNote):
+      elif (not yubnMode and ke.isShortcutDown(scEraseNote)) or
+           (    yubnMode and ke.isShortcutDown(scEraseNote_YubnMode)):
         if map.hasNote(cur):
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
@@ -6207,7 +6225,9 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scEditPreferences): openPreferencesDialog(a)
 
-      elif ke.isShortcutDown(scNewLevel):
+      elif (not yubnMode and ke.isShortcutDown(scNewLevel)) or
+           (    yubnMode and ke.isShortcutDown(scNewLevel_YubnMode)):
+
         if map.levels.len < NumLevelsLimits.maxInt:
           openNewLevelDialog(a)
         else:
@@ -6475,7 +6495,10 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emSelectErase
 
       elif ke.isShortcutDown(scSelectionAll):  ui.selection.get.fill(true)
-      elif ke.isShortcutDown(scSelectionNone): ui.selection.get.fill(false)
+
+      elif (not yubnMode and ke.isShortcutDown(scSelectionNone)) or
+           (    yubnMode and ke.isShortcutDown(scSelectionNone_YubnMode)):
+        ui.selection.get.fill(false)
 
       elif ke.isShortcutDown({scSelectionAddRect, scSelectionSubRect}):
         ui.editMode = emSelectRect
@@ -6816,6 +6839,8 @@ proc handleGlobalKeyEvents(a) =
 # }}}
 # {{{ handleGlobalKeyEvents_NoLevels()
 proc handleGlobalKeyEvents_NoLevels(a) =
+  let yubnMode = a.prefs.yubnMovementKeys
+
   if hasKeyEvent():
     let ke = koi.currEvent()
 
@@ -6826,7 +6851,9 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isShortcutDown(scSaveMap):           saveMap(a)
     elif ke.isShortcutDown(scSaveMapAs):         saveMapAs(a)
 
-    elif ke.isShortcutDown(scNewLevel):          openNewLevelDialog(a)
+    elif (not yubnMode and ke.isShortcutDown(scNewLevel)) or
+         (    yubnMode and ke.isShortcutDown(scNewLevel_YubnMode)):
+      openNewLevelDialog(a)
 
     elif ke.isShortcutDown(scReloadTheme):       reloadTheme(a)
     elif ke.isShortcutDown(scPreviousTheme):     selectPrevTheme(a)
@@ -6834,7 +6861,10 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 
     elif ke.isShortcutDown(scEditPreferences):   openPreferencesDialog(a)
 
-    elif ke.isShortcutDown(scUndo, repeat=true): undoAction(a)
+    elif (not yubnMode and ke.isShortcutDown(scUndo,          repeat=true)) or
+         (    yubnMode and ke.isShortcutDown(scUndo_YubnMode, repeat=true)):
+      undoAction(a)
+
     elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
 
     elif ke.isShortcutDown(scOpenUserManual):    openUserManual(a)
@@ -8007,6 +8037,7 @@ proc desc(s: string): QuickRefItem =
 const QuickRefSepa = QuickRefItem(kind: qkSeparator)
 
 # {{{ General
+# TODO YUBN key support
 let g_quickRef_General = @[
   @[
     scNewMap.sc,            "New map".desc,
@@ -8016,7 +8047,7 @@ let g_quickRef_General = @[
     scEditMapProps.sc,      "Edit map properties".desc,
     QuickRefSepa,
 
-    scNewLevel.sc,          "New level".desc,
+    scnewLevel.sc,           "New level".desc,
     scDeleteLevel.sc,       "Delete level".desc,
     scEditLevelProps.sc,    "Edit level properties".desc,
     QuickRefSepa,
@@ -9021,6 +9052,8 @@ proc initPreferences(cfg: HoconNode; a) =
     else:
       # deprecated; support for the old key will be dropped eventually
       movementWrapAround = prefs.getBoolOrDefault("movement-wrap-around", false)
+
+    yubnMovementKeys = prefs.getBoolOrDefault("editing.yubn-movement-keys")
 
     vsync = prefs.getBoolOrDefault("video.vsync", true)
 

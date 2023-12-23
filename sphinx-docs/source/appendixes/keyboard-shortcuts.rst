@@ -48,11 +48,11 @@ Movement/direction keys
               These keys are referred to as <span class="sc">&laquo;Std move&raquo;</span> from now on.
             </p>
             <p>
-              Combine with <kbd>Ctrl</kbd> for 5 cell jumps, or <kbd>Shift</kbd> for pan.
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
             <p>
             <p>
               <span class="asterisk">*</span>
-              <span class="sc">NumLock</span> must be off to use the numeric keypad for navigation.
+              <span class="sc">NumLock</span> must be off to use the keypad for navigation.
             <p>
           </td>
         </tr>
@@ -63,25 +63,25 @@ Movement/direction keys
           <td><kbd>&larr;</kbd></td>
           <td><kbd>kp 4</kbd><span class="asterisk">*</span></td>
           <td><kbd>H</kbd></td>
-          <td>Left</td>
+          <td>Left (West)</td>
         </tr>
         <tr>
           <td><kbd>&rarr;</kbd></td>
           <td><kbd>kp 6</kbd><span class="asterisk">*</span></td>
           <td><kbd>L</kbd></td>
-          <td>Right</td>
+          <td>Right (East)</td>
         </tr>
         <tr>
           <td><kbd>&uarr;</kbd></td>
           <td><kbd>kp 8</kbd><span class="asterisk">*</span></td>
           <td><kbd>K</kbd></td>
-          <td>Up</td>
+          <td>Up (North)</td>
         </tr>
         <tr>
           <td><kbd>&darr;</kbd></td>
           <td><kbd>kp 2</kbd><kbd>kp 5</kbd><span class="asterisk">*</span></td>
           <td><kbd>J</kbd></td>
-          <td>Down</td>
+          <td>Down (South)</td>
         </tr>
       </tbody>
     </table>
@@ -92,7 +92,7 @@ Movement/direction keys
         <tr>
           <th>Keypad</th>
           <th>Vim</th>
-          <th></th>
+          <th width="40%"></th>
         </tr>
       </thead>
 
@@ -104,15 +104,14 @@ Movement/direction keys
             </p>
             <p>
               <span class="asterisk">*</span>
-              <span class="sc">NumLock</span> must be off to use the numeric keypad for navigation.<br>
-              Combine with <kbd>Ctrl</kbd> for 5 cell jumps, or <kbd>Shift</kbd> for pan.
+              <span class="sc">NumLock</span> must be off to use the keypad for navigation.<br>
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
             <p>
             <p>
               <span class="dagger">†</span>
-              Only if <span class="sc">YUBN diagonal movement</span> is enabled in preferences.<br>
-              Cannot be combined with <kbd>Ctrl</kbd> for jumps or
-              <kbd>Shift</kbd> for pan because that would interfere with other
-              shortcuts.
+              Only if <span class="sc">YUBN diagonal movement</span> is enabled.<br>
+              Can be combined with <kbd>Shift</kbd> for pan.<br>
+              Cannot be combined with <kbd>Ctrl</kbd> for jumps.
             </p>
             <p>
           </td>
@@ -123,22 +122,22 @@ Movement/direction keys
         <tr>
           <td><kbd>kp 7</kbd><span class="asterisk">*</span></td>
           <td><kbd>Y</kbd><span class="dagger">†</span></td>
-          <td>Up &amp; left</td>
+          <td>Up &amp; left (Northwest)</td>
         </tr>
         <tr>
           <td><kbd>kp 9</kbd><span class="asterisk">*</span></td>
           <td><kbd>U</kbd><span class="dagger">†</span></td>
-          <td>Up &amp; right</td>
+          <td>Up &amp; right (Northeast)</td>
         </tr>
         <tr>
           <td><kbd>kp 1</kbd><span class="asterisk">*</span></td>
           <td><kbd>B</kbd><span class="dagger">†</span></td>
-          <td>Down &amp; left</td>
+          <td>Down &amp; left (Southwest)</td>
         </tr>
         <tr>
-          <td><kbd>kp 3</kbd><kbd>kp 5</kbd><span class="asterisk">*</span></td>
+          <td><kbd>kp 3</kbd><span class="asterisk">*</span></td>
           <td><kbd>N</kbd><span class="dagger">†</span></td>
-          <td>Down &amp; right</td>
+          <td>Down &amp; right (Southeast)</td>
         </tr>
       </tbody>
     </table>
@@ -173,11 +172,11 @@ Movement/direction keys
             </p>
             <p>
               <span class="asterisk">*</span>
-              Combine with <kbd>Ctrl</kbd> for 5 cell jumps, or <kbd>Shift</kbd> for pan.
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
             </p>
             <p>
               <span class="dagger">†</span>
-              <span class="sc">NumLock</span> must be off to use the numeric keypad for navigation.
+              <span class="sc">NumLock</span> must be off to use the keypad for navigation.
             <p>
           </td>
         </tr>
@@ -219,20 +218,17 @@ Movement/direction keys
 
     <table class="shortcuts std-move-keys">
       <caption>WASD Mode</caption>
+
       <tfoot>
         <tr>
           <td colspan="4">
-            <p>All <span class="sc">Std &amp; Diag move</span> keys are available in this
-            mode.<br></p>
-
             <p>
-              <span class="sc">WASD keys</span> can be combined with <kbd>Shift</kbd> for pan.
+              All <span class="sc">Std &amp; Diag move</span> keys are available
+              in this mode.<br>
             </p>
-
             <p>
-              <span class="sc">WASD keys</span> cannot be combined with
-              <kbd>Ctrl</kbd> for jumps because that would interfere with
-              other shortcuts.
+              Can be combined with <kbd>Shift</kbd> for pan.<br>
+              Cannot be combined with <kbd>Ctrl</kbd> for jumps.
             </p>
           </td>
         </tr>
@@ -240,9 +236,30 @@ Movement/direction keys
 
       <tbody class="no-padding">
         <tr>
-          <td><kbd>W</kbd> / <kbd>A</kbd> / <kbd>S</kbd> / <kbd>D</kbd></td>
-          <td>Up/left/down/right</td>
+          <td></td>
+          <td><kbd>W</kbd></td>
+          <td>Up (North)</td>
+          <td></td>
         </tr>
+        <tr>
+          <td></td>
+          <td><kbd>A</kbd></td>
+          <td>Left (West)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><kbd>S</kbd></td>
+          <td>Down (South)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><kbd>D</kbd></td>
+          <td>Right (East)</td>
+          <td></td>
+        </tr>
+
       </tbody>
     </table>
 
@@ -252,7 +269,7 @@ Movement/direction keys
         <tr>
           <th>Arrow</th>
           <th>Keypad</th>
-          <th>WASD</th>
+          <th>Key</th>
           <th></th>
         </tr>
       </thead>
@@ -265,12 +282,17 @@ Movement/direction keys
             </p>
             <p>
               <span class="asterisk">*</span>
-              Combine with <kbd>Ctrl</kbd> for 5 cell jumps, or <kbd>Shift</kbd> for pan.
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
             </p>
             <p>
               <span class="dagger">†</span>
-              <span class="sc">NumLock</span> must be off to use the numeric keypad for navigation.
+              <span class="sc">NumLock</span> must be off to use the keypad for navigation.
             <p>
+            <p>
+              <span class="dagger">‡</span>
+              Can be combined with <kbd>Shift</kbd> for pan.<br>
+              Cannot be combined with <kbd>Ctrl</kbd> for jumps.
+            </p>
           </td>
         </tr>
       </tfoot>
@@ -279,25 +301,25 @@ Movement/direction keys
         <tr>
           <td><kbd>&larr;</kbd><span class="asterisk">*</span></td>
           <td><kbd>kp 4</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
-          <td><kbd>A</kbd></td>
+          <td><kbd>A</kbd><span class="dagger">‡</span></td>
           <td>Strafe left</td>
         </tr>
         <tr>
           <td><kbd>&rarr;</kbd><span class="asterisk">*</span></td>
           <td><kbd>kp 6</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
-          <td><kbd>D</kbd></td>
+          <td><kbd>D</kbd><span class="dagger">‡</span></td>
           <td>Strafe right</td>
         </tr>
         <tr>
           <td><kbd>&uarr;</kbd><span class="asterisk">*</span></td>
           <td><kbd>kp 8</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
-          <td><kbd>W</kbd></td>
+          <td><kbd>W</kbd><span class="dagger">‡</span></td>
           <td>Forward</td>
         </tr>
         <tr>
           <td><kbd>&darr;</kbd><span class="asterisk">*</span></td>
           <td><kbd>kp 2</kbd><kbd>kp 5</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
-          <td><kbd>S</kbd></td>
+          <td><kbd>S</kbd><span class="dagger">‡</span></td>
           <td>Backward</td>
         </tr>
         <tr>
@@ -455,7 +477,7 @@ Edit mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>
+              <kbd>Ctrl</kbd>+<kbd>N</kbd>
             </kbd>
           </td>
           <td>New level</td>
@@ -563,13 +585,13 @@ Edit mode
         <tr>
           <td>
             <span class="group">
-              <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>Z</kbd></kbd> or
+              <kbd>U</kbd><span class="asterisk">*</span> or
             </span>
             <span class="group">
               <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>U</kbd></kbd> or
             </span>
             <span class="group">
-              <kbd>U</kbd><span class="asterisk">*</span>
+              <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>Z</kbd></kbd>
             </span>
           </td>
           <td>
@@ -890,10 +912,10 @@ Edit mode
         <tr>
           <td>
             <span class="group">
-              <kbd>Ctrl</kbd>+<kbd>N</kbd> or
+              <kbd>N</kbd><span class="asterisk">*</span> or
             </span>
             <span class="group">
-              <kbd>N</kbd><span class="asterisk">*</span>
+              <kbd>;</kbd>
             </span>
           </td>
           <td>
@@ -906,11 +928,24 @@ Edit mode
         </tr>
         <tr>
           <td>
-            <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd>N</kbd>
-            </kbd>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Shift</kbd>+<kbd>N</kbd><span class="asterisk">*</span> or
+              </kbd>
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Shift</kbd>+<kbd>;</kbd>
+              </kbd>
+            </span>
           </td>
-          <td>Erase note</td>
+          <td>
+            Erase note
+            <p>
+              <span class="asterisk">*</span>
+              Except for <span class="sc">YUBN keys</span>
+            </p>
+          </td>
         </tr>
         <tr>
           <td>
@@ -1031,7 +1066,7 @@ Select (Mark) Mode
               <kbd>Ctrl</kbd>+<kbd>[</kbd>
             </kbd>
           </td>
-          <td>Cancel selection &amp; return to <em>Edit Mode</em></td>
+          <td>Cancel selection &amp;<br>return to <em>Edit Mode</em></td>
         </tr>
       </tbody>
 
@@ -1084,7 +1119,7 @@ Select (Mark) Mode
             </span>
           </td>
           <td>
-            Clear selection (unmark all)
+            Clear selection<br>(unmark all)
             <p>
               <span class="asterisk">*</span>
               Except for <span class="sc">YUBN keys</span>
@@ -1097,10 +1132,10 @@ Select (Mark) Mode
         <tr>
           <td>
             <span class="group">
-              <kbd>C</kbd> or
+              <kbd>Y</kbd><span class="asterisk">*</span> or
             </span>
             <span class="group">
-              <kbd>Y</kbd><span class="asterisk">*</span>
+              <kbd>C</kbd>
             </span>
           </td>
           <td>
@@ -1177,7 +1212,6 @@ Paste & Nudge Preview Modes
         <tr>
           <td colspan="2">
             <p>
-              <span class="asterisk">*</span>
               Panning is not available in <span class="sc">Nudge Preview Mode</span>.
             <p>
           </td>
@@ -1210,7 +1244,6 @@ Paste & Nudge Preview Modes
           </td>
           <td>
             Pan level (1 cell)
-            <p>Except for <span class="sc">YUBN keys</span></p>
           </td>
         </tr>
         <tr>
@@ -1294,7 +1327,7 @@ Dialogs
           <td>
             <kbd>Enter</kbd> <kbd>kp Enter</kbd>
           </td>
-          <td>Confirm (OK, Save, etc.)</td>
+          <td>Confirm<br>(OK, Save, etc.)</td>
         </tr>
         <tr>
           <td>
