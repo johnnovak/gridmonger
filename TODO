@@ -7,6 +7,12 @@ BUGS
 
 - notes pane should fill the window horizontally when the tools pane is hidden
 
+- move copies labels instead of moving then cell is empty
+
+- move selection severs links (but nudge works)
+
+- warning when closing new map that was never manually saved
+
 
 
 TODO
