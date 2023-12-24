@@ -7,15 +7,41 @@ BUGS
 
 - notes pane should fill the window horizontally when the tools pane is hidden
 
+- move copies labels instead of moving then cell is empty
+
+- move selection severs links (but nudge works)
+
+- warning when closing new map that was never manually saved
+
+- selecting single line text selects whole line
+
+- clear floor should not remove comments?
+
 
 
 TODO
 ====
 
   - diagonal movement with numpad
+  - test extensively & update manual
+
+  - generate app shortcuts at runtime based on some flags (e.g.
+	yubnMovementKeys). this simplifies generating the quickrefs & the key
+	handling, and allows to switch between Ctrl/Cmd on macOS
+
+  - option to use Cmd key on macOS (selectable at runtime)
+
+  - list all notes pane on the left:
+    - filter by note type (none, number, ID, icon -- each category can be toggled)
+    - show all notes, or only for the current level
+	- sort by level elevation or note name
+
+  - clipping indicator when nudging / moving
 
   - window handling bugs:
 	  - crash when dragging maximised window
+
+  - add support for wraparound to move & paste preview mode
 
   - OS X:
     - gridmonger document icon
