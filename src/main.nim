@@ -5182,6 +5182,7 @@ proc cycleFloorGroupAction(floors: seq[Floor], forward: bool; a) =
 proc startExcavateTunnelAction(a) =
   let cur = a.ui.cursor
   actions.excavateTunnel(a.doc.map, loc=cur, undoLoc=cur, a.ui.currFloorColor,
+                         dir=CardinalDir.none,
                          a.doc.undoManager, groupWithPrev=false)
 
   setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll,
@@ -5734,8 +5735,6 @@ proc handleGlobalKeyEvents(a) =
 
   # {{{ handleMoveWalk()
   proc handleMoveWalk(ke: Event; a) =
-    const mkS = {mkShift}
-
     var s = 1
     if mkCtrl in ke.mods:
       if ke.key in AllWasdMoveKeys: return
@@ -5753,12 +5752,29 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.strafeLeft,  repeat=true): moveCursor(left(), s, a)
     elif ke.isKeyDown(k.strafeRight, repeat=true): moveCursor(right(), s, a)
 
-    elif ke.isKeyDown(k.turnLeft,    mkS, repeat=true): ui.cursorOrient = left()
-    elif ke.isKeyDown(k.turnRight,   mkS, repeat=true): ui.cursorOrient = right()
-    elif ke.isKeyDown(k.strafeLeft,  mkS, repeat=true): moveLevel(left(), s, a)
-    elif ke.isKeyDown(k.strafeRight, mkS, repeat=true): moveLevel(right(), s, a)
-    elif ke.isKeyDown(k.forward,     mkS, repeat=true): moveLevel(ui.cursorOrient, s, a)
-    elif ke.isKeyDown(k.backward,    mkS, repeat=true): moveLevel(backward(), s, a)
+    elif ke.isKeyDown(k.turnLeft,    {mkShift}, repeat=true): ui.cursorOrient = left()
+    elif ke.isKeyDown(k.turnRight,   {mkShift}, repeat=true): ui.cursorOrient = right()
+    elif ke.isKeyDown(k.strafeLeft,  {mkShift}, repeat=true): moveLevel(left(), s, a)
+    elif ke.isKeyDown(k.strafeRight, {mkShift}, repeat=true): moveLevel(right(), s, a)
+    elif ke.isKeyDown(k.forward,     {mkShift}, repeat=true): moveLevel(ui.cursorOrient, s, a)
+    elif ke.isKeyDown(k.backward,    {mkShift}, repeat=true): moveLevel(backward(), s, a)
+
+  # }}}
+  # {{{ moveKeyToCardinalDir()
+  template moveKeyToCardinalDir(ke: Event, allowWasdKeys: bool,
+                                allowRepeat: bool): Option[CardinalDir] =
+
+    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
+            else: MoveKeysCursor
+
+    var kk = ke
+    kk.mods = {}
+
+    if   kk.isKeyDown(k.left,  repeat=allowRepeat): dirW.some
+    elif kk.isKeyDown(k.right, repeat=allowRepeat): dirE.some
+    elif kk.isKeyDown(k.up,    repeat=allowRepeat): dirN.some
+    elif kk.isKeyDown(k.down,  repeat=allowRepeat): dirS.some
+    else: CardinalDir.none
 
   # }}}
   # {{{ handleMoveKeys()
@@ -5770,17 +5786,11 @@ proc handleGlobalKeyEvents(a) =
       if not yubnMode and ke.key in DiagonalMoveLetterKeys:
         return
 
-    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
-            else: MoveKeysCursor
-
     let mods = ke.mods
-    var kk = ke
-    kk.mods = {}
 
-    if   kk.isKeyDown(k.left,  repeat=allowRepeat): moveHandler(dirW, mods, a)
-    elif kk.isKeyDown(k.right, repeat=allowRepeat): moveHandler(dirE, mods, a)
-    elif kk.isKeyDown(k.up,    repeat=allowRepeat): moveHandler(dirN, mods, a)
-    elif kk.isKeyDown(k.down,  repeat=allowRepeat): moveHandler(dirS, mods, a)
+    let dir = moveKeyToCardinalDir(ke, allowWasdKeys, allowRepeat)
+    if dir.isSome:
+      moveHandler(dir.get, mods, a)
 
     if allowDiagonal:
       let d = DiagonalMoveKeysCursor
@@ -6314,8 +6324,11 @@ proc handleGlobalKeyEvents(a) =
 
       if cur != ui.prevCursor:
         if   ui.editMode == emExcavateTunnel:
+          let dir = moveKeyToCardinalDir(ke, allowWasdKeys=true,
+                                         allowRepeat=true)
+
           actions.excavateTunnel(map, loc=cur, undoLoc=ui.prevCursor,
-                                 ui.currFloorColor,
+                                 ui.currFloorColor, dir,
                                  um, groupWithPrev=opts.drawTrail)
 
         elif ui.editMode == emEraseCell:

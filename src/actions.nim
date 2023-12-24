@@ -154,12 +154,12 @@ proc eraseCellWalls*(map; loc: Location; um) =
 
 # }}}
 # {{{ excavateTunnel*()
-proc excavateTunnel*(map; loc, undoLoc: Location, floorColor: Natural; um;
-                     groupWithPrev: bool) =
+proc excavateTunnel*(map; loc, undoLoc: Location, floorColor: Natural;
+                     dir: Option[CardinalDir]; um; groupWithPrev: bool) =
 
   singleCellAction(map, loc, undoLoc, um, groupWithPrev,
                    "Excavate tunnel", m):
-    m.excavateTunnel(loc, floorColor)
+    m.excavateTunnel(loc, floorColor, dir)
 
 # }}}
 
@@ -195,7 +195,7 @@ proc excavateTrail*(map; loc: Location, bbox: Rect[Natural],
 
         if m.hasTrail(loc):
           if m.isEmpty(loc):
-            m.excavateTunnel(loc, floorColor)
+            m.excavateTunnel(loc, floorColor, dir=CardinalDir.none)
           else:
             m.setFloorColor(loc, floorColor)
 
