@@ -2680,9 +2680,15 @@ proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
     let startCol = dp.selStartCol - dp.viewStartCol + ViewBufBorder
     let copyBufLevel = dp.selectionBuffer.get.level
 
-    discard viewBuf.paste(startRow, startCol,
-                          srcLevel=copyBufLevel,
-                          dp.selectionBuffer.get.selection)
+    let destRect = rectN(
+      ViewBufBorder,
+      ViewBufBorder,
+      viewBuf.rows - ViewBufBorder,
+      viewBuf.cols - ViewBufBorder
+    )
+    discard viewBuf.pasteWithWraparound(startRow, startCol, destRect,
+                                        srcLevel=copyBufLevel,
+                                        dp.selectionBuffer.get.selection)
 
     if outlineBuf.isSome:
       let ob = outlineBuf.get
