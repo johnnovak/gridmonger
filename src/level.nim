@@ -363,6 +363,62 @@ proc paste*(l; destRow, destCol: int, srcLevel: Level,
             )
 
 # }}}
+# {{{ pasteWithWraparound*()
+proc pasteWithWraparound*(l; destRow, destCol: int, destRect: Rect[Natural],
+                          srcLevel: Level, sel: Selection,
+                          pasteTrail: bool = false): Option[Rect[Natural]] =
+
+  var r = destRow
+  if r < destRect.r1: inc(r, destRect.rows)
+
+  var c = destCol
+  if c < destRect.c1: inc(c, destRect.cols)
+
+  assert destRect.contains(r,c)
+
+  result = rectN(0, 0, l.cols, l.rows).some
+
+  for srcRow in 0..<srcLevel.rows:
+    for srcCol in 0..<srcLevel.cols:
+
+      if sel[srcRow, srcCol]:
+        let floor = srcLevel.getFloor(srcRow, srcCol)
+        l.setFloor(r,c, floor)
+
+        let floorColor = srcLevel.getFloorColor(srcRow, srcCol)
+        l.setFloorColor(r,c, floorColor)
+
+        let ot = srcLevel.getFloorOrientation(srcRow, srcCol)
+        l.setFloorOrientation(r,c, ot)
+
+        if pasteTrail:
+          l.setTrail(r,c, srcLevel.hasTrail(srcRow, srcCol))
+
+        template copyWall(dir: CardinalDir) =
+          let w = srcLevel.getWall(srcRow, srcCol, dir)
+          l.setWall(r,c, dir, w)
+
+        if floor.isEmpty:
+          l.eraseOrphanedWalls(r,c)
+        else:
+          copyWall(dirN)
+          copyWall(dirW)
+          copyWall(dirS)
+          copyWall(dirE)
+
+        l.annotations.delAnnotation(r,c)
+        if srcLevel.annotations.hasAnnotation(srcRow, srcCol):
+          l.annotations.setAnnotation(
+            r,c, srcLevel.annotations.getAnnotation(srcRow, srcCol).get
+          )
+
+      inc(c)
+      if c == destRect.c2: c = destRect.c1
+
+    inc(r)
+    if r == destRect.r2: r = destRect.r1
+
+# }}}
 
 # {{{ guessFloorOrientation*()
 proc guessFloorOrientation*(l; r,c: Natural): Orientation =

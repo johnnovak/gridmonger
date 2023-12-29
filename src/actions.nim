@@ -574,7 +574,7 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
             srcInside = true
             destInside = true
 
-          # Link starting from a paste buffer locationn (pointing to either
+          # Link starting from a paste buffer location (pointing to either
           # a map location, or another paste buffer location)
           if src.level == pasteBufferLevelIndex:
             linksToDeleteBySrc.add(src)
@@ -875,7 +875,10 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.notes,
       initRegions=false
     )
-    discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
+    let destRect = rectN(0, 0, l.rows, l.cols)
+    discard l.pasteWithWraparound(rowOffs, colOffs, destRect,
+                                  sb.level, sb.selection, pasteTrail=true)
+
     m.levels[loc.level] = l
 
     for src in oldLinks.sources: m.links.delBySrc(src)
