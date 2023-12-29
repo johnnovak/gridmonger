@@ -14,11 +14,22 @@ BUGS
 - warning when closing new map that was never manually saved
 
 
-
 TODO
 ====
 
   - diagonal movement with numpad
+  - test extensively & update manual
+
+  - generate app shortcuts at runtime based on some flags (e.g.
+	yubnMovementKeys). this simplifies generating the quickrefs & the key
+	handling, and allows to switch between Ctrl/Cmd on macOS
+
+  - option to use Cmd key on macOS (selectable at runtime)
+
+  - list all notes pane on the left:
+    - filter by note type (none, number, ID, icon -- each category can be toggled)
+    - show all notes, or only for the current level
+	- sort by level elevation or note name
 
   - window handling bugs:
 	  - crash when dragging maximised window
