@@ -121,12 +121,12 @@ Notes:
           UINT16  index         (max=9999)
           UINT8   indexColor    (max=3)
 
-      if kind == 2 (icon)
-          UINT8   icon          (max=39, see NoteIcons in icons.nim
-                                         for mappings)
-      if kind == 3 (customId)
+      if kind == 2 (customId)
           BSTR    custom ID     (minLen=1, maxLen=2, only alphanumeric)
 
+      if kind == 3 (icon)
+          UINT8   icon          (max=39, see NoteIcons in icons.nim
+                                         for mappings)
       if kind == 4 (label)
           UINT8   labelColor    (max=3)
 
