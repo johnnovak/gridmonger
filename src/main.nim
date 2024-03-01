@@ -1433,7 +1433,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   template stepSE(curPos: Natural, maxPos: Natural) =
     let newPos = curPos + steps
     if newPos > maxPos and wrapAround:
-      curPos = floorMod(newPos, maxPos + 1)
+      curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
       curPos = min(newPos, maxPos)
@@ -1442,7 +1442,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
     let newPos = curPos - steps
     let minPos = 0
     if newPos < minPos and wrapAround:
-      curPos = floorMod(newPos, maxPos + 1)
+      curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
       curPos = max(minPos, newPos)
@@ -5169,7 +5169,7 @@ proc cycleFloorGroupAction(floors: seq[Floor], forward: bool; a) =
     var i = floors.find(floor)
     if i > -1:
       if forward: inc(i) else: dec(i)
-      floor = floors[floorMod(i, floors.len)]
+      floor = floors[i.floorMod(floors.len)]
     else:
       floor = if forward: floors[0] else: floors[^1]
 
