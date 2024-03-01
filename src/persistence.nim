@@ -590,7 +590,7 @@ proc readLevelRegions_v1_v2(rr): (RegionOptions, Regions) =
                   ColumnsPerRegionLimits)
 
   let perRegionCoords = rr.read(uint8)
-  checkBool(perRegionCoords, "lvl.cell.perRegionCoords")
+  checkBool(perRegionCoords, "lvl.regn.perRegionCoords")
 
   let regionOpts = RegionOptions(
     enabled:         enabled.bool,
