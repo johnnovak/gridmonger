@@ -2093,7 +2093,7 @@ proc drawBackgroundGrid(viewBuf: Level; ctx) =
 
   for viewRow in 0..dp.viewRows:
     for viewCol in 0..dp.viewCols:
-      if viewBuf.isEmpty(toBufRow(viewRow), toBufCol(viewCol)):
+      if viewBuf.isEmpty(viewRow.toBufRow, viewCol.toBufCol):
         let x = cellX(viewCol, dp)
         let y = cellY(viewRow, dp)
         drawGrid(x, y, lt.gridBackgroundGridColor, lt.gridBackgroundStyle,
@@ -2109,8 +2109,8 @@ proc drawCellBackgroundsAndGrid(viewBuf: Level; ctx) =
 
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
-      let bufRow = toBufRow(viewRow)
-      let bufCol = toBufCol(viewCol)
+      let bufRow = viewRow.toBufRow
+      let bufCol = viewCol.toBufCol
 
       if not viewBuf.isEmpty(bufRow, bufCol):
         let x = cellX(viewCol, dp)
@@ -2130,8 +2130,8 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   alias(vg, ctx.vg)
 
   let
-    bufRow = toBufRow(viewRow)
-    bufCol = toBufCol(viewCol)
+    bufRow = viewRow.toBufRow
+    bufCol = viewCol.toBufCol
     f = viewBuf.getFloor(bufRow, bufCol)
     x = cellX(viewCol, dp)
     y = cellY(viewRow, dp)
@@ -2201,8 +2201,8 @@ proc drawFloors(viewBuf: Level; ctx) =
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
       let
-        bufRow = toBufRow(viewRow)
-        bufCol = toBufCol(viewCol)
+        bufRow = viewRow.toBufRow
+        bufCol = viewCol.toBufCol
         f = viewBuf.getFloor(bufRow, bufCol)
 
       if f != fBridge:
@@ -2216,8 +2216,8 @@ proc drawBridges(viewBuf: Level; ctx) =
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
       let
-        bufRow = toBufRow(viewRow)
-        bufCol = toBufCol(viewCol)
+        bufRow = viewRow.toBufRow
+        bufCol = viewCol.toBufCol
         f = viewBuf.getFloor(bufRow, bufCol)
 
       if f == fBridge:
@@ -2230,8 +2230,8 @@ proc drawTrail(viewBuf: Level; ctx) =
 
   for viewRow in 0..<dp.viewRows:
     for viewCol in 0..<dp.viewCols:
-      let bufRow = toBufRow(viewRow)
-      let bufCol = toBufCol(viewCol)
+      let bufRow = viewRow.toBufRow
+      let bufCol = viewCol.toBufCol
 
       if viewBuf.hasTrail(bufRow, bufCol):
         let x = cellX(viewCol, dp)
@@ -2315,8 +2315,8 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
   alias(dp, ctx.dp)
 
   let
-    bufRow = toBufRow(viewRow)
-    bufCol = toBufCol(viewCol)
+    bufRow = viewRow.toBufRow
+    bufCol = viewCol.toBufCol
 
   let (isCursorActiveNE, isCursorActiveSW) = case orientation
     of Horiz:
@@ -2387,10 +2387,10 @@ proc drawCellWallsNorth(viewBuf: Level, viewRow: Natural,
                         regionBorder: bool; ctx) =
   alias(dp, ctx.dp)
 
-  let bufRow = toBufRow(viewRow)
+  let bufRow = viewRow.toBufRow
 
   for viewCol in 0..<dp.viewCols:
-    let bufCol = toBufCol(viewCol)
+    let bufCol = viewCol.toBufCol
 
     drawWall(
       cellX(viewCol, dp),
@@ -2407,10 +2407,10 @@ proc drawCellWallsWest(viewBuf: Level, viewCol: Natural,
                        regionBorder: bool; ctx) =
   alias(dp, ctx.dp)
 
-  let bufCol = toBufCol(viewCol)
+  let bufCol = viewCol.toBufCol
 
   for viewRow in 0..<dp.viewRows:
-    let bufRow = toBufRow(viewRow)
+    let bufRow = viewRow.toBufRow
 
     drawWall(
       cellX(viewCol, dp),
@@ -2426,10 +2426,10 @@ proc drawCellWallsWest(viewBuf: Level, viewCol: Natural,
 proc drawEmptyRegionBorderNorth(viewBuf: Level, viewRow: Natural; ctx) =
   alias(dp, ctx.dp)
 
-  let bufRow = toBufRow(viewRow)
+  let bufRow = viewRow.toBufRow
 
   for viewCol in 0..<dp.viewCols:
-    let bufCol = toBufCol(viewCol)
+    let bufCol = viewCol.toBufCol
 
     if viewBuf.getWall(bufRow, bufCol, dirN) == wNone:
       drawEmptyRegionBorderWallHoriz(
@@ -2443,10 +2443,10 @@ proc drawEmptyRegionBorderNorth(viewBuf: Level, viewRow: Natural; ctx) =
 proc drawEmptyRegionBorderWest(viewBuf: Level, viewCol: Natural; ctx) =
   alias(dp, ctx.dp)
 
-  let bufCol = toBufCol(viewCol)
+  let bufCol = viewCol.toBufCol
 
   for viewRow in 0..<dp.viewRows:
-    let bufRow = toBufRow(viewRow)
+    let bufRow = viewRow.toBufRow
 
     if viewBuf.getWall(bufRow, bufCol, dirW) == wNone:
       drawEmptyRegionBorderWallVert(
@@ -2542,7 +2542,7 @@ proc drawRegionBorderOverhang(l: Level, viewBuf: Level; ctx) =
   drawRegionBorderRows(l, viewBuf, ctx, viewRow):
     let
       y = cellY(viewRow, dp)
-      bufRow = toBufRow(viewRow)
+      bufRow = viewRow.toBufRow
       firstBufCol = ViewBufBorder-1
       lastBufCol = ViewBufBorder + dp.viewCols
 
@@ -2564,7 +2564,7 @@ proc drawRegionBorderOverhang(l: Level, viewBuf: Level; ctx) =
   drawRegionBorderCols(l, viewBuf, ctx, viewCol):
     let
       x = cellX(viewCol, dp)
-      bufCol = toBufCol(viewCol)
+      bufCol = viewCol.toBufCol
       firstBufRow = ViewBufBorder-1
       lastBufRow = ViewBufBorder + dp.viewRows
 
