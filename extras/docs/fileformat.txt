@@ -138,6 +138,7 @@ Notes:
     UINT16  rowsPerRegion       (min=2, max=3333)
     UINT16  columnsPerRegion    (min=2, max=3333)
     UINT16  numRegions
+    UINT8   perRegionCoords     (0=off, 1=on)
 
     numRegion times:
     UINT16  row*                (max=3332)
