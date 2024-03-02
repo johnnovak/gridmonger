@@ -13,6 +13,11 @@ BUGS
 
 - warning when closing new map that was never manually saved
 
+- selecting single line text selects whole line
+
+- clear floor should not remove comments?
+
+
 
 TODO
 ====
@@ -31,8 +36,12 @@ TODO
     - show all notes, or only for the current level
 	- sort by level elevation or note name
 
+  - clipping indicator when nudging / moving
+
   - window handling bugs:
 	  - crash when dragging maximised window
+
+  - add support for wraparound to move & paste preview mode
 
   - OS X:
     - gridmonger document icon
