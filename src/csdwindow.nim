@@ -138,18 +138,18 @@ proc maximized*(win): bool =
 # }}}
 # {{{ rect()
 proc rect(win): Rect[int] =
-  let (x1, y1) = win.pos
-  let (x2, y2) = (x1 + win.size.w, y1 + win.size.h)
-  coordRectI(x1, y1, x2, y2)
+  let (x1,y1) = win.pos
+  let (x2,y2) = (x1 + win.size.w, y1 + win.size.h)
+  coordRect(x1,y1, x2,y2)
 
 # }}}
 
 # {{{ workAreaRect()
 proc workAreaRect(m: Monitor): Rect[int] =
   let wa = m.workArea
-  let (x1, y1) = (wa.x, wa.y)
-  let (x2, y2) = (x1 + wa.w, y1 + wa.h)
-  coordRectI(x1, y1, x2, y2)
+  let (x1,y1) = (wa.x, wa.y)
+  let (x2,y2) = (x1 + wa.w, y1 + wa.h)
+  coordRect(x1,y1, x2,y2)
 
 # }}}
 # {{{ findMonitorByCoord()

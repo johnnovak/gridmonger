@@ -30,8 +30,8 @@ func `y2=`*[T: RectType](r: var Rect[T], y2: T) = r.r2 = y2
 
 # }}}
 
-# {{{ rectN*()
-proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
+# {{{ rect*()
+proc rect*[T: RectType](r1,c1, r2,c2: T): Rect[T] =
   assert r1 < r2
   assert c1 < c2
 
@@ -39,28 +39,21 @@ proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
   result.c1 = c1
   result.r2 = r2
   result.c2 = c2
+
+# }}}
+# {{{ rectN*()
+proc rectN*(r1,c1, r2,c2: Natural): Rect[Natural] =
+  rect(r1,c1, r2,c2)
 
 # }}}
 # {{{ rectI*()
 proc rectI*(r1,c1, r2,c2: int): Rect[int] =
-  assert r1 < r2
-  assert c1 < c2
-
-  result.r1 = r1
-  result.c1 = c1
-  result.r2 = r2
-  result.c2 = c2
+  rect(r1,c1, r2,c2)
 
 # }}}
-# {{{ coordRectI*()
-proc coordRectI*(x1,y1, x2,y2: int): Rect[int] =
-  assert x1 < x2
-  assert x1 < x2
-
-  result.x1 = x1
-  result.y1 = y1
-  result.x2 = x2
-  result.y2 = y2
+# {{{ coordRect*()
+proc coordRect*(x1,y1, x2,y2: int): Rect[int] =
+  rect(y1,x1, y2,x2)
 
 # }}}
 
@@ -72,14 +65,17 @@ proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
     nr = min(a.r1 + a.rows, b.r1 + b.rows)
     nc = min(a.c1 + a.cols, b.c1 + b.cols)
 
-  if (nc >= c and nr >= r):
-    some(Rect[T](
-      r1: r,
-      c1: c,
-      r2: r + nr-r,
-      c2: c + nc-c
-    ))
-  else: none(Rect[T])
+  if (nc > c and nr > r):
+    let
+      r1 = r
+      c1 = c
+      r2 = r + nr-r
+      c2 = c + nc-c
+
+    rect(r1,c1, r2,c2).some
+
+  else:
+    none(Rect[T])
 
 # }}}
 # {{{ contains*()
@@ -112,5 +108,25 @@ proc shiftVert*[T: RectType](a: var Rect[T], d: int) =
   a.r2 += d
 
 # }}}
+
+# {{{ Tests
+
+when isMainModule:
+  block:  # intersect
+    let a = rect(-5,2, -1,7)
+
+    # fully overlapping
+    assert a.intersect(a) == a.some
+
+    # partially overlapping
+    assert a.intersect(rect(-25,5, -2,20)) == rectI(-5,5, -2,7).some
+
+    # not overlapping
+    assert a.intersect(rect(-25,2, -21,7)) == Rect[int].none
+
+    # touching
+    assert a.intersect(rect(-5,7, -3,9)) == Rect[int].none
+
+#  }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
