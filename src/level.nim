@@ -1,5 +1,6 @@
 import std/math
 import std/options
+import std/strformat
 
 import annotations
 import common
@@ -309,114 +310,135 @@ proc copyCellsAndAnnotationsFrom*(l; destRow, destCol: Natural,
   l.copyAnnotationsFrom(destRow, destCol, srcLevel, srcRect)
 
 # }}}
+
+# {{{ copyCell()
+proc copyCell(destLevel: Level, destRow, destCol: Natural,
+              srcLevel: Level, srcRow, srcCol: Natural,
+              pasteTrail: bool = false) =
+
+#    echo fmt"  destRow: {destRow}, destCol: {destCol}, srcRow: {srcRow}, srcCol: {srcCol}"
+  let floor = srcLevel.getFloor(srcRow, srcCol)
+  destLevel.setFloor(destRow, destCol, floor)
+
+  let floorColor = srcLevel.getFloorColor(srcRow, srcCol)
+  destLevel.setFloorColor(destRow, destCol, floorColor)
+
+  let ot = srcLevel.getFloorOrientation(srcRow, srcCol)
+  destLevel.setFloorOrientation(destRow, destCol, ot)
+
+  if pasteTrail:
+    destLevel.setTrail(destRow, destCol, srcLevel.hasTrail(srcRow, srcCol))
+
+  template copyWall(dir: CardinalDir) =
+    let w = srcLevel.getWall(srcRow, srcCol, dir)
+    destLevel.setWall(destRow, destCol, dir, w)
+
+  if floor.isEmpty:
+    destLevel.eraseOrphanedWalls(destRow, destCol)
+  else:
+    copyWall(dirN)
+    copyWall(dirW)
+    copyWall(dirS)
+    copyWall(dirE)
+
+  destLevel.annotations.delAnnotation(destRow, destCol)
+  if srcLevel.annotations.hasAnnotation(srcRow, srcCol):
+    destLevel.annotations.setAnnotation(
+      destRow, destCol,
+      srcLevel.annotations.getAnnotation(srcRow, srcCol).get
+    )
+
 # {{{ paste*()
-proc paste*(l; destRow, destCol: int, srcLevel: Level,
-            sel: Selection, pasteTrail: bool = false): Option[Rect[Natural]] =
+
+proc paste*(l; destRow, destCol: int, srcLevel: Level, sel: Selection,
+            pasteTrail: bool = false): Option[Rect[Natural]] =
 
   let destRect = rectI(
     destRow, destCol,
     destRow + srcLevel.rows, destCol + srcLevel.cols
   ).intersect(
-    rectI(0, 0, l.rows, l.cols)
+    rectI(0,0, l.rows, l.cols)
   )
 
   if destRect.isSome:
-    let dr = destRect.get
-    result = rectN(dr.r1, dr.c1, dr.r2, dr.c2).some
+    let d = destRect.get
+    result = rectN(d.r1, d.c1, d.r2, d.c2).some
 
-    for r in dr.r1..<dr.r2:
-      for c in dr.c1..<dr.c2:
-        var srcRow = r - dr.r1
-        var srcCol = c - dr.c1
+    for r in d.r1..<d.r2:
+      for c in d.c1..<d.c2:
+        var srcRow = r - d.r1
+        var srcCol = c - d.c1
         if destRow < 0: inc(srcRow, -destRow)
         if destCol < 0: inc(srcCol, -destCol)
 
         if sel[srcRow, srcCol]:
-          let floor = srcLevel.getFloor(srcRow, srcCol)
-          l.setFloor(r,c, floor)
-
-          let floorColor = srcLevel.getFloorColor(srcRow, srcCol)
-          l.setFloorColor(r,c, floorColor)
-
-          let ot = srcLevel.getFloorOrientation(srcRow, srcCol)
-          l.setFloorOrientation(r,c, ot)
-
-          if pasteTrail:
-            l.setTrail(r,c, srcLevel.hasTrail(srcRow, srcCol))
-
-          template copyWall(dir: CardinalDir) =
-            let w = srcLevel.getWall(srcRow, srcCol, dir)
-            l.setWall(r,c, dir, w)
-
-          if floor.isEmpty:
-            l.eraseOrphanedWalls(r,c)
-          else:
-            copyWall(dirN)
-            copyWall(dirW)
-            copyWall(dirS)
-            copyWall(dirE)
-
-          l.annotations.delAnnotation(r,c)
-          if srcLevel.annotations.hasAnnotation(srcRow, srcCol):
-            l.annotations.setAnnotation(
-              r,c, srcLevel.annotations.getAnnotation(srcRow, srcCol).get
-            )
+          copyCell(destLevel=l, destRow=r, destCol=c,
+                   srcLevel, srcRow, srcCol, pasteTrail)
 
 # }}}
 # {{{ pasteWithWraparound*()
-proc pasteWithWraparound*(l; destRow, destCol: int, destRect: Rect[Natural],
-                          srcLevel: Level, sel: Selection,
-                          pasteTrail: bool = false): Option[Rect[Natural]] =
 
-  var r = destRow
-  if r < destRect.r1: inc(r, destRect.rows)
+proc pasteWithWraparound*(l; destRow, destCol: int, srcLevel: Level,
+                          sel: Selection, pasteTrail: bool = false,
+                          levelRows, levelCols: Natural,
+                          selStartRow, selStartCol: int,
+                          destBufStartRow, destBufStartCol: Natural,
+                          destBufRowOffset, destBufColOffset: Natural): Option[Rect[Natural]] =
 
-  var c = destCol
-  if c < destRect.c1: inc(c, destRect.cols)
+  echo "*** 2"
+  echo "---------------------------------"
+  echo fmt"destLevel: {l.rows} x {l.cols}, destRow: {destRow}, destCol: {destCol}"
+  echo fmt"srcLevel: {srcLevel.rows} x {srcLevel.cols}, selection: {sel.rows} x {sel.cols}"
+  echo fmt"levelRows: {levelRows}, levelCols: {levelCols}"
+  echo fmt"selStartRow: {selStartRow}, selStartCol: {selStartCol}"
+  echo fmt"destBufStartRow: {destBufStartRow}, destBufStartCol: {destBufStartCol}"
+  echo fmt"destBufRowOffset: {destBufRowOffset}, destBufColOffset: {destBufColOffset}"
 
-  assert destRect.contains(r,c)
+#[    var dr = destRow
+    if dr < destRect.r1: inc(dr, destRect.rows)
 
-  result = rectN(0, 0, l.cols, l.rows).some
+    var dc = destCol
+    if dc < destRect.c1: inc(dc, destRect.cols)
+
+    assert destRect.contains(dr,dc)
+
+    result = rectN(0, 0, l.cols, l.rows).some
+
+#    echo fmt"dr: {dr}, dc: {dc}"
+
+
+    for srcRow in 0..<srcLevel.rows:
+      for srcCol in 0..<srcLevel.cols:
+        copyCell(dr, dc, srcRow, srcCol)
+        inc(dc)
+        if dc == destRect.c2: dc = destRect.c1
+
+      dc = destCol
+      if dc < destRect.c1: inc(dc, destRect.cols)
+
+      inc(dr)
+      if dr == destRect.r2: dr = destRect.r1
+]#
+
 
   for srcRow in 0..<srcLevel.rows:
     for srcCol in 0..<srcLevel.cols:
-
       if sel[srcRow, srcCol]:
-        let floor = srcLevel.getFloor(srcRow, srcCol)
-        l.setFloor(r,c, floor)
+        let
+          wrappedRow = (selStartRow + srcRow).floorMod(levelRows)
+          wrappedCol = (selStartCol + srcCol).floorMod(levelCols)
 
-        let floorColor = srcLevel.getFloorColor(srcRow, srcCol)
-        l.setFloorColor(r,c, floorColor)
+          dr = wrappedRow.int + destBufRowOffset - destBufStartRow
+          dc = wrappedCol.int + destBufColOffset - destBufStartCol
 
-        let ot = srcLevel.getFloorOrientation(srcRow, srcCol)
-        l.setFloorOrientation(r,c, ot)
+        echo fmt"  wrapped: {wrappedRow},{wrappedCol}, dr: {dr}, dc: {dc}"
 
-        if pasteTrail:
-          l.setTrail(r,c, srcLevel.hasTrail(srcRow, srcCol))
+#        if dr >= (destBufStartRow + destBufRowOffset) and
+#           dc >= (destBufStartCol + destBufColOffset):
+        if dr >= 0 and dc >= 0:
 
-        template copyWall(dir: CardinalDir) =
-          let w = srcLevel.getWall(srcRow, srcCol, dir)
-          l.setWall(r,c, dir, w)
-
-        if floor.isEmpty:
-          l.eraseOrphanedWalls(r,c)
-        else:
-          copyWall(dirN)
-          copyWall(dirW)
-          copyWall(dirS)
-          copyWall(dirE)
-
-        l.annotations.delAnnotation(r,c)
-        if srcLevel.annotations.hasAnnotation(srcRow, srcCol):
-          l.annotations.setAnnotation(
-            r,c, srcLevel.annotations.getAnnotation(srcRow, srcCol).get
-          )
-
-      inc(c)
-      if c == destRect.c2: c = destRect.c1
-
-    inc(r)
-    if r == destRect.r2: r = destRect.r1
+          copyCell(destLevel=l, destRow=dr, destCol=dc,
+                   srcLevel, srcRow, srcCol, pasteTrail)
 
 # }}}
 

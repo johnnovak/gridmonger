@@ -2673,27 +2673,34 @@ proc renderEdgeOutlines(viewBuf: Level): OutlineBuf =
 
 # }}}
 # {{{ mergeSelectionAndOutlineBuffers()
-proc mergeSelectionAndOutlineBuffers(viewBuf: Level,
+proc mergeSelectionAndOutlineBuffers(level, viewBuf: Level,
                                      outlineBuf: Option[OutlineBuf], dp) =
   if dp.selectionBuffer.isSome:
     let startRow = dp.selStartRow - dp.viewStartRow + ViewBufBorder
     let startCol = dp.selStartCol - dp.viewStartCol + ViewBufBorder
-    let copyBufLevel = dp.selectionBuffer.get.level
+    let selBufLevel = dp.selectionBuffer.get.level
 
-    let destRect = rectN(
-      ViewBufBorder,
-      ViewBufBorder,
-      viewBuf.rows - ViewBufBorder,
-      viewBuf.cols - ViewBufBorder
+#[
+    discard viewBuf.paste(destRow=startRow, destCol=startCol,
+                          srcLevel=selBufLevel,
+                          dp.selectionBuffer.get.selection)
+]#
+
+    discard viewBuf.pasteWithWraparound(
+      destRow=startRow, destCol=startCol,
+      srcLevel=selBufLevel, sel=dp.selectionBuffer.get.selection,
+      levelRows=level.rows, levelCols=level.cols,
+      selStartRow=dp.selStartRow, selStartCol=dp.selStartCol,
+      destBufStartRow=dp.viewStartRow,
+      destBufStartCol=dp.viewStartCol,
+      destBufRowOffset=ViewBufBorder,
+      destBufColOffset=ViewBufBorder
     )
-    discard viewBuf.pasteWithWraparound(startRow, startCol, destRect,
-                                        srcLevel=copyBufLevel,
-                                        dp.selectionBuffer.get.selection)
 
     if outlineBuf.isSome:
       let ob = outlineBuf.get
-      let endRow = min(startRow + copyBufLevel.rows-1, ob.rows-1)
-      let endCol = min(startCol + copyBufLevel.cols-1, ob.cols-1)
+      let endRow = min(startRow + selBufLevel.rows-1, ob.rows-1)
+      let endCol = min(startCol + selBufLevel.cols-1, ob.cols-1)
 
       let sr = max(startRow, 0)
       let sc = max(startCol, 0)
@@ -2738,7 +2745,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   else:
     OutlineBuf.none
 
-  mergeSelectionAndOutlineBuffers(viewBuf, outlineBuf, dp)
+  mergeSelectionAndOutlineBuffers(l, viewBuf, outlineBuf, dp)
 
   drawBackgroundGrid(viewBuf, ctx)
 

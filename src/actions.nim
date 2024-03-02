@@ -875,9 +875,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.notes,
       initRegions=false
     )
-    let destRect = rectN(0, 0, l.rows, l.cols)
-    discard l.pasteWithWraparound(rowOffs, colOffs, destRect,
-                                  sb.level, sb.selection, pasteTrail=true)
+    discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
 
     m.levels[loc.level] = l
 

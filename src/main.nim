@@ -1659,6 +1659,9 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   if bbox.isSome:
     let bbox = bbox.get
 
+    echo bbox
+    echo bbox.w, bbox.h
+
     buf = some(SelectionBuffer(
       selection: newSelectionFrom(sel, bbox),
       level: newLevelFrom(currLevel(a), bbox)
@@ -1689,8 +1692,11 @@ proc exitNudgePreviewMode(a) =
   let cur = a.ui.cursor
 
   ui.editMode = emNormal
+
+  # Reset the current level reference to the level in the nudge buffer
   map.levels[cur.level] = ui.nudgeBuf.get.level
   ui.nudgeBuf = SelectionBuffer.none
+
   clearStatusMessage(a)
 
 # }}}
@@ -6128,7 +6134,13 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scNudgePreview):
         let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
+
+        # For the duration of the nudge operation, we move the reference
+        # of the current level to the nudge buffer. The current level then
+        # gets manipulated via the nudge buffer then the reference gets moved
+        # back at the end of the nudge operation.
         ui.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
+
         map.levels[cur.level] = newLevel(
           l.locationName, l.levelName, l.elevation,
           l.rows, l.cols,
