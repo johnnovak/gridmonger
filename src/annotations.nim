@@ -20,11 +20,9 @@ proc newAnnotations*(rows, cols: Natural): Annotations =
 
 # {{{ coordsToKey()
 template coordsToKey(a; r,c: Natural): Natural =
-  let h = a.rows
-  let w = a.cols
-  assert r < h
-  assert c < w
-  r*w + c
+  assert r < a.rows
+  assert c < a.cols
+  (r * a.cols) + c
 
 # }}}
 # {{{ keyToCoords()

@@ -1,3 +1,4 @@
+import std/math
 import std/options
 import std/sets
 import std/tables
@@ -198,7 +199,7 @@ proc remapLevelIndex*(vl; oldIndex, newIndex: Natural) =
 # }}}
 # {{{ shiftLinksInLevel*()
 proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
-                        levelRect: Rect[int]): Links =
+                        levelRect: Rect[int], wraparound: bool): Links =
   result = initLinks()
 
   for src, dest in l:
@@ -208,20 +209,30 @@ proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
     if src.level == level:
       var r = src.row.int + rowOffs
       var c = src.col.int + colOffs
-      if levelRect.contains(r,c):
-        src.row = r
-        src.col = c
+
+      if wraparound:
+        src.row = r.floorMod(levelRect.rows)
+        src.col = c.floorMod(levelRect.cols)
       else:
-        continue
+        if levelRect.contains(r,c):
+          src.row = r
+          src.col = c
+        else:
+          continue
 
     if dest.level == level:
       var r = dest.row.int + rowOffs
       var c = dest.col.int + colOffs
-      if levelRect.contains(r,c):
-        dest.row = r
-        dest.col = c
+
+      if wraparound:
+        dest.row = r.floorMod(levelRect.rows)
+        dest.col = c.floorMod(levelRect.cols)
       else:
-        continue
+        if levelRect.contains(r,c):
+          dest.row = r
+          dest.col = c
+        else:
+          continue
 
     result.set(src, dest)
 

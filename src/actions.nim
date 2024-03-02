@@ -550,6 +550,10 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
         let destRect = destRect.get
         var loc = Location(level: loc.level)
 
+        # TODO
+        # - BUG: move selection severs links (but nudge works)
+        # - add support for wraparound in paste & move mode
+
         # Erase existing map links in the paste area (taking selection into
         # account)
         for r in destRect.r1..<destRect.r2:
@@ -743,7 +747,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     colOffs = destCol.int - copyRect.c1
 
     newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
-                                          newLevelRect)
+                                          newLevelRect, wraparound=false)
 
   let action = proc (m: var Map): UndoStateData =
     alias(l, m.levels[loc.level])
@@ -761,7 +765,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
 
-    # Adjut regions
+    # Adjust regions
     let (regionOffsRow, regionOffsCol) = calcRegionResizeOffsets(
       m, loc.level, newRows, newCols, anchor
     )
@@ -813,7 +817,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     colOffs = -cropRect.c1
 
     newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
-                                          newLevelRect)
+                                          newLevelRect, wraparound=false)
 
   let action = proc (m: var Map): UndoStateData =
     m.levels[loc.level] = m.newLevelFrom(loc.level, cropRect)
@@ -850,7 +854,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 # }}}
 # {{{ nudgeLevel*()
 proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
-                 sb: SelectionBuffer; um): Location =
+                 sb: SelectionBuffer, wraparound: bool; um): Location =
 
   let usd = UndoStateData(
     actionName: "Nudge level", location: loc, undoLocation: loc
@@ -860,7 +864,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
   let oldLinks = map.links.filterByLevel(loc.level)
   let newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
-                                            levelRect)
+                                            levelRect, wraparound)
 
   # Do action
   #
@@ -875,7 +879,18 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.notes,
       initRegions=false
     )
-    discard l.paste(rowOffs, colOffs, sb.level, sb.selection, pasteTrail=true)
+
+    if wraparound:
+      discard l.pasteWithWraparound(destRow=rowOffs, destCol=colOffs,
+                                    srcLevel=sb.level, sb.selection,
+                                    pasteTrail=true,
+                                    levelRows=sb.level.rows,
+                                    levelCols=sb.level.cols,
+                                    selStartRow=rowOffs,
+                                    selStartCol=colOffs)
+    else:
+      discard l.paste(rowOffs, colOffs, sb.level, sb.selection,
+                      pasteTrail=true)
 
     m.levels[loc.level] = l
 

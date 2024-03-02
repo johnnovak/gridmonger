@@ -348,8 +348,8 @@ proc copyCell(destLevel: Level, destRow, destCol: Natural,
       srcLevel.annotations.getAnnotation(srcRow, srcCol).get
     )
 
+# }}}
 # {{{ paste*()
-
 proc paste*(l; destRow, destCol: int, srcLevel: Level, sel: Selection,
             pasteTrail: bool = false): Option[Rect[Natural]] =
 
@@ -377,49 +377,22 @@ proc paste*(l; destRow, destCol: int, srcLevel: Level, sel: Selection,
 
 # }}}
 # {{{ pasteWithWraparound*()
-
 proc pasteWithWraparound*(l; destRow, destCol: int, srcLevel: Level,
                           sel: Selection, pasteTrail: bool = false,
                           levelRows, levelCols: Natural,
                           selStartRow, selStartCol: int,
-                          destBufStartRow, destBufStartCol: Natural,
-                          destBufRowOffset, destBufColOffset: Natural): Option[Rect[Natural]] =
+                          destStartRow: Natural = 0,
+                          destStartCol: Natural = 0,
+                          destRowOffset: Natural = 0,
+                          destColOffset: Natural = 0): Option[Rect[Natural]] =
 
-  echo "*** 2"
-  echo "---------------------------------"
-  echo fmt"destLevel: {l.rows} x {l.cols}, destRow: {destRow}, destCol: {destCol}"
-  echo fmt"srcLevel: {srcLevel.rows} x {srcLevel.cols}, selection: {sel.rows} x {sel.cols}"
-  echo fmt"levelRows: {levelRows}, levelCols: {levelCols}"
-  echo fmt"selStartRow: {selStartRow}, selStartCol: {selStartCol}"
-  echo fmt"destBufStartRow: {destBufStartRow}, destBufStartCol: {destBufStartCol}"
-  echo fmt"destBufRowOffset: {destBufRowOffset}, destBufColOffset: {destBufColOffset}"
-
-#[    var dr = destRow
-    if dr < destRect.r1: inc(dr, destRect.rows)
-
-    var dc = destCol
-    if dc < destRect.c1: inc(dc, destRect.cols)
-
-    assert destRect.contains(dr,dc)
-
-    result = rectN(0, 0, l.cols, l.rows).some
-
-#    echo fmt"dr: {dr}, dc: {dc}"
-
-
-    for srcRow in 0..<srcLevel.rows:
-      for srcCol in 0..<srcLevel.cols:
-        copyCell(dr, dc, srcRow, srcCol)
-        inc(dc)
-        if dc == destRect.c2: dc = destRect.c1
-
-      dc = destCol
-      if dc < destRect.c1: inc(dc, destRect.cols)
-
-      inc(dr)
-      if dr == destRect.r2: dr = destRect.r1
-]#
-
+#  echo "---------------------------------"
+#  echo fmt"destLevel: {l.rows} x {l.cols}, destRow: {destRow}, destCol: {destCol}"
+#  echo fmt"srcLevel: {srcLevel.rows} x {srcLevel.cols}, selection: {sel.rows} x {sel.cols}"
+#  echo fmt"levelRows: {levelRows}, levelCols: {levelCols}"
+#  echo fmt"selStartRow: {selStartRow}, selStartCol: {selStartCol}"
+#  echo fmt"destStartRow: {destStartRow}, destBufStartCol: {destBufStartCol}"
+#  echo fmt"destRowOffset: {destRowOffset}, destBufColOffset: {destBufColOffset}"
 
   for srcRow in 0..<srcLevel.rows:
     for srcCol in 0..<srcLevel.cols:
@@ -428,14 +401,11 @@ proc pasteWithWraparound*(l; destRow, destCol: int, srcLevel: Level,
           wrappedRow = (selStartRow + srcRow).floorMod(levelRows)
           wrappedCol = (selStartCol + srcCol).floorMod(levelCols)
 
-          dr = wrappedRow.int + destBufRowOffset - destBufStartRow
-          dc = wrappedCol.int + destBufColOffset - destBufStartCol
+          dr = wrappedRow.int + destRowOffset - destStartRow
+          dc = wrappedCol.int + destColOffset - destStartCol
 
-        echo fmt"  wrapped: {wrappedRow},{wrappedCol}, dr: {dr}, dc: {dc}"
-
-#        if dr >= (destBufStartRow + destBufRowOffset) and
-#           dc >= (destBufStartCol + destBufColOffset):
-        if dr >= 0 and dc >= 0:
+        if wrappedRow >= destStartRow and dr < l.rows and
+           wrappedCol >= destStartCol and dc < l.cols:
 
           copyCell(destLevel=l, destRow=dr, destCol=dc,
                    srcLevel, srcRow, srcCol, pasteTrail)

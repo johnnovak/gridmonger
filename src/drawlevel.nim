@@ -2691,10 +2691,11 @@ proc mergeSelectionAndOutlineBuffers(level, viewBuf: Level,
       srcLevel=selBufLevel, sel=dp.selectionBuffer.get.selection,
       levelRows=level.rows, levelCols=level.cols,
       selStartRow=dp.selStartRow, selStartCol=dp.selStartCol,
-      destBufStartRow=dp.viewStartRow,
-      destBufStartCol=dp.viewStartCol,
-      destBufRowOffset=ViewBufBorder,
-      destBufColOffset=ViewBufBorder
+
+      destStartRow=dp.viewStartRow,
+      destStartCol=dp.viewStartCol,
+      destRowOffset=ViewBufBorder,
+      destColOffset=ViewBufBorder
     )
 
     if outlineBuf.isSome:
