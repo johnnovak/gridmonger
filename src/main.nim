@@ -2394,6 +2394,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "option.show-notes-pane",  a.opts.showNotesPane)
   cfg.set(p & "option.wasd-mode",        a.opts.wasdMode)
   cfg.set(p & "option.walk-mode",        a.opts.walkMode)
+  cfg.set(p & "option.paste-wraparound", a.opts.pasteWraparound)
 
   p = "last-state.window."
   cfg.set(p & "maximized",      a.win.maximized)
@@ -9113,10 +9114,11 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
 
   with a.opts:
-    showNotesPane = uiCfg.getBoolOrDefault("option.show-notes-pane", true)
-    showToolsPane = uiCfg.getBoolOrDefault("option.show-tools-pane", true)
-    walkMode      = uiCfg.getBoolOrDefault("option.walk-mode",       false)
-    wasdMode      = uiCfg.getBoolOrDefault("option.wasd-mode",       false)
+    showNotesPane   = uiCfg.getBoolOrDefault("option.show-notes-pane",  true)
+    showToolsPane   = uiCfg.getBoolOrDefault("option.show-tools-pane",  true)
+    walkMode        = uiCfg.getBoolOrDefault("option.walk-mode",        false)
+    wasdMode        = uiCfg.getBoolOrDefault("option.wasd-mode",        false)
+    pasteWraparound = uiCfg.getBoolOrDefault("option.paste-wraparound", false)
 
   a.ui.drawLevelParams.setZoomLevel(
     a.theme.levelTheme,
