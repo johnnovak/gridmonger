@@ -57,12 +57,12 @@ const _removeChildren = (element) => {
 const _escapeRegExp = (string) =>
   string.replace(/[.*+\-?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 
-const _displayItem = (item, searchTerms) => {
+const _displayItem = (item, searchTerms, highlightTerms) => {
   const docBuilder = DOCUMENTATION_OPTIONS.BUILDER;
-  const docUrlRoot = DOCUMENTATION_OPTIONS.URL_ROOT;
   const docFileSuffix = DOCUMENTATION_OPTIONS.FILE_SUFFIX;
   const docLinkSuffix = DOCUMENTATION_OPTIONS.LINK_SUFFIX;
   const showSearchSummary = DOCUMENTATION_OPTIONS.SHOW_SEARCH_SUMMARY;
+  const contentRoot = document.documentElement.dataset.content_root;
 
   const [docName, title, anchor, descr, score, _filename] = item;
 
@@ -75,20 +75,24 @@ const _displayItem = (item, searchTerms) => {
     if (dirname.match(/\/index\/$/))
       dirname = dirname.substring(0, dirname.length - 6);
     else if (dirname === "index/") dirname = "";
-    requestUrl = docUrlRoot + dirname;
+    requestUrl = contentRoot + dirname;
     linkUrl = requestUrl;
   } else {
     // normal html builders
-    requestUrl = docUrlRoot + docName + docFileSuffix;
+    requestUrl = contentRoot + docName + docFileSuffix;
     linkUrl = docName + docLinkSuffix;
   }
   let linkEl = listItem.appendChild(document.createElement("a"));
   linkEl.href = linkUrl + anchor;
   linkEl.dataset.score = score;
   linkEl.innerHTML = title;
-  if (descr)
+  if (descr) {
     listItem.appendChild(document.createElement("span")).innerHTML =
       " (" + descr + ")";
+    // highlight search terms in the description
+    if (SPHINX_HIGHLIGHT_ENABLED)  // set in sphinx_highlight.js
+      highlightTerms.forEach((term) => _highlightText(listItem, term, "highlighted"));
+  }
   else if (showSearchSummary)
     fetch(requestUrl)
       .then((responseData) => responseData.text())
@@ -97,30 +101,36 @@ const _displayItem = (item, searchTerms) => {
           listItem.appendChild(
             Search.makeSearchSummary(data, searchTerms)
           );
+        // highlight search terms in the summary
+        if (SPHINX_HIGHLIGHT_ENABLED)  // set in sphinx_highlight.js
+          highlightTerms.forEach((term) => _highlightText(listItem, term, "highlighted"));
       });
   Search.output.appendChild(listItem);
 };
 const _finishSearch = (resultCount) => {
   Search.stopPulse();
-  Search.title.innerText = "Search results";
-  if (!resultCount) {
-    Search.status.innerText = "Your search did not match any documents.";
-  } else {
-    var plural = (resultCount == 1) ? "" : "s";
-    Search.status.innerText = `Found ${resultCount} page${plural} matching the search query:`
-  }
+  Search.title.innerText = _("Search Results");
+  if (!resultCount)
+    Search.status.innerText = Documentation.gettext(
+      "Your search did not match any documents. Please make sure that all words are spelled correctly and that you've selected enough categories."
+    );
+  else
+    Search.status.innerText = _(
+      `Search finished, found ${resultCount} page(s) matching the search query.`
+    );
 };
 const _displayNextItem = (
   results,
   resultCount,
-  searchTerms
+  searchTerms,
+  highlightTerms,
 ) => {
   // results left, load the summary and display it
   // this is intended to be dynamic (don't sub resultsCount)
   if (results.length) {
-    _displayItem(results.pop(), searchTerms);
+    _displayItem(results.pop(), searchTerms, highlightTerms);
     setTimeout(
-      () => _displayNextItem(results, resultCount, searchTerms),
+      () => _displayNextItem(results, resultCount, searchTerms, highlightTerms),
       5
     );
   }
@@ -156,7 +166,7 @@ const Search = {
     const docContent = htmlElement.querySelector('[role="main"]');
     if (docContent !== undefined) return docContent.textContent;
     console.warn(
-      "Content block not found. Sphinx search tries to obtain it via '[role=main]'."
+      "Content block not found. Sphinx search tries to obtain it via '[role=main]'. Could you check your theme or template."
     );
     return "";
   },
@@ -204,7 +214,7 @@ const Search = {
   performSearch: (query) => {
     // create the required interface elements
     const searchText = document.createElement("h2");
-    searchText.textContent = "Searching";
+    searchText.textContent = _("Searching");
     const searchSummary = document.createElement("p");
     searchSummary.classList.add("search-summary");
     searchSummary.innerText = "";
@@ -220,7 +230,7 @@ const Search = {
     const searchProgress = document.getElementById("search-progress");
     // Some themes don't use the search progress node
     if (searchProgress) {
-      searchProgress.innerText = "Preparing search...";
+      searchProgress.innerText = _("Preparing search...");
     }
     Search.startPulse();
 
@@ -243,7 +253,7 @@ const Search = {
     const stemmer = new Stemmer();
     const searchTerms = new Set();
     const excludedTerms = new Set();
-//    const highlightTerms = new Set();
+    const highlightTerms = new Set();
     const objectTerms = new Set(splitQuery(query.toLowerCase().trim()));
     splitQuery(query.trim()).forEach((queryTerm) => {
       const queryTermLower = queryTerm.toLowerCase();
@@ -262,13 +272,13 @@ const Search = {
       if (word[0] === "-") excludedTerms.add(word.substr(1));
       else {
         searchTerms.add(word);
-//        highlightTerms.add(queryTermLower);
+        highlightTerms.add(queryTermLower);
       }
     });
 
-//    if (SPHINX_HIGHLIGHT_ENABLED) {  // set in sphinx_highlight.js
-//      localStorage.setItem("sphinx_highlight_terms", [...highlightTerms].join(" "))
-//    }
+    if (SPHINX_HIGHLIGHT_ENABLED) {  // set in sphinx_highlight.js
+      localStorage.setItem("sphinx_highlight_terms", [...highlightTerms].join(" "))
+    }
 
     // console.debug("SEARCH: searching for:");
     // console.info("required: ", [...searchTerms]);
@@ -358,7 +368,7 @@ const Search = {
     // console.info("search results:", Search.lastresults);
 
     // print the results
-    _displayNextItem(results, results.length, searchTerms);
+    _displayNextItem(results, results.length, searchTerms, highlightTerms);
   },
 
   /**
@@ -408,7 +418,7 @@ const Search = {
       if (anchor === "") anchor = fullname;
       else if (anchor === "-") anchor = objNames[match[1]][1] + "-" + fullname;
 
-      const descr = objName + ", in " + title;
+      const descr = objName + _(", in ") + title;
 
       // add custom score for some objects according to scorer
       if (Scorer.objPrio.hasOwnProperty(match[2]))
