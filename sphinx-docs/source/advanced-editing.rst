@@ -242,6 +242,12 @@ You can shift the contents of the level around without changing its dimensions
 with the *nudge level* action.
 
 Press :kbd:`Ctrl+E` to enter *Nudge Preview Mode*, then use the movement keys
-to reposition the level's contents. Accept the changes by pressing
-:kbd:`Enter`, or discard them with :kbd:`Esc`.
+to reposition the level's contents.
+
+Nudging can cause parts of the level to be clipped as you move it beyond the
+grid's boundaries. By enabling *wraparound*, the rows and columns shifted
+beyond one edge will "wrap around" to the opposite side. Press :kbd:`W` to
+toggle this wraparound behaviour.
+
+Accept the changes by pressing :kbd:`Enter` or discard them with :kbd:`Esc`.
 
