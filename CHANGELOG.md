@@ -1,13 +1,21 @@
 # Changelog
 
-## v1.2.0 – 2023-07-xx
+## v1.2.0 – 2024-04-xx
 
 ### New features
 
-- Add support for panning the level with the mouse (middle-click + drag, or
+- Multi-monitor support.
+
+- Option to nudge the level and move/paste with wraparound.
+
+- Support for panning the level with the mouse (middle-click + drag, or
   Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
 
 - The selection can now be moved with the mouse in Paste Preview Mode.
+
+- The user manual is now searchable.
+
+- Support for diagonal movement TODO
 
 ### Enhancements
 
@@ -18,18 +26,25 @@
   follows the mouse pointer even if you move it outside of the level's
   bounds.
 
+- Restoring the window size and position on startup is now more robust.
+
 ### Fixes
 
 - Fix crash when undoing the creation of the very first level.
 
 - Fix crash when deleting the last remaining level of a map.
 
+- Fix crash when nudging large levels zooomed in close to the maximum zoom
+  factor.
+
+- Fix nudging non-square levels (previously, you could only nudge vertically
+  by the number of columns at most).
+
 - If auto-saving is enabled, the map no longer gets immediately auto-saved
   right after adding the first level to an empty map.
 
-- The auto-save timer resets when the auto-save is enabled from a disabled
-- state.
-
+- The auto-save timer now resets when the auto-save is enabled from a disabled
+  state.
 
 ---
 
