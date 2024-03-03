@@ -6,7 +6,7 @@
 
 - Multi-monitor support.
 
-- Option to nudge the level and move/paste with wraparound.
+- Option to [nudge the level](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level) and move/paste with wraparound.
 
 - Support for panning the level with the mouse (middle-click + drag, or
   Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
@@ -15,7 +15,7 @@
 
 - The user manual is now searchable.
 
-- Support for diagonal movement TODO
+- Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement) TODO
 
 ### Enhancements
 
