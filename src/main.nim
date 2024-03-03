@@ -1010,10 +1010,10 @@ let g_appShortcuts = {
   scZoomOut:                   @[mkKeyShortcut(keyMinus,      {})],
 
   scMarkSelection:             @[mkKeyShortcut(keyM,          {})],
+
   scPaste:                     @[mkKeyShortcut(keyP,          {})],
   scPastePreview:              @[mkKeyShortcut(keyP,          {mkShift})],
   scNudgePreview:              @[mkKeyShortcut(keyG,          {mkCtrl})],
-
   scPasteAccept:               @[mkKeyShortcut(keyP,          {}),
                                  mkKeyShortcut(keyEnter,      {}),
                                  mkKeyShortcut(keyKpEnter,    {})],
@@ -1314,8 +1314,8 @@ proc setSelectModeSelectMessage(a) =
   )
 
 # }}}
-# {{{ setSelectModeActionMessage()
-proc setSelectModeActionMessage(a) =
+# {{{ setSelectModeSpecialActionsMessage()
+proc setSelectModeSpecialActionsMessage(a) =
   setStatusMessage(
     IconSelection, "Mark selection",
     @[scSelectionEraseArea.toStr(),         "erase",
@@ -5127,7 +5127,8 @@ proc undoAction(a) =
     if not levelChange:
       a.opts.drawTrail = drawTrail
 
-    setStatusMessage(IconUndo, fmt"Undid action: {undoStateData.actionName}", a)
+    setStatusMessage(IconUndo,
+                     fmt"Undid action: {undoStateData.actionName}", a)
   else:
     setWarningMessage("Nothing to undo", a=a)
 
@@ -5161,6 +5162,7 @@ proc setFloorAction(f: Floor; a) =
   let ot = a.doc.map.guessFloorOrientation(a.ui.cursor)
   actions.setOrientedFloor(a.doc.map, a.ui.cursor, f, ot, a.ui.currFloorColor,
                            a.doc.undoManager)
+
   setStatusMessage(fmt"Set floor type – {f}", a)
 
 # }}}
@@ -5205,6 +5207,7 @@ proc startEraseCellsAction(a) =
 proc startEraseTrailAction(a) =
   let cur = a.ui.cursor
   actions.eraseTrail(a.doc.map, loc=cur, undoLoc=cur, a.doc.undoManager)
+
   setStatusMessage(IconEraser, "Erase trail", @[IconArrowsAll, "erase"], a)
 
 # }}}
@@ -5682,6 +5685,7 @@ proc setSelectJumpToLinkSrcActionMessage(a) =
   let currIdx = a.ui.jumpToSrcLocationIdx + 1
   let count = a.ui.jumpToSrcLocations.len
   let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
+
   setStatusMessage(NoIcon,
                    fmt"Select {linkFloorToString(floor)} source ({currIdx} of {count})",
                    @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"],
@@ -6122,6 +6126,7 @@ proc handleGlobalKeyEvents(a) =
 
           opts.drawTrail = false
           ui.editMode = emPastePreview
+
           setStatusMessage(IconTiles, "Paste preview",
                            @[IconArrowsAll, "placement",
                            "Enter/P", "paste", "Esc", "cancel"], a)
@@ -6503,7 +6508,7 @@ proc handleGlobalKeyEvents(a) =
                                allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
 
-      if   koi.ctrlDown(): setSelectModeActionMessage(a)
+      if   koi.ctrlDown(): setSelectModeSpecialActionsMessage(a)
       else:                setSelectModeSelectMessage(a)
 
       if   ke.isShortcutDown(scSelectionDraw):
@@ -6561,6 +6566,7 @@ proc handleGlobalKeyEvents(a) =
           dp.selStartCol = cur.col
 
           ui.editMode = emMovePreview
+
           setStatusMessage(IconTiles, "Move selection",
                            @[IconArrowsAll, "placement",
                            "Enter/P", "confirm", "Esc", "cancel"], a)
