@@ -208,7 +208,7 @@ type
     autosave*:          bool
     autosaveFreqMins:   Natural
 
-    movementWrapAround: bool
+    movementWraparound: bool
     yubnMovementKeys:   bool
 
 
@@ -477,7 +477,7 @@ type
     vsync:              bool
 
     # Editing tab
-    movementWrapAround: bool
+    movementWraparound: bool
     yubnMovementKeys:   bool
 
 
@@ -1428,11 +1428,11 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   let sm = ScrollMargin
   var cur = cur
 
-  let wrapAround = a.prefs.movementWrapAround
+  let wraparound = a.prefs.movementWraparound
 
   template stepSE(curPos: Natural, maxPos: Natural) =
     let newPos = curPos + steps
-    if newPos > maxPos and wrapAround:
+    if newPos > maxPos and wraparound:
       curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
@@ -1441,7 +1441,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   template stepNW(curPos: Natural, maxPos: Natural) =
     let newPos = curPos - steps
     let minPos = 0
-    if newPos < minPos and wrapAround:
+    if newPos < minPos and wraparound:
       curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
@@ -2359,7 +2359,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
   cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
-  cfg.set(p & "editing.movement-wrap-around",   a.prefs.movementWrapAround)
+  cfg.set(p & "editing.movement-wraparound",    a.prefs.movementWraparound)
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
 
@@ -3098,7 +3098,7 @@ proc openPreferencesDialog(a) =
 
   dlg.autosave           = a.prefs.autosave
   dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
-  dlg.movementWrapAround = a.prefs.movementWrapAround
+  dlg.movementWraparound = a.prefs.movementWraparound
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
   dlg.vsync              = a.prefs.vsync
 
@@ -3211,9 +3211,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
   elif dlg.activeTab == 2:  # Editing
     group:
-      koi.label("Movement wrap-around", style=a.theme.labelStyle)
+      koi.label("Movement wraparound", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.movementWrapAround, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.movementWraparound, style = a.theme.checkBoxStyle)
 
       koi.label("YUBN diagonal movement",
                  style=a.theme.labelStyle)
@@ -3239,7 +3239,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.vsync              = dlg.vsync
 
     # Editing
-    a.prefs.movementWrapAround = dlg.movementWrapAround
+    a.prefs.movementWraparound = dlg.movementWraparound
     a.prefs.yubnMovementKeys   = dlg.yubnMovementKeys
 
     saveAppConfig(a)
@@ -9065,12 +9065,17 @@ proc initPreferences(cfg: HoconNode; a) =
                            "auto-save.frequency-mins", 2
                          ).limit(AutosaveFreqMinsLimits)
 
-    const MovementWrapAroundKey = "editing.movement-wrap-around"
-    if prefs.getOpt(MovementWrapAroundKey).isSome:
-      movementWrapAround = prefs.getBoolOrDefault(MovementWrapAroundKey, false)
+    const MovementWraparoundKey = "editing.movement-wraparound"
+    if prefs.getOpt(MovementWraparoundKey).isSome:
+      movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey, false)
     else:
-      # deprecated; support for the old key will be dropped eventually
-      movementWrapAround = prefs.getBoolOrDefault("movement-wrap-around", false)
+      # TODO deprecated keys; drop support for these after a few releases
+      let MovementWraparoundKey_v110 = "editing.movement-wrap-around"
+      if prefs.getOpt(MovementWraparoundKey_v110).isSome:
+        movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey_v110, false)
+      else:
+        let MovementWraparoundKey_v100 = "movement-wrap-around"
+        movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey_v100, false)
 
     yubnMovementKeys = prefs.getBoolOrDefault("editing.yubn-movement-keys")
 
