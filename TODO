@@ -9,8 +9,6 @@ BUGS
 
 - move copies labels instead of moving then cell is empty
 
-- move selection severs links (but nudge works)
-
 - warning when closing new map that was never manually saved
 
 - selecting single line text selects whole line

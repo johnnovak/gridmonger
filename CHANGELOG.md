@@ -40,6 +40,8 @@
 - Fix nudging non-square levels (previously, you could only nudge vertically
   by the number of columns at most).
 
+- Fix moving a selection not moving the links correctly (or at all).
+
 - If auto-saving is enabled, the map no longer gets immediately auto-saved
   right after adding the first level to an empty map.
 

@@ -494,7 +494,6 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
   let newLinks = transformAndCollectLinks(oldLinks, sel, bbox)
 
-
   cellAreaAction(map, loc, loc, bbox, um, groupWithPrev=false,
                  "Cut selection", m):
 
@@ -548,19 +547,16 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
 
       if destRect.isSome:
         let destRect = destRect.get
-        var loc = Location(level: loc.level)
 
         # TODO
-        # - BUG: move selection severs links (but nudge works)
         # - add support for wraparound in paste & move mode
 
         # Erase existing map links in the paste area (taking selection into
         # account)
         for r in destRect.r1..<destRect.r2:
           for c in destRect.c1..<destRect.c2:
-            loc.col = c
             if sb.selection[r-destRect.r1, c-destRect.c1]:
-              m.eraseCellLinks(loc)
+              m.eraseCellLinks(Location(level: loc.level, row: r, col: c))
 
         if pasteBufferLevelIndex.isSome:
           # Recreate links from the paste buffer
