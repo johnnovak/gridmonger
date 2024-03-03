@@ -88,9 +88,8 @@ proc drawClearFloor*(map; loc, undoLoc: Location, floorColor: Natural;
                    fmt"Draw/clear floor", m):
 
     let l = m.levels[loc.level]
-    l.delAnnotation(loc.row, loc.col)
 
-    m.setFloor(loc, fBlank)
+    m.clearFloor(loc)
     m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -133,7 +132,7 @@ proc eraseCell*(map; loc, undoLoc: Location; um; groupWithPrev: bool) =
 
   singleCellAction(map, loc, undoLoc, um, groupWithPrev,
                    "Erase cell", m):
-    m.eraseCell(loc)
+    m.eraseCell(loc, preserveLabel=true)
 
 # }}}
 # {{{ setWall*()
@@ -224,7 +223,7 @@ proc setNote*(map; loc: Location, n: Annotation; um) =
 
     let l = m.levels[loc.level]
     if n.kind != akComment:
-      m.setFloor(loc, fBlank)
+      m.clearFloor(loc)
 
     l.setAnnotation(loc.row, loc.col, n)
 
@@ -247,7 +246,7 @@ proc setLabel*(map; loc: Location, n: Annotation; um) =
                    "Set label", m):
 
     if not m.isEmpty(loc):
-      m.setFloor(loc, fBlank)
+      m.clearFloor(loc)
 
     let l = m.levels[loc.level]
     l.setAnnotation(loc.row, loc.col, n)
@@ -382,7 +381,7 @@ proc eraseSelection*(map; level: Natural, sel: Selection,
         if sel[r,c]:
           loc.row = r
           loc.col = c
-          m.eraseCell(loc)
+          m.eraseCell(loc, preserveLabel=true)
 
 # }}}
 # {{{ fillSelection*()
@@ -401,8 +400,8 @@ proc fillSelection*(map; level: Natural, sel: Selection,
         if sel[r,c]:
           loc.row = r
           loc.col = c
-          m.eraseCell(loc)
-          m.setFloor(loc, fBlank)
+          m.eraseCell(loc, preserveLabel=true)
+          m.clearFloor(loc)
           m.setFloorColor(loc, floorColor)
 
 # }}}
@@ -511,8 +510,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
           l.row = r
           l.col = c
 
-          if not m.isEmpty(l):
-            m.eraseCell(l)
+          m.eraseCell(l, preserveLabel=false)
 
 # }}}
 # {{{ pasteSelection*()

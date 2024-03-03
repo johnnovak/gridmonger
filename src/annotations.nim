@@ -160,6 +160,9 @@ proc convertNoteToComment*(a; r,c: Natural) =
   let annot = a.getAnnotation(r,c)
   if annot.isSome:
     let note = annot.get
+    if note.kind == akLabel:
+      return
+
     if note.kind != akComment:
       a.delAnnotation(r,c)
 

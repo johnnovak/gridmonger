@@ -56,6 +56,11 @@ proc setFloor*(l; r,c: Natural, f: Floor) =
   l.cellGrid.setFloor(r,c, f)
 
 # }}}
+# {{{ cleearFloor*()
+proc clearFloor*(l; r,c: Natural) =
+  l.cellGrid.setFloor(r,c, fBlank)
+
+# }}}
 # {{{ getFloorOrientation*()
 proc getFloorOrientation*(l; r,c: Natural): Orientation {.inline.} =
   l.cellGrid.getFloorOrientation(r,c)

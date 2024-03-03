@@ -126,9 +126,15 @@ proc eraseCellLinks*(m; loc: Location) =
 
 # }}}
 # {{{ eraseCell*()
-proc eraseCell*(m; loc: Location) =
+proc eraseCell*(m; loc: Location, preserveLabel: bool) =
+  alias(l, m.levels[loc.level])
+  let label = m.getLabel(loc)
+
   m.levels[loc.level].eraseCell(loc.row, loc.col)
   m.eraseCellLinks(loc)
+
+  if preserveLabel and label.isSome:
+    l.setAnnotation(loc.row, loc.col, label.get)
 
 # }}}
 # {{{ eraseCellWalls*()
@@ -150,6 +156,12 @@ proc getFloor*(m; loc: Location): Floor {.inline.} =
 # {{{ setFloor*()
 proc setFloor*(m; loc: Location, f: Floor) =
   m.levels[loc.level].setFloor(loc.row, loc.col, f)
+  m.eraseCellLinks(loc)
+
+# }}}
+# {{{ clearFloor*()
+proc clearFloor*(m; loc: Location) =
+  m.levels[loc.level].clearFloor(loc.row, loc.col)
   m.eraseCellLinks(loc)
 
 # }}}
@@ -214,15 +226,9 @@ proc excavateTunnel*(m; loc: Location, floorColor: Natural,
   alias(c, loc.col)
   alias(r, loc.row)
 
-  let label = m.getLabel(loc)
-
-  m.eraseCell(loc)
+  m.eraseCell(loc, preserveLabel=true)
   m.setFloor(loc, fBlank)
   m.setFloorColor(loc, floorColor)
-
-  # Preserve label
-  if label.isSome:
-    l.setAnnotation(loc.row, loc.col, label.get)
 
   var wallDirs = @[dirN, dirS, dirE, dirW]
   if dir.isSome:
