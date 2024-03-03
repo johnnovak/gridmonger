@@ -2367,6 +2367,8 @@ proc saveAppConfig(a) =
 
   var cfg = newHoconObject()
 
+  cfg.set("config-version", AppVersion)
+
   var p = "preferences."
   cfg.set(p & "load-last-map",                  a.prefs.loadLastMap)
   cfg.set(p & "splash.show-at-startup",         a.prefs.showSplash)
