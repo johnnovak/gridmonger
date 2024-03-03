@@ -363,7 +363,7 @@ that action in the *vertical direction*.
 
 To use this feature, first set or clear a wall in the current cell using the
 :kbd:`W` modifier, then hold down :kbd:`Shift` without releasing :kbd:`W` to
-enter *repeat mode*. Now you can use the movement keys to repeat the draw wall
+enter *draw wall repeat mode*. Now you can use the movement keys to repeat the draw wall
 action either horizontally or vertically, depending on the orientation of the
 wall you've drawn first.
 
