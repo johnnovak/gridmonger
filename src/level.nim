@@ -13,9 +13,8 @@ import selection
 using l: Level
 
 const
-  # internal IDs, never written to disk
-  CopyBufferLevelIndex* = 1_000_000
-  MoveBufferLevelIndex* = 1_000_001
+  # internal ID, never written to disk
+  MoveBufferLevelIndex* = 1_000_000.Natural
 
 # {{{ CellGrid
 # {{{ rows*()
@@ -472,7 +471,7 @@ proc calcResizeParams*(
 # }}}
 # {{{ isSpecialLevelIndex*()
 proc isSpecialLevelIndex*(idx: Natural): bool =
-  idx >= CopyBufferLevelIndex
+  idx >= MoveBufferLevelIndex
 
 # }}}
 

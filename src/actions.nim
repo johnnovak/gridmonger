@@ -518,7 +518,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 # }}}
 # {{{ pasteSelection*()
 proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
-                     pasteBufferLevelIndex: Natural; um;
+                     pasteBufferLevelIndex: Option[Natural]; um;
                      groupWithPrev = false,
                      pasteTrail = false,
                      actionName = "Pasted buffer") =
@@ -562,61 +562,62 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
             if sb.selection[r-destRect.r1, c-destRect.c1]:
               m.eraseCellLinks(loc)
 
-        # Recreate links from the paste buffer
-        var linksToDeleteBySrc = newSeq[Location]()
-        var linksToDeleteByDest = newSeq[Location]()
+        if pasteBufferLevelIndex.isSome:
+          # Recreate links from the paste buffer
+          var linksToDeleteBySrc = newSeq[Location]()
+          var linksToDeleteByDest = newSeq[Location]()
 
-        var linksToAdd = initLinks()
+          var linksToAdd = initLinks()
 
-        # More efficient to just iterate through all links in the map in one
-        # go
-        for src, dest in m.links:
-          var
-            src = src
-            dest = dest
-            addLink = false
-            srcInside = true
-            destInside = true
+          # More efficient to just iterate through all links in the map in one
+          # go
+          for src, dest in m.links:
+            var
+              src = src
+              dest = dest
+              addLink = false
+              srcInside = true
+              destInside = true
 
-          # Link starting from a paste buffer location (pointing to either
-          # a map location, or another paste buffer location)
-          if src.level == pasteBufferLevelIndex:
-            linksToDeleteBySrc.add(src)
+            # Link starting from a paste buffer location (pointing to either
+            # a map location, or another paste buffer location)
+            if src.level == pasteBufferLevelIndex.get:
+              linksToDeleteBySrc.add(src)
 
-            # Add paste location offset
-            src.level = loc.level
-            src.row  += loc.row
-            src.col  += loc.col
+              # Add paste location offset
+              src.level = loc.level
+              src.row  += loc.row
+              src.col  += loc.col
 
-            # We need this check because the full paste rect might get clipped
-            # if it cannot fit into the available map area
-            srcInside = destRect.contains(src.row, src.col)
-            addLink = true
+              # We need this check because the full paste rect might get clipped
+              # if it cannot fit into the available map area
+              srcInside = destRect.contains(src.row, src.col)
+              addLink = true
 
-          # Link pointing to a paste buffer location (from either a map
-          # location, or another paste buffer location)
-          if dest.level == pasteBufferLevelIndex:
-            linksToDeleteByDest.add(dest)
+            # Link pointing to a paste buffer location (from either a map
+            # location, or another paste buffer location)
+            if dest.level == pasteBufferLevelIndex.get:
+              linksToDeleteByDest.add(dest)
 
-            # Add paste location offset
-            dest.level = loc.level
-            dest.row  += loc.row
-            dest.col  += loc.col
+              # Add paste location offset
+              dest.level = loc.level
+              dest.row  += loc.row
+              dest.col  += loc.col
 
-            # We need this check because the full paste rect might get clipped
-            # if it cannot fit into the available map area
-            destInside = destRect.contains(dest.row, dest.col)
-            addLink = true
+              # We need this check because the full paste rect might get clipped
+              # if it cannot fit into the available map area
+              destInside = destRect.contains(dest.row, dest.col)
+              addLink = true
 
-          if addLink and srcInside and destInside:
-            linksToAdd.set(src, dest)
+            if addLink and srcInside and destInside:
+              linksToAdd.set(src, dest)
 
-        # Delete paste buffer links
-        for s in linksToDeleteBySrc:  m.links.delBySrc(s)
-        for s in linksToDeleteByDest: m.links.delByDest(s)
+          # Delete paste buffer links
+          for s in linksToDeleteBySrc:  m.links.delBySrc(s)
+          for s in linksToDeleteByDest: m.links.delByDest(s)
 
-        # Recreate links between real map locations
-        m.links.addAll(linksToAdd)
+          # Recreate links between real map locations
+          m.links.addAll(linksToAdd)
 
         m.normaliseLinkedStairs(loc.level)
 

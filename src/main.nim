@@ -266,7 +266,6 @@ type
     selRect:            Option[SelectionRect]
     copyBuf:            Option[SelectionBuffer]
     nudgeBuf:           Option[SelectionBuffer]
-    cutToBuffer:        bool
     pasteUndoLocation:  Location
 
     status:             StatusMessage
@@ -1678,8 +1677,6 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
       selection: newSelectionFrom(sel, bbox),
       level: newLevelFrom(currLevel(a), bbox)
     ))
-
-    ui.cutToBuffer = false
 
   result = bbox
 
@@ -6128,10 +6125,8 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scPaste):
         if ui.copyBuf.isSome:
           actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
-                                 pasteBufferLevelIndex=CopyBufferLevelIndex,
+                                 pasteBufferLevelIndex=Natural.none,
                                  um)
-
-          if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
           setStatusMessage(IconPaste, "Buffer pasted", a)
         else:
@@ -6702,10 +6697,8 @@ proc handleGlobalKeyEvents(a) =
 
       if ke.isShortcutDown(scPasteAccept):
         actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
-                               pasteBufferLevelIndex=CopyBufferLevelIndex,
+                               pasteBufferLevelIndex=Natural.none,
                                um, pasteTrail=true)
-
-        if ui.cutToBuffer: ui.copyBuf = SelectionBuffer.none
 
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
@@ -6736,7 +6729,7 @@ proc handleGlobalKeyEvents(a) =
       if ke.isShortcutDown(scPasteAccept):
         actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
                                ui.nudgeBuf.get,
-                               pasteBufferLevelIndex=MoveBufferLevelIndex,
+                               pasteBufferLevelIndex=MoveBufferLevelIndex.some,
                                um, groupWithPrev=true,
                                actionName="Move selection")
 
