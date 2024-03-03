@@ -4,43 +4,48 @@
 
 ### New features
 
+- The user manual is now searchable.
+
 - Multi-monitor support.
 
-- Option to [nudge the level](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level) and move/paste with wraparound.
+- Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
+  and move/paste selections with wraparound.
 
 - Support for panning the level with the mouse (middle-click + drag, or
   Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
 
 - The selection can now be moved with the mouse in Paste Preview Mode.
 
-- The user manual is now searchable.
-
 - Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement) TODO
 
 ### Enhancements
 
-- Better mouse handling when using the mouse to place the cursor and the
-  mouse pointer is moved outside of the bounds of the level.
+- Erase and clear floor actions don't erase labels now.
 
-- Setting the cursor position with the mouse is improved; now the cursor
-  follows the mouse pointer even if you move it outside of the level's
-  bounds.
+- Clear floor actions don't erase annotations now.
+
+- Setting the cursor position with the mouse has been improved; now the cursor
+  follows the mouse pointer when you move it outside of the level's bounds.
 
 - Restoring the window size and position on startup is now more robust.
 
 ### Fixes
 
-- Fix crash when undoing the creation of the very first level.
+- Fix crash when undoing the creation of the first level in an empty map.
 
 - Fix crash when deleting the last remaining level of a map.
 
 - Fix crash when nudging large levels zooomed in close to the maximum zoom
   factor.
 
-- Fix nudging non-square levels (previously, you could only nudge vertically
-  by the number of columns at most).
+- Fix nudging non-square levels; previously, the maximum vertical nudge amount
+  was erroneously capped by the level's number of columns (instead of number
+  of rows).
 
-- Fix moving a selection not moving the links correctly (or at all).
+- Fix moving selections not moving the links correctly (or at all).
+
+- Fix moving selections leaving copies of the original labels if they were on
+  empty cells.
 
 - If auto-saving is enabled, the map no longer gets immediately auto-saved
   right after adding the first level to an empty map.
@@ -77,7 +82,7 @@
 
 ### New features
 
-- Add preferences option to enable movement wrap-around.
+- Add preferences option to enable movement wraparound.
 
 - Allow multiple source links for teleporters (Teon Banek).
 
