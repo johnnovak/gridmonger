@@ -90,6 +90,8 @@ type
 
     drawCursorGuides*: bool
 
+    pasteWraparound*:  bool
+
     # internal
     zoomLevel:          range[MinZoomLevel..MaxZoomLevel]
     gridSize:           float
@@ -2680,23 +2682,22 @@ proc mergeSelectionAndOutlineBuffers(level, viewBuf: Level,
     let startCol = dp.selStartCol - dp.viewStartCol + ViewBufBorder
     let selBufLevel = dp.selectionBuffer.get.level
 
-#[
-    discard viewBuf.paste(destRow=startRow, destCol=startCol,
-                          srcLevel=selBufLevel,
-                          dp.selectionBuffer.get.selection)
-]#
+    if dp.pasteWraparound:
+      discard viewBuf.pasteWithWraparound(
+        destRow=startRow, destCol=startCol,
+        srcLevel=selBufLevel, sel=dp.selectionBuffer.get.selection,
+        levelRows=level.rows, levelCols=level.cols,
+        selStartRow=dp.selStartRow, selStartCol=dp.selStartCol,
 
-    discard viewBuf.pasteWithWraparound(
-      destRow=startRow, destCol=startCol,
-      srcLevel=selBufLevel, sel=dp.selectionBuffer.get.selection,
-      levelRows=level.rows, levelCols=level.cols,
-      selStartRow=dp.selStartRow, selStartCol=dp.selStartCol,
-
-      destStartRow=dp.viewStartRow,
-      destStartCol=dp.viewStartCol,
-      destRowOffset=ViewBufBorder,
-      destColOffset=ViewBufBorder
-    )
+        destStartRow=dp.viewStartRow,
+        destStartCol=dp.viewStartCol,
+        destRowOffset=ViewBufBorder,
+        destColOffset=ViewBufBorder
+      )
+    else:
+      discard viewBuf.paste(destRow=startRow, destCol=startCol,
+                            srcLevel=selBufLevel,
+                            dp.selectionBuffer.get.selection)
 
     if outlineBuf.isSome:
       let ob = outlineBuf.get

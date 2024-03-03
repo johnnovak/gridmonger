@@ -244,6 +244,8 @@ type
     walkMode:           bool
     wasdMode:           bool
 
+    pasteWraparound:    bool
+
     showThemeEditor:    bool
     showQuickReference: bool
 
@@ -874,6 +876,7 @@ type AppShortcut = enum
   scToggleWasdMode,
   scToggleDrawTrail,
   scToggleTitleBar,
+  scTogglePasteWraparound,
 
   # Misc
   scShowAboutDialog,
@@ -1056,6 +1059,7 @@ let g_appShortcuts = {
   scToggleWasdMode:     @[mkKeyShortcut(keyTab,           {})],
   scToggleDrawTrail:    @[mkKeyShortcut(keyT,             {})],
   scToggleTitleBar:     @[mkKeyShortcut(keyT,             {mkAlt, mkShift})],
+  scTogglePasteWraparound:  @[mkKeyShortcut(keyW,         {})],
 
   # Misc
   scShowAboutDialog:      @[mkKeyShortcut(keyA,           {mkCtrl})],
@@ -1335,7 +1339,18 @@ proc setSetLinkDestinationMessage(floor: Floor; a) =
                    @[IconArrowsAll, "select cell",
                    scAccept.toStr(0), "set", scCancel.toStr(0), "cancel"], a)
 # }}}
+# {{{ setNudgePreviewModeMessage()
+proc setNudgePreviewModeMessage(a) =
+  let wraparoundMsg = "wraparound: " & (if a.opts.pasteWraparound: "on"
+                                        else: "off")
 
+  setStatusMessage(IconArrowsAll, "Nudge preview",
+                   @[IconArrowsAll, "nudge",
+                   scTogglePasteWraparound.toStr(), wraparoundMsg,
+                   "Enter", "confirm", "Esc", "cancel"], a)
+
+# }}}
+#
 # {{{ drawAreaWidth()
 proc drawAreaWidth(a): float =
   if a.opts.showThemeEditor: koi.winWidth() - ThemePaneWidth
@@ -6153,9 +6168,8 @@ proc handleGlobalKeyEvents(a) =
 
         ui.editMode = emNudgePreview
         opts.drawTrail = false
-        setStatusMessage(IconArrowsAll, "Nudge preview",
-                         @[IconArrowsAll, "nudge",
-                         "Enter", "confirm", "Esc", "cancel"], a)
+
+        setNudgePreviewModeMessage(a)
 
       elif ke.isShortcutDown(scJumpToLinkedCell):
         let otherLocs = map.getLinkedLocations(cur)
@@ -6761,13 +6775,18 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = ui.cursor
 
-      if   ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
+      if ke.isShortcutDown(scTogglePasteWraparound):
+        opts.pasteWraparound = not opts.pasteWraparound
+        setNudgePreviewModeMessage(a)
+
+      elif   ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
 
       elif ke.isShortcutDown(scAccept):
         let newCur = actions.nudgeLevel(map, cur,
                                         dp.selStartRow, dp.selStartCol,
-                                        ui.nudgeBuf.get, wraparound=true, um)
+                                        ui.nudgeBuf.get,
+                                        wraparound=opts.pasteWraparound, um)
         moveCursorTo(newCur, a)
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
@@ -7037,6 +7056,7 @@ proc renderLevel(a) =
     dp.cursorCol = ui.cursor.col
     dp.cellCoordOpts = coordOptsForCurrLevel(a)
     dp.regionOpts = l.regionOpts
+    dp.pasteWraparound = opts.pasteWraparound
 
     if opts.walkMode and
        ((ui.editMode in {emNormal, emExcavateTunnel, emEraseCell,
