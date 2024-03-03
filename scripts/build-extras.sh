@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-nim packageExampleMaps
 nim packageManual
+nim packageExampleMaps
 nim publishExtras
 

@@ -57,7 +57,7 @@ nim manual
 
 ```
 nim -f release
-nim packageWin
+nim packageWinInstaller
 nim packageWinPortable
 nim publishPackageWin
 ```
@@ -66,7 +66,7 @@ nim publishPackageWin
 
 ```
 nim -f --cpu:i386 release
-nim --cpu:i386 packageWin
+nim --cpu:i386 packageWinInstaller
 nim --cpu:i386 packageWinPortable
 nim --cpu:i386 publishPackageWin
 ```
@@ -81,7 +81,7 @@ Commit and push the changes in `docs/`.
 ```
 nim -f releaseMacX64
 nim -f releaseMacArm64
-nim releaseMacUniversal
+nim mergeMacUniversal
 nim packageMac
 nim publishPackageMac
 ```
@@ -94,8 +94,8 @@ Commit and push the changes in `docs/`.
 ### 4. Package and publish extras
 
 ```
-nim packageExampleMaps
 nim packageManual
+nim packageExampleMaps
 nim publishExtras
 ```
 

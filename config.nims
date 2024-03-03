@@ -1,3 +1,5 @@
+{.hints: off.}
+
 import os
 import strformat
 import strutils
@@ -13,7 +15,7 @@ const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
 const currYear = CompileDate[0..3]
 
-const macPackageName = fmt"gridmonger-v{version}-mac.zip"
+const macPackageName = fmt"gridmonger-v{version}-macos-universal.zip"
 
 const dataDir = "Data"
 const exampleMapsDir = "Example Maps"
@@ -101,26 +103,21 @@ task releaseMacX64, "release build (macOS x86-64)":
   releaseTask()
 
 
-task releaseMacUniversal, "create macOS universal binary":
+task mergeMacUniversal, "create macOS universal binary":
   exec fmt"strip -S {exeNameMacX64}"
   exec fmt"strip -S {exeNameMacArm64}"
   exec fmt"lipo {exeNameMacX64} {exeNameMacArm64} -create -output {exeName}"
 
 
-task strip, "strip executable":
-  exec fmt"strip -S {exeName}"
-
-
-task packageWin, "create Windows installer":
-  stripTask()
+task packageWinInstaller, "create Windows installer package":
   mkdir distWinDir
+  exec fmt"strip -S {exeName}"
   exec fmt"makensis /DARCH{arch} gridmonger.nsi"
 
 
 task packageWinPortable, "create Windows portable package":
-  stripTask()
-
   mkdir distWinDir
+  exec fmt"strip -S {exeName}"
   let packageName = "Gridmonger"
   let packageDir = distWinDir / packageName
   rmDir packageDir
@@ -145,17 +142,7 @@ task packageWinPortable, "create Windows portable package":
   rmDir packageDir
 
 
-task publishPackageWin, "publish Windows packages":
-  let installerName = getWinInstallerPackageName(arch)
-  cpFile distWinDir / installerName, siteReleasesWinDir / installerName
-
-  let portableName = getWinPortablePackageName(arch)
-  cpFile distWinDir / portableName, siteReleasesWinDir / portableName
-
-
-task packageMac, "create macOS app bundle":
-  stripTask()
-
+task packageMac, "create macOS app bundle package":
   let appBundleName = "Gridmonger.app"
   let appBundleDir = distMacDir / appBundleName
   let contentsDir = appBundleDir / "Contents"
@@ -195,15 +182,6 @@ task packageMac, "create macOS app bundle":
     rmDir appBundleName
 
 
-task publishPackageMac, "publish macOS app bundle":
-  cpFile distMacDir / macPackageName, siteReleasesMacDir / macPackageName
-
-
-task manual, "build manual":
-  withDir sphinxDocsDir:
-    exec "make build_manual"
-
-
 task packageManual, "create zipped manual package":
   let outputDir = "Gridmonger Manual"
   cpDir manualDir, outputDir
@@ -218,9 +196,26 @@ task packageExampleMaps, "create zipped example maps package":
   createZip(zipName=distDir / distMapsName, srcPath=exampleMapsDir, extraArgs="-i *.gmm")
 
 
-task publishExtras, "publish extra packages":
+task publishPackageWin, "publish Windows packages to website dir":
+  let installerName = getWinInstallerPackageName(arch)
+  cpFile distWinDir / installerName, siteReleasesWinDir / installerName
+
+  let portableName = getWinPortablePackageName(arch)
+  cpFile distWinDir / portableName, siteReleasesWinDir / portableName
+
+
+task publishPackageMac, "publish macOS package to website dir":
+  cpFile distMacDir / macPackageName, siteReleasesMacDir / macPackageName
+
+
+task publishExtras, "publish extra packages (manual, example maps) to website dir":
   cpFile distDir / distManualName, siteExtrasDir / distManualName
   cpFile distDir / distMapsName, siteExtrasDir / distMapsName
+
+
+task manual, "build manual":
+  withDir sphinxDocsDir:
+    exec "make build_manual"
 
 
 task site, "build website":
@@ -237,6 +232,7 @@ task clean, "clean everything":
   rmFile exeNameMacX64
   rmDir distDir
   rmDir manualDir
-  withDir sphinxDocsDir:
-    exec "make clean"
+  if fileExists(sphinxDocsDir):
+    withDir sphinxDocsDir:
+      exec "make clean"
 

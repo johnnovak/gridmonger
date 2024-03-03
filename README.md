@@ -8,7 +8,7 @@
 
 ## Build instructions
 
-Requires [Nim](https://nim-lang.org/) 1.6.14
+Requires [Nim](https://nim-lang.org/) 2.0.2
 
 ### Dependencies
 
@@ -58,14 +58,14 @@ The [website](https://gridmonger.johnnovak.net) (GitHub Pages site) and
 [manual](https://gridmonger.johnnovak.net/manual/contents.html) are generated
 from [Sphinx](https://www.sphinx-doc.org) sources.
 
-The website is published from the `/docs` directory in the `master` branch.
+The website is published from the `/docs` directory of the `master` branch.
 
 #### Requirements
 
-- [Sphinx](https://www.sphinx-doc.org/en/master/usage/installation.html) 5.3+
-- [Sass](https://sass-lang.com/) 1.37+
+- [Sphinx](https://www.sphinx-doc.org/en/master/usage/installation.html) 7.2+
+- [Sass](https://sass-lang.com/) 1.57+
 - [Make](https://www.gnu.org/software/make/) 3.8+
-- [GNU sed](https://www.gnu.org/software/sed/) 4.8+
+- [GNU sed](https://www.gnu.org/software/sed/) 4.9+
 - Zip 3.0+
 
 
@@ -93,7 +93,7 @@ See [RELEASE.md](/RELEASE.md)
 
 ## License
 
-Developed by John Novak <<john@johnnovak.net>>, 2020-2023
+Developed by John Novak <<john@johnnovak.net>>, 2020-2024
 
 This work is free. You can redistribute it and/or modify it under the terms of
 the [Do What The Fuck You Want To Public License, Version 2](http://www.wtfpl.net), as published
