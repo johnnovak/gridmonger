@@ -1259,6 +1259,15 @@ Paste & Nudge Preview Modes
         </tr>
       </tbody>
 
+      <tbody>
+        <tr>
+          <td>
+            <kbd>W</kbd>
+          </td>
+          <td>Toggle wraparound</td>
+        </tr>
+      </tbody>
+
       <tbody class="no-padding">
         <tr>
           <td>
