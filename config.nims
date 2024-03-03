@@ -15,7 +15,7 @@ const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
 const currYear = CompileDate[0..3]
 
-const macPackageName = fmt"gridmonger-v{version}-macos-universal.zip"
+const macPackageName = fmt"gridmonger-v{version}-macos.zip"
 
 const dataDir = "Data"
 const exampleMapsDir = "Example Maps"
