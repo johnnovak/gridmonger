@@ -15,16 +15,16 @@ following cell types:
 - entrance and exit doors
 
 You can jump between linked cells by pressing the :kbd:`G` key, which is very
-useful when navigating through complex, interlocking multi-level dungeons. The
+useful when navigating complex, interlocking, multi-level dungeons. The
 included ``Eye of the Beholder I`` and ``The Dark Heart of Uukrul`` example
 maps are great demonstrations of this.
 
-To create a link, first move the cursor to the source cell and press
-:kbd:`Shift+G` to enter *Set Link Destination Mode*. Now move the cursor to
-the target cell, then press :kbd:`Enter` to create the link or :kbd:`Esc` to
-cancel. All the common navigation shortcuts are available in this mode, so you
-can change the current level, zoom in and out, etc. The
-:ref:`moving-around:Mouse movement actions` can be accessed too.
+To create a link, move the cursor to the source cell and press :kbd:`Shift+G`
+to enter *Set Link Destination Mode*. Now move the cursor to the target cell,
+then press :kbd:`Enter` to create the link or :kbd:`Esc` to cancel. All the
+common navigation shortcuts are available in this mode, so you can change the
+current level, zoom in and out, etc. The :ref:`moving-around:Mouse movement
+actions` can be accessed, too.
 
 The destination cell will be overwritten (if it doesn't contain the
 destination cell type already), but any existing note will be preserved (and
@@ -49,14 +49,14 @@ linked cells.
 To jump back and forth between two linked cells, place the cursor at either
 end of the link, then press :kbd:`G`. Some cells may have multiple linked
 locations to jump to. This is currently only possible by linking multiple
-teleport sources to a single destination. In such cases, you will be able to
-select the jump location with the movement keys. To exit from location
-selection mode, press :kbd:`Enter` or :kbd:`Esc`, or press :kbd:`G` again to
-return to the destination cell. The included ``Wizardry`` example
-map contains such multi-source teleports.
+teleport sources to a single destination. In such cases, you can select the
+jump location with the movement keys. Press :kbd:`Enter` or :kbd:`Esc` to exit
+from location selection mode, or press :kbd:`G` again to return to the destination
+cell. The included ``Wizardry`` example map contains such multi-source
+teleports.
 
-If you delete a cell that is part of a link, the other end will be unlinked,
-but otherwise left intact. In fact, this is the easiest way to break a link.
+If you delete a cell part of a link, the other end will be unlinked but
+otherwise left intact. In fact, this is the easiest way to break a link.
 Again, multi-source teleports are an exception --- deleting a single source
 will leave the other source-destination links intact.
 
@@ -84,15 +84,15 @@ Doors
 
 .. note::
 
-    A cell cannot be both a link source and a destination at the same time, so
+    A cell cannot be both a link source and a destination simulateneously, so
     you cannot create things like chain-linked teleport cells or multi-level
-    staircases. Furthermore, with the exception of multiple teleport sources
-    linking to the same destination, links can only be created between exactly
-    two cells.
+    staircases. Furthermore, except for multiple teleport sources linking to
+    the same destination, links can only be created between precisely two
+    cells.
 
-    All these constraints are enforced at link creation time: if either the
-    source or the destination cell is already part of a link, those links will
-    be severed before creating the new one. Teleport destination is the only
+    All these constraints are enforced at link creation time: if the source or
+    the destination cell is already part of a link, those links will be
+    severed before creating a new one. The teleport destination is the only
     cell type that will preserve the links to its previous source cells when
     being linked to a new teleport source.
 
@@ -102,8 +102,8 @@ Doors
 Selections
 ==========
 
-The idea behind selections is simple: you select a number of cells first, then
-perform some action on them.
+The idea behind selections is simple: you select some cells first, then
+perform an action on them.
 
 All editing actions presented so far have to be invoked from *Edit Mode*,
 which is the default operational mode of the program. To make a selection,
@@ -128,7 +128,7 @@ clears the selection (*Unselect All*).
 .. tip::
 
   The :ref:`moving-around:Mouse movement actions` are available in *Select
-  Mode* too to move the cursor or pan the level. This opens up some
+  Mode*, too to move the cursor or pan the level. This opens up some
   interesting possibilities; e.g., you can draw selections with the mouse when
   used in conjunction with the :kbd:`D` and :kbd:`E` modifiers.
 
@@ -154,10 +154,10 @@ pressing :kbd:`P`. It is important to note that links are *not* copied, but
 you can paste the copied content as many times as you wish. This restriction
 is necessary to maintain the integrity of the links.
 
-If you press :kbd:`Shift+P`, you'll enter *Paste Preview Mode* where you can
+If you press :kbd:`Shift+P`, you'll enter *Paste Preview Mode*, where you can
 position the selection interactively with the movement keys (usually shown in
 a light-blue overlay, which is, again, theme-dependent), then perform the
-paste action by pressing :kbd:`Enter`, or cancel it with :kbd:`Esc`. Note that
+paste action by pressing :kbd:`Enter` or cancel it with :kbd:`Esc`. Note that
 you can also switch the current level in *Paste Preview Mode*. Naturally, the
 :ref:`moving-around:Mouse movement actions` are available too.
 
@@ -218,15 +218,15 @@ invoked from *Edit Mode*.
 Resize level
 ------------
 
-The *resize level* action, invoked by :kbd:`Ctrl+E`, lets you to shrink or
-expand the dimensions of the current level. You'll need to select an anchor
-point for the action. It's probably easiest to illustrate the role of the
-anchor point through a few examples:
+The *resize level* action, invoked by :kbd:`Ctrl+E`, lets you shrink or expand
+the dimensions of the current level. You'll need to select an anchor point for
+the action. It's probably easiest to illustrate the role of the anchor point
+through a few examples:
 
 .. rst-class:: multiline
 
 - Making the level 2 columns and 3 rows larger using the top-left anchor point
-  will add 2 extra empty columns at the right side of the level, and 3 extra
+  will add 2 extra empty columns at the right side of the level and 3 extra
   empty rows at the bottom.
 
 - Making the level 4 columns and 4 rows smaller using the centre anchor point

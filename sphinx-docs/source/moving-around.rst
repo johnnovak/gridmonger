@@ -137,8 +137,8 @@ Properties` or :ref:`maps-and-levels:Level Properties` dialogs.
   <https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys>`_ navigation.
 
 
-Movement wrap-around
-~~~~~~~~~~~~~~~~~~~~
+Movement wraparound
+~~~~~~~~~~~~~~~~~~~
 
 Some cunningly crafted dungeons feature maps that "wrap around" from one side
 to the other --- you step off the edge of the map, and you'll find yourself
@@ -149,9 +149,9 @@ or the fourth spider-infested level of `Eye of the Beholder
 <https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)>`_).
 
 By default, you cannot move past the edges of the level but you can enable
-this behaviour by ticking the **Movement wrap-around** checkbox in the
+this behaviour by ticking the **Movement wraparound** checkbox in the
 :ref:`preferences:Editing tab` of the :ref:`preferences:Preferences` dialog.
-For consistency, this enables wrap-around cursor movement in all editing modes
+For consistency, this enables wraparound cursor movement in all editing modes
 (you'll learn about these modes below and in later chapters).
 
 

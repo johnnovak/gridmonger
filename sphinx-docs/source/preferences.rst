@@ -42,7 +42,7 @@ This tab contains options that affect the workings of the editing operations.
 
 **Movement-wrap around** controls whether the cursor should appear on the
 opposite side when moved past the edges of the level (see
-:ref:`moving-around:Movement wrap-around`).
+:ref:`moving-around:Movement wraparound`).
 
 **YUBN diagonal movement** enables moving the cursor in the intercardinal
 directions via the YUBN keys in addition to the numeric keypad (see
