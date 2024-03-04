@@ -42,7 +42,7 @@
   was erroneously capped by the level's number of columns (instead of number
   of rows).
 
-- Fix moving selections not moving the links correctly (or at all).
+- Fix moving selections not moving links correctly (or at all).
 
 - Fix moving selections leaving copies of the original labels if they were on
   empty cells.

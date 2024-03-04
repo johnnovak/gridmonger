@@ -7,21 +7,23 @@ BUGS
 
 - notes pane should fill the window horizontally when the tools pane is hidden
 
-- move copies labels instead of moving then cell is empty
-
 - warning when closing new map that was never manually saved
 
 - selecting single line text selects whole line
 
-- clear floor should not remove comments?
-
+- autosave does not save new map that hasn't been saved before
 
 
 TODO
 ====
 
-  - diagonal movement with numpad
   - test extensively & update manual
+
+  - finish diagonal movement (numpad, yubn)
+
+  - finish intelligent excavate mode
+
+  - improve restoring the windows size on screen dimension changes
 
   - generate app shortcuts at runtime based on some flags (e.g.
 	yubnMovementKeys). this simplifies generating the quickrefs & the key
@@ -29,29 +31,22 @@ TODO
 
   - option to use Cmd key on macOS (selectable at runtime)
 
+  - window handling bugs:
+    - crash when dragging maximised window
+
+  - OS X:
+    - gridmonger document icon
+
   - list all notes pane on the left:
     - filter by note type (none, number, ID, icon -- each category can be toggled)
     - show all notes, or only for the current level
 	- sort by level elevation or note name
-
-  - clipping indicator when nudging / moving
-
-  - window handling bugs:
-	  - crash when dragging maximised window
-
-  - add support for wraparound to move & paste preview mode
-
-  - OS X:
-    - gridmonger document icon
 
 
 FEATURE & ENHANCEMENT IDEAS
 ===========================
 
   - new features:
-    - middle-click + drag to pan the map
-	- 1,3,7,9 numlock keys to move diagonally
-
     - export map as PNG
     - export map as PDF
     - full screen borderless
@@ -66,17 +61,16 @@ FEATURE & ENHANCEMENT IDEAS
 
     - onion skin?
     - map selector dialog?
+    - clipping indicator when nudging / moving
 
   - enhancements:
+    - double-clicking on title bar should toggle maximise window
     - log memory access crashes somehow? (also division by zero)
 
     - show current color / tool in statusbar when toolbar is not visible ?
 
     - level selector popup
     - theme selector popup/window
-
-    - window not visible after disconnecting external screen
-      - reset window position shortcut?
 
 	- should steps be moved with selection? 
 	- should steps be copied with selection? 
@@ -111,6 +105,7 @@ FEATURE & ENHANCEMENT IDEAS
 
 LOW PRIORITY BUGS & ENHANCEMENTS
 ================================
+
   - proper multi-window handling in csdwindow
   - better csdwindow separation (e.g. titlebar)
 
