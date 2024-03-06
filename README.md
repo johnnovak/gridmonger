@@ -13,7 +13,7 @@ Requires [Nim](https://nim-lang.org/) 2.0.2
 ### Dependencies
 
 * [koi](https://github.com/johnnovak/koi)
-* [nim-glfw](https://github.com/johnnovak/nim-glfw) (`gridmonger` branch)
+* [nim-glfw](https://github.com/johnnovak/nim-glfw)
 * [nim-nanovg](https://github.com/johnnovak/nim-nanovg/)
 * [nim-osdialog](https://github.com/johnnovak/nim-osdialog)
 * [nim-riff](https://github.com/johnnovak/nim-riff)
@@ -22,23 +22,23 @@ Requires [Nim](https://nim-lang.org/) 2.0.2
 You can install most of the dependencies with [Nimble](https://github.com/nim-lang/nimble):
 
 ```
-nimble install nanovg osdialog riff winim
+nimble install glfw nanovg osdialog riff winim
 ```
 
-For `koi` and `nim-glfw`, clone their Git repositories, check out the
-`gridmonger` branch in `nim-glfw`, then install both with `nimble develop` for
-local development.
+For `koi`, clone its Git repository and execute `nimble develop` from the root
+directory of checked out repo. That will install the library for local
+development.
 
 
 ### Compiling
 
-Debug build (debug logging enabled, file dialogs disabled on Windows):
+Debug build (debug logging enabled, file dialogs disabled):
 
 ```
 nim debug
 ```
 
-Release build:
+Release build (file dialogs enabled):
 
 ```
 nim release
@@ -48,8 +48,7 @@ Run `nim help` for the full list of build tasks.
 
 
 **NOTE:** Create an empty directory `Config` in the project root directory to
-enable portable mode (that's what you normally want to use during
-development).
+enable portable mode (that's what you normally want during development).
 
 
 ### Building the manual & website
