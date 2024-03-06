@@ -159,8 +159,8 @@ Diagonal movement
 ~~~~~~~~~~~~~~~~~
 
 It's also possible to move the cursor diagonally in the intercardinal
-directions by using the numeric keypad or the :kbd:`Y`:kbd:`U`:kbd:`B`:kbd:`N`
-keys which might be familiar to some from `Rogue
+directions by using the numeric keypad or the YUBN keys which might be
+familiar to some from `Rogue
 <https://en.wikipedia.org/wiki/Rogue_(video_game)>`_:
 
 .. raw:: html
@@ -202,12 +202,12 @@ YUBN navigation is off by default as these keys clash with some other
 shortcuts. You need to enable **YUBN diagonal movement** explicitly in the
 :ref:`preferences:Editing tab` of the :ref:`preferences:Preferences` dialog if
 you wish to use it. Actions whose shortcuts clash with the
-:kbd:`Y`:kbd:`U`:kbd:`B`:kbd:`N` keys also have alternative secondary
+YUBN keys also have alternative secondary
 shortcuts; with YUBN navigation enabled, you can only access these actions via
 their secondary shortcuts.
 
 The :kbd:`Shift` modifier to pan the level is available with
-the :kbd:`Y`:kbd:`U`:kbd:`B`:kbd:`N` keys too.
+the YUBN keys too.
 
 The :kbd:`Ctrl` modifier for 5-cell jumps, however, only works with the
 diagonal movement keys on the numeric keypad to prevent further shortcut
