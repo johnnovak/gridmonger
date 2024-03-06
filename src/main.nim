@@ -197,6 +197,14 @@ type
     logFile:     File
 
 
+  WalkCursorMode = enum
+    wcmStrafe = (0, "Strafe")
+    wcmTurn   = (1, "Turn")
+
+  WalkKeys = object
+    forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
+
+
   Preferences = object
     showSplash:         bool
     autoCloseSplash:    bool
@@ -209,6 +217,7 @@ type
     autosaveFreqMins:   Natural
 
     movementWraparound: bool
+    walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
 
 
@@ -255,6 +264,9 @@ type
     prevCursor:         Location
     cursorOrient:       CardinalDir
     editMode:           EditMode
+
+    walkKeysWasd:       WalkKeys
+    walkKeysCursor:     WalkKeys
 
     # to restore the previous edit mode when exiting emPanLevel
     prevEditMode:       EditMode
@@ -479,6 +491,7 @@ type
 
     # Editing tab
     movementWraparound: bool
+    walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
 
 
@@ -705,27 +718,66 @@ const
     downRight : {keyN, keyKp3}
   )
 
-type WalkKeys = object
-  forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
+func `+`(a: WalkKeys, b: WalkKeys): WalkKeys =
+  result = WalkKeys(
+    forward     : a.forward     + b.forward,
+    backward    : a.backward    + b.backward,
+    strafeLeft  : a.strafeLeft  + b.strafeLeft,
+    strafeRight : a.strafeRight + b.strafeRight,
+    turnLeft    : a.turnLeft    + b.turnLeft,
+    turnRight   : a.turnRight   + b.turnRight
+  )
 
 const
-  WalkKeysCursor = WalkKeys(
-    forward     : {keyKp8, keyUp},
-    backward    : {keyKp2, keyKp5, Key.keyDown},
-    strafeLeft  : {keyKp4, keyLeft},
-    strafeRight : {keyKp6, keyRight},
+  WalkKeysCursorStrafe = WalkKeys(
+    forward     : {keyUp},
+    backward    : {Key.keyDown},
+    strafeLeft  : {keyLeft},
+    strafeRight : {keyRight},
+    turnLeft    : {},
+    turnRight   : {}
+  )
+
+  WalkKeysCursorTurn = WalkKeys(
+    forward     : {keyUp},
+    backward    : {Key.keyDown},
+    strafeLeft  : {},
+    strafeRight : {},
+    turnLeft    : {keyLeft},
+    turnRight   : {keyRight}
+  )
+
+  WalkKeysKeypad = WalkKeys(
+    forward     : {keyKp8},
+    backward    : {keyKp2, keyKp5},
+    strafeLeft  : {keyKp4},
+    strafeRight : {keyKp6},
     turnLeft    : {keyKp7},
     turnRight   : {keyKp9}
   )
 
   WalkKeysWasd = WalkKeys(
-    forward     : WalkKeysCursor.forward     + {keyW},
-    backward    : WalkKeysCursor.backward    + {Key.keyS},
-    strafeLeft  : WalkKeysCursor.strafeLeft  + {keyA},
-    strafeRight : WalkKeysCursor.strafeRight + {keyD},
-    turnLeft    : WalkKeysCursor.turnLeft    + {keyQ},
-    turnRight   : WalkKeysCursor.turnRight   + {keyE}
+    forward     : {keyW},
+    backward    : {Key.keyS},
+    strafeLeft  : {keyA},
+    strafeRight : {keyD},
+    turnLeft    : {keyQ},
+    turnRight   : {keyE}
   )
+
+func makeWalkKeysCursor(mode: WalkCursorMode): WalkKeys =
+  if mode == wcmStrafe:
+    result = WalkKeysKeypad + WalkKeysCursorStrafe
+  elif mode == wcmTurn:
+    result = WalkKeysKeypad + WalkKeysCursorTurn
+
+func makeWalkKeysWasd(walkKeysCursor: WalkKeys): WalkKeys =
+  walkKeysCursor + WalkKeysWasd
+
+proc updateWalkKeys(a) =
+  a.ui.walkKeysCursor = makeWalkKeysCursor(a.prefs.walkCursorMode)
+  a.ui.walkKeysWasd   = makeWalkKeysWasd(a.ui.walkKeysCursor)
+
 
 const
   AllWasdMoveKeys = {keyQ, keyW, keyE, keyA, Key.keyS, keyD}
@@ -2375,6 +2427,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
   cfg.set(p & "editing.movement-wraparound",    a.prefs.movementWraparound)
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
+  cfg.set(p & "editing.walk-cursor-mode",       enumToDashCase($a.prefs.walkCursorMode))
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
 
   p = "last-state."
@@ -2580,15 +2633,16 @@ const
   ConfirmDlgHeight = 160.0
 
   DialogLayoutParams = AutoLayoutParams(
-    itemsPerRow      : 2,
-    rowWidth         : 370.0,
-    labelWidth       : 160.0,
-    sectionPad       : 0.0,
-    leftPad          : 0.0,
-    rightPad         : 0.0,
-    rowPad           : 8.0,
-    rowGroupPad      : 20.0,
-    defaultRowHeight : 24.0
+    itemsPerRow       : 2,
+    rowWidth          : 370.0,
+    labelWidth        : 160.0,
+    sectionPad        : 0.0,
+    leftPad           : 0.0,
+    rightPad          : 0.0,
+    rowPad            : 8.0,
+    rowGroupPad       : 20.0,
+    defaultRowHeight  : 24.0,
+    defaultItemHeight : 24.0
   )
 
 # }}}
@@ -3113,9 +3167,11 @@ proc openPreferencesDialog(a) =
 
   dlg.autosave           = a.prefs.autosave
   dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
+  dlg.vsync              = a.prefs.vsync
+
   dlg.movementWraparound = a.prefs.movementWraparound
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
-  dlg.vsync              = a.prefs.vsync
+  dlg.walkCursorMode     = a.prefs.walkCursorMode
 
   a.dialogs.activeDialog = dlgPreferencesDialog
 
@@ -3156,7 +3212,6 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.label("Show splash image", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.showSplash, style = a.theme.checkBoxStyle)
-
 
       var disabled = not dlg.showSplash
       koi.label("Auto-close splash",
@@ -3235,6 +3290,10 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.yubnMovementKeys, style = a.theme.checkBoxStyle)
 
+      koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
+      koi.nextItemWidth(80)
+      koi.dropDown(dlg.walkCursorMode)
+
   koi.endView()
 
 
@@ -3256,9 +3315,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     # Editing
     a.prefs.movementWraparound = dlg.movementWraparound
     a.prefs.yubnMovementKeys   = dlg.yubnMovementKeys
+    a.prefs.walkCursorMode     = dlg.walkCursorMode
 
     saveAppConfig(a)
     setSwapInterval(a)
+    updateWalkKeys(a)
 
     closeDialog(a)
 
@@ -5765,7 +5826,7 @@ proc handleGlobalKeyEvents(a) =
     var ke = ke
     ke.mods = ke.mods - {mkCtrl}
 
-    let k = if opts.wasdMode: WalkKeysWasd else: WalkKeysCursor
+    let k = if opts.wasdMode: ui.walkKeysWasd else: ui.walkKeysCursor
 
     if   ke.isKeyDown(k.turnLeft,    repeat=true): ui.cursorOrient = left()
     elif ke.isKeyDown(k.turnRight,   repeat=true): ui.cursorOrient = right()
@@ -9087,6 +9148,8 @@ proc initPreferences(cfg: HoconNode; a) =
                            "auto-save.frequency-mins", 2
                          ).limit(AutosaveFreqMinsLimits)
 
+    vsync = prefs.getBoolOrDefault("video.vsync", true)
+
     const MovementWraparoundKey = "editing.movement-wraparound"
     if prefs.getOpt(MovementWraparoundKey).isSome:
       movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey, false)
@@ -9101,7 +9164,8 @@ proc initPreferences(cfg: HoconNode; a) =
 
     yubnMovementKeys = prefs.getBoolOrDefault("editing.yubn-movement-keys")
 
-    vsync = prefs.getBoolOrDefault("video.vsync", true)
+    walkCursorMode = prefs.getEnumOrDefault("editing.walk-cursor-mode",
+                                            WalkCursorMode)
 
 # }}}
 # {{{ restoreUIStateFromConfig()
@@ -9182,6 +9246,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   restoreUIStateFromConfig(cfg, a)
 
+  updateWalkKeys(a)
   updateLastCursorViewCoords(a)
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
