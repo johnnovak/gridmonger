@@ -47,3 +47,7 @@ opposite side when moved past the edges of the level (see
 **YUBN diagonal movement** enables moving the cursor in the intercardinal
 directions via the YUBN keys in addition to the numeric keypad (see
 :ref:`moving-around:Diagonal movement`).
+
+**Walk mode Left/Right keys** controls whether the left and right cursor keys
+perform strafing or turning in :ref:`moving-around:Walk mode`. This is
+especially useful on keyboards without a numeric keypad.

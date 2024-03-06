@@ -232,9 +232,9 @@ Walk Mode
 *Walk Mode* can be toggled with the :kbd:`\`` key (that's the `grave accent
 <https://en.wikipedia.org/wiki/Grave_accent>`_ or backtick key located in the
 top-left corner of the keyboard before the :kbd:`1` key). The cursor is
-displayed as a triangle instead of a square in this mode. The triangle points
-to the walking direction and represents your avatar; you can turn, strafe, and
-move forward and backward, just like in a classic dungeon crawler.
+displayed as a triangle instead of a square in *Walk Mode*. The triangle
+represents your avatar and points to the walking direction; you can turn,
+strafe, and move forward and backward, just like in a classic dungeon crawler.
 
 .. raw:: html
 
@@ -248,9 +248,13 @@ move forward and backward, just like in a classic dungeon crawler.
     </div>
 
 
-The cursor keys perform different actions in this mode, and Vim-style HJKL
-navigation is not available (it would be too confusing):
+By default, the left and right cursor keys perform strafing in *Walk Mode*.
+You can change this to turning instead with the **Walk mode Left/Right keys**
+option in the :ref:`preferences:Editing tab` of the
+:ref:`preferences:Preferences` dialog.
 
+Depending on whether :kbd:`←` and :kbd:`→` perform strafing or
+turning, you can still use the other action with the :kbd:`Alt` modifier:
 
 .. raw:: html
 
@@ -258,38 +262,78 @@ navigation is not available (it would be too confusing):
       <thead>
         <tr>
           <th>Arrow</th>
+          <th>Strafe mode</th>
+          <th>Turn mode</th>
+        </tr>
+      </thead>
+      <tbody class="no-padding">
+        <tr>
+          <td><kbd>&uarr;</kbd></td>
+          <td>Forward</td>
+          <td>Forward</td>
+        </tr>
+        <tr>
+          <td><kbd>&darr;</kbd></td>
+          <td>Backward</td>
+          <td>Backward</td>
+        </tr>
+        <tr>
+          <td><kbd>&larr;</kbd></td>
+          <td>Strafe left</td>
+          <td>Turn left</td>
+        </tr>
+        <tr>
+          <td><kbd>Alt</kbd>+<kbd>&larr;</kbd></td>
+          <td>Turn left</td>
+          <td>Strafe left</td>
+        </tr>
+        <tr>
+          <td><kbd>&rarr;</kbd></td>
+          <td>Strafe right</td>
+          <td>Turn right</td>
+        </tr>
+        <tr>
+          <td><kbd>Alt</kbd>+<kbd>&rarr;</kbd></td>
+          <td>Turn right</td>
+          <td>Strafe right</td>
+        </tr>
+      </tbody>
+    </table>
+
+The strafe and turn actions are always available on the keypad without
+the need for the :kbd:`Alt` modifier:
+
+.. raw:: html
+
+    <table class="shortcuts std-move-keys">
+      <thead>
+        <tr>
           <th>Keypad</th>
           <th></th>
         </tr>
       </thead>
       <tbody class="no-padding">
         <tr>
-          <td><kbd>&larr;</kbd></td>
           <td><kbd>kp 4</kbd></td>
           <td>Strafe left</td>
         </tr>
         <tr>
-          <td><kbd>&rarr;</kbd></td>
           <td><kbd>kp 6</kbd></td>
           <td>Strafe right</td>
         </tr>
         <tr>
-          <td><kbd>&uarr;</kbd></td>
           <td><kbd>kp 8</kbd></td>
           <td>Forward</td>
         </tr>
         <tr>
-          <td><kbd>&darr;</kbd></td>
           <td><kbd>kp 2</kbd><kbd>kp 5</kbd></td>
           <td>Backward</td>
         </tr>
         <tr>
-          <td>&ndash;</td>
           <td><kbd>kp 7</kbd></td>
           <td>Turn left</td>
         </tr>
         <tr>
-          <td>&ndash;</td>
           <td><kbd>kp 9</kbd></td>
           <td>Turn right</td>
         </tr>
@@ -301,7 +345,11 @@ modifiers to perform jumps or pan the level, respectively, and the same
 :ref:`moving-around:Mouse movement actions` are also available.
 
 Diagonal movement is not available in *Walk Mode* as it's not compatible with
-the concept, and the numeric keys are used for other purposes anyway. 
+the concept, and the numeric keys are used for other purposes anyway.
+
+You can't use Vim-style HJKL navigation for walking either as that would be
+too confusing. Consider using the :ref:`moving-around:WASD + Walk Mode` option
+instead.
 
 
 WASD Mode
@@ -361,7 +409,7 @@ movement keys become a bit more interesting:
     <table class="shortcuts std-move-keys">
       <thead>
         <tr>
-          <th>Arrow</th>
+          <th>Arrow<br>(Turn mode)</th>
           <th>Keypad</th>
           <th>WASD</th>
           <th></th>
@@ -406,6 +454,10 @@ movement keys become a bit more interesting:
         </tr>
       </tbody>
     </table>
+
+Strafe mode, turn mode, and the  :kbd:`Alt` modifiers for the arrow keys work
+exactly the same way as in :ref:`moving-around:Walk mode`; they have only been
+omitted for brevity.
 
 Admittedly, this is the most complex mode, and while some people might find it
 really useful, if it doesn't click with you, don't feel compelled to use it.
