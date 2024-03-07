@@ -430,6 +430,7 @@ article a:hover {
 }
 article dl > dt > kbd {
   padding-left: 0.5em;
+  font-weight: normal;
 }
 article nav {
   margin: 1em 0 1em 0;
@@ -618,7 +619,6 @@ article table.shortcuts.std-move-keys > tbody > tr > td {
 }
 article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(1) {
   width: 25%;
-  padding: 0;
 }
 article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(2) {
   width: 25%;
