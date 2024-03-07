@@ -734,6 +734,8 @@ const
     backward    : {Key.keyDown},
     strafeLeft  : {keyLeft},
     strafeRight : {keyRight},
+
+    # Alt+Left/Right for turning is handled as a special case
     turnLeft    : {},
     turnRight   : {}
   )
@@ -741,10 +743,12 @@ const
   WalkKeysCursorTurn = WalkKeys(
     forward     : {keyUp},
     backward    : {Key.keyDown},
-    strafeLeft  : {},
-    strafeRight : {},
     turnLeft    : {keyLeft},
-    turnRight   : {keyRight}
+    turnRight   : {keyRight},
+
+    # Alt+Left/Right for strafing is handled as a special case
+    strafeLeft  : {},
+    strafeRight : {}
   )
 
   WalkKeysKeypad = WalkKeys(
@@ -5823,24 +5827,47 @@ proc handleGlobalKeyEvents(a) =
       if ke.key in AllWasdMoveKeys: return
       else: s = CursorJump
 
+    let altDown = mkAlt in ke.mods
+
     var ke = ke
-    ke.mods = ke.mods - {mkCtrl}
+    ke.mods = ke.mods - {mkCtrl, mkAlt}
 
     let k = if opts.wasdMode: ui.walkKeysWasd else: ui.walkKeysCursor
 
-    if   ke.isKeyDown(k.turnLeft,    repeat=true): ui.cursorOrient = left()
-    elif ke.isKeyDown(k.turnRight,   repeat=true): ui.cursorOrient = right()
-    elif ke.isKeyDown(k.forward,     repeat=true): moveCursor(ui.cursorOrient, s, a)
-    elif ke.isKeyDown(k.backward,    repeat=true): moveCursor(backward(), s, a)
-    elif ke.isKeyDown(k.strafeLeft,  repeat=true): moveCursor(left(), s, a)
-    elif ke.isKeyDown(k.strafeRight, repeat=true): moveCursor(right(), s, a)
+    if   ke.isKeyDown(k.forward,  repeat=true):
+      moveCursor(ui.cursorOrient, s, a)
 
-    elif ke.isKeyDown(k.turnLeft,    {mkShift}, repeat=true): ui.cursorOrient = left()
-    elif ke.isKeyDown(k.turnRight,   {mkShift}, repeat=true): ui.cursorOrient = right()
-    elif ke.isKeyDown(k.strafeLeft,  {mkShift}, repeat=true): moveLevel(left(), s, a)
-    elif ke.isKeyDown(k.strafeRight, {mkShift}, repeat=true): moveLevel(right(), s, a)
-    elif ke.isKeyDown(k.forward,     {mkShift}, repeat=true): moveLevel(ui.cursorOrient, s, a)
-    elif ke.isKeyDown(k.backward,    {mkShift}, repeat=true): moveLevel(backward(), s, a)
+    elif ke.isKeyDown(k.backward, repeat=true):
+      moveCursor(backward(), s, a)
+
+    elif ke.isKeyDown(k.forward,  {mkShift}, repeat=true):
+      moveLevel(ui.cursorOrient, s, a)
+
+    elif ke.isKeyDown(k.backward, {mkShift}, repeat=true):
+      moveLevel(backward(), s, a)
+
+    case a.prefs.walkCursorMode:
+    of wcmStrafe:
+      if   ke.isKeyDown(k.strafeLeft,             repeat=true) or
+           ke.isKeyDown(k.strafeLeft,  {mkShift}, repeat=true):
+        if altDown: ui.cursorOrient = left()
+        else:       moveCursor(left(), s, a)
+
+      elif ke.isKeyDown(k.strafeRight,            repeat=true) or
+           ke.isKeyDown(k.strafeRight, {mkShift}, repeat=true):
+        if altDown: ui.cursorOrient = right()
+        else:       moveCursor(right(), s, a)
+
+    of wcmTurn:
+      if   ke.isKeyDown(k.turnLeft) or
+           ke.isKeyDown(k.turnLeft, {mkShift}):
+        if altDown: moveCursor(left(), s, a)
+        else:       ui.cursorOrient = left()
+
+      elif ke.isKeyDown(k.turnRight) or
+           ke.isKeyDown(k.turnRight, {mkShift}):
+        if altDown: moveCursor(right(), s, a)
+        else:       ui.cursorOrient = right()
 
   # }}}
   # {{{ moveKeyToCardinalDir()
