@@ -1745,7 +1745,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
   let wraparound = a.prefs.movementWraparound
 
-  template stepSE(curPos: Natural, maxPos: Natural) =
+  template stepInc(curPos: Natural, maxPos: Natural) =
     let newPos = curPos + steps
     if newPos > maxPos and wraparound:
       curPos = newPos.floorMod(maxPos + 1)
@@ -1753,7 +1753,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
     else:
       curPos = min(newPos, maxPos)
 
-  template stepNW(curPos: Natural, maxPos: Natural) =
+  template stepDec(curPos: Natural, maxPos: Natural) =
     let newPos = curPos - steps
     let minPos = 0
     if newPos < minPos and wraparound:
@@ -1764,7 +1764,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
   case dir:
   of dirE:
-    stepSE(cur.col, maxPos=(l.cols - 1))
+    stepInc(cur.col, maxPos=(l.cols - 1))
 
     let viewCol = viewCol(cur.col, a)
     let viewColMax = dp.viewCols-1 - sm
@@ -1772,7 +1772,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
       dp.viewStartCol = (l.cols - dp.viewCols).clamp(0, dp.viewStartCol +
                                                         (viewCol - viewColMax))
   of dirS:
-    stepSE(cur.row, maxPos=(l.rows - 1))
+    stepInc(cur.row, maxPos=(l.rows - 1))
 
     let viewRow = viewRow(cur.row, a)
     let viewRowMax = dp.viewRows-1 - sm
@@ -1781,14 +1781,14 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
                                                         (viewRow - viewRowMax))
 
   of dirW:
-    stepNW(cur.col, maxPos=(l.cols - 1))
+    stepDec(cur.col, maxPos=(l.cols - 1))
 
     let viewCol = viewCol(cur.col, a)
     if viewCol < sm:
       dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
 
   of dirN:
-    stepNW(cur.row, maxPos=(l.rows - 1))
+    stepDec(cur.row, maxPos=(l.rows - 1))
 
     let viewRow = viewRow(cur.row, a)
     if viewRow < sm:
@@ -1800,6 +1800,25 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 # {{{ moveCursor()
 proc moveCursor(dir: CardinalDir, steps: Natural = 1; a) =
   let cur = stepCursor(a.ui.cursor, dir, steps, a)
+  setCursor(cur, a)
+
+# }}}
+# {{{ moveCursor()
+proc moveCursor(dir: Direction, steps: Natural = 1; a) =
+  let l = currLevel(a)
+
+  var cur = a.ui.cursor
+  for i in 0..<steps:
+    if not a.prefs.movementWraparound:
+      if (dirN in dir and cur.row == 0)        or
+         (dirS in dir and cur.row == l.rows-1) or
+         (dirW in dir and cur.col == 0)        or
+         (dirE in dir and cur.col == l.cols-1):
+        return
+
+    for d in dir:
+      cur = stepCursor(cur, d, steps=1, a)
+
   setCursor(cur, a)
 
 # }}}
@@ -1865,8 +1884,8 @@ proc locationAtMouse(clampToBounds=false, a): Option[Location] =
       result = Location.none
 
 # }}}
-# {{{ moveLevel()
-proc moveLevel(dir: CardinalDir, steps: Natural = 1; a) =
+# {{{ stepLevelView()
+proc stepLevelView(dir: CardinalDir; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
@@ -1877,10 +1896,10 @@ proc moveLevel(dir: CardinalDir, steps: Natural = 1; a) =
   var newViewStartRow = dp.viewStartRow
 
   case dir:
-  of dirE: newViewStartCol = min(dp.viewStartCol + steps, maxViewStartCol)
-  of dirW: newViewStartCol = max(dp.viewStartCol - steps, 0)
-  of dirS: newViewStartRow = min(dp.viewStartRow + steps, maxViewStartRow)
-  of dirN: newViewStartRow = max(dp.viewStartRow - steps, 0)
+  of dirE: newViewStartCol = min(dp.viewStartCol + 1, maxViewStartCol)
+  of dirW: newViewStartCol = max(dp.viewStartCol - 1, 0)
+  of dirS: newViewStartRow = min(dp.viewStartRow + 1, maxViewStartRow)
+  of dirN: newViewStartRow = max(dp.viewStartRow - 1, 0)
 
   var cur = a.ui.cursor
   cur.row = cur.row + viewRow(newViewStartRow, a)
@@ -1889,6 +1908,27 @@ proc moveLevel(dir: CardinalDir, steps: Natural = 1; a) =
 
   dp.viewStartRow = newViewStartRow
   dp.viewStartCol = newViewStartCol
+
+# }}}
+# {{{ moveLevelView()
+proc moveLevelView(dir: Direction, steps: Natural = 1; a) =
+  alias(dp, a.ui.drawLevelParams)
+
+  a.opts.drawTrail = false
+
+  let l = currLevel(a)
+  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
+  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
+
+  for i in 0..<steps:
+    if (dirN in dir and dp.viewStartRow == 0) or
+       (dirS in dir and dp.viewStartRow == maxViewStartRow) or
+       (dirW in dir and dp.viewStartCol == 0) or
+       (dirE in dir and dp.viewStartCol == maxViewStartCol):
+      return
+
+    for d in dir:
+      stepLevelView(d, a)
 
 # }}}
 
@@ -5874,14 +5914,14 @@ proc handleLevelMouseEvents(a) =
     if colSteps == 0: discard
     else:
       ui.mouseDragStartX = koi.mx()
-      if colSteps > 0: moveLevel(dirE,  colSteps, a)
-      else:            moveLevel(dirW, -colSteps, a)
+      if colSteps > 0: moveLevelView(East,  colSteps, a)
+      else:            moveLevelView(West, -colSteps, a)
 
     if rowSteps == 0: discard
     else:
       ui.mouseDragStartY = koi.my()
-      if rowSteps > 0: moveLevel(dirS,  rowSteps, a)
-      else:            moveLevel(dirN, -rowSteps, a)
+      if rowSteps > 0: moveLevelView(South,  rowSteps, a)
+      else:            moveLevelView(North, -rowSteps, a)
 
     if ui.editMode == emPanLevel and
       ui.prevEditMode in {emPastePreview, emMovePreview}:
@@ -6094,10 +6134,10 @@ proc handleGlobalKeyEvents(a) =
       moveCursor(backward(), s, a)
 
     elif ke.isKeyDown(k.forward,  {mkShift}, repeat=true):
-      moveLevel(ui.cursorOrient, s, a)
+      moveLevelView({ui.cursorOrient}, s, a)
 
     elif ke.isKeyDown(k.backward, {mkShift}, repeat=true):
-      moveLevel(backward(), s, a)
+      moveLevelView({backward()}, s, a)
 
     case a.prefs.walkCursorMode:
     of wcmStrafe:
@@ -6195,11 +6235,6 @@ proc handleGlobalKeyEvents(a) =
         return
       else: s = CursorJump
 
-    if allowPan and mkShift in ke.mods:
-      if ke.key in DiagonalMoveLetterKeys:
-        # Disallow Shift+Y/U/B/N panning as it would interfere with shorcuts
-        return
-
     let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
             else: MoveKeysCursor
 
@@ -6213,29 +6248,39 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, s, a)
     elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, s, a)
     elif allowPan:
-      if   ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevel(dirW, s, a)
-      elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevel(dirE, s, a)
-      elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevel(dirN, s, a)
-      elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevel(dirS, s, a)
+      if   ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevelView(West,  s, a)
+      elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevelView(East,  s, a)
+      elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevelView(North, s, a)
+      elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevelView(South, s, a)
 
     if allowDiagonal:
       let d = DiagonalMoveKeysCursor
 
+      # move cursor
       if ke.isKeyDown(d.upLeft, repeat=true):
-        moveCursor(dirN, s, a)
-        moveCursor(dirW, s, a)
+        moveCursor(NorthWest, s, a)
 
       elif ke.isKeyDown(d.upRight, repeat=true):
-        moveCursor(dirN, s, a)
-        moveCursor(dirE, s, a)
+        moveCursor(NorthEast, s, a)
 
       elif ke.isKeyDown(d.downLeft, repeat=true):
-        moveCursor(dirS, s, a)
-        moveCursor(dirW, s, a)
+        moveCursor(SouthWest, s, a)
 
       elif ke.isKeyDown(d.downRight, repeat=true):
-        moveCursor(dirS, s, a)
-        moveCursor(dirE, s, a)
+        moveCursor(SouthEast, s, a)
+
+      # move level
+      elif ke.isKeyDown(d.upLeft, {mkShift}, repeat=true):
+        moveLevelView(NorthWest, s, a)
+
+      elif ke.isKeyDown(d.upRight, {mkShift}, repeat=true):
+        moveLevelView(NorthEast, s, a)
+
+      elif ke.isKeyDown(d.downLeft, {mkShift}, repeat=true):
+        moveLevelView(SouthWest, s, a)
+
+      elif ke.isKeyDown(d.downRight, {mkShift}, repeat=true):
+        moveLevelView(SouthEast, s, a)
 
     result = false
 
