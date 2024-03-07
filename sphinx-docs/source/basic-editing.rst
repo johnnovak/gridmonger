@@ -454,8 +454,8 @@ The trail data for all levels is saved into the map file.
 
     *Trail Mode* is turned off automatically when performing an action that
     would yield confusing or unwanted results with it being on (e.g., creating
-    or deleting levels, changing the current level, entering *Select Mode*,
-    etc.)
+    or deleting levels, changing the current level, or working with
+    :ref:`advanced-editing:Selections`).
 
 
 .. rst-class:: style6 big
