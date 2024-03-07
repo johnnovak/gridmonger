@@ -170,6 +170,171 @@ const
   ]
 
 # }}}
+# {{{ AppShortCut
+
+type AppShortcut = enum
+  # General
+  scNextTextField,
+  scAccept,
+  scCancel,
+  scDiscard,
+  scUndo,
+  scRedo,
+
+  # Maps
+  scNewMap,
+  scOpenMap,
+  scSaveMap,
+  scSaveMapAs,
+  scEditMapProps,
+
+  # Levels
+  scNewLevel,
+  scDeleteLevel,
+  scEditLevelProps,
+  scResizeLevel,
+
+  # Regions
+  scEditRegionProps,
+
+  # Themes
+  scReloadTheme,
+  scPreviousTheme,
+  scNextTheme,
+
+  # Editing
+  scCycleFloorGroup1Forward,
+  scCycleFloorGroup2Forward,
+  scCycleFloorGroup3Forward,
+  scCycleFloorGroup4Forward,
+  scCycleFloorGroup5Forward,
+  scCycleFloorGroup6Forward,
+  scCycleFloorGroup7Forward,
+  scCycleFloorGroup8Forward,
+
+  scCycleFloorGroup1Backward,
+  scCycleFloorGroup2Backward,
+  scCycleFloorGroup3Backward,
+  scCycleFloorGroup4Backward,
+  scCycleFloorGroup5Backward,
+  scCycleFloorGroup6Backward,
+  scCycleFloorGroup7Backward,
+  scCycleFloorGroup8Backward,
+
+  scExcavateTunnel,
+  scEraseCell,
+  scDrawClearFloor,
+  scToggleFloorOrientation,
+
+  scSetFloorColor,
+  scPickFloorColor,
+  scPreviousFloorColor,
+  scNextFloorColor,
+
+  scSelectFloorColor1,
+  scSelectFloorColor2,
+  scSelectFloorColor3,
+  scSelectFloorColor4,
+  scSelectFloorColor5,
+  scSelectFloorColor6,
+  scSelectFloorColor7,
+  scSelectFloorColor8,
+  scSelectFloorColor9,
+  scSelectFloorColor10,
+
+  scDrawWall,
+  scDrawWallRepeat,
+  scDrawSpecialWall,
+  scPreviousSpecialWall,
+  scNextSpecialWall,
+
+  scSelectSpecialWall1,
+  scSelectSpecialWall2,
+  scSelectSpecialWall3,
+  scSelectSpecialWall4,
+  scSelectSpecialWall5,
+  scSelectSpecialWall6,
+  scSelectSpecialWall7,
+  scSelectSpecialWall8,
+  scSelectSpecialWall9,
+  scSelectSpecialWall10,
+  scSelectSpecialWall11,
+  scSelectSpecialWall12,
+
+  scEraseTrail,
+  scExcavateTrail,
+  scClearTrail,
+
+  scJumpToLinkedCell,
+  scLinkCell,
+
+  scPreviousLevel,
+  scNextLevel,
+
+  scZoomIn,
+  scZoomOut,
+
+  scMarkSelection,
+  scPaste,
+  scPastePreview,
+  scNudgePreview,
+  scPasteAccept,
+
+  scEditNote,
+  scEraseNote,
+  scEditLabel,
+  scEraseLabel,
+
+  scShowNoteTooltip,
+
+  # Select mode
+  scSelectionDraw,
+  scSelectionErase,
+  scSelectionAll,
+  scSelectionNone,
+  scSelectionAddRect,
+  scSelectionSubRect,
+  scSelectionCopy,
+  scSelectionMove,
+  scSelectionEraseArea,
+  scSelectionFillArea,
+  scSelectionSurroundArea,
+  scSelectionSetFloorColorArea,
+  scSelectionCropArea,
+
+  # Options
+  scToggleCellCoords,
+  scToggleNotesPane,
+  scToggleToolsPane,
+  scToggleWalkMode,
+  scToggleWasdMode,
+  scToggleDrawTrail,
+  scToggleTitleBar,
+  scTogglePasteWraparound,
+
+  # Misc
+  scShowAboutDialog,
+  scOpenUserManual,
+  scToggleThemeEditor,
+  scEditPreferences,
+  scToggleQuickReference,
+
+# }}}
+# {{{ QuickRefItem
+type
+  QuickRefItemKind = enum
+    qkShortcut, qkKeyShortcuts, qkCustomShortcuts, qkDescription, qkSeparator
+
+  QuickRefItem = object
+    sepa: char
+    case kind: QuickRefItemKind
+    of qkShortcut:        shortcut:        AppShortcut
+    of qkKeyShortcuts:    keyShortcuts:    seq[KeyShortcut]
+    of qkCustomShortcuts: customShortcuts: seq[string]
+    of qkDescription:     description:     string
+    of qkSeparator:      discard
+
+# }}}
 # {{{ App context
 
 type
@@ -260,6 +425,9 @@ type
 
 
   UIState = object
+    shortcuts:          Table[AppShortCut, seq[KeyShortcut]]
+    quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
+
     cursor:             Location
     prevCursor:         Location
     cursorOrient:       CardinalDir
@@ -687,6 +855,219 @@ var g_app: AppContext
 using a: var AppContext
 
 # }}}
+# {{{ Quick keyboard reference definitions
+
+proc sc(sc: AppShortcut): QuickRefItem =
+  QuickRefItem(kind: qkShortcut, shortcut: sc)
+
+proc sc(sc: seq[AppShortcut], sepa = '/'; a): QuickRefItem =
+  var shortcuts: seq[KeyShortcut] = @[]
+  for s in sc: shortcuts.add(a.ui.shortcuts[s][0])
+  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts, sepa: sepa)
+
+proc sc(sc: KeyShortcut): QuickRefItem =
+  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: @[sc])
+
+proc sc(sc: seq[KeyShortcut], sepa = '/'): QuickRefItem =
+  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: sc, sepa: sepa)
+
+proc csc(s: seq[string]): QuickRefItem =
+  QuickRefItem(kind: qkCustomShortcuts, customShortcuts: s)
+
+proc desc(s: string): QuickRefItem =
+  QuickRefItem(kind: qkDescription, description: s)
+
+const QuickRefSepa = QuickRefItem(kind: qkSeparator)
+
+# {{{ General
+func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
+  @[
+    @[
+      scNewMap.sc,            "New map".desc,
+      scOpenMap.sc,           "Open map".desc,
+      scSaveMap.sc,           "Save map".desc,
+      scSaveMapAs.sc,         "Save map as".desc,
+      scEditMapProps.sc,      "Edit map properties".desc,
+      QuickRefSepa,
+
+      scnewLevel.sc,           "New level".desc,
+      scDeleteLevel.sc,       "Delete level".desc,
+      scEditLevelProps.sc,    "Edit level properties".desc,
+      QuickRefSepa,
+
+      scEditRegionProps.sc,   "Edit region properties".desc,
+      QuickRefSepa,
+
+      scPreviousLevel.sc,     "Previous level".desc,
+      scNextLevel.sc,         "Next level".desc,
+
+      scToggleCellCoords.sc,  "Toggle cell coordinates".desc,
+      scToggleNotesPane.sc,   "Toggle notes pane".desc,
+      scToggleToolsPane.sc,   "Toggle tools pane".desc,
+    ],
+    @[
+      @[scZoomIn,
+        scZoomOut].sc(a=a),   "Zoom in/out".desc,
+      QuickRefSepa,
+
+      scUndo.sc,              "Undo last action".desc,
+      scRedo.sc,              "Redo last action".desc,
+
+      scToggleWalkMode.sc,    "Toggle walk mode".desc,
+      scToggleWasdMode.sc,    "Toggle WASD mode".desc,
+      QuickRefSepa,
+
+      scShowNoteTooltip.sc,   "Display note tooltip".desc,
+      QuickRefSepa,
+
+      scPreviousTheme.sc,     "Previous theme".desc,
+      scNextTheme.sc,         "Next theme".desc,
+      scReloadTheme.sc,       "Reload current theme".desc,
+      QuickRefSepa,
+
+      scShowAboutDialog.sc,      "Show about dialog".desc,
+      scToggleQuickReference.sc, "Show quick keyboard reference".desc,
+      scOpenUserManual.sc,       "Open user manual in browser".desc,
+      QuickRefSepa,
+
+      scEditPreferences.sc,   "Preferences".desc,
+      QuickRefSepa,
+
+      scToggleThemeEditor.sc, "Toggle theme editor".desc,
+      scToggleTitleBar.sc,    "Toggle title bar".desc,
+    ]
+  ]
+
+# }}}
+# {{{ Editing
+func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
+  @[
+    @[
+      scExcavateTunnel.sc,         "Excavate".desc,
+      scEraseCell.sc,              "Erase cell".desc,
+      scDrawClearFloor.sc,         "Clear floor".desc,
+      scToggleFloorOrientation.sc, "Toggle floor orientation".desc,
+      QuickRefSepa,
+
+      scDrawWall.sc,            "Toggle wall".desc,
+      scDrawSpecialWall.sc,     "Toggle special wall".desc,
+
+      @[scPreviousSpecialWall,
+        scNextSpecialWall].sc(a=a), "Previous/next special wall".desc,
+      QuickRefSepa,
+
+      @[scPreviousFloorColor,
+        scNextFloorColor].sc(a=a), "Previous/next floor colour".desc,
+
+      scSetFloorColor.sc,       "Set floor colour".desc,
+      scPickFloorColor.sc,      "Pick floor colour".desc,
+      QuickRefSepa,
+
+      scToggleDrawTrail.sc,     "Toggle draw trail".desc,
+      scExcavateTrail.sc,       "Excavate trail in current level".desc,
+      scClearTrail.sc,          "Clear trail in current level".desc,
+      scEraseTrail.sc,          "Erase trail".desc,
+      QuickRefSepa,
+
+      scMarkSelection.sc,       "Enter Select (Mark) mode".desc,
+      scPaste.sc,               "Paste copy buffer contents".desc,
+      scPastePreview.sc,        "Enter Paste Preview mode".desc,
+      QuickRefSepa,
+
+      scEditNote.sc,            "Create/edit note".desc,
+      scEraseNote.sc,           "Erase note".desc,
+      scEditLabel.sc,           "Create/edit text label".desc,
+      scEraseLabel.sc,          "Erase text label".desc,
+      QuickRefSepa,
+
+    ],
+    @[
+      scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
+      scLinkCell.sc,            "Set link destination".desc,
+      QuickRefSepa,
+
+      scResizeLevel.sc,         "Resize level".desc,
+      scNudgePreview.sc,        "Enter Nudge Level mode".desc,
+      QuickRefSepa,
+
+      @[scCycleFloorGroup1Forward,
+        scCycleFloorGroup1Backward].sc(a=a), "Cycle door".desc,
+
+      @[scCycleFloorGroup2Forward,
+        scCycleFloorGroup2Backward].sc(a=a), "Cycle special door".desc,
+
+      @[scCycleFloorGroup3Forward,
+        scCycleFloorGroup3Backward].sc(a=a), "Cycle pressure plate".desc,
+
+      @[scCycleFloorGroup4Forward,
+        scCycleFloorGroup4Backward].sc(a=a), "Cycle pit".desc,
+
+      @[scCycleFloorGroup5Forward,
+        scCycleFloorGroup5Backward].sc(a=a), "Cycle special".desc,
+
+      @[scCycleFloorGroup6Forward,
+        scCycleFloorGroup6Backward].sc(a=a), "Cycle entry/exit".desc,
+
+      @[scCycleFloorGroup7Forward,
+        scCycleFloorGroup7Backward].sc(a=a), "Draw bridge".desc,
+
+      @[scCycleFloorGroup8Forward,
+        scCycleFloorGroup8Backward].sc(a=a), "Cycle column/statue".desc,
+
+      QuickRefSepa,
+
+      scSelectSpecialWall1.sc,  "Special wall: Open door".desc,
+      scSelectSpecialWall2.sc,  "Special wall: Locked door".desc,
+      scSelectSpecialWall3.sc,  "Special wall: Archway".desc,
+      scSelectSpecialWall4.sc,  "Special wall: Secret Door".desc,
+      scSelectSpecialWall5.sc,  "Special wall: One-way door".desc,
+      scSelectSpecialWall6.sc,  "Special wall: Illusory wall".desc,
+      scSelectSpecialWall7.sc,  "Special wall: Invisible wall".desc,
+      scSelectSpecialWall8.sc,  "Special wall: Lever".desc,
+      scSelectSpecialWall9.sc,  "Special wall: Niche".desc,
+      scSelectSpecialWall10.sc, "Special wall: Statue".desc,
+      scSelectSpecialWall11.sc, "Special wall: Keyhole".desc,
+      scSelectSpecialWall12.sc, "Special wall: Writing".desc,
+      QuickRefSepa,
+    ]
+  ]
+
+# }}}
+# {{{ Dialogs
+func mkQuickRefDialogs(a): seq[seq[QuickRefItem]] =
+  @[
+    @[
+      KeyShortcut(key: keyTab,
+                  mods: {mkShift}).sc, "Previous text input field".desc,
+
+      scNextTextField.sc, "Next text input field".desc,
+      QuickRefSepa,
+
+      @[KeyShortcut(key: key1, mods: {mkCtrl}),
+        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
+
+      @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Switch current tab".desc,
+      QuickRefSepa,
+
+      @[fmt"{IconArrowsAll}"].csc, "Change radio button selection".desc,
+      QuickRefSepa,
+
+      scAccept.sc,  "Confirm".desc,
+      scCancel.sc,  "Cancel".desc,
+      scDiscard.sc, "Discard".desc,
+    ]
+  ]
+
+# }}}
+
+func mkQuickRefShortcuts(a): seq[seq[seq[QuickRefItem]]] =
+  @[
+    mkQuickRefGeneral(a),
+    mkQuickRefEditing(a),
+    mkQuickRefDialogs(a)
+  ]
+
+# }}}
 # {{{ Keyboard shortcuts
 
 type MoveKeys = object
@@ -769,18 +1150,18 @@ const
     turnRight   : {keyE}
   )
 
-func makeWalkKeysCursor(mode: WalkCursorMode): WalkKeys =
+func mkWalkKeysCursor(mode: WalkCursorMode): WalkKeys =
   if mode == wcmStrafe:
     result = WalkKeysKeypad + WalkKeysCursorStrafe
   elif mode == wcmTurn:
     result = WalkKeysKeypad + WalkKeysCursorTurn
 
-func makeWalkKeysWasd(walkKeysCursor: WalkKeys): WalkKeys =
+func mkWalkKeysWasd(walkKeysCursor: WalkKeys): WalkKeys =
   walkKeysCursor + WalkKeysWasd
 
 proc updateWalkKeys(a) =
-  a.ui.walkKeysCursor = makeWalkKeysCursor(a.prefs.walkCursorMode)
-  a.ui.walkKeysWasd   = makeWalkKeysWasd(a.ui.walkKeysCursor)
+  a.ui.walkKeysCursor = mkWalkKeysCursor(a.prefs.walkCursorMode)
+  a.ui.walkKeysWasd   = mkWalkKeysWasd(a.ui.walkKeysCursor)
 
 
 const
@@ -788,163 +1169,12 @@ const
   DiagonalMoveLetterKeys = {keyY, keyU, keyB, keyN}
 
 
-type AppShortcut = enum
-  # General
-  scNextTextField,
-  scAccept,
-  scCancel,
-  scDiscard,
-  scUndo,
-  scUndo_YubnMode,
-  scRedo,
-
-  # Maps
-  scNewMap,
-  scOpenMap,
-  scSaveMap,
-  scSaveMapAs,
-  scEditMapProps,
-
-  # Levels
-  scNewLevel,
-  scNewLevel_YubnMode,
-  scDeleteLevel,
-  scEditLevelProps,
-  scResizeLevel,
-
-  # Regions
-  scEditRegionProps,
-
-  # Themes
-  scReloadTheme,
-  scPreviousTheme,
-  scNextTheme,
-
-  # Editing
-  scCycleFloorGroup1Forward,
-  scCycleFloorGroup2Forward,
-  scCycleFloorGroup3Forward,
-  scCycleFloorGroup4Forward,
-  scCycleFloorGroup5Forward,
-  scCycleFloorGroup6Forward,
-  scCycleFloorGroup7Forward,
-  scCycleFloorGroup8Forward,
-
-  scCycleFloorGroup1Backward,
-  scCycleFloorGroup2Backward,
-  scCycleFloorGroup3Backward,
-  scCycleFloorGroup4Backward,
-  scCycleFloorGroup5Backward,
-  scCycleFloorGroup6Backward,
-  scCycleFloorGroup7Backward,
-  scCycleFloorGroup8Backward,
-
-  scExcavateTunnel,
-  scEraseCell,
-  scDrawClearFloor,
-  scToggleFloorOrientation,
-
-  scSetFloorColor,
-  scPickFloorColor,
-  scPreviousFloorColor,
-  scNextFloorColor,
-
-  scSelectFloorColor1,
-  scSelectFloorColor2,
-  scSelectFloorColor3,
-  scSelectFloorColor4,
-  scSelectFloorColor5,
-  scSelectFloorColor6,
-  scSelectFloorColor7,
-  scSelectFloorColor8,
-  scSelectFloorColor9,
-  scSelectFloorColor10,
-
-  scDrawWall,
-  scDrawWallRepeat,
-  scDrawSpecialWall,
-  scPreviousSpecialWall,
-  scNextSpecialWall,
-
-  scSelectSpecialWall1,
-  scSelectSpecialWall2,
-  scSelectSpecialWall3,
-  scSelectSpecialWall4,
-  scSelectSpecialWall5,
-  scSelectSpecialWall6,
-  scSelectSpecialWall7,
-  scSelectSpecialWall8,
-  scSelectSpecialWall9,
-  scSelectSpecialWall10,
-  scSelectSpecialWall11,
-  scSelectSpecialWall12,
-
-  scEraseTrail,
-  scExcavateTrail,
-  scClearTrail,
-
-  scJumpToLinkedCell,
-  scLinkCell,
-
-  scPreviousLevel,
-  scNextLevel,
-
-  scZoomIn,
-  scZoomOut,
-
-  scMarkSelection,
-  scPaste,
-  scPastePreview,
-  scNudgePreview,
-  scPasteAccept,
-
-  scEditNote,
-  scEditNote_YubnMode,
-  scEraseNote,
-  scEraseNote_YubnMode,
-  scEditLabel,
-  scEraseLabel,
-
-  scShowNoteTooltip,
-
-  # Select mode
-  scSelectionDraw,
-  scSelectionErase,
-  scSelectionAll,
-  scSelectionNone,
-  scSelectionNone_YubnMode,
-  scSelectionAddRect,
-  scSelectionSubRect,
-  scSelectionCopy,
-  scSelectionMove,
-  scSelectionEraseArea,
-  scSelectionFillArea,
-  scSelectionSurroundArea,
-  scSelectionSetFloorColorArea,
-  scSelectionCropArea,
-
-  # Options
-  scToggleCellCoords,
-  scToggleNotesPane,
-  scToggleToolsPane,
-  scToggleWalkMode,
-  scToggleWasdMode,
-  scToggleDrawTrail,
-  scToggleTitleBar,
-  scTogglePasteWraparound,
-
-  # Misc
-  scShowAboutDialog,
-  scOpenUserManual,
-  scToggleThemeEditor,
-  scEditPreferences,
-  scToggleQuickReference,
-
+# {{{ DefaultAppShortcuts
 
 # TODO Intoduce win/mac specific shorcuts, switchable at runtime via prefs?
 # (e.g. use Cmd instead of Ctrl in shortcuts on Mac; Mac specific text box
 # editing shortcuts, etc.)
-let g_appShortcuts = {
+let DefaultAppShortcuts = {
   # General
   scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
 
@@ -957,9 +1187,7 @@ let g_appShortcuts = {
   scDiscard:            @[mkKeyShortcut(keyD,             {mkAlt})],
 
   scUndo:               @[mkKeyShortcut(keyZ,             {mkCtrl}),
-                          mkKeyShortcut(keyU,             {})],
-
-  scUndo_YubnMode:      @[mkKeyShortcut(keyZ,             {mkCtrl}),
+                          mkKeyShortcut(keyU,             {}),
                           mkKeyShortcut(keyU,             {mkCtrl})],
 
   scRedo:               @[mkKeyShortcut(keyY,             {mkCtrl}),
@@ -973,8 +1201,9 @@ let g_appShortcuts = {
   scEditMapProps:       @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
 
   # Levels
-  scNewLevel:              @[mkKeyShortcut(keyN,          {mkCtrl})],
-  scNewLevel_YubnMode:     @[mkKeyShortcut(keyN,          {mkCtrl, mkShift})],
+  scNewLevel:              @[mkKeyShortcut(keyN,          {mkCtrl}),
+                             mkKeyShortcut(keyN,          {mkCtrl, mkShift})],
+
   scDeleteLevel   :        @[mkKeyShortcut(keyD,          {mkCtrl})],
   scEditLevelProps:        @[mkKeyShortcut(keyP,          {mkCtrl})],
   scResizeLevel:           @[mkKeyShortcut(keyE,          {mkCtrl})],
@@ -1076,10 +1305,12 @@ let g_appShortcuts = {
                                  mkKeyShortcut(keyEnter,      {}),
                                  mkKeyShortcut(keyKpEnter,    {})],
 
-  scEditNote:                  @[mkKeyShortcut(keyN,          {})],
-  scEditNote_YubnMode:         @[mkKeyShortcut(keyN,          {mkCtrl})],
-  scEraseNote:                 @[mkKeyShortcut(keyN,          {mkShift})],
-  scEraseNote_YubnMode:        @[mkKeyShortcut(keyX,          {mkCtrl})],
+  scEditNote:                  @[mkKeyShortcut(keyN,          {}),
+                                 mkKeyShortcut(keyN,          {mkCtrl})],
+
+  scEraseNote:                 @[mkKeyShortcut(keyN,          {mkShift}),
+                                 mkKeyShortcut(keyX,          {mkCtrl})],
+
   scEditLabel:                 @[mkKeyShortcut(keyT,          {mkCtrl})],
   scEraseLabel:                @[mkKeyShortcut(keyT,          {mkShift})],
 
@@ -1090,8 +1321,8 @@ let g_appShortcuts = {
   scSelectionErase:              @[mkKeyShortcut(keyE,        {})],
   scSelectionAll:                @[mkKeyShortcut(keyA,        {})],
 
-  scSelectionNone:               @[mkKeyShortcut(keyU,        {})],
-  scSelectionNone_YubnMode:      @[mkKeyShortcut(keyX,        {})],
+  scSelectionNone:               @[mkKeyShortcut(keyU,        {}),
+                                   mkKeyShortcut(keyX,        {})],
 
   scSelectionAddRect:            @[mkKeyShortcut(keyR,        {})],
   scSelectionSubRect:            @[mkKeyShortcut(Key.keyS,    {})],
@@ -1125,6 +1356,23 @@ let g_appShortcuts = {
 
 }.toTable
 
+# }}}
+
+# {{{ makeYubnAppShortcuts()
+proc mkYubnAppShortcuts(): Table[AppShortCut, seq[KeyShortcut]] =
+  var sc = DefaultAppShortcuts
+
+  sc[scUndo]          = @[mkKeyShortcut(keyZ, {mkCtrl}),
+                          mkKeyShortcut(keyU, {mkCtrl})]
+
+  sc[scNewLevel]      = @[mkKeyShortcut(keyN, {mkCtrl, mkShift})]
+  sc[scEditNote]      = @[mkKeyShortcut(keyN, {mkCtrl})]
+  sc[scEraseNote]     = @[mkKeyShortcut(keyX, {mkCtrl})]
+  sc[scSelectionNone] = @[mkKeyShortcut(keyX, {})]
+
+  sc
+
+# }}}
 # {{{ toStr()
 proc toStr(k: Key): string =
   case k
@@ -1204,16 +1452,14 @@ proc toStr(k: KeyShortcut): string =
   s.add(k.key.toStr())
   s.join("+")
 
-
-proc toStr(sc: AppShortcut, idx = -1): string =
-
+proc toStr(sc: AppShortcut; a; idx = -1): string =
   var s: seq[string] = @[]
   if idx == -1:
-    for k in g_appShortcuts[sc]:
+    for k in a.ui.shortcuts[sc]:
       s.add(k.toStr())
     result = s.join("/")
   else:
-    result = g_appShortcuts[sc][idx].toStr()
+    result = a.ui.shortcuts[sc][idx].toStr()
 # }}}
 
 # }}}
@@ -1357,18 +1603,16 @@ proc setErrorMessage(msg: string; a) =
 # }}}
 # {{{ setSelectModeSelectMessage()
 proc setSelectModeSelectMessage(a) =
-  let selectionNone = if a.prefs.yubnMovementKeys: scSelectionNone_YubnMode
-                      else: scSelectionNone
   setStatusMessage(
     IconSelection, "Mark selection",
-    @[scSelectionDraw.toStr(),    "draw",
-      scSelectionErase.toStr(),   "erase",
-      scSelectionAddRect.toStr(), "add rect",
-      scSelectionSubRect.toStr(), "sub rect",
-      scSelectionAll.toStr(),     "mark all",
-      selectionNone.toStr(),      "unmark all",
-      scSelectionCopy.toStr(),    "copy",
-      "Ctrl",                     "special"],
+    @[scSelectionDraw.toStr(a),    "draw",
+      scSelectionErase.toStr(a),   "erase",
+      scSelectionAddRect.toStr(a), "add rect",
+      scSelectionSubRect.toStr(a), "sub rect",
+      scSelectionAll.toStr(a),     "mark all",
+      scSelectionNone.toStr(a),    "unmark all",
+      scSelectionCopy.toStr(a),    "copy",
+      "Ctrl",                      "special"],
     a
   )
 
@@ -1377,12 +1621,12 @@ proc setSelectModeSelectMessage(a) =
 proc setSelectModeSpecialActionsMessage(a) =
   setStatusMessage(
     IconSelection, "Mark selection",
-    @[scSelectionEraseArea.toStr(),         "erase",
-      scSelectionFillArea.toStr(),          "fill",
-      scSelectionSurroundArea.toStr(),      "surround",
-      scSelectionCropArea.toStr(),          "crop",
-      scSelectionMove.toStr(),              "move",
-      scSelectionSetFloorColorArea.toStr(), "set colour"],
+    @[scSelectionEraseArea.toStr(a),         "erase",
+      scSelectionFillArea.toStr(a),          "fill",
+      scSelectionSurroundArea.toStr(a),      "surround",
+      scSelectionCropArea.toStr(a),          "crop",
+      scSelectionMove.toStr(a),              "move",
+      scSelectionSetFloorColorArea.toStr(a), "set colour"],
     a
   )
 
@@ -1392,7 +1636,8 @@ proc setSetLinkDestinationMessage(floor: Floor; a) =
   setStatusMessage(IconLink,
                    fmt"Set {linkFloorToString(floor)} destination",
                    @[IconArrowsAll, "select cell",
-                   scAccept.toStr(0), "set", scCancel.toStr(0), "cancel"], a)
+                   scAccept.toStr(a, idx=0), "set",
+                   scCancel.toStr(a, idx=0), "cancel"], a)
 # }}}
 # {{{ setNudgePreviewModeMessage()
 proc setNudgePreviewModeMessage(a) =
@@ -1401,7 +1646,7 @@ proc setNudgePreviewModeMessage(a) =
 
   setStatusMessage(IconArrowsAll, "Nudge preview",
                    @[IconArrowsAll, "nudge",
-                   scTogglePasteWraparound.toStr(), wraparoundMsg,
+                   scTogglePasteWraparound.toStr(a), wraparoundMsg,
                    "Enter", "confirm", "Esc", "cancel"], a)
 
 # }}}
@@ -1848,6 +2093,14 @@ proc setSwapInterval(a) =
 # }}}
 # {{{ Key event helpers
 
+# {{{ updateShortcuts()
+proc updateShortcuts(a) =
+  a.ui.shortcuts = if a.prefs.yubnMovementKeys: mkYubnAppShortcuts()
+                   else: DefaultAppShortcuts
+
+  a.ui.quickRefShortcuts = mkQuickRefShortcuts(a)
+
+# }}}
 # {{{ hasKeyEvent()
 proc hasKeyEvent(): bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
@@ -1873,40 +2126,39 @@ proc isKeyDown(ev: Event, key: Key,
 # }}}
 # {{{ checkShortcut()
 proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
-                   actions: set[KeyAction], ignoreMods=false): bool =
+                   actions: set[KeyAction], ignoreMods=false; a): bool =
   if ev.kind == ekKey:
     if ev.action in actions:
       let currShortcut = mkKeyShortcut(ev.key, ev.mods)
       for sc in shortcuts:
         if ignoreMods:
-          for asc in g_appShortcuts[sc]:
+          for asc in a.ui.shortcuts[sc]:
             if asc.key == ev.key:
               return true
         else:
-          if currShortcut in g_appShortcuts[sc]:
+          if currShortcut in a.ui.shortcuts[sc]:
             return true
 
 # }}}
 # {{{ isShortcutDown()
-proc isShortcutDown(ev: Event, shortcuts: set[AppShortcut],
+proc isShortcutDown(ev: Event, shortcuts: set[AppShortcut]; a;
                     repeat=false, ignoreMods=false): bool =
   let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
-  checkShortcut(ev, shortcuts, actions, ignoreMods)
+  checkShortcut(ev, shortcuts, actions, ignoreMods, a)
 
-proc isShortcutDown(ev: Event, shortcut: AppShortcut,
+proc isShortcutDown(ev: Event, shortcut: AppShortcut; a;
                     repeat=false, ignoreMods=false): bool =
-  isShortcutDown(ev, {shortcut}, repeat, ignoreMods)
+  isShortcutDown(ev, {shortcut}, a, repeat, ignoreMods)
 
 # }}}
 # {{{ isShortcutUp()
-proc isShortcutUp(ev: Event, shortcuts: set[AppShortcut]): bool =
-  checkShortcut(ev, shortcuts, actions={kaUp}, ignoreMods=true)
+proc isShortcutUp(ev: Event, shortcuts: set[AppShortcut]; a): bool =
+  checkShortcut(ev, shortcuts, actions={kaUp}, ignoreMods=true, a)
 
-proc isShortcutUp(ev: Event, shortcut: AppShortcut): bool =
-  isShortcutUp(ev, {shortcut})
+proc isShortcutUp(ev: Event, shortcut: AppShortcut; a): bool =
+  isShortcutUp(ev, {shortcut}, a)
 
 # }}}
-
 # }}}
 
 # {{{ Theme handling
@@ -3151,7 +3403,7 @@ proc aboutDialog(a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if ke.isShortcutDown(scCancel) or ke.isShortcutDown(scAccept):
+    if ke.isShortcutDown(scCancel, a) or ke.isShortcutDown(scAccept, a):
       closeAction(a)
     else: eventHandled = false
 
@@ -3324,6 +3576,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     saveAppConfig(a)
     setSwapInterval(a)
     updateWalkKeys(a)
+    updateShortcuts(a)
 
     closeDialog(a)
 
@@ -3351,11 +3604,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
     dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
-    if   ke.isShortcutDown(scNextTextField):
+    if   ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -3430,9 +3683,9 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel):  cancelAction(a)
-    elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
-    elif ke.isShortcutDown(scAccept):  okAction(dlg, a)
+    if   ke.isShortcutDown(scCancel, a):  cancelAction(a)
+    elif ke.isShortcutDown(scDiscard, a): discardAction(dlg, a)
+    elif ke.isShortcutDown(scAccept, a):  okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -3564,11 +3817,11 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
     dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
-    if   ke.isShortcutDown(scNextTextField):
+    if   ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -3692,11 +3945,11 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 
     dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
-    if   ke.isShortcutDown(scNextTextField):
+    if   ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -3882,11 +4135,11 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
 
     dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
-    if   ke.isShortcutDown(scNextTextField):
+    if   ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4049,11 +4302,11 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
 
     dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
 
-    if   ke.isShortcutDown(scNextTextField):
+    if   ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4188,11 +4441,11 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
       handleGridRadioButton(ke, ord(dlg.anchor), AnchorIcons.len, IconsPerRow)
     )
 
-    if ke.isShortcutDown(scNextTextField):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4257,8 +4510,8 @@ proc deleteLevelDialog(a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(a)
+    if   ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4473,11 +4726,11 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
         ke, dlg.icon, NoteIcons.len, IconsPerRow
       )
 
-    if ke.isShortcutDown(scNextTextField):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4606,11 +4859,11 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
       ke, dlg.color, NumIndexColors, buttonsPerRow=NumIndexColors
     )
 
-    if ke.isShortcutDown(scNextTextField):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4732,11 +4985,11 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if ke.isShortcutDown(scNextTextField):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4810,9 +5063,9 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel):  cancelAction(a)
-    elif ke.isShortcutDown(scDiscard): discardAction(dlg, a)
-    elif ke.isShortcutDown(scAccept):  okAction(dlg, a)
+    if   ke.isShortcutDown(scCancel, a):  cancelAction(a)
+    elif ke.isShortcutDown(scDiscard, a): discardAction(dlg, a)
+    elif ke.isShortcutDown(scAccept, a):  okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4883,8 +5136,8 @@ proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    if   ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -4994,11 +5247,11 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scNextTextField):
+    if   ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -5107,11 +5360,11 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scNextTextField):
+    if   ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
-    elif ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(dlg, a)
+    elif ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -5175,8 +5428,8 @@ proc deleteThemeDialog(a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scCancel): cancelAction(a)
-    elif ke.isShortcutDown(scAccept): okAction(a)
+    if   ke.isShortcutDown(scCancel, a): cancelAction(a)
+    elif ke.isShortcutDown(scAccept, a): okAction(a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
@@ -6033,21 +6286,21 @@ proc handleGlobalKeyEvents(a) =
                             allowWasdKeys=true, allowDiagonal=true, a):
           setStatusMessage("moved", a)
 
-      if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
 
       let cur = ui.cursor
 
-      if not opts.wasdMode and ke.isShortcutDown(scExcavateTunnel):
+      if not opts.wasdMode and ke.isShortcutDown(scExcavateTunnel, a):
         ui.editMode = emExcavateTunnel
         startExcavateTunnelAction(a)
 
       elif not (opts.wasdMode and opts.walkMode) and
-           ke.isShortcutDown(scEraseCell):
+           ke.isShortcutDown(scEraseCell, a):
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
 
-      elif ke.isShortcutDown(scDrawClearFloor):
+      elif ke.isShortcutDown(scDrawClearFloor, a):
         ui.editMode = emDrawClearFloor
         setStatusMessage(IconEraser, "Draw/clear floor",
                          @[IconArrowsAll, "draw/clear"], a)
@@ -6055,7 +6308,7 @@ proc handleGlobalKeyEvents(a) =
         actions.drawClearFloor(map, loc=cur, undoLoc=cur,
                                ui.currFloorColor, um, groupWithPrev=false)
 
-      elif ke.isShortcutDown(scToggleFloorOrientation):
+      elif ke.isShortcutDown(scToggleFloorOrientation, a):
         let floor = map.getFloor(cur)
 
         if floor != fEmpty:
@@ -6070,7 +6323,7 @@ proc handleGlobalKeyEvents(a) =
           setWarningMessage("Cannot set floor orientation of an empty cell",
                             a=a)
 
-      elif ke.isShortcutDown(scSetFloorColor):
+      elif ke.isShortcutDown(scSetFloorColor, a):
         ui.editMode = emColorFloor
         setStatusMessage(IconEraser, "Set floor colour",
                          @[IconArrowsAll, "set colour"], a)
@@ -6079,91 +6332,91 @@ proc handleGlobalKeyEvents(a) =
           actions.setFloorColor(map, loc=cur, undoLoc=cur,
                                 ui.currFloorColor, um, groupWithPrev=false)
 
-      elif not opts.wasdMode and ke.isShortcutDown(scDrawWall):
+      elif not opts.wasdMode and ke.isShortcutDown(scDrawWall, a):
         enterDrawWallMode(specialWall = false, a)
 
-      elif ke.isShortcutDown(scDrawSpecialWall):
+      elif ke.isShortcutDown(scDrawSpecialWall, a):
         enterDrawWallMode(specialWall = true, a)
 
 
-      elif ke.isShortcutDown(scCycleFloorGroup1Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup1Forward, a):
         cycleFloorGroupAction(FloorGroup1, forward=true, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup2Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup2Forward, a):
         cycleFloorGroupAction(FloorGroup2, forward=true, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup3Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup3Forward, a):
         cycleFloorGroupAction(FloorGroup3, forward=true, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup4Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup4Forward, a):
         cycleFloorGroupAction(FloorGroup4, forward=true, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup5Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup5Forward, a):
         cycleFloorGroupAction(FloorGroup5, forward=true, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup6Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup6Forward, a):
         cycleFloorGroupAction(FloorGroup6, forward=true, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup7Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup7Forward, a):
         cycleFloorGroupAction(FloorGroup7, forward=true, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup8Forward):
+      elif ke.isShortcutDown(scCycleFloorGroup8Forward, a):
         cycleFloorGroupAction(FloorGroup8, forward=true, a)
 
 
-      elif ke.isShortcutDown(scCycleFloorGroup1Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup1Backward, a):
         cycleFloorGroupAction(FloorGroup1, forward=false, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup2Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup2Backward, a):
         cycleFloorGroupAction(FloorGroup2, forward=false, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup3Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup3Backward, a):
         cycleFloorGroupAction(FloorGroup3, forward=false, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup4Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup4Backward, a):
         cycleFloorGroupAction(FloorGroup4, forward=false, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup5Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup5Backward, a):
         cycleFloorGroupAction(FloorGroup5, forward=false, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup6Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup6Backward, a):
         cycleFloorGroupAction(FloorGroup6, forward=false, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup7Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup7Backward, a):
         cycleFloorGroupAction(FloorGroup7, forward=false, a)
 
-      elif ke.isShortcutDown(scCycleFloorGroup8Backward):
+      elif ke.isShortcutDown(scCycleFloorGroup8Backward, a):
         cycleFloorGroupAction(FloorGroup8, forward=false, a)
 
-      elif ke.isShortcutDown(scSelectSpecialWall1):  selectSpecialWall(0, a)
-      elif ke.isShortcutDown(scSelectSpecialWall2):  selectSpecialWall(1, a)
-      elif ke.isShortcutDown(scSelectSpecialWall3):  selectSpecialWall(2, a)
-      elif ke.isShortcutDown(scSelectSpecialWall4):  selectSpecialWall(3, a)
-      elif ke.isShortcutDown(scSelectSpecialWall5):  selectSpecialWall(4, a)
-      elif ke.isShortcutDown(scSelectSpecialWall6):  selectSpecialWall(5, a)
-      elif ke.isShortcutDown(scSelectSpecialWall7):  selectSpecialWall(6, a)
-      elif ke.isShortcutDown(scSelectSpecialWall8):  selectSpecialWall(7, a)
-      elif ke.isShortcutDown(scSelectSpecialWall9):  selectSpecialWall(8, a)
-      elif ke.isShortcutDown(scSelectSpecialWall10): selectSpecialWall(9, a)
-      elif ke.isShortcutDown(scSelectSpecialWall11): selectSpecialWall(10, a)
-      elif ke.isShortcutDown(scSelectSpecialWall12): selectSpecialWall(11, a)
+      elif ke.isShortcutDown(scSelectSpecialWall1, a):  selectSpecialWall(0, a)
+      elif ke.isShortcutDown(scSelectSpecialWall2, a):  selectSpecialWall(1, a)
+      elif ke.isShortcutDown(scSelectSpecialWall3, a):  selectSpecialWall(2, a)
+      elif ke.isShortcutDown(scSelectSpecialWall4, a):  selectSpecialWall(3, a)
+      elif ke.isShortcutDown(scSelectSpecialWall5, a):  selectSpecialWall(4, a)
+      elif ke.isShortcutDown(scSelectSpecialWall6, a):  selectSpecialWall(5, a)
+      elif ke.isShortcutDown(scSelectSpecialWall7, a):  selectSpecialWall(6, a)
+      elif ke.isShortcutDown(scSelectSpecialWall8, a):  selectSpecialWall(7, a)
+      elif ke.isShortcutDown(scSelectSpecialWall9, a):  selectSpecialWall(8, a)
+      elif ke.isShortcutDown(scSelectSpecialWall10, a): selectSpecialWall(9, a)
+      elif ke.isShortcutDown(scSelectSpecialWall11, a): selectSpecialWall(10, a)
+      elif ke.isShortcutDown(scSelectSpecialWall12, a): selectSpecialWall(11, a)
 
-      elif ke.isShortcutDown(scPreviousSpecialWall, repeat=true):
+      elif ke.isShortcutDown(scPreviousSpecialWall, repeat=true, a=a):
         if ui.currSpecialWall > 0: dec(ui.currSpecialWall)
         else: ui.currSpecialWall = SpecialWalls.high
 
-      elif ke.isShortcutDown(scNextSpecialWall, repeat=true):
+      elif ke.isShortcutDown(scNextSpecialWall, repeat=true, a=a):
         if ui.currSpecialWall < SpecialWalls.high: inc(ui.currSpecialWall)
         else: ui.currSpecialWall = 0
 
-      elif ke.isShortcutDown(scEraseTrail):
+      elif ke.isShortcutDown(scEraseTrail, a):
         if not opts.drawTrail:
           ui.editMode = emEraseTrail
           startEraseTrailAction(a)
         else:
           setWarningMessage("Cannot erase trail when draw trail is on", a=a)
 
-      elif ke.isShortcutDown(scExcavateTrail):
+      elif ke.isShortcutDown(scExcavateTrail, a):
         let bbox = l.calcTrailBoundingBox()
         if bbox.isSome:
           actions.excavateTrail(map, cur, bbox.get, ui.currFloorColor, um)
@@ -6174,7 +6427,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("No trail to excavate", a=a)
 
-      elif ke.isShortcutDown(scClearTrail):
+      elif ke.isShortcutDown(scClearTrail, a):
         let bbox = l.calcTrailBoundingBox()
         if bbox.isSome:
           actions.clearTrailInLevel(map, cur, bbox.get, um)
@@ -6182,35 +6435,32 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("No trail to clear", a=a)
 
-      elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
+      elif ke.isShortcutDown(scPreviousFloorColor, repeat=true, a=a):
         selectPrevFloorColor(a)
 
-      elif ke.isShortcutDown(scNextFloorColor, repeat=true):
+      elif ke.isShortcutDown(scNextFloorColor, repeat=true, a=a):
         selectNextFloorColor(a)
 
-      elif ke.isShortcutDown(scPickFloorColor): pickFloorColor(a)
+      elif ke.isShortcutDown(scPickFloorColor, a): pickFloorColor(a)
 
-      elif ke.isShortcutDown(scSelectFloorColor1):  selectFloorColor(0, a)
-      elif ke.isShortcutDown(scSelectFloorColor2):  selectFloorColor(1, a)
-      elif ke.isShortcutDown(scSelectFloorColor3):  selectFloorColor(2, a)
-      elif ke.isShortcutDown(scSelectFloorColor4):  selectFloorColor(3, a)
-      elif ke.isShortcutDown(scSelectFloorColor5):  selectFloorColor(4, a)
-      elif ke.isShortcutDown(scSelectFloorColor6):  selectFloorColor(5, a)
-      elif ke.isShortcutDown(scSelectFloorColor7):  selectFloorColor(6, a)
-      elif ke.isShortcutDown(scSelectFloorColor8):  selectFloorColor(7, a)
-      elif ke.isShortcutDown(scSelectFloorColor9):  selectFloorColor(8, a)
-      elif ke.isShortcutDown(scSelectFloorColor10): selectFloorColor(9, a)
+      elif ke.isShortcutDown(scSelectFloorColor1, a):  selectFloorColor(0, a)
+      elif ke.isShortcutDown(scSelectFloorColor2, a):  selectFloorColor(1, a)
+      elif ke.isShortcutDown(scSelectFloorColor3, a):  selectFloorColor(2, a)
+      elif ke.isShortcutDown(scSelectFloorColor4, a):  selectFloorColor(3, a)
+      elif ke.isShortcutDown(scSelectFloorColor5, a):  selectFloorColor(4, a)
+      elif ke.isShortcutDown(scSelectFloorColor6, a):  selectFloorColor(5, a)
+      elif ke.isShortcutDown(scSelectFloorColor7, a):  selectFloorColor(6, a)
+      elif ke.isShortcutDown(scSelectFloorColor8, a):  selectFloorColor(7, a)
+      elif ke.isShortcutDown(scSelectFloorColor9, a):  selectFloorColor(8, a)
+      elif ke.isShortcutDown(scSelectFloorColor10, a): selectFloorColor(9, a)
 
-      elif (not yubnMode and ke.isShortcutDown(scUndo,          repeat=true)) or
-           (    yubnMode and ke.isShortcutDown(scUndo_YubnMode, repeat=true)):
-        undoAction(a)
+      elif ke.isShortcutDown(scUndo, repeat=true, a=a): undoAction(a)
+      elif ke.isShortcutDown(scRedo, repeat=true, a=a): redoAction(a)
 
-      elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
-
-      elif ke.isShortcutDown(scMarkSelection):
+      elif ke.isShortcutDown(scMarkSelection, a):
         enterSelectMode(a)
 
-      elif ke.isShortcutDown(scPaste):
+      elif ke.isShortcutDown(scPaste, a):
         if ui.copyBuf.isSome:
           actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
                                  pasteBufferLevelIndex=Natural.none,
@@ -6220,7 +6470,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("Cannot paste, buffer is empty", a=a)
 
-      elif ke.isShortcutDown(scPastePreview):
+      elif ke.isShortcutDown(scPastePreview, a):
         if ui.copyBuf.isSome:
           dp.selStartRow = cur.row
           dp.selStartCol = cur.col
@@ -6234,7 +6484,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("Cannot paste, buffer is empty", a=a)
 
-      elif ke.isShortcutDown(scNudgePreview):
+      elif ke.isShortcutDown(scNudgePreview, a):
         let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
 
@@ -6257,7 +6507,7 @@ proc handleGlobalKeyEvents(a) =
 
         setNudgePreviewModeMessage(a)
 
-      elif ke.isShortcutDown(scJumpToLinkedCell):
+      elif ke.isShortcutDown(scJumpToLinkedCell, a):
         let otherLocs = map.getLinkedLocations(cur)
 
         if otherLocs.len == 1:
@@ -6290,7 +6540,7 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("Not a linked cell", a=a)
 
-      elif ke.isShortcutDown(scLinkCell):
+      elif ke.isShortcutDown(scLinkCell, a):
         let floor = map.getFloor(cur)
         if floor in LinkSources:
           ui.linkSrcLocation = cur
@@ -6299,42 +6549,40 @@ proc handleGlobalKeyEvents(a) =
         else:
           setWarningMessage("Cannot link current cell", a=a)
 
-      elif ke.isShortcutDown(scZoomIn, repeat=true):
+      elif ke.isShortcutDown(scZoomIn, repeat=true, a=a):
         zoomIn(a)
         setStatusMessage(IconZoomIn,
           fmt"Zoomed in – level {dp.getZoomLevel()}", a)
 
-      elif ke.isShortcutDown(scZoomOut, repeat=true):
+      elif ke.isShortcutDown(scZoomOut, repeat=true, a=a):
         zoomOut(a)
         setStatusMessage(IconZoomOut,
                          fmt"Zoomed out – level {dp.getZoomLevel()}", a)
 
-      elif (not yubnMode and ke.isShortcutDown(scEditNote)) or
-           (    yubnMode and ke.isShortcutDown(scEditNote_YubnMode)):
+      elif ke.isShortcutDown(scEditNote, a):
         if map.isEmpty(cur):
           setWarningMessage("Cannot attach note to empty cell", a=a)
         else:
           openEditNoteDialog(a)
 
-      elif (not yubnMode and ke.isShortcutDown(scEraseNote)) or
-           (    yubnMode and ke.isShortcutDown(scEraseNote_YubnMode)):
+      elif ke.isShortcutDown(scEraseNote, a):
         if map.hasNote(cur):
           actions.eraseNote(map, cur, um)
           setStatusMessage(IconEraser, "Note erased", a)
         else:
           setWarningMessage("No note to erase in cell", a=a)
 
-      elif ke.isShortcutDown(scEditLabel):
+      elif ke.isShortcutDown(scEditLabel, a):
         openEditLabelDialog(a)
 
-      elif ke.isShortcutDown(scEraseLabel):
+      elif ke.isShortcutDown(scEraseLabel, a):
         if map.hasLabel(cur):
           actions.eraseLabel(map, cur, um)
           setStatusMessage(IconEraser, "Label erased", a)
         else:
           setWarningMessage("No label to erase in cell", a=a)
 
-      elif ke.isShortcutDown(scShowNoteTooltip):
+      elif ke.isShortcutDown(scShowNoteTooltip, a):
         if ui.manualNoteTooltipState.show:
           resetManualNoteTooltip(a)
         else:
@@ -6345,11 +6593,9 @@ proc handleGlobalKeyEvents(a) =
               mx = koi.mx()
               my = koi.my()
 
-      elif ke.isShortcutDown(scEditPreferences): openPreferencesDialog(a)
+      elif ke.isShortcutDown(scEditPreferences, a): openPreferencesDialog(a)
 
-      elif (not yubnMode and ke.isShortcutDown(scNewLevel)) or
-           (    yubnMode and ke.isShortcutDown(scNewLevel_YubnMode)):
-
+      elif ke.isShortcutDown(scNewLevel, a):
         if map.levels.len < NumLevelsLimits.maxInt:
           openNewLevelDialog(a)
         else:
@@ -6358,19 +6604,19 @@ proc handleGlobalKeyEvents(a) =
             fmt"({NumLevelsLimits.maxInt})", a=a
           )
 
-      elif ke.isShortcutDown(scDeleteLevel):
+      elif ke.isShortcutDown(scDeleteLevel, a):
         openDeleteLevelDialog(a)
 
-      elif ke.isShortcutDown(scNewMap): newMap(a)
-      elif ke.isShortcutDown(scEditMapProps): openEditMapPropsDialog(a)
+      elif ke.isShortcutDown(scNewMap, a): newMap(a)
+      elif ke.isShortcutDown(scEditMapProps, a): openEditMapPropsDialog(a)
 
-      elif ke.isShortcutDown(scEditLevelProps):
+      elif ke.isShortcutDown(scEditLevelProps, a):
         openEditLevelPropsDialog(a)
 
-      elif ke.isShortcutDown(scResizeLevel):
+      elif ke.isShortcutDown(scResizeLevel, a):
         openResizeLevelDialog(a)
 
-      elif ke.isShortcutDown(scEditRegionProps):
+      elif ke.isShortcutDown(scEditRegionProps, a):
         if l.regionOpts.enabled:
           openEditRegionPropertiesDialog(a)
         else:
@@ -6379,50 +6625,50 @@ proc handleGlobalKeyEvents(a) =
             a=a
           )
 
-      elif ke.isShortcutDown(scOpenMap):       openMap(a)
-      elif ke.isShortcutDown(scSaveMap):       saveMap(a)
-      elif ke.isShortcutDown(scSaveMapAs):     saveMapAs(a)
+      elif ke.isShortcutDown(scOpenMap, a):       openMap(a)
+      elif ke.isShortcutDown(scSaveMap, a):       saveMap(a)
+      elif ke.isShortcutDown(scSaveMapAs, a):     saveMapAs(a)
 
-      elif ke.isShortcutDown(scReloadTheme):   reloadTheme(a)
-      elif ke.isShortcutDown(scPreviousTheme): selectPrevTheme(a)
-      elif ke.isShortcutDown(scNextTheme):     selectNextTheme(a)
+      elif ke.isShortcutDown(scReloadTheme, a):   reloadTheme(a)
+      elif ke.isShortcutDown(scPreviousTheme, a): selectPrevTheme(a)
+      elif ke.isShortcutDown(scNextTheme, a):     selectNextTheme(a)
 
-      elif ke.isShortcutDown(scOpenUserManual):
+      elif ke.isShortcutDown(scOpenUserManual, a):
         openUserManual(a)
 
-      elif ke.isShortcutDown(scShowAboutDialog):
+      elif ke.isShortcutDown(scShowAboutDialog, a):
         openAboutDialog(a)
 
-      elif ke.isShortcutDown(scToggleThemeEditor):
+      elif ke.isShortcutDown(scToggleThemeEditor, a):
         toggleThemeEditor(a)
 
-      elif ke.isShortcutDown(scToggleQuickReference):
+      elif ke.isShortcutDown(scToggleQuickReference, a):
         showQuickReference(a)
 
       # Toggle options
-      elif ke.isShortcutDown(scToggleCellCoords):
+      elif ke.isShortcutDown(scToggleCellCoords, a):
         toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
 
-      elif ke.isShortcutDown(scToggleNotesPane):
+      elif ke.isShortcutDown(scToggleNotesPane, a):
         toggleShowOption(opts.showNotesPane, NoIcon, "Notes pane", a)
 
-      elif ke.isShortcutDown(scToggleToolsPane):
+      elif ke.isShortcutDown(scToggleToolsPane, a):
         toggleShowOption(opts.showToolsPane, NoIcon, "Tools pane", a)
 
-      elif ke.isShortcutDown(scToggleWalkMode):
+      elif ke.isShortcutDown(scToggleWalkMode, a):
         opts.walkMode = not opts.walkMode
         let msg = if opts.walkMode: "Walk mode" else: "Normal mode"
         setStatusMessage(msg, a)
 
-      elif ke.isShortcutDown(scToggleWasdMode):
+      elif ke.isShortcutDown(scToggleWasdMode, a):
         toggleOnOffOption(opts.wasdMode, IconMouse, "WASD mode", a)
 
-      elif ke.isShortcutDown(scToggleDrawTrail):
+      elif ke.isShortcutDown(scToggleDrawTrail, a):
         if not opts.drawTrail:
           actions.drawTrail(map, loc=cur, undoLoc=cur, um)
         toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
 
-      elif ke.isShortcutDown(scToggleTitleBar):
+      elif ke.isShortcutDown(scToggleTitleBar, a):
         toggleTitleBar(a)
 
     # }}}
@@ -6461,12 +6707,12 @@ proc handleGlobalKeyEvents(a) =
                                   ui.currFloorColor,
                                   um, groupWithPrev=opts.drawTrail)
 
-      if not opts.wasdMode and ke.isShortcutUp(scExcavateTunnel):
+      if not opts.wasdMode and ke.isShortcutUp(scExcavateTunnel, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
       if ke.isShortcutUp({scEraseCell, scDrawClearFloor, scEraseTrail,
-                          scSetFloorColor}):
+                          scSetFloorColor}, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -6496,11 +6742,11 @@ proc handleGlobalKeyEvents(a) =
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
                      allowDiagonal=false, handleMoveKey)
 
-      if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
+      if not opts.wasdMode and ke.isShortcutUp(scDrawWall, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isShortcutDown(scDrawWallRepeat, ignoreMods=true):
+      elif ke.isShortcutDown(scDrawWallRepeat, ignoreMods=true, a=a):
         if ui.drawWallRepeatAction == dwaNone:
           setWarningMessage("Set or clear wall in current cell first",
                             keepStatusMessage=true, a=a)
@@ -6508,7 +6754,7 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emDrawWallRepeat
           setDrawWallActionRepeatMessage(a)
 
-      elif ke.isShortcutUp(scDrawWallRepeat):
+      elif ke.isShortcutUp(scDrawWallRepeat, a):
         setDrawWallActionMessage(a)
 
     # }}}
@@ -6521,11 +6767,11 @@ proc handleGlobalKeyEvents(a) =
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=true,
                      allowDiagonal=false, drawWallRepeatMoveKeyHandler)
 
-      if ke.isShortcutUp(scDrawWallRepeat):
+      if ke.isShortcutUp(scDrawWallRepeat, a):
         ui.editMode = emDrawWall
         setDrawWallActionMessage(a)
 
-      if not opts.wasdMode and ke.isShortcutUp(scDrawWall):
+      if not opts.wasdMode and ke.isShortcutUp(scDrawWall, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -6568,11 +6814,11 @@ proc handleGlobalKeyEvents(a) =
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
                      allowDiagonal=false, handleMoveKey)
 
-      if ke.isShortcutUp(scDrawSpecialWall):
+      if ke.isShortcutUp(scDrawSpecialWall, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isShortcutDown(scDrawWallRepeat, ignoreMods=true):
+      elif ke.isShortcutDown(scDrawWallRepeat, ignoreMods=true, a=a):
         if ui.drawWallRepeatAction == dwaNone:
           setWarningMessage("Set or clear wall in current cell first",
                             keepStatusMessage=true, a=a)
@@ -6580,7 +6826,7 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emDrawSpecialWallRepeat
           setDrawSpecialWallActionRepeatMessage(a)
 
-      elif ke.isShortcutUp(scDrawWallRepeat):
+      elif ke.isShortcutUp(scDrawWallRepeat, a):
         setDrawSpecialWallActionMessage(a)
 
     # }}}
@@ -6593,11 +6839,11 @@ proc handleGlobalKeyEvents(a) =
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=true,
                      allowDiagonal=false, drawWallRepeatMoveKeyHandler)
 
-      if ke.isShortcutUp(scDrawWallRepeat):
+      if ke.isShortcutUp(scDrawWallRepeat, a):
         ui.editMode = emDrawSpecialWall
         setDrawSpecialWallActionMessage(a)
 
-      if ke.isShortcutUp(scDrawSpecialWall):
+      if ke.isShortcutUp(scDrawSpecialWall, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -6611,36 +6857,35 @@ proc handleGlobalKeyEvents(a) =
       if   koi.ctrlDown(): setSelectModeSpecialActionsMessage(a)
       else:                setSelectModeSelectMessage(a)
 
-      if   ke.isShortcutDown(scSelectionDraw):
+      if   ke.isShortcutDown(scSelectionDraw, a):
         ui.selection.get[cur.row, cur.col] = true
         ui.editMode = emSelectDraw
 
-      elif ke.isShortcutDown(scSelectionErase):
+      elif ke.isShortcutDown(scSelectionErase, a):
         ui.selection.get[cur.row, cur.col] = false
         ui.editMode = emSelectErase
 
-      elif ke.isShortcutDown(scSelectionAll):  ui.selection.get.fill(true)
+      elif ke.isShortcutDown(scSelectionAll, a):  ui.selection.get.fill(true)
 
-      elif (not yubnMode and ke.isShortcutDown(scSelectionNone)) or
-           (    yubnMode and ke.isShortcutDown(scSelectionNone_YubnMode)):
+      elif ke.isShortcutDown(scSelectionNone, a):
         ui.selection.get.fill(false)
 
-      elif ke.isShortcutDown({scSelectionAddRect, scSelectionSubRect}):
+      elif ke.isShortcutDown({scSelectionAddRect, scSelectionSubRect}, a):
         ui.editMode = emSelectRect
         ui.selRect = some(SelectionRect(
           startRow: cur.row,
           startCol: cur.col,
           rect: rectN(cur.row, cur.col, cur.row+1, cur.col+1),
-          selected: ke.isShortcutDown(scSelectionAddRect)
+          selected: ke.isShortcutDown(scSelectionAddRect, a)
         ))
 
-      elif ke.isShortcutDown(scSelectionCopy):
+      elif ke.isShortcutDown(scSelectionCopy, a):
         let bbox = copySelection(ui.copyBuf, a)
         if bbox.isSome:
           exitSelectMode(a)
           setStatusMessage(IconCopy, "Copied selection to buffer", a)
 
-      elif ke.isShortcutDown(scSelectionMove):
+      elif ke.isShortcutDown(scSelectionMove, a):
         let selection = ui.selection.get
         let bbox = copySelection(ui.nudgeBuf, a)
         if bbox.isSome:
@@ -6671,7 +6916,7 @@ proc handleGlobalKeyEvents(a) =
                            @[IconArrowsAll, "placement",
                            "Enter/P", "confirm", "Esc", "cancel"], a)
 
-      elif ke.isShortcutDown(scSelectionEraseArea):
+      elif ke.isShortcutDown(scSelectionEraseArea, a):
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
@@ -6679,7 +6924,7 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconEraser, "Erased selection", a)
 
-      elif ke.isShortcutDown(scSelectionFillArea):
+      elif ke.isShortcutDown(scSelectionFillArea, a):
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
@@ -6688,7 +6933,7 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Filled selection", a)
 
-      elif ke.isShortcutDown(scSelectionSurroundArea):
+      elif ke.isShortcutDown(scSelectionSurroundArea, a):
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
@@ -6697,7 +6942,7 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Surrounded selection with walls", a)
 
-      elif ke.isShortcutDown(scSelectionSetFloorColorArea):
+      elif ke.isShortcutDown(scSelectionSetFloorColorArea, a):
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
@@ -6706,7 +6951,7 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Set floor colour of selection", a)
 
-      elif ke.isShortcutDown(scSelectionCropArea):
+      elif ke.isShortcutDown(scSelectionCropArea, a):
         let sel = ui.selection.get
         let bbox = sel.boundingBox
         if bbox.isSome:
@@ -6715,22 +6960,22 @@ proc handleGlobalKeyEvents(a) =
           exitSelectMode(a)
           setStatusMessage(IconPencil, "Cropped level to selection", a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
 
-      elif ke.isShortcutDown(scPreviousFloorColor, repeat=true):
+      elif ke.isShortcutDown(scPreviousFloorColor, repeat=true, a=a):
         selectPrevFloorColor(a)
 
-      elif ke.isShortcutDown(scNextFloorColor, repeat=true):
+      elif ke.isShortcutDown(scNextFloorColor, repeat=true, a=a):
         selectNextFloorColor(a)
 
-      elif ke.isShortcutDown(scPickFloorColor): pickFloorColor(a)
+      elif ke.isShortcutDown(scPickFloorColor, a): pickFloorColor(a)
 
-      elif ke.isShortcutDown(scCancel):
+      elif ke.isShortcutDown(scCancel, a):
         exitSelectMode(a)
         a.clearStatusMessage()
 
-      elif ke.isShortcutDown(scOpenUserManual):
+      elif ke.isShortcutDown(scOpenUserManual, a):
         openUserManual(a)
 
     # }}}
@@ -6741,7 +6986,7 @@ proc handleGlobalKeyEvents(a) =
       let cur = ui.cursor
       ui.selection.get[cur.row, cur.col] = ui.editMode == emSelectDraw
 
-      if ke.isShortcutUp({scSelectionDraw, scSelectionErase}):
+      if ke.isShortcutUp({scSelectionDraw, scSelectionErase}, a):
         ui.editMode = emSelect
 
     # }}}
@@ -6768,7 +7013,7 @@ proc handleGlobalKeyEvents(a) =
 
       ui.selRect.get.rect = rectN(r1,c1, r2,c2)
 
-      if ke.isShortcutUp({scSelectionAddRect, scSelectionSubRect}):
+      if ke.isShortcutUp({scSelectionAddRect, scSelectionSubRect}, a):
         ui.selection.get.fill(ui.selRect.get.rect, ui.selRect.get.selected)
         ui.selRect = SelectionRect.none
         ui.editMode = emSelect
@@ -6783,7 +7028,7 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartRow = cur.row
       dp.selStartCol = cur.col
 
-      if ke.isShortcutDown(scPasteAccept):
+      if ke.isShortcutDown(scPasteAccept, a):
         actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
                                pasteBufferLevelIndex=Natural.none,
                                um, pasteTrail=true)
@@ -6791,17 +7036,17 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
-      elif ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
+      elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
 
-      elif ke.isShortcutDown(scCancel):
+      elif ke.isShortcutDown(scCancel, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isShortcutDown(scOpenUserManual):
+      elif ke.isShortcutDown(scOpenUserManual, a):
         openUserManual(a)
 
     # }}}
@@ -6814,7 +7059,7 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartRow = cur.row
       dp.selStartCol = cur.col
 
-      if ke.isShortcutDown(scPasteAccept):
+      if ke.isShortcutDown(scPasteAccept, a):
         actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
                                ui.nudgeBuf.get,
                                pasteBufferLevelIndex=MoveBufferLevelIndex.some,
@@ -6824,16 +7069,16 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Moved selection", a)
 
-      elif ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
+      elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
 
-      elif ke.isShortcutDown(scCancel):
+      elif ke.isShortcutDown(scCancel, a):
         exitMovePreviewMode(a)
 
-      elif ke.isShortcutDown(scOpenUserManual):
+      elif ke.isShortcutDown(scOpenUserManual, a):
         openUserManual(a)
 
     # }}}
@@ -6859,14 +7104,14 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = ui.cursor
 
-      if ke.isShortcutDown(scTogglePasteWraparound):
+      if ke.isShortcutDown(scTogglePasteWraparound, a):
         opts.pasteWraparound = not opts.pasteWraparound
         setNudgePreviewModeMessage(a)
 
-      elif   ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
+      elif   ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
 
-      elif ke.isShortcutDown(scAccept):
+      elif ke.isShortcutDown(scAccept, a):
         let newCur = actions.nudgeLevel(map, cur,
                                         dp.selStartRow, dp.selStartCol,
                                         ui.nudgeBuf.get,
@@ -6875,10 +7120,10 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
 
-      elif ke.isShortcutDown(scCancel):
+      elif ke.isShortcutDown(scCancel, a):
         exitNudgePreviewMode(a)
 
-      elif ke.isShortcutDown(scOpenUserManual):
+      elif ke.isShortcutDown(scOpenUserManual, a):
         openUserManual(a)
 
     # }}}
@@ -6889,8 +7134,8 @@ proc handleGlobalKeyEvents(a) =
         discard handleMoveCursor(ke, allowPan=true, allowJump=true,
                                  allowWasdKeys=true, allowDiagonal=false, a)
 
-      if   ke.isShortcutDown(scPreviousLevel, repeat=true): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true): selectNextLevel(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
+      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
 
       let cur = ui.cursor
 
@@ -6898,7 +7143,7 @@ proc handleGlobalKeyEvents(a) =
         let floor = map.getFloor(ui.linkSrcLocation)
         setSetLinkDestinationMessage(floor, a)
 
-      if ke.isShortcutDown(scAccept):
+      if ke.isShortcutDown(scAccept, a):
         if map.isEmpty(cur):
           setWarningMessage("Cannot set link destination to an empty cell",
                             keepStatusMessage=true, a=a)
@@ -6917,14 +7162,14 @@ proc handleGlobalKeyEvents(a) =
                            fmt"{capitalizeAscii(linkType)} link destination set",
                            a)
 
-      elif ke.isShortcutDown(scZoomIn,  repeat=true): zoomIn(a)
-      elif ke.isShortcutDown(scZoomOut, repeat=true): zoomOut(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
+      elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
 
-      elif ke.isShortcutDown(scCancel):
+      elif ke.isShortcutDown(scCancel, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
-      elif ke.isShortcutDown(scOpenUserManual):
+      elif ke.isShortcutDown(scOpenUserManual, a):
         openUserManual(a)
 
     # }}}
@@ -6948,13 +7193,14 @@ proc handleGlobalKeyEvents(a) =
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
                      allowDiagonal=false, handleMoveKey)
 
-      if ke.isShortcutDown(scAccept) or ke.isShortcutDown(scCancel):
+      if ke.isShortcutDown(scAccept, a) or ke.isShortcutDown(scCancel, a):
         ui.editMode = emNormal
         if ui.wasDrawingTrail:
           actions.drawTrail(map, loc=ui.cursor, undoLoc=ui.jumpToDestLocation, um)
           opts.drawTrail = true
         clearStatusMessage(a)
-      elif ke.isShortcutDown(scJumpToLinkedCell):
+
+      elif ke.isShortcutDown(scJumpToLinkedCell, a):
         moveCursorTo(ui.jumpToDestLocation, a)
         ui.editMode = emNormal
         if ui.wasDrawingTrail:
@@ -6973,64 +7219,60 @@ proc handleGlobalKeyEvents_NoLevels(a) =
   if hasKeyEvent():
     let ke = koi.currEvent()
 
-    if   ke.isShortcutDown(scNewMap):            newMap(a)
-    elif ke.isShortcutDown(scEditMapProps):      openEditMapPropsDialog(a)
+    if   ke.isShortcutDown(scNewMap, a):            newMap(a)
+    elif ke.isShortcutDown(scEditMapProps, a):      openEditMapPropsDialog(a)
 
-    elif ke.isShortcutDown(scOpenMap):           openMap(a)
-    elif ke.isShortcutDown(scSaveMap):           saveMap(a)
-    elif ke.isShortcutDown(scSaveMapAs):         saveMapAs(a)
+    elif ke.isShortcutDown(scOpenMap, a):           openMap(a)
+    elif ke.isShortcutDown(scSaveMap, a):           saveMap(a)
+    elif ke.isShortcutDown(scSaveMapAs, a):         saveMapAs(a)
 
-    elif (not yubnMode and ke.isShortcutDown(scNewLevel)) or
-         (    yubnMode and ke.isShortcutDown(scNewLevel_YubnMode)):
+    elif ke.isShortcutDown(scNewLevel, a):
       openNewLevelDialog(a)
 
-    elif ke.isShortcutDown(scReloadTheme):       reloadTheme(a)
-    elif ke.isShortcutDown(scPreviousTheme):     selectPrevTheme(a)
-    elif ke.isShortcutDown(scNextTheme):         selectNextTheme(a)
+    elif ke.isShortcutDown(scReloadTheme, a):       reloadTheme(a)
+    elif ke.isShortcutDown(scPreviousTheme, a):     selectPrevTheme(a)
+    elif ke.isShortcutDown(scNextTheme, a):         selectNextTheme(a)
 
-    elif ke.isShortcutDown(scEditPreferences):   openPreferencesDialog(a)
+    elif ke.isShortcutDown(scEditPreferences, a):   openPreferencesDialog(a)
 
-    elif (not yubnMode and ke.isShortcutDown(scUndo,          repeat=true)) or
-         (    yubnMode and ke.isShortcutDown(scUndo_YubnMode, repeat=true)):
-      undoAction(a)
+    elif ke.isShortcutDown(scUndo, repeat=true, a=a): undoAction(a)
+    elif ke.isShortcutDown(scRedo, repeat=true, a=a): redoAction(a)
 
-    elif ke.isShortcutDown(scRedo, repeat=true): redoAction(a)
+    elif ke.isShortcutDown(scOpenUserManual, a):    openUserManual(a)
+    elif ke.isShortcutDown(scShowAboutDialog, a):   openAboutDialog(a)
 
-    elif ke.isShortcutDown(scOpenUserManual):    openUserManual(a)
-    elif ke.isShortcutDown(scShowAboutDialog):   openAboutDialog(a)
-
-    elif ke.isShortcutDown(scToggleThemeEditor):
+    elif ke.isShortcutDown(scToggleThemeEditor, a):
       toggleThemeEditor(a)
 
-    elif ke.isShortcutDown(scToggleQuickReference):
+    elif ke.isShortcutDown(scToggleQuickReference, a):
       showQuickReference(a)
 
     # Toggle options
-    elif ke.isShortcutDown(scToggleTitleBar):
+    elif ke.isShortcutDown(scToggleTitleBar, a):
       toggleTitleBar(a)
 
 # }}}
 # {{{ handleQuickRefKeyEvents()
 
-let g_quickRefTabLabels = @["General", "Editing", "Dialogs"]
+let QuickRefTabLabels = @["General", "Editing", "Dialogs"]
 
 proc handleQuickRefKeyEvents(a) =
   if hasKeyEvent():
     let ke = koi.currEvent()
 
     a.quickRef.activeTab = handleTabNavigation(ke, a.quickRef.activeTab,
-                                               g_quickRefTabLabels.high)
+                                               QuickRefTabLabels.high)
 
-    if   ke.isShortcutDown(scReloadTheme):   reloadTheme(a)
-    elif ke.isShortcutDown(scPreviousTheme): selectPrevTheme(a)
-    elif ke.isShortcutDown(scNextTheme):     selectNextTheme(a)
+    if   ke.isShortcutDown(scReloadTheme, a):   reloadTheme(a)
+    elif ke.isShortcutDown(scPreviousTheme, a): selectPrevTheme(a)
+    elif ke.isShortcutDown(scNextTheme, a):     selectNextTheme(a)
 
-    elif ke.isShortcutDown(scOpenUserManual):    openUserManual(a)
-    elif ke.isShortcutDown(scToggleThemeEditor): toggleThemeEditor(a)
+    elif ke.isShortcutDown(scOpenUserManual, a):    openUserManual(a)
+    elif ke.isShortcutDown(scToggleThemeEditor, a): toggleThemeEditor(a)
 
-    elif ke.isShortcutDown(scToggleQuickReference) or
-         ke.isShortcutDown(scAccept) or
-         ke.isShortcutDown(scCancel) or
+    elif ke.isShortcutDown(scToggleQuickReference, a) or
+         ke.isShortcutDown(scAccept, a) or
+         ke.isShortcutDown(scCancel, a) or
          isKeyDown(keySpace):
 
       a.opts.showQuickReference = false
@@ -8130,222 +8372,6 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # }}}
 
-# {{{ Quick keyboard reference definitions
-type
-  QuickRefItemKind = enum
-    qkShortcut, qkKeyShortcuts, qkCustomShortcuts, qkDescription, qkSeparator
-
-  QuickRefItem = object
-    sepa: char
-    case kind: QuickRefItemKind
-    of qkShortcut:        shortcut:        AppShortcut
-    of qkKeyShortcuts:    keyShortcuts:    seq[KeyShortcut]
-    of qkCustomShortcuts: customShortcuts: seq[string]
-    of qkDescription:     description:     string
-    of qkSeparator:      discard
-
-proc sc(sc: AppShortcut): QuickRefItem =
-  QuickRefItem(kind: qkShortcut, shortcut: sc)
-
-proc sc(sc: seq[AppShortcut], sepa = '/'): QuickRefItem =
-  var shortcuts: seq[KeyShortcut] = @[]
-  for s in sc: shortcuts.add(g_appShortcuts[s][0])
-  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts, sepa: sepa)
-
-proc sc(sc: KeyShortcut): QuickRefItem =
-  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: @[sc])
-
-proc sc(sc: seq[KeyShortcut], sepa = '/'): QuickRefItem =
-  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: sc, sepa: sepa)
-
-proc csc(s: seq[string]): QuickRefItem =
-  QuickRefItem(kind: qkCustomShortcuts, customShortcuts: s)
-
-proc desc(s: string): QuickRefItem =
-  QuickRefItem(kind: qkDescription, description: s)
-
-const QuickRefSepa = QuickRefItem(kind: qkSeparator)
-
-# {{{ General
-let g_quickRef_General = @[
-  @[
-    scNewMap.sc,            "New map".desc,
-    scOpenMap.sc,           "Open map".desc,
-    scSaveMap.sc,           "Save map".desc,
-    scSaveMapAs.sc,         "Save map as".desc,
-    scEditMapProps.sc,      "Edit map properties".desc,
-    QuickRefSepa,
-
-    scnewLevel.sc,           "New level".desc,
-    scDeleteLevel.sc,       "Delete level".desc,
-    scEditLevelProps.sc,    "Edit level properties".desc,
-    QuickRefSepa,
-
-    scEditRegionProps.sc,   "Edit region properties".desc,
-    QuickRefSepa,
-
-    scPreviousLevel.sc,     "Previous level".desc,
-    scNextLevel.sc,         "Next level".desc,
-
-    scToggleCellCoords.sc,  "Toggle cell coordinates".desc,
-    scToggleNotesPane.sc,   "Toggle notes pane".desc,
-    scToggleToolsPane.sc,   "Toggle tools pane".desc,
-  ],
-  @[
-    @[scZoomIn,
-      scZoomOut].sc,        "Zoom in/out".desc,
-    QuickRefSepa,
-
-    scUndo.sc,              "Undo last action".desc,
-    scRedo.sc,              "Redo last action".desc,
-
-    scToggleWalkMode.sc,    "Toggle walk mode".desc,
-    scToggleWasdMode.sc,    "Toggle WASD mode".desc,
-    QuickRefSepa,
-
-    scShowNoteTooltip.sc,   "Display note tooltip".desc,
-    QuickRefSepa,
-
-    scPreviousTheme.sc,     "Previous theme".desc,
-    scNextTheme.sc,         "Next theme".desc,
-    scReloadTheme.sc,       "Reload current theme".desc,
-    QuickRefSepa,
-
-    scShowAboutDialog.sc,      "Show about dialog".desc,
-    scToggleQuickReference.sc, "Show quick keyboard reference".desc,
-    scOpenUserManual.sc,       "Open user manual in browser".desc,
-    QuickRefSepa,
-
-    scEditPreferences.sc,   "Preferences".desc,
-    QuickRefSepa,
-
-    scToggleThemeEditor.sc, "Toggle theme editor".desc,
-    scToggleTitleBar.sc,    "Toggle title bar".desc,
-  ]
-]
-# }}}
-# {{{ Editing
-let g_quickRef_Editing = @[
-  @[
-    scExcavateTunnel.sc,         "Excavate".desc,
-    scEraseCell.sc,              "Erase cell".desc,
-    scDrawClearFloor.sc,         "Clear floor".desc,
-    scToggleFloorOrientation.sc, "Toggle floor orientation".desc,
-    QuickRefSepa,
-
-    @[scCycleFloorGroup1Forward,
-      scCycleFloorGroup1Backward].sc, "Cycle door".desc,
-
-    @[scCycleFloorGroup2Forward,
-      scCycleFloorGroup2Backward].sc, "Cycle special door".desc,
-
-    @[scCycleFloorGroup3Forward,
-      scCycleFloorGroup3Backward].sc, "Cycle pressure plate".desc,
-
-    @[scCycleFloorGroup4Forward,
-      scCycleFloorGroup4Backward].sc, "Cycle pit".desc,
-
-    @[scCycleFloorGroup5Forward,
-      scCycleFloorGroup5Backward].sc, "Cycle special".desc,
-
-    @[scCycleFloorGroup6Forward,
-      scCycleFloorGroup6Backward].sc, "Cycle entry/exit".desc,
-
-    @[scCycleFloorGroup7Forward,
-      scCycleFloorGroup7Backward].sc, "Draw bridge".desc,
-
-    @[scCycleFloorGroup8Forward,
-      scCycleFloorGroup8Backward].sc, "Cycle column/statue".desc,
-
-    QuickRefSepa,
-
-    scSelectSpecialWall1.sc,  "Special wall: Open door".desc,
-    scSelectSpecialWall2.sc,  "Special wall: Locked door".desc,
-    scSelectSpecialWall3.sc,  "Special wall: Archway".desc,
-    scSelectSpecialWall4.sc,  "Special wall: Secret Door".desc,
-    scSelectSpecialWall5.sc,  "Special wall: One-way door".desc,
-    scSelectSpecialWall6.sc,  "Special wall: Illusory wall".desc,
-    scSelectSpecialWall7.sc,  "Special wall: Invisible wall".desc,
-    scSelectSpecialWall8.sc,  "Special wall: Lever".desc,
-    scSelectSpecialWall9.sc,  "Special wall: Niche".desc,
-    scSelectSpecialWall10.sc, "Special wall: Statue".desc,
-    scSelectSpecialWall11.sc, "Special wall: Keyhole".desc,
-    scSelectSpecialWall12.sc, "Special wall: Writing".desc,
-  ],
-  @[
-    scDrawWall.sc,            "Toggle wall".desc,
-    scDrawSpecialWall.sc,     "Toggle special wall".desc,
-
-    @[scPreviousSpecialWall,
-      scNextSpecialWall].sc,  "Previous/next special wall".desc,
-    QuickRefSepa,
-
-    @[scPreviousFloorColor,
-      scNextFloorColor].sc,   "Previous/next floor colour".desc,
-
-    scSetFloorColor.sc,       "Set floor colour".desc,
-    scPickFloorColor.sc,      "Pick floor colour".desc,
-    QuickRefSepa,
-
-    scToggleDrawTrail.sc,     "Toggle draw trail".desc,
-    scExcavateTrail.sc,       "Excavate trail in current level".desc,
-    scClearTrail.sc,          "Clear trail in current level".desc,
-    scEraseTrail.sc,          "Erase trail".desc,
-    QuickRefSepa,
-
-    scMarkSelection.sc,       "Enter Select (Mark) mode".desc,
-    scPaste.sc,               "Paste copy buffer contents".desc,
-    scPastePreview.sc,        "Enter Paste Preview mode".desc,
-    QuickRefSepa,
-
-    scEditNote.sc,            "Create/edit note".desc,
-    scEraseNote.sc,           "Erase note".desc,
-    scEditLabel.sc,           "Create/edit text label".desc,
-    scEraseLabel.sc,          "Erase text label".desc,
-    QuickRefSepa,
-
-    scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
-    scLinkCell.sc,            "Set link destination".desc,
-    QuickRefSepa,
-
-    scResizeLevel.sc,         "Resize level".desc,
-    scNudgePreview.sc,        "Enter Nudge Level mode".desc,
-    QuickRefSepa,
-  ]
-]
-# }}}
-# {{{ Dialogs
-let g_quickRef_Dialogs = @[
-  @[
-    KeyShortcut(key: keyTab,
-                mods: {mkShift}).sc, "Previous text input field".desc,
-
-    scNextTextField.sc, "Next text input field".desc,
-    QuickRefSepa,
-
-    @[KeyShortcut(key: key1, mods: {mkCtrl}),
-      KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
-
-    @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Switch current tab".desc,
-    QuickRefSepa,
-
-    @[fmt"{IconArrowsAll}"].csc, "Change radio button selection".desc,
-    QuickRefSepa,
-
-    scAccept.sc,  "Confirm".desc,
-    scCancel.sc,  "Cancel".desc,
-    scDiscard.sc, "Discard".desc,
-  ]
-]
-# }}}
-
-let g_quickRefShortcuts = @[
-  g_quickRef_General,
-  g_quickRef_Editing,
-  g_quickRef_Dialogs
-]
-
-# }}}
 # {{{ renderQuickReference()
 
 proc renderQuickReference(a) =
@@ -8379,7 +8405,7 @@ proc renderQuickReference(a) =
     for item in items:
       case item.kind
       of qkShortcut:
-        let shortcuts = g_appShortcuts[item.shortcut]
+        let shortcuts = a.ui.shortcuts[item.shortcut]
         heightInc = 0.0
         var ys = y
         for sc in shortcuts:
@@ -8431,7 +8457,7 @@ proc renderQuickReference(a) =
   let
     uiWidth = drawAreaWidth(a)
     uiHeight = drawAreaHeight(a)
-    yOffs = max((uiHeight - 750) * 0.5, 0)
+    yOffs = max((uiHeight - 770) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     vg.save()
@@ -8460,7 +8486,7 @@ proc renderQuickReference(a) =
 
   koi.radioButtons(
     radioButtonX, 92+yOffs, tabWidth, 24,
-    g_quickRefTabLabels, a.quickRef.activeTab,
+    QuickRefTabLabels, a.quickRef.activeTab,
     style = a.theme.radioButtonStyle
   )
 
@@ -8476,7 +8502,7 @@ proc renderQuickReference(a) =
   else: (400.0, defaultColWidth + 30)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
-    let items = g_quickRefShortcuts[a.quickRef.activeTab]
+    let items = a.ui.quickRefShortcuts[a.quickRef.activeTab]
     if items.len == 1: sx = radioButtonX + 70
     for r in items:
       renderSection(sx, sy, r, colWidth, a)
@@ -9274,6 +9300,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   restoreUIStateFromConfig(cfg, a)
 
   updateWalkKeys(a)
+  updateShortcuts(a)
   updateLastCursorViewCoords(a)
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
