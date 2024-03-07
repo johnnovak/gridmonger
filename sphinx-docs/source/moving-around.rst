@@ -73,7 +73,7 @@ standard cursor keys or the keypad for now. But I do recommend you to read the
 interesting enough to explore this topic further.
 
 The following table summarises the standard movement keys available in *Normal
-Mode*:
+Mode* to move in the four cardinal directions (horizontally and vertically):
 
 .. raw:: html
 
@@ -116,6 +116,40 @@ Mode*:
     </table>
 
 
+You can use the keypad to move in the intercardinal directions too
+(diagonally):
+
+.. raw:: html
+
+    <table class="shortcuts std-move-keys" style="width: 67%">
+      <thead>
+        <tr>
+          <th>Keypad</th>
+          <th width="45%"></th>
+        </tr>
+      </thead>
+
+      <tbody class="no-padding">
+        <tr>
+          <td><kbd>kp 7</kbd></td>
+          <td>Up &amp; left (Northwest)</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 9</kbd></td>
+          <td>Up &amp; right (Northeast)</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 1</kbd></td>
+          <td>Down &amp; left (Southwest)</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 3</kbd></td>
+          <td>Down &amp; right (Southeast)</td>
+        </tr>
+      </tbody>
+    </table>
+
+
 To move in 5-cell jumps, hold down :kbd:`Ctrl` while using the movement keys.
 Similarly, you can pan the level by holding down :kbd:`Shift`. This can be
 combined with :kbd:`Ctrl` to pan in 5-cell increments.
@@ -128,7 +162,7 @@ Properties` or :ref:`maps-and-levels:Level Properties` dialogs.
 
 .. note::
 
-  *NumLock* must be off if you want to use the numeric keypad for navigation.
+  *NumLock* must be off if you want to use the keypad for navigation.
 
 .. tip::
 
@@ -155,12 +189,12 @@ For consistency, this enables wraparound cursor movement in all editing modes
 (you'll learn about these modes below and in later chapters).
 
 
-Diagonal movement
-~~~~~~~~~~~~~~~~~
+YUBN diagonal movement
+~~~~~~~~~~~~~~~~~~~~~~
 
-It's also possible to move the cursor diagonally in the intercardinal
-directions by using the numeric keypad or the YUBN keys which might be
-familiar to some from `Rogue
+In addition to the numeric keypad, it's also possible to move the cursor
+diagonally in the intercardinal directions with the YUBN keys. This might be
+familiar to some from the classic game `Rogue
 <https://en.wikipedia.org/wiki/Rogue_(video_game)>`_:
 
 .. raw:: html
@@ -201,10 +235,9 @@ familiar to some from `Rogue
 YUBN navigation is off by default as these keys clash with some other
 shortcuts. You need to enable **YUBN diagonal movement** explicitly in the
 :ref:`preferences:Editing tab` of the :ref:`preferences:Preferences` dialog if
-you wish to use it. Actions whose shortcuts clash with the
-YUBN keys also have alternative secondary
-shortcuts; with YUBN navigation enabled, you can only access these actions via
-their secondary shortcuts.
+you wish to use it. Actions whose shortcuts clash with the YUBN keys also have
+alternative secondary shortcuts to ensure you can still access them with YUBN
+mode enabled.
 
 The :kbd:`Shift` modifier to pan the level is available with
 the YUBN keys too.

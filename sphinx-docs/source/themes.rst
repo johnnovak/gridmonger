@@ -90,7 +90,7 @@ Copy
     This is the action to use if you don't want to override a built-in theme
     (e.g., if you want to create a new tweaked version under a different
     name), or if you want to design your own theme --- just pick a theme you
-    want to use as your starting point and hit **Copy**.
+    want to use as your starting point and press **Copy**.
 
     You'll be asked for a new theme name, and you'll get a warning if the name
     you've chosen would override (*shadow*) that of an existing built-in theme,
