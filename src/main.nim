@@ -1031,7 +1031,7 @@ func mkQuickRefDialogs(a): seq[seq[QuickRefItem]] =
       @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Move between tabs".desc,
 
       @[KeyShortcut(key: key1, mods: {mkCtrl}),
-        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
+        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Select tab 1-9".desc,
       QuickRefSepa,
 
       KeyShortcut(key: keyTab,
