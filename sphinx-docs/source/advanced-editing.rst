@@ -9,10 +9,10 @@ A very handy advantage of Gridmonger over pencil-and-paper mapping is the
 ability to establish links between cells. Links can be created between the
 following cell types:
 
-- pits and ceiling pits
-- teleport sources and destinations
-- upward and downward stairs
-- entrance and exit doors
+- Pits and ceiling pits
+- Teleport sources and destinations
+- Upward and downward stairs
+- Entrance and exit doors
 
 You can jump between linked cells by pressing the :kbd:`G` key, which is very
 useful when navigating complex, interlocking, multi-level dungeons. The
@@ -202,10 +202,10 @@ Move :kbd:`Ctrl+M`
     dedicated "move buffer" under the hood).
 
 Erase :kbd:`Ctrl+E`
-    Equivalent of using the *erase cell* action on the selected cells.
+    Equivalent to using the *erase cell* action on the selected cells.
 
 Fill :kbd:`Ctrl+F`
-    Equivalent of using the *draw/clear floor* action on the selected cells.
+    Equivalent to using the *draw/clear floor* action on the selected cells.
 
 Set colour :kbd:`Ctrl+C`
     Set the floor colour of the selected cells to the current colour.

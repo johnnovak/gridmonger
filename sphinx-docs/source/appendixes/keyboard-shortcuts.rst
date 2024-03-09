@@ -860,27 +860,75 @@ Edit mode
         </tr>
         <tr>
           <td>
-            <kbd>Alt</kbd>+<kbd>1</kbd>-<kbd>9</kbd>
+            <kbd>Alt</kbd>+<kbd>1</kbd></kbd>
           </td>
-          <td>Set special wall 1-9</td>
+          <td>Set special wall: Open door</td>
         </tr>
         <tr>
           <td>
-            <kbd>Alt</kbd>+<kbd>0</kbd>
+            <kbd>Alt</kbd>+<kbd>2</kbd></kbd>
           </td>
-          <td>Set special wall 10</td>
+          <td>Set special wall: Locked door</td>
         </tr>
         <tr>
           <td>
-            <kbd>Alt</kbd>+<kbd>-</kbd>
+            <kbd>Alt</kbd>+<kbd>3</kbd></kbd>
           </td>
-          <td>Set special wall 11</td>
+          <td>Set special wall: Archway</td>
         </tr>
         <tr>
           <td>
-            <kbd>Alt</kbd>+<kbd>=</kbd>
+            <kbd>Alt</kbd>+<kbd>4</kbd></kbd>
           </td>
-          <td>Set special wall 12</td>
+          <td>Set special wall: Secret door</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>5</kbd></kbd>
+          </td>
+          <td>Set special wall: One-way door</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>6</kbd></kbd>
+          </td>
+          <td>Set special wall: Illusory wall</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>7</kbd></kbd>
+          </td>
+          <td>Set special wall: Invisible wall</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>8</kbd></kbd>
+          </td>
+          <td>Set special wall: Lever</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>9</kbd></kbd>
+          </td>
+          <td>Set special wall: Niche</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>0</kbd></kbd>
+          </td>
+          <td>Set special wall: Keyhole</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>-</kbd></kbd>
+          </td>
+          <td>Set special wall: Keyhole</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Alt</kbd>+<kbd>=</kbd></kbd>
+          </td>
+          <td>Set special wall: Writing</td>
         </tr>
       </tbody>
 
@@ -1355,7 +1403,7 @@ Dialogs
               <kbd>Ctrl</kbd>+<kbd>1</kbd>-<kbd>9</kbd>
             </kbd>
           </td>
-          <td>Go to tab 1–9</td>
+          <td>Select tab 1–9</td>
         </tr>
         <tr>
           <td>

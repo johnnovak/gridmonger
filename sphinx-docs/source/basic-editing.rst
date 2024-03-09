@@ -50,9 +50,9 @@ The :kbd:`D` key acts as a *modifier key* when used together with the movement
 keys (similarly to :kbd:`Shift` or :kbd:`Ctrl`). There are a few other tools
 that work the same way:
 
-* :kbd:`E` – erase whole cell, including walls (we'll talk about walls shortly)
-* :kbd:`F` – draw/clear floor
-* :kbd:`C` – set floor colour
+* :kbd:`E` – Erase whole cell, including walls (we'll talk about walls shortly)
+* :kbd:`F` – Draw/clear floor
+* :kbd:`C` – Set floor colour
 
 New cells are drawn with the current floor colour, which is indicated in the
 tools pane on the right. You can toggle the visibility of the tools pane with
@@ -98,128 +98,128 @@ key multiple times repeatedly, and backward by pressing the key with the
       <tbody>
         <tr>
           <td class="key" rowspan="3"><kbd>1</kbd></td>
-          <td class="icon"><img src="_static/img/floor-open-door.png" alt="open door"></td>
-          <td class="name">open door</td>
+          <td class="icon"><img src="_static/img/floor-open-door.png" alt="Open door"></td>
+          <td class="name">Open door</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-locked-door.png" alt="locked door"></td>
-          <td class="name">locked door</td>
+          <td class="icon"><img src="_static/img/floor-locked-door.png" alt="Locked door"></td>
+          <td class="name">Locked door</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-archway.png" alt="archway"></td>
-          <td class="name">archway</td>
+          <td class="icon"><img src="_static/img/floor-archway.png" alt="Archway"></td>
+          <td class="name">Archway</td>
         </tr>
       </tbody>
 
       <tbody>
         <tr>
           <td class="key" rowspan="4"><kbd>2</kbd></td>
-          <td class="icon"><img src="_static/img/floor-secret-door.png" alt="secret door"></td>
-          <td class="name">secret door</td>
+          <td class="icon"><img src="_static/img/floor-secret-door.png" alt="Secret door"></td>
+          <td class="name">Secret door</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-secret-door-block.png" alt="secret door (block style)"></td>
-          <td class="name">secret door (block style)</td>
+          <td class="icon"><img src="_static/img/floor-secret-door-block.png" alt="Secret door (block style)"></td>
+          <td class="name">Secret door (block style)</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-one-way-door-1.png" alt="one-way door (1)"></td>
-          <td class="name">one-way door (N/E)</td>
+          <td class="icon"><img src="_static/img/floor-one-way-door-1.png" alt="One-way door (N/E)"></td>
+          <td class="name">One-way door (N/E)</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-one-way-door-2.png" alt="one-way door (2)"></td>
-          <td class="name">one-way door (S/W)</td>
+          <td class="icon"><img src="_static/img/floor-one-way-door-2.png" alt="One-way door (S/W)"></td>
+          <td class="name">One-way door (S/W)</td>
         </tr>
       </tbody>
 
       <tbody>
         <tr>
           <td class="key" rowspan="2"><kbd>3</kbd></td>
-          <td class="icon"><img src="_static/img/floor-pressure-plate.png" alt="pressure plate"></td>
-          <td class="name">pressure plate</td>
+          <td class="icon"><img src="_static/img/floor-pressure-plate.png" alt="Pressure plate"></td>
+          <td class="name">Pressure plate</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-hidden-pressure-plate.png" alt="hidden pressure plate"></td>
-          <td class="name">hidden pressure plate</td>
+          <td class="icon"><img src="_static/img/floor-hidden-pressure-plate.png" alt="Hidden pressure plate"></td>
+          <td class="name">Hidden pressure plate</td>
         </tr>
       </tbody>
 
       <tbody>
         <tr>
           <td class="key" rowspan="4"><kbd>4</kbd></td>
-          <td class="icon"><img src="_static/img/floor-closed-pit.png" alt="closed pit"></td>
-          <td class="name">closed pit</td>
+          <td class="icon"><img src="_static/img/floor-closed-pit.png" alt="Closed pit"></td>
+          <td class="name">Closed pit</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-open-pit.png" alt="open pit"></td>
-          <td class="name">open pit</td>
+          <td class="icon"><img src="_static/img/floor-open-pit.png" alt="Open pit"></td>
+          <td class="name">Open pit</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-hidden-pit.png" alt="hidden pit"></td>
-          <td class="name">hidden pit</td>
+          <td class="icon"><img src="_static/img/floor-hidden-pit.png" alt="Hidden pit"></td>
+          <td class="name">Hidden pit</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-ceiling-pit.png" alt="ceiling pit"></td>
-          <td class="name">ceiling pit</td>
+          <td class="icon"><img src="_static/img/floor-ceiling-pit.png" alt="Ceiling pit"></td>
+          <td class="name">Ceiling pit</td>
         </tr>
       </tbody>
 
       <tbody>
         <tr>
           <td class="key" rowspan="4"><kbd>5</kbd></td>
-          <td class="icon"><img src="_static/img/floor-teleport-src.png" alt="teleport source"></td>
-          <td class="name">teleport source</td>
+          <td class="icon"><img src="_static/img/floor-teleport-src.png" alt="Teleport source"></td>
+          <td class="name">Teleport source</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-teleport-dest.png" alt="teleport destination"></td>
-          <td class="name">teleport destination</td>
+          <td class="icon"><img src="_static/img/floor-teleport-dest.png" alt="Teleport destination"></td>
+          <td class="name">Teleport destination</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-spinner.png" alt="spinner"></td>
-          <td class="name">spinner</td>
+          <td class="icon"><img src="_static/img/floor-spinner.png" alt="Spinner"></td>
+          <td class="name">Spinner</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-invisible-barrier.png" alt="invisible barrier"></td>
-          <td class="name">invisible barrier</td>
+          <td class="icon"><img src="_static/img/floor-invisible-barrier.png" alt="Invisible barrier"></td>
+          <td class="name">Invisible barrier</td>
         </tr>
       </tbody>
 
       <tbody>
         <tr>
           <td class="key" rowspan="4"><kbd>6</kbd></td>
-          <td class="icon"><img src="_static/img/floor-stairs-down.png" alt="stairs down"></td>
-          <td class="name">stairs down</td>
+          <td class="icon"><img src="_static/img/floor-stairs-down.png" alt="Stairs down"></td>
+          <td class="name">Stairs down</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-stairs-up.png" alt="stairs up"></td>
-          <td class="name">stairs up</td>
+          <td class="icon"><img src="_static/img/floor-stairs-up.png" alt="Stairs up"></td>
+          <td class="name">Stairs up</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-entrance-door.png" alt="entrance door"></td>
-          <td class="name">entrance door</td>
+          <td class="icon"><img src="_static/img/floor-entrance-door.png" alt="Entrance door"></td>
+          <td class="name">Entrance door</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-exit-door.png" alt="exit door"></td>
-          <td class="name">exit door</td>
+          <td class="icon"><img src="_static/img/floor-exit-door.png" alt="Exit door"></td>
+          <td class="name">Exit door</td>
         </tr>
       </tbody>
 
       <tbody>
         <tr>
           <td class="key"><kbd>7</kbd></td>
-          <td class="icon"><img src="_static/img/floor-bridge.png" alt="bridge"></td>
-          <td class="name">bridge</td>
+          <td class="icon"><img src="_static/img/floor-bridge.png" alt="Bridge"></td>
+          <td class="name">Bridge</td>
         </tr>
       </tbody>
 
       <tbody>
         <tr>
           <td class="key" rowspan="2"><kbd>8</kbd></td>
-          <td class="icon"><img src="_static/img/floor-column.png" alt="column"></td>
-          <td class="name">column</td>
+          <td class="icon"><img src="_static/img/floor-column.png" alt="Column"></td>
+          <td class="name">Column</td>
         </tr>
         <tr>
-          <td class="icon"><img src="_static/img/floor-statue.png" alt="statue"></td>
-          <td class="name">statue</td>
+          <td class="icon"><img src="_static/img/floor-statue.png" alt="Statue"></td>
+          <td class="name">Statue</td>
         </tr>
       </tbody>
 
@@ -231,16 +231,24 @@ placing them in tunnels (as you normally would), they are automatically
 oriented correctly. Should you need it, you can always change the floor
 orientation manually with the :kbd:`O` key.
 
-The *bridge* type is a bit special; it has a small amount of "overhang" into
-its two adjacent cells. You can draw long continuous bridges by placing
-multiple bridge floors next to each other.
+These two floor types are a bit special:
+
+.. rst-class:: multiline
+
+- There are two *one-way doors types*: one for the North or East direction,
+  and another for South or West. Press the :kbd:`O` key to switch between
+  North-South or East-West orientation, then :kbd:`2`/:kbd:`Shift+2` to flip
+  the arrow direction.
+
+- The *bridge type* has a small amount of "overhang" that extends into its two
+  adjacent cells. You can draw long continuous bridges by placing multiple
+  bridge cells next to each other.
 
 These floor types should take care of most of your dungeoneering needs. The
-goal was to keep it simple and not overcomplicate matters by allowing the
-users to define their custom types. In the rare case where you really need
-something not covered by these, you can always just add a note to the cell
-using a custom ID, as you will learn in the :ref:`annotations:Annotations`
-chapter.
+goal was to keep it simple and not overcomplicate matters by allowing
+user-defined custom types. In the rare case where you really need something
+not covered by these, you can always just add a note to the cell using a
+custom ID as you will learn in the :ref:`annotations:Annotations` chapter.
 
 
 .. rst-class:: style4
@@ -256,9 +264,9 @@ To draw regular walls, hold down the :kbd:`W` modifier key and press one of
 the movement keys. This toggles the current cell's wall in the selected
 direction according to the following rules:
 
-- if no wall exists in that direction, a regular wall is created
-- if the existing wall is a regular wall, the wall is removed
-- if the existing wall is a special wall, it is turned into a regular wall
+- If no wall exists in that direction, a regular wall is created.
+- If the existing wall is a regular wall, the wall is removed.
+- If the existing wall is a special wall, it is turned into a regular wall.
 
 Although this might sound a bit complicated, it's really simple and intuitive
 in practice --- just give it a go and you'll see!
@@ -292,59 +300,61 @@ To change the current special wall type, use the :kbd:`[` and :kbd:`]` keys.
       <tbody>
         <tr>
           <td class="icon"><img src="_static/img/wall-open-door.png" alt="open door"></td>
-          <td class="name">open door</td>
+          <td class="name">Open door</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-locked-door.png" alt="locked door"></td>
-          <td class="name">locked door</td>
+          <td class="name">Locked door</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-archway.png" alt="archway"></td>
-          <td class="name">archway</td>
+          <td class="name">Archway</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-secret-door.png" alt="secret door"></td>
-          <td class="name">secret door</td>
+          <td class="name">Secret door</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-one-way-door.png" alt="one-way door"></td>
-          <td class="name">one-way door</td>
+          <td class="name">One-way door</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-illusory.png" alt="illusory wall"></td>
-          <td class="name">illusory wall</td>
+          <td class="name">Illusory wall</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-invisible.png" alt="invisible wall"></td>
-          <td class="name">invisible wall</td>
+          <td class="name">Invisible wall</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-lever.png" alt="lever"></td>
-          <td class="name">lever</td>
+          <td class="name">Lever</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-niche.png" alt="niche"></td>
-          <td class="name">niche</td>
+          <td class="name">Niche</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-statue.png" alt="statue"></td>
-          <td class="name">statue</td>
+          <td class="name">Statue</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-keyhole.png" alt="keyhole"></td>
-          <td class="name">keyhole</td>
+          <td class="name">Keyhole</td>
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/wall-writing.png" alt="writing"></td>
-          <td class="name">writing</td>
+          <td class="name">Writing</td>
         </tr>
       </tbody>
 
     </table>
 
-One-way doors are a bit special; their arrows are drawn towards the direction
-you've used when drawing them. So if you want to flip the direction of the arrow,
-just go to the "other side" of the door and draw it again!
+One-way doors are a bit special; their arrows always point towards the drawing
+direction. If you want to flip the direction of the arrow, just go to the
+"other side" of the door and draw it again in the opposite direction! The
+lever, niche, statue, and writing special wall types are similarly
+"directional".
 
 
 Draw wall repeat
