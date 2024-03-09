@@ -883,6 +883,12 @@ const QuickRefSepa = QuickRefItem(kind: qkSeparator)
 func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
   @[
     @[
+      scShowAboutDialog.sc,      "Show about dialog".desc,
+      scToggleQuickReference.sc, "Toggle quick keyboard reference".desc,
+      scOpenUserManual.sc,       "Open user manual in browser".desc,
+      scEditPreferences.sc,      "Preferences".desc,
+      QuickRefSepa,
+
       scNewMap.sc,            "New map".desc,
       scOpenMap.sc,           "Open map".desc,
       scSaveMap.sc,           "Save map".desc,
@@ -890,51 +896,36 @@ func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
       scEditMapProps.sc,      "Edit map properties".desc,
       QuickRefSepa,
 
-      scnewLevel.sc,           "New level".desc,
-      scDeleteLevel.sc,       "Delete level".desc,
+      scNewLevel.sc,          "New level".desc,
       scEditLevelProps.sc,    "Edit level properties".desc,
-      QuickRefSepa,
-
       scEditRegionProps.sc,   "Edit region properties".desc,
+      scDeleteLevel.sc,       "Delete level".desc,
       QuickRefSepa,
 
       scPreviousLevel.sc,     "Previous level".desc,
       scNextLevel.sc,         "Next level".desc,
-
-      scToggleCellCoords.sc,  "Toggle cell coordinates".desc,
-      scToggleNotesPane.sc,   "Toggle notes pane".desc,
-      scToggleToolsPane.sc,   "Toggle tools pane".desc,
     ],
     @[
+      scUndo.sc,              "Undo last action".desc,
+      scRedo.sc,              "Redo last action".desc,
+
       @[scZoomIn,
         scZoomOut].sc(a=a),   "Zoom in/out".desc,
       QuickRefSepa,
 
-      scUndo.sc,              "Undo last action".desc,
-      scRedo.sc,              "Redo last action".desc,
-
       scToggleWalkMode.sc,    "Toggle walk mode".desc,
       scToggleWasdMode.sc,    "Toggle WASD mode".desc,
-      QuickRefSepa,
-
-      scShowNoteTooltip.sc,   "Display note tooltip".desc,
+      scShowNoteTooltip.sc,   "Toggle display note tooltip".desc,
+      scToggleCellCoords.sc,  "Toggle cell coordinates".desc,
+      scToggleNotesPane.sc,   "Toggle notes pane".desc,
+      scToggleToolsPane.sc,   "Toggle tools pane".desc,
+      scToggleTitleBar.sc,    "Toggle title bar".desc,
       QuickRefSepa,
 
       scPreviousTheme.sc,     "Previous theme".desc,
       scNextTheme.sc,         "Next theme".desc,
       scReloadTheme.sc,       "Reload current theme".desc,
-      QuickRefSepa,
-
-      scShowAboutDialog.sc,      "Show about dialog".desc,
-      scToggleQuickReference.sc, "Show quick keyboard reference".desc,
-      scOpenUserManual.sc,       "Open user manual in browser".desc,
-      QuickRefSepa,
-
-      scEditPreferences.sc,   "Preferences".desc,
-      QuickRefSepa,
-
       scToggleThemeEditor.sc, "Toggle theme editor".desc,
-      scToggleTitleBar.sc,    "Toggle title bar".desc,
     ]
   ]
 
@@ -943,14 +934,14 @@ func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
 func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
   @[
     @[
-      scExcavateTunnel.sc,         "Excavate".desc,
-      scEraseCell.sc,              "Erase cell".desc,
-      scDrawClearFloor.sc,         "Clear floor".desc,
+      scExcavateTunnel.sc,      "Excavate (draw) tunnel".desc,
+      scEraseCell.sc,           "Erase cell (clear floor & walls)".desc,
+      scDrawClearFloor.sc,      "Draw/clear floor".desc,
       scToggleFloorOrientation.sc, "Toggle floor orientation".desc,
       QuickRefSepa,
 
-      scDrawWall.sc,            "Toggle wall".desc,
-      scDrawSpecialWall.sc,     "Toggle special wall".desc,
+      scDrawWall.sc,            "Draw/clear wall".desc,
+      scDrawSpecialWall.sc,     "Draw/clear special wall".desc,
 
       @[scPreviousSpecialWall,
         scNextSpecialWall].sc(a=a), "Previous/next special wall".desc,
@@ -963,21 +954,21 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       scPickFloorColor.sc,      "Pick floor colour".desc,
       QuickRefSepa,
 
-      scToggleDrawTrail.sc,     "Toggle draw trail".desc,
+      scToggleDrawTrail.sc,     "Toggle trail mode".desc,
       scExcavateTrail.sc,       "Excavate trail in current level".desc,
       scClearTrail.sc,          "Clear trail in current level".desc,
       scEraseTrail.sc,          "Erase trail".desc,
       QuickRefSepa,
 
-      scMarkSelection.sc,       "Enter Select (Mark) mode".desc,
+      scMarkSelection.sc,       "Enter select (mark) mode".desc,
       scPaste.sc,               "Paste copy buffer contents".desc,
-      scPastePreview.sc,        "Enter Paste Preview mode".desc,
+      scPastePreview.sc,        "Enter paste preview mode".desc,
       QuickRefSepa,
 
       scEditNote.sc,            "Create/edit note".desc,
       scEraseNote.sc,           "Erase note".desc,
-      scEditLabel.sc,           "Create/edit text label".desc,
-      scEraseLabel.sc,          "Erase text label".desc,
+      scEditLabel.sc,           "Create/edit label".desc,
+      scEraseLabel.sc,          "Erase label".desc,
       QuickRefSepa,
 
     ],
@@ -987,7 +978,7 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       QuickRefSepa,
 
       scResizeLevel.sc,         "Resize level".desc,
-      scNudgePreview.sc,        "Enter Nudge Level mode".desc,
+      scNudgePreview.sc,        "Nudge level".desc,
       QuickRefSepa,
 
       @[scCycleFloorGroup1Forward,
@@ -1016,18 +1007,18 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
 
       QuickRefSepa,
 
-      scSelectSpecialWall1.sc,  "Special wall: Open door".desc,
-      scSelectSpecialWall2.sc,  "Special wall: Locked door".desc,
-      scSelectSpecialWall3.sc,  "Special wall: Archway".desc,
-      scSelectSpecialWall4.sc,  "Special wall: Secret Door".desc,
-      scSelectSpecialWall5.sc,  "Special wall: One-way door".desc,
-      scSelectSpecialWall6.sc,  "Special wall: Illusory wall".desc,
-      scSelectSpecialWall7.sc,  "Special wall: Invisible wall".desc,
-      scSelectSpecialWall8.sc,  "Special wall: Lever".desc,
-      scSelectSpecialWall9.sc,  "Special wall: Niche".desc,
-      scSelectSpecialWall10.sc, "Special wall: Statue".desc,
-      scSelectSpecialWall11.sc, "Special wall: Keyhole".desc,
-      scSelectSpecialWall12.sc, "Special wall: Writing".desc,
+      scSelectSpecialWall1.sc,  "Set special wall: Open door".desc,
+      scSelectSpecialWall2.sc,  "Set special wall: Locked door".desc,
+      scSelectSpecialWall3.sc,  "Set special wall: Archway".desc,
+      scSelectSpecialWall4.sc,  "Set special wall: Secret door".desc,
+      scSelectSpecialWall5.sc,  "Set special wall: One-way door".desc,
+      scSelectSpecialWall6.sc,  "Set special wall: Illusory wall".desc,
+      scSelectSpecialWall7.sc,  "Set special wall: Invisible wall".desc,
+      scSelectSpecialWall8.sc,  "Set special wall: Lever".desc,
+      scSelectSpecialWall9.sc,  "Set special wall: Niche".desc,
+      scSelectSpecialWall10.sc, "Set special wall: Statue".desc,
+      scSelectSpecialWall11.sc, "Set special wall: Keyhole".desc,
+      scSelectSpecialWall12.sc, "Set special wall: Writing".desc,
       QuickRefSepa,
     ]
   ]
@@ -1037,22 +1028,22 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
 func mkQuickRefDialogs(a): seq[seq[QuickRefItem]] =
   @[
     @[
+      @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Move between tabs".desc,
+
+      @[KeyShortcut(key: key1, mods: {mkCtrl}),
+        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
+      QuickRefSepa,
+
       KeyShortcut(key: keyTab,
                   mods: {mkShift}).sc, "Previous text input field".desc,
 
       scNextTextField.sc, "Next text input field".desc,
       QuickRefSepa,
 
-      @[KeyShortcut(key: key1, mods: {mkCtrl}),
-        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Go to tab 1-9".desc,
-
-      @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Switch current tab".desc,
-      QuickRefSepa,
-
       @[fmt"{IconArrowsAll}"].csc, "Change radio button selection".desc,
       QuickRefSepa,
 
-      scAccept.sc,  "Confirm".desc,
+      scAccept.sc,  "Confirm (OK, Save, etc.)".desc,
       scCancel.sc,  "Cancel".desc,
       scDiscard.sc, "Discard".desc,
     ]
@@ -1186,12 +1177,12 @@ let DefaultAppShortcuts = {
 
   scDiscard:            @[mkKeyShortcut(keyD,             {mkAlt})],
 
-  scUndo:               @[mkKeyShortcut(keyZ,             {mkCtrl}),
-                          mkKeyShortcut(keyU,             {}),
-                          mkKeyShortcut(keyU,             {mkCtrl})],
+  scUndo:               @[mkKeyShortcut(keyU,             {}),
+                          mkKeyShortcut(keyU,             {mkCtrl}),
+                          mkKeyShortcut(keyZ,             {mkCtrl})],
 
-  scRedo:               @[mkKeyShortcut(keyY,             {mkCtrl}),
-                          mkKeyShortcut(keyR,             {mkCtrl})],
+  scRedo:               @[mkKeyShortcut(keyR,             {mkCtrl}),
+                          mkKeyShortcut(keyY,             {mkCtrl})],
 
   # Maps
   scNewMap:             @[mkKeyShortcut(keyN,             {mkCtrl, mkAlt})],
@@ -1201,9 +1192,7 @@ let DefaultAppShortcuts = {
   scEditMapProps:       @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
 
   # Levels
-  scNewLevel:              @[mkKeyShortcut(keyN,          {mkCtrl}),
-                             mkKeyShortcut(keyN,          {mkCtrl, mkShift})],
-
+  scNewLevel:              @[mkKeyShortcut(keyN,          {mkCtrl})],
   scDeleteLevel   :        @[mkKeyShortcut(keyD,          {mkCtrl})],
   scEditLevelProps:        @[mkKeyShortcut(keyP,          {mkCtrl})],
   scResizeLevel:           @[mkKeyShortcut(keyE,          {mkCtrl})],
@@ -1306,10 +1295,10 @@ let DefaultAppShortcuts = {
                                  mkKeyShortcut(keyKpEnter,    {})],
 
   scEditNote:                  @[mkKeyShortcut(keyN,          {}),
-                                 mkKeyShortcut(keyN,          {mkCtrl})],
+                                 mkKeyShortcut(keySemicolon,  {})],
 
   scEraseNote:                 @[mkKeyShortcut(keyN,          {mkShift}),
-                                 mkKeyShortcut(keyX,          {mkCtrl})],
+                                 mkKeyShortcut(keySemicolon,  {mkShift})],
 
   scEditLabel:                 @[mkKeyShortcut(keyT,          {mkCtrl})],
   scEraseLabel:                @[mkKeyShortcut(keyT,          {mkShift})],
@@ -1362,13 +1351,18 @@ let DefaultAppShortcuts = {
 proc mkYubnAppShortcuts(): Table[AppShortCut, seq[KeyShortcut]] =
   var sc = DefaultAppShortcuts
 
+  # remove keyY mappings
+  sc[scSelectionCopy] = @[mkKeyShortcut(keyC, {})]
+
+  # remove keyU mappings
   sc[scUndo]          = @[mkKeyShortcut(keyZ, {mkCtrl}),
                           mkKeyShortcut(keyU, {mkCtrl})]
 
-  sc[scNewLevel]      = @[mkKeyShortcut(keyN, {mkCtrl, mkShift})]
-  sc[scEditNote]      = @[mkKeyShortcut(keyN, {mkCtrl})]
-  sc[scEraseNote]     = @[mkKeyShortcut(keyX, {mkCtrl})]
   sc[scSelectionNone] = @[mkKeyShortcut(keyX, {})]
+
+  # remove keyN mappings
+  sc[scEditNote]      = @[mkKeyShortcut(keySemicolon, {})]
+  sc[scEraseNote]     = @[mkKeyShortcut(keySemicolon, {mkShift})]
 
   sc
 
@@ -3283,16 +3277,14 @@ func handleGridRadioButton(ke: Event, currButtonIdx: Natural,
 # }}}
 # {{{ handleTabNavigation()
 proc handleTabNavigation(ke: Event,
-                         currTabIndex, maxTabIndex: Natural): Natural =
+                         currTabIndex, maxTabIndex: Natural; a): Natural =
   result = currTabIndex
 
-  if ke.isKeyDown(MoveKeysCursor.left, {mkCtrl}) or
-     ke.isKeyDown(keyTab, {mkCtrl, mkShift}):
+  if ke.isKeyDown(MoveKeysCursor.left, {mkCtrl}):
     if    currTabIndex > 0: result = currTabIndex - 1
     else: result = maxTabIndex
 
-  elif ke.isKeyDown(MoveKeysCursor.right, {mkCtrl}) or
-       ke.isKeyDown(keyTab, {mkCtrl}):
+  elif ke.isKeyDown(MoveKeysCursor.right, {mkCtrl}):
     if    currTabIndex < maxTabIndex: result = currTabIndex + 1
     else: result = 0
 
@@ -3586,7 +3578,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.yubnMovementKeys, style = a.theme.checkBoxStyle)
 
-      koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
+      koi.label("Walk Mode Left/Right keys", style=a.theme.labelStyle)
       koi.nextItemWidth(80)
       koi.dropDown(dlg.walkCursorMode)
 
@@ -3642,9 +3634,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high, a)
 
-    if   ke.isShortcutDown(scNextTextField, a):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
@@ -3855,9 +3847,9 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high, a)
 
-    if   ke.isShortcutDown(scNextTextField, a):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
@@ -3983,9 +3975,9 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high, a)
 
-    if   ke.isShortcutDown(scNextTextField, a):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
@@ -4173,9 +4165,9 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high, a)
 
-    if   ke.isShortcutDown(scNextTextField, a):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
@@ -4340,9 +4332,9 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high)
+    dlg.activeTab = handleTabNavigation(ke, dlg.activeTab, tabLabels.high, a)
 
-    if   ke.isShortcutDown(scNextTextField, a):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
@@ -4752,7 +4744,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
     var eventHandled = true
 
     dlg.kind = AnnotationKind(
-      handleTabNavigation(ke, ord(dlg.kind), ord(akIcon))
+      handleTabNavigation(ke, ord(dlg.kind), ord(akIcon), a)
     )
 
     case dlg.kind
@@ -5287,7 +5279,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scNextTextField, a):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
@@ -5400,7 +5392,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     let ke = koi.currEvent()
     var eventHandled = true
 
-    if   ke.isShortcutDown(scNextTextField, a):
+    if ke.isShortcutDown(scNextTextField, a):
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
@@ -7306,7 +7298,7 @@ proc handleQuickRefKeyEvents(a) =
     let ke = koi.currEvent()
 
     a.quickRef.activeTab = handleTabNavigation(ke, a.quickRef.activeTab,
-                                               QuickRefTabLabels.high)
+                                               QuickRefTabLabels.high, a)
 
     if   ke.isShortcutDown(scReloadTheme, a):   reloadTheme(a)
     elif ke.isShortcutDown(scPreviousTheme, a): selectPrevTheme(a)
@@ -8502,7 +8494,7 @@ proc renderQuickReference(a) =
   let
     uiWidth = drawAreaWidth(a)
     uiHeight = drawAreaHeight(a)
-    yOffs = max((uiHeight - 770) * 0.5, 0)
+    yOffs = max((uiHeight - 820) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     vg.save()
