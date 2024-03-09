@@ -125,6 +125,11 @@ Similarly, you can "draw" the selection or "erase" from it by using the
 clears the selection (*Unselect All*).
 
 
+.. note::
+
+  The :kbd:`U` shortcut is not available with :ref:`YUBN keys
+  <moving-around:Diagonal movement>` enabled.
+
 .. tip::
 
   The :ref:`moving-around:Mouse movement actions` are available in *Select
@@ -148,6 +153,11 @@ clears the selection (*Unselect All*).
 When you're happy with your selection, it's time to perform an action on it.
 :kbd:`C` (or :kbd:`Y`) copies (yanks) the selected cells into the paste buffer
 and returns to *Edit Mode*.
+
+.. note::
+
+  The :kbd:`Y` shortcut is not available with :ref:`YUBN keys
+  <moving-around:Diagonal movement>` enabled.
 
 You can paste the contents of the buffer at the current cursor position by
 pressing :kbd:`P`. It is important to note that links are *not* copied, but

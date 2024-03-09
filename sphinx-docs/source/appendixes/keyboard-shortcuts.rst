@@ -48,11 +48,11 @@ Movement/direction keys
               These keys are referred to as <span class="sc">&laquo;Std move&raquo;</span> from now on.
             </p>
             <p>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
             <p>
             <p>
               <span class="asterisk">*</span>
-              <span class="sc">NumLock</span> must be off to use the keypad for navigation.
+              <span class="sc">NumLock</span> must be off to use the keypad for movement.
             <p>
           </td>
         </tr>
@@ -104,15 +104,13 @@ Movement/direction keys
             </p>
             <p>
               <span class="asterisk">*</span>
-              <span class="sc">NumLock</span> must be off to use the keypad for navigation.<br>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
+              <span class="sc">NumLock</span> must be off to use the keypad for movement.<br>
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
             <p>
             <p>
               <span class="dagger">†</span>
-              Only if <span class="sc">YUBN diagonal movement</span> is enabled.<br>
-              Can be combined with <kbd>Shift</kbd> for pan.<br>
-              Cannot be combined with <kbd>Ctrl</kbd> for jumps.
-            </p>
+              With <span class="sc">YUBN keys</span> enabled. Combine with <kbd>Shift</kbd> to pan.
+            <p>
             <p>
           </td>
         </tr>
@@ -147,8 +145,11 @@ Movement/direction keys
       <tfoot>
         <tr>
           <td>
-            <p>All <span class="sc">Std &amp; Diag move</span> keys are available in this
-            mode.<br></p>
+            <p>
+              All movement keys (including standard and diagonal)<br>
+              are referred to as <span class="sc">&laquo;Move keys&raquo;</span>.
+            </p>
+            <p>All <span class="sc">Move keys</span> are available in this mode.</p>
           </td>
         </tr>
       </tfoot>
@@ -158,7 +159,8 @@ Movement/direction keys
       <caption>Walk Mode</caption>
       <thead>
         <tr>
-          <th>Arrow</th>
+          <th>Arrow<br>(Strafe mode)</th>
+          <th>Arrow<br>(Turn mode)</th>
           <th>Keypad</th>
           <th></th>
         </tr>
@@ -166,17 +168,14 @@ Movement/direction keys
 
       <tfoot>
         <tr>
-          <td colspan="4">
-            <p>
-              <span class="sc">Vim</span> movement keys are not available in <span class="sc">Walk Mode</span>.
-            </p>
+          <td colspan="5">
             <p>
               <span class="asterisk">*</span>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
             </p>
             <p>
               <span class="dagger">†</span>
-              <span class="sc">NumLock</span> must be off to use the keypad for navigation.
+              <span class="sc">NumLock</span> must be off to use the keypad for movement.
             <p>
           </td>
         </tr>
@@ -184,32 +183,62 @@ Movement/direction keys
 
       <tbody class="no-padding">
         <tr>
-          <td><kbd>&larr;</kbd><span class="asterisk">*</span></td>
-          <td><kbd>kp 4</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
-          <td>Strafe left</td>
-        </tr>
-        <tr>
-          <td><kbd>&rarr;</kbd><span class="asterisk">*</span></td>
-          <td><kbd>kp 6</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
-          <td>Strafe right</td>
-        </tr>
-        <tr>
+          <td><kbd>&uarr;</kbd><span class="asterisk">*</span></td>
           <td><kbd>&uarr;</kbd><span class="asterisk">*</span></td>
           <td><kbd>kp 8</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
           <td>Forward</td>
         </tr>
         <tr>
           <td><kbd>&darr;</kbd><span class="asterisk">*</span></td>
+          <td><kbd>&darr;</kbd><span class="asterisk">*</span></td>
           <td><kbd>kp 2</kbd><kbd>kp 5</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
           <td>Backward</td>
         </tr>
         <tr>
-          <td>&ndash;</td>
+          <td>
+            <kbd>&larr;</kbd><span class="asterisk">*</span>
+          </td>
+          <td>
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>&larr;</kbd></kbd>
+            </kbd>
+          </td>
+          <td><kbd>kp 4</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
+          <td>Strafe left</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>&rarr;</kbd><span class="asterisk">*</span>
+          </td>
+          <td>
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>&rarr;</kbd></kbd>
+            </kbd>
+          </td>
+          <td><kbd>kp 6</kbd><span class="asterisk">*</span><span class="dagger">†</span></td>
+          <td>Strafe right</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>&larr;</kbd></kbd>
+            </kbd>
+          </td>
+          <td>
+            <kbd>&larr;</kbd><span class="asterisk">*</span>
+          </td>
           <td><kbd>kp 7</kbd><span class="dagger">†</span></td>
           <td>Turn left</td>
         </tr>
         <tr>
-          <td>&ndash;</td>
+          <td>
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>&rarr;</kbd></kbd>
+            </kbd>
+          </td>
+          <td>
+            <kbd>&rarr;</kbd><span class="asterisk">*</span>
+          </td>
           <td><kbd>kp 9</kbd><span class="dagger">†</span></td>
           <td>Turn right</td>
         </tr>
@@ -223,12 +252,10 @@ Movement/direction keys
         <tr>
           <td colspan="4">
             <p>
-              All <span class="sc">Std &amp; Diag move</span> keys are available
-              in this mode.<br>
+              All <span class="sc">Move keys</span> are available in this mode.
             </p>
             <p>
-              Can be combined with <kbd>Shift</kbd> for pan.<br>
-              Cannot be combined with <kbd>Ctrl</kbd> for jumps.
+              Combine with <kbd>Shift</kbd> to pan.
             </p>
           </td>
         </tr>
@@ -278,20 +305,16 @@ Movement/direction keys
         <tr>
           <td colspan="4">
             <p>
-              <span class="sc">Vim</span> movement keys are not available in <span class="sc">Walk Mode</span>.
-            </p>
-            <p>
               <span class="asterisk">*</span>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> for pan.
+              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
             </p>
             <p>
               <span class="dagger">†</span>
-              <span class="sc">NumLock</span> must be off to use the keypad for navigation.
-            <p>
+              <span class="sc">NumLock</span> must be off to use the keypad for movement.
+            </p>
             <p>
               <span class="dagger">‡</span>
-              Can be combined with <kbd>Shift</kbd> for pan.<br>
-              Cannot be combined with <kbd>Ctrl</kbd> for jumps.
+              Combine with <kbd>Shift</kbd> to pan.
             </p>
           </td>
         </tr>
@@ -414,7 +437,9 @@ Edit mode
         <tr>
           <td>
             <span class="group">
-              <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>-</kbd></kbd> / <kbd>=</kbd> or
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>-</kbd>
+              </kbd> / <kbd>=</kbd> or
             </span>
             <span class="group">
               <kbd>PgUp</kbd> / <kbd>PgDn</kbd> or
@@ -430,6 +455,81 @@ Edit mode
 
     <table class="shortcuts">
       <caption>General</caption>
+      <tbody>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Ctrl</kbd>+<kbd>A</kbd>
+            </kbd>
+          </td>
+          <td>Show about dialog</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>/</kbd>
+            </kbd>
+          </td>
+          <td>Toggle quick keyboard reference</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>F1</kbd>
+          </td>
+          <td>Open user manual in default browser</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd>
+            </kbd>
+          </td>
+          <td>Preferences</td>
+        </tr>
+      </tbody>
+
+      <tbody>
+        <tr>
+          <td>
+            <span class="group">
+              <kbd>U</kbd><span class="asterisk">*</span> or
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>U</kbd>
+              </kbd> or
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Z</kbd>
+              </kbd>
+            </span>
+          </td>
+          <td>
+            Undo last action
+            <p>
+              <span class="asterisk">*</span>
+              Except for <span class="sc">YUBN keys</span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>R</kbd>
+              </kbd> or
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Y</kbd>
+              </kbd>
+            </span>
+          </td>
+          <td>Redo last action</td>
+        </tr>
+      </tbody>
+
       <tbody>
         <tr>
           <td>
@@ -480,7 +580,9 @@ Edit mode
               <kbd>Ctrl</kbd>+<kbd>N</kbd>
             </kbd>
           </td>
-          <td>New level</td>
+          <td>
+            New level
+          </td>
         </tr>
         <tr>
           <td>
@@ -493,21 +595,18 @@ Edit mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>D</kbd>
-            </kbd>
-          </td>
-          <td>Delete level</td>
-        </tr>
-      </tbody>
-
-      <tbody>
-        <tr>
-          <td>
-            <kbd class="compound">
               <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>
             </kbd>
           </td>
           <td>Edit region properties</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Ctrl</kbd>+<kbd>D</kbd>
+            </kbd>
+          </td>
+          <td>Delete level</td>
         </tr>
       </tbody>
 
@@ -544,35 +643,6 @@ Edit mode
           </td>
           <td>Toggle title bar</td>
         </tr>
-      </tbody>
-
-      <tbody>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>PgUp</kbd>
-            </kbd>
-          <td>Previous theme</td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>PgDn</kbd>
-            </kbd>
-          </td>
-          <td>Next theme</td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Home</kbd>
-            </kbd>
-          </td>
-          <td>Reload current theme</td>
-        </tr>
-      </tbody>
-
-      <tbody>
         <tr>
           <td>
             <kbd>Space</kbd>
@@ -585,73 +655,48 @@ Edit mode
         <tr>
           <td>
             <span class="group">
-              <kbd>U</kbd><span class="asterisk">*</span> or
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>PgUp</kbd>
+              </kbd> or
             </span>
             <span class="group">
-              <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>U</kbd></kbd> or
-            </span>
-            <span class="group">
-              <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>Z</kbd></kbd>
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Fn</kbd>+<kbd>&uarr;</kbd>
+              </kbd>
             </span>
           </td>
-          <td>
-            Undo last action
-            <p>
-              <span class="asterisk">*</span>
-              Except for <span class="sc">YUBN keys</span>
-            </p>
-          </td>
+          <td>Previous theme</td>
         </tr>
         <tr>
           <td>
             <span class="group">
-              <kbd class="compound"><kbd>Ctrl</kbd>+<kbd>Y</kbd></kbd> or
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>PgDn</kbd>
+              </kbd> or
             </span>
-            <kbd class="compound group">
-              <kbd>Ctrl</kbd>+<kbd>R</kbd>
-            </kbd>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Fn</kbd>+<kbd>&darr;</kbd>
+              </kbd>
+            </span>
           </td>
-          <td>Redo last action</td>
-        </tr>
-      </tbody>
-
-      <tbody>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd>
-            </kbd>
-          </td>
-          <td>Preferences</td>
-        </tr>
-      </tbody>
-
-      <tbody>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>A</kbd>
-            </kbd>
-          </td>
-          <td>About dialog</td>
+          <td>Next theme</td>
         </tr>
         <tr>
           <td>
-            <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd>/</kbd>
-            </kbd>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Home</kbd>
+              </kbd> or
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Fn</kbd>+<kbd>&larr;</kbd>
+              </kbd>
+            </span>
           </td>
-          <td>Quick keyboard reference</td>
+          <td>Reload current theme</td>
         </tr>
-        <tr>
-          <td>
-            <kbd>F1</kbd>
-          </td>
-          <td>Open user manual in default browser</td>
-        </tr>
-      </tbody>
-
-      <tbody>
         <tr>
           <td>
             <kbd>F12</kbd>
@@ -672,7 +717,7 @@ Edit mode
           </td>
           <td>
             Excavate (draw) tunnel
-            <p>Not available in <span class="sc">WASD Mode</span><br>
+            <p>Except in <span class="sc">WASD Mode</span><br>
             (use Left Mouse Button instead)</p>
           </td>
         </tr>
@@ -684,7 +729,7 @@ Edit mode
           </td>
           <td>
             Erase cell (clear floor &amp; walls)
-            <p>Not available in <span class="sc">WASD + Walk Mode</span><br>
+            <p>Except in <span class="sc">WASD + Walk Mode</span><br>
             (use Middle Mouse Button instead)</p>
           </td>
         </tr>
@@ -707,49 +752,72 @@ Edit mode
       <tbody>
         <tr>
           <td>
-            <kbd>1</kbd> / <kbd class="compound"><kbd>Shift</kbd>+<kbd>1</kbd></kbd>
+            <kbd>1</kbd> /
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>1</kbd>
+            </kbd>
           </td>
           <td>Cycle door</td>
         </tr>
         <tr>
           <td>
-            <kbd>2</kbd> / <kbd class="compound"><kbd>Shift</kbd>+<kbd>2</kbd></kbd>
+            <kbd>2</kbd> /
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>2</kbd>
+            </kbd>
           </td>
           <td>Cycle special door</td>
         </tr>
         <tr>
           <td>
-            <kbd>3</kbd> / <kbd class="compound"><kbd>Shift</kbd>+<kbd>4</kbd></kbd>
+            <kbd>3</kbd> / 
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>4</kbd>
+            </kbd>
           </td>
           <td>Cycle pressure plate</td>
         </tr>
         <tr>
           <td>
-            <kbd>4</kbd> / <kbd class="compound"><kbd>Shift</kbd>+<kbd>4</kbd></kbd>
+            <kbd>4</kbd> / 
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>4</kbd>
+            </kbd>
           </td>
           <td>Cycle pit</td>
         </tr>
         <tr>
           <td>
-            <kbd>5</kbd> / <kbd class="compound "><kbd>Shift</kbd>+<kbd>5</kbd></kbd>
+            <kbd>5</kbd> /
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>5</kbd>
+            </kbd>
           </td>
           <td>Cycle teleport/spinner/invisible barrier</td>
         </tr>
         <tr>
           <td>
-            <kbd>6</kbd> / <kbd class="compound "><kbd>Shift</kbd>+<kbd>6</kbd></kbd>
+            <kbd>6</kbd> / <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>6</kbd>
+            </kbd>
           </td>
           <td>Cycle entry/exit</td>
         </tr>
         <tr>
           <td>
-            <kbd>7</kbd> / <kbd class="compound "><kbd>Shift</kbd>+<kbd>7</kbd></kbd>
+            <kbd>7</kbd> /
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>7</kbd>
+            </kbd>
           </td>
           <td>Draw bridge</td>
         </tr>
         <tr>
           <td>
-            <kbd>8</kbd> / <kbd class="compound "><kbd>Shift</kbd>+<kbd>8</kbd></kbd>
+            <kbd>8</kbd> / 
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>8</kbd>
+            </kbd>
           </td>
           <td>Cycle column/statue</td>
         </tr>
@@ -763,10 +831,10 @@ Edit mode
             </kbd>
           </td>
           <td>
-            Toggle wall in direction
+            Draw/clear wall in direction
             <p>Hold <kbd>Shift</kbd> after setting/clearing a wall to
             enter repeat mode</p>
-            <p>Not available in <span class="sc">WASD Mode</span><br>
+            <p>Except in <span class="sc">WASD Mode</span><br>
             (use Right Mouse Button instead)</p>
           </td>
         </tr>
@@ -777,10 +845,10 @@ Edit mode
             </kbd>
           </td>
           <td>
-            Toggle special wall in direction
+            Draw/clear special wall in direction
             <p>Hold <kbd>Shift</kbd> after setting/clearing a wall to
             enter repeat mode</p>
-            <p>Not available in <span class="sc">WASD Mode</span><br>
+            <p>Except in <span class="sc">WASD Mode</span><br>
             (use Right+Left Mouse Button instead)</p>
           </td>
         </tr>
@@ -896,7 +964,7 @@ Edit mode
           <td>
             <kbd>P</kbd>
           </td>
-          <td>Paste buffer contents at cursor</td>
+          <td>Paste copy buffer contents</td>
         </tr>
         <tr>
           <td>
@@ -911,12 +979,8 @@ Edit mode
       <tbody>
         <tr>
           <td>
-            <span class="group">
-              <kbd>N</kbd><span class="asterisk">*</span> or
-            </span>
-            <span class="group">
-              <kbd>;</kbd>
-            </span>
+            <kbd>N</kbd><span class="asterisk">*</span> or
+            <kbd>;</kbd>
           </td>
           <td>
             Create/edit note
@@ -929,9 +993,7 @@ Edit mode
         <tr>
           <td>
             <span class="group">
-              <kbd class="compound">
-                <kbd>Shift</kbd>+<kbd>N</kbd><span class="asterisk">*</span> or
-              </kbd>
+              <kbd>Shift</kbd>+<kbd>N</kbd><span class="asterisk">*</span> or
             </span>
             <span class="group">
               <kbd class="compound">
@@ -1014,14 +1076,14 @@ Select (Mark) Mode
       <tbody>
         <tr>
           <td>
-            <kbd class="move">Std &amp; Diag move</kbd>
+            <kbd class="move">Move keys</kbd>
           </td>
           <td>Move cursor (1 cell)</td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>Ctrl</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>
@@ -1032,18 +1094,17 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>
             Pan level (1 cell)
-            <p>Except for <span class="sc">YUBN keys</span></p>
           </td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>
@@ -1059,10 +1120,8 @@ Select (Mark) Mode
         </tr>
         <tr>
           <td>
-            <span class="group">
-              <kbd>Esc</kbd> or
-            </span>
-            <kbd class="compound group">
+            <kbd>Esc</kbd> or
+            <kbd class="compound">
               <kbd>Ctrl</kbd>+<kbd>[</kbd>
             </kbd>
           </td>
@@ -1074,7 +1133,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>D</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>D</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>Draw selection</td>
@@ -1082,7 +1141,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>E</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>E</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>Erase from selection</td>
@@ -1090,7 +1149,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>R</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>R</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>Add rectangular area to selection</td>
@@ -1098,7 +1157,7 @@ Select (Mark) Mode
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>S</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>S</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>Subtract rectangular area from selection</td>
@@ -1111,12 +1170,7 @@ Select (Mark) Mode
         </tr>
         <tr>
           <td>
-            <span class="group">
-              <kbd>U</kbd><span class="asterisk">*</span> or
-            </span>
-            <span class="group">
-              <kbd>X</kbd>
-            </span>
+            <kbd>U</kbd><span class="asterisk">*</span> or <kbd>X</kbd>
           </td>
           <td>
             Clear selection<br>(unmark all)
@@ -1131,15 +1185,10 @@ Select (Mark) Mode
       <tbody class="no-padding">
         <tr>
           <td>
-            <span class="group">
-              <kbd>Y</kbd><span class="asterisk">*</span> or
-            </span>
-            <span class="group">
-              <kbd>C</kbd>
-            </span>
+            <kbd>Y</kbd><span class="asterisk">*</span> or <kbd>C</kbd>
           </td>
           <td>
-            Copy (yank) selection
+            Yank (copy) selection
             <p>
               <span class="asterisk">*</span>
               Except for <span class="sc">YUBN keys</span>
@@ -1212,6 +1261,7 @@ Paste & Nudge Preview Modes
         <tr>
           <td colspan="2">
             <p>
+              <span class="asterisk">*</span>
               Panning is not available in <span class="sc">Nudge Preview Mode</span>.
             <p>
           </td>
@@ -1221,14 +1271,14 @@ Paste & Nudge Preview Modes
       <tbody>
         <tr>
           <td>
-            <kbd class="move">Std &amp; Diag move</kbd>
+            <kbd class="move">Move keys</kbd>
           </td>
           <td>Move selection (1 cell)</td>
         </tr>
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>Ctrl</kbd>+<kbd class="move">Move keys</kbd>
             </kbd>
           </td>
           <td>
@@ -1239,7 +1289,8 @@ Paste & Nudge Preview Modes
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
+              <span class="asterisk">*</span>
             </kbd>
           </td>
           <td>
@@ -1249,7 +1300,8 @@ Paste & Nudge Preview Modes
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Std &amp; Diag move</kbd>
+              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
+              <span class="asterisk">*</span>
             </kbd>
           </td>
           <td>
@@ -1257,18 +1309,12 @@ Paste & Nudge Preview Modes
             <p>Except for <span class="sc">YUBN keys</span></p>
           </td>
         </tr>
-      </tbody>
-
-      <tbody>
         <tr>
           <td>
             <kbd>W</kbd>
           </td>
           <td>Toggle wraparound</td>
         </tr>
-      </tbody>
-
-      <tbody class="no-padding">
         <tr>
           <td>
             <kbd>P</kbd> or <kbd>Enter</kbd> or <kbd>kp Enter</kbd>
@@ -1276,10 +1322,8 @@ Paste & Nudge Preview Modes
           <td>Paste</td>
         </tr>
         <td>
-          <span class="group">
-            <kbd>Esc</kbd> or
-          </span>
-          <kbd class="compound group">
+          <kbd>Esc</kbd> or
+          <kbd class="compound">
             <kbd>Ctrl</kbd>+<kbd>[</kbd>
           </kbd>
         </td>
@@ -1299,18 +1343,11 @@ Dialogs
       <tbody class="no-padding">
         <tr>
           <td>
-            <span class="group">
-              <kbd class="compound">
-                <kbd>Ctrl</kbd>+<kbd class="move">Std move Left/Right</kbd>
-              </kbd>
-            </span>
-            <span class="group">
-              <kbd class="compound">
-                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd>/<kbd>Ctrl</kbd>+<kbd>Tab</kbd>
-              </kbd>
-            </span>
+            <kbd class="compound">
+              <kbd>Ctrl</kbd>+<kbd class="move">Std move Left/Right</kbd>
+            </kbd>
           </td>
-          <td>Previous/next tab</td>
+          <td>Move between tabs</td>
         </tr>
         <tr>
           <td>
@@ -1318,7 +1355,7 @@ Dialogs
               <kbd>Ctrl</kbd>+<kbd>1</kbd>-<kbd>9</kbd>
             </kbd>
           </td>
-          <td>Go to <em>N</em>th tab</td>
+          <td>Go to tab 1–9</td>
         </tr>
         <tr>
           <td>
@@ -1331,19 +1368,17 @@ Dialogs
         <td>
           <kbd class="move">Std move</kbd>
         </td>
-        <td>Change selected radio button</td>
+        <td>Change radio button selection</td>
         <tr>
           <td>
             <kbd>Enter</kbd> <kbd>kp Enter</kbd>
           </td>
-          <td>Confirm<br>(OK, Save, etc.)</td>
+          <td>Confirm (OK, Save, etc.)</td>
         </tr>
         <tr>
           <td>
-            <span class="group">
-              <kbd>Esc</kbd> or
-            </span>
-            <kbd class="compound group">
+            <kbd>Esc</kbd> or
+            <kbd class="compound">
               <kbd>Ctrl</kbd>+<kbd>[</kbd>
             </kbd>
           </td>

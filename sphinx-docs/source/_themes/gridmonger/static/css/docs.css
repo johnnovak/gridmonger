@@ -671,9 +671,13 @@ article kbd:not(.compound).move {
   box-shadow: none;
 }
 article span.asterisk {
-  font-size: 1.2em;
+  font-family: serif;
+  font-size: 23px;
   font-style: normal;
   line-height: 1;
+}
+article .compound span.asterisk {
+  margin-left: -10px;
 }
 article span.dagger {
   position: relative;

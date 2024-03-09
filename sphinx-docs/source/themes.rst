@@ -7,9 +7,16 @@ themes out-of-the-box. Furthermore, the program also allows the modification
 of the built-in themes and the creation of entirely new ones.
 
 You can cycle through the themes in forward or reverse alphabetical order with
-:kbd:`Ctrl+PgUp` and :kbd:`Ctrl+PgDown` in *Edit Mode*. The name of the
+:kbd:`Ctrl+PgUp` and :kbd:`Ctrl+PgDn` in *Edit Mode*. The name of the
 theme in use is saved into your map file; when loading a map, the theme will
 be restored, or if it cannot be found, the ``Default`` theme will be used.
+
+.. tip::
+
+    If you're on a laptop that doesn't have :kbd:`PgUp` and :kbd:`PgDn` keys,
+    you can use :kbd:`Ctrl+Fn+↑` and :kbd:`Ctrl+Fn+↓` to switch between the
+    themes.
+
 
 Theme conventions
 =================
@@ -157,4 +164,16 @@ images are first attempted from here, then if that fails, from the
 ``Themes/Images`` folder. Because of this, when you make some adjustments to a
 built-in theme (creating an user theme that shadows the built-in theme in the
 process), the images files do not need to be copied.
+
+.. tip::
+
+    Press :kbd:`Ctrl+Home` (or :kbd:`Ctrl+Fn+←` on laptops) to refresh the
+    theme if you have changed the image referenced by a theme, or if you've
+    modified the theme file directly.
+
+.. note::
+
+    The list of available theme files is only looked up at startup. If
+    you've modified the contents of the theme folders directly, you'll
+    need to restart Gridmonger to see the up-to-date theme list.
 

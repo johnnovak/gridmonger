@@ -72,8 +72,8 @@ standard cursor keys or the keypad for now. But I do recommend you to read the
 :ref:`About Vim <about-vim>` side-note at the end; you might find it
 interesting enough to explore this topic further.
 
-The following table summarises the standard movement keys available in *Normal
-Mode* to move in the four cardinal directions (horizontally and vertically):
+The following table summarises the *standard movement keys* available in
+*Normal Mode*:
 
 .. raw:: html
 
@@ -111,40 +111,6 @@ Mode* to move in the four cardinal directions (horizontally and vertically):
           <td><kbd>kp 2</kbd><kbd>kp 5</kbd></td>
           <td><kbd>J</kbd></td>
           <td>Down (South)</td>
-        </tr>
-      </tbody>
-    </table>
-
-
-You can use the keypad to move in the intercardinal directions too
-(diagonally):
-
-.. raw:: html
-
-    <table class="shortcuts std-move-keys" style="width: 67%">
-      <thead>
-        <tr>
-          <th>Keypad</th>
-          <th width="45%"></th>
-        </tr>
-      </thead>
-
-      <tbody class="no-padding">
-        <tr>
-          <td><kbd>kp 7</kbd></td>
-          <td>Up &amp; left (Northwest)</td>
-        </tr>
-        <tr>
-          <td><kbd>kp 9</kbd></td>
-          <td>Up &amp; right (Northeast)</td>
-        </tr>
-        <tr>
-          <td><kbd>kp 1</kbd></td>
-          <td>Down &amp; left (Southwest)</td>
-        </tr>
-        <tr>
-          <td><kbd>kp 3</kbd></td>
-          <td>Down &amp; right (Southeast)</td>
         </tr>
       </tbody>
     </table>
@@ -189,13 +155,47 @@ For consistency, this enables wraparound cursor movement in all editing modes
 (you'll learn about these modes below and in later chapters).
 
 
-YUBN diagonal movement
-~~~~~~~~~~~~~~~~~~~~~~
+Diagonal movement
+~~~~~~~~~~~~~~~~~
+
+You can use the keypad to move in the intercardinal directions too
+(diagonally, in 45-degree angle):
+
+.. raw:: html
+
+    <table class="shortcuts std-move-keys" style="width: 67%">
+      <thead>
+        <tr>
+          <th>Keypad</th>
+          <th width="45%"></th>
+        </tr>
+      </thead>
+
+      <tbody class="no-padding">
+        <tr>
+          <td><kbd>kp 7</kbd></td>
+          <td>Up &amp; left (Northwest)</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 9</kbd></td>
+          <td>Up &amp; right (Northeast)</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 1</kbd></td>
+          <td>Down &amp; left (Southwest)</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 3</kbd></td>
+          <td>Down &amp; right (Southeast)</td>
+        </tr>
+      </tbody>
+    </table>
+
+
 
 In addition to the numeric keypad, it's also possible to move the cursor
-diagonally in the intercardinal directions with the YUBN keys. This might be
-familiar to some from the classic game `Rogue
-<https://en.wikipedia.org/wiki/Rogue_(video_game)>`_:
+diagonally with the YUBN keys. This might be familiar to some from the classic
+game `Rogue <https://en.wikipedia.org/wiki/Rogue_(video_game)>`_:
 
 .. raw:: html
 
@@ -411,19 +411,19 @@ in the top-left corner of the window when *WASD Mode* is on.
 
 
 When it comes to navigation, this mode is the same as *Normal Mode*, with the
-addition that you can also use the :kbd:`W`:kbd:`A`:kbd:`S`:kbd:`D` keys for
-cursor movement. All diagonal movement keys are available in *WASD mode*.
-Editing, however, is a little different --- as you'll learn in the
-:ref:`basic-editing:Editing in WASD Mode` section, the mouse buttons are
-repurposed for editing in this mode, so you need to hold the :kbd:`Shift`
-modifier to use the :ref:`moving-around:Mouse movement actions`.
+addition that you can also use the WASD keys for cursor movement. All diagonal
+movement keys are available in *WASD mode*. Editing, however, is a little
+different --- as you'll learn in the :ref:`basic-editing:Editing in WASD Mode`
+section, the mouse buttons are repurposed for editing in this mode, so you
+need to hold the :kbd:`Shift` modifier to use the :ref:`moving-around:Mouse
+movement actions`.
 
 
 
 .. note::
 
    In *WASD Mode*, you cannot use the :kbd:`Ctrl` movement modifier with the
-   :kbd:`W`:kbd:`A`:kbd:`S`:kbd:`D` keys for 5-cell jumps because that would
+   WASD keys for 5-cell jumps because that would
    interfere with other shortcuts. You can, however, use the :kbd:`Shift`
    modifier with them, and both the :kbd:`Ctrl` and :kbd:`Shift` modifiers are
    available with the other movement keys.

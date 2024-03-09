@@ -121,12 +121,18 @@ right initially; you can always change it later with the resize and crop
 actions, as you'll see.
 
 To delete the current level, press :kbd:`Ctrl+D`. If you accidentally deleted
-a level, no problem, you can always undo it by pressing :kbd:`U` or
-:kbd:`Ctrl+Z`.
+a level, no problem, you can always undo it by pressing :kbd:`U`,
+:kbd:`Ctrl+U`, or :kbd:`Ctrl+Z`.
 
 Similarly, you can create a new map with :kbd:`Ctrl+Alt+N`. Make sure to save
 your current map first if you don't want to lose it, because deleting the
 whole map is the one action that *cannot* be undone!
+
+.. note::
+
+    The :kbd:`U` undo shortcut is not available if :ref:`YUBN keys
+    <moving-around:Diagonal movement>` are enabled. You'll learn about this
+    special feature in the next chapter.
 
 
 .. rst-class:: style1 big

@@ -61,8 +61,8 @@ and :kbd:`.` keys. To "pick" the floor colour from the current cell, press
 :kbd:`I`.
 
 Gridmonger has a virtually unlimited undo history (only limited by your
-computer's memory). You can undo most actions with :kbd:`Ctrl+Z`, :kbd:`U`, or
-:kbd:`Ctrl+U` and redo them with :kbd:`Ctrl+Y` or :kbd:`Ctrl+R`. The only
+computer's memory). You can undo most actions with :kbd:`U`, :kbd:`Ctrl+U`, or
+:kbd:`Ctrl+Z` and redo them with :kbd:`Ctrl+R` or :kbd:`Ctrl+Y`. The only
 action that cannot be undone is the creation of a new map which discards the
 current map.
 
@@ -432,10 +432,10 @@ undoable actions.
 
     <div class="figure">
       <a href="_static/img/trail.png" class="glightbox">
-        <img alt="Trail mode" src="_static/img/trail.png" style="width: 90%;">
+        <img alt="Trail Mode" src="_static/img/trail.png" style="width: 90%;">
       </a>
         <p class="caption">
-          <span>Trail mode</span>
+          <span>Trail Mode</span>
         </p>
     </div>
 
@@ -469,7 +469,7 @@ not a problem, as in this mode you're supposed to use *mouse modifiers*
 instead for these actions.
 
 For example, to draw tunnels, hold down the left mouse button and use the
-:kbd:`W`:kbd:`A`:kbd:`S`:kbd:`D` movement keys.
+WASD movement keys.
 
 The following mouse modifiers are available:
 

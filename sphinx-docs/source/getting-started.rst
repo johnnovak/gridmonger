@@ -124,6 +124,7 @@ For the impatient among you, here's a few notes to get you started.
 .. rst-class:: multiline
 
 - Use :kbd:`Ctrl+PgUp` and :kbd:`Ctrl+PgDn` to cycle through the themes
+  (or :kbd:`Ctrl+Fn+↑` and :kbd:`Ctrl+Fn+↓` on laptops).
 
 
 **Editing**

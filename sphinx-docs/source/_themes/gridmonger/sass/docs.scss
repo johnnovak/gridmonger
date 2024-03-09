@@ -386,9 +386,13 @@ article {
   }
 
   span.asterisk {
-    font-size: 1.2em;
+    font-family: serif;
+    font-size: 23px;
     font-style: normal;
     line-height: 1;
+  }
+  .compound span.asterisk {
+    margin-left: -10px;
   }
   span.dagger {
     position: relative;
