@@ -235,9 +235,9 @@ These two floor types are a bit special:
 
 .. rst-class:: multiline
 
-- There are two *one-way doors types*: one for the North or East direction,
-  and another for South or West. Press the :kbd:`O` key to switch between
-  North-South or East-West orientation, then :kbd:`2`/:kbd:`Shift+2` to flip
+- There are two *one-way doors types*: one for the north or east direction,
+  and another for south or west. Press the :kbd:`O` key to switch between
+  north-south or east-west orientation, then :kbd:`2`/:kbd:`Shift+2` to flip
   the arrow direction.
 
 - The *bridge type* has a small amount of "overhang" that extends into its two
