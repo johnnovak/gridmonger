@@ -11,28 +11,35 @@ BUGS
 
 - selecting single line text selects whole line
 
-- autosave does not save new map that hasn't been saved before
-
 
 TODO
 ====
 
-  - test extensively & update manual
-
+  - implement paste wraparound
+  - allow pasting with negative offsets
   - finish diagonal movement (numpad, yubn)
-
   - finish intelligent excavate mode
-
   - improve restoring the windows size on screen dimension changes
 
   - generate app shortcuts at runtime based on some flags (e.g.
 	yubnMovementKeys). this simplifies generating the quickrefs & the key
 	handling, and allows to switch between Ctrl/Cmd on macOS
 
-  - option to use Cmd key on macOS (selectable at runtime)
-
   - window handling bugs:
     - crash when dragging maximised window
+
+  - autosave does not save new map that hasn't been saved before
+
+  - if a new maps has been autosaved but not saved manually, quitting would
+	proceed without a warning but the map is lost
+
+  - restrict trail mode further
+
+  ----
+
+  - test extensively & update manual
+
+  - option to use Cmd key on macOS (selectable at runtime)
 
   - OS X:
     - gridmonger document icon
