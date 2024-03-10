@@ -11,20 +11,21 @@ gratification.  To paraphrase the famous quote about Linux:
 selective about its friends than your average desktop application.*
 
 But, alas, worry not --- if you are a fan of old-school computer role-playing
-games, and you are able to set them up in emulators, you will get along with
+games and you are able to set them up in emulators, you will get along with
 Gridmonger just fine!
 
-The user interface is optimised for power users, and therefore is operable by
+The user interface is optimised for power users and is therefore operable by
 keyboard shortcuts almost exclusively. While you could get quite far going by
 the list of :ref:`appendixes/keyboard-shortcuts:Keyboard shortcuts` alone, the
-more complex features --- and especially the reason behind them --- would be
-not so trivial to figure out on your own.  I very much recommend reading
-through this manual at least once to familiarise yourself with the full list
-of program features. And don't just read --- create a test map, or load one of
-the included `Example maps <https://gridmonger.johnnovak.net/files/gridmonger-example-maps.zip>`_, and try the
-features for yourself as you're progressing through the chapters!
+more complex features --- especially the reason behind them --- would not be
+so trivial to figure out on your own.  I very much recommend reading through
+this manual at least once to familiarise yourself with the complete list of
+program features. And don't just read --- create a test map, or load one of
+the included `Example maps
+<https://gridmonger.johnnovak.net/files/gridmonger-example-maps.zip>`_, and
+try the features for yourself as you progress through the chapters!
 
-Having said all that, some people are just impatient, or want to get a taste
+Having said all that, some people are just impatient or want to get a taste
 of the thing before committing to learning it. For them, I have included a few
 quick tips in the :ref:`getting-started:quickstart` section below.
 
@@ -32,14 +33,14 @@ Requirements
 ============
 
 Gridmonger requires very little hard drive space, only around 6-8 megabytes.
-Windows 7 & 10 and macOS Mojave or later (10.14+) are supported, although
-in all likelihood it will work just fine on Windows XP and much earlier macOS
+Windows 7 & 10 and macOS Mojave or later (10.14+) are supported, although, in
+all likelihood, it will work fine on Windows XP and much earlier macOS
 versions.
 
-The program uses OpenGL for all its rendering; it works very similarly to a
-game engine. You'll need a graphics card that supports OpenGL 3.2 core
-profile or later. In practice, this means that any graphics card released in
-the last 10 years or so will do (including integrated ones).
+The program uses OpenGL for all its rendering; it works similarly to a game
+engine. You'll need a graphics card that supports OpenGL 3.2 core profile or
+later. In practice, any graphics card released in the last 10 years or so will
+do (including integrated ones).
 
 Installation
 ============
@@ -50,9 +51,8 @@ Windows
 To install Gridmonger on Windows, download either the Windows installer (for
 standard installations) or the ZIP file (for portable installations) from the
 `Downloads <https://gridmonger.johnnovak.net/#Downloads>`_ page. Then run the
-installer, or simply unpack the contents of the ZIP file somewhere. First-time
-users are encouraged to use the installer and accept the default install
-options.
+installer or simply unpack the ZIP file's contents somewhere. First-time
+users are encouraged to use the installer and accept the default options.
 
 The 64-bit version is strongly recommended as it's more performant and more
 thoroughly tested; only use the 32-bit version if you're still running a
@@ -77,10 +77,11 @@ etc.)
 Linux
 -----
 
-No Linux builds are provided yet, but you can build it yourself by following
-the `build instructions <https://github.com/johnnovak/gridmonger#build-instructions>`_.
-There are some graphical glitches when resizing and moving the application
-window, but otherwise the program works perfectly.
+No Linux builds are provided yet, but you can build the program yourself by
+following the `build instructions <https://github.com/johnnovak/gridmonger#build-instructions>`_.
+There might be some graphical glitches when resizing and moving the
+application window under certain window managers, but otherwise, the program
+should work perfectly.
 
 
 .. rst-class:: style4 big
@@ -88,11 +89,11 @@ window, but otherwise the program works perfectly.
 Quickstart
 ==========
 
-For the impatient among you, here's a few notes to get you started.
+For the impatient among you, here are a few notes to get you started.
 
 .. tip::
 
-   Always have an eye on the *status bar messages* at the bottom of the
+   Always keep an eye on the *status bar messages* at the bottom of the
    window, as they contain important context-dependent information about the
    tools you're trying to use.
 
