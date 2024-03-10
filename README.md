@@ -73,6 +73,7 @@ The website is published from the `/docs` directory of the `master` branch.
 - To create the zipped distribution package of the manual from the generated
   files, run `nim packageManual`
 
+- Check out the [release build instructions](https://github.com/johnnovak/gridmonger/blob/master/RELEASE.md#build-instructions) for further details.
 
 #### Theme development
 
