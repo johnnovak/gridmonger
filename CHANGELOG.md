@@ -4,8 +4,6 @@
 
 ### New features
 
-- The user manual is now searchable.
-
 - Multi-monitor support.
 
 - Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
@@ -16,7 +14,11 @@
 
 - The selection can now be moved with the mouse in Paste Preview Mode.
 
-- Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement) TODO
+- Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement).
+
+- The user manual is now searchable (works in the offline documentation too,
+  but only page titles are displayed in the search results).
+
 
 ### Enhancements
 
@@ -28,6 +30,9 @@
   follows the mouse pointer when you move it outside of the level's bounds.
 
 - Restoring the window size and position on startup is now more robust.
+
+- The user manual has been overhauled for improved wording and clarity.
+
 
 ### Fixes
 
@@ -52,6 +57,7 @@
 
 - The auto-save timer now resets when the auto-save is enabled from a disabled
   state.
+
 
 ---
 
@@ -83,15 +89,12 @@
 ### New features
 
 - Add preferences option to enable movement wraparound.
-
 - Allow multiple source links for teleporters (Teon Banek).
-
 - New Werdna theme (designed for the PC/CGA version of Wizardry 1-5).
 
 ### Fixes
 
 - Fix "Draw Wall Repeat" modifier handling on Linux.
-
 - Fix cursor jump when cursor is close to the level edges (Teon Banek).
 
 ### Contributors
