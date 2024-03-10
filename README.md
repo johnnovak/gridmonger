@@ -19,15 +19,11 @@ Requires [Nim](https://nim-lang.org/) 2.0.2
 * [nim-riff](https://github.com/johnnovak/nim-riff)
 * [winim](https://github.com/khchen/winim)
 
-You can install most of the dependencies with [Nimble](https://github.com/nim-lang/nimble):
+You can install the dependencies with [Nimble](https://github.com/nim-lang/nimble):
 
 ```
-nimble install glfw nanovg osdialog riff winim
+nimble install koi glfw nanovg osdialog riff winim
 ```
-
-For `koi`, clone its Git repository and execute `nimble develop` from the root
-directory of checked out repo. That will install the library for local
-development.
 
 
 ### Compiling
