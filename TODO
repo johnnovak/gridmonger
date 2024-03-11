@@ -16,7 +16,6 @@ TODO
   - implement paste wraparound
   - allow pasting with negative offsets
   - finish diagonal movement (numpad, yubn)
-  - finish intelligent excavate mode
   - improve restoring the windows size on screen dimension changes
 
   - generate app shortcuts at runtime based on some flags (e.g.

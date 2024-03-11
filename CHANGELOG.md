@@ -16,6 +16,9 @@
 
 - Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement).
 
+- [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
+  option to aid exploring tunnel style dungeons.
+
 - The user manual is now searchable (works in the offline documentation too,
   but only page titles are displayed in the search results).
 

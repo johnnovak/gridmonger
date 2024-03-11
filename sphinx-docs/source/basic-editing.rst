@@ -10,7 +10,7 @@ less common third *hybrid style* that combines elements from both.
 
     <div class="figure">
       <a href="_static/img/eob.png" class="glightbox">
-        <img alt="Tunnel style — Eye of the Beholder I" src="_static/img/eob.png" style="width: 77%;">
+        <img alt="Tunnel style — Eye of the Beholder I" src="_static/img/eob.png" style="width: 83%;">
       </a>
         <p class="caption">
           <span>
@@ -20,7 +20,7 @@ less common third *hybrid style* that combines elements from both.
 
     <div class="figure">
       <a href="_static/img/por.png" class="glightbox">
-        <img alt="Wall style — Pool of Radiance" src="_static/img/por.png" style="width: 55%;">
+        <img alt="Wall style — Pool of Radiance" src="_static/img/por.png" style="width: 64%;">
       </a>
       <p class="caption">
         <span>
@@ -30,7 +30,7 @@ less common third *hybrid style* that combines elements from both.
 
     <div class="figure">
       <a href="_static/img/uukrul.png" class="glightbox">
-        <img alt="Hybrid style — Dark Heart of Uukrul" src="_static/img/uukrul.png" style="width: 82%;">
+        <img alt="Hybrid style — Dark Heart of Uukrul" src="_static/img/uukrul.png" style="width: 92%;">
       </a>
       <p class="caption">
         <span>
@@ -38,6 +38,11 @@ less common third *hybrid style* that combines elements from both.
         </span>
     </div>
 
+
+Editing tools
+=============
+
+Gridmonger has a number of handy map editing tools at your disposal.
 
 Tunnel style maps are easiest to create with the *excavate* (*draw tunnel*)
 tool. To use it, hold down the :kbd:`D` key and use the movement keys. The
@@ -53,6 +58,9 @@ that work the same way:
 * :kbd:`E` – Erase whole cell, including walls (we'll talk about walls shortly)
 * :kbd:`F` – Draw/clear floor
 * :kbd:`C` – Set floor colour
+
+Naturally, all tools are compatible with :ref:`moving-around:Movement
+wraparound`.
 
 New cells are drawn with the current floor colour, which is indicated in the
 tools pane on the right. You can toggle the visibility of the tools pane with
@@ -355,6 +363,36 @@ direction. If you want to flip the direction of the arrow, just go to the
 "other side" of the door and draw it again in the opposite direction! The
 lever, niche, statue, and writing special wall types are similarly
 "directional".
+
+
+Open-ended excavate
+===================
+
+The ends of the tunnels created with the *excavate (draw tunnel)* are closed
+off with a regular wall by default. Some people might prefer leaving them
+open, though. This could come in handy when exploring tunnel style maps; an
+open tunnel would signal there's more to explore in that direction.
+
+You can enable this feature with the **Open-ended excavate** checkbox in the
+:ref:`preferences:Editing tab` of the :ref:`preferences:Preferences` dialog.
+
+The below map illustrates the difference between the two operational modes.
+The same tunnel structure was drawn twice as a single uninterrupted excavate
+operation with **Open-ended excavate** disabled (left) then enabled (right),
+going from one numbered location to next in order.
+
+.. raw:: html
+
+    <div class="figure">
+      <a href="_static/img/open-ended-excavate.png" class="glightbox">
+        <img alt="Drawing a spiral with the draw wall repeat tool" src="_static/img/open-ended-excavate.png" style="width: 88%;">
+      </a>
+        <p class="caption">
+          <span>Left: open-ended excavate disabled (close off tunnels with walls)<br>
+          Right: open-ended excavate enabled
+          </span>
+        </p>
+    </div>
 
 
 Draw wall repeat
