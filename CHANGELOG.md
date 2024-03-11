@@ -14,8 +14,8 @@
 - Option to select whether the Left/Right cursor keys perform strafing or
   turning in [Walk Mode](https://gridmonger.johnnovak.net/manual/moving-around.html#walk-mode).
 - Support for panning the level with the mouse (middle-click + drag, or
-  Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
-- The selection can now be moved with the mouse in Paste Preview Mode.
+  Ctrl + left-click + drag). Works in *Paste Preview Mode* and *WASD Mode* too.
+- The selection can now be moved with the mouse in *Paste Preview Mode*.
 - The [user manual](https://gridmonger.johnnovak.net/manual/contents.html) is
   now searchable (works in the offline documentation too, but only page titles
   are displayed in the search results).
@@ -63,7 +63,7 @@
 
 ### Fixes
 
-- Fix bug where no operation can be performed on the selection in Mark mode
+- Fix bug where no operation can be performed on the selection in *Mark Mode*
   if only cells from the bottom row are selected.
 - Fix a very obscure bug where the auto-saved map can get occasionally
   corrupted when creating a level with smaller dimensions than the current
