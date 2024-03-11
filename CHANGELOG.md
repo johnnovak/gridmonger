@@ -52,6 +52,9 @@
 - Fix moving selections leaving copies of the original labels if they were on
   empty cells.
 
+- The notes pane now fills the window horizontally when the tools pane is
+  hidden.
+
 - If auto-saving is enabled, the map no longer gets immediately auto-saved
   right after adding the first level to an empty map.
 

@@ -5,8 +5,6 @@ BUGS
   mode, move a few steps, disable trail mode, move a few steps, repeat a few
   times, then undo back to the beginning)
 
-- notes pane should fill the window horizontally when the tools pane is hidden
-
 - warning when closing new map that was never manually saved
 
 - selecting single line text selects whole line

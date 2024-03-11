@@ -1662,8 +1662,11 @@ proc drawAreaHeight(a): float =
 # }}}
 # {{{ toolsPaneWidth()
 proc toolsPaneWidth(a): float =
-  if drawAreaHeight(a) < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
-  else: ToolsPaneWidthNarrow
+  if a.opts.showToolsPane:
+    if drawAreaHeight(a) < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
+    else: ToolsPaneWidthNarrow
+  else:
+    0.0
 
 # }}}
 # {{{ updatePaneCoords()
