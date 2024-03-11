@@ -63,7 +63,7 @@
 
 ### Fixes
 
-- Fix bug where no operation can be performed on the selection in "Mark mode"
+- Fix bug where no operation can be performed on the selection in Mark mode
   if only cells from the bottom row are selected.
 - Fix a very obscure bug where the auto-saved map can get occasionally
   corrupted when creating a level with smaller dimensions than the current
@@ -81,7 +81,7 @@
 
 ### Fixes
 
-- Fix "Draw Wall Repeat" modifier handling on Linux.
+- Fix Draw Wall Repeat modifier handling on Linux.
 - Fix cursor jump when cursor is close to the level edges (Teon Banek).
 
 ### Contributors
