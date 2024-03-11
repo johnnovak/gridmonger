@@ -14,7 +14,8 @@
 
 - The selection can now be moved with the mouse in Paste Preview Mode.
 
-- Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement).
+- Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement),
+  including YUBN keys.
 
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
   option to aid exploring tunnel style dungeons.
