@@ -6713,8 +6713,10 @@ proc handleGlobalKeyEvents(a) =
     of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
+        let allowDiagonal = ui.editMode != emExcavateTunnel
         discard handleMoveCursor(ke, allowPan=false, allowJump=false,
-                                 allowWasdKeys=true, allowDiagonal=true, a)
+                                 allowWasdKeys=true,
+                                 allowDiagonal=allowDiagonal, a)
       let cur = ui.cursor
 
       if cur != ui.prevCursor:
