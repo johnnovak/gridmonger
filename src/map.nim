@@ -221,7 +221,9 @@ proc setTrail*(m; loc: Location, t: bool) =
 
 # {{{ excavateTunnel*()
 proc excavateTunnel*(m; loc: Location, floorColor: Natural,
-                     dir: Option[CardinalDir]) =
+                     dir: Option[CardinalDir] = CardinalDir.none,
+                     prevLoc: Option[Location] = Location.none,
+                     prevDir: Option[CardinalDir] = CardinalDir.none) =
   alias(l, m.levels[loc.level])
   alias(c, loc.col)
   alias(r, loc.row)
@@ -229,6 +231,10 @@ proc excavateTunnel*(m; loc: Location, floorColor: Natural,
   m.eraseCell(loc, preserveLabel=true)
   m.setFloor(loc, fBlank)
   m.setFloorColor(loc, floorColor)
+
+  if dir.isSome and prevDir.isSome and
+     dir.get.orientation != prevDir.get.orientation:
+    m.excavateTunnel(prevLoc.get, floorColor)
 
   var wallDirs = @[dirN, dirS, dirE, dirW]
   if dir.isSome:

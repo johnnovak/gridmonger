@@ -382,6 +382,7 @@ type
     autosaveFreqMins:   Natural
 
     movementWraparound: bool
+    openEndedExcavate:  bool
     walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
 
@@ -428,17 +429,19 @@ type
     shortcuts:          Table[AppShortCut, seq[KeyShortcut]]
     quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
 
+    editMode:           EditMode
+    # to restore the previous edit mode when exiting emPanLevel
+    prevEditMode:       EditMode
+
     cursor:             Location
     prevCursor:         Location
-    cursorOrient:       CardinalDir
-    editMode:           EditMode
+    cursorOrient:       CardinalDir           # used by Walk Mode
+    prevMoveDir:        Option[CardinalDir]   # used by the exacavate tool
 
     walkKeysWasd:       WalkKeys
     walkKeysCursor:     WalkKeys
 
-    # to restore the previous edit mode when exiting emPanLevel
-    prevEditMode:       EditMode
-
+    # used by the zooming logic
     prevCursorViewX:    float
     prevCursorViewY:    float
 
@@ -659,6 +662,7 @@ type
 
     # Editing tab
     movementWraparound: bool
+    openEndedExcavate:  bool
     walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
 
@@ -1794,11 +1798,15 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 # {{{ moveCursor()
 proc moveCursor(dir: CardinalDir, steps: Natural = 1; a) =
   let cur = stepCursor(a.ui.cursor, dir, steps, a)
-  setCursor(cur, a)
+  if cur != a.ui.cursor:
+    a.ui.prevMoveDir = dir.some
+    setCursor(cur, a)
 
 # }}}
-# {{{ moveCursor()
-proc moveCursor(dir: Direction, steps: Natural = 1; a) =
+# {{{ moveCursorDiagonal()
+proc moveCursorDiagonal(dir: Direction, steps: Natural = 1; a) =
+  assert(dir in @[NorthWest, NorthEast, SouthWest, SouthEast])
+
   let l = currLevel(a)
 
   var cur = a.ui.cursor
@@ -2716,6 +2724,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
   cfg.set(p & "editing.movement-wraparound",    a.prefs.movementWraparound)
+  cfg.set(p & "editing.open-ended-excavate",    a.prefs.openEndedExcavate)
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
   cfg.set(p & "editing.walk-cursor-mode",       enumToDashCase($a.prefs.walkCursorMode))
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
@@ -3458,6 +3467,7 @@ proc openPreferencesDialog(a) =
   dlg.vsync              = a.prefs.vsync
 
   dlg.movementWraparound = a.prefs.movementWraparound
+  dlg.openEndedExcavate  = a.prefs.openEndedExcavate
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
   dlg.walkCursorMode     = a.prefs.walkCursorMode
 
@@ -3573,12 +3583,16 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.movementWraparound, style = a.theme.checkBoxStyle)
 
+      koi.label("Open-ended exacavate", style=a.theme.labelStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.openEndedExcavate, style = a.theme.checkBoxStyle)
+
       koi.label("YUBN diagonal movement",
                  style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.yubnMovementKeys, style = a.theme.checkBoxStyle)
 
-      koi.label("Walk Mode Left/Right keys", style=a.theme.labelStyle)
+      koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
       koi.nextItemWidth(80)
       koi.dropDown(dlg.walkCursorMode)
 
@@ -3602,6 +3616,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
     # Editing
     a.prefs.movementWraparound = dlg.movementWraparound
+    a.prefs.openEndedExcavate  = dlg.openEndedExcavate
     a.prefs.yubnMovementKeys   = dlg.yubnMovementKeys
     a.prefs.walkCursorMode     = dlg.walkCursorMode
 
@@ -5551,9 +5566,10 @@ proc cycleFloorGroupAction(floors: seq[Floor], forward: bool; a) =
 # {{{ startExcavateTunnelAction()
 proc startExcavateTunnelAction(a) =
   let cur = a.ui.cursor
+  a.ui.prevMoveDir = CardinalDir.none
+
   actions.excavateTunnel(a.doc.map, loc=cur, undoLoc=cur, a.ui.currFloorColor,
-                         dir=CardinalDir.none,
-                         a.doc.undoManager, groupWithPrev=false)
+                         um=a.doc.undoManager, groupWithPrev=false)
 
   setStatusMessage(IconPencil, "Excavate tunnel", @[IconArrowsAll,
                    "excavate"], a)
@@ -6250,16 +6266,16 @@ proc handleGlobalKeyEvents(a) =
 
       # move cursor
       if ke.isKeyDown(d.upLeft, repeat=true):
-        moveCursor(NorthWest, s, a)
+        moveCursorDiagonal(NorthWest, s, a)
 
       elif ke.isKeyDown(d.upRight, repeat=true):
-        moveCursor(NorthEast, s, a)
+        moveCursorDiagonal(NorthEast, s, a)
 
       elif ke.isKeyDown(d.downLeft, repeat=true):
-        moveCursor(SouthWest, s, a)
+        moveCursorDiagonal(SouthWest, s, a)
 
       elif ke.isKeyDown(d.downRight, repeat=true):
-        moveCursor(SouthEast, s, a)
+        moveCursorDiagonal(SouthEast, s, a)
 
       # move level
       elif ke.isKeyDown(d.upLeft, {mkShift}, repeat=true):
@@ -6711,6 +6727,8 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
     of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
+      let prevMoveDir = a.ui.prevMoveDir
+
       if opts.walkMode: handleMoveWalk(ke, a)
       else:
         let allowDiagonal = ui.editMode != emExcavateTunnel
@@ -6721,12 +6739,20 @@ proc handleGlobalKeyEvents(a) =
 
       if cur != ui.prevCursor:
         if   ui.editMode == emExcavateTunnel:
-          let dir = moveKeyToCardinalDir(ke, allowWasdKeys=true,
-                                         allowRepeat=true)
+          if a.prefs.openEndedExcavate:
+            let dir = if opts.walkMode: ui.cursorOrient.some
+                      else: moveKeyToCardinalDir(ke, allowWasdKeys=true,
+                                                 allowRepeat=true)
 
-          actions.excavateTunnel(map, loc=cur, undoLoc=ui.prevCursor,
-                                 ui.currFloorColor, dir,
-                                 um, groupWithPrev=opts.drawTrail)
+            actions.excavateTunnel(map, loc=cur, undoLoc=ui.prevCursor,
+                                   ui.currFloorColor, dir,
+                                   prevDir=prevMoveDir,
+                                   prevLoc=ui.prevCursor.some,
+                                   um, groupWithPrev=opts.drawTrail)
+          else:
+            actions.excavateTunnel(a.doc.map, loc=cur, undoLoc=cur,
+                                   a.ui.currFloorColor,
+                                   um=um, groupWithPrev=opts.drawTrail)
 
         elif ui.editMode == emEraseCell:
           actions.eraseCell(map, loc=cur, undoLoc=ui.prevCursor,
@@ -9254,6 +9280,7 @@ proc initPreferences(cfg: HoconNode; a) =
         let MovementWraparoundKey_v100 = "movement-wrap-around"
         movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey_v100, false)
 
+    openEndedExcavate = prefs.getBoolOrDefault("editing.open-ended-excavate")
     yubnMovementKeys = prefs.getBoolOrDefault("editing.yubn-movement-keys")
 
     walkCursorMode = prefs.getEnumOrDefault("editing.walk-cursor-mode",
