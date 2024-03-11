@@ -134,7 +134,7 @@ ui {
 
 level {
   general {
-    background = "#a28251ff"
+    background = "#856b42ff"
     line-width = normal
     cursor = "#ffa600ff"
     cursor-guides = "#ffa60039"
@@ -206,7 +206,7 @@ level {
   floor {
     transparent = no
     background = [
-      "#0a0a0a00"
+      "#917448ff"
       "#79000052"
       "#e9030227"
       "#ae8e5dff"

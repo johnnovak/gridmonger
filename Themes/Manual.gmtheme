@@ -134,7 +134,7 @@ ui {
 
 level {
   general {
-    background = "#d7d2ccff"
+    background = "#715f4aff"
     line-width = normal
     cursor = "#f0a200ff"
     cursor-guides = "#ffa60033"

@@ -33,6 +33,8 @@
 
 - The user manual has been overhauled for improved wording and clarity.
 
+- Minor improvements to some of the bundled themes.
+
 
 ### Fixes
 
