@@ -20,7 +20,6 @@
   now searchable (works in the offline documentation too, but only page titles
   are displayed in the search results).
 
-
 ### Enhancements
 
 - Erase and clear floor actions don't erase labels now.
@@ -30,7 +29,6 @@
 - Restoring the window size and position on startup is now more robust.
 - The user manual has been overhauled for improved wording and clarity.
 - Minor improvements to some of the bundled themes.
-
 
 ### Fixes
 
@@ -51,7 +49,6 @@
 - The auto-save timer now resets when the auto-save is enabled from a disabled
   state.
 
-
 ---
 
 ## v1.1.0 – 2023-02-02
@@ -59,7 +56,6 @@
 ### New features
 
 - Add Column and Statue floor types.
-
 
 ---
 
@@ -69,11 +65,9 @@
 
 - Fix bug where no operation can be performed on the selection in "Mark mode"
   if only cells from the bottom row are selected.
-
 - Fix a very obscure bug where the auto-saved map can get occasionally
   corrupted when creating a level with smaller dimensions than the current
   one.
-
 
 ---
 
@@ -93,7 +87,6 @@
 ### Contributors
 
 - Teon "Th30n" Banek <<theongugl@gmail.com>>
-
 
 ---
 
