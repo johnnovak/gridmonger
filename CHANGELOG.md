@@ -9,19 +9,23 @@
 - Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
   and move/paste selections with wraparound.
 
-- Support for panning the level with the mouse (middle-click + drag, or
-  Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
-
-- The selection can now be moved with the mouse in Paste Preview Mode.
-
-- Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement),
-  including YUBN keys.
+- Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement)
+  via the numeric keypad or the YUBN keys (à la Rogue).
 
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
   option to aid exploring tunnel style dungeons.
 
-- The user manual is now searchable (works in the offline documentation too,
-  but only page titles are displayed in the search results).
+- Support for panning the level with the mouse (middle-click + drag, or
+  Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
+
+- Option to select whether the Left/Right cursor keys perform strafing or
+  turning in [Walk Mode](https://gridmonger.johnnovak.net/manual/moving-around.html#walk-mode).
+
+- The selection can now be moved with the mouse in Paste Preview Mode.
+
+- The [user manual](https://gridmonger.johnnovak.net/manual/contents.html) is
+  now searchable (works in the offline documentation too, but only page titles
+  are displayed in the search results).
 
 
 ### Enhancements
