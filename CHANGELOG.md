@@ -15,11 +15,11 @@
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
   option to aid exploring tunnel style dungeons.
 
-- Support for panning the level with the mouse (middle-click + drag, or
-  Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
-
 - Option to select whether the Left/Right cursor keys perform strafing or
   turning in [Walk Mode](https://gridmonger.johnnovak.net/manual/moving-around.html#walk-mode).
+
+- Support for panning the level with the mouse (middle-click + drag, or
+  Ctrl + left-click + drag). Works in Paste Preview Mode and WASD Mode too.
 
 - The selection can now be moved with the mouse in Paste Preview Mode.
 
