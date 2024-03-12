@@ -1,20 +1,19 @@
 BUGS
 ====
 
-- trail mode in combination with undo/redo acts a bit weird (enable trail
-  mode, move a few steps, disable trail mode, move a few steps, repeat a few
-  times, then undo back to the beginning)
-
 - warning when closing new map that was never manually saved
 
 - selecting single line text selects whole line
+
+- trail mode in combination with undo/redo acts a bit weird (enable trail
+  mode, move a few steps, disable trail mode, move a few steps, repeat a few
+  times, then undo back to the beginning)
 
 
 TODO
 ====
 
   - implement paste wraparound
-  - allow pasting with negative offsets
   - finish diagonal movement (numpad, yubn)
   - improve restoring the windows size on screen dimension changes
 
@@ -26,13 +25,11 @@ TODO
   - if a new maps has been autosaved but not saved manually, quitting would
 	proceed without a warning but the map is lost
 
-  - generate app shortcuts at runtime based on some flags (e.g.
-	yubnMovementKeys). this simplifies generating the quickrefs & the key
-	handling, and allows to switch between Ctrl/Cmd on macOS
-
-  ----
+  - allow pasting with negative offsets
 
   - test extensively & update manual
+
+  ----
 
   - option to use Cmd key on macOS (selectable at runtime)
 
