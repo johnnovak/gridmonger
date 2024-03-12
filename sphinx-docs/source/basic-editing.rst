@@ -378,7 +378,7 @@ You can enable this feature with the **Open-ended excavate** checkbox in the
 
 The below map illustrates the difference between the two operational modes.
 The same tunnel structure was drawn twice as a single uninterrupted excavate
-operation with **Open-ended excavate** disabled (left) then enabled (right),
+action with **Open-ended excavate** disabled (left) then enabled (right),
 going from one numbered location to next in order.
 
 .. raw:: html
@@ -393,6 +393,14 @@ going from one numbered location to next in order.
           </span>
         </p>
     </div>
+
+.. tip::
+
+    If you want to close the end of a tunnel you've just created and the
+    cursor is still at the end of it, press and release :kbd:`D` once again
+    without using the movement keys. This trick is also useful to close off
+    the "last missing wall" when enlarging rooms with the open-ended exacavate
+    tool.
 
 
 Draw wall repeat
