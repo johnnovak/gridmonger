@@ -26,6 +26,8 @@
 - Clear floor actions don't erase annotations now.
 - Setting the cursor position with the mouse has been improved; now the cursor
   follows the mouse pointer when you move it outside of the level's bounds.
+- Turn off *Trail Mode* automatically in more scenarios that would result in
+  confusing or unwanted behaviour.
 - Restoring the window size and position on startup is now more robust.
 - The user manual has been overhauled for improved wording and clarity.
 - Minor improvements to some of the bundled themes.
