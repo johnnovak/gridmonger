@@ -1749,6 +1749,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   template stepInc(curPos: Natural, maxPos: Natural) =
     let newPos = curPos + steps
     if newPos > maxPos and wraparound:
+      if steps > 1: a.opts.drawTrail = false
       curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
@@ -1758,6 +1759,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
     let newPos = curPos - steps
     let minPos = 0
     if newPos < minPos and wraparound:
+      if steps > 1: a.opts.drawTrail = false
       curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
@@ -1802,6 +1804,8 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 proc moveCursor(dir: CardinalDir, steps: Natural = 1; a) =
   let cur = stepCursor(a.ui.cursor, dir, steps, a)
   if cur != a.ui.cursor:
+    if steps > 1:
+      a.opts.drawTrail = false
     a.ui.prevMoveDir = dir.some
     setCursor(cur, a)
 
@@ -6244,7 +6248,8 @@ proc handleGlobalKeyEvents(a) =
       elif ke.key in DiagonalMoveLetterKeys:
         # Disallow Ctrl+Y/U/B/N panning as it would interfere with shorcuts
         return
-      else: s = CursorJump
+      else:
+        s = CursorJump
 
     let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
             else: MoveKeysCursor
