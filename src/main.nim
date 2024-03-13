@@ -1637,18 +1637,37 @@ proc setSetLinkDestinationMessage(floor: Floor; a) =
                    scAccept.toStr(a, idx=0), "set",
                    scCancel.toStr(a, idx=0), "cancel"], a)
 # }}}
+# {{{ mkWraparoundMessage()
+proc mkWraparoundMessage(a): string =
+  "wraparound: " & (if a.opts.pasteWraparound: "on" else: "off")
+
+# }}}
 # {{{ setNudgePreviewModeMessage()
 proc setNudgePreviewModeMessage(a) =
-  let wraparoundMsg = "wraparound: " & (if a.opts.pasteWraparound: "on"
-                                        else: "off")
-
-  setStatusMessage(IconArrowsAll, "Nudge preview",
+  setStatusMessage(IconArrowsAll, "Nudge level",
                    @[IconArrowsAll, "nudge",
-                   scTogglePasteWraparound.toStr(a), wraparoundMsg,
+                   scTogglePasteWraparound.toStr(a), mkWraparoundMessage(a),
                    "Enter", "confirm", "Esc", "cancel"], a)
 
 # }}}
-#
+# {{{ setPastePreviewModeMessage()
+proc setPastePreviewModeMessage(a) =
+  setStatusMessage(IconTiles, "Paste selection",
+                   @[IconArrowsAll, "placement",
+                   scTogglePasteWraparound.toStr(a),
+                   mkWraparoundMessage(a),
+                   "Enter/P", "paste", "Esc", "cancel"], a)
+
+# }}}
+# {{{
+proc setMovePreviewModeMessage(a) =
+  setStatusMessage(IconTiles, "Move selection",
+                   @[IconArrowsAll, "placement",
+                   scTogglePasteWraparound.toStr(a),
+                   mkWraparoundMessage(a),
+                   "Enter/P", "confirm", "Esc", "cancel"], a)
+
+# }}}
 # {{{ drawAreaWidth()
 proc drawAreaWidth(a): float =
   if a.opts.showThemeEditor: koi.winWidth() - ThemePaneWidth
@@ -6539,9 +6558,7 @@ proc handleGlobalKeyEvents(a) =
           opts.drawTrail = false
           ui.editMode = emPastePreview
 
-          setStatusMessage(IconTiles, "Paste preview",
-                           @[IconArrowsAll, "placement",
-                           "Enter/P", "paste", "Esc", "cancel"], a)
+          setPastePreviewModeMessage(a)
         else:
           setWarningMessage("Cannot paste, buffer is empty", a=a)
 
@@ -6984,10 +7001,7 @@ proc handleGlobalKeyEvents(a) =
           dp.selStartCol = cur.col
 
           ui.editMode = emMovePreview
-
-          setStatusMessage(IconTiles, "Move selection",
-                           @[IconArrowsAll, "placement",
-                           "Enter/P", "confirm", "Esc", "cancel"], a)
+          setMovePreviewModeMessage(a)
 
       elif ke.isShortcutDown(scSelectionEraseArea, a):
         let selection = ui.selection.get
@@ -7101,19 +7115,22 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartRow = cur.row
       dp.selStartCol = cur.col
 
-      if ke.isShortcutDown(scPasteAccept, a):
-        actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
-                               pasteBufferLevelIndex=Natural.none,
-                               um, pasteTrail=true)
-
-        ui.editMode = emNormal
-        setStatusMessage(IconPaste, "Pasted buffer contents", a)
+      if ke.isShortcutDown(scTogglePasteWraparound, a):
+        opts.pasteWraparound = not opts.pasteWraparound
+        setPastePreviewModeMessage(a)
 
       elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
       elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
+
+      elif ke.isShortcutDown(scPasteAccept, a):
+        actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
+                               pasteBufferLevelIndex=Natural.none,
+                               um, pasteTrail=true)
+        ui.editMode = emNormal
+        setStatusMessage(IconPaste, "Pasted buffer contents", a)
 
       elif ke.isShortcutDown(scCancel, a):
         ui.editMode = emNormal
@@ -7132,21 +7149,24 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartRow = cur.row
       dp.selStartCol = cur.col
 
-      if ke.isShortcutDown(scPasteAccept, a):
-        actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
-                               ui.nudgeBuf.get,
-                               pasteBufferLevelIndex=MoveBufferLevelIndex.some,
-                               um, groupWithPrev=true,
-                               actionName="Move selection")
-
-        ui.editMode = emNormal
-        setStatusMessage(IconPaste, "Moved selection", a)
+      if ke.isShortcutDown(scTogglePasteWraparound, a):
+        opts.pasteWraparound = not opts.pasteWraparound
+        setMovePreviewModeMessage(a)
 
       elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
       elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
+
+      elif ke.isShortcutDown(scPasteAccept, a):
+        actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
+                               ui.nudgeBuf.get,
+                               pasteBufferLevelIndex=MoveBufferLevelIndex.some,
+                               um, groupWithPrev=true,
+                               actionName="Move selection")
+        ui.editMode = emNormal
+        setStatusMessage(IconPaste, "Moved selection", a)
 
       elif ke.isShortcutDown(scCancel, a):
         exitMovePreviewMode(a)
@@ -7181,7 +7201,7 @@ proc handleGlobalKeyEvents(a) =
         opts.pasteWraparound = not opts.pasteWraparound
         setNudgePreviewModeMessage(a)
 
-      elif   ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
+      elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
 
       elif ke.isShortcutDown(scAccept, a):
