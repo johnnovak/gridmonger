@@ -90,7 +90,8 @@ type
 
     drawCursorGuides*: bool
 
-    pasteWraparound*:  bool
+    pasteWraparound*:     bool
+    selectionWraparound*: bool
 
     # internal
     zoomLevel:          range[MinZoomLevel..MaxZoomLevel]
@@ -2622,14 +2623,22 @@ proc drawSelectionHighlight(ctx) =
     sel = dp.selectionBuffer.get.selection
     viewSelStartRow = dp.selStartRow - dp.viewStartRow
     viewSelStartCol = dp.selStartCol - dp.viewStartCol
-    rows = min(sel.rows, dp.viewRows - viewSelStartRow)
-    cols = min(sel.cols, dp.viewCols - viewSelStartCol)
+
+    (rows, cols) = if dp.selectionWraparound:
+                     (sel.rows.int, sel.cols.int)
+                   else:
+                     (min(sel.rows, dp.viewRows - viewSelStartRow),
+                      min(sel.cols, dp.viewCols - viewSelStartCol))
 
   for r in 0..<rows:
     for c in 0..<cols:
-      if sel[r,c] and viewSelStartRow + r >= 0 and viewSelStartCol + c >= 0:
-        let x = cellX(viewSelStartCol + c, dp)
-        let y = cellY(viewSelStartRow + r, dp)
+      if sel[r,c] and (viewSelStartRow + r >= 0 and
+                       viewSelStartCol + c >= 0):
+        let
+          wrapCol = (viewSelStartCol + c).floorMod(dp.viewCols)
+          wrapRow = (viewSelStartRow + r).floorMod(dp.viewRows)
+          x = cellX(wrapCol, dp)
+          y = cellY(wrapRow, dp)
 
         drawCellHighlight(x, y, lt.pastePreviewColor, ctx)
 

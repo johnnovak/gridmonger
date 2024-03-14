@@ -7471,11 +7471,14 @@ proc renderLevel(a) =
 
   # Draw level
   if dp.viewRows > 0 and dp.viewCols > 0:
-    dp.cursorRow = ui.cursor.row
-    dp.cursorCol = ui.cursor.col
+    dp.cursorRow     = ui.cursor.row
+    dp.cursorCol     = ui.cursor.col
     dp.cellCoordOpts = coordOptsForCurrLevel(a)
-    dp.regionOpts = l.regionOpts
-    dp.pasteWraparound = opts.pasteWraparound
+    dp.regionOpts    = l.regionOpts
+
+    dp.pasteWraparound  = opts.pasteWraparound
+    dp.selectionWraparound = (opts.pasteWraparound and
+                              ui.editMode != emNudgePreview)
 
     if opts.walkMode and
        ((ui.editMode in {emNormal, emExcavateTunnel, emEraseCell,
