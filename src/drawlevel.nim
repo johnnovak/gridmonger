@@ -2745,10 +2745,8 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   setLevelClippingRect(l, ctx)
 
-  if lt.backgroundHatchEnabled:
-    drawBackgroundHatch(ctx)
-  else:
-    drawBackground(ctx)
+  if lt.backgroundHatchEnabled: drawBackgroundHatch(ctx)
+  else:                         drawBackground(ctx)
 
   # outlineBuf has the same dimensions as viewBuf
   let outlineBuf = if lt.outlineStyle >= osSquareEdges:
@@ -2760,10 +2758,8 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   drawBackgroundGrid(viewBuf, ctx)
 
-  if lt.outlineStyle == osCell:
-    drawCellOutlines(l, ctx)
-  elif outlineBuf.isSome:
-    drawEdgeOutlines(l, outlineBuf.get, ctx)
+  if lt.outlineStyle == osCell: drawCellOutlines(l, ctx)
+  elif outlineBuf.isSome:       drawEdgeOutlines(l, outlineBuf.get, ctx)
 
   drawCellBackgroundsAndGrid(viewBuf, ctx)
 
@@ -2778,28 +2774,19 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   if not drawSelectionBuffer:
     drawLinkMarkers(map, level, ctx)
 
-  if lt.shadowInnerWidthFactor > 0:
-    drawInnerShadows(viewBuf, ctx)
-
-  if lt.shadowOuterWidthFactor > 0:
-    drawOuterShadows(viewBuf, ctx)
+  if lt.shadowInnerWidthFactor > 0: drawInnerShadows(viewBuf, ctx)
+  if lt.shadowOuterWidthFactor > 0: drawOuterShadows(viewBuf, ctx)
 
   drawWalls(l, viewBuf, ctx)
   drawBridges(viewBuf, ctx)
 
-  if dp.regionOpts.enabled:
-    drawRegionBorders(l, viewBuf, ctx)
+  if dp.regionOpts.enabled: drawRegionBorders(l, viewBuf, ctx)
 
   drawLabels(viewBuf, ctx)
 
-  if dp.selection.isSome:
-    drawSelection(ctx)
-
-  if drawSelectionBuffer:
-    drawSelectionHighlight(ctx)
-
-  if dp.drawCursorGuides:
-    drawCursorGuides(ctx)
+  if dp.selection.isSome: drawSelection(ctx)
+  if drawSelectionBuffer: drawSelectionHighlight(ctx)
+  if dp.drawCursorGuides: drawCursorGuides(ctx)
 
   setLevelClippingRect(l, ctx)
 
