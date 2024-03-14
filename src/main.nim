@@ -2037,7 +2037,7 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   alias(ui, a.ui)
 
   let sel = ui.selection.get
-  let bbox = sel.boundingBox()
+  let bbox = sel.boundingBox
 
   if bbox.isSome:
     let bbox = bbox.get
@@ -6544,7 +6544,7 @@ proc handleGlobalKeyEvents(a) =
         if ui.copyBuf.isSome:
           actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
                                  pasteBufferLevelIndex=Natural.none,
-                                 um)
+                                 wraparound=false, um)
 
           setStatusMessage(IconPaste, "Buffer pasted", a)
         else:
@@ -7128,6 +7128,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scPasteAccept, a):
         actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
                                pasteBufferLevelIndex=Natural.none,
+                               wraparound=opts.pasteWraparound,
                                um, pasteTrail=true)
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
@@ -7163,6 +7164,7 @@ proc handleGlobalKeyEvents(a) =
         actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
                                ui.nudgeBuf.get,
                                pasteBufferLevelIndex=MoveBufferLevelIndex.some,
+                               wraparound=opts.pasteWraparound,
                                um, groupWithPrev=true,
                                actionName="Move selection")
         ui.editMode = emNormal

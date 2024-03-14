@@ -1,5 +1,6 @@
 import std/math
 import std/options
+import std/strformat
 
 import annotations
 import common
@@ -384,18 +385,18 @@ proc pasteWithWraparound*(l; destRow, destCol: int, srcLevel: Level,
                           sel: Selection, pasteTrail: bool = false,
                           levelRows, levelCols: Natural,
                           selStartRow, selStartCol: int,
-                          destStartRow: Natural = 0,
-                          destStartCol: Natural = 0,
+                          destStartRow:  Natural = 0,
+                          destStartCol:  Natural = 0,
                           destRowOffset: Natural = 0,
                           destColOffset: Natural = 0): Option[Rect[Natural]] =
 
-#  echo "---------------------------------"
-#  echo fmt"destLevel: {l.rows} x {l.cols}, destRow: {destRow}, destCol: {destCol}"
-#  echo fmt"srcLevel: {srcLevel.rows} x {srcLevel.cols}, selection: {sel.rows} x {sel.cols}"
-#  echo fmt"levelRows: {levelRows}, levelCols: {levelCols}"
-#  echo fmt"selStartRow: {selStartRow}, selStartCol: {selStartCol}"
-#  echo fmt"destStartRow: {destStartRow}, destBufStartCol: {destBufStartCol}"
-#  echo fmt"destRowOffset: {destRowOffset}, destBufColOffset: {destBufColOffset}"
+  echo "---------------------------------"
+  echo fmt"destLevel: {l.rows} x {l.cols}, destRow: {destRow}, destCol: {destCol}"
+  echo fmt"srcLevel: {srcLevel.rows} x {srcLevel.cols}, selection: {sel.rows} x {sel.cols}"
+  echo fmt"levelRows: {levelRows}, levelCols: {levelCols}"
+  echo fmt"selStartRow: {selStartRow}, selStartCol: {selStartCol}"
+#  echo fmt"destStartRow: {destStartRow}, destStartCol: {destStartCol}"
+#  echo fmt"destRowOffset: {destRowOffset}, destColOffset: {destColOffset}"
 
   for srcRow in 0..<srcLevel.rows:
     for srcCol in 0..<srcLevel.cols:
