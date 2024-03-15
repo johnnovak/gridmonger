@@ -6,7 +6,8 @@
 
 - Multi-monitor support.
 - Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
-  and move/paste selections with wraparound.
+  and move or paste [selections](https://gridmonger.johnnovak.net/manual/advanced-editing.html#selections)
+  with wraparound.
 - Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement)
   via the numeric keypad or the YUBN keys (à la Rogue).
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)

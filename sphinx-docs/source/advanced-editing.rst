@@ -185,6 +185,14 @@ you can also switch the current level in *Paste Preview Mode*. Naturally, the
         </p>
     </div>
 
+If you move the selection beyond the level's boundaries, parts of it will
+become clipped. By enabling *wraparound*, the cells shifted beyond one edge of
+the level will "wrap around" to the opposite side. You can toggle wraparound
+with the :kbd:`W` key while in *Paste Preview Mode*. The status bar indicates
+whether wraparound is enabled or not.
+
+TODO wraparound image
+
 
 .. tip::
 
@@ -201,7 +209,8 @@ Move :kbd:`Ctrl+M`
     will be cut first, then you will be automatically taken into *Paste
     Preview Mode*, where you can reposition the selection. Note that the move
     action will leave the contents of the paste buffer intact (it uses a
-    dedicated move buffer under the hood).
+    dedicated move buffer under the hood). Wraparound is available when moving
+    selections too; you can toggle it with the :kbd:`W` key.
 
 Erase :kbd:`Ctrl+E`
     Equivalent to using the *erase cell* action on the selected cells.
@@ -256,11 +265,8 @@ with the *nudge level* action.
 Press :kbd:`Ctrl+E` to enter *Nudge Preview Mode*, then use the movement keys
 to reposition the level's contents.
 
-Nudging can cause parts of the level to be clipped as you move it beyond the
-grid's boundaries. By enabling *wraparound*, the rows and columns shifted
-beyond one edge will "wrap around" to the opposite side. Press :kbd:`W` to
-toggle this wraparound behaviour. The status bar indicates whether wraparound
-is enabled or not.
+Similarly to *Paste Preview Mode*, you can enable wraparound with the :kbd:`W`
+key when nudging levels.
 
 Accept the changes by pressing :kbd:`Enter` or discard them with :kbd:`Esc`.
 
