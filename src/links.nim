@@ -47,6 +47,21 @@ proc dump*(l) =
     echo "src: ", src, ", dest: ", dest
 
 # }}}
+# {{{ sanitise*()
+proc sanitise*(l) =
+  var dump = false
+  for src, dest in l:
+    if src.level > 100 or dest.level > 100:
+      dump = true
+      break
+
+  if dump:
+    echo "========================================================="
+    echo "Stack trace:\n" & getStackTrace()
+    echo "---------------------------------------------------------"
+    l.dump()
+
+# }}}
 # {{{ delBySrc*()
 proc delBySrc*(vl; src: Location) =
   if src notin vl.srcToDest:
