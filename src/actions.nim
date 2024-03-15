@@ -1,3 +1,4 @@
+import std/math
 import std/options
 import std/sets
 import std/strformat
@@ -580,25 +581,33 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
       destRect = l.paste(loc.row, loc.col,
                          sb.level, sb.selection, pasteTrail)
 
-#[    if destRect.isSome:
+    if destRect.isSome:
       let destRect = destRect.get
+
+      # Add paste location offset & account for potential wraparound
+      func offsetLocation(t: Location): Location =
+        Location(level: loc.level,
+                 row: (t.row + loc.row).floorMod(l.rows),
+                 col: (t.col + loc.col).floorMod(l.cols))
 
       # Erase existing map links in the paste area (taking selection into
       # account)
-      for r in destRect.r1..<destRect.r2:
-        for c in destRect.c1..<destRect.c2:
-          if sb.selection[r-destRect.r1, c-destRect.c1]:
-            m.eraseCellLinks(Location(level: loc.level, row: r, col: c))
+      for r in 0..<sb.level.rows:
+        for c in 0..<sb.level.cols:
+          if sb.selection[r, c]:
+            m.eraseCellLinks(
+              offsetLocation(Location(level: loc.level, row: r, col: c))
+            )
 
       if pasteBufferLevelIndex.isSome:
         # Recreate links from the paste buffer
-        var linksToDeleteBySrc  = newSeq[Location]()
-        var linksToDeleteByDest = newSeq[Location]()
+        var
+          linksToDeleteBySrc  = newSeq[Location]()
+          linksToDeleteByDest = newSeq[Location]()
+          linksToAdd          = initLinks()
 
-        var linksToAdd = initLinks()
-
-        # More efficient to just iterate through all links in the map in one
-        # go
+        # It's more efficient to just iterate through all links in the map in
+        # one go
         for src, dest in m.links:
           var
             src = src
@@ -608,32 +617,26 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
             destInside = true
 
           # Link starting from a paste buffer location (pointing to either
-          # a map location, or another paste buffer location)
+          # a map location, or to another paste buffer location)
           if src.level == pasteBufferLevelIndex.get:
             linksToDeleteBySrc.add(src)
 
-            # Add paste location offset
-            src.level = loc.level
-            src.row  += loc.row
-            src.col  += loc.col
+            src = offsetLocation(src)
 
             # We need this check because the full paste rect might get clipped
-            # if it cannot fit into the available map area
+            # if wraparound is off
             srcInside = destRect.contains(src.row, src.col)
             addLink = true
 
           # Link pointing to a paste buffer location (from either a map
-          # location, or another paste buffer location)
+          # location, or from another paste buffer location)
           if dest.level == pasteBufferLevelIndex.get:
             linksToDeleteByDest.add(dest)
 
-            # Add paste location offset
-            dest.level = loc.level
-            dest.row  += loc.row
-            dest.col  += loc.col
+            dest = offsetLocation(dest)
 
             # We need this check because the full paste rect might get clipped
-            # if it cannot fit into the available map area
+            # if wraparound is off
             destInside = destRect.contains(dest.row, dest.col)
             addLink = true
 
@@ -648,7 +651,7 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
         m.links.addAll(linksToAdd)
 
       m.normaliseLinkedStairs(loc.level)
-]#
+
 # }}}
 
 # {{{ addNewLevel*()
