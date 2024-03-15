@@ -47,19 +47,20 @@ proc dump*(l) =
     echo "src: ", src, ", dest: ", dest
 
 # }}}
-# {{{ sanitise*()
-proc sanitise*(l) =
-  var dump = false
-  for src, dest in l:
-    if src.level > 100 or dest.level > 100:
-      dump = true
-      break
+# {{{ debugSanitise*()
+proc debugSanitise*(l) =
+  when defined(DEBUG):
+    var dump = false
+    for src, dest in l:
+      if src.level > 100 or dest.level > 100:
+        dump = true
+        break
 
-  if dump:
-    echo "========================================================="
-    echo "Stack trace:\n" & getStackTrace()
-    echo "---------------------------------------------------------"
-    l.dump()
+    if dump:
+      echo "========================================================="
+      echo "Stack trace:\n" & getStackTrace()
+      echo "---------------------------------------------------------"
+      l.dump()
 
 # }}}
 # {{{ delBySrc*()

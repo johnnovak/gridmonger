@@ -195,6 +195,7 @@ proc checkValueRange[T: SomeInteger](v: T, name: string,
                                      min: T = 0, max: T = 0, debugLog = true) =
   if debugLog:
     debug(fmt"{name}: {v}")
+
   if v < min or v > max:
     raiseMapReadError(
       fmt"The value of integer '{name}' must be between {min} and {max}, " &

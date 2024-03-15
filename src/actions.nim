@@ -60,7 +60,7 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
     )
 
     m.links = oldLinks
-    m.links.sanitise()
+    m.links.debugSanitise()
     result = usd
 
   um.storeUndoState(action, undoAction, groupWithPrev)
@@ -344,7 +344,6 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
   if oldSrcs.isSome:
     for oldSrc in oldSrcs.get: oldLinks.set(oldSrc, src)
 
-
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[dest.level].copyCellsAndAnnotationsFrom(
       destRow  = rect.r1,
@@ -462,6 +461,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
   let level = loc.level
   var oldLinks = map.links.filterByInRect(level, bbox, sel.some)
+  map.links.debugSanitise()
 
   proc transformAndCollectLinks(origLinks: Links, selection: Selection,
                                 bbox: Rect[Natural]): Links =
@@ -503,6 +503,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
       m.links.delBySrc(s)
 
     m.links.addAll(newLinks)
+    m.links.debugSanitise()
 
     var l: Location
     l.level = level
@@ -543,10 +544,7 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
       rect.c1 = 0
       rect.c2 = levelCols
 
-    echo levelRows, " ", levelCols
-    echo rect
     rect
-
 
   else:
     rectN(
@@ -687,6 +685,7 @@ proc addNewLevel*(map; loc: Location,
 
     for src in m.links.filterByLevel(level).sources:
       m.links.delBySrc(src)
+      m.links.debugSanitise()
 
     result = usd
 
@@ -721,6 +720,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
       let oldLevelIdx = m.levels.high+1
       let newLevelIdx = loc.level
       m.links.remapLevelIndex(oldLevelIdx, newLevelIdx)
+      m.links.debugSanitise()
 
     var usd = usd
     if m.levels.len == 0:
@@ -748,9 +748,11 @@ proc deleteLevel*(map; loc: Location; um): Location =
 
       m.levels[loc.level] = restoredLevel
       m.links.remapLevelIndex(oldIndex = loc.level, newIndex = m.levels.high)
+      m.links.debugSanitise()
 
     m.refreshSortedLevelNames()
     m.links.addAll(oldLinks)
+    m.links.debugSanitise()
 
     result = usd
 
@@ -796,6 +798,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     # Adjust links
     for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
+    m.links.debugSanitise()
 
     # Adjust regions
     let (regionOffsRow, regionOffsCol) = calcRegionResizeOffsets(
@@ -823,6 +826,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
+    m.links.debugSanitise()
 
     m.levels[loc.level].regions = oldRegions
 
@@ -857,6 +861,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     # Adjust links
     for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
+    m.links.debugSanitise()
 
     var usd = usd
     usd.location.col = max(usd.location.col.int + colOffs, 0).Natural
@@ -874,6 +879,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
+    m.links.debugSanitise()
 
     m.levels[loc.level].regions = oldRegions
 
@@ -897,6 +903,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   let oldLinks = map.links.filterByLevel(loc.level)
   let newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
                                             levelRect, wraparound)
+  map.links.debugSanitise()
 
   # Do action
   #
@@ -928,6 +935,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
     for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
+    m.links.debugSanitise()
 
     var usd = usd
     usd.location.row = max(usd.location.row + rowOffs, 0)
@@ -943,6 +951,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
+    m.links.debugSanitise()
 
     result = usd
 
