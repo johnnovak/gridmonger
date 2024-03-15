@@ -13,7 +13,6 @@ BUGS
 TODO
 ====
 
-  - implement paste wraparound
   - finish diagonal movement (numpad, yubn)
   - improve restoring the windows size on screen dimension changes
 
@@ -25,11 +24,11 @@ TODO
   - if a new maps has been autosaved but not saved manually, quitting would
 	proceed without a warning but the map is lost
 
-  - allow pasting with negative offsets
-
   - test extensively & update manual
 
   ----
+
+  - allow pasting with negative offsets
 
   - option to use Cmd key on macOS (selectable at runtime)
 
