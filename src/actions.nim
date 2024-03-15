@@ -37,7 +37,7 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
     actionMap.levels[loc.level].reindexNotes()
     result = usd
 
-  var oldLinks = map.links.filterByInRect(loc.level, rect)
+  var oldLinks = map.links
 
   let undoLevel = map.newLevelFrom(loc.level, rect)
 
@@ -57,10 +57,9 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
       rect.r1 + undoLevel.rows,
       rect.c1 + undoLevel.cols
     )
-    for src in m.links.filterByInRect(loc.level, delRect).sources:
-      m.links.delBySrc(src)
 
-    m.links.addAll(oldLinks)
+    m.links = oldLinks
+    m.links.sanitise()
     result = usd
 
   um.storeUndoState(action, undoAction, groupWithPrev)

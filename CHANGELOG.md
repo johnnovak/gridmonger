@@ -44,6 +44,11 @@
 - Fix moving selections not moving links correctly (or at all).
 - Fix moving selections leaving copies of the original labels if they were on
   empty cells.
+- Fix evil move selection link corruption bug. Moving cells that contain
+  links, then either cancelling the move operation or performing it and then
+  undoing the move could generate extra "invisible" invalid links. You could
+  continue using the program and saving the map would still succeed, but you
+  could not load it back later.
 - The notes pane now fills the window horizontally when the tools pane is
   hidden.
 - If auto-saving is enabled, the map no longer gets immediately auto-saved
