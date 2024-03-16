@@ -2615,7 +2615,7 @@ proc drawSelection(ctx) =
 
 # }}}
 # {{{ drawSelectionHighlight()
-proc drawSelectionHighlight(ctx) =
+proc drawSelectionHighlight(levelRows, levelCols: Natural; ctx) =
   alias(dp, ctx.dp)
   alias(lt, ctx.lt)
 
@@ -2634,9 +2634,14 @@ proc drawSelectionHighlight(ctx) =
     for c in 0..<cols:
       if sel[r,c] and (viewSelStartRow + r >= 0 and
                        viewSelStartCol + c >= 0):
+        # Don't allow large levels to wrap around multiple times
+        if r >= levelRows or c >= levelCols:
+            continue
+
         let
-          wrapCol = (viewSelStartCol + c).floorMod(dp.viewCols)
-          wrapRow = (viewSelStartRow + r).floorMod(dp.viewRows)
+          wrapRow = (viewSelStartRow + r).floorMod(levelRows)
+          wrapCol = (viewSelStartCol + c).floorMod(levelCols)
+
           x = cellX(wrapCol, dp)
           y = cellY(wrapRow, dp)
 
@@ -2785,7 +2790,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   drawLabels(viewBuf, ctx)
 
   if dp.selection.isSome: drawSelection(ctx)
-  if drawSelectionBuffer: drawSelectionHighlight(ctx)
+  if drawSelectionBuffer: drawSelectionHighlight(l.rows, l.cols, ctx)
   if dp.drawCursorGuides: drawCursorGuides(ctx)
 
   setLevelClippingRect(l, ctx)

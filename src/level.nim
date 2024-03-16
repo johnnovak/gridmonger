@@ -394,6 +394,10 @@ proc pasteWithWraparound*(l; destRow, destCol: int, srcLevel: Level,
   for srcRow in 0..<srcLevel.rows:
     for srcCol in 0..<srcLevel.cols:
       if sel[srcRow, srcCol]:
+        # Don't allow large levels to wrap around multiple times
+        if srcRow >= levelRows or srcCol >= levelCols:
+          continue
+
         let
           wrappedRow = (selStartRow + srcRow).floorMod(levelRows)
           wrappedCol = (selStartCol + srcCol).floorMod(levelCols)
