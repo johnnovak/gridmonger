@@ -1,5 +1,6 @@
 import std/math
 import std/options
+#import std/strformat
 
 import annotations
 import common
@@ -390,6 +391,14 @@ proc pasteWithWraparound*(l; destRow, destCol: int, srcLevel: Level,
 
   # The 'dest' params are for working with the "oversized" paste preview
   # buffers.
+
+#  echo "---------------------------------"
+#  echo fmt"destLevel: {l.rows} x {l.cols}, destRow: {destRow}, destCol: {destCol}"
+#  echo fmt"srcLevel: {srcLevel.rows} x {srcLevel.cols}, selection: {sel.rows} x {sel.cols}"
+#  echo fmt"levelRows: {levelRows}, levelCols: {levelCols}"
+#  echo fmt"selStartRow: {selStartRow}, selStartCol: {selStartCol}"
+#  echo fmt"destStartRow: {destStartRow}, destStartCol: {destStartCol}"
+#  echo fmt"destRowOffset: {destRowOffset}, destColOffset: {destColOffset}"
 
   for srcRow in 0..<srcLevel.rows:
     for srcCol in 0..<srcLevel.cols:
