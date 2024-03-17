@@ -103,11 +103,11 @@ type
     viewStartRow*:      Natural
     viewStartCol*:      Natural
 
-    optShowCellCoords*: bool
-    optShowToolsPane*:  bool
-    optShowNotesPane*:  bool
-    optWasdMode*:       bool
-    optWalkMode*:       bool
+    optShowCellCoords*:      bool
+    optShowToolsPane*:       bool
+    optShowCurrentNotePane*: bool
+    optWasdMode*:            bool
+    optWalkMode*:            bool
 
     currFloorColor*:    range[0..LevelTheme.floorBackgroundColor.high]
     currSpecialWall*:   range[0..SpecialWalls.high]
@@ -278,8 +278,8 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
   let optShowToolsPane = rr.read(uint8)
   checkBool(optShowToolsPane, "stat.optShowToolsPane")
 
-  let optShowNotesPane = rr.read(uint8)
-  checkBool(optShowNotesPane, "stat.optShowNotesPane")
+  let optShowCurrentNotePane = rr.read(uint8)
+  checkBool(optShowCurrentNotePane, "stat.optShowCurrentNotePane")
 
   let optWasdMode = rr.read(uint8)
   checkBool(optWasdMode, "stat.optWasdMode")
@@ -295,23 +295,23 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
   checkValueRange(currSpecialWall, "stat.currSpecialWall", SpecialWallLimits)
 
   result = AppState(
-    themeName:         themeName,
+    themeName:       themeName,
 
-    zoomLevel:         zoomLevel,
-    currLevel:         currLevel,
-    cursorRow:         cursorRow,
-    cursorCol:         cursorCol,
-    viewStartRow:      viewStartRow,
-    viewStartCol:      viewStartCol,
+    zoomLevel:       zoomLevel,
+    currLevel:       currLevel,
+    cursorRow:       cursorRow,
+    cursorCol:       cursorCol,
+    viewStartRow:    viewStartRow,
+    viewStartCol:    viewStartCol,
 
-    optShowCellCoords: optShowCellCoords.bool,
-    optShowToolsPane:  optShowToolsPane.bool,
-    optShowNotesPane:  optShowNotesPane.bool,
-    optWasdMode:       optWasdMode.bool,
-    optWalkMode:       optWalkMode.bool,
+    optShowCellCoords:      optShowCellCoords.bool,
+    optShowToolsPane:       optShowToolsPane.bool,
+    optShowCurrentNotePane: optShowCurrentNotePane.bool,
+    optWasdMode:            optWasdMode.bool,
+    optWalkMode:            optWalkMode.bool,
 
-    currFloorColor:    currFloorColor,
-    currSpecialWall:   currSpecialWall
+    currFloorColor:  currFloorColor,
+    currSpecialWall: currSpecialWall
   )
 
   popDebugIndent()
@@ -962,7 +962,7 @@ proc writeAppState(rw; s: AppState) =
   # Options
   rw.write(s.optShowCellCoords.uint8)
   rw.write(s.optShowToolsPane.uint8)
-  rw.write(s.optShowNotesPane.uint8)
+  rw.write(s.optShowCurrentNotePane.uint8)
   rw.write(s.optWasdMode.uint8)
   rw.write(s.optWalkMode.uint8)
 

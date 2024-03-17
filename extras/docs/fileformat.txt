@@ -164,26 +164,29 @@ Notes:
 
 
 'stat'
-    BSTR    themeName*          (minLen=1, maxLen=100)
+    BSTR    themeName*          	(minLen=1, maxLen=100)
 
     * Cannot start or end with a space or '.'
       The following characters are disallowed:
         '/', '\', ':', '*', '?', '"', '<', '>', '|', '^', <zero byte>
 
-    UINT8   zoomLevel           (min=1, max=20)
-    UINT8   currLevel           (max=numLevels-1)
-    UINT16  cursorRow           (max=numRows-1    of the given level)
-    UINT16  cursorColumn        (max=numColumns-1 of the given level)
-    UINT16  viewStartRow        (max=numRows-1    of the given level)
-    UINT16  viewStartColumn     (max=numColumns-1 of the given level)
+    UINT8   zoomLevel           	(min=1, max=20)
+    UINT8   currLevel           	(max=numLevels-1)
+    UINT16  cursorRow           	(max=numRows-1    of the given level)
+    UINT16  cursorColumn        	(max=numColumns-1 of the given level)
+    UINT16  viewStartRow        	(max=numRows-1    of the given level)
+    UINT16  viewStartColumn     	(max=numColumns-1 of the given level)
 
-    UINT8   optShowCellCoords   (0=off, 1=on)
-    UINT8   optShowToolsPane    (0=off, 1=on)
-    UINT8   optShowNotesPane    (0=off, 1=on)
-    UINT8   optWasdMode         (0=off, 1=on)
-    UINT8   optWalkMode         (0=off, 1=on)
+    UINT8   optShowCellCoords       (0=off, 1=on)
+    UINT8   optShowToolsPane        (0=off, 1=on)
+    UINT8   optShowCurrentNotePane  (0=off, 1=on)
+    UINT8   optShowNotesListPane    (0=off, 1=on)
+    UINT8   optWasdMode             (0=off, 1=on)
+    UINT8   optWalkMode             (0=off, 1=on)
 
-    UINT8   currFloorColor      (max=9)
-    UINT8   currSpecialWall     (max=11, see SpecialWalls array in main.nim
-                                         for mappings)
+	TODO opt wraparound?
+
+    UINT8   currFloorColor      	(max=9)
+    UINT8   currSpecialWall     	(max=11, see SpecialWalls array in
+	                                         main.nim for mappings)
 

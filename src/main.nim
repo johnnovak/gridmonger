@@ -76,37 +76,37 @@ const
   ScrollMargin = 3
 
 const
-  DefaultWindowWidth      = 700
-  DefaultWindowHeight     = 800
+  DefaultWindowWidth       = 700
+  DefaultWindowHeight      = 800
 
-  StatusBarHeight         = 26.0
+  StatusBarHeight          = 26.0
 
-  LevelTopPad_Regions     = 28.0
+  LevelTopPad_Regions      = 28.0
 
-  LevelTopPad_Coords      = 85.0
-  LevelRightPad_Coords    = 50.0
-  LevelBottomPad_Coords   = 40.0
-  LevelLeftPad_Coords     = 50.0
+  LevelTopPad_Coords       = 85.0
+  LevelRightPad_Coords     = 50.0
+  LevelBottomPad_Coords    = 40.0
+  LevelLeftPad_Coords      = 50.0
 
-  LevelTopPad_NoCoords    = 65.0
-  LevelRightPad_NoCoords  = 28.0
-  LevelBottomPad_NoCoords = 10.0
-  LevelLeftPad_NoCoords   = 28.0
+  LevelTopPad_NoCoords     = 65.0
+  LevelRightPad_NoCoords   = 28.0
+  LevelBottomPad_NoCoords  = 10.0
+  LevelLeftPad_NoCoords    = 28.0
 
-  NotesPaneHeight         = 62.0
-  NotesPaneTopPad         = 10.0
-  NotesPaneRightPad       = 50.0
-  NotesPaneBottomPad      = 10.0
-  NotesPaneLeftPad        = 20.0
+  CurrentNotePaneHeight    = 62.0
+  CurrentNotePaneTopPad    = 10.0
+  CurrentNotePaneRightPad  = 50.0
+  CurrentNotePaneBottomPad = 10.0
+  CurrentNotePaneLeftPad   = 20.0
 
-  ToolsPaneWidthNarrow    = 60.0
-  ToolsPaneWidthWide      = 90.0
-  ToolsPaneTopPad         = 65.0
-  ToolsPaneBottomPad      = 30.0
-  ToolsPaneYBreakpoint1   = 709.0
-  ToolsPaneYBreakpoint2   = 859.0
+  ToolsPaneWidthNarrow     = 60.0
+  ToolsPaneWidthWide       = 90.0
+  ToolsPaneTopPad          = 65.0
+  ToolsPaneBottomPad       = 30.0
+  ToolsPaneYBreakpoint1    = 709.0
+  ToolsPaneYBreakpoint2    = 859.0
 
-  ThemePaneWidth          = 326.0
+  ThemePaneWidth           = 326.0
 
 const
   SplashTimeoutSecsLimits* = intLimits(min=1, max=10)
@@ -304,7 +304,7 @@ type AppShortcut = enum
 
   # Options
   scToggleCellCoords,
-  scToggleNotesPane,
+  scToggleCurrentNotePane,
   scToggleToolsPane,
   scToggleWalkMode,
   scToggleWasdMode,
@@ -412,17 +412,17 @@ type
     lastAutosaveTime:   MonoTime
 
   Options = object
-    showNotesPane:      bool
-    showToolsPane:      bool
+    showCurrentNotePane:  bool
+    showToolsPane:        bool
 
-    drawTrail:          bool
-    walkMode:           bool
-    wasdMode:           bool
+    drawTrail:            bool
+    walkMode:             bool
+    wasdMode:             bool
 
-    pasteWraparound:    bool
+    pasteWraparound:      bool
 
-    showThemeEditor:    bool
-    showQuickReference: bool
+    showThemeEditor:      bool
+    showQuickReference:   bool
 
 
   UIState = object
@@ -917,13 +917,13 @@ func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
         scZoomOut].sc(a=a),   "Zoom in/out".desc,
       QuickRefSepa,
 
-      scToggleWalkMode.sc,    "Toggle walk mode".desc,
-      scToggleWasdMode.sc,    "Toggle WASD mode".desc,
-      scShowNoteTooltip.sc,   "Toggle display note tooltip".desc,
-      scToggleCellCoords.sc,  "Toggle cell coordinates".desc,
-      scToggleNotesPane.sc,   "Toggle notes pane".desc,
-      scToggleToolsPane.sc,   "Toggle tools pane".desc,
-      scToggleTitleBar.sc,    "Toggle title bar".desc,
+      scToggleWalkMode.sc,        "Toggle walk mode".desc,
+      scToggleWasdMode.sc,        "Toggle WASD mode".desc,
+      scShowNoteTooltip.sc,       "Toggle display note tooltip".desc,
+      scToggleCellCoords.sc,      "Toggle cell coordinates".desc,
+      scToggleCurrentNotePane.sc, "Toggle current note pane".desc,
+      scToggleToolsPane.sc,       "Toggle tools pane".desc,
+      scToggleTitleBar.sc,        "Toggle title bar".desc,
       QuickRefSepa,
 
       scPreviousTheme.sc,     "Previous theme".desc,
@@ -1331,21 +1331,21 @@ let DefaultAppShortcuts = {
   scSelectionCropArea:           @[mkKeyShortcut(keyR,        {mkCtrl})],
 
   # Options
-  scToggleCellCoords:   @[mkKeyShortcut(keyC,             {mkAlt})],
-  scToggleNotesPane:    @[mkKeyShortcut(keyN,             {mkAlt})],
-  scToggleToolsPane:    @[mkKeyShortcut(keyT,             {mkAlt})],
-  scToggleWalkMode:     @[mkKeyShortcut(keyGraveAccent,   {})],
-  scToggleWasdMode:     @[mkKeyShortcut(keyTab,           {})],
-  scToggleDrawTrail:    @[mkKeyShortcut(keyT,             {})],
-  scToggleTitleBar:     @[mkKeyShortcut(keyT,             {mkAlt, mkShift})],
-  scTogglePasteWraparound:  @[mkKeyShortcut(keyW,         {})],
+  scToggleCellCoords:      @[mkKeyShortcut(keyC,           {mkAlt})],
+  scToggleCurrentNotePane: @[mkKeyShortcut(keyN,           {mkAlt})],
+  scToggleToolsPane:       @[mkKeyShortcut(keyT,           {mkAlt})],
+  scToggleWalkMode:        @[mkKeyShortcut(keyGraveAccent, {})],
+  scToggleWasdMode:        @[mkKeyShortcut(keyTab,         {})],
+  scToggleDrawTrail:       @[mkKeyShortcut(keyT,           {})],
+  scToggleTitleBar:        @[mkKeyShortcut(keyT,           {mkAlt, mkShift})],
+  scTogglePasteWraparound: @[mkKeyShortcut(keyW,           {})],
 
   # Misc
-  scShowAboutDialog:      @[mkKeyShortcut(keyA,           {mkCtrl})],
-  scOpenUserManual:       @[mkKeyShortcut(keyF1,          {})],
-  scToggleThemeEditor:    @[mkKeyShortcut(keyF12,         {})],
-  scEditPreferences:      @[mkKeyShortcut(keyU,           {mkCtrl, mkAlt})],
-  scToggleQuickReference: @[mkKeyShortcut(keySlash,       {mkShift})]
+  scShowAboutDialog:       @[mkKeyShortcut(keyA,           {mkCtrl})],
+  scOpenUserManual:        @[mkKeyShortcut(keyF1,          {})],
+  scToggleThemeEditor:     @[mkKeyShortcut(keyF12,         {})],
+  scEditPreferences:       @[mkKeyShortcut(keyU,           {mkCtrl, mkAlt})],
+  scToggleQuickReference:  @[mkKeyShortcut(keySlash,       {mkShift})]
 
 }.toTable
 
@@ -1719,9 +1719,9 @@ proc updatePaneCoords(a) =
                                                a.ui.levelBottomPad -
                                                StatusBarHeight
 
-  if a.opts.showNotesPane:
-   ui.levelDrawAreaHeight -= NotesPaneTopPad + NotesPaneHeight +
-                             NotesPaneBottomPad
+  if a.opts.showCurrentNotePane:
+   ui.levelDrawAreaHeight -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
+                             CurrentNotePaneBottomPad
 
   if a.opts.showToolsPane:
     ui.levelDrawAreaWidth -= toolsPaneWidth(a)
@@ -2760,18 +2760,18 @@ proc saveAppConfig(a) =
   cfg.set(p & "theme-name",    a.currThemeName.name)
 
   p = "last-state.ui."
-  cfg.set(p & "zoom-level",              dp.getZoomLevel())
-  cfg.set(p & "current-level",           cur.level)
-  cfg.set(p & "cursor.row",              cur.row)
-  cfg.set(p & "cursor.column",           cur.col)
-  cfg.set(p & "view-start.row",          dp.viewStartRow)
-  cfg.set(p & "view-start.column",       dp.viewStartCol)
-  cfg.set(p & "option.show-cell-coords", dp.drawCellCoords)
-  cfg.set(p & "option.show-tools-pane",  a.opts.showToolsPane)
-  cfg.set(p & "option.show-notes-pane",  a.opts.showNotesPane)
-  cfg.set(p & "option.wasd-mode",        a.opts.wasdMode)
-  cfg.set(p & "option.walk-mode",        a.opts.walkMode)
-  cfg.set(p & "option.paste-wraparound", a.opts.pasteWraparound)
+  cfg.set(p & "zoom-level",                    dp.getZoomLevel())
+  cfg.set(p & "current-level",                 cur.level)
+  cfg.set(p & "cursor.row",                    cur.row)
+  cfg.set(p & "cursor.column",                 cur.col)
+  cfg.set(p & "view-start.row",                dp.viewStartRow)
+  cfg.set(p & "view-start.column",             dp.viewStartCol)
+  cfg.set(p & "option.show-cell-coords",       dp.drawCellCoords)
+  cfg.set(p & "option.show-tools-pane",        a.opts.showToolsPane)
+  cfg.set(p & "option.show-current-note-pane", a.opts.showCurrentNotePane)
+  cfg.set(p & "option.wasd-mode",              a.opts.wasdMode)
+  cfg.set(p & "option.walk-mode",              a.opts.walkMode)
+  cfg.set(p & "option.paste-wraparound",       a.opts.pasteWraparound)
 
   p = "last-state.window."
   cfg.set(p & "maximized",      a.win.maximized)
@@ -2809,11 +2809,11 @@ proc loadMap(filename: string; a): bool =
       a.theme.hideThemeLoadedMessage = true
 
       with a.opts:
-        showToolsPane = s.optShowToolsPane
-        showNotesPane = s.optShowNotesPane
-        wasdMode      = s.optWasdMode
-        walkMode      = s.optWalkMode
-        drawTrail     = false
+        showToolsPane       = s.optShowToolsPane
+        showCurrentNotePane = s.optShowCurrentNotePane
+        wasdMode            = s.optWasdMode
+        walkMode            = s.optWalkMode
+        drawTrail           = false
 
       with a.ui.drawLevelParams:
         viewStartRow   = s.viewStartRow
@@ -2858,23 +2858,23 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
   let cur = a.ui.cursor
 
   let appState = AppState(
-    themeName         : a.currThemeName.name,
+    themeName:              a.currThemeName.name,
 
-    zoomLevel         : dp.getZoomLevel(),
-    currLevel         : cur.level,
-    cursorRow         : cur.row,
-    cursorCol         : cur.col,
-    viewStartRow      : dp.viewStartRow,
-    viewStartCol      : dp.viewStartCol,
+    zoomLevel:              dp.getZoomLevel(),
+    currLevel:              cur.level,
+    cursorRow:              cur.row,
+    cursorCol:              cur.col,
+    viewStartRow:           dp.viewStartRow,
+    viewStartCol:           dp.viewStartCol,
 
-    optShowCellCoords : dp.drawCellCoords,
-    optShowToolsPane  : a.opts.showToolsPane,
-    optShowNotesPane  : a.opts.showNotesPane,
-    optWasdMode       : a.opts.wasdMode,
-    optWalkMode       : a.opts.walkMode,
+    optShowCellCoords:      dp.drawCellCoords,
+    optShowToolsPane:       a.opts.showToolsPane,
+    optShowCurrentNotePane: a.opts.showCurrentNotePane,
+    optWasdMode:            a.opts.wasdMode,
+    optWalkMode:            a.opts.walkMode,
 
-    currFloorColor    : a.ui.currFloorColor,
-    currSpecialWall   : a.ui.currSpecialWall,
+    currFloorColor:         a.ui.currFloorColor,
+    currSpecialWall:        a.ui.currSpecialWall,
   )
 
   info(fmt"Saving map to '{filename}'")
@@ -6344,7 +6344,7 @@ proc handleGlobalKeyEvents(a) =
       )
 
   # }}}
- 
+
   if hasKeyEvent():
     let ke = koi.currEvent()
     # TODO eventHandled is not set here, but it's not actually needed (yet)
@@ -6727,8 +6727,9 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scToggleCellCoords, a):
         toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
 
-      elif ke.isShortcutDown(scToggleNotesPane, a):
-        toggleShowOption(opts.showNotesPane, NoIcon, "Notes pane", a)
+      elif ke.isShortcutDown(scToggleCurrentNotePane, a):
+        toggleShowOption(opts.showCurrentNotePane, NoIcon,
+                         "Current note pane", a)
 
       elif ke.isShortcutDown(scToggleToolsPane, a):
         toggleShowOption(opts.showToolsPane, NoIcon, "Tools pane", a)
@@ -7753,7 +7754,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
   )
 
 # }}}
-# {{{ renderNotesPane()
+# {{{ renderCurrentNotePane()
 
 # {{{ drawIndexedNote()
 proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
@@ -7784,7 +7785,7 @@ proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
 
 # }}}
 
-proc renderNotesPane(x, y, w, h: float; a) =
+proc renderCurrentNotePane(x, y, w, h: float; a) =
   alias(vg, a.vg)
 
   let s = a.theme.notesPaneTheme
@@ -8795,12 +8796,15 @@ proc renderUI(a) =
 
       renderLevel(a)
 
-      if a.opts.showNotesPane:
-        renderNotesPane(
-          x = NotesPaneLeftPad,
-          y = winHeight - StatusBarHeight - NotesPaneHeight - NotesPaneBottomPad,
-          w = uiWidth - toolsPaneWidth(a) - NotesPaneLeftPad - NotesPaneRightPad,
-          h = NotesPaneHeight,
+      if a.opts.showCurrentNotePane:
+        renderCurrentNotePane(
+          x = CurrentNotePaneLeftPad,
+          y = (winHeight - StatusBarHeight - CurrentNotePaneHeight -
+                                             CurrentNotePaneBottomPad),
+
+          w = (uiWidth - toolsPaneWidth(a) - CurrentNotePaneLeftPad -
+                                             CurrentNotePaneRightPad),
+          h = CurrentNotePaneHeight,
           a
         )
 
@@ -9303,15 +9307,21 @@ proc initPreferences(cfg: HoconNode; a) =
 
     const MovementWraparoundKey = "editing.movement-wraparound"
     if prefs.getOpt(MovementWraparoundKey).isSome:
-      movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey, false)
+      movementWraparound = prefs.getBoolOrDefault(
+        MovementWraparoundKey, false
+      )
     else:
       # TODO deprecated keys; drop support for these after a few releases
       let MovementWraparoundKey_v110 = "editing.movement-wrap-around"
       if prefs.getOpt(MovementWraparoundKey_v110).isSome:
-        movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey_v110, false)
+        movementWraparound = prefs.getBoolOrDefault(
+          MovementWraparoundKey_v110, false
+        )
       else:
         let MovementWraparoundKey_v100 = "movement-wrap-around"
-        movementWraparound = prefs.getBoolOrDefault(MovementWraparoundKey_v100, false)
+        movementWraparound = prefs.getBoolOrDefault(
+          MovementWraparoundKey_v100, false
+        )
 
     openEndedExcavate = prefs.getBoolOrDefault("editing.open-ended-excavate")
     yubnMovementKeys = prefs.getBoolOrDefault("editing.yubn-movement-keys")
@@ -9325,7 +9335,19 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
 
   with a.opts:
-    showNotesPane   = uiCfg.getBoolOrDefault("option.show-notes-pane",  true)
+    const ShowCurrentNotePaneKey = "option.show-current-note-pane"
+    if uiCfg.getOpt(ShowCurrentNotePaneKey).isSome:
+      showCurrentNotePane = uiCfg.getBoolOrDefault(
+        ShowCurrentNotePaneKey, true
+      )
+    else:
+      # TODO deprecated keys; drop support for these after a few releases
+      const ShowCurrentNotePaneKey_v110 = "option.show-notes-pane"
+      if uiCfg.getOpt(ShowCurrentNotePaneKey_v110).isSome:
+        showCurrentNotePane = uiCfg.getBoolOrDefault(
+          ShowCurrentNotePaneKey_v110, true
+        )
+
     showToolsPane   = uiCfg.getBoolOrDefault("option.show-tools-pane",  true)
     walkMode        = uiCfg.getBoolOrDefault("option.walk-mode",        false)
     wasdMode        = uiCfg.getBoolOrDefault("option.wasd-mode",        false)
