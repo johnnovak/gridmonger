@@ -88,8 +88,8 @@ type
 
 
   Links* = object
-    srcToDest*:  Table[Location, Location]
-    destToSrcs*: Table[Location, HashSet[Location]]
+    srcToDest*:  OrderedTable[Location, Location]
+    destToSrcs*: OrderedTable[Location, HashSet[Location]]
 
 
   CoordinateOptions* = object
@@ -128,7 +128,7 @@ type
     rowsPerRegion*:   Natural
     perRegionCoords*: bool
 
-  Regions* = Table[RegionCoords, Region]
+  Regions* = OrderedTable[RegionCoords, Region]
 
   RegionCoords* = object
     row*, col*: Natural
@@ -140,7 +140,7 @@ type
 
   Annotations* = ref object
     cols*, rows*:  Natural
-    annotations*:  Table[Natural, Annotation]
+    annotations*:  OrderedTable[Natural, Annotation]
 
   AnnotationKind* = enum
     akComment, akIndexed, akCustomId, akIcon, akLabel

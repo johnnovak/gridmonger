@@ -12,7 +12,7 @@ using
 
 # {{{ initRegions*()
 proc initRegions*(): Regions =
-  result = initTable[RegionCoords, Region]()
+  result = initOrderedTable[RegionCoords, Region]()
 
 # }}}
 # {{{ dump*()

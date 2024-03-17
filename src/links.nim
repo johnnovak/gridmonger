@@ -16,8 +16,8 @@ using
 
 # {{{ initLinks*()
 proc initLinks*(initialSize: Natural = DefaultInitialSize): Links =
-  result.srcToDest = initTable[Location, Location](initialSize)
-  result.destToSrcs = initTable[Location, HashSet[Location]](initialSize)
+  result.srcToDest = initOrderedTable[Location, Location](initialSize)
+  result.destToSrcs = initOrderedTable[Location, HashSet[Location]](initialSize)
 
 # }}}
 

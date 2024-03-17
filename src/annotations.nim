@@ -13,7 +13,7 @@ proc newAnnotations*(rows, cols: Natural): Annotations =
   var a = new Annotations
   a.rows = rows
   a.cols = cols
-  a.annotations = initTable[Natural, Annotation]()
+  a.annotations = initOrderedTable[Natural, Annotation]()
   result = a
 
 # }}}
