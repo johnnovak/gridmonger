@@ -99,6 +99,8 @@ const
   CurrentNotePaneBottomPad = 10.0
   CurrentNotePaneLeftPad   = 20.0
 
+  NotesListPaneWidth       = 300.0
+
   ToolsPaneWidthNarrow     = 60.0
   ToolsPaneWidthWide       = 90.0
   ToolsPaneTopPad          = 65.0
@@ -305,6 +307,7 @@ type AppShortcut = enum
   # Options
   scToggleCellCoords,
   scToggleCurrentNotePane,
+  scToggleNotesListPane,
   scToggleToolsPane,
   scToggleWalkMode,
   scToggleWasdMode,
@@ -413,6 +416,7 @@ type
 
   Options = object
     showCurrentNotePane:  bool
+    showNotesListPane:    bool
     showToolsPane:        bool
 
     drawTrail:            bool
@@ -468,6 +472,8 @@ type
     panLevelMode:       PanLevelMode
 
     manualNoteTooltipState: ManualNoteTooltipState
+
+    notesListLastHotId: ItemId
 
     levelTopPad:        float
     levelRightPad:      float
@@ -922,6 +928,7 @@ func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
       scShowNoteTooltip.sc,       "Toggle display note tooltip".desc,
       scToggleCellCoords.sc,      "Toggle cell coordinates".desc,
       scToggleCurrentNotePane.sc, "Toggle current note pane".desc,
+      scToggleNotesListPane.sc,   "Toggle notes list pane".desc,
       scToggleToolsPane.sc,       "Toggle tools pane".desc,
       scToggleTitleBar.sc,        "Toggle title bar".desc,
       QuickRefSepa,
@@ -1333,6 +1340,7 @@ let DefaultAppShortcuts = {
   # Options
   scToggleCellCoords:      @[mkKeyShortcut(keyC,           {mkAlt})],
   scToggleCurrentNotePane: @[mkKeyShortcut(keyN,           {mkAlt})],
+  scToggleNotesListPane:   @[mkKeyShortcut(keyL,           {mkAlt})],
   scToggleToolsPane:       @[mkKeyShortcut(keyT,           {mkAlt})],
   scToggleWalkMode:        @[mkKeyShortcut(keyGraveAccent, {})],
   scToggleWasdMode:        @[mkKeyShortcut(keyTab,         {})],
@@ -1659,7 +1667,7 @@ proc setPastePreviewModeMessage(a) =
                    "Enter/P", "paste", "Esc", "cancel"], a)
 
 # }}}
-# {{{
+# {{{ setMovePreviewModeMessage()
 proc setMovePreviewModeMessage(a) =
   setStatusMessage(IconTiles, "Move selection",
                    @[IconArrowsAll, "placement",
@@ -1668,28 +1676,37 @@ proc setMovePreviewModeMessage(a) =
                    "Enter/P", "confirm", "Esc", "cancel"], a)
 
 # }}}
-# {{{ drawAreaWidth()
-proc drawAreaWidth(a): float =
-  if a.opts.showThemeEditor: koi.winWidth() - ThemePaneWidth
-  else: koi.winWidth()
+# {{{ drawAreaRect()
+proc drawAreaRect(a): Rect[int] =
+  var
+    x1 = 0
+    x2 = koi.winWidth()
 
-# }}}
-# {{{ drawAreaHeight()
-proc drawAreaHeight(a): float =
-  koi.winHeight() - a.win.titleBarHeight
+  if a.opts.showThemeEditor:
+    x2 -= ThemePaneWidth
+
+  if a.opts.showNotesListPane:
+    x1 = NotesListPaneWidth.int
+
+  let
+    y1 = a.win.titleBarHeight
+    y2 = koi.winHeight()
+
+  coordRect(x1.int, y1.int, x2.int, y2.int)
 
 # }}}
 # {{{ toolsPaneWidth()
 proc toolsPaneWidth(a): float =
+  let drawArea = drawAreaRect(a)
   if a.opts.showToolsPane:
-    if drawAreaHeight(a) < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
+    if drawArea.h < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
     else: ToolsPaneWidthNarrow
   else:
     0.0
 
 # }}}
-# {{{ updatePaneCoords()
-proc updatePaneCoords(a) =
+# {{{ updateLevelDrawParams()
+proc updateLevelDrawParams(a) =
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
 
@@ -1709,17 +1726,23 @@ proc updatePaneCoords(a) =
   if l.regionOpts.enabled:
     a.ui.levelTopPad += LevelTopPad_Regions
 
-  dp.startX = ui.levelLeftPad
-  dp.startY = a.win.titleBarHeight + ui.levelTopPad
+  let drawArea = drawAreaRect(a)
 
-  ui.levelDrawAreaWidth = drawAreaWidth(a) - a.ui.levelLeftPad -
-                                             a.ui.levelRightPad
+  dp.startX = drawArea.x1 + ui.levelLeftPad
+  dp.startY = drawArea.y1 + ui.levelTopPad
 
-  ui.levelDrawAreaHeight = drawAreaHeight(a) - a.ui.levelTopPad -
-                                               a.ui.levelBottomPad -
-                                               StatusBarHeight
+  ui.levelDrawAreaWidth = drawArea.w - a.ui.levelLeftPad -
+                                       a.ui.levelRightPad
+
+  ui.levelDrawAreaHeight = drawArea.h - a.ui.levelTopPad -
+                                        a.ui.levelBottomPad -
+                                        StatusBarHeight
 
   if a.opts.showCurrentNotePane:
+   ui.levelDrawAreaHeight -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
+                             CurrentNotePaneBottomPad
+
+  if a.opts.showNotesListPane:
    ui.levelDrawAreaHeight -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
                              CurrentNotePaneBottomPad
 
@@ -2769,6 +2792,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "option.show-cell-coords",       dp.drawCellCoords)
   cfg.set(p & "option.show-tools-pane",        a.opts.showToolsPane)
   cfg.set(p & "option.show-current-note-pane", a.opts.showCurrentNotePane)
+  cfg.set(p & "option.show-notes-list-pane",   a.opts.showNotesListPane)
   cfg.set(p & "option.wasd-mode",              a.opts.wasdMode)
   cfg.set(p & "option.walk-mode",              a.opts.walkMode)
   cfg.set(p & "option.paste-wraparound",       a.opts.pasteWraparound)
@@ -2811,6 +2835,7 @@ proc loadMap(filename: string; a): bool =
       with a.opts:
         showToolsPane       = s.optShowToolsPane
         showCurrentNotePane = s.optShowCurrentNotePane
+        showNotesListPane   = s.optShowNotesListPane
         wasdMode            = s.optWasdMode
         walkMode            = s.optWalkMode
         drawTrail           = false
@@ -2870,6 +2895,7 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
     optShowCellCoords:      dp.drawCellCoords,
     optShowToolsPane:       a.opts.showToolsPane,
     optShowCurrentNotePane: a.opts.showCurrentNotePane,
+    optShowNotesListPane:   a.opts.showNotesListPane,
     optWasdMode:            a.opts.wasdMode,
     optWalkMode:            a.opts.walkMode,
 
@@ -3256,7 +3282,8 @@ template validateCommonGeneralMapFields(dlg: untyped): string =
 
 # {{{ calcDialogX()
 proc calcDialogX(dlgWidth: float; a): float =
-  drawAreaWidth(a)*0.5 - dlgWidth*0.5
+  let drawArea = drawAreaRect(a)
+  drawArea.x1 + drawArea.w.float*0.5 - dlgWidth*0.5
 
 # }}}
 # {{{ dialogButtonsStartPos()
@@ -3335,9 +3362,10 @@ proc handleTabNavigation(ke: Event,
 proc colorRadioButtonDrawProc(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
 
-  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               state: WidgetState, first, last: bool,
-               x, y, w, h: float, style: RadioButtonsStyle) =
+  return proc (vg: NVGContext,
+               id: ItemId, x, y, w, h: float,
+               buttonIdx, numButtons: Natural, label: string,
+               state: WidgetState, style: RadioButtonsStyle) =
 
     let sw = 2.0
     let (x, y, w, h) = snapToGrid(x, y, w, h, sw)
@@ -6731,6 +6759,10 @@ proc handleGlobalKeyEvents(a) =
         toggleShowOption(opts.showCurrentNotePane, NoIcon,
                          "Current note pane", a)
 
+      elif ke.isShortcutDown(scToggleNotesListPane, a):
+        toggleShowOption(opts.showNotesListPane, NoIcon,
+                         "Note list pane", a)
+
       elif ke.isShortcutDown(scToggleToolsPane, a):
         toggleShowOption(opts.showToolsPane, NoIcon, "Tools pane", a)
 
@@ -7448,7 +7480,7 @@ proc renderLevel(a) =
   let i = instantiationInfo(fullPaths=true)
   let id = koi.generateId(i.filename, i.line, "gridmonger-level")
 
-  updatePaneCoords(a)
+  updateLevelDrawParams(a)
 
   updateViewAndCursorPos(a)
   updateLastCursorViewCoords(a)
@@ -7566,8 +7598,10 @@ proc renderEmptyMap(a) =
   vg.setFont(22, "sans-bold")
   vg.fillColor(lt.foregroundNormalNormalColor)
   vg.textAlign(haCenter, vaMiddle)
-  var y = drawAreaHeight(a) * 0.5
-  discard vg.text(drawAreaWidth(a) * 0.5, y, "Empty map")
+
+  let drawArea = drawAreaRect(a)
+  var y = drawArea.h.float * 0.5
+  discard vg.text(drawArea.x1 + drawArea.w.float * 0.5, y, "Empty map")
 
 # }}}
 # {{{ renderModeAndOptionIndicators()
@@ -7602,9 +7636,10 @@ proc specialWallDrawProc(lt: LevelTheme,
                          tt: ToolbarPaneTheme,
                          dp: DrawLevelParams): RadioButtonsDrawProc =
 
-  return proc (vg: NVGContext, buttonIdx: Natural, label: string,
-               state: WidgetState, first, last: bool,
-               x, y, w, h: float, style: RadioButtonsStyle) =
+  return proc (vg: NVGContext,
+               id: ItemId, x, y, w, h: float,
+               buttonIdx, numButtons: Natural, label: string,
+               state: WidgetState, style: RadioButtonsStyle) =
 
     var (bgCol, active) = case state
                           of wsActive:      (lt.cursorColor,       true)
@@ -7704,11 +7739,13 @@ proc renderToolsPane(x, y, w, h: float; a) =
     colorX = x + 3
     colorY = y + 445
 
-  if drawAreaHeight(a) < ToolsPaneYBreakpoint2:
+  let drawArea = drawAreaRect(a)
+
+  if drawArea.h < ToolsPaneYBreakpoint2:
     colorItemsPerColum = 5
     toolX += 30
 
-  if drawAreaHeight(a) < ToolsPaneYBreakpoint1:
+  if drawArea.h < ToolsPaneYBreakpoint1:
     toolItemsPerColumn = 6
     toolX -= 30
     colorX += 3
@@ -7834,7 +7871,98 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
     vg.restore()
 
 # }}}
+# {{{ renderNotesListPane()
+proc renderNotesListPane(x, y, w, h: float; a) =
+  alias(vg, a.vg)
 
+  let ws = a.theme.windowTheme
+  let s = a.theme.notesPaneTheme
+
+  let
+    l = currLevel(a)
+
+  vg.beginPath()
+  vg.rect(x, y, w, h)
+  vg.fillColor(lerp(ws.backgroundColor, black, 0.3))
+  vg.fill()
+
+  const
+    TopPad   = 13
+    HorizPad = 13
+
+  koi.beginScrollView(x, y+TopPad, w, h-TopPad)
+
+  var lp = DefaultAutoLayoutParams
+  lp.itemsPerRow = 1
+  lp.rowWidth    = w - HorizPad*2
+  lp.rowPad      = 0
+  lp.labelWidth  = w - HorizPad*2
+  lp.leftPad     = HorizPad
+
+  initAutoLayout(lp)
+
+  var a = a
+
+  var noteTable = initTable[ItemId, (Natural, Natural, Annotation)]()
+
+  let noteButtonDrawProc: ButtonDrawProc = proc(
+    vg: NVGContext,
+    id: ItemId, x, y, w, h: float, label: string,
+    state: WidgetState, style: ButtonStyle
+  ) =
+    alias(s, style)
+
+#    vg.beginPath()
+#    vg.strokeWidth(1)
+#    vg.strokeColor(red())
+#    vg.rect(x, y, w, h)
+#    vg.stroke()
+
+    let fillColor =
+      case state
+      of wsDisabled, wsNormal, wsActive, wsActiveHover: s.fillColor
+      of wsHover, wsDown:                               s.fillColorHover
+
+    vg.setFont(14, "sans-bold")
+    vg.fillColor(fillColor)
+    vg.textLineHeight(1.4)
+    vg.textBox(x, y+10, w, label)
+
+
+  var foundHotItem = false
+
+  for (r,c, note) in l.allNotes():
+    if note.kind != akLabel:
+      let idString = fmt"notes-list:{r}:{c}"
+      let id = hashId(idString)
+      koi.setNextId(idString)
+
+      noteTable[id] = (r,c, note)
+
+      vg.setFont(14, "sans-bold")
+      vg.textLineHeight(1.4)
+      let bounds = vg.textBoxBounds(HorizPad, y, w - HorizPad*2, note.text)
+      let noteHeight = bounds.y2 - bounds.y1
+
+      koi.nextRowHeight(noteHeight + 13)
+      koi.nextItemHeight(noteHeight + 13)
+
+      if koi.button(note.text, activateOnButtonDown=true,
+                    drawProc=noteButtonDrawProc.some):
+        moveCursorTo(Location(level: a.ui.cursor.level, row: r, col: c), a)
+
+      if isHot(id):
+        foundHotItem = true
+        if a.ui.notesListLastHotId != id:
+          a.ui.notesListLastHotId = id
+          echo note.text
+
+  if not foundHotItem:
+    a.ui.notesListLastHotId = -1
+
+  koi.endScrollView()
+
+# }}}
 # {{{ renderCommand()
 proc renderCommand(x, y: float; command: string; bgColor, textColor: Color;
                    a): float =
@@ -7863,19 +7991,20 @@ proc renderCommand(x, y: float; command: string; a): float =
 
 # }}}
 # {{{ renderStatusBar()
-proc renderStatusBar(y: float, winWidth: float; a) =
+proc renderStatusBar(x, y, w: float; a) =
   alias(vg, a.vg)
   alias(status, a.ui.status)
 
   let s = a.theme.statusBarTheme
 
-  let ty = y + StatusBarHeight * TextVertAlignFactor
+  let ty = StatusBarHeight * TextVertAlignFactor
 
   # Bar background
   vg.save()
+  vg.translate(x, y)
 
   vg.beginPath()
-  vg.rect(0, y, winWidth, StatusBarHeight)
+  vg.rect(0, 0, w, StatusBarHeight)
   vg.fillColor(s.backgroundColor)
   vg.fill()
 
@@ -7896,9 +8025,9 @@ proc renderStatusBar(y: float, winWidth: float; a) =
 
     vg.fillColor(s.coordinatesColor)
     vg.textAlign(haLeft, vaMiddle)
-    discard vg.text(winWidth - tw - 7, ty, cursorPos)
+    discard vg.text(w - tw - 7, ty, cursorPos)
 
-    vg.intersectScissor(0, y, winWidth - tw - 15, StatusBarHeight)
+    vg.intersectScissor(0, 0, w - tw - 15, StatusBarHeight)
 
   # Display status message or warning
   const
@@ -8479,7 +8608,7 @@ proc renderQuickReference(a) =
 
   const
     h = 24.0
-    sepaH = 14.0
+    sepaHeight = 14.0
     defaultColWidth = 105.0
 
   let
@@ -8513,7 +8642,7 @@ proc renderQuickReference(a) =
                                 commandBgColor, commandTextColor, a)
           ys += h
           heightInc += h
-        if shortcuts.len > 1: heightInc += sepaH
+        if shortcuts.len > 1: heightInc += sepaHeight
         x += colWidth
 
       of qkKeyShortcuts:
@@ -8551,12 +8680,15 @@ proc renderQuickReference(a) =
         y += heightInc
 
       of qkSeparator:
-        y += sepaH
+        y += sepaHeight
 
   let
-    uiWidth = drawAreaWidth(a)
-    uiHeight = drawAreaHeight(a)
-    yOffs = max((uiHeight - 820) * 0.5, 0)
+    drawArea = drawAreaRect(a)
+    xStart   = drawArea.x1.float
+    yStart   = drawArea.y1.float
+    uiWidth  = drawArea.w.float
+    uiHeight = drawArea.h.float
+    yOffs    = max((uiHeight - 840) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     vg.save()
@@ -8565,7 +8697,7 @@ proc renderQuickReference(a) =
   koi.addDrawLayer(koi.currentLayer(), vg):
     # Background
     vg.beginPath()
-    vg.rect(0, 0, uiWidth, uiHeight)
+    vg.rect(xStart, yStart, uiWidth, uiHeight)
     vg.fillColor(bgColor)
     vg.fill()
 
@@ -8573,7 +8705,7 @@ proc renderQuickReference(a) =
     vg.setFont(20, "sans-bold")
     vg.fillColor(titleColor)
     vg.textAlign(haCenter, vaMiddle)
-    discard vg.text(round(uiWidth*0.5), 60+yOffs, "Quick Keyboard Reference")
+    discard vg.text(round(xStart + uiWidth*0.5), 60+yOffs, "Quick Keyboard Reference")
 
   let
     t = invLerp(MinWindowWidth.float, 800.0, uiWidth).clamp(0.0, 1.0)
@@ -8581,7 +8713,7 @@ proc renderQuickReference(a) =
     columnWidth = lerp(300.0, 330.0, t)
     tabWidth = 400.0
 
-  let radioButtonX = (uiWidth - tabWidth)*0.5
+  let radioButtonX = xStart + (uiWidth - tabWidth)*0.5
 
   koi.radioButtons(
     radioButtonX, 92+yOffs, tabWidth, 24,
@@ -8589,16 +8721,17 @@ proc renderQuickReference(a) =
     style = a.theme.radioButtonStyle
   )
 
-  koi.beginScrollView(x = (uiWidth - viewWidth)*0.5 + 4, y = 150+yOffs,
-                      w = viewWidth, h = (uiHeight - 162))
+  koi.beginScrollView(x = xStart + (uiWidth - viewWidth)*0.5 + 4,
+                      y = yStart + 150+yOffs,
+                      w = viewWidth, h = (uiHeight - 176))
 
   var a = a
   var (sx, sy) = addDrawOffset(10, 10)
 
   let (viewHeight, colWidth) = case a.quickRef.activeTab
-  of 0: (525.0, defaultColWidth)
-  of 1: (592.0, defaultColWidth)
-  else: (400.0, defaultColWidth + 30)
+  of 0: (520.0, defaultColWidth)
+  of 1: (655.0, defaultColWidth)
+  else: (300.0, defaultColWidth + 30)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     let items = a.ui.quickRefShortcuts[a.quickRef.activeTab]
@@ -8621,9 +8754,8 @@ proc renderLevelDropdown(a) =
   alias(map, a.doc.map)
 
   let
+    drawArea   = drawAreaRect(a)
     levelNames = map.sortedLevelNames
-    uiWidth = drawAreaWidth(a)
-    yStart = a.win.titleBarHeight
 
   var sortedLevelIdx = currSortedLevelIdx(a)
   let prevSortedLevelIdx = sortedLevelIdx
@@ -8637,8 +8769,8 @@ proc renderLevelDropdown(a) =
   )
 
   koi.dropDown(
-    x = round((uiWidth - levelDropDownWidth) * 0.5),
-    y = yStart + 19.0,
+    x = round(drawArea.x1 + (drawArea.w - levelDropDownWidth) * 0.5),
+    y = drawArea.y1 + 19.0,
     w = levelDropDownWidth,
     h = 24.0,
     levelNames,
@@ -8660,7 +8792,7 @@ proc renderRegionDropDown(a) =
   let
     l = currLevel(a)
     currRegion = currRegion(a)
-    uiWidth = drawAreaWidth(a)
+    drawArea = drawAreaRect(a)
 
   if currRegion.isSome:
     var sortedRegionNames = l.regionNames()
@@ -8676,7 +8808,7 @@ proc renderRegionDropDown(a) =
     )
 
     koi.dropDown(
-      x = round((uiWidth - regionDropDownWidth) * 0.5),
+      x = round(drawArea.x1 + (drawArea.w - regionDropDownWidth) * 0.5),
       y = 73.0,
       w = regionDropDownWidth,
       h = 24.0,
@@ -8692,7 +8824,7 @@ proc renderRegionDropDown(a) =
       let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
 
       let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.level,
-                                               regionCoords)
+                                                     regionCoords)
 
       centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
 # }}}
@@ -8761,13 +8893,17 @@ proc renderUI(a) =
   alias(vg, a.vg)
   alias(map, a.doc.map)
 
-  let winHeight = koi.winHeight()
-  let uiWidth = drawAreaWidth(a)
-  let yStart = a.win.titleBarHeight
+  let
+    drawArea  = drawAreaRect(a)
+    xStart    = drawArea.x1.float
+    yStart    = drawArea.y1.float
+    uiWidth   = drawArea.w.float
+    uiHeight  = drawArea.h.float
+    winHeight = koi.winHeight()
 
   # Clear background
   vg.beginPath()
-  vg.rect(0, a.win.titleBarHeight, uiWidth, drawAreaHeight(a))
+  vg.rect(xStart, yStart, uiWidth, uiHeight)
 
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
@@ -8781,7 +8917,7 @@ proc renderUI(a) =
 
   else:
     # About button
-    if button(x=uiWidth-55.0, y=yStart+19.0, w=20.0, h=DlgItemHeight,
+    if button(x=xStart+uiWidth-55.0, y=yStart+19.0, w=20.0, h=DlgItemHeight,
               IconQuestion, style=a.theme.aboutButtonStyle, tooltip="About"):
       openAboutDialog(a)
 
@@ -8798,7 +8934,7 @@ proc renderUI(a) =
 
       if a.opts.showCurrentNotePane:
         renderCurrentNotePane(
-          x = CurrentNotePaneLeftPad,
+          x = xStart + CurrentNotePaneLeftPad,
           y = (winHeight - StatusBarHeight - CurrentNotePaneHeight -
                                              CurrentNotePaneBottomPad),
 
@@ -8808,9 +8944,14 @@ proc renderUI(a) =
           a
         )
 
+      if a.opts.showNotesListPane:
+        renderNotesListPane(x = 0, y = yStart,
+                            w = NotesListPaneWidth,
+                            h = uiHeight - StatusBarHeight, a)
+
       if a.opts.showToolsPane:
         renderToolsPane(
-          x = uiWidth - toolsPaneWidth(a),
+          x = xStart + uiWidth - toolsPaneWidth(a),
           y = yStart + ToolsPaneTopPad,
           w = toolsPaneWidth(a),
           h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
@@ -8821,7 +8962,7 @@ proc renderUI(a) =
 
   # Status bar
   let statusBarY = winHeight - StatusBarHeight
-  renderStatusBar(statusBarY, uiWidth.float, a)
+  renderStatusBar(0, statusBarY, winWidth(), a)
 
   # Theme editor pane
   # XXX hack, we need to render the theme editor before the dialogs, so
@@ -8829,10 +8970,11 @@ proc renderUI(a) =
   # when pressing ESC to close the colorpicker, the dialog should not close)
   if a.opts.showThemeEditor:
     let
-      x = uiWidth
+      drawArea = drawAreaRect(a)
+      x = xStart + uiWidth
       y = yStart
       w = ThemePaneWidth
-      h = drawAreaHeight(a)
+      h = drawArea.h.float - StatusBarHeight
 
     renderThemeEditorPane(x, y, w, h, a)
 
@@ -9348,10 +9490,11 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
           ShowCurrentNotePaneKey_v110, true
         )
 
-    showToolsPane   = uiCfg.getBoolOrDefault("option.show-tools-pane",  true)
-    walkMode        = uiCfg.getBoolOrDefault("option.walk-mode",        false)
-    wasdMode        = uiCfg.getBoolOrDefault("option.wasd-mode",        false)
-    pasteWraparound = uiCfg.getBoolOrDefault("option.paste-wraparound", false)
+    showNotesListPane = uiCfg.getBoolOrDefault("option.show-notes-list-pane", true)
+    showToolsPane     = uiCfg.getBoolOrDefault("option.show-tools-pane",      true)
+    walkMode          = uiCfg.getBoolOrDefault("option.walk-mode",            false)
+    wasdMode          = uiCfg.getBoolOrDefault("option.wasd-mode",            false)
+    pasteWraparound   = uiCfg.getBoolOrDefault("option.paste-wraparound",     false)
 
   a.ui.drawLevelParams.setZoomLevel(
     a.theme.levelTheme,

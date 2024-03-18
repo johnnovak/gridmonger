@@ -106,6 +106,7 @@ type
     optShowCellCoords*:      bool
     optShowToolsPane*:       bool
     optShowCurrentNotePane*: bool
+    optShowNotesListPane*:   bool
     optWasdMode*:            bool
     optWalkMode*:            bool
 

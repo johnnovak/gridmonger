@@ -358,9 +358,9 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   koi.setCurrentLayer(layerWindowDecoration)
 
   # Minimise/maximise/close window buttons
-  var x = winWidth - TitleBarWindowButtonsTotalWidth
+  var x = (winWidth - TitleBarWindowButtonsTotalWidth).float
 
-  if koi.button(x, by, bw, bh, IconWindowLeft, style=buttonStyle):
+  if koi.button(x, by, bw.float, bh, IconWindowLeft, style=buttonStyle):
     win.snapToLeft()
 
   x += bw
