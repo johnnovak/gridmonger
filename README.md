@@ -28,13 +28,23 @@ nimble install koi glfw nanovg osdialog riff winim
 
 ### Compiling
 
-Debug build (debug logging enabled, file dialogs disabled):
+The `main` branch is usualy in flux as it often contains work-in-progress
+changes intended go into the next release. Check out the latest tag instead to
+build the last stable version:
+
+```bash
+git tag
+# replace with the highest tag
+git checkout v1.1.0
+```
+
+To build the debug version (debug logging enabled, file dialogs disabled):
 
 ```
 nim debug
 ```
 
-Release build (file dialogs enabled):
+To build the release version (file dialogs enabled):
 
 ```
 nim release
