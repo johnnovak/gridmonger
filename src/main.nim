@@ -28,6 +28,7 @@ import nanovg
 when not defined(DEBUG): import osdialog
 
 import actions
+import converters
 import cfghelper
 import cmdline
 import common
@@ -93,11 +94,11 @@ const
   LevelBottomPad_NoCoords  = 10.0
   LevelLeftPad_NoCoords    = 28.0
 
-  CurrentNotePaneHeight    = 62.0
-  CurrentNotePaneTopPad    = 10.0
-  CurrentNotePaneRightPad  = 50.0
-  CurrentNotePaneBottomPad = 10.0
-  CurrentNotePaneLeftPad   = 20.0
+  CurrentNotePaneHeight    = 72.0
+  CurrentNotePaneTopPad    = 0.0
+  CurrentNotePaneRightPad  = 26.0
+  CurrentNotePaneBottomPad = 16.0
+  CurrentNotePaneLeftPad   = 14.0
 
   NotesListPaneWidth       = 300.0
 
@@ -474,11 +475,6 @@ type
     manualNoteTooltipState: ManualNoteTooltipState
 
     notesListLastHotId: ItemId
-
-    levelTopPad:        float
-    levelRightPad:      float
-    levelBottomPad:     float
-    levelLeftPad:       float
 
     linkSrcLocation:    Location
 
@@ -1676,8 +1672,8 @@ proc setMovePreviewModeMessage(a) =
                    "Enter/P", "confirm", "Esc", "cancel"], a)
 
 # }}}
-# {{{ drawAreaRect()
-proc drawAreaRect(a): Rect[int] =
+# {{{ mainPaneRect()
+proc mainPaneRect(a): Rect[int] =
   var
     x1 = 0
     x2 = koi.winWidth()
@@ -1685,69 +1681,74 @@ proc drawAreaRect(a): Rect[int] =
   if a.opts.showThemeEditor:
     x2 -= ThemePaneWidth
 
-  if a.opts.showNotesListPane:
-    x1 = NotesListPaneWidth.int
+  if a.doc.map.hasLevels and a.opts.showNotesListPane:
+    x1 += NotesListPaneWidth.int
 
   let
     y1 = a.win.titleBarHeight
-    y2 = koi.winHeight()
+    y2 = koi.winHeight() - StatusBarHeight
 
   coordRect(x1.int, y1.int, x2.int, y2.int)
 
 # }}}
 # {{{ toolsPaneWidth()
 proc toolsPaneWidth(a): float =
-  let drawArea = drawAreaRect(a)
+  let mainPane = mainPaneRect(a)
   if a.opts.showToolsPane:
-    if drawArea.h < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
+    if mainPane.h < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
     else: ToolsPaneWidthNarrow
   else:
     0.0
 
 # }}}
-# {{{ updateLevelDrawParams()
-proc updateLevelDrawParams(a) =
+# {{{ toolsPaneHeight()
+proc toolsPaneHeight(mainPaneHeight: float): float =
+  if   mainPaneHeight < ToolsPaneYBreakpoint1: 420.0
+  elif mainPaneHeight < ToolsPaneYBreakpoint2: 630.0
+  else:                                        780.0
+
+# }}}
+
+# {{{ calculateLevelDrawArea()
+proc calculateLevelDrawArea(a): (float, float) =
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
 
   let l = currLevel(a)
 
+  var topPad, rightPad, bottomPad, leftPad: float
+
   if dp.drawCellCoords:
-    a.ui.levelTopPad    = LevelTopPad_Coords
-    a.ui.levelRightPad  = LevelRightPad_Coords
-    a.ui.levelBottomPad = LevelBottomPad_Coords
-    a.ui.levelLeftPad   = LevelLeftPad_Coords
+    topPad    = LevelTopPad_Coords
+    rightPad  = LevelRightPad_Coords
+    bottomPad = LevelBottomPad_Coords
+    leftPad   = LevelLeftPad_Coords
   else:
-    a.ui.levelTopPad    = LevelTopPad_NoCoords
-    a.ui.levelRightPad  = LevelRightPad_NoCoords
-    a.ui.levelBottomPad = LevelBottomPad_NoCoords
-    a.ui.levelLeftPad   = LevelLeftPad_NoCoords
+    topPad    = LevelTopPad_NoCoords
+    rightPad  = LevelRightPad_NoCoords
+    bottomPad = LevelBottomPad_NoCoords
+    leftPad   = LevelLeftPad_NoCoords
 
   if l.regionOpts.enabled:
-    a.ui.levelTopPad += LevelTopPad_Regions
+    topPad += LevelTopPad_Regions
 
-  let drawArea = drawAreaRect(a)
+  let mainPane = mainPaneRect(a)
 
-  dp.startX = drawArea.x1 + ui.levelLeftPad
-  dp.startY = drawArea.y1 + ui.levelTopPad
+  dp.startX = mainPane.x1 + leftPad
+  dp.startY = mainPane.y1 + topPad
 
-  ui.levelDrawAreaWidth = drawArea.w - a.ui.levelLeftPad -
-                                       a.ui.levelRightPad
-
-  ui.levelDrawAreaHeight = drawArea.h - a.ui.levelTopPad -
-                                        a.ui.levelBottomPad -
-                                        StatusBarHeight
+  var
+    w = mainPane.w - leftPad - rightPad
+    h = mainPane.h - topPad  - bottomPad
 
   if a.opts.showCurrentNotePane:
-   ui.levelDrawAreaHeight -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
-                             CurrentNotePaneBottomPad
-
-  if a.opts.showNotesListPane:
-   ui.levelDrawAreaHeight -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
-                             CurrentNotePaneBottomPad
+   h -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
+                                CurrentNotePaneBottomPad
 
   if a.opts.showToolsPane:
-    ui.levelDrawAreaWidth -= toolsPaneWidth(a)
+    w -= toolsPaneWidth(a)
+
+  (w, h)
 
 # }}}
 
@@ -2004,13 +2005,13 @@ proc updateLastCursorViewCoords(a) =
 
 # }}}
 # {{{ updateViewAndCursorPos()
-proc updateViewAndCursorPos(a) =
+proc updateViewAndCursorPos(levelDrawWidth, levelDrawHeight: float; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
 
-  dp.viewRows = min(dp.numDisplayableRows(a.ui.levelDrawAreaHeight), l.rows)
-  dp.viewCols = min(dp.numDisplayableCols(a.ui.levelDrawAreaWidth), l.cols)
+  dp.viewRows = min(dp.numDisplayableRows(levelDrawHeight), l.rows)
+  dp.viewCols = min(dp.numDisplayableCols(levelDrawWidth), l.cols)
 
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
@@ -3282,8 +3283,8 @@ template validateCommonGeneralMapFields(dlg: untyped): string =
 
 # {{{ calcDialogX()
 proc calcDialogX(dlgWidth: float; a): float =
-  let drawArea = drawAreaRect(a)
-  drawArea.x1 + drawArea.w.float*0.5 - dlgWidth*0.5
+  let mainPane = mainPaneRect(a)
+  mainPane.x1 + mainPane.w.float*0.5 - dlgWidth*0.5
 
 # }}}
 # {{{ dialogButtonsStartPos()
@@ -3459,7 +3460,7 @@ proc aboutDialog(a) =
                                xoffs=dialogX, yoffs=dialogY, scale=scale)
 
 
-  koi.image(0, 0, DlgWidth.float, DlgHeight.float, al.logoPaint)
+  koi.image(0, 0, DlgWidth, DlgHeight, al.logoPaint)
 
   var labelStyle = a.theme.labelStyle.deepCopy()
   labelStyle.align = haCenter
@@ -5966,7 +5967,7 @@ proc handleLevelMouseEvents(a) =
     const SensitivityMax = 35
 
     let sensitivity = remap(
-      inMin=MinZoomLevel.float, inMax=MaxZoomLevel.float,
+      inMin=MinZoomLevel, inMax=MaxZoomLevel,
       outMin=SensitivityMin, outMax=SensitivityMax,
       dp.getZoomLevel().float
     )
@@ -7413,7 +7414,8 @@ proc handleQuickRefKeyEvents(a) =
 # {{{ Rendering
 
 # {{{ renderNoteTooltip()
-proc renderNoteTooltip(x, y: float, note: Annotation, a) =
+proc renderNoteTooltip(x, y: float, levelDrawWidth, levelDrawHeight: float,
+                       note: Annotation, a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
   alias(dp, a.ui.drawLevelParams)
@@ -7444,8 +7446,8 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
     noteBoxW = noteTextW + PadX*2
 
     let
-      xOver = noteBoxX + noteBoxW - (dp.startX + ui.levelDrawAreaWidth)
-      yOver = noteBoxY + noteBoxH - (dp.startY + ui.levelDrawAreaHeight)
+      xOver = noteBoxX + noteBoxW - (dp.startX + levelDrawWidth)
+      yOver = noteBoxY + noteBoxH - (dp.startY + levelDrawHeight)
 
     if xOver > 0:
       noteBoxX -= xOver
@@ -7470,29 +7472,20 @@ proc renderNoteTooltip(x, y: float, note: Annotation, a) =
 
 # }}}
 # {{{ renderLevel()
-proc renderLevel(a) =
+proc renderLevel(x, y, w, h: float,
+                 levelDrawWidth, levelDrawHeight: float; a) =
+
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
   alias(opts, a.opts)
 
-  let l = currLevel(a)
-
-  let i = instantiationInfo(fullPaths=true)
-  let id = koi.generateId(i.filename, i.line, "gridmonger-level")
-
-  updateLevelDrawParams(a)
-
-  updateViewAndCursorPos(a)
-  updateLastCursorViewCoords(a)
+  let
+    l = currLevel(a)
+    i = instantiationInfo(fullPaths=true)
+    id = koi.generateId(i.filename, i.line, "gridmonger-level")
 
   if ui.prevCursor != ui.cursor:
     resetManualNoteTooltip(a)
-
-  let
-    x = dp.startX
-    y = dp.startY
-    w = dp.viewCols * dp.gridSize
-    h = dp.viewRows * dp.gridSize
 
   # Hit testing
   if koi.isHit(x, y, w, h):
@@ -7583,7 +7576,7 @@ proc renderLevel(a) =
       x = dp.startX + viewCol(a) * dp.gridSize + NoteTooltipXOffs
       y = dp.startY + viewRow(a) * dp.gridSize + NoteTooltipYOffs
 
-    renderNoteTooltip(x, y, note.get, a)
+    renderNoteTooltip(x, y, levelDrawWidth, levelDrawHeight, note.get, a)
 
 
   a.ui.prevCursor = a.ui.cursor
@@ -7599,24 +7592,23 @@ proc renderEmptyMap(a) =
   vg.fillColor(lt.foregroundNormalNormalColor)
   vg.textAlign(haCenter, vaMiddle)
 
-  let drawArea = drawAreaRect(a)
-  var y = drawArea.h.float * 0.5
-  discard vg.text(drawArea.x1 + drawArea.w.float * 0.5, y, "Empty map")
+  let mainPane = mainPaneRect(a)
+  var y = mainPane.h.float * 0.5
+  discard vg.text(mainPane.x1 + mainPane.w.float * 0.5, y, "Empty map")
 
 # }}}
 # {{{ renderModeAndOptionIndicators()
-proc renderModeAndOptionIndicators(a) =
+proc renderModeAndOptionIndicators(x, y: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
 
   let lt = a.theme.levelTheme
 
-  var x = ui.levelLeftPad
-  let y = a.win.titleBarHeight + 32
-
   vg.save()
 
   vg.fillColor(lt.coordinatesHighlightColor)
+
+  var x = x
 
   if a.opts.wasdMode:
     vg.setFont(15, "sans-bold")
@@ -7626,6 +7618,8 @@ proc renderModeAndOptionIndicators(a) =
   if a.opts.drawTrail:
     vg.setFont(19, "sans-bold")
     discard vg.text(x, y+1, IconShoePrints)
+
+  vg.restore()
 
 # }}}
 
@@ -7730,6 +7724,13 @@ proc specialWallDrawProc(lt: LevelTheme,
 proc renderToolsPane(x, y, w, h: float; a) =
   alias(ui, a.ui)
   alias(lt, a.theme.levelTheme)
+  alias(vg, a.vg)
+
+#  vg.beginPath()
+#  vg.strokeWidth(1)
+#  vg.strokeColor(green())
+#  vg.rect(x, y, w, h)
+#  vg.stroke()
 
   var
     toolItemsPerColumn = 12
@@ -7739,13 +7740,13 @@ proc renderToolsPane(x, y, w, h: float; a) =
     colorX = x + 3
     colorY = y + 445
 
-  let drawArea = drawAreaRect(a)
+  let mainPane = mainPaneRect(a)
 
-  if drawArea.h < ToolsPaneYBreakpoint2:
+  if mainPane.h < ToolsPaneYBreakpoint2:
     colorItemsPerColum = 5
     toolX += 30
 
-  if drawArea.h < ToolsPaneYBreakpoint1:
+  if mainPane.h < ToolsPaneYBreakpoint1:
     toolItemsPerColumn = 6
     toolX -= 30
     colorX += 3
@@ -7814,7 +7815,7 @@ proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
                        elif index < 100: 0.37
                        else:             0.32
 
-  vg.setFont((size*fontSizeFactor).float, "sans-bold")
+  vg.setFont(size*fontSizeFactor, "sans-bold")
   vg.fillColor(fgColor)
   vg.textAlign(haCenter, vaMiddle)
 
@@ -7840,7 +7841,7 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
 
     case note.kind
     of akIndexed:
-      drawIndexedNote(x, y-12, size=36,
+      drawIndexedNote(x, y-2, size=36,
                       bgColor=s.indexBackgroundColor[note.indexColor],
                       fgColor=s.indexColor,
                       a.theme.levelTheme.notebackgroundShape,
@@ -7849,23 +7850,24 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
     of akCustomId:
       vg.fillColor(s.textColor)
       vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+18, y-2, note.customId)
+      discard vg.text(x+18, y+8, note.customId)
 
     of akIcon:
       vg.fillColor(s.textColor)
       vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y-3, NoteIcons[note.icon])
+      discard vg.text(x+20, y+7, NoteIcons[note.icon])
 
     of akComment:
       vg.fillColor(s.textColor)
       vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y-2, IconComment)
+      discard vg.text(x+20, y+8, IconComment)
 
     of akLabel: discard
 
 
     var text = note.text
-    koi.textArea(x+40, y-11, w-20, h+10, text, disabled=true,
+    const textIndent = 40
+    koi.textArea(x+textIndent, y-1, w-textIndent, h, text, disabled=true,
                  style=a.theme.noteTextAreaStyle)
 
     vg.restore()
@@ -7944,8 +7946,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       let bounds = vg.textBoxBounds(HorizPad, y, w - HorizPad*2, note.text)
       let noteHeight = bounds.y2 - bounds.y1
 
-      koi.nextRowHeight(noteHeight + 13)
-      koi.nextItemHeight(noteHeight + 13)
+      koi.nextRowHeight(noteHeight + 18)
+      koi.nextItemHeight(noteHeight + 18)
 
       if koi.button(note.text, activateOnButtonDown=true,
                     drawProc=noteButtonDrawProc.some):
@@ -7991,20 +7993,20 @@ proc renderCommand(x, y: float; command: string; a): float =
 
 # }}}
 # {{{ renderStatusBar()
-proc renderStatusBar(x, y, w: float; a) =
+proc renderStatusBar(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(status, a.ui.status)
 
   let s = a.theme.statusBarTheme
 
-  let ty = StatusBarHeight * TextVertAlignFactor
+  let ty = h * TextVertAlignFactor
 
   # Bar background
   vg.save()
   vg.translate(x, y)
 
   vg.beginPath()
-  vg.rect(0, 0, w, StatusBarHeight)
+  vg.rect(0, 0, w, h)
   vg.fillColor(s.backgroundColor)
   vg.fill()
 
@@ -8027,7 +8029,7 @@ proc renderStatusBar(x, y, w: float; a) =
     vg.textAlign(haLeft, vaMiddle)
     discard vg.text(w - tw - 7, ty, cursorPos)
 
-    vg.intersectScissor(0, 0, w - tw - 15, StatusBarHeight)
+    vg.intersectScissor(0, 0, w - tw - 15, h)
 
   # Display status message or warning
   const
@@ -8602,14 +8604,9 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # {{{ renderQuickReference()
 
-proc renderQuickReference(a) =
+proc renderQuickReference(x, y, w, h: float; a) =
   alias(vg, a.vg)
   let cfg = a.theme.config
-
-  const
-    h = 24.0
-    sepaHeight = 14.0
-    defaultColWidth = 105.0
 
   let
     p = "ui.quick-help."
@@ -8622,11 +8619,16 @@ proc renderQuickReference(a) =
 
   proc renderSection(x, y: float; items: seq[QuickRefItem];
                      colWidth: float; a) =
+
+    const
+      RowHeight = 24.0
+      SepaHeight = 14.0
+
     var
       x0 = x
-      x = x
-      y = y
-      heightInc = h
+      x  = x
+      y  = y
+      heightInc = RowHeight
 
     vg.setFont(14, "sans-bold")
 
@@ -8640,9 +8642,9 @@ proc renderQuickReference(a) =
           let shortcut = sc.toStr()
           discard renderCommand(x, ys, shortcut,
                                 commandBgColor, commandTextColor, a)
-          ys += h
-          heightInc += h
-        if shortcuts.len > 1: heightInc += sepaHeight
+          ys += RowHeight
+          heightInc += RowHeight
+        if shortcuts.len > 1: heightInc += SepaHeight
         x += colWidth
 
       of qkKeyShortcuts:
@@ -8657,7 +8659,7 @@ proc renderQuickReference(a) =
             xa = vg.text(round(sx), round(y), $item.sepa)
             sx += 9
         x += colWidth
-        heightInc = h
+        heightInc = RowHeight
 
       of qkCustomShortcuts:
         var sx = x
@@ -8670,7 +8672,7 @@ proc renderQuickReference(a) =
             xa = vg.text(round(sx), round(y), $item.sepa)
             sx += 9
         x += colWidth
-        heightInc = h
+        heightInc = RowHeight
 
 
       of qkDescription:
@@ -8680,24 +8682,19 @@ proc renderQuickReference(a) =
         y += heightInc
 
       of qkSeparator:
-        y += sepaHeight
+        y += SepaHeight
 
-  let
-    drawArea = drawAreaRect(a)
-    xStart   = drawArea.x1.float
-    yStart   = drawArea.y1.float
-    uiWidth  = drawArea.w.float
-    uiHeight = drawArea.h.float
-    yOffs    = max((uiHeight - 840) * 0.5, 0)
+
+  let yOffs = max((h - 840) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     vg.save()
-    vg.intersectScissor(0, 0, uiWidth, uiHeight)
+    vg.intersectScissor(x, y, w, h)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     # Background
     vg.beginPath()
-    vg.rect(xStart, yStart, uiWidth, uiHeight)
+    vg.rect(x, y, w, h)
     vg.fillColor(bgColor)
     vg.fill()
 
@@ -8705,15 +8702,15 @@ proc renderQuickReference(a) =
     vg.setFont(20, "sans-bold")
     vg.fillColor(titleColor)
     vg.textAlign(haCenter, vaMiddle)
-    discard vg.text(round(xStart + uiWidth*0.5), 60+yOffs, "Quick Keyboard Reference")
+    discard vg.text(round(x + w*0.5), 60+yOffs, "Quick Keyboard Reference")
 
   let
-    t = invLerp(MinWindowWidth.float, 800.0, uiWidth).clamp(0.0, 1.0)
+    t = invLerp(MinWindowWidth, 800.0, w).clamp(0.0, 1.0)
     viewWidth = lerp(622.0, 680.0, t)
     columnWidth = lerp(300.0, 330.0, t)
     tabWidth = 400.0
 
-  let radioButtonX = xStart + (uiWidth - tabWidth)*0.5
+  let radioButtonX = x + (w - tabWidth)*0.5
 
   koi.radioButtons(
     radioButtonX, 92+yOffs, tabWidth, 24,
@@ -8721,17 +8718,19 @@ proc renderQuickReference(a) =
     style = a.theme.radioButtonStyle
   )
 
-  koi.beginScrollView(x = xStart + (uiWidth - viewWidth)*0.5 + 4,
-                      y = yStart + 150+yOffs,
-                      w = viewWidth, h = (uiHeight - 176))
+  koi.beginScrollView(x = x + (w - viewWidth)*0.5 + 4,
+                      y = y + 150+yOffs,
+                      w = viewWidth, h = (h - 176))
 
   var a = a
   var (sx, sy) = addDrawOffset(10, 10)
 
+  const DefaultColWidth = 105.0
+
   let (viewHeight, colWidth) = case a.quickRef.activeTab
-  of 0: (520.0, defaultColWidth)
-  of 1: (655.0, defaultColWidth)
-  else: (300.0, defaultColWidth + 30)
+  of 0: (520.0, DefaultColWidth)
+  of 1: (655.0, DefaultColWidth)
+  else: (300.0, DefaultColWidth + 30)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     let items = a.ui.quickRefShortcuts[a.quickRef.activeTab]
@@ -8754,7 +8753,7 @@ proc renderLevelDropdown(a) =
   alias(map, a.doc.map)
 
   let
-    drawArea   = drawAreaRect(a)
+    mainPane   = mainPaneRect(a)
     levelNames = map.sortedLevelNames
 
   var sortedLevelIdx = currSortedLevelIdx(a)
@@ -8769,8 +8768,8 @@ proc renderLevelDropdown(a) =
   )
 
   koi.dropDown(
-    x = round(drawArea.x1 + (drawArea.w - levelDropDownWidth) * 0.5),
-    y = drawArea.y1 + 19.0,
+    x = round(mainPane.w - levelDropDownWidth) * 0.5,
+    y = 19.0,
     w = levelDropDownWidth,
     h = 24.0,
     levelNames,
@@ -8784,6 +8783,7 @@ proc renderLevelDropdown(a) =
     var cur = ui.cursor
     cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
     setCursor(cur, a)
+
 # }}}
 # {{{ renderRegionDropDown()
 proc renderRegionDropDown(a) =
@@ -8792,7 +8792,7 @@ proc renderRegionDropDown(a) =
   let
     l = currLevel(a)
     currRegion = currRegion(a)
-    drawArea = drawAreaRect(a)
+    mainPane = mainPaneRect(a)
 
   if currRegion.isSome:
     var sortedRegionNames = l.regionNames()
@@ -8808,7 +8808,7 @@ proc renderRegionDropDown(a) =
     )
 
     koi.dropDown(
-      x = round(drawArea.x1 + (drawArea.w - regionDropDownWidth) * 0.5),
+      x = round(mainPane.x1 + (mainPane.w - regionDropDownWidth) * 0.5),
       y = 73.0,
       w = regionDropDownWidth,
       h = 24.0,
@@ -8827,6 +8827,7 @@ proc renderRegionDropDown(a) =
                                                      regionCoords)
 
       centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
+
 # }}}
 # {{{ renderDialogs()
 proc renderDialogs(a) =
@@ -8894,16 +8895,12 @@ proc renderUI(a) =
   alias(map, a.doc.map)
 
   let
-    drawArea  = drawAreaRect(a)
-    xStart    = drawArea.x1.float
-    yStart    = drawArea.y1.float
-    uiWidth   = drawArea.w.float
-    uiHeight  = drawArea.h.float
-    winHeight = koi.winHeight()
+    mainPane = mainPaneRect(a)
+    toolsPaneHeight = toolsPaneHeight(mainPane.h)
 
   # Clear background
   vg.beginPath()
-  vg.rect(xStart, yStart, uiWidth, uiHeight)
+  vg.rect(mainPane.x1, mainPane.y1, mainPane.w, mainPane.h)
 
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
@@ -8913,56 +8910,91 @@ proc renderUI(a) =
   vg.fill()
 
   if a.opts.showQuickReference:
-    renderQuickReference(a)
+    var w = winWidth()
+    if a.opts.showThemeEditor: w -= ThemePaneWidth
+
+    renderQuickReference(x=0, y=mainPane.y1, w=w, h=mainPane.h, a)
 
   else:
-    # About button
-    if button(x=xStart+uiWidth-55.0, y=yStart+19.0, w=20.0, h=DlgItemHeight,
-              IconQuestion, style=a.theme.aboutButtonStyle, tooltip="About"):
-      openAboutDialog(a)
-
     if not map.hasLevels:
       renderEmptyMap(a)
 
     else:
+      koi.beginView(x=mainPane.x1, y=mainPane.y1, w=mainPane.w, h=mainPane.h)
+
+      # About button
+      if button(x=mainPane.w-55.0, y=19.0, w=20.0, h=DlgItemHeight,
+                IconQuestion, style=a.theme.aboutButtonStyle, tooltip="About"):
+        openAboutDialog(a)
+
       renderLevelDropdown(a)
 
       if currLevel(a).regionOpts.enabled:
         renderRegionDropDown(a)
 
-      renderLevel(a)
+      let (levelDrawWidth, levelDrawHeight) = calculateLevelDrawArea(a)
+      updateViewAndCursorPos(levelDrawWidth, levelDrawHeight, a)
+      updateLastCursorViewCoords(a)
 
+      alias(dp, ui.drawLevelParams)
+
+      renderLevel(
+        x = dp.startX,
+        y = dp.startY,
+        w = dp.viewCols * dp.gridSize,
+        h = dp.viewRows * dp.gridSize,
+        levelDrawWidth  = levelDrawWidth,
+        levelDrawHeight = levelDrawHeight,
+        a
+      )
+
+      renderModeAndOptionIndicators(
+        x = mainPane.x1 + LevelLeftPad_NoCoords,
+        y = a.win.titleBarHeight + 32,
+        a
+      )
+
+      if a.opts.showToolsPane:
+        renderToolsPane(
+          x = mainPane.w - toolsPaneWidth(a),
+          y = ToolsPaneTopPad,
+          w = toolsPaneWidth(a),
+          h = toolsPaneHeight,
+          a
+        )
+
+      koi.endView()
+
+
+    if map.hasLevels:
       if a.opts.showCurrentNotePane:
-        renderCurrentNotePane(
-          x = xStart + CurrentNotePaneLeftPad,
-          y = (winHeight - StatusBarHeight - CurrentNotePaneHeight -
-                                             CurrentNotePaneBottomPad),
+        var paneWidth = mainPane.w - CurrentNotePaneLeftPad -
+                                     CurrentNotePaneRightPad
 
-          w = (uiWidth - toolsPaneWidth(a) - CurrentNotePaneLeftPad -
-                                             CurrentNotePaneRightPad),
+        let totalNotePaneHeight = CurrentNotePaneHeight +
+                                  CurrentNotePaneTopPad +
+                                  CurrentNotePaneBottomPad
+
+        if mainPane.h - toolsPaneHeight - ToolsPaneTopPad <
+           totalNotePaneHeight - 30:
+          paneWidth -= toolsPaneWidth(a)
+
+        renderCurrentNotePane(
+          x = mainPane.x1 + CurrentNotePaneLeftPad,
+          y = mainPane.y2 - CurrentNotePaneHeight - CurrentNotePaneBottomPad,
+          w = paneWidth,
           h = CurrentNotePaneHeight,
           a
         )
 
       if a.opts.showNotesListPane:
-        renderNotesListPane(x = 0, y = yStart,
+        renderNotesListPane(x = 0, y = mainPane.y1,
                             w = NotesListPaneWidth,
-                            h = uiHeight - StatusBarHeight, a)
-
-      if a.opts.showToolsPane:
-        renderToolsPane(
-          x = xStart + uiWidth - toolsPaneWidth(a),
-          y = yStart + ToolsPaneTopPad,
-          w = toolsPaneWidth(a),
-          h = winHeight - StatusBarHeight - ToolsPaneBottomPad,
-          a
-        )
-
-      renderModeAndOptionIndicators(a)
+                            h = mainPane.h, a)
 
   # Status bar
-  let statusBarY = winHeight - StatusBarHeight
-  renderStatusBar(0, statusBarY, winWidth(), a)
+  let statusBarY = mainPane.y1 + mainPane.h
+  renderStatusBar(0, statusBarY, winWidth(), StatusBarHeight, a)
 
   # Theme editor pane
   # XXX hack, we need to render the theme editor before the dialogs, so
@@ -8970,11 +9002,11 @@ proc renderUI(a) =
   # when pressing ESC to close the colorpicker, the dialog should not close)
   if a.opts.showThemeEditor:
     let
-      drawArea = drawAreaRect(a)
-      x = xStart + uiWidth
-      y = yStart
+      mainPane = mainPaneRect(a)
+      x = mainPane.x1 + mainPane.w
+      y = mainPane.y1
       w = ThemePaneWidth
-      h = drawArea.h.float - StatusBarHeight
+      h = mainPane.h
 
     renderThemeEditorPane(x, y, w, h, a)
 
@@ -9096,13 +9128,13 @@ proc renderFrameSplash(a) =
   let
     (winWidth, winHeight) = s.win.size
     (fbWidth, fbHeight) = s.win.framebufferSize
-    pxRatio = fbWidth / winWidth
+    pxRatio = fbWidth.float / winWidth.float
 
   glViewport(0, 0, fbWidth, fbHeight)
 
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
-  vg.beginFrame(winWidth.float, winHeight.float, pxRatio)
+  vg.beginFrame(winWidth, winHeight, pxRatio)
 
   if s.logoImage == NoImage or s.updateLogoImage:
     colorImage(s.logo, cfg.getColorOrDefault("ui.splash-image.logo"))
@@ -9142,7 +9174,7 @@ proc renderFrameSplash(a) =
   )
 
   vg.beginPath()
-  vg.rect(0, 0, winWidth.float, winHeight.float)
+  vg.rect(0, 0, winWidth, winHeight)
 
   vg.fillPaint(s.shadowPaint)
   vg.fill()
@@ -9337,7 +9369,7 @@ proc setDefaultWidgetStyles(a) =
   koi.setDefaultCheckboxStyle(s)
 
 # }}}
-#
+
 # {{{ initGfx()
 proc initGfx(a) =
   glfw.initialize()
