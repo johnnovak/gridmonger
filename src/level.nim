@@ -1,6 +1,5 @@
 import std/math
 import std/options
-import std/strformat
 
 import annotations
 import common

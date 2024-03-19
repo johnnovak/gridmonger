@@ -1,8 +1,6 @@
-import options
-#import strformat
+import std/options
 
 import winim/lean
-
 
 # Adapted from
 # https://peter.bloomfield.online/introduction-to-win32-named-pipes-cpp/
@@ -63,7 +61,7 @@ proc isAppInstanceAlreadyRunning*(): bool =
 
 # }}}
 
-# {{{ initClient()
+# {{{ initClient*()
 proc initClient*(): bool =
   if not commonInit():
     return false
