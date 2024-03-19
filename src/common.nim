@@ -38,16 +38,16 @@ type
 
 type
   CardinalDir* = enum
-    dirN  = (0, "North")
-    dirE  = (1, "East")
-    dirS  = (2, "South")
-    dirW  = (3, "West")
+    dirN = "North"
+    dirE = "East"
+    dirS = "South"
+    dirW = "West"
 
   Direction* = set[CardinalDir]
 
   Orientation* = enum
-    Horiz = (0, "horizontal")
-    Vert  = (1, "vertical")
+    Horiz = "horizontal"
+    Vert  = "vertical"
 
 const
   North*     = {dirN}
@@ -171,28 +171,28 @@ type
     trail*:            bool
 
   Floor* = enum
-    fEmpty               = ( 0, "none"),
-    fBlank               = ( 1, "blank"),
-    fDoor                = (20, "open door"),
-    fLockedDoor          = (21, "locked door"),
-    fArchway             = (22, "archway"),
-    fSecretDoorBlock     = (23, "secret door (block)"),
-    fSecretDoor          = (24, "secret door"),
-    fOneWayDoor1         = (25, "one-way door"),
-    fOneWayDoor2         = (26, "one-way door"),
-    fPressurePlate       = (30, "pressure plate"),
-    fHiddenPressurePlate = (31, "hidden pressure plate"),
-    fClosedPit           = (40, "closed pit"),
-    fOpenPit             = (41, "open pit"),
-    fHiddenPit           = (42, "hidden pit"),
-    fCeilingPit          = (43, "ceiling pit"),
-    fStairsDown          = (50, "stairs down"),
-    fStairsUp            = (51, "stairs up"),
-    fEntranceDoor        = (52, "entrance door"),
-    fExitDoor            = (53, "exit door"),
-    fSpinner             = (60, "spinner"),
-    fTeleportSource      = (70, "teleport"),
-    fTeleportDestination = (71, "teleport destination"),
+    fEmpty               = ( 0, "none")
+    fBlank               = ( 1, "blank")
+    fDoor                = (20, "open door")
+    fLockedDoor          = (21, "locked door")
+    fArchway             = (22, "archway")
+    fSecretDoorBlock     = (23, "secret door (block)")
+    fSecretDoor          = (24, "secret door")
+    fOneWayDoor1         = (25, "one-way door")
+    fOneWayDoor2         = (26, "one-way door")
+    fPressurePlate       = (30, "pressure plate")
+    fHiddenPressurePlate = (31, "hidden pressure plate")
+    fClosedPit           = (40, "closed pit")
+    fOpenPit             = (41, "open pit")
+    fHiddenPit           = (42, "hidden pit")
+    fCeilingPit          = (43, "ceiling pit")
+    fStairsDown          = (50, "stairs down")
+    fStairsUp            = (51, "stairs up")
+    fEntranceDoor        = (52, "entrance door")
+    fExitDoor            = (53, "exit door")
+    fSpinner             = (60, "spinner")
+    fTeleportSource      = (70, "teleport")
+    fTeleportDestination = (71, "teleport destination")
     fInvisibleBarrier    = (80, "invisible barrier")
     fBridge              = (90, "bridge")
     fColumn              = (100, "column")
@@ -259,20 +259,20 @@ type
 
 type
   LineWidth* = enum
-    lwThin   = (0, "Thin"),
+    lwThin   = (0, "Thin")
     lwNormal = (1, "Normal")
 
   GridStyle* = enum
-    gsNone   = (0, "None"),
-    gsSolid  = (1, "Solid"),
-    gsLoose  = (2, "Loose"),
+    gsNone   = (0, "None")
+    gsSolid  = (1, "Solid")
+    gsLoose  = (2, "Loose")
     gsCross  = (3, "Cross")
 
   OutlineStyle* = enum
-    osNone                = (0, "None"),
-    osCell                = (1, "Cell"),
-    osSquareEdges         = (2, "Square Edges"),
-    osRoundedEdges        = (3, "Rounded Edges"),
+    osNone                = (0, "None")
+    osCell                = (1, "Cell")
+    osSquareEdges         = (2, "Square Edges")
+    osRoundedEdges        = (3, "Rounded Edges")
     osRoundedEdgesFilled  = (4, "Filled Rounded Edges")
 
   OutlineFillStyle* = enum

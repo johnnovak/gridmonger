@@ -89,8 +89,8 @@ type
   MapReadError* = object of IOError
 
   CompressionType = enum
-    ctUncompressed     = 0,
-    ctRunLengthEncoded = 1,
+    ctUncompressed     = 0
+    ctRunLengthEncoded = 1
     ctZeroes           = 2
 
   AppState* = object

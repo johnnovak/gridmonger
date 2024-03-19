@@ -177,151 +177,151 @@ const
 
 type AppShortcut = enum
   # General
-  scNextTextField,
-  scAccept,
-  scCancel,
-  scDiscard,
-  scUndo,
-  scRedo,
+  scNextTextField
+  scAccept
+  scCancel
+  scDiscard
+  scUndo
+  scRedo
 
   # Maps
-  scNewMap,
-  scOpenMap,
-  scSaveMap,
-  scSaveMapAs,
-  scEditMapProps,
+  scNewMap
+  scOpenMap
+  scSaveMap
+  scSaveMapAs
+  scEditMapProps
 
   # Levels
-  scNewLevel,
-  scDeleteLevel,
-  scEditLevelProps,
-  scResizeLevel,
+  scNewLevel
+  scDeleteLevel
+  scEditLevelProps
+  scResizeLevel
 
   # Regions
-  scEditRegionProps,
+  scEditRegionProps
 
   # Themes
-  scReloadTheme,
-  scPreviousTheme,
-  scNextTheme,
+  scReloadTheme
+  scPreviousTheme
+  scNextTheme
 
   # Editing
-  scCycleFloorGroup1Forward,
-  scCycleFloorGroup2Forward,
-  scCycleFloorGroup3Forward,
-  scCycleFloorGroup4Forward,
-  scCycleFloorGroup5Forward,
-  scCycleFloorGroup6Forward,
-  scCycleFloorGroup7Forward,
-  scCycleFloorGroup8Forward,
+  scCycleFloorGroup1Forward
+  scCycleFloorGroup2Forward
+  scCycleFloorGroup3Forward
+  scCycleFloorGroup4Forward
+  scCycleFloorGroup5Forward
+  scCycleFloorGroup6Forward
+  scCycleFloorGroup7Forward
+  scCycleFloorGroup8Forward
 
-  scCycleFloorGroup1Backward,
-  scCycleFloorGroup2Backward,
-  scCycleFloorGroup3Backward,
-  scCycleFloorGroup4Backward,
-  scCycleFloorGroup5Backward,
-  scCycleFloorGroup6Backward,
-  scCycleFloorGroup7Backward,
-  scCycleFloorGroup8Backward,
+  scCycleFloorGroup1Backward
+  scCycleFloorGroup2Backward
+  scCycleFloorGroup3Backward
+  scCycleFloorGroup4Backward
+  scCycleFloorGroup5Backward
+  scCycleFloorGroup6Backward
+  scCycleFloorGroup7Backward
+  scCycleFloorGroup8Backward
 
-  scExcavateTunnel,
-  scEraseCell,
-  scDrawClearFloor,
-  scToggleFloorOrientation,
+  scExcavateTunnel
+  scEraseCell
+  scDrawClearFloor
+  scToggleFloorOrientation
 
-  scSetFloorColor,
-  scPickFloorColor,
-  scPreviousFloorColor,
-  scNextFloorColor,
+  scSetFloorColor
+  scPickFloorColor
+  scPreviousFloorColor
+  scNextFloorColor
 
-  scSelectFloorColor1,
-  scSelectFloorColor2,
-  scSelectFloorColor3,
-  scSelectFloorColor4,
-  scSelectFloorColor5,
-  scSelectFloorColor6,
-  scSelectFloorColor7,
-  scSelectFloorColor8,
-  scSelectFloorColor9,
-  scSelectFloorColor10,
+  scSelectFloorColor1
+  scSelectFloorColor2
+  scSelectFloorColor3
+  scSelectFloorColor4
+  scSelectFloorColor5
+  scSelectFloorColor6
+  scSelectFloorColor7
+  scSelectFloorColor8
+  scSelectFloorColor9
+  scSelectFloorColor10
 
-  scDrawWall,
-  scDrawWallRepeat,
-  scDrawSpecialWall,
-  scPreviousSpecialWall,
-  scNextSpecialWall,
+  scDrawWall
+  scDrawWallRepeat
+  scDrawSpecialWall
+  scPreviousSpecialWall
+  scNextSpecialWall
 
-  scSelectSpecialWall1,
-  scSelectSpecialWall2,
-  scSelectSpecialWall3,
-  scSelectSpecialWall4,
-  scSelectSpecialWall5,
-  scSelectSpecialWall6,
-  scSelectSpecialWall7,
-  scSelectSpecialWall8,
-  scSelectSpecialWall9,
-  scSelectSpecialWall10,
-  scSelectSpecialWall11,
-  scSelectSpecialWall12,
+  scSelectSpecialWall1
+  scSelectSpecialWall2
+  scSelectSpecialWall3
+  scSelectSpecialWall4
+  scSelectSpecialWall5
+  scSelectSpecialWall6
+  scSelectSpecialWall7
+  scSelectSpecialWall8
+  scSelectSpecialWall9
+  scSelectSpecialWall10
+  scSelectSpecialWall11
+  scSelectSpecialWall12
 
-  scEraseTrail,
-  scExcavateTrail,
-  scClearTrail,
+  scEraseTrail
+  scExcavateTrail
+  scClearTrail
 
-  scJumpToLinkedCell,
-  scLinkCell,
+  scJumpToLinkedCell
+  scLinkCell
 
-  scPreviousLevel,
-  scNextLevel,
+  scPreviousLevel
+  scNextLevel
 
-  scZoomIn,
-  scZoomOut,
+  scZoomIn
+  scZoomOut
 
-  scMarkSelection,
-  scPaste,
-  scPastePreview,
-  scNudgePreview,
-  scPasteAccept,
+  scMarkSelection
+  scPaste
+  scPastePreview
+  scNudgePreview
+  scPasteAccept
 
-  scEditNote,
-  scEraseNote,
-  scEditLabel,
-  scEraseLabel,
+  scEditNote
+  scEraseNote
+  scEditLabel
+  scEraseLabel
 
-  scShowNoteTooltip,
+  scShowNoteTooltip
 
   # Select mode
-  scSelectionDraw,
-  scSelectionErase,
-  scSelectionAll,
-  scSelectionNone,
-  scSelectionAddRect,
-  scSelectionSubRect,
-  scSelectionCopy,
-  scSelectionMove,
-  scSelectionEraseArea,
-  scSelectionFillArea,
-  scSelectionSurroundArea,
-  scSelectionSetFloorColorArea,
-  scSelectionCropArea,
+  scSelectionDraw
+  scSelectionErase
+  scSelectionAll
+  scSelectionNone
+  scSelectionAddRect
+  scSelectionSubRect
+  scSelectionCopy
+  scSelectionMove
+  scSelectionEraseArea
+  scSelectionFillArea
+  scSelectionSurroundArea
+  scSelectionSetFloorColorArea
+  scSelectionCropArea
 
   # Options
-  scToggleCellCoords,
-  scToggleCurrentNotePane,
-  scToggleNotesListPane,
-  scToggleToolsPane,
-  scToggleWalkMode,
-  scToggleWasdMode,
-  scToggleDrawTrail,
-  scToggleTitleBar,
-  scTogglePasteWraparound,
+  scToggleCellCoords
+  scToggleCurrentNotePane
+  scToggleNotesListPane
+  scToggleToolsPane
+  scToggleWalkMode
+  scToggleWasdMode
+  scToggleDrawTrail
+  scToggleTitleBar
+  scTogglePasteWraparound
 
   # Misc
-  scShowAboutDialog,
-  scOpenUserManual,
-  scToggleThemeEditor,
-  scEditPreferences,
-  scToggleQuickReference,
+  scShowAboutDialog
+  scOpenUserManual
+  scToggleThemeEditor
+  scEditPreferences
+  scToggleQuickReference
 
 # }}}
 # {{{ QuickRefItem
@@ -512,25 +512,25 @@ type
 
 
   EditMode = enum
-    emNormal,
-    emColorFloor,
-    emDrawClearFloor,
-    emDrawSpecialWall,
-    emDrawSpecialWallRepeat,
-    emDrawWall,
-    emDrawWallRepeat,
-    emEraseCell,
-    emEraseTrail,
-    emExcavateTunnel,
-    emMovePreview,
-    emNudgePreview,
-    emPastePreview,
-    emSelect,
-    emSelectDraw,
-    emSelectErase,
-    emSelectRect,
+    emNormal
+    emColorFloor
+    emDrawClearFloor
+    emDrawSpecialWall
+    emDrawSpecialWallRepeat
+    emDrawWall
+    emDrawWallRepeat
+    emEraseCell
+    emEraseTrail
+    emExcavateTunnel
+    emMovePreview
+    emNudgePreview
+    emPastePreview
+    emSelect
+    emSelectDraw
+    emSelectErase
+    emSelectRect
     emSetCellLink,
-    emSelectJumpToLinkSrc,
+    emSelectJumpToLinkSrc
 
     # Special "momentary" mode; after exiting emPanLevel, the previous edit
     # mode is restored.
@@ -541,9 +541,9 @@ type
     dlmMiddleButton
 
   DrawWallRepeatAction = enum
-    dwaNone  = (0, "none"),
-    dwaSet   = (1, "set"),
-    dwaClear = (2, "clear")
+    dwaNone  = "none"
+    dwaSet   = "set"
+    dwaClear = "clear"
 
   Theme = object
     config:                 HoconNode
@@ -588,30 +588,30 @@ type
     override:  bool
 
   Dialog = enum
-    dlgNone,
+    dlgNone
 
-    dlgAboutDialog,
-    dlgPreferencesDialog,
+    dlgAboutDialog
+    dlgPreferencesDialog
 
-    dlgSaveDiscardMapDialog,
+    dlgSaveDiscardMapDialog
 
-    dlgNewMapDialog,
-    dlgEditMapPropsDialog,
+    dlgNewMapDialog
+    dlgEditMapPropsDialog
 
-    dlgNewLevelDialog,
-    dlgEditLevelPropsDialog,
-    dlgResizeLevelDialog,
-    dlgDeleteLevelDialog,
+    dlgNewLevelDialog
+    dlgEditLevelPropsDialog
+    dlgResizeLevelDialog
+    dlgDeleteLevelDialog
 
-    dlgEditNoteDialog,
-    dlgEditLabelDialog,
+    dlgEditNoteDialog
+    dlgEditLabelDialog
 
-    dlgEditRegionPropsDialog,
+    dlgEditRegionPropsDialog
 
-    dlgSaveDiscardThemeDialog,
-    dlgCopyThemeDialog,
-    dlgRenameThemeDialog,
-    dlgOverwriteThemeDialog,
+    dlgSaveDiscardThemeDialog
+    dlgCopyThemeDialog
+    dlgRenameThemeDialog
+    dlgOverwriteThemeDialog
     dlgDeleteThemeDialog
 
 

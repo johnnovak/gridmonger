@@ -61,20 +61,20 @@ proc close(s) =
 
 type
   TokenKind = enum
-    tkLeftBrace    = (0,  "left brace ('{')"),
-    tkRightBrace   = (1,  "right brace ('}')"),
-    tkLeftBracket  = (2,  "left bracket ('[')"),
-    tkRightBracket = (3,  "right bracket (']')"),
-    tkComma        = (4,  "comma (',')"),
-    tkNewline      = (5,  "newline"),
-    # TODO tkWhitespace
-    tkColon        = (6,  "colon (':')"),
-    tkEquals       = (7,  "equals sign ('=')"),
-    tkString       = (8,  "string"),
-    tkNumber       = (9,  "number"),
-    tkTrue         = (10, "true"),
-    tkFalse        = (11, "false"),
-    tkNull         = (12, "null")
+    tkLeftBrace    = "left brace ('{')"
+    tkRightBrace   = "right brace ('}')"
+    tkLeftBracket  = "left bracket ('[')"
+    tkRightBracket = "right bracket (']')"
+    tkComma        = "comma (',')"
+    tkNewline      = "newline"
+    # TODO tkWhitespa
+    tkColon        = "colon (':')"
+    tkEquals       = "equals sign ('=')"
+    tkString       = "string"
+    tkNumber       = "number"
+    tkTrue         = "true"
+    tkFalse        = "false"
+    tkNull         = "null"
 
   Token = object
     case kind: TokenKind
@@ -322,12 +322,12 @@ type
   HoconParseError* = object of IOError
 
   HoconNodeKind* = enum
-    hnkNull   = (0, "null"),
-    hnkString = (1, "string"),
-    hnkNumber = (2, "number"),
-    hnkBool   = (3, "bool"),
-    hnkObject = (4, "object"),
-    hnkArray  = (5, "array")
+    hnkNull   = "null"
+    hnkString = "string"
+    hnkNumber = "number"
+    hnkBool   = "bool"
+    hnkObject = "object"
+    hnkArray  = "array"
 
   HoconNode* = ref HoconNodeObj
 

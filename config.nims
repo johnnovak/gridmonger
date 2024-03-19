@@ -58,8 +58,8 @@ proc createZip(zipName, srcPath: string, extraArgs = "") =
   exec fmt"zip -q -9 -r ""{zipName}"" ""{srcPath}"" {extraArgs}"
 
 type Arch = enum
-  Arch32 = (0, "32")
-  Arch64 = (1, "64")
+  Arch32 = "32"
+  Arch64 = "64"
 
 let arch = if hostCPU == "i386": Arch32 else: Arch64
 
