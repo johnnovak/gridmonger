@@ -433,11 +433,15 @@ type
   UIState = object
     shortcuts:          Table[AppShortCut, seq[KeyShortcut]]
     quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
+    status:             StatusMessage
+    notesListState:     NotesListState
 
     editMode:           EditMode
     # to restore the previous edit mode when exiting emPanLevel
     prevEditMode:       EditMode
 
+    # Navigation
+    # ----------
     cursor:             Location
     prevCursor:         Location
     cursorOrient:       CardinalDir           # used by Walk Mode
@@ -446,51 +450,55 @@ type
     walkKeysWasd:       WalkKeys
     walkKeysCursor:     WalkKeys
 
-    # used by the zooming logic
-    prevCursorViewX:    float
-    prevCursorViewY:    float
+    panLevelMode:       PanLevelMode
 
+    # Tools
+    # -----
+    currSpecialWall:         range[0..SpecialWalls.high]
+    currFloorColor:          range[0..LevelTheme.floorBackgroundColor.high]
+
+    drawWallRepeatAction:    DrawWallRepeatAction
+    drawWallRepeatWall:      Wall
+    drawWallRepeatDirection: CardinalDir
+
+    # Selections
+    # ----------
     selection:          Option[Selection]
     selRect:            Option[SelectionRect]
     copyBuf:            Option[SelectionBuffer]
     nudgeBuf:           Option[SelectionBuffer]
     pasteUndoLocation:  Location
 
-    status:             StatusMessage
+    # Mouse handling
+    # --------------
+    mouseCanStartExcavate:  bool
+    mouseDragStartX:        float
+    mouseDragStartY:        float
 
-    currSpecialWall:    range[0..SpecialWalls.high]
-    currFloorColor:     range[0..LevelTheme.floorBackgroundColor.high]
+    # Cell linking
+    # ------------
+    linkSrcLocation:        Location
+    jumpToDestLocation:     Location
+    jumpToSrcLocations:     seq[Location]
+    jumpToSrcLocationIdx:   Natural
+    lastJumpToSrcLocation:  Location
+    wasDrawingTrail:        bool
 
-    drawWallRepeatAction:    DrawWallRepeatAction
-    drawWallRepeatWall:      Wall
-    drawWallRepeatDirection: CardinalDir
+    # Drawing
+    # -------
+    drawLevelParams:        DrawLevelParams
+    toolbarDrawParams:      DrawLevelParams
 
-    mouseCanStartExcavateAction: bool
+    # used by the zooming logic
+    prevCursorViewX:        float
+    prevCursorViewY:        float
 
-    mouseDragStartX:    float
-    mouseDragStartY:    float
+    levelDrawAreaWidth:     float
+    levelDrawAreaHeight:    float
 
-    panLevelMode:       PanLevelMode
+    backgroundImage:        Option[Paint]
 
     manualNoteTooltipState: ManualNoteTooltipState
-
-    notesListLastHotId: ItemId
-
-    linkSrcLocation:    Location
-
-    jumpToDestLocation:    Location
-    jumpToSrcLocations:    seq[Location]
-    jumpToSrcLocationIdx:  Natural
-    lastJumpToSrcLocation: Location
-    wasDrawingTrail:       bool
-
-    drawLevelParams:    DrawLevelParams
-    toolbarDrawParams:  DrawLevelParams
-
-    levelDrawAreaWidth:  float
-    levelDrawAreaHeight: float
-
-    backgroundImage:    Option[Paint]
 
 
   ManualNoteTooltipState = object
@@ -498,6 +506,25 @@ type
     location: Location
     mx:       float
     my:       float
+
+  NotesListState = object
+    noteFilterType:   seq[NoteFilterType]
+    noteFilterOrder:  NoteFilterOrder
+    linkCursor:       bool
+
+    lastHotId:        ItemId
+
+  NoteFilterType = enum
+    nftNone   = "None"
+    nftNumber = "Number"
+    nftId     = "ID"
+    nftIcon   = "Icon"
+
+  NoteFilterOrder = enum
+    nfoLocation     = "Location"
+    nfoText         = "Text"
+    nfoTypeLocation = "Type, Location"
+    nfoTypeText     = "Type, Text"
 
   StatusMessage = object
     icon:           string
@@ -2856,7 +2883,7 @@ proc loadMap(filename: string; a): bool =
         currSpecialWall = s.currSpecialWall
 
       a.ui.drawLevelParams.setZoomLevel(a.theme.levelTheme, s.zoomLevel)
-      a.ui.mouseCanStartExcavateAction = true
+      a.ui.mouseCanStartExcavate = true
 
     else:
       resetCursorAndViewStart(a)
@@ -4140,7 +4167,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    commonLevelFields(dimensionsDisabled = false)
+    commonLevelFields(dimensionsDisabled=false)
 
   elif dlg.activeTab == 1:  # Coordinates
     group:
@@ -4315,7 +4342,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
   koi.initAutoLayout(lp)
 
   if dlg.activeTab == 0:  # General
-    commonLevelFields(dimensionsDisabled = true)
+    commonLevelFields(dimensionsDisabled=true)
 
   elif dlg.activeTab == 1:  # Coordinates
     koi.label("Override map settings", style=a.theme.labelStyle)
@@ -6013,7 +6040,7 @@ proc handleLevelMouseEvents(a) =
     case ui.editMode
     of emNormal:
       if koi.mbLeftDown():
-        if ui.mouseCanStartExcavateAction:
+        if ui.mouseCanStartExcavate:
           if koi.shiftDown():
             if koi.ctrlDown():
               enterPanLevelMode(dlmCtrlLeftButton, a)
@@ -6023,10 +6050,10 @@ proc handleLevelMouseEvents(a) =
             ui.editMode = emExcavateTunnel
             startExcavateTunnelAction(a)
       else:
-        ui.mouseCanStartExcavateAction = true
+        ui.mouseCanStartExcavate = true
 
       if koi.mbRightDown():
-        enterDrawWallMode(specialWall = false, a)
+        enterDrawWallMode(specialWall=false, a)
 
       elif koi.mbMiddleDown():
         if koi.shiftDown():
@@ -6044,7 +6071,7 @@ proc handleLevelMouseEvents(a) =
         clearStatusMessage(a)
       else:
         if koi.mbLeftDown():
-          enterDrawWallMode(specialWall = true, a)
+          enterDrawWallMode(specialWall=true, a)
 
     of emDrawWallRepeat:
       if not koi.mbRightDown():
@@ -6054,16 +6081,16 @@ proc handleLevelMouseEvents(a) =
     of emDrawSpecialWall:
       if not koi.mbRightDown():
         ui.editMode = emNormal
-        ui.mouseCanStartExcavateAction = false
+        ui.mouseCanStartExcavate=false
         clearStatusMessage(a)
       else:
         if not koi.mbLeftDown():
-          enterDrawWallMode(specialWall = false, a)
+          enterDrawWallMode(specialWall=false, a)
 
     of emDrawSpecialWallRepeat:
       if not koi.mbRightDown():
         ui.editMode = emNormal
-        ui.mouseCanStartExcavateAction = false
+        ui.mouseCanStartExcavate = false
         clearStatusMessage(a)
 
     of emEraseCell:
@@ -6442,10 +6469,10 @@ proc handleGlobalKeyEvents(a) =
                                 ui.currFloorColor, um, groupWithPrev=false)
 
       elif not opts.wasdMode and ke.isShortcutDown(scDrawWall, a):
-        enterDrawWallMode(specialWall = false, a)
+        enterDrawWallMode(specialWall=false, a)
 
       elif ke.isShortcutDown(scDrawSpecialWall, a):
-        enterDrawWallMode(specialWall = true, a)
+        enterDrawWallMode(specialWall=true, a)
 
 
       elif ke.isShortcutDown(scCycleFloorGroup1Forward, a):
@@ -7792,11 +7819,9 @@ proc renderToolsPane(x, y, w, h: float; a) =
   )
 
 # }}}
-# {{{ renderCurrentNotePane()
-
-# {{{ drawIndexedNote()
-proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
-                     shape: NoteBackgroundShape; index: Natural; a) =
+# {{{ renderIndexedNote()
+proc renderIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
+                       shape: NoteBackgroundShape; index: Natural; a) =
   alias(vg, a.vg)
 
   vg.fillColor(bgColor)
@@ -7822,11 +7847,46 @@ proc drawIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
   discard vg.text(x + size*0.51, y + size*0.54, $index)
 
 # }}}
-
-proc renderCurrentNotePane(x, y, w, h: float; a) =
+# {{{ renderNoteMarker()
+proc renderNoteMarker(x, y, w, h: float, note: Annotation, textColor: Color,
+                      indexedNoteSize: float = 36.0; a) =
   alias(vg, a.vg)
 
   let s = a.theme.notesPaneTheme
+
+  vg.save()
+
+  case note.kind
+  of akIndexed:
+    renderIndexedNote(x, y-2, size=indexedNoteSize,
+                      bgColor=s.indexBackgroundColor[note.indexColor],
+                      fgColor=s.indexColor,
+                      a.theme.levelTheme.notebackgroundShape,
+                      note.index, a)
+
+  of akCustomId:
+    vg.fillColor(textColor)
+    vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
+    discard vg.text(x+18, y+8, note.customId)
+
+  of akIcon:
+    vg.fillColor(textColor)
+    vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+    discard vg.text(x+20, y+7, NoteIcons[note.icon])
+
+  of akComment:
+    vg.fillColor(textColor)
+    vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
+    discard vg.text(x+20, y+8, IconComment)
+
+  of akLabel: discard
+
+  vg.restore()
+
+# }}}
+# {{{ renderCurrentNotePane()
+proc renderCurrentNotePane(x, y, w, h: float; a) =
+  alias(vg, a.vg)
 
   let
     l = currLevel(a)
@@ -7837,45 +7897,19 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
     let note = note.get
     if note.text == "" or note.kind == akLabel: return
 
-    vg.save()
-
-    case note.kind
-    of akIndexed:
-      drawIndexedNote(x, y-2, size=36,
-                      bgColor=s.indexBackgroundColor[note.indexColor],
-                      fgColor=s.indexColor,
-                      a.theme.levelTheme.notebackgroundShape,
-                      note.index, a)
-
-    of akCustomId:
-      vg.fillColor(s.textColor)
-      vg.setFont(18, "sans-black", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+18, y+8, note.customId)
-
-    of akIcon:
-      vg.fillColor(s.textColor)
-      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y+7, NoteIcons[note.icon])
-
-    of akComment:
-      vg.fillColor(s.textColor)
-      vg.setFont(19, "sans-bold", horizAlign=haCenter, vertAlign=vaTop)
-      discard vg.text(x+20, y+8, IconComment)
-
-    of akLabel: discard
-
+    renderNoteMarker(x, y, w, h, note,
+                     textColor=a.theme.notesPaneTheme.textColor, a=a)
 
     var text = note.text
-    const textIndent = 40
-    koi.textArea(x+textIndent, y-1, w-textIndent, h, text, disabled=true,
+    const TextIndent = 44
+    koi.textArea(x+TextIndent, y-1, w-TextIndent, h, text, disabled=true,
                  style=a.theme.noteTextAreaStyle)
-
-    vg.restore()
 
 # }}}
 # {{{ renderNotesListPane()
 proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
+  alias(ui, a.ui)
 
   let ws = a.theme.windowTheme
   let s = a.theme.notesPaneTheme
@@ -7889,17 +7923,45 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   vg.fill()
 
   const
-    TopPad   = 13
-    HorizPad = 13
+    TopPad     = 100
+    LeftPad    = 16
+    RightPad   = 16
+    TextIndent = 44
+    NotesHorizOffs = -8
+
+  var
+    wx = LeftPad
+    wy = 45
+    wh = 24
+
+#  koi.label("Origin", style=a.theme.labelStyle)
+  koi.multiRadioButtons(
+    wx, wy, w=w-LeftPad-RightPad, wh,
+    ui.notesListState.noteFilterType,
+    style = a.theme.radioButtonStyle
+  )
+
+  wy += 32
+  koi.label(wx+3, wy, 1000, wh, "Order by", style=a.theme.labelStyle)
+
+  # Text
+  # Location
+  # Type, Location
+  # Type, Text
+  #
+  #
+  #
+  #
+
 
   koi.beginScrollView(x, y+TopPad, w, h-TopPad)
 
   var lp = DefaultAutoLayoutParams
   lp.itemsPerRow = 1
-  lp.rowWidth    = w - HorizPad*2
+  lp.rowWidth    = w
   lp.rowPad      = 0
-  lp.labelWidth  = w - HorizPad*2
-  lp.leftPad     = HorizPad
+  lp.labelWidth  = w
+  lp.leftPad     = 0
 
   initAutoLayout(lp)
 
@@ -7912,23 +7974,34 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     id: ItemId, x, y, w, h: float, label: string,
     state: WidgetState, style: ButtonStyle
   ) =
-    alias(s, style)
 
-#    vg.beginPath()
-#    vg.strokeWidth(1)
-#    vg.strokeColor(red())
-#    vg.rect(x, y, w, h)
-#    vg.stroke()
+    if state in {wsHover, wsDown}:
+      vg.beginPath()
+      vg.fillColor(black(0.2))
+      vg.rect(x, y, w, h)
+      vg.fill()
 
-    let fillColor =
+    let textColor =
       case state
-      of wsDisabled, wsNormal, wsActive, wsActiveHover: s.fillColor
-      of wsHover, wsDown:                               s.fillColorHover
+      of wsDisabled, wsNormal, wsActive, wsActiveHover: s.textColor
+      of wsHover, wsDown, wsActiveDown:                 white()
+
+    let (r,c, note) = noteTable[id]
+
+    let mx = x + LeftPad + NotesHorizOffs
+
+    if note.kind == akIndexed:
+      renderNoteMarker(mx+3, y+2, w, h, note, textColor,
+                       indexedNoteSize=32, a)
+    else:
+      renderNoteMarker(mx, y, w, h, note, textColor, a=a)
 
     vg.setFont(14, "sans-bold")
-    vg.fillColor(fillColor)
+    vg.fillColor(textColor)
     vg.textLineHeight(1.4)
-    vg.textBox(x, y+10, w, label)
+    vg.textBox(x + LeftPad + TextIndent + NotesHorizOffs, y+17,
+               w - TextIndent - LeftPad - RightPad - NotesHorizOffs,
+               note.text)
 
 
   var foundHotItem = false
@@ -7943,24 +8016,36 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
       vg.setFont(14, "sans-bold")
       vg.textLineHeight(1.4)
-      let bounds = vg.textBoxBounds(HorizPad, y, w - HorizPad*2, note.text)
+      let bounds = vg.textBoxBounds(
+        LeftPad + TextIndent + NotesHorizOffs,
+        y,
+        w - TextIndent - LeftPad - RightPad - NotesHorizOffs,
+        note.text
+      )
+
       let noteHeight = bounds.y2 - bounds.y1
 
       koi.nextRowHeight(noteHeight + 18)
       koi.nextItemHeight(noteHeight + 18)
 
+      var moveCursorToNote = false
+
       if koi.button(note.text, activateOnButtonDown=true,
                     drawProc=noteButtonDrawProc.some):
-        moveCursorTo(Location(level: a.ui.cursor.level, row: r, col: c), a)
+        moveCursorToNote = true
 
       if isHot(id):
         foundHotItem = true
-        if a.ui.notesListLastHotId != id:
-          a.ui.notesListLastHotId = id
-          echo note.text
+        if ui.notesListState.lastHotId != id:
+          ui.notesListState.lastHotId = id
+          if koi.shiftDown():
+            moveCursorToNote = true
+
+      if moveCursorToNote:
+        moveCursorTo(Location(level: ui.cursor.level, row: r, col: c), a)
 
   if not foundHotItem:
-    a.ui.notesListLastHotId = -1
+    ui.notesListState.lastHotId = -1
 
   koi.endScrollView()
 
