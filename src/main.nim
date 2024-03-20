@@ -1100,17 +1100,17 @@ type MoveKeys = object
 
 const
   MoveKeysCursor = MoveKeys(
-    left  : {keyLeft,     keyH, keyKp4},
-    right : {keyRight,    keyL, keyKp6},
-    up    : {keyUp,       keyK, keyKp8},
-    down  : {Key.keyDown, keyJ, keyKp2, keyKp5}
+    left:  {keyLeft,     keyH, keyKp4},
+    right: {keyRight,    keyL, keyKp6},
+    up:    {keyUp,       keyK, keyKp8},
+    down:  {Key.keyDown, keyJ, keyKp2, keyKp5}
   )
 
   MoveKeysWasd = MoveKeys(
-    left  : MoveKeysCursor.left  + {keyA},
-    right : MoveKeysCursor.right + {keyD},
-    up    : MoveKeysCursor.up    + {keyW},
-    down  : MoveKeysCursor.down  + {Key.keyS}
+    left:  MoveKeysCursor.left  + {keyA},
+    right: MoveKeysCursor.right + {keyD},
+    up:    MoveKeysCursor.up    + {keyW},
+    down:  MoveKeysCursor.down  + {Key.keyS}
   )
 
 type DiagonalMoveKeys = object
@@ -1118,61 +1118,61 @@ type DiagonalMoveKeys = object
 
 const
   DiagonalMoveKeysCursor = DiagonalMoveKeys(
-    upLeft    : {keyY, keyKp7},
-    upRight   : {keyU, keyKp9},
-    downLeft  : {keyB, keyKp1},
-    downRight : {keyN, keyKp3}
+    upLeft:    {keyY, keyKp7},
+    upRight:   {keyU, keyKp9},
+    downLeft:  {keyB, keyKp1},
+    downRight: {keyN, keyKp3}
   )
 
 func `+`(a: WalkKeys, b: WalkKeys): WalkKeys =
   result = WalkKeys(
-    forward     : a.forward     + b.forward,
-    backward    : a.backward    + b.backward,
-    strafeLeft  : a.strafeLeft  + b.strafeLeft,
-    strafeRight : a.strafeRight + b.strafeRight,
-    turnLeft    : a.turnLeft    + b.turnLeft,
-    turnRight   : a.turnRight   + b.turnRight
+    forward:     a.forward     + b.forward,
+    backward:    a.backward    + b.backward,
+    strafeLeft:  a.strafeLeft  + b.strafeLeft,
+    strafeRight: a.strafeRight + b.strafeRight,
+    turnLeft:    a.turnLeft    + b.turnLeft,
+    turnRight:   a.turnRight   + b.turnRight
   )
 
 const
   WalkKeysCursorStrafe = WalkKeys(
-    forward     : {keyUp},
-    backward    : {Key.keyDown},
-    strafeLeft  : {keyLeft},
-    strafeRight : {keyRight},
+    forward:     {keyUp},
+    backward:    {Key.keyDown},
+    strafeLeft:  {keyLeft},
+    strafeRight: {keyRight},
 
     # Alt+Left/Right for turning is handled as a special case
-    turnLeft    : {},
-    turnRight   : {}
+    turnLeft:    {},
+    turnRight:   {}
   )
 
   WalkKeysCursorTurn = WalkKeys(
-    forward     : {keyUp},
-    backward    : {Key.keyDown},
-    turnLeft    : {keyLeft},
-    turnRight   : {keyRight},
+    forward:     {keyUp},
+    backward:    {Key.keyDown},
+    turnLeft:    {keyLeft},
+    turnRight:   {keyRight},
 
     # Alt+Left/Right for strafing is handled as a special case
-    strafeLeft  : {},
-    strafeRight : {}
+    strafeLeft:  {},
+    strafeRight: {}
   )
 
   WalkKeysKeypad = WalkKeys(
-    forward     : {keyKp8},
-    backward    : {keyKp2, keyKp5},
-    strafeLeft  : {keyKp4},
-    strafeRight : {keyKp6},
-    turnLeft    : {keyKp7},
-    turnRight   : {keyKp9}
+    forward:     {keyKp8},
+    backward:    {keyKp2, keyKp5},
+    strafeLeft:  {keyKp4},
+    strafeRight: {keyKp6},
+    turnLeft:    {keyKp7},
+    turnRight:   {keyKp9}
   )
 
   WalkKeysWasd = WalkKeys(
-    forward     : {keyW},
-    backward    : {Key.keyS},
-    strafeLeft  : {keyA},
-    strafeRight : {keyD},
-    turnLeft    : {keyQ},
-    turnRight   : {keyE}
+    forward:     {keyW},
+    backward:    {Key.keyS},
+    strafeLeft:  {keyA},
+    strafeRight: {keyD},
+    turnLeft:    {keyQ},
+    turnRight:   {keyE}
   )
 
 func mkWalkKeysCursor(mode: WalkCursorMode): WalkKeys =
@@ -1227,7 +1227,7 @@ let DefaultAppShortcuts = {
 
   # Levels
   scNewLevel:              @[mkKeyShortcut(keyN,          {mkCtrl})],
-  scDeleteLevel   :        @[mkKeyShortcut(keyD,          {mkCtrl})],
+  scDeleteLevel:           @[mkKeyShortcut(keyD,          {mkCtrl})],
   scEditLevelProps:        @[mkKeyShortcut(keyP,          {mkCtrl})],
   scResizeLevel:           @[mkKeyShortcut(keyE,          {mkCtrl})],
 
@@ -3012,16 +3012,16 @@ const
   ConfirmDlgHeight = 160.0
 
   DialogLayoutParams = AutoLayoutParams(
-    itemsPerRow       : 2,
-    rowWidth          : 370.0,
-    labelWidth        : 160.0,
-    sectionPad        : 0.0,
-    leftPad           : 0.0,
-    rightPad          : 0.0,
-    rowPad            : 8.0,
-    rowGroupPad       : 20.0,
-    defaultRowHeight  : 24.0,
-    defaultItemHeight : 24.0
+    itemsPerRow:       2,
+    rowWidth:          370.0,
+    labelWidth:        160.0,
+    sectionPad:        0.0,
+    leftPad:           0.0,
+    rightPad:          0.0,
+    rowPad:            8.0,
+    rowGroupPad:       20.0,
+    defaultRowHeight:  24.0,
+    defaultItemHeight: 24.0
   )
 
 # }}}
@@ -4035,11 +4035,11 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
     if validationError != "": return
 
     let coordOpts = CoordinateOptions(
-      origin      : CoordinateOrigin(dlg.origin),
-      rowStyle    : CoordinateStyle(dlg.rowStyle),
-      columnStyle : CoordinateStyle(dlg.columnStyle),
-      rowStart    : parseInt(dlg.rowStart),
-      columnStart : parseInt(dlg.columnStart)
+      origin:      CoordinateOrigin(dlg.origin),
+      rowStyle:    CoordinateStyle(dlg.rowStyle),
+      columnStyle: CoordinateStyle(dlg.columnStyle),
+      rowStart:    parseInt(dlg.rowStart),
+      columnStart: parseInt(dlg.columnStart)
     )
 
     actions.setMapProperties(a.doc.map, a.ui.cursor,
@@ -4217,18 +4217,18 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
       dlg.overrideCoordOpts,
 
       coordOpts = CoordinateOptions(
-        origin      : CoordinateOrigin(dlg.origin),
-        rowStyle    : CoordinateStyle(dlg.rowStyle),
-        columnStyle : CoordinateStyle(dlg.columnStyle),
-        rowStart    : parseInt(dlg.rowStart),
-        columnStart : parseInt(dlg.columnStart)
+        origin:      CoordinateOrigin(dlg.origin),
+        rowStyle:    CoordinateStyle(dlg.rowStyle),
+        columnStyle: CoordinateStyle(dlg.columnStyle),
+        rowStart:    parseInt(dlg.rowStart),
+        columnStart: parseInt(dlg.columnStart)
       ),
 
       regionOpts = RegionOptions(
-        enabled         : dlg.enableRegions,
-        colsPerRegion   : parseInt(dlg.colsPerRegion),
-        rowsPerRegion   : parseInt(dlg.rowsPerRegion),
-        perRegionCoords : dlg.perRegionCoords
+        enabled:         dlg.enableRegions,
+        colsPerRegion:   parseInt(dlg.colsPerRegion),
+        rowsPerRegion:   parseInt(dlg.rowsPerRegion),
+        perRegionCoords: dlg.perRegionCoords
       ),
 
       dlg.notes,
@@ -4385,18 +4385,18 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
     let elevation = parseInt(dlg.elevation)
 
     let coordOpts = CoordinateOptions(
-      origin      : CoordinateOrigin(dlg.origin),
-      rowStyle    : CoordinateStyle(dlg.rowStyle),
-      columnStyle : CoordinateStyle(dlg.columnStyle),
-      rowStart    : parseInt(dlg.rowStart),
-      columnStart : parseInt(dlg.columnStart)
+      origin:      CoordinateOrigin(dlg.origin),
+      rowStyle:    CoordinateStyle(dlg.rowStyle),
+      columnStyle: CoordinateStyle(dlg.columnStyle),
+      rowStart:    parseInt(dlg.rowStart),
+      columnStart: parseInt(dlg.columnStart)
     )
 
     let regionOpts = RegionOptions(
-      enabled         : dlg.enableRegions,
-      rowsPerRegion   : parseInt(dlg.rowsPerRegion),
-      colsPerRegion   : parseInt(dlg.colsPerRegion),
-      perRegionCoords : dlg.perRegionCoords
+      enabled:         dlg.enableRegions,
+      rowsPerRegion:   parseInt(dlg.rowsPerRegion),
+      colsPerRegion:   parseInt(dlg.colsPerRegion),
+      perRegionCoords: dlg.perRegionCoords
     )
 
     actions.setLevelProperties(a.doc.map, a.ui.cursor,
