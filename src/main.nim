@@ -1740,7 +1740,7 @@ proc toolsPaneHeight(mainPaneHeight: float): float =
 # }}}
 
 # {{{ calculateLevelDrawArea()
-proc calculateLevelDrawArea(a): (float, float) =
+proc calculateLevelDrawArea(a): tuple[w, h: float] =
   alias(dp, a.ui.drawLevelParams)
   alias(ui, a.ui)
 
@@ -3355,7 +3355,7 @@ proc calcDialogX(dlgWidth: float; a): float =
 # }}}
 # {{{ dialogButtonsStartPos()
 func dialogButtonsStartPos(dlgWidth, dlgHeight: float,
-                           numButtons: Natural): (float, float) =
+                           numButtons: Natural): tuple[x, y: float] =
   const BorderPad = 15.0
 
   let x = dlgWidth - numButtons * DlgButtonWidth - BorderPad -

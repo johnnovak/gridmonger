@@ -577,7 +577,8 @@ proc readCoordinateOptions_v1_v2(rr; parentChunk: string): CoordinateOptions =
 
 # }}}
 # {{{ readLevelRegions_v1_v2*()
-proc readLevelRegions_v1_v2(rr): (RegionOptions, Regions) =
+proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
+                                       regions: Regions] =
   debug(fmt"Reading level regions...")
   pushDebugIndent()
 
@@ -844,7 +845,8 @@ proc readMap_v1_v2(rr): Map =
 # }}}
 # # {{{ readMapFile*()
 # TODO return display related info and info chunk data as well
-proc readMapFile*(filename: string): (Map, Option[AppState]) =
+proc readMapFile*(filename: string): tuple[map: Map,
+                                           appState: Option[AppState]] =
   initDebugIndent()
 
   var rr: RiffReader

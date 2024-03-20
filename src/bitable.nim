@@ -33,7 +33,7 @@ iterator values*[K, V](t: BiTable[K, V]): V =
   for v in t.valToKey.keys:
     yield v
 
-iterator pairs*[K, V](t: BiTable[K, V]): (K, V) =
+iterator pairs*[K, V](t: BiTable[K, V]): tuple[key: K, val: V] =
   for k, v in t.keyToVal.pairs:
     yield (k, v)
 

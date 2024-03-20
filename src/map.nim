@@ -340,7 +340,7 @@ proc getRegionRect*(m; level: Natural, rc: RegionCoords): Rect[Natural] =
 # }}}
 # {{{ getRegionCenterLocation*()
 proc getRegionCenterLocation*(m; level: Natural,
-                              rc: RegionCoords): (Natural, Natural) =
+                              rc: RegionCoords): tuple[row, col: Natural] =
   let
     l = m.levels[level]
     r = m.getRegionRect(level, rc)

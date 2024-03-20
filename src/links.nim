@@ -35,7 +35,7 @@ iterator sources*(l): Location =
 # }}}
 
 # {{{ pairs*()
-iterator pairs*(l): (Location, Location) =
+iterator pairs*(l): tuple[src, dest: Location] =
   for src, dest in l.srcToDest:
     yield (src, dest)
 

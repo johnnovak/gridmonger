@@ -35,7 +35,7 @@ proc getRegion*(r; rc: RegionCoords): Option[Region] =
 
 # }}}
 # {{{ allRegions*()
-iterator allRegions*(r): (RegionCoords, Region) =
+iterator allRegions*(r): tuple[regionCoords: RegionCoords, region: Region] =
   for rc, r in r:
     yield (rc, r)
 

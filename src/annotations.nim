@@ -26,7 +26,7 @@ template coordsToKey(a; r,c: Natural): Natural =
 
 # }}}
 # {{{ keyToCoords()
-template keyToCoords(a; k: Natural): (Natural, Natural) =
+template keyToCoords(a; k: Natural): tuple[row, col: Natural] =
   let
     w = a.cols
     r = (k div w).Natural
@@ -77,7 +77,7 @@ proc numAnnotations*(a): Natural =
 
 # }}}
 # {{{ allAnnotations*()
-iterator allAnnotations*(a): (Natural, Natural, Annotation) =
+iterator allAnnotations*(a): tuple[row, col: Natural, annotation: Annotation] =
   for k, annot in a.annotations:
     let (r,c) = a.keyToCoords(k)
     yield (r,c, annot)
@@ -109,7 +109,7 @@ proc getNote*(a; r,c: Natural): Option[Annotation] =
 
 # }}}
 # {{{ allNotes*()
-iterator allNotes*(a): (Natural, Natural, Annotation) =
+iterator allNotes*(a): tuple[row, col: Natural, annotation: Annotation] =
   for k, annot in a.annotations:
     if annot.isNote:
       let (r,c) = a.keyToCoords(k)
@@ -145,7 +145,7 @@ proc getLabel*(a; r,c: Natural): Option[Annotation] =
 
 # }}}
 # {{{ allLabels*()
-iterator allLabels*(a): (Natural, Natural, Annotation) =
+iterator allLabels*(a): tuple[row, col: Natural, annotation: Annotation] =
   for k, annot in a.annotations:
     if annot.isLabel:
       let (r,c) = a.keyToCoords(k)

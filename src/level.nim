@@ -118,7 +118,8 @@ proc numAnnotations*(l): Natural =
 
 # }}}
 # {{{ allAnnotations*()
-template allAnnotations*(a): (Natural, Natural, Annotation) =
+template allAnnotations*(a): tuple[row, col: Natural,
+                                   annotation: Annotation] =
   l.annotations.allAnnotations()
 
 # }}}
@@ -134,7 +135,7 @@ proc getNote*(l; r,c: Natural): Option[Annotation] =
 
 # }}}
 # {{{ allNotes*()
-template allNotes*(l): (Natural, Natural, Annotation) =
+template allNotes*(l): tuple[row, col: Natural, annotation: Annotation] =
   l.annotations.allNotes()
 
 # }}}
@@ -155,7 +156,7 @@ proc getLabel*(l; r,c: Natural): Option[Annotation] =
 
 # }}}
 # {{{ allLabels*()
-template allLabels*(l): (Natural, Natural, Annotation) =
+template allLabels*(l): tuple[row, col: Natural, annotation: Annotation] =
   l.annotations.allLabels()
 
 # }}}
@@ -182,7 +183,7 @@ proc getRegion*(l; rc: RegionCoords): Option[Region] =
 
 # }}}
 # {{{ allRegions*()
-template allRegions*(l): (RegionCoords, Region) =
+template allRegions*(l): tuple[regionCoords: RegionCoords, region: Region] =
   l.regions.allRegions()
 
 # }}}
@@ -197,7 +198,8 @@ proc regionNames*(l): seq[string] =
 
 # }}}
 # {{{ findFirstRegionByName*()
-proc findFirstRegionByName*(l; name: string): Option[(RegionCoords, Region)] =
+proc findFirstRegionByName*(l; name: string): Option[tuple[regionCoords: RegionCoords,
+                                                           region: Region]] =
   l.regions.findFirstRegionByName(name)
 
 # }}}
