@@ -43,6 +43,7 @@ const
   ShadowWidthFactorLimits*  = floatLimits(min=0.0, max=1.0)
 
   AlphaLimits* = floatLimits(min=0.0, max=1.0)
+
 # }}}
 
 # {{{ Helpers
@@ -54,6 +55,7 @@ proc limit(config: HoconNode, key: string, limits: FieldLimits) =
 proc getColorOrDefaultArray(cfg: HoconNode, key: string, colors: var openArray[Color]) =
   for i,c in colors.mpairs:
     c = cfg.getColorOrDefault(fmt"{key}.{i}")
+
 # }}}
 
 # {{{ toLevelTheme*()
@@ -172,9 +174,8 @@ proc toNotesPaneTheme*(cfg: HoconNode): NotesPaneTheme =
   alias(s, result)
   s = new NotesPaneTheme
 
-  s.textColor      = cfg.getColorOrDefault("text")
-  s.scrollBarColor = cfg.getColorOrDefault("scroll-bar")
-  s.indexColor     = cfg.getColorOrDefault("index")
+  s.textColor  = cfg.getColorOrDefault("text")
+  s.indexColor = cfg.getColorOrDefault("index")
 
   cfg.getColorOrDefaultArray("index-background", s.indexBackgroundColor)
 

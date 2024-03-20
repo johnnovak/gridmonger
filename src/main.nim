@@ -573,40 +573,42 @@ type
     dwaClear = "clear"
 
   Theme = object
-    config:                 HoconNode
-    prevConfig:             HoconNode
+    config:                   HoconNode
+    prevConfig:               HoconNode
 
-    themeNames:             seq[ThemeName]
-    currThemeIndex:         Natural
-    nextThemeIndex:         Option[Natural]
-    hideThemeLoadedMessage: bool
-    themeReloaded:          bool
-    updateTheme:            bool
-    loadBackgroundImage:    bool
+    themeNames:               seq[ThemeName]
+    currThemeIndex:           Natural
+    nextThemeIndex:           Option[Natural]
+    hideThemeLoadedMessage:   bool
+    themeReloaded:            bool
+    updateTheme:              bool
+    loadBackgroundImage:      bool
 
-    buttonStyle:            ButtonStyle
-    checkBoxStyle:          CheckboxStyle
-    dialogStyle:            DialogStyle
-    labelStyle:             LabelStyle
-    radioButtonStyle:       RadioButtonsStyle
-    textAreaStyle:          TextAreaStyle
-    textFieldStyle:         TextFieldStyle
+    labelStyle:               LabelStyle
+    buttonStyle:              ButtonStyle
+    radioButtonStyle:         RadioButtonsStyle
+    dropDownStyle:            DropDownStyle
+    checkBoxStyle:            CheckboxStyle
+    textFieldStyle:           TextFieldStyle
+    textAreaStyle:            TextAreaStyle
+    dialogStyle:              DialogStyle
 
-    aboutDialogStyle:       DialogStyle
-    aboutButtonStyle:       ButtonStyle
+    aboutDialogStyle:         DialogStyle
+    aboutButtonStyle:         ButtonStyle
 
-    iconRadioButtonsStyle:  RadioButtonsStyle
-    warningLabelStyle:      LabelStyle
-    errorLabelStyle:        LabelStyle
+    iconRadioButtonsStyle:    RadioButtonsStyle
+    warningLabelStyle:        LabelStyle
+    errorLabelStyle:          LabelStyle
 
-    levelDropDownStyle:     DropDownStyle
-    noteTextAreaStyle:      TextAreaStyle
+    levelDropDownStyle:       DropDownStyle
+    noteTextAreaStyle:        TextAreaStyle
+    notesListScrollViewStyle: ScrollViewStyle
 
-    windowTheme:            WindowTheme
-    statusBarTheme:         StatusBarTheme
-    notesPaneTheme:         NotesPaneTheme
-    toolbarPaneTheme:       ToolbarPaneTheme
-    levelTheme:             LevelTheme
+    windowTheme:              WindowTheme
+    statusBarTheme:           StatusBarTheme
+    notesPaneTheme:           NotesPaneTheme
+    toolbarPaneTheme:         ToolbarPaneTheme
+    levelTheme:               LevelTheme
 
 
   ThemeName = object
@@ -824,6 +826,7 @@ type
 
     sectionUserInterface:    bool
     sectionWidget:           bool
+    sectionDropDown:         bool
     sectionTextField:        bool
     sectionDialog:           bool
     sectionTitleBar:         bool
@@ -2462,6 +2465,16 @@ proc updateWidgetStyles(a) =
 
   let w = cfg.getObjectOrEmpty("ui.widget")
 
+  var labelStyle = koi.getDefaultLabelStyle()
+  with labelStyle:
+    color            = w.getColorOrDefault("foreground.normal")
+    colorHover       = color
+    colorDown        = w.getColorOrDefault("foreground.active")
+    colorActive      = colorDown
+    colorActiveHover = colorDown
+    colorDisabled    = w.getColorOrDefault("foreground.disabled")
+
+  # Button
   with a.theme.buttonStyle:
     cornerRadius      = w.getFloatOrDefault("corner-radius")
     fillColor         = w.getColorOrDefault("background.normal")
@@ -2469,12 +2482,8 @@ proc updateWidgetStyles(a) =
     fillColorDown     = w.getColorOrDefault("background.active")
     fillColorDisabled = w.getColorOrDefault("background.disabled")
 
-    label.color            = w.getColorOrDefault("foreground.normal")
-    label.colorHover       = label.color
-    label.colorDown        = w.getColorOrDefault("foreground.active")
-    label.colorActive      = label.colorDown
-    label.colorActiveHover = label.colorDown
-    label.colorDisabled    = w.getColorOrDefault("foreground.disabled")
+    label       = labelStyle.deepCopy()
+    label.align = haCenter
 
   # Radio button
   a.theme.radioButtonStyle = koi.getDefaultRadioButtonsStyle()
@@ -2487,11 +2496,8 @@ proc updateWidgetStyles(a) =
     buttonFillColorActive      = buttonFillColorDown
     buttonFillColorActiveHover = buttonFillColorDown
 
-    label.color            = w.getColorOrDefault("foreground.normal")
-    label.colorHover       = label.color
-    label.colorDown        = w.getColorOrDefault("foreground.active")
-    label.colorActive      = label.colorDown
-    label.colorActiveHover = label.colorDown
+    label       = labelStyle.deepCopy()
+    label.align = haCenter
 
   # Icon radio button
   a.theme.iconRadioButtonsStyle = koi.getDefaultRadioButtonsStyle()
@@ -2505,14 +2511,39 @@ proc updateWidgetStyles(a) =
     buttonFillColorActive      = buttonFillColorDown
     buttonFillColorActiveHover = buttonFillColorDown
 
-    label.fontSize         = 18.0
-    label.color            = w.getColorOrDefault("foreground.normal")
-    label.colorHover       = label.color
-    label.colorDown        = w.getColorOrDefault("foreground.active")
-    label.colorActive      = label.colorDown
-    label.colorActiveHover = label.colorDown
-    label.padHoriz         = 0
-    label.padHoriz         = 0
+    label          = labelStyle.deepCopy()
+    label.fontSize = 18.0
+    label.padHoriz = 0
+    label.padHoriz = 0
+
+  # Drop down
+  let dd = cfg.getObjectOrEmpty("ui.drop-down")
+
+  a.theme.dropDownStyle = koi.getDefaultDropDownStyle()
+
+  with a.theme.dropDownStyle:
+    buttonCornerRadius      = w.getFloatOrDefault("corner-radius")
+    buttonFillColor         = w.getColorOrDefault("background.normal")
+    buttonFillColorHover    = w.getColorOrDefault("background.hover")
+    buttonFillColorDown     = w.getColorOrDefault("background.active")
+    buttonFillColorDisabled = w.getColorOrDefault("background.disabled")
+
+    label          = labelStyle.deepCopy()
+    label.padHoriz = 8.0
+
+    itemListCornerRadius     = buttonCornerRadius
+    itemBackgroundColorHover = w.getColorOrDefault("background.active")
+
+    if dd.isEmpty():
+      itemListFillColor = lerp(cfg.getColorOrDefault("ui.dialog.background"),
+                               black(), 0.4)
+
+      item.color        = cfg.getColorOrDefault("ui.dialog.label")
+      item.colorHover   = w.getColorOrDefault("foreground.active")
+    else:
+      itemListFillColor = dd.getColorOrDefault("item-list-background")
+      item.color        = dd.getColorOrDefault("item.normal")
+      item.colorHover   = dd.getColorOrDefault("item.hover")
 
   # Text field
   a.theme.textFieldStyle = koi.getDefaultTextFieldStyle()
@@ -2678,7 +2709,7 @@ proc updateWidgetStyles(a) =
     label.colorHover = ab.getColorOrDefault("label.hover")
     label.colorDown  = ab.getColorOrDefault("label.down")
 
-  # Note text area
+  # Current note pane
   let pn = cfg.getObjectOrEmpty("pane.notes")
 
   a.theme.noteTextAreaStyle = koi.getDefaultTextAreaStyle()
@@ -2701,6 +2732,14 @@ proc updateWidgetStyles(a) =
       thumbFillColor      = c.withAlpha(0.4)
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
+
+  # Notes list pane
+  a.theme.notesListScrollViewStyle = getDefaultScrollViewStyle()
+
+  with a.theme.notesListScrollViewStyle:
+    with scrollBarStyle:
+      discard
+      # TODO
 
 # }}}
 # {{{ updateTheme()
@@ -3676,7 +3715,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
       koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
       koi.nextItemWidth(80)
-      koi.dropDown(dlg.walkCursorMode)
+      koi.dropDown(dlg.walkCursorMode, style = a.theme.dropDownStyle)
 
   koi.endView()
 
@@ -7920,7 +7959,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   vg.beginPath()
   vg.rect(x, y, w, h)
-  vg.fillColor(lerp(ws.backgroundColor, black, 0.3))
+  vg.fillColor(lerp(ws.backgroundColor, black, 0.25))
   vg.fill()
 
   const
@@ -7935,27 +7974,23 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     wy = 45
     wh = 24
 
-#  koi.label("Origin", style=a.theme.labelStyle)
   koi.multiRadioButtons(
     wx, wy, w=w-LeftPad-RightPad, wh,
     ui.notesListState.noteFilterType,
     style = a.theme.radioButtonStyle
   )
 
-  wy += 32
-  koi.label(wx+3, wy, 1000, wh, "Order by", style=a.theme.labelStyle)
+  wy += 40
+  koi.label(wx+3, wy, 60, wh, "Order by", style=a.theme.labelStyle)
 
-  # Text
-  # Location
-  # Type, Location
-  # Type, Text
-  #
-  #
-  #
-  #
+  koi.dropDown(
+    wx+68, wy, w=120, wh,
+    ui.notesListState.noteFilterOrder,
+    style = a.theme.dropDownStyle
+  )
 
-
-  koi.beginScrollView(x, y+TopPad, w, h-TopPad)
+  koi.beginScrollView(x, y+TopPad, w, h-TopPad,
+                      style=a.theme.notesListScrollViewStyle)
 
   var lp = DefaultAutoLayoutParams
   lp.itemsPerRow = 1
@@ -8315,6 +8350,13 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Foreground Active",   p & "foreground.active")
         colorProp("Foreground Disabled", p & "foreground.disabled")
 
+    if koi.subSectionHeader("Drop Down", te.sectionDropdown):
+      p = "ui.drop-down."
+      group:
+        colorProp("Item List Background", p & "item-list-background")
+        colorProp("Item Normal",          p & "item.normal")
+        colorProp("Item Hover",           p & "item.hover")
+
     if koi.subSectionHeader("Text Field", te.sectionTextField):
       p = "ui.text-field."
       group:
@@ -8500,13 +8542,13 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("Level Drop Down", te.sectionLevelDropDown):
       p = "level.level-drop-down."
       group:
-        colorprop("Button Normal",        p & "button.normal")
-        colorprop("Button Hover",         p & "button.hover")
-        colorprop("Button Label",         p & "button.label")
+        colorProp("Button Normal",        p & "button.normal")
+        colorProp("Button Hover",         p & "button.hover")
+        colorProp("Button Label",         p & "button.label")
       group:
-        colorprop("Item List Background", p & "item-list-background")
-        colorprop("Item Normal",          p & "item.normal")
-        colorprop("Item Hover",           p & "item.hover")
+        colorProp("Item List Background", p & "item-list-background")
+        colorProp("Item Normal",          p & "item.normal")
+        colorProp("Item Hover",           p & "item.hover")
       group:
         let WCRLimits = WidgetCornerRadiusLimits
         floatProp("Corner Radius",        p & "corner-radius", WCRLimits)
@@ -8986,7 +9028,9 @@ proc renderUI(a) =
 
   # Clear background
   vg.beginPath()
-  vg.rect(mainPane.x1, mainPane.y1, mainPane.w, mainPane.h)
+
+  # Make sure the background image extends to the notes list pane if open
+  vg.rect(0, mainPane.y1, mainPane.w + mainPane.x1, mainPane.h)
 
   if ui.backgroundImage.isSome:
     vg.fillPaint(ui.backgroundImage.get)
@@ -9444,18 +9488,6 @@ proc loadAboutLogoImage(a) =
 
 # }}}
 
-# {{{ setDefaultWidgetStyles()
-proc setDefaultWidgetStyles(a) =
-  var s = koi.getDefaultCheckBoxStyle()
-
-  s.icon.fontSize = 12.0
-  s.iconActive    = IconCheck
-  s.iconInactive  = NoIcon
-
-  koi.setDefaultCheckboxStyle(s)
-
-# }}}
-
 # {{{ initGfx()
 proc initGfx(a) =
   glfw.initialize()
@@ -9647,7 +9679,6 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   loadFonts(a)
   loadAndSetIcon(a)
-  setDefaultWidgetStyles(a)
 
   a.doc.undoManager = newUndoManager[Map, UndoStateData]()
   a.ui.drawLevelParams = newDrawLevelParams()

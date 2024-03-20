@@ -320,7 +320,6 @@ type
 
   NotesPaneTheme* = ref object
     textColor*:                    Color
-    scrollBarColor*:               Color
     indexColor*:                   Color
     indexBackgroundColor*:         array[4, Color]
 
