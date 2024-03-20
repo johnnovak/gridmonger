@@ -44,21 +44,15 @@ func isNote(a: Annotation): bool = not a.isLabel
 
 # }}}
 
-# {{{ hasAnnotation*()
-proc hasAnnotation*(a; r,c: Natural): bool {.inline.} =
-  let key = a.coordsToKey(r,c)
-  a.annotations.hasKey(key)
-
-# }}}
-# {{{ getAnnotation*()
-proc getAnnotation*(a; r,c: Natural): Option[Annotation] =
+# {{{ `[]*`()
+proc `[]`*(a; r,c: Natural): Option[Annotation] =
   let key = a.coordsToKey(r,c)
   if a.annotations.hasKey(key):
     result = a.annotations[key].some
 
 # }}}
-# {{{ setAnnotation*()
-proc setAnnotation*(a; r,c: Natural, annot: Annotation) =
+# {{{ `[]=*`()
+proc `[]=`*(a; r,c: Natural, annot: Annotation) =
   let key = a.coordsToKey(r,c)
   a.annotations[key] = annot
 
@@ -85,7 +79,7 @@ iterator allAnnotations*(a): tuple[row, col: Natural, annotation: Annotation] =
 # }}}
 # {{{ delAnnotations*()
 proc delAnnotations*(a; rect: Rect[Natural]) =
-  var toDel: seq[(Natural, Natural)]
+  var toDel: seq[tuple[row, col: Natural]]
 
   for r,c, _ in a.allAnnotations:
     if rect.contains(r,c):
@@ -97,13 +91,13 @@ proc delAnnotations*(a; rect: Rect[Natural]) =
 
 # {{{ hasNote*()
 proc hasNote*(a; r,c: Natural): bool =
-  let a = a.getAnnotation(r,c)
+  let a = a[r,c]
   result = a.isSome and a.get.isNote
 
 # }}}
 # {{{ getNote*()
 proc getNote*(a; r,c: Natural): Option[Annotation] =
-  let a = a.getAnnotation(r,c)
+  let a = a[r,c]
   if a.isSome:
     if a.get.isNote: result = a
 
@@ -133,13 +127,13 @@ proc reindexNotes*(a) =
 
 # {{{ hasLabel*()
 proc hasLabel*(a; r,c: Natural): bool =
-  let a = a.getAnnotation(r,c)
+  let a = a[r,c]
   result = a.isSome and a.get.isLabel
 
 # }}}
 # {{{ getLabel*()
 proc getLabel*(a; r,c: Natural): Option[Annotation] =
-  let a = a.getAnnotation(r,c)
+  let a = a[r,c]
   if a.isSome:
     if a.get.isLabel: result = a
 
@@ -157,7 +151,7 @@ iterator allLabels*(a): tuple[row, col: Natural, annotation: Annotation] =
 
 # {{{ convertNoteToComment*()
 proc convertNoteToComment*(a; r,c: Natural) =
-  let annot = a.getAnnotation(r,c)
+  let annot = a[r,c]
   if annot.isSome:
     let note = annot.get
     if note.kind == akLabel:
@@ -171,7 +165,7 @@ proc convertNoteToComment*(a; r,c: Natural) =
         a.delAnnotation(r,c)
       else:
         let comment = Annotation(kind: akComment, text: note.text)
-        a.setAnnotation(r,c, comment)
+        a[r,c] = comment
 
 # }}}
 

@@ -99,12 +99,12 @@ proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
 # {{{ Annotations
 # {{{ getAnnotation*()
 proc getAnnotation*(l; r,c: Natural): Option[Annotation] =
-  l.annotations.getAnnotation(r,c)
+  l.annotations[r,c]
 
 # }}}
 # {{{ setAnnotation*()
 proc setAnnotation*(l; r,c: Natural, a: Annotation) =
-  l.annotations.setAnnotation(r,c, a)
+  l.annotations[r,c] = a
 
 # }}}
 # {{{ delAnnotation*()
@@ -166,8 +166,8 @@ proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
                           srcLevel: Level, srcRect: Rect[Natural]) =
   for (r,c, a) in srcLevel.annotations.allAnnotations:
     if srcRect.contains(r,c):
-      l.annotations.setAnnotation(destRow + r - srcRect.r1,
-                                  destCol + c - srcRect.c1, a)
+      l.annotations[destRow + r - srcRect.r1,
+                    destCol + c - srcRect.c1] = a
 
 # }}}
 # }}}
@@ -346,11 +346,10 @@ proc copyCell(destLevel: Level, destRow, destCol: Natural,
     copyWall(dirE)
 
   destLevel.annotations.delAnnotation(destRow, destCol)
-  if srcLevel.annotations.hasAnnotation(srcRow, srcCol):
-    destLevel.annotations.setAnnotation(
-      destRow, destCol,
-      srcLevel.annotations.getAnnotation(srcRow, srcCol).get
-    )
+
+  let a = srcLevel.annotations[srcRow, srcCol]
+  if a.isSOme:
+    destLevel.annotations[destRow, destCol] = a.get
 
 # }}}
 # {{{ paste*()
