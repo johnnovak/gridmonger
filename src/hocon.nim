@@ -27,16 +27,23 @@ proc initUnicodeScanner(stream: Stream): UnicodeScanner =
   result.readBuf.setLen(4)
   result.peekBuf = initDeque[Rune]()
 
+
 proc readNextRune(s): Rune =
   proc raiseEOFError() =
     raise newException(IOError, "Unexpected end of file")
 
   if s.stream.atEnd: raiseEOFError()
   s.readBuf[0] = cast[char](s.stream.readUint8())
-  let runeLen = s.readBuf.runeLenAt(0)
-  let bytesRead = s.stream.readDataStr(s.readBuf, 1..(1 + runeLen-2))
-  if bytesRead + 1 != runeLen: raiseEOFError()
+
+  let
+    runeLen = s.readBuf.runeLenAt(0)
+    bytesRead = s.stream.readDataStr(s.readBuf, 1..(1 + runeLen-2))
+
+  if bytesRead + 1 != runeLen:
+    raiseEOFError()
+
   s.readBuf.runeAt(0)
+
 
 proc peekRune(s; lookahead: Natural = 1): Rune =
   assert(lookahead >= 1)
@@ -77,11 +84,11 @@ type
     tkNull         = "null"
 
   Token = object
-    case kind: TokenKind
-    of tkString: str: string
-    of tkNumber: num: string
+    case  kind:     TokenKind
+    of    tkString: str: string
+    of    tkNumber: num: string
     else: discard
-    line, column: Natural
+    line, column:   Natural
 
   Tokeniser = object
     scanner:      UnicodeScanner
@@ -341,7 +348,7 @@ type
     of hnkArray:  elems*:  seq[HoconNode]
 
 
-proc `==`*(a: HoconNode, b: HoconNode): bool =
+proc `==`*(a, b: HoconNode): bool =
   if cast[int](a) == 0: return cast[int](b) == 0  # HACK
   if a.kind != b.kind: return false
   case a.kind
@@ -667,8 +674,15 @@ proc raiseHoconPathError*(path, message: string) {.noReturn.} =
 
 proc raiseHoconValueError*(src, target: HoconNodeKind,
                            path: string) {.noReturn.} =
-  raise newException(HoconPathError,
+  raise newException(HoconValueError,
                      fmt"Cannot read {src} as {target}, path: {path}")
+
+proc isEmpty*(node: HoconNode): bool =
+  case node.kind
+  of hnkObject: node.fields.len == 0
+  of hnkArray: node.elems.len == 0
+  else:
+    raise newException(HoconValueError, fmt"Not an object or array")
 
 proc hasOnlyDigits(s: string): bool =
   for c in s:
@@ -729,8 +743,7 @@ proc getString*(node: HoconNode; path: string): string =
   of hnkString: v.str
   of hnkNumber: $v.num
   of hnkBool:   $v.bool
-  else:
-    raiseHoconValueError(v.kind, hnkString, path)
+  else: raiseHoconValueError(v.kind, hnkString, path)
 
 proc getBool*(node: HoconNode; path: string): bool =
   let v = node.get(path)
@@ -740,8 +753,7 @@ proc getBool*(node: HoconNode; path: string): bool =
     case v.str
     of "true",  "yes", "on":  true
     of "false", "no",  "off": false
-    else:
-      raiseHoconValueError(v.kind, hnkBool, path)
+    else: raiseHoconValueError(v.kind, hnkBool, path)
   else:
     raiseHoconValueError(v.kind, hnkBool, path)
 
@@ -767,10 +779,18 @@ proc getInt*(node: HoconNode, path: string): int =
 proc getNatural*(node: HoconNode, path: string): Natural =
   let n = node.get(path)
   let v = n.doGetFloat(path)
-  if v >= 0:
-    result = v.Natural
-  else:
-    raiseHoconValueError(n.kind, hnkNumber, path)
+  if v >= 0: v.Natural
+  else: raiseHoconValueError(n.kind, hnkNumber, path)
+
+proc getObject*(node: HoconNode, path: string): OrderedTable[string, HoconNode] =
+  let n = node.get(path)
+  if n.kind == hnkObject: n.fields
+  else: raiseHoconValueError(n.kind, hnkObject, path)
+
+proc getArray*(node: HoconNode, path: string): seq[HoconNode] =
+  let n = node.get(path)
+  if n.kind == hnkArray: n.elems
+  else: raiseHoconValueError(n.kind, hnkArray, path)
 
 # }}}
 # {{{ Setters
@@ -887,6 +907,13 @@ proc merge*(dest: HoconNode, src: HoconNode, path: string = "") =
 
 # {{{ Tests
 when isMainModule:
+
+  proc `==`*(a, b: Token): bool =
+    if a.kind != b.kind: return false
+    case a.kind
+    of tkString: a.str == b.str
+    of tkNumber: a.num == b.num
+    else: true
 
   proc printTree(node: HoconNode, depth: int = 0) =
     let indent = " ".repeat(depth * 2)
@@ -1150,21 +1177,51 @@ when isMainModule:
 
     var p = initHoconParser(newStringStream(testString))
     let root = p.parse()
-    printTree(root)
+#    printTree(root)
 
-    echo root.get("a.b")[]
-    echo root.get("a.aa.foo")[]
-    echo root.get("a.d")[]
-    echo root.get("a.e.0")[]
-    echo root.get("a.e.1")[]
-    echo root.get("a.e.2")[]
-    echo root.get("b")[]
+    block:
+      let ab  = root.get("a.b")
+      assert ab == HoconNode(kind: hnkString, str: "c")
 
-    echo root.getString("a.b")
-    echo root.getBool("a.aa.foo")
-    echo root.getNatural("a.d")
-    echo root.getFloat("a.e.0")
-    echo root.getString("b")
+      let foo = root.get("a.aa.foo")
+      assert foo == HoconNode(kind: hnkBool, bool: false)
+
+      let d   = root.get("a.d")
+      assert d == HoconNode(kind: hnkNumber, num: 5.0)
+
+      let e0  = root.get("a.e.0")
+      assert e0 == HoconNode(kind: hnkNumber, num: 1.0)
+
+      let e1  = root.get("a.e.1")
+      assert e1 == HoconNode(kind: hnkNumber, num: 2.0)
+
+      let e2  = root.get("a.e.2")
+      assert e2 == HoconNode(kind: hnkNumber, num: 3.0)
+
+      let b   = root.get("b")
+      assert b == HoconNode(kind: hnkNumber, num: 123.0)
+
+    block:
+      let ab  = root.getString("a.b")
+      assert ab == "c"
+
+      let foo = root.getBool("a.aa.foo")
+      assert foo == false
+
+      let d   = root.getNatural("a.d")
+      assert d == 5
+
+      let e0  = root.getFloat("a.e.0")
+      assert e0 == 1.0
+
+      let e1  = root.getInt("a.e.1")
+      assert e1 == 2
+
+      let e2  = root.getFloat("a.e.2")
+      assert e2 == 3.0
+
+      let b   = root.getString("b")
+      assert b == "123.0"
 
   block:
     let testString = """
@@ -1193,13 +1250,13 @@ c = "d"
     var p = initHoconParser(newStringStream(testString))
     let root = p.parse()
 
-    echo '-'.repeat(40)
-    printTree(root)
+#    echo '-'.repeat(40)
+#    printTree(root)
 
     var st = newStringStream()
-    echo '-'.repeat(40)
+#    echo '-'.repeat(40)
     root.write(st)
-    echo st.data
+#    echo st.data
 
   # }}}
   # {{{ setter test
@@ -1212,10 +1269,17 @@ c = "d"
     obj.set("a.b.c2.1", "y")
     obj.set("a.b.c2.5.2.foo.1", "bar")
 
+    assert obj.getBool("a.b.c1.d1") == true
+    assert obj.getInt("a.b.c1.d2") == 42
+    assert obj.getString("a.b.c2.0") == "x"
+    assert obj.getString("a.b.c2.2") == "z"
+    assert obj.getString("a.b.c2.1") == "y"
+    assert obj.getString("a.b.c2.5.2.foo.1") == "bar"
+
     var st = newStringStream()
-    echo '-'.repeat(40)
+#    echo '-'.repeat(40)
     obj.write(st)
-    echo st.data
+#    echo st.data
 
 # }}}
   # {{{ merge test
@@ -1245,9 +1309,9 @@ c = "d"
 
     block:
       var st = newStringStream()
-      echo '-'.repeat(40)
+#      echo '-'.repeat(40)
       src.write(st)
-      echo st.data
+#      echo st.data
 
     let destObj = """
 {
@@ -1270,9 +1334,9 @@ c = "d"
 
     block:
       var st = newStringStream()
-      echo '-'.repeat(40)
+#      echo '-'.repeat(40)
       dest.write(st)
-      echo st.data
+#      echo st.data
 
 # }}}
 # }}}
