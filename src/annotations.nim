@@ -22,6 +22,7 @@ proc newAnnotations*(rows, cols: Natural): Annotations =
 template coordsToKey(a; r,c: Natural): Natural =
   assert r < a.rows
   assert c < a.cols
+
   (r * a.cols) + c
 
 # }}}
@@ -31,16 +32,11 @@ template keyToCoords(a; k: Natural): tuple[row, col: Natural] =
     w = a.cols
     r = (k div w).Natural
     c = (k mod w).Natural
+
+  assert r < a.rows
+  assert c < a.cols
+
   (r,c)
-
-# }}}
-
-# {{{ isLabel()
-func isLabel(a: Annotation): bool = a.kind == akLabel
-
-# }}}
-# {{{ isNote()
-func isNote(a: Annotation): bool = not a.isLabel
 
 # }}}
 

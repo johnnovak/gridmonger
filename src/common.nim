@@ -36,7 +36,6 @@ type
     level*:     Natural
     row*, col*: Natural
 
-type
   CardinalDir* = enum
     dirN = "North"
     dirE = "East"
@@ -59,12 +58,12 @@ const
   West*      = {dirW}
   NorthWest* = {dirN, dirW}
 
-proc orientation*(dir: CardinalDir): Orientation =
+func orientation*(dir: CardinalDir): Orientation =
   case dir
   of dirE, dirW: Horiz
   of dirN, dirS: Vert
 
-proc opposite*(o: Orientation): Orientation =
+func opposite*(o: Orientation): Orientation =
   case o
   of Horiz: Vert
   of Vert:  Horiz
@@ -137,24 +136,6 @@ type
     name*:  string
     notes*: string
 
-
-  Annotations* = ref object
-    cols*, rows*:  Natural
-    annotations*:  OrderedTable[Natural, Annotation]
-
-  AnnotationKind* = enum
-    akComment, akIndexed, akCustomId, akIcon, akLabel
-
-  Annotation* = object
-    text*: string
-    case kind*: AnnotationKind
-    of akComment:  discard
-    of akIndexed:  index*, indexColor*: Natural
-    of akCustomId: customId*: string
-    of akIcon:     icon*: Natural
-    of akLabel:    labelColor*: Natural
-
-
   CellGrid* = ref object
     cols*:  Natural
     rows*:  Natural
@@ -218,6 +199,29 @@ type
     wKeyhole       = (60, "keyhole")
     wWritingNE     = (70, "writing")
     wWritingSW     = (71, "writing")
+
+  Annotations* = ref object
+    cols*, rows*:  Natural
+    annotations*:  OrderedTable[Natural, Annotation]
+
+  AnnotationKind* = enum
+    akComment, akIndexed, akCustomId, akIcon, akLabel
+
+  Annotation* = object
+    text*: string
+    case kind*: AnnotationKind
+    of akComment:  discard
+    of akIndexed:  index*, indexColor*: Natural
+    of akCustomId: customId*: string
+    of akIcon:     icon*: Natural
+    of akLabel:    labelColor*: Natural
+
+func isLabel*(a: Annotation): bool =
+  a.kind == akLabel
+
+func isNote*(a: Annotation): bool =
+  not a.isLabel
+
 
 const
   SpecialWalls* = @[
