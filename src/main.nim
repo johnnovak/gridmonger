@@ -3407,7 +3407,7 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
     const SelPad = 3
 
     var cx, cy, cw, ch: float
-    if state in {wsDown, wsActive, wsActiveHover, wsHover}:
+    if state in {wsHover, wsDown, wsActive, wsActiveHover, wsActiveDown}:
       vg.beginPath()
       vg.strokeColor(cursorColor)
       vg.strokeWidth(sw)
@@ -7663,18 +7663,19 @@ proc specialWallDrawProc(lt: LevelTheme,
                state: WidgetState, style: RadioButtonsStyle) =
 
     var (bgCol, active) = case state
-                          of wsActive:      (lt.cursorColor,       true)
-                          of wsHover:       (tt.buttonHoverColor,  false)
-                          of wsActiveHover: (lt.cursorColor,       true)
-                          of wsDown:        (lt.cursorColor,       true)
-                          else:             (tt.buttonNormalColor, false)
+                          of wsHover:
+                            (tt.buttonHoverColor,  false)
+                          of wsDown, wsActive, wsActiveHover, wsActiveDown:
+                            (lt.cursorColor,       true)
+                          else:
+                            (tt.buttonNormalColor, false)
 
     # Nasty stuff, but it's not really worth refactoring everything for
     # this little aesthetic fix...
     let
       savedFloorColor = lt.floorBackgroundColor[0]
       savedForegroundNormalNormalColor = lt.foregroundNormalNormalColor
-      savedForegroundLightNormalColor = lt.foregroundLightNormalColor
+      savedForegroundLightNormalColor  = lt.foregroundLightNormalColor
       savedBackgroundImage = dp.backgroundImage
 
     lt.floorBackgroundColor[0] = lerp(lt.backgroundColor, bgCol, bgCol.a)
