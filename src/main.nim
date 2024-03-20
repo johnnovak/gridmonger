@@ -511,6 +511,7 @@ type
     noteFilterType:   seq[NoteFilterType]
     noteFilterOrder:  NoteFilterOrder
     linkCursor:       bool
+    notesTable:       Table[ItemId, (Natural, Natural, Annotation)]
 
     lastHotId:        ItemId
 
@@ -3094,10 +3095,10 @@ template coordinateFields() =
     )
 
   group:
-    let letterLabelX = x + 190
+    let letterLabelX = x + 152
 
     koi.label("Column start", style=a.theme.labelStyle)
-    var y = koi.currAutoLayoutY()
+    var y = koi.autoLayoutNextY()
 
     koi.nextItemWidth(DlgNumberWidth)
     koi.textField(
@@ -3119,8 +3120,7 @@ template coordinateFields() =
         discard
 
     koi.label("Row start", style=a.theme.labelStyle)
-    y = koi.currAutoLayoutY()
-
+    y = koi.autoLayoutNextY()
 
     koi.nextItemWidth(DlgNumberWidth)
     koi.textField(
@@ -7947,6 +7947,78 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
 
 # }}}
 # {{{ renderNotesListPane()
+
+proc toAnnotationKindSet(filter: seq[NoteFilterType]): set[AnnotationKind] =
+  for f in filter:
+    case f
+    of nftNone:   result.incl(akComment)
+    of nftNumber: result.incl(akIndexed)
+    of nftId:     result.incl(akCustomId)
+    of nftIcon:   result.incl(akIcon)
+    else: discard
+
+const
+  TopPad     = 98
+  LeftPad    = 16
+  RightPad   = 16
+  TextIndent = 44
+  NotesHorizOffs = -8
+
+
+proc noteButton(id: ItemId): bool =
+  alias(ui, g_app.ui)
+
+  koi.autoLayoutPre()
+
+  let
+    (x, y) = addDrawOffset(x=koi.autoLayoutNextX(),
+                           y=koi.autoLayoutNextY())
+    w = koi.autoLayoutNextItemWidth()
+    h = koi.autoLayoutNextItemHeight()
+
+  # Hit testing
+  if isHit(x, y, w-12, h):
+    setHot(id)
+    if koi.mbLeftDown() and koi.hasNoActiveItem():
+      setActive(id)
+      result = true
+
+  addDrawLayer(koi.currentLayer(), vg):
+    let state = if   koi.isHot(id) and koi.hasNoActiveItem(): wsHover
+                elif koi.isHot(id) and koi.isActive(id):      wsDown
+                else:                                         wsNormal
+
+    if state in {wsHover, wsDown}:
+      vg.beginPath()
+      vg.fillColor(black(0.2))
+      vg.rect(x, y, w, h)
+      vg.fill()
+
+    let textColor =
+      case state
+      of wsDisabled, wsNormal, wsActive, wsActiveHover: white(0.7)
+      of wsHover, wsDown, wsActiveDown:                 white()
+
+    let (r,c, note) = ui.notesListState.notesTable[id]
+
+    let mx = x + LeftPad + NotesHorizOffs
+
+    if note.kind == akIndexed:
+      renderNoteMarker(mx+3, y+2, w, h, note, textColor,
+                       indexedNoteSize=32, g_app)
+    else:
+      renderNoteMarker(mx, y, w, h, note, textColor, a=g_app)
+
+    vg.setFont(14, "sans-bold")
+    vg.fillColor(textColor)
+    vg.textLineHeight(1.4)
+    vg.textBox(x + LeftPad + TextIndent + NotesHorizOffs, y+17,
+               w - TextIndent - LeftPad - RightPad - NotesHorizOffs,
+               note.text)
+
+  koi.autoLayoutPost()
+
+
 proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
@@ -7962,16 +8034,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   vg.fillColor(lerp(ws.backgroundColor, black, 0.25))
   vg.fill()
 
-  const
-    TopPad     = 100
-    LeftPad    = 16
-    RightPad   = 16
-    TextIndent = 44
-    NotesHorizOffs = -8
+  vg.beginPath()
+  vg.rect(x, y, w, TopPad)
+  vg.fillColor(lerp(ws.backgroundColor, black, 0.15))
+  vg.fill()
 
   var
     wx = LeftPad
-    wy = 45
+    wy = 43
     wh = 24
 
   koi.multiRadioButtons(
@@ -8004,51 +8074,23 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   var a = a
 
   var noteTable = initTable[ItemId, (Natural, Natural, Annotation)]()
-
-  let noteButtonDrawProc: ButtonDrawProc = proc(
-    vg: NVGContext,
-    id: ItemId, x, y, w, h: float, label: string,
-    state: WidgetState, style: ButtonStyle
-  ) =
-
-    if state in {wsHover, wsDown}:
-      vg.beginPath()
-      vg.fillColor(black(0.2))
-      vg.rect(x, y, w, h)
-      vg.fill()
-
-    let textColor =
-      case state
-      of wsDisabled, wsNormal, wsActive, wsActiveHover: s.textColor
-      of wsHover, wsDown, wsActiveDown:                 white()
-
-    let (r,c, note) = noteTable[id]
-
-    let mx = x + LeftPad + NotesHorizOffs
-
-    if note.kind == akIndexed:
-      renderNoteMarker(mx+3, y+2, w, h, note, textColor,
-                       indexedNoteSize=32, a)
-    else:
-      renderNoteMarker(mx, y, w, h, note, textColor, a=a)
-
-    vg.setFont(14, "sans-bold")
-    vg.fillColor(textColor)
-    vg.textLineHeight(1.4)
-    vg.textBox(x + LeftPad + TextIndent + NotesHorizOffs, y+17,
-               w - TextIndent - LeftPad - RightPad - NotesHorizOffs,
-               note.text)
-
-
   var foundHotItem = false
 
+  let annotationKindFilter = ui.notesListState.noteFilterType.toAnnotationKindSet
+
+  var noteCoords = newSeqOfCap[(Natural, Natural)](l.numAnnotations())
+  for (r,c, _) in l.allNotes():
+    noteCoords.add((r, c))
+
+
+
   for (r,c, note) in l.allNotes():
-    if note.kind != akLabel:
+    if note.kind in annotationKindFilter:
       let idString = fmt"notes-list:{r}:{c}"
       let id = hashId(idString)
       koi.setNextId(idString)
 
-      noteTable[id] = (r,c, note)
+      ui.notesListState.notesTable[id] = (r,c, note)
 
       vg.setFont(14, "sans-bold")
       vg.textLineHeight(1.4)
@@ -8066,11 +8108,10 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
       var moveCursorToNote = false
 
-      if koi.button(note.text, activateOnButtonDown=true,
-                    drawProc=noteButtonDrawProc.some):
+      if noteButton(id):
         moveCursorToNote = true
 
-      if isHot(id):
+      if koi.isHot(id):
         foundHotItem = true
         if ui.notesListState.lastHotId != id:
           ui.notesListState.lastHotId = id
@@ -9676,6 +9717,10 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   let cfg = loadAppConfigOrDefault(a.paths.configFile)
   initPreferences(cfg, a)
+
+  # TODO init from config
+  a.ui.notesListState.noteFilterType  = @[nftNone, nftNumber, nftId, nftIcon]
+  a.ui.notesListState.noteFilterOrder = nfoTypeLocation
 
   loadFonts(a)
   loadAndSetIcon(a)
