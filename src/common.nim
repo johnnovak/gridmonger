@@ -45,8 +45,8 @@ type
   Direction* = set[CardinalDir]
 
   Orientation* = enum
-    Horiz = "horizontal"
-    Vert  = "vertical"
+    Horiz = (0, "horizontal")
+    Vert  = (1, "vertical")
 
 const
   North*     = {dirN}
@@ -97,10 +97,12 @@ type
     rowStart*, columnStart*: int
 
   CoordinateOrigin* = enum
-    coNorthWest, coSouthWest
+    coNorthWest = 0
+    coSouthWest = 1
 
   CoordinateStyle* = enum
-    csNumber, csLetter
+    csNumber = 0
+    csLetter = 1
 
 
   Level* = ref object
@@ -206,7 +208,11 @@ type
     dirty*:        bool
 
   AnnotationKind* = enum
-    akComment, akIndexed, akCustomId, akIcon, akLabel
+    akComment  = 0
+    akIndexed  = 1
+    akCustomId = 2
+    akIcon     = 3
+    akLabel    = 4
 
   Annotation* = object
     text*: string
