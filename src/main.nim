@@ -507,22 +507,28 @@ type
     mx:       float
     my:       float
 
-  NotesListState = object
-    noteFilterType:   seq[NoteFilterType]
-    noteFilterOrder:  NoteFilterOrder
-    linkCursor:       bool
 
-  NoteFilterType = enum
+  NotesListState = object
+    currFilter:     NotesListFilter
+    prevFilter:     NotesListFilter
+    linkCursor:     bool
+    sortedNoteKeys: seq[tuple[row, col: Natural]]
+    dirty:          bool
+
+  NotesListFilter = object
+    typeFilter:     seq[NoteTypeFilter]
+    order:          NoteOrder
+
+  NoteTypeFilter = enum
     nftNone   = "None"
     nftNumber = "Number"
     nftId     = "ID"
     nftIcon   = "Icon"
 
-  NoteFilterOrder = enum
-    nfoLocation     = "Location"
-    nfoText         = "Text"
-    nfoTypeLocation = "Type, Location"
-    nfoTypeText     = "Type, Text"
+  NoteOrder = enum
+    nfoType   = "Type"
+    nfoText   = "Text"
+
 
   StatusMessage = object
     icon:           string
@@ -7945,7 +7951,7 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
 # }}}
 # {{{ renderNotesListPane()
 
-proc toAnnotationKindSet(filter: seq[NoteFilterType]): set[AnnotationKind] =
+proc toAnnotationKindSet(filter: seq[NoteTypeFilter]): set[AnnotationKind] =
   for f in filter:
     case f
     of nftNone:   result.incl(akComment)
@@ -8008,6 +8014,7 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
 proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
+  alias(nls, ui.notesListState)
 
   let
     ws = a.theme.windowTheme
@@ -8039,18 +8046,23 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   koi.multiRadioButtons(
     wx, wy, w=w-LeftPad-RightPad, wh,
-    ui.notesListState.noteFilterType,
-    style = a.theme.radioButtonStyle
+    nls.currFilter.typeFilter, style = a.theme.radioButtonStyle
   )
 
   wy += 40
   koi.label(wx+3, wy, 60, wh, "Order by", style=a.theme.labelStyle)
 
   koi.dropDown(
-    wx+68, wy, w=120, wh,
-    ui.notesListState.noteFilterOrder,
-    style = a.theme.dropDownStyle
+    wx+68, wy, w=80, wh,
+    nls.currFilter.order, style = a.theme.dropDownStyle
   )
+
+  if nls.currFilter != nls.prevFilter:
+    nls.dirty = true
+
+  if l.annotations.dirty:
+    nls.dirty = true
+    l.annotations.dirty = false
 
   # Scroll view with notes
   koi.beginScrollView(x, y+TopPad, w, h-TopPad,
@@ -8067,20 +8079,64 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   var a = a
 
-  var noteTable = initTable[ItemId, tuple[row, col: Natural,
-                                          annotation: Annotation]]()
+  func toSortOrder(ak: AnnotationKind): int =
+    case ak
+    of akIndexed:  0
+    of akCustomId: 1
+    of akIcon:     2
+    of akComment:  3
+    of akLabel:    4
 
-  let annotationKindFilter = ui.notesListState.noteFilterType.toAnnotationKindSet
-#[
-  var sortedNoteKeys = newSeqOfCap[ItemId](l.numAnnotations())
-  for (r,c, _) in l.allNotes():
-    sortedNoteKeys.add((r, c))
+  func sortByNoteType(a, b: Annotation): int =
+    var c = 0
+    if a.kind == b.kind:
+      case a.kind:
+      of akComment, akLabel: discard
+      of akIndexed:
+        c   = cmp(a.index,    b.index);    if c != 0: return c
+      of akCustomId:
+        c   = cmp(a.customId, b.customId); if c != 0: return c
+      of akIcon:
+        c   = cmp(a.icon,     b.icon);     if c != 0: return c
+      return 0
+    else:
+      cmp(a.kind.toSortOrder, b.kind.toSortOrder)
 
-  sortedNoteKeys.sort(
-    proc (keyA, keyB: tuple[row, col: Natural]): int =
-      let a =
-  )
-]#
+  func sortByTextAndLocation(keyA, keyB: tuple[row, col: Natural];
+                             a, b: Annotation): int =
+    var c = cmpIgnoreCase(a.text, b.text); if c != 0: return c
+    c     = cmp(keyA.row, keyB.row);       if c != 0: return c
+    return  cmp(keyA.col, keyB.col)
+
+  func sortByTextLocationType(keyA, keyB: tuple[row, col: Natural]): int =
+    let a = l.getNote(keyA.row, keyA.col).get
+    let b = l.getNote(keyB.row, keyB.col).get
+    var c = sortByTextAndLocation(keyA, keyB, a, b)
+    if c != 0: return c
+    sortByNoteType(a, b)
+
+  func sortByTypeTextLocation(keyA, keyB: tuple[row, col: Natural]): int =
+    let a = l.getNote(keyA.row, keyA.col).get
+    let b = l.getNote(keyB.row, keyB.col).get
+    var c = sortByNoteType(a, b)
+    if c != 0: return c
+    sortByTextAndLocation(keyA, keyB, a, b)
+
+  if nls.dirty:
+    echo "DIRTY"
+    let annotationKindFilter = nls.currFilter.typeFilter.toAnnotationKindSet
+
+    nls.sortedNoteKeys = newSeqOfCap[(Natural, Natural)](l.numAnnotations())
+    for (r,c, note) in l.allNotes():
+      if note.kind in annotationKindFilter:
+        nls.sortedNoteKeys.add((r, c))
+
+    case nls.currFilter.order
+    of nfoType: nls.sortedNoteKeys.sort(sortByTypeTextLocation)
+    of nfoText: nls.sortedNoteKeys.sort(sortByTextLocationType)
+
+    nls.prevFilter = nls.currFilter
+    nls.dirty = false
 
   const
     NoteHorizOffs  = -8
@@ -8089,26 +8145,26 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   vg.setFont(14, "sans-bold")
   vg.textLineHeight(1.4)
 
-  for (r,c, note) in l.allNotes():
-    if note.kind in annotationKindFilter:
-      let
-        idString = fmt"notes-list:{r}:{c}"
-        id       = hashId(idString)
+  for (r,c) in nls.sortedNoteKeys:
+    let note = l.getNote(r, c).get
+    let
+      idString = fmt"notes-list:{r}:{c}"
+      id = hashId(idString)
 
-      koi.setNextId(idString)
+    koi.setNextId(idString)
 
-      let
-        markerX    = LeftPad + NoteHorizOffs
-        textX      = markerX + TextIndent
-        textW      = w - TextIndent - LeftPad - RightPad - NoteHorizOffs
-        bounds     = vg.textBoxBounds(textX, y, textW, note.text)
-        noteHeight = bounds.y2 - bounds.y1 + NoteVertPad
+    let
+      markerX    = LeftPad + NoteHorizOffs
+      textX      = markerX + TextIndent
+      textW      = w - TextIndent - LeftPad - RightPad - NoteHorizOffs
+      bounds     = vg.textBoxBounds(textX, y, textW, note.text)
+      noteHeight = bounds.y2 - bounds.y1 + NoteVertPad
 
-      koi.nextRowHeight(noteHeight)
-      koi.nextItemHeight(noteHeight)
+    koi.nextRowHeight(noteHeight)
+    koi.nextItemHeight(noteHeight)
 
-      if noteButton(id, textX, textY=17, textW, markerX, note):
-        moveCursorTo(Location(level: ui.cursor.level, row: r, col: c), a)
+    if noteButton(id, textX, textY=17, textW, markerX, note):
+      moveCursorTo(Location(level: ui.cursor.level, row: r, col: c), a)
 
   koi.endScrollView()
 
@@ -9705,8 +9761,10 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   initPreferences(cfg, a)
 
   # TODO init from config
-  a.ui.notesListState.noteFilterType  = @[nftNone, nftNumber, nftId, nftIcon]
-  a.ui.notesListState.noteFilterOrder = nfoTypeLocation
+  with a.ui.notesListState:
+    currFilter.typeFilter = @[nftNone, nftNumber, nftId, nftIcon]
+    currFilter.order      = nfoType
+    dirty                 = true
 
   loadFonts(a)
   loadAndSetIcon(a)
@@ -9947,7 +10005,10 @@ proc main() =
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
-        glfw.waitEventsTimeout(0.2)
+        when defined(windows):
+          glfw.waitEventsTimeout(0.2)
+        else:
+          glfw.waitEvents()
 
     cleanup(a)
 
