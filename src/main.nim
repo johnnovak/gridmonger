@@ -511,9 +511,6 @@ type
     noteFilterType:   seq[NoteFilterType]
     noteFilterOrder:  NoteFilterOrder
     linkCursor:       bool
-    notesTable:       Table[ItemId, (Natural, Natural, Annotation)]
-
-    lastHotId:        ItemId
 
   NoteFilterType = enum
     nftNone   = "None"
@@ -7955,17 +7952,10 @@ proc toAnnotationKindSet(filter: seq[NoteFilterType]): set[AnnotationKind] =
     of nftNumber: result.incl(akIndexed)
     of nftId:     result.incl(akCustomId)
     of nftIcon:   result.incl(akIcon)
-    else: discard
-
-const
-  TopPad     = 98
-  LeftPad    = 16
-  RightPad   = 16
-  TextIndent = 44
-  NotesHorizOffs = -8
 
 
-proc noteButton(id: ItemId): bool =
+proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
+                note: Annotation): bool =
   alias(ui, g_app.ui)
 
   koi.autoLayoutPre()
@@ -7977,9 +7967,11 @@ proc noteButton(id: ItemId): bool =
     h = koi.autoLayoutNextItemHeight()
 
   # Hit testing
-  if isHit(x, y, w-12, h):
+  const ScrollBarWidth = 12
+
+  if isHit(x, y, w-ScrollBarWidth, h):
     setHot(id)
-    if koi.mbLeftDown() and koi.hasNoActiveItem():
+    if (koi.mbLeftDown() or koi.shiftDown()) and koi.hasNoActiveItem():
       setActive(id)
       result = true
 
@@ -7999,22 +7991,16 @@ proc noteButton(id: ItemId): bool =
       of wsDisabled, wsNormal, wsActive, wsActiveHover: white(0.7)
       of wsHover, wsDown, wsActiveDown:                 white()
 
-    let (r,c, note) = ui.notesListState.notesTable[id]
-
-    let mx = x + LeftPad + NotesHorizOffs
-
     if note.kind == akIndexed:
-      renderNoteMarker(mx+3, y+2, w, h, note, textColor,
+      renderNoteMarker(x + markerX + 3, y+2, w, h, note, textColor,
                        indexedNoteSize=32, g_app)
     else:
-      renderNoteMarker(mx, y, w, h, note, textColor, a=g_app)
+      renderNoteMarker(x + markerX, y, w, h, note, textColor, a=g_app)
 
     vg.setFont(14, "sans-bold")
     vg.fillColor(textColor)
     vg.textLineHeight(1.4)
-    vg.textBox(x + LeftPad + TextIndent + NotesHorizOffs, y+17,
-               w - TextIndent - LeftPad - RightPad - NotesHorizOffs,
-               note.text)
+    vg.textBox(x + textX, y + textY, textW, note.text)
 
   koi.autoLayoutPost()
 
@@ -8023,17 +8009,24 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
 
-  let ws = a.theme.windowTheme
-  let s = a.theme.notesPaneTheme
-
   let
-    l = currLevel(a)
+    ws = a.theme.windowTheme
+    s  = a.theme.notesPaneTheme
+    l  = currLevel(a)
 
+  const
+    TopPad     = 98
+    LeftPad    = 16
+    RightPad   = 16
+    TextIndent = 44
+
+  # Draw pane background
   vg.beginPath()
   vg.rect(x, y, w, h)
   vg.fillColor(lerp(ws.backgroundColor, black, 0.25))
   vg.fill()
 
+  # Top filter & options pane
   vg.beginPath()
   vg.rect(x, y, w, TopPad)
   vg.fillColor(lerp(ws.backgroundColor, black, 0.15))
@@ -8059,6 +8052,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     style = a.theme.dropDownStyle
   )
 
+  # Scroll view with notes
   koi.beginScrollView(x, y+TopPad, w, h-TopPad,
                       style=a.theme.notesListScrollViewStyle)
 
@@ -8073,56 +8067,48 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   var a = a
 
-  var noteTable = initTable[ItemId, (Natural, Natural, Annotation)]()
-  var foundHotItem = false
+  var noteTable = initTable[ItemId, tuple[row, col: Natural,
+                                          annotation: Annotation]]()
 
   let annotationKindFilter = ui.notesListState.noteFilterType.toAnnotationKindSet
-
-  var noteCoords = newSeqOfCap[(Natural, Natural)](l.numAnnotations())
+#[
+  var sortedNoteKeys = newSeqOfCap[ItemId](l.numAnnotations())
   for (r,c, _) in l.allNotes():
-    noteCoords.add((r, c))
+    sortedNoteKeys.add((r, c))
 
+  sortedNoteKeys.sort(
+    proc (keyA, keyB: tuple[row, col: Natural]): int =
+      let a =
+  )
+]#
 
+  const
+    NoteHorizOffs  = -8
+    NoteVertPad    = 18
+
+  vg.setFont(14, "sans-bold")
+  vg.textLineHeight(1.4)
 
   for (r,c, note) in l.allNotes():
     if note.kind in annotationKindFilter:
-      let idString = fmt"notes-list:{r}:{c}"
-      let id = hashId(idString)
+      let
+        idString = fmt"notes-list:{r}:{c}"
+        id       = hashId(idString)
+
       koi.setNextId(idString)
 
-      ui.notesListState.notesTable[id] = (r,c, note)
+      let
+        markerX    = LeftPad + NoteHorizOffs
+        textX      = markerX + TextIndent
+        textW      = w - TextIndent - LeftPad - RightPad - NoteHorizOffs
+        bounds     = vg.textBoxBounds(textX, y, textW, note.text)
+        noteHeight = bounds.y2 - bounds.y1 + NoteVertPad
 
-      vg.setFont(14, "sans-bold")
-      vg.textLineHeight(1.4)
-      let bounds = vg.textBoxBounds(
-        LeftPad + TextIndent + NotesHorizOffs,
-        y,
-        w - TextIndent - LeftPad - RightPad - NotesHorizOffs,
-        note.text
-      )
+      koi.nextRowHeight(noteHeight)
+      koi.nextItemHeight(noteHeight)
 
-      let noteHeight = bounds.y2 - bounds.y1
-
-      koi.nextRowHeight(noteHeight + 18)
-      koi.nextItemHeight(noteHeight + 18)
-
-      var moveCursorToNote = false
-
-      if noteButton(id):
-        moveCursorToNote = true
-
-      if koi.isHot(id):
-        foundHotItem = true
-        if ui.notesListState.lastHotId != id:
-          ui.notesListState.lastHotId = id
-          if koi.shiftDown():
-            moveCursorToNote = true
-
-      if moveCursorToNote:
+      if noteButton(id, textX, textY=17, textW, markerX, note):
         moveCursorTo(Location(level: ui.cursor.level, row: r, col: c), a)
-
-  if not foundHotItem:
-    ui.notesListState.lastHotId = -1
 
   koi.endScrollView()
 
