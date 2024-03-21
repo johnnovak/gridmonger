@@ -203,6 +203,7 @@ type
   Annotations* = ref object
     cols*, rows*:  Natural
     annotations*:  OrderedTable[Natural, Annotation]
+    dirty*:        bool
 
   AnnotationKind* = enum
     akComment, akIndexed, akCustomId, akIcon, akLabel

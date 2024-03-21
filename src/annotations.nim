@@ -14,6 +14,10 @@ proc newAnnotations*(rows, cols: Natural): Annotations =
   a.rows = rows
   a.cols = cols
   a.annotations = initOrderedTable[Natural, Annotation]()
+
+  # Start with dirty until cleared
+  a.dirty = true
+
   result = a
 
 # }}}
@@ -51,6 +55,7 @@ proc `[]`*(a; r,c: Natural): Option[Annotation] =
 proc `[]=`*(a; r,c: Natural, annot: Annotation) =
   let key = a.coordsToKey(r,c)
   a.annotations[key] = annot
+  a.dirty = true
 
 # }}}
 # {{{ delAnnotation*()
@@ -58,6 +63,7 @@ proc delAnnotation*(a; r,c: Natural) =
   let key = a.coordsToKey(r,c)
   if a.annotations.hasKey(key):
     a.annotations.del(key)
+  a.dirty = true
 
 # }}}
 
@@ -75,7 +81,7 @@ iterator allAnnotations*(a): tuple[row, col: Natural, annotation: Annotation] =
 # }}}
 # {{{ delAnnotations*()
 proc delAnnotations*(a; rect: Rect[Natural]) =
-  var toDel: seq[tuple[row, col: Natural]]
+  var toDel: seq[(Natural, Natural)]
 
   for r,c, _ in a.allAnnotations:
     if rect.contains(r,c):
@@ -119,6 +125,8 @@ proc reindexNotes*(a) =
   for i, k in keys:
     a.annotations[k].index = i+1
 
+  a.dirty = true
+
 # }}}
 
 # {{{ hasLabel*()
@@ -147,9 +155,9 @@ iterator allLabels*(a): tuple[row, col: Natural, annotation: Annotation] =
 
 # {{{ convertNoteToComment*()
 proc convertNoteToComment*(a; r,c: Natural) =
-  let annot = a[r,c]
-  if annot.isSome:
-    let note = annot.get
+  let note = a[r,c]
+  if note.isSome:
+    let note = note.get
     if note.kind == akLabel:
       return
 
