@@ -9970,6 +9970,7 @@ proc main() =
       let filenames = getCocoaOpenedFilenames()
       if filenames.len > 0:
         openMap(filenames[0], a)
+        a.splash.show = false
         koi.setFramesLeft()
 
     a.win.show()
