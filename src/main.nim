@@ -7646,9 +7646,6 @@ proc renderLevel(x, y, w, h: float,
 
     renderNoteTooltip(x, y, levelDrawWidth, levelDrawHeight, note.get, a)
 
-
-  a.ui.prevCursor = a.ui.cursor
-
 # }}}
 # {{{ renderEmptyMap()
 proc renderEmptyMap(a) =
@@ -8056,12 +8053,17 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.currFilter.order, style = a.theme.dropDownStyle
   )
 
+  # Determine note list dirty state
   if nls.currFilter != nls.prevFilter:
     nls.dirty = true
 
-  if l.annotations.dirty:
+  elif l.annotations.dirty:
     nls.dirty = true
     l.annotations.dirty = false
+
+  elif ui.cursor.level != ui.prevCursor.level:
+    echo "LEVEL CHANGED"
+    nls.dirty = true
 
   # Scroll view with notes
   koi.beginScrollView(x, y+TopPad, w, h-TopPad,
@@ -9221,6 +9223,8 @@ proc renderUI(a) =
     renderThemeEditorPane(x, y, w, h, a)
 
   renderDialogs(a)
+
+  a.ui.prevCursor = a.ui.cursor
 
 # }}}
 
