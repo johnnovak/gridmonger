@@ -8081,8 +8081,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   initAutoLayout(lp)
 
-  var a = a
-
   func toSortOrder(ak: AnnotationKind): int =
     case ak
     of akIndexed:  0
@@ -8173,7 +8171,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 # }}}
 # {{{ renderCommand()
 proc renderCommand(x, y: float; command: string; bgColor, textColor: Color;
-                   a): float =
+                   a: AppContext): float =
   alias(vg, a.vg)
 
   let w = vg.textWidth(command)
@@ -8829,7 +8827,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
 
 
   proc renderSection(x, y: float; items: seq[QuickRefItem];
-                     colWidth: float; a) =
+                     colWidth: float; a: AppContext) =
 
     const
       RowHeight = 24.0
@@ -8933,7 +8931,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
                       y = y + 150+yOffs,
                       w = viewWidth, h = (h - 176))
 
-  var a = a
+  let a = a
   var (sx, sy) = addDrawOffset(10, 10)
 
   const DefaultColWidth = 105.0
