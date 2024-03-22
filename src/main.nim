@@ -9228,8 +9228,8 @@ proc renderUI(a) =
 
 # }}}
 
-# {{{ renderFramePre()
-proc renderFramePre(a) =
+# {{{ renderFramePreCb()
+proc renderFramePreCb(a) =
 
   proc loadPendingTheme(themeIndex: Natural, a) =
     try:
@@ -9265,11 +9265,11 @@ proc renderFramePre(a) =
   a.updateUI = true
 
 # }}}
-# {{{ renderFrame()
+# {{{ renderFrameCb()
 
 proc closeSplash(a)
 
-proc renderFrame(a) =
+proc renderFrameCb(a) =
 
   proc displayThemeLoadedMessage(a) =
     let themeName = a.currThemeName.name
@@ -9834,9 +9834,9 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   a.updateUI = true
 
   # Init window
-  a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(g_app)
-  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
-  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
+  a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePreCb(g_app)
+  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrameCb(g_app)
+  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrameCb(g_app)
 
   a.win.dropCb = dropCb
 
