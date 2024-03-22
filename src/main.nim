@@ -19,11 +19,14 @@ import std/times
 
 import deps/with
 import glad/gl
+
 import glfw
 from glfw/wrapper import IconImageObj
+
 import koi
 import koi/undomanager
 from koi/utils as koiUtils import lerp, invLerp, remap
+
 import nanovg
 when not defined(DEBUG): import osdialog
 
@@ -2137,26 +2140,24 @@ proc exitNudgePreviewMode(a) =
 
 # }}}
 # {{{ returnToNormalMode()
-when defined(windows):
+proc returnToNormalMode(a) =
+  alias(ui, a.ui)
 
-  proc returnToNormalMode(a) =
-    alias(ui, a.ui)
+  case ui.editMode
+  of emNormal: discard
 
-    case ui.editMode
-    of emNormal: discard
+  of emMovePreview:
+    exitMovePreviewMode(a)
 
-    of emMovePreview:
-      exitMovePreviewMode(a)
+  of emNudgePreview:
+    exitNudgePreviewMode(a)
 
-    of emNudgePreview:
-      exitNudgePreviewMode(a)
+  of emSelect, emSelectDraw, emSelectErase, emSelectRect:
+    exitSelectMode(a)
 
-    of emSelect, emSelectDraw, emSelectErase, emSelectRect:
-      exitSelectMode(a)
-
-    else:
-      ui.editMode = emNormal
-      clearStatusMessage(a)
+  else:
+    ui.editMode = emNormal
+    clearStatusMessage(a)
 
 # }}}
 
@@ -5808,16 +5809,14 @@ proc openMap(a) =
     handleMapModified(a)
 
 
-when defined(windows):
+proc openMap(filename: string; a) =
+  proc doOpenMap(a) =
+    discard loadMap(filename, a)
 
-  proc openMap(filename: string; a) =
-    proc doOpenMap(a) =
-      discard loadMap(filename, a)
-
-    if a.doc.undoManager.isModified:
-      openSaveDiscardMapDialog(nextAction = doOpenMap, a)
-    else:
-      doOpenMap(a)
+  if a.doc.undoManager.isModified:
+    openSaveDiscardMapDialog(nextAction = doOpenMap, a)
+  else:
+    doOpenMap(a)
 
 # }}}
 # {{{ saveMapAs()
@@ -9844,7 +9843,6 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   a.win.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar", true)
   a.win.snapWindowToVisibleArea()
-  a.win.show()
 
 # }}}
 # {{{ cleanup()
@@ -9926,7 +9924,6 @@ proc main() =
 
     discard attachOutputToConsole()
 
-
   g_app = new AppContext
   var a = g_app
 
@@ -9945,6 +9942,14 @@ proc main() =
 
     initGfx(a)
     initApp(configFile, mapFile, winCfg, a)
+
+    when defined(macosx):
+      let filenames = getCocoaOpenedFilenames()
+      if filenames.len > 0:
+        openMap(filenames[0], a)
+        koi.setFramesLeft()
+
+    a.win.show()
 
     while not a.shouldClose:
       # Render app
@@ -10000,6 +10005,16 @@ proc main() =
               a.win.restore()
               a.win.focus()
               koi.setFramesLeft()
+
+      when defined(macosx):
+        let filenames = getCocoaOpenedFilenames()
+        if filenames.len > 0:
+          closeDialog(a)
+          returnToNormalMode(a)
+          openMap(filenames[0], a)
+#          a.win.restore()
+          a.win.focus()
+          koi.setFramesLeft()
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
