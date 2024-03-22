@@ -42,7 +42,7 @@ const sphinxDocsDir = "sphinx-docs"
 proc setCommonCompileParams() =
   if hostOS == "windows" and hostCPU == "i386":
     let mingw32BinDir = mingw32Dir / "bin"
-    put "gcc.path", mingw32BinDir
+    put "gcc.path",     mingw32BinDir
     put "gcc.cpp.path", mingw32BinDir
 
   --path:"../nim-glfw"
@@ -50,6 +50,7 @@ proc setCommonCompileParams() =
   --path:"../koi"
 
   --gc:orc
+  --threads:on
   --deepcopy:on
   --d:nimPreviewFloatRoundtrip
   --d:nvgGL3
