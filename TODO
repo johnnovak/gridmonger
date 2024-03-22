@@ -28,17 +28,10 @@ TODO
 
   ----
 
-  - allow pasting with negative offsets
-
   - option to use Cmd key on macOS (selectable at runtime)
 
   - OS X:
     - gridmonger document icon
-
-  - list all notes pane on the left:
-    - filter by note type (none, number, ID, icon -- each category can be toggled)
-    - show all notes, or only for the current level
-	- sort by level elevation or note name
 
 
 FEATURE & ENHANCEMENT IDEAS
