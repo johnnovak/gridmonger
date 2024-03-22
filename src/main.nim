@@ -858,6 +858,9 @@ type
     sectionNotesPane:        bool
     sectionToolbarPane:      bool
 
+    focusCaptured:           bool
+
+
 
   QuickRef = object
     activeTab:    Natural
@@ -8668,8 +8671,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 # }}}
 # {{{ renderThemeEditorPane()
 
-var g_themeEditorPropsFocusCaptured: bool
-
 proc renderThemeEditorPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
 
@@ -8801,11 +8802,11 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   # XXX hack to enable theme editing while a dialog is open
   let fc = koi.focusCaptured()
-  koi.setFocusCaptured(g_themeEditorPropsFocusCaptured)
+  koi.setFocusCaptured(a.themeEditor.focusCaptured)
 
   renderThemeEditorProps(x+1, y+topSectionHeight, w-2, h=propsHeight, a)
 
-  g_themeEditorPropsFocusCaptured = koi.focusCaptured()
+  a.themeEditor.focusCaptured = koi.focusCaptured()
   koi.setFocusCaptured(fc)
 
   a.theme.updateTheme = true
