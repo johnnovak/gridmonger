@@ -515,8 +515,13 @@ type
     currFilter:     NotesListFilter
     prevFilter:     NotesListFilter
     linkCursor:     bool
-    sortedNoteKeys: seq[tuple[row, col: Natural]]
+    cache:          seq[NotesListCacheEntry]
     dirty:          bool
+
+  NotesListCacheEntry = object
+    id:             ItemId
+    row, col:       Natural
+    height:         float
 
   NotesListFilter = object
     typeFilter:     seq[NoteTypeFilter]
@@ -7968,6 +7973,7 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
   let
     (x, y) = addDrawOffset(x=koi.autoLayoutNextX(),
                            y=koi.autoLayoutNextY())
+
     w = koi.autoLayoutNextItemWidth()
     h = koi.autoLayoutNextItemHeight()
 
@@ -8010,6 +8016,36 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
   koi.autoLayoutPost()
 
 
+func toSortOrder(ak: AnnotationKind): int =
+  case ak
+  of akIndexed:  0
+  of akCustomId: 1
+  of akIcon:     2
+  of akComment:  3
+  of akLabel:    4
+
+func sortByNoteType(a, b: Annotation): int =
+  var c = 0
+  if a.kind == b.kind:
+    case a.kind:
+    of akComment, akLabel: discard
+    of akIndexed:
+      c   = cmp(a.index,    b.index);    if c != 0: return c
+    of akCustomId:
+      c   = cmp(a.customId, b.customId); if c != 0: return c
+    of akIcon:
+      c   = cmp(a.icon,     b.icon);     if c != 0: return c
+    return 0
+  else:
+    cmp(a.kind.toSortOrder, b.kind.toSortOrder)
+
+func sortByTextAndLocation(locA: tuple[row, col: Natural], a: Annotation,
+                           locB: tuple[row, col: Natural], b: Annotation): int =
+  var c = cmpIgnoreCase(a.text, b.text); if c != 0: return c
+  c     = cmp(locA.row, locB.row);       if c != 0: return c
+  return  cmp(locA.col, locB.col)
+
+
 proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
@@ -8017,7 +8053,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   let
     ws = a.theme.windowTheme
-    s  = a.theme.notesPaneTheme
     l  = currLevel(a)
 
   const
@@ -8081,90 +8116,72 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   initAutoLayout(lp)
 
-  func toSortOrder(ak: AnnotationKind): int =
-    case ak
-    of akIndexed:  0
-    of akCustomId: 1
-    of akIcon:     2
-    of akComment:  3
-    of akLabel:    4
+  const
+    NoteHorizOffs  = -8
+    NoteVertPad    = 18
 
-  func sortByNoteType(a, b: Annotation): int =
-    var c = 0
-    if a.kind == b.kind:
-      case a.kind:
-      of akComment, akLabel: discard
-      of akIndexed:
-        c   = cmp(a.index,    b.index);    if c != 0: return c
-      of akCustomId:
-        c   = cmp(a.customId, b.customId); if c != 0: return c
-      of akIcon:
-        c   = cmp(a.icon,     b.icon);     if c != 0: return c
-      return 0
-    else:
-      cmp(a.kind.toSortOrder, b.kind.toSortOrder)
+  let
+    markerX = LeftPad + NoteHorizOffs
+    textX   = markerX + TextIndent
+    textW   = w - TextIndent - LeftPad - RightPad - NoteHorizOffs
 
-  func sortByTextAndLocation(keyA, keyB: tuple[row, col: Natural];
-                             a, b: Annotation): int =
-    var c = cmpIgnoreCase(a.text, b.text); if c != 0: return c
-    c     = cmp(keyA.row, keyB.row);       if c != 0: return c
-    return  cmp(keyA.col, keyB.col)
+  template setFont() =
+    vg.setFont(14, "sans-bold")
+    vg.textLineHeight(1.4)
 
-  func sortByTextLocationType(keyA, keyB: tuple[row, col: Natural]): int =
-    let a = l.getNote(keyA.row, keyA.col).get
-    let b = l.getNote(keyB.row, keyB.col).get
-    var c = sortByTextAndLocation(keyA, keyB, a, b)
+  func sortByTextLocationType(a, b: NotesListCacheEntry): int =
+    let noteA = l.getNote(a.row, b.col).get
+    let noteB = l.getNote(a.row, b.col).get
+    var c = sortByTextAndLocation((a.row, a.col), noteA,
+                                  (b.row, b.col), noteB)
     if c != 0: return c
-    sortByNoteType(a, b)
+    sortByNoteType(noteA, noteB)
 
-  func sortByTypeTextLocation(keyA, keyB: tuple[row, col: Natural]): int =
-    let a = l.getNote(keyA.row, keyA.col).get
-    let b = l.getNote(keyB.row, keyB.col).get
-    var c = sortByNoteType(a, b)
+  func sortByTypeTextLocation(a, b: NotesListCacheEntry): int =
+    let noteA = l.getNote(a.row, a.col).get
+    let noteB = l.getNote(b.row, b.col).get
+    var c = sortByNoteType(noteA, noteB)
     if c != 0: return c
-    sortByTextAndLocation(keyA, keyB, a, b)
+    sortByTextAndLocation((a.row, a.col), noteA,
+                          (b.row, b.col), noteB)
 
   if nls.dirty:
     echo "DIRTY"
     let annotationKindFilter = nls.currFilter.typeFilter.toAnnotationKindSet
 
-    nls.sortedNoteKeys = newSeqOfCap[(Natural, Natural)](l.numAnnotations())
+    setFont()
+
+    nls.cache = newSeqOfCap[NotesListCacheEntry](l.numAnnotations())
     for (r,c, note) in l.allNotes():
       if note.kind in annotationKindFilter:
-        nls.sortedNoteKeys.add((r, c))
+        let
+          idString   = fmt"notes-list:{r}:{c}"
+          id         = hashId(idString)
+          textBounds = vg.textBoxBounds(textX, y, textW, note.text)
+          height     = textBounds.y2 - textBounds.y1 + NoteVertPad
+
+        nls.cache.add(
+          NotesListCacheEntry(id: id, row: r, col: c, height: height)
+        )
 
     case nls.currFilter.order
-    of nfoType: nls.sortedNoteKeys.sort(sortByTypeTextLocation)
-    of nfoText: nls.sortedNoteKeys.sort(sortByTextLocationType)
+    of nfoType: nls.cache.sort(sortByTypeTextLocation)
+    of nfoText: nls.cache.sort(sortByTextLocationType)
 
     nls.prevFilter = nls.currFilter
     nls.dirty = false
 
-  const
-    NoteHorizOffs  = -8
-    NoteVertPad    = 18
 
-  vg.setFont(14, "sans-bold")
-  vg.textLineHeight(1.4)
+  setFont()
 
-  for (r,c) in nls.sortedNoteKeys:
-    let note = l.getNote(r, c).get
-    let
-      idString = fmt"notes-list:{r}:{c}"
-      id = hashId(idString)
+  for e in nls.cache:
+    let note = l.getNote(e.row, e.col).get
 
-    let
-      markerX    = LeftPad + NoteHorizOffs
-      textX      = markerX + TextIndent
-      textW      = w - TextIndent - LeftPad - RightPad - NoteHorizOffs
-      bounds     = vg.textBoxBounds(textX, y, textW, note.text)
-      noteHeight = bounds.y2 - bounds.y1 + NoteVertPad
+    koi.nextRowHeight(e.height)
+    koi.nextItemHeight(e.height)
 
-    koi.nextRowHeight(noteHeight)
-    koi.nextItemHeight(noteHeight)
-
-    if noteButton(id, textX, textY=17, textW, markerX, note):
-      moveCursorTo(Location(level: ui.cursor.level, row: r, col: c), a)
+    if noteButton(e.id, textX, textY=17, textW, markerX, note):
+      moveCursorTo(Location(level: ui.cursor.level, row: e.row, col: e.col), a)
 
   koi.endScrollView()
 
@@ -9947,7 +9964,7 @@ proc main() =
     discard attachOutputToConsole()
 
   g_app = new AppContext
-  var a = g_app
+  alias(a, g_app)
 
   a.doc.lastAutosaveTime = getMonoTime()
 
