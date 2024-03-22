@@ -9747,6 +9747,25 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
       col   = uiCfg.getNaturalOrDefault("cursor.column", 0)
 
 # }}}
+
+# {{{ handleOpenFileEvent()
+proc handleOpenFileEvent(path: string; a) =
+  closeDialog(a)
+  returnToNormalMode(a)
+  openMap(path, a)
+  a.win.restore()
+  a.win.focus()
+  koi.setFramesLeft()
+
+# }}}
+# {{{ dropCb()
+proc dropCb(window: Window, paths: PathDropInfo) =
+  if paths.len > 0:
+    let path = paths.items.toSeq[0]
+    handleOpenFileEvent($path, g_app)
+
+# }}}
+
 # {{{ initApp()
 proc initApp(configFile: Option[string], mapFile: Option[string],
              winCfg: HoconNode; a) =
@@ -9814,6 +9833,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePre(g_app)
   a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
   a.win.renderFrameCb = proc (win: CSDWindow) = renderFrame(g_app)
+
+  a.win.dropCb = dropCb
 
   # Set window size & position
   let mergedWinCfg = cfg.getObjectOrEmpty("last-state.window")
@@ -9997,22 +10018,12 @@ proc main() =
               koi.setFramesLeft()
 
             of mkOpenFile:
-              closeDialog(a)
-              returnToNormalMode(a)
-              openMap(msg.filename, a)
-              a.win.restore()
-              a.win.focus()
-              koi.setFramesLeft()
+              handleOpenFileEvent(filenames[0], a)
 
-      when defined(macosx):
+      elif defined(macosx):
         let filenames = getCocoaOpenedFilenames()
         if filenames.len > 0:
-          closeDialog(a)
-          returnToNormalMode(a)
-          openMap(filenames[0], a)
-#          a.win.restore()
-          a.win.focus()
-          koi.setFramesLeft()
+          handleOpenFileEvent(filenames[0], a)
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():

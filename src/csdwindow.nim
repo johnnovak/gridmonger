@@ -135,6 +135,9 @@ proc `shouldClose=`*(win; state: bool) =
 proc maximized*(win): bool =
   win.maximized
 
+proc `dropCb=`*(win; f: DropCb) =
+  win.w.dropCb = f
+
 # }}}
 # {{{ rect()
 proc rect(win): Rect[int] =
@@ -601,6 +604,7 @@ proc `renderFramePreCb=`*(win; p: RenderFramePreProc) =
 proc `renderFrameCb=`*(win; p: RenderFrameProc) =
   g_window = win
   g_renderFrameProc = p
+
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
