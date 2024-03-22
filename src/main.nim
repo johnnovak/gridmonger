@@ -16,6 +16,7 @@ import std/strformat
 import std/strutils
 import std/tables
 import std/times
+import std/typedthreads
 
 import deps/with
 import glad/gl
@@ -9796,7 +9797,8 @@ proc handleOpenFileEvent(path: string; a) =
   closeDialog(a)
   returnToNormalMode(a)
   openMap(path, a)
-  a.win.restore()
+  # TODO not needed on macOS at least
+#  a.win.restore()
   a.win.focus()
   koi.setFramesLeft()
 
@@ -9968,6 +9970,27 @@ when not defined(DEBUG):
 
 # }}}
 
+
+var th: Thread[void]
+
+type ThreadData = object
+  running: bool
+  filenames: seq[string]
+  ready: bool
+
+var g_threadData: ptr ThreadData
+
+proc threadFunc() {.thread.} =
+  while g_threadData.running:
+    if not g_threadData.ready:
+      let filenames = getCocoaOpenedFilenames()
+      if filenames.len > 0:
+        g_threadData.filenames = filenames
+        g_threadData.ready = true
+        postEmptyEvent()
+    sleep(100)
+
+
 # {{{ main()
 proc main() =
 
@@ -10014,6 +10037,11 @@ proc main() =
 
     a.win.show()
 
+    g_threadData = cast[ptr ThreadData](alloc0(sizeof(ThreadData)))
+    g_threadData.running = true
+
+    createThread(th, threadFunc)
+
     while not a.shouldClose:
       # Render app
       glfw.makeContextCurrent(a.win.glfwWin)
@@ -10057,7 +10085,8 @@ proc main() =
             let msg = msg.get
             case msg.kind
             of mkFocus:
-              a.win.restore()
+              # TODO not needed on macOS at least
+#              a.win.restore()
               a.win.focus()
               koi.setFramesLeft()
 
@@ -10065,24 +10094,26 @@ proc main() =
               handleOpenFileEvent(filenames[0], a)
 
       elif defined(macosx):
-        let filenames = getCocoaOpenedFilenames()
-        if filenames.len > 0:
-          handleOpenFileEvent(filenames[0], a)
+        if g_threadData.ready:
+          let filenames = g_threadData.filenames
+          if filenames.len > 0:
+            handleOpenFileEvent(filenames[0], a)
+            g_threadData.ready = false
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
-        when defined(windows):
-          glfw.waitEventsTimeout(0.2)
-        else:
-          glfw.waitEvents()
+        glfw.waitEvents()
 
     cleanup(a)
 
   except CatchableError as e:
     when defined(DEBUG): raise e
     else: crashHandler(e, a)
+
+  g_threadData.running = false
+  joinThread(th)
 
 # }}}
 
