@@ -8150,8 +8150,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       idString = fmt"notes-list:{r}:{c}"
       id = hashId(idString)
 
-    koi.setNextId(idString)
-
     let
       markerX    = LeftPad + NoteHorizOffs
       textX      = markerX + TextIndent
