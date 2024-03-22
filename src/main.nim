@@ -176,7 +176,7 @@ const
   ]
 
 # }}}
-# {{{ AppShortCut
+# {{{ AppShortcut
 
 type AppShortcut = enum
   # General
@@ -419,7 +419,7 @@ type
 
 
   UIState = object
-    shortcuts:          Table[AppShortCut, seq[KeyShortcut]]
+    shortcuts:          Table[AppShortcut, seq[KeyShortcut]]
     quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
     status:             StatusMessage
     notesListState:     NotesListState
@@ -1398,7 +1398,7 @@ let DefaultAppShortcuts = {
 # }}}
 
 # {{{ makeYubnAppShortcuts()
-proc mkYubnAppShortcuts(): Table[AppShortCut, seq[KeyShortcut]] =
+proc mkYubnAppShortcuts(): Table[AppShortcut, seq[KeyShortcut]] =
   var sc = DefaultAppShortcuts
 
   # remove keyY mappings
