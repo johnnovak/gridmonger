@@ -20,6 +20,9 @@
 - The [user manual](https://gridmonger.johnnovak.net/manual/contents.html) is
   now searchable (works in the offline documentation too, but only page titles
   are displayed in the search results).
+- You can now load map files by drag & dropping their icons onto the program
+  window or taskbar icon.
+- macOS: Support for opening map files from the Finder.
 
 ### Enhancements
 
@@ -30,6 +33,8 @@
 - Turn off *Trail Mode* automatically in more scenarios that would result in
   confusing or unwanted behaviour.
 - Restoring the window size and position on startup is now more robust.
+- Idle perfomance has been improved; CPU and GPU utilisation is now close to
+  zero if there is no user input.
 - The user manual has been overhauled for improved wording and clarity.
 - Minor improvements to some of the bundled themes.
 
