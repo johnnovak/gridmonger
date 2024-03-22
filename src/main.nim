@@ -327,22 +327,7 @@ type AppShortcut = enum
   scToggleQuickReference
 
 # }}}
-# {{{ QuickRefItem
-type
-  QuickRefItemKind = enum
-    qkShortcut, qkKeyShortcuts, qkCustomShortcuts, qkDescription, qkSeparator
-
-  QuickRefItem = object
-    sepa: char
-    case kind: QuickRefItemKind
-    of qkShortcut:        shortcut:        AppShortcut
-    of qkKeyShortcuts:    keyShortcuts:    seq[KeyShortcut]
-    of qkCustomShortcuts: customShortcuts: seq[string]
-    of qkDescription:     description:     string
-    of qkSeparator:      discard
-
-# }}}
-# {{{ App context
+# {{{ AppContext
 
 type
   AppContext = ref object
@@ -866,7 +851,6 @@ type
     focusCaptured:           bool
 
 
-
   QuickRef = object
     activeTab:    Natural
 
@@ -901,6 +885,19 @@ type
     updateLogoImage:  bool
 
 
+  QuickRefItemKind = enum
+    qkShortcut, qkKeyShortcuts, qkCustomShortcuts, qkDescription, qkSeparator
+
+  QuickRefItem = object
+    sepa: char
+    case kind: QuickRefItemKind
+    of qkShortcut:        shortcut:        AppShortcut
+    of qkKeyShortcuts:    keyShortcuts:    seq[KeyShortcut]
+    of qkCustomShortcuts: customShortcuts: seq[string]
+    of qkDescription:     description:     string
+    of qkSeparator:      discard
+
+
 var g_app: AppContext
 
 using a: var AppContext
@@ -930,7 +927,7 @@ proc desc(s: string): QuickRefItem =
 
 const QuickRefSepa = QuickRefItem(kind: qkSeparator)
 
-# {{{ General
+# {{{ mkQuickRefGeneral()
 func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
   @[
     @[
@@ -982,7 +979,7 @@ func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
   ]
 
 # }}}
-# {{{ Editing
+# {{{ mkQuickRefEditing()
 func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
   @[
     @[
@@ -1076,7 +1073,7 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
   ]
 
 # }}}
-# {{{ Dialogs
+# {{{ mkQuickRefDialogs()
 func mkQuickRefDialogs(a): seq[seq[QuickRefItem]] =
   @[
     @[
@@ -1560,7 +1557,6 @@ proc logError(e: ref Exception, msgPrefix: string = "") =
 # }}}
 
 # }}}
-
 # {{{ UI helpers
 
 # {{{ viewRow()
@@ -2121,7 +2117,6 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 # }}}
 
 # {{{ exitMovePreviewMode()
-#
 proc undoAction(a)
 
 proc exitMovePreviewMode(a) =
@@ -2294,6 +2289,7 @@ proc isShortcutUp(ev: Event, shortcut: AppShortcut; a): bool =
   isShortcutUp(ev, {shortcut}, a)
 
 # }}}
+
 # }}}
 
 # {{{ Theme handling
@@ -2779,7 +2775,6 @@ proc updateTheme(a) =
                                            koi.getPxRatio())
 
 # }}}
-
 # {{{ switchTheme()
 proc switchTheme(themeIndex: Natural; a) =
   let theme = a.theme.themeNames[themeIndex]
@@ -2830,7 +2825,6 @@ proc saveAppConfig(cfg: HoconNode, filename: string) =
 
 # }}}
 # {{{ saveAppConfig()
-
 proc saveAppConfig(a) =
   alias(dp, a.ui.drawLevelParams)
 
@@ -3493,6 +3487,7 @@ proc closeDialog(a) =
 # }}}
 
 # {{{ About dialog
+
 proc openAboutDialog(a) =
   a.dialogs.activeDialog = dlgAboutDialog
 
@@ -3587,6 +3582,7 @@ proc aboutDialog(a) =
 
 # }}}
 # {{{ Preferences dialog
+
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialogs.preferencesDialog)
 
@@ -3797,6 +3793,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
 # }}}
 # {{{ Save/discard map changes dialog
+
 proc openSaveDiscardMapDialog(nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.saveDiscardMapDialog)
   dlg.nextAction = nextAction
@@ -3875,6 +3872,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
 # }}}
 
 # {{{ New map dialog
+
 proc openNewMapDialog(a) =
   alias(dlg, a.dialogs.newMapDialog)
 
@@ -4010,6 +4008,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
 # }}}
 # {{{ Edit map properties dialog
+
 proc openEditMapPropsDialog(a) =
   alias(dlg, a.dialogs.editMapPropsDialog)
   alias(map, a.doc.map)
@@ -4139,6 +4138,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 # }}}
 
 # {{{ New level dialog
+
 proc openNewLevelDialog(a) =
   alias(dlg, a.dialogs.newLevelDialog)
 
@@ -4328,6 +4328,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
 
 # }}}
 # {{{ Edit level properties dialog
+
 proc openEditLevelPropsDialog(a) =
   alias(dlg, a.dialogs.editLevelPropsDialog)
 
@@ -4495,6 +4496,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
 
 # }}}
 # {{{ Resize level dialog
+
 proc openResizeLevelDialog(a) =
   alias(dlg, a.dialogs.resizeLevelDialog)
 
@@ -4634,6 +4636,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
 # }}}
 # {{{ Delete level dialog
+
 proc openDeleteLevelDialog(a) =
   a.dialogs.activeDialog = dlgDeleteLevelDialog
 
@@ -4701,6 +4704,7 @@ proc deleteLevelDialog(a) =
 # }}}
 
 # {{{ Edit note dialog
+
 proc openEditNoteDialog(a) =
   alias(dlg, a.dialogs.editNoteDialog)
 
@@ -4919,6 +4923,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
 # }}}
 # {{{ Edit label dialog
+
 proc openEditLabelDialog(a) =
   alias(dlg, a.dialogs.editLabelDialog)
 
@@ -5053,6 +5058,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 # }}}
 
 # {{{ Edit region properties dialog
+
 proc openEditRegionPropertiesDialog(a) =
   alias(dlg, a.dialogs.editRegionPropsDialog)
 
@@ -5179,6 +5185,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 # }}}
 
 # {{{ Save/discard theme changes dialog
+
 proc openSaveDiscardThemeDialog(nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.saveDiscardThemeDialog)
   dlg.nextAction = nextAction
@@ -5254,6 +5261,7 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
 
 # }}}
 # {{{ Overwrite theme dialog
+
 proc openOverwriteThemeDialog(themeName: string,
                               nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.overwriteThemeDialog)
@@ -5668,6 +5676,7 @@ proc redoAction(a) =
                      fmt"Redid action: {undoStateData.actionName}", a)
   else:
     setWarningMessage("Nothing to redo", a=a)
+
 # }}}
 
 # {{{ setFloorAction()
@@ -5775,6 +5784,7 @@ proc setDrawSpecialWallActionRepeatMessage(a) =
 
 # }}}
 # {{{ Non-undoable actions
+
 # {{{ openUserManual()
 proc openUserManual(a) =
   openDefaultBrowser(a.paths.manualDir / "index.html")
@@ -5907,7 +5917,6 @@ proc selectNextLevel(a) =
     setCursor(cur, a)
 
 # }}}
-
 # {{{ centerCursorAfterZoom()
 proc centerCursorAfterZoom(a) =
   alias(dp, a.ui.drawLevelParams)
@@ -5938,7 +5947,6 @@ proc selectSpecialWall(index: Natural; a) =
   a.ui.currSpecialWall = index
 
 # }}}
-
 # {{{ selectPrevFloorColor()
 proc selectPrevFloorColor(a) =
   if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
@@ -7489,6 +7497,116 @@ proc handleQuickRefKeyEvents(a) =
 
 # {{{ Rendering
 
+# {{{ Level
+
+# {{{ renderLevelDropdown()
+proc renderLevelDropdown(a) =
+  alias(ui, a.ui)
+  alias(vg, a.vg)
+  alias(map, a.doc.map)
+
+  let
+    mainPane   = mainPaneRect(a)
+    levelNames = map.sortedLevelNames
+
+  var sortedLevelIdx = currSortedLevelIdx(a)
+  let prevSortedLevelIdx = sortedLevelIdx
+
+  vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
+
+  # Level drop-down
+  let levelDropDownWidth = round(
+    vg.textWidth(levelNames[sortedLevelIdx]) +
+    a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
+  )
+
+  koi.dropDown(
+    x = round(mainPane.w - levelDropDownWidth) * 0.5,
+    y = 19.0,
+    w = levelDropDownWidth,
+    h = 24.0,
+    levelNames,
+    sortedLevelIdx,
+    tooltip = "",
+    disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+    style = a.theme.levelDropDownStyle
+  )
+
+  if sortedLevelIdx != prevSortedLevelIdx:
+    var cur = ui.cursor
+    cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+    setCursor(cur, a)
+
+# }}}
+# {{{ renderRegionDropDown()
+proc renderRegionDropDown(a) =
+  alias(ui, a.ui)
+
+  let
+    l = currLevel(a)
+    currRegion = currRegion(a)
+    mainPane = mainPaneRect(a)
+
+  if currRegion.isSome:
+    var sortedRegionNames = l.regionNames()
+    sort(sortedRegionNames)
+
+    let currRegionName = currRegion.get.name
+    var sortedRegionIdx = sortedRegionNames.find(currRegionName)
+    let prevSortedRegionIdx = sortedRegionIdx
+
+    let regionDropDownWidth = round(
+      a.vg.textWidth(currRegionName) +
+      a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
+    )
+
+    koi.dropDown(
+      x = round(mainPane.x1 + (mainPane.w - regionDropDownWidth) * 0.5),
+      y = 73.0,
+      w = regionDropDownWidth,
+      h = 24.0,
+      sortedRegionNames,
+      sortedRegionIdx,
+      tooltip = "",
+      disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+      style = a.theme.levelDropDownStyle
+    )
+
+    if sortedRegionIdx != prevSortedRegionIdx :
+      let currRegionName = sortedRegionNames[sortedRegionIdx]
+      let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
+
+      let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.level,
+                                                     regionCoords)
+
+      centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
+
+# }}}
+# {{{ renderModeAndOptionIndicators()
+proc renderModeAndOptionIndicators(x, y: float; a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+
+  let lt = a.theme.levelTheme
+
+  vg.save()
+
+  vg.fillColor(lt.coordinatesHighlightColor)
+
+  var x = x
+
+  if a.opts.wasdMode:
+    vg.setFont(15, "sans-bold")
+    discard vg.text(x, y, fmt"WASD+{IconMouse}")
+    x += 80
+
+  if a.opts.drawTrail:
+    vg.setFont(19, "sans-bold")
+    discard vg.text(x, y+1, IconShoePrints)
+
+  vg.restore()
+
+# }}}
 # {{{ renderNoteTooltip()
 proc renderNoteTooltip(x, y: float, levelDrawWidth, levelDrawHeight: float,
                        note: Annotation, a) =
@@ -7547,6 +7665,7 @@ proc renderNoteTooltip(x, y: float, levelDrawWidth, levelDrawHeight: float,
     vg.textBox(textX, textY, breakWidth, note.text)
 
 # }}}
+
 # {{{ renderLevel()
 proc renderLevel(x, y, w, h: float,
                  levelDrawWidth, levelDrawHeight: float; a) =
@@ -7670,33 +7789,9 @@ proc renderEmptyMap(a) =
   discard vg.text(mainPane.x1 + mainPane.w.float * 0.5, y, "Empty map")
 
 # }}}
-# {{{ renderModeAndOptionIndicators()
-proc renderModeAndOptionIndicators(x, y: float; a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-
-  let lt = a.theme.levelTheme
-
-  vg.save()
-
-  vg.fillColor(lt.coordinatesHighlightColor)
-
-  var x = x
-
-  if a.opts.wasdMode:
-    vg.setFont(15, "sans-bold")
-    discard vg.text(x, y, fmt"WASD+{IconMouse}")
-    x += 80
-
-  if a.opts.drawTrail:
-    vg.setFont(19, "sans-bold")
-    discard vg.text(x, y+1, IconShoePrints)
-
-  vg.restore()
 
 # }}}
-
-# {{{ renderToolsPane()
+# {{{ Tools pane
 
 # {{{ specialWallDrawProc()
 proc specialWallDrawProc(lt: LevelTheme,
@@ -7794,7 +7889,7 @@ proc specialWallDrawProc(lt: LevelTheme,
     dp.backgroundImage = savedBackgroundImage
 
 # }}}
-
+# {{{ renderToolsPane()
 proc renderToolsPane(x, y, w, h: float; a) =
   alias(ui, a.ui)
   alias(lt, a.theme.levelTheme)
@@ -7826,7 +7921,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     colorX += 3
     colorY -= 210
 
-  # Draw special walls
+  # Special walls
   koi.radioButtons(
     x = toolX,
     y = y,
@@ -7843,7 +7938,7 @@ proc renderToolsPane(x, y, w, h: float; a) =
     ).some
   )
 
-  # Draw floor colors
+  # Floor colours
   var floorColors = newSeqOfCap[Color](lt.floorBackgroundColor.len)
 
   for fc in 0..lt.floorBackgroundColor.high:
@@ -7866,6 +7961,10 @@ proc renderToolsPane(x, y, w, h: float; a) =
   )
 
 # }}}
+
+# }}}
+# {{{ Note panes
+
 # {{{ renderIndexedNote()
 proc renderIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
                        shape: NoteBackgroundShape; index: Natural; a) =
@@ -7963,7 +8062,38 @@ proc toAnnotationKindSet(filter: seq[NoteTypeFilter]): set[AnnotationKind] =
     of nftId:     result.incl(akCustomId)
     of nftIcon:   result.incl(akIcon)
 
+# {{{ Note sort functions
+func toSortOrder(ak: AnnotationKind): int =
+  case ak
+  of akIndexed:  0
+  of akCustomId: 1
+  of akIcon:     2
+  of akComment:  3
+  of akLabel:    4
 
+func sortByNoteType(a, b: Annotation): int =
+  var c = 0
+  if a.kind == b.kind:
+    case a.kind:
+    of akComment, akLabel: discard
+    of akIndexed:
+      c   = cmp(a.index,    b.index);    if c != 0: return c
+    of akCustomId:
+      c   = cmp(a.customId, b.customId); if c != 0: return c
+    of akIcon:
+      c   = cmp(a.icon,     b.icon);     if c != 0: return c
+    return 0
+  else:
+    cmp(a.kind.toSortOrder, b.kind.toSortOrder)
+
+func sortByTextAndLocation(locA: tuple[row, col: Natural], a: Annotation,
+                           locB: tuple[row, col: Natural], b: Annotation): int =
+  var c = cmpIgnoreCase(a.text, b.text); if c != 0: return c
+  c     = cmp(locA.row, locB.row);       if c != 0: return c
+  return  cmp(locA.col, locB.col)
+
+# }}}
+# {{{ noteButton()
 proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
                 note: Annotation): bool =
   alias(ui, g_app.ui)
@@ -8015,37 +8145,9 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
 
   koi.autoLayoutPost()
 
+# }}}
 
-func toSortOrder(ak: AnnotationKind): int =
-  case ak
-  of akIndexed:  0
-  of akCustomId: 1
-  of akIcon:     2
-  of akComment:  3
-  of akLabel:    4
-
-func sortByNoteType(a, b: Annotation): int =
-  var c = 0
-  if a.kind == b.kind:
-    case a.kind:
-    of akComment, akLabel: discard
-    of akIndexed:
-      c   = cmp(a.index,    b.index);    if c != 0: return c
-    of akCustomId:
-      c   = cmp(a.customId, b.customId); if c != 0: return c
-    of akIcon:
-      c   = cmp(a.icon,     b.icon);     if c != 0: return c
-    return 0
-  else:
-    cmp(a.kind.toSortOrder, b.kind.toSortOrder)
-
-func sortByTextAndLocation(locA: tuple[row, col: Natural], a: Annotation,
-                           locB: tuple[row, col: Natural], b: Annotation): int =
-  var c = cmpIgnoreCase(a.text, b.text); if c != 0: return c
-  c     = cmp(locA.row, locB.row);       if c != 0: return c
-  return  cmp(locA.col, locB.col)
-
-
+# {{{ renderNotesListPane()
 proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
@@ -8100,21 +8202,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     l.annotations.dirty = false
 
   elif ui.cursor.level != ui.prevCursor.level:
-    echo "LEVEL CHANGED"
     nls.dirty = true
 
-  # Scroll view with notes
-  koi.beginScrollView(x, y+TopPad, w, h-TopPad,
-                      style=a.theme.notesListScrollViewStyle)
-
-  var lp = DefaultAutoLayoutParams
-  lp.itemsPerRow = 1
-  lp.rowWidth    = w
-  lp.rowPad      = 0
-  lp.labelWidth  = w
-  lp.leftPad     = 0
-
-  initAutoLayout(lp)
 
   const
     NoteHorizOffs  = -8
@@ -8129,24 +8218,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     vg.setFont(14, "sans-bold")
     vg.textLineHeight(1.4)
 
-  func sortByTextLocationType(a, b: NotesListCacheEntry): int =
-    let noteA = l.getNote(a.row, b.col).get
-    let noteB = l.getNote(a.row, b.col).get
-    var c = sortByTextAndLocation((a.row, a.col), noteA,
-                                  (b.row, b.col), noteB)
-    if c != 0: return c
-    sortByNoteType(noteA, noteB)
-
-  func sortByTypeTextLocation(a, b: NotesListCacheEntry): int =
-    let noteA = l.getNote(a.row, a.col).get
-    let noteB = l.getNote(b.row, b.col).get
-    var c = sortByNoteType(noteA, noteB)
-    if c != 0: return c
-    sortByTextAndLocation((a.row, a.col), noteA,
-                          (b.row, b.col), noteB)
-
+  # Refresh cache if needed
   if nls.dirty:
-    echo "DIRTY"
     let annotationKindFilter = nls.currFilter.typeFilter.toAnnotationKindSet
 
     setFont()
@@ -8164,6 +8237,22 @@ proc renderNotesListPane(x, y, w, h: float; a) =
           NotesListCacheEntry(id: id, row: r, col: c, height: height)
         )
 
+    func sortByTextLocationType(a, b: NotesListCacheEntry): int =
+      let noteA = l.getNote(a.row, b.col).get
+      let noteB = l.getNote(a.row, b.col).get
+      var c = sortByTextAndLocation((a.row, a.col), noteA,
+                                    (b.row, b.col), noteB)
+      if c != 0: return c
+      sortByNoteType(noteA, noteB)
+
+    func sortByTypeTextLocation(a, b: NotesListCacheEntry): int =
+      let noteA = l.getNote(a.row, a.col).get
+      let noteB = l.getNote(b.row, b.col).get
+      var c = sortByNoteType(noteA, noteB)
+      if c != 0: return c
+      sortByTextAndLocation((a.row, a.col), noteA,
+                            (b.row, b.col), noteB)
+
     case nls.currFilter.order
     of nfoType: nls.cache.sort(sortByTypeTextLocation)
     of nfoText: nls.cache.sort(sortByTextLocationType)
@@ -8171,7 +8260,20 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.prevFilter = nls.currFilter
     nls.dirty = false
 
+  # Scroll view with notes
+  koi.beginScrollView(x, y+TopPad, w, h-TopPad,
+                      style=a.theme.notesListScrollViewStyle)
 
+  var lp = DefaultAutoLayoutParams
+  lp.itemsPerRow = 1
+  lp.rowWidth    = w
+  lp.rowPad      = 0
+  lp.labelWidth  = w
+  lp.leftPad     = 0
+
+  initAutoLayout(lp)
+
+  # Render note buttons
   setFont()
 
   for e in nls.cache:
@@ -8186,121 +8288,10 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   koi.endScrollView()
 
 # }}}
-# {{{ renderCommand()
-proc renderCommand(x, y: float; command: string; bgColor, textColor: Color;
-                   a: AppContext): float =
-  alias(vg, a.vg)
-
-  let w = vg.textWidth(command)
-  let (x, y) = (round(x), round(y))
-
-  vg.beginPath()
-  vg.roundedRect(x, y-10, w+10, 18, 3)
-  vg.fillColor(bgColor)
-  vg.fill()
-
-  vg.fillColor(textColor)
-  discard vg.text(x+5, y, command)
-
-  result = w
-
-
-proc renderCommand(x, y: float; command: string; a): float =
-  let s = a.theme.statusBarTheme
-
-  renderCommand(x, y, command,
-                bgColor=s.commandBackgroundColor, textColor=s.commandTextColor,
-                a)
-
-# }}}
-# {{{ renderStatusBar()
-proc renderStatusBar(x, y, w, h: float; a) =
-  alias(vg, a.vg)
-  alias(status, a.ui.status)
-
-  let s = a.theme.statusBarTheme
-
-  let ty = h * TextVertAlignFactor
-
-  # Bar background
-  vg.save()
-  vg.translate(x, y)
-
-  vg.beginPath()
-  vg.rect(0, 0, w, h)
-  vg.fillColor(s.backgroundColor)
-  vg.fill()
-
-  # Display cursor coordinates
-  vg.setFont(14, "sans-bold")
-
-  if a.doc.map.hasLevels:
-    let
-      l = currLevel(a)
-      coordOpts = coordOptsForCurrLevel(a)
-
-      cur = a.ui.cursor
-      row = formatRowCoord(cur.row, l.rows, coordOpts, l.regionOpts)
-      col = formatColumnCoord(cur.col, l.cols, coordOpts, l.regionOpts)
-
-      cursorPos = fmt"({col}, {row})"
-      tw = vg.textWidth(cursorPos)
-
-    vg.fillColor(s.coordinatesColor)
-    vg.textAlign(haLeft, vaMiddle)
-    discard vg.text(w - tw - 7, ty, cursorPos)
-
-    vg.intersectScissor(0, 0, w - tw - 15, h)
-
-  # Display status message or warning
-  const
-    IconPosX = 10
-    MessagePosX = 30
-    MessagePadX = 20
-    CommandLabelPadX = 14
-    CommandTextPadX = 10
-
-  var x = 10.0
-
-  # Clear expired warning messages
-  if status.warning != "":
-    let dt = getMonoTime() - status.warningT0
-    if dt > status.warningTimeout:
-      status.warning = ""
-
-      if not status.keepMessageAfterWarningExpired:
-        clearStatusMessage(a)
-
-  # Display message
-  if status.warning == "":
-    vg.fillColor(s.textColor)
-    discard vg.text(IconPosX, ty, status.icon)
-
-    let tx = vg.text(MessagePosX, ty, status.message)
-    x = tx + MessagePadX
-
-    # Display commands, if present
-    for i, cmd in status.commands:
-      if i mod 2 == 0:
-        let w = renderCommand(x, ty, cmd, a)
-        x += w + CommandLabelPadX
-      else:
-        let text = cmd
-        vg.fillColor(s.textColor)
-        let tw = vg.text(round(x), round(ty), text)
-        x = tw + CommandTextPadX
-
-  # Display warning
-  else:
-    vg.fillColor(status.warningColor)
-    discard vg.text(IconPosX, ty, IconWarning)
-    discard vg.text(MessagePosX, ty, status.warning)
-
-  vg.restore()
-
 # }}}
 
-# {{{ renderThemeEditorProps()
+# }}}
+# {{{ Theme editor
 
 var ThemeEditorScrollViewStyle = getDefaultScrollViewStyle()
 with ThemeEditorScrollViewStyle:
@@ -8318,6 +8309,7 @@ with ThemeEditorAutoLayoutParams:
   rightPad   = 16.0
   labelWidth = 185.0
 
+# {{{ renderThemeEditorProps()
 proc renderThemeEditorProps(x, y, w, h: float; a) =
   alias(te, a.themeEditor)
   alias(cfg, a.theme.config)
@@ -8371,7 +8363,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   var p: string
 
-  # {{{ User interface section
+  # {{{ -- User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
@@ -8526,7 +8518,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.checkBox(a.splash.show)
 
   # }}}
-  # {{{ Level section
+  # {{{ -- Level section
   if koi.sectionHeader("Level", te.sectionLevel):
     if koi.subSectionHeader("General", te.sectionLevelGeneral):
       p = "level.general."
@@ -8656,7 +8648,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Shadow",               p & "shadow.color")
 
   # }}}
-  # {{{ Panes section
+  # {{{ -- Panes section
 
   if koi.sectionHeader("Panes", te.sectionPanes):
     if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
@@ -8732,7 +8724,6 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
             style=titleStyle)
 
   # Theme name & action buttons
-
   vg.beginPath()
   vg.rect(x+1, y+TitleHeight, w, h=96)
   vg.fillColor(gray(0.36))
@@ -8828,6 +8819,121 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
 # }}}
 
+# }}}
+
+# {{{ renderCommand()
+proc renderCommand(x, y: float; command: string; bgColor, textColor: Color;
+                   a: AppContext): float =
+  alias(vg, a.vg)
+
+  let w = vg.textWidth(command)
+  let (x, y) = (round(x), round(y))
+
+  vg.beginPath()
+  vg.roundedRect(x, y-10, w+10, 18, 3)
+  vg.fillColor(bgColor)
+  vg.fill()
+
+  vg.fillColor(textColor)
+  discard vg.text(x+5, y, command)
+
+  result = w
+
+
+proc renderCommand(x, y: float; command: string; a): float =
+  let s = a.theme.statusBarTheme
+
+  renderCommand(x, y, command,
+                bgColor=s.commandBackgroundColor, textColor=s.commandTextColor,
+                a)
+
+# }}}
+# {{{ renderStatusBar()
+proc renderStatusBar(x, y, w, h: float; a) =
+  alias(vg, a.vg)
+  alias(status, a.ui.status)
+
+  let s = a.theme.statusBarTheme
+
+  let ty = h * TextVertAlignFactor
+
+  # Bar background
+  vg.save()
+  vg.translate(x, y)
+
+  vg.beginPath()
+  vg.rect(0, 0, w, h)
+  vg.fillColor(s.backgroundColor)
+  vg.fill()
+
+  # Display cursor coordinates
+  vg.setFont(14, "sans-bold")
+
+  if a.doc.map.hasLevels:
+    let
+      l = currLevel(a)
+      coordOpts = coordOptsForCurrLevel(a)
+
+      cur = a.ui.cursor
+      row = formatRowCoord(cur.row, l.rows, coordOpts, l.regionOpts)
+      col = formatColumnCoord(cur.col, l.cols, coordOpts, l.regionOpts)
+
+      cursorPos = fmt"({col}, {row})"
+      tw = vg.textWidth(cursorPos)
+
+    vg.fillColor(s.coordinatesColor)
+    vg.textAlign(haLeft, vaMiddle)
+    discard vg.text(w - tw - 7, ty, cursorPos)
+
+    vg.intersectScissor(0, 0, w - tw - 15, h)
+
+  # Display status message or warning
+  const
+    IconPosX = 10
+    MessagePosX = 30
+    MessagePadX = 20
+    CommandLabelPadX = 14
+    CommandTextPadX = 10
+
+  var x = 10.0
+
+  # Clear expired warning messages
+  if status.warning != "":
+    let dt = getMonoTime() - status.warningT0
+    if dt > status.warningTimeout:
+      status.warning = ""
+
+      if not status.keepMessageAfterWarningExpired:
+        clearStatusMessage(a)
+
+  # Display message
+  if status.warning == "":
+    vg.fillColor(s.textColor)
+    discard vg.text(IconPosX, ty, status.icon)
+
+    let tx = vg.text(MessagePosX, ty, status.message)
+    x = tx + MessagePadX
+
+    # Display commands, if present
+    for i, cmd in status.commands:
+      if i mod 2 == 0:
+        let w = renderCommand(x, ty, cmd, a)
+        x += w + CommandLabelPadX
+      else:
+        let text = cmd
+        vg.fillColor(s.textColor)
+        let tw = vg.text(round(x), round(ty), text)
+        x = tw + CommandTextPadX
+
+  # Display warning
+  else:
+    vg.fillColor(status.warningColor)
+    discard vg.text(IconPosX, ty, IconWarning)
+    discard vg.text(MessagePosX, ty, status.warning)
+
+  vg.restore()
+
+# }}}
 # {{{ renderQuickReference()
 
 proc renderQuickReference(x, y, w, h: float; a) =
@@ -8971,90 +9077,6 @@ proc renderQuickReference(x, y, w, h: float; a) =
     vg.restore()
 
 # }}}
-
-# {{{ renderLevelDropdown()
-proc renderLevelDropdown(a) =
-  alias(ui, a.ui)
-  alias(vg, a.vg)
-  alias(map, a.doc.map)
-
-  let
-    mainPane   = mainPaneRect(a)
-    levelNames = map.sortedLevelNames
-
-  var sortedLevelIdx = currSortedLevelIdx(a)
-  let prevSortedLevelIdx = sortedLevelIdx
-
-  vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
-
-  # Level drop-down
-  let levelDropDownWidth = round(
-    vg.textWidth(levelNames[sortedLevelIdx]) +
-    a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
-  )
-
-  koi.dropDown(
-    x = round(mainPane.w - levelDropDownWidth) * 0.5,
-    y = 19.0,
-    w = levelDropDownWidth,
-    h = 24.0,
-    levelNames,
-    sortedLevelIdx,
-    tooltip = "",
-    disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-    style = a.theme.levelDropDownStyle
-  )
-
-  if sortedLevelIdx != prevSortedLevelIdx:
-    var cur = ui.cursor
-    cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
-    setCursor(cur, a)
-
-# }}}
-# {{{ renderRegionDropDown()
-proc renderRegionDropDown(a) =
-  alias(ui, a.ui)
-
-  let
-    l = currLevel(a)
-    currRegion = currRegion(a)
-    mainPane = mainPaneRect(a)
-
-  if currRegion.isSome:
-    var sortedRegionNames = l.regionNames()
-    sort(sortedRegionNames)
-
-    let currRegionName = currRegion.get.name
-    var sortedRegionIdx = sortedRegionNames.find(currRegionName)
-    let prevSortedRegionIdx = sortedRegionIdx
-
-    let regionDropDownWidth = round(
-      a.vg.textWidth(currRegionName) +
-      a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
-    )
-
-    koi.dropDown(
-      x = round(mainPane.x1 + (mainPane.w - regionDropDownWidth) * 0.5),
-      y = 73.0,
-      w = regionDropDownWidth,
-      h = 24.0,
-      sortedRegionNames,
-      sortedRegionIdx,
-      tooltip = "",
-      disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-      style = a.theme.levelDropDownStyle
-    )
-
-    if sortedRegionIdx != prevSortedRegionIdx :
-      let currRegionName = sortedRegionNames[sortedRegionIdx]
-      let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
-
-      let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.level,
-                                                     regionCoords)
-
-      centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
-
-# }}}
 # {{{ renderDialogs()
 proc renderDialogs(a) =
   alias(dlg, a.dialogs)
@@ -9114,6 +9136,7 @@ proc renderDialogs(a) =
     deleteThemeDialog(a)
 
 # }}}
+#
 # {{{ renderUI()
 proc renderUI(a) =
   alias(ui, a.ui)
