@@ -14,7 +14,7 @@ import std/sets
 import std/monotimes
 import std/streams
 import std/strformat
-import std/strutils
+import std/strutils except strip, splitWhitespace
 import std/tables
 import std/times
 import std/unicode
@@ -515,6 +515,7 @@ type
   NotesListFilter = object
     typeFilter:     seq[NoteTypeFilter]
     order:          NoteOrder
+    searchTerm:     string
 
   NoteTypeFilter = enum
     nftNone   = "None"
@@ -8161,7 +8162,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     l  = currLevel(a)
 
   const
-    TopPad     = 98
+    TopPad     = 134
     LeftPad    = 16
     RightPad   = 16
     TextIndent = 44
@@ -8188,12 +8189,21 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.currFilter.typeFilter, style = a.theme.radioButtonStyle
   )
 
-  wy += 40
+  wy += 42
   koi.label(wx+3, wy, 60, wh, "Order by", style=a.theme.labelStyle)
 
   koi.dropDown(
-    wx+68, wy, w=80, wh,
+    wx+68, wy, w=60, wh,
     nls.currFilter.order, style = a.theme.dropDownStyle
+  )
+
+  wy += 35
+  koi.label(wx+3, wy, 60, wh, "Search", style=a.theme.labelStyle)
+
+  koi.textField(
+    wx+68, wy, w=190, wh,
+    nls.currFilter.searchTerm,
+    style = a.theme.textFieldStyle
   )
 
   # Determine note list dirty state
@@ -8228,8 +8238,19 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     setFont()
 
     nls.cache = newSeqOfCap[NotesListCacheEntry](l.numAnnotations())
+
+    let searchTerms = nls.currFilter.searchTerm.strip.toLower.splitWhitespace
+
     for (r,c, note) in l.allNotes():
       if note.kind in annotationKindFilter:
+        if searchTerms.len > 0:
+          var found = false
+          for term in searchTerms:
+            if note.text.toLower.contains(term):
+              found = true
+              break
+          if not found: continue
+
         let
           idString   = fmt"notes-list:{r}:{c}"
           id         = hashId(idString)
