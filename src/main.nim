@@ -399,7 +399,7 @@ type
 
 
   Document = object
-    filename:           string
+    path:               string
     map:                Map
     undoManager:        UndoManager[Map, UndoStateData]
     lastAutosaveTime:   MonoTime
@@ -2795,15 +2795,15 @@ proc switchTheme(themeIndex: Natural; a) =
 # {{{ Config handling
 
 # {{{ loadAppConfigOrDefault()
-proc loadAppConfigOrDefault(filename: string): HoconNode =
+proc loadAppConfigOrDefault(path: string): HoconNode =
   var s: FileStream
   try:
-    s = newFileStream(filename)
+    s = newFileStream(path)
     var p = initHoconParser(s)
     result = p.parse()
   except CatchableError as e:
     logging.warn(
-      fmt"Cannot load config file '{filename}', using default config. " &
+      fmt"Cannot load config file '{path}', using default config. " &
       fmt"Error message: {e.msg}"
     )
     result = newHoconObject()
@@ -2812,14 +2812,14 @@ proc loadAppConfigOrDefault(filename: string): HoconNode =
 
 # }}}
 # {{{ saveAppConfig()
-proc saveAppConfig(cfg: HoconNode, filename: string) =
+proc saveAppConfig(cfg: HoconNode, path: string) =
   var s: FileStream
   try:
-    s = newFileStream(filename, fmWrite)
+    s = newFileStream(path, fmWrite)
     cfg.write(s)
   except CatchableError as e:
     logging.error(
-      fmt"Cannot write config file '{filename}'. Error message: {e.msg}"
+      fmt"Cannot write config file '{path}'. Error message: {e.msg}"
     )
   finally:
     if s != nil: s.close()
@@ -2854,7 +2854,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
 
   p = "last-state."
-  cfg.set(p & "last-document", a.doc.filename)
+  cfg.set(p & "last-document", a.doc.path)
   cfg.set(p & "theme-name",    a.currThemeName.name)
 
   p = "last-state.ui."
@@ -2888,16 +2888,16 @@ proc saveAppConfig(a) =
 # {{{ Map handling
 
 # {{{ loadMap()
-proc loadMap(filename: string; a): bool =
-  info(fmt"Loading map '{filename}'...")
+proc loadMap(path: string; a): bool =
+  info(fmt"Loading map '{path}'...")
 
   try:
     let t0 = getMonoTime()
-    let (map, appState) = readMapFile(filename)
+    let (map, appState) = readMapFile(path)
     let dt = getMonoTime() - t0
 
     a.doc.map = map
-    a.doc.filename = filename
+    a.doc.path = path
     a.doc.lastAutosaveTime = getMonoTime()
 
     if appState.isSome:
@@ -2937,7 +2937,7 @@ proc loadMap(filename: string; a): bool =
 
     initUndoManager(a.doc.undoManager)
 
-    let message = fmt"Map '{filename}' loaded in " &
+    let message = fmt"Map '{path}' loaded in " &
                   fmt"{durationToFloatMillis(dt):.2f} ms"
 
     info(message)
@@ -2952,7 +2952,7 @@ proc loadMap(filename: string; a): bool =
 
 # }}}
 # {{{ saveMap()
-proc saveMap(filename: string, autosave, createBackup: bool; a) =
+proc saveMap(path: string, autosave, createBackup: bool; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let cur = a.ui.cursor
@@ -2978,12 +2978,12 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
     currSpecialWall:        a.ui.currSpecialWall,
   )
 
-  info(fmt"Saving map to '{filename}'")
+  info(fmt"Saving map to '{path}'")
 
   if createBackup:
     try:
-      if fileExists(filename):
-        moveFile(filename, fmt"{filename}.{BackupFileExt}")
+      if fileExists(path):
+        moveFile(path, fmt"{path}.{BackupFileExt}")
     except CatchableError as e:
       let msgPrefix = "Error creating backup file"
       logError(e, msgPrefix)
@@ -2992,11 +2992,11 @@ proc saveMap(filename: string, autosave, createBackup: bool; a) =
       return
 
   try:
-    writeMapFile(a.doc.map, appState, filename)
+    writeMapFile(a.doc.map, appState, path)
     a.doc.undoManager.setLastSaveState()
 
     if not autosave:
-      setStatusMessage(IconFloppy, fmt"Map '{filename}' saved", a)
+      setStatusMessage(IconFloppy, fmt"Map '{path}' saved", a)
 
   except CatchableError as e:
     logError(e)
@@ -3011,11 +3011,11 @@ proc handleAutoSaveMap(a) =
   if a.prefs.autosave and a.doc.undoManager.isModified:
     let dt = getMonoTime() - a.doc.lastAutosaveTime
     if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
-      let filename = if a.doc.filename == "":
-                       a.paths.autosaveDir / addFileExt("Untitled", MapFileExt)
-                     else: a.doc.filename
+      let path = if a.doc.path == "":
+                   a.paths.autosaveDir / addFileExt("Untitled", MapFileExt)
+                 else: a.doc.path
 
-      saveMap(filename, autosave=true, createBackup=true, a)
+      saveMap(path, autosave=true, createBackup=true, a)
       a.doc.lastAutosaveTime = getMonoTime()
 
 # }}}
@@ -3025,8 +3025,8 @@ when not defined(DEBUG):
 
   proc autoSaveMapOnCrash(a): string =
     var fname: string
-    if a.doc.filename == "":
-      let (path, _, _) = splitFile(a.doc.filename)
+    if a.doc.path == "":
+      let (path, _, _) = splitFile(a.doc.path)
       fname = path
     else:
       fname = a.paths.autosaveDir
@@ -3952,7 +3952,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
     a.opts.drawTrail = false
 
-    a.doc.filename = ""
+    a.doc.path = ""
     a.doc.map = newMap(dlg.title, dlg.game, dlg.author,
                        creationTime=now().format("yyyy-MM-dd HH:mm:ss"))
 
@@ -5364,7 +5364,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     x + LabelWidth, y, w=196, h,
     dlg.newThemeName,
     activate = dlg.activateFirstTextField,
-    # TODO disallow invalid filename chars?
+    # TODO disallow invalid path chars?
     style = a.theme.textFieldStyle
   )
 
@@ -5478,7 +5478,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     x + LabelWidth, y, w=196, h,
     dlg.newThemeName,
     activate = dlg.activateFirstTextField,
-    # TODO disallow invalid filename chars?
+    # TODO disallow invalid path chars?
     style = a.theme.textFieldStyle
   )
 
@@ -5811,10 +5811,9 @@ proc openMap(a) =
   proc requestOpenMap(a) =
     when defined(DEBUG): discard
     else:
-      let filename = fileDialog(fdOpenFile,
-                                filters=GridmongerMapFileFilter)
-      if filename != "":
-        discard loadMap(filename, a)
+      let path = fileDialog(fdOpenFile, filters=GridmongerMapFileFilter)
+      if path != "":
+        discard loadMap(path, a)
 
   proc handleMapModified(a) =
     if a.doc.undoManager.isModified:
@@ -5828,9 +5827,9 @@ proc openMap(a) =
     handleMapModified(a)
 
 
-proc openMap(filename: string; a) =
+proc openMap(path: string; a) =
   proc doOpenMap(a) =
-    discard loadMap(filename, a)
+    discard loadMap(path, a)
 
   if a.doc.undoManager.isModified:
     openSaveDiscardMapDialog(nextAction = doOpenMap, a)
@@ -5841,20 +5840,20 @@ proc openMap(filename: string; a) =
 # {{{ saveMapAs()
 proc saveMapAs(a) =
   when not defined(DEBUG):
-    var filename = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
-    if filename != "":
-      filename = addFileExt(filename, MapFileExt)
+    var path = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
+    if path != "":
+      path = addFileExt(path, MapFileExt)
 
-      saveMap(filename, autosave=false, createBackup=false, a)
-      a.doc.filename = filename
+      saveMap(path, autosave=false, createBackup=false, a)
+      a.doc.path = path
 
 # }}}
 # {{{ saveMap()
 proc saveMap(a) =
-  if a.doc.filename == "":
+  if a.doc.path == "":
     saveMapAs(a)
   else:
-    saveMap(a.doc.filename, autosave=false, createBackup=true, a)
+    saveMap(a.doc.path, autosave=false, createBackup=true, a)
 
 # }}}
 
@@ -9477,7 +9476,7 @@ proc renderFrameSplash(a) =
 # {{{ Init & cleanup
 
 # {{{ createSplashWindow()
-proc createSplashWindow(mousePassthru: bool = false; a) =
+proc createSplashWindow(mousePassthrough: bool = false; a) =
   alias(s, a.splash)
 
   var cfg = DefaultOpenglWindowConfig
@@ -9573,11 +9572,11 @@ proc loadAndSetIcon(a) =
 proc loadFonts(a) =
   alias(p, a.paths)
 
-  proc loadFont(fontName: string, filename: string; a): Font =
+  proc loadFont(fontName: string, path: string; a): Font =
     try:
-      a.vg.createFont(fontName, filename)
+      a.vg.createFont(fontName, path)
     except CatchableError as e:
-      logging.error(fmt"Cannot load font '{filename}'")
+      logging.error(fmt"Cannot load font '{path}'")
       raise e
 
   discard         loadFont("sans",       p.dataDir / "Roboto-Regular.ttf", a)
@@ -9936,7 +9935,7 @@ proc cleanup(a) =
 when not defined(DEBUG):
 
   proc crashHandler(e: ref Exception, a) =
-    let doAutosave = a.doc.filename != ""
+    let doAutosave = a.doc.path != ""
     var crashAutosavePath = ""
 
     if doAutosave:

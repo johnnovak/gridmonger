@@ -845,13 +845,13 @@ proc readMap_v1_v2(rr): Map =
 # }}}
 # # {{{ readMapFile*()
 # TODO return display related info and info chunk data as well
-proc readMapFile*(filename: string): tuple[map: Map,
-                                           appState: Option[AppState]] =
+proc readMapFile*(path: string): tuple[map: Map,
+                                       appState: Option[AppState]] =
   initDebugIndent()
 
   var rr: RiffReader
   try:
-    rr = openRiffFile(filename)
+    rr = openRiffFile(path)
 
     let riffChunk = rr.currentChunk
     if riffChunk.formatTypeId != FourCC_GRMM:
@@ -1177,12 +1177,12 @@ proc writeMap(rw; m: Map) =
 
 # }}}
 # {{{ writeMapFile*()
-proc writeMapFile*(m: Map, appState: AppState, filename: string) =
+proc writeMapFile*(m: Map, appState: AppState, path: string) =
   initDebugIndent()
 
   var rw: RiffWriter
   try:
-    rw = createRiffFile(filename, FourCC_GRMM)
+    rw = createRiffFile(path, FourCC_GRMM)
 
     writeMap(rw, m)
     writeLevelList(rw, m.levels)
