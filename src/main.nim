@@ -1,6 +1,7 @@
 # {{{ Imports
 
 import std/algorithm
+import std/exitprocs
 import std/browsers
 import std/lenientops
 import std/logging
@@ -16,7 +17,6 @@ import std/strformat
 import std/strutils
 import std/tables
 import std/times
-import std/typedthreads
 
 import deps/with
 import glad/gl
@@ -32,9 +32,9 @@ import nanovg
 when not defined(DEBUG): import osdialog
 
 import actions
+import cmdline
 import converters
 import cfghelper
-import cmdline
 import common
 import csdwindow
 import drawlevel
@@ -51,8 +51,11 @@ import unicode
 import utils as gmUtils
 
 when defined(windows):
-  import platform/windows/ipc
+  import platform/windows/appevents
   import platform/windows/console
+
+elif defined(macosx):
+  import platform/macos/appevents
 
 # }}}
 
@@ -9625,7 +9628,7 @@ proc initGfx(a) =
   let renderer = cast[cstring](glGetString(GL_RENDERER))
 
   let msg = fmt"""
-GPU info
+GPU info:
   Vendor:   {vendor}
   Renderer: {renderer}
   Version:  {version}"""
@@ -9812,7 +9815,7 @@ proc dropCb(window: Window, paths: PathDropInfo) =
 
 # {{{ initApp()
 proc initApp(configFile: Option[string], mapFile: Option[string],
-             winCfg: HoconNode; a) =
+             winCfg: HoconNode, hideSplash = false; a) =
 
   if configFile.isSome:
     a.paths.configFile = configFile.get
@@ -9867,7 +9870,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
 
-  a.splash.show = a.prefs.showSplash
+  a.splash.show = not hideSplash and a.prefs.showSplash
   a.splash.t0 = getMonoTime()
   setSwapInterval(a)
 
@@ -9969,43 +9972,17 @@ when not defined(DEBUG):
 
 # }}}
 
-
-var th: Thread[void]
-
-type ThreadData = object
-  running: bool
-  filenames: seq[string]
-  ready: bool
-
-var g_threadData: ptr ThreadData
-
-proc threadFunc() {.thread.} =
-  while g_threadData.running:
-    if not g_threadData.ready:
-      let filenames = getCocoaOpenedFilenames()
-      if filenames.len > 0:
-        g_threadData.filenames = filenames
-        g_threadData.ready = true
-        postEmptyEvent()
-    sleep(100)
-
-
 # {{{ main()
 proc main() =
 
-  # Multiple application instance handling
-  when defined(windows):
-    var serverInitOk = false
-    if ipc.isAppInstanceAlreadyRunning():
-      if ipc.initClient():
-        if paramCount() == 0:
-          ipc.sendFocusMessage()
-        else:
-          ipc.sendOpenFileMessage(paramStr(1))
-      quit()
-    else:
-      serverInitOk = ipc.initServer()
+  if not appEvents.initOrQuit():
+    # TODO error
+    discard
+    quit(QuitFailure)
 
+  addExitProc(appEvents.shutdown)
+
+  when defined(windows):
     discard attachOutputToConsole()
 
   g_app = new AppContext
@@ -10014,8 +9991,6 @@ proc main() =
   a.doc.lastAutosaveTime = getMonoTime()
 
   try:
-    let (configFile, mapFile, winCfg) = parseCommandLineParams()
-
     initPaths(a)
     createDirs(a)
     initLogger(a)
@@ -10024,22 +9999,31 @@ proc main() =
     info(CompiledAtInfo)
     info(fmt"Paths: {a.paths}")
 
-    initGfx(a)
-    initApp(configFile, mapFile, winCfg, a)
+    let (configFile, mapFile, winCfg) = parseCommandLineParams()
+    info(fmt"Command line parameters: configFile: {configFile}, " &
+         fmt"mapFile: {mapFile}, winCfg: {winCfg}")
 
+    initGfx(a)
+
+    # Handle starting the app bundle by opening a map file in Finder on macOS
+    #
+    # Waiting "a bit" seems to be the only sort-of reliable way to receive the
+    # openFile Cocoa event which then gets mapped to the "Open File" app
+    # event.
     when defined(macosx):
-      let filenames = getCocoaOpenedFilenames()
-      if filenames.len > 0:
-        openMap(filenames[0], a)
-        a.splash.show = false
-        koi.setFramesLeft()
+      sleep(80)
+
+      let event = appEvents.tryReceiveEvent()
+      if event.isSome and event.get.kind == aeOpenFile:
+        initApp(configFile, mapFile=event.get.path.some, winCfg,
+                hideSplash=true, a)
+      else:
+        initApp(configFile, mapFile, winCfg, a=a)
+
+    else: # Windows, Linux
+      initApp(configFile, mapFile, winCfg, a=a)
 
     a.win.show()
-
-    g_threadData = cast[ptr ThreadData](alloc0(sizeof(ThreadData)))
-    g_threadData.running = true
-
-    createThread(th, threadFunc)
 
     while not a.shouldClose:
       # Render app
@@ -10053,7 +10037,7 @@ proc main() =
 
       # Render splash
       if a.splash.win == nil and a.splash.show:
-        createSplashWindow(mousePassthru = a.opts.showThemeEditor, a)
+        createSplashWindow(mousePassthrough = a.opts.showThemeEditor, a)
         glfw.makeContextCurrent(a.splash.win)
 
         if a.splash.logo.data == nil:
@@ -10076,28 +10060,17 @@ proc main() =
 
       handleAutoSaveMap(a)
 
-      # Multiple application instance handling
-      when defined(windows):
-        if serverInitOk:
-          let msg = ipc.tryReceiveMessage()
-          if msg.isSome:
-            let msg = msg.get
-            case msg.kind
-            of mkFocus:
-              # TODO not needed on macOS at least
-#              a.win.restore()
-              a.win.focus()
-              koi.setFramesLeft()
+      # Handle app events
+      let event = appEvents.tryReceiveEvent()
+      if event.isSome:
+        let event = event.get
+        case event.kind
+        of aeFocus:
+          a.win.focus()
+          koi.setFramesLeft()
 
-            of mkOpenFile:
-              handleOpenFileEvent(filenames[0], a)
-
-      elif defined(macosx):
-        if g_threadData.ready:
-          let filenames = g_threadData.filenames
-          if filenames.len > 0:
-            handleOpenFileEvent(filenames[0], a)
-            g_threadData.ready = false
+        of aeOpenFile:
+          handleOpenFileEvent(event.path, a)
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
@@ -10110,9 +10083,6 @@ proc main() =
   except CatchableError as e:
     when defined(DEBUG): raise e
     else: crashHandler(e, a)
-
-  g_threadData.running = false
-  joinThread(th)
 
 # }}}
 

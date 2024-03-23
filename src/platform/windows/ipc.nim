@@ -1,26 +1,18 @@
 import std/options
+import std/strformat
 
 import winim/lean
 
 # Adapted from
 # https://peter.bloomfield.online/introduction-to-win32-named-pipes-cpp/
 
-type
-  MessageKind* = enum
-    mkFocus, mkOpenFile
-
-  Message* = object
-    case kind*: MessageKind
-    of mkFocus:    discard
-    of mkOpenFile: filename*: string
-
 const
-  MaxFilenameLen = 32768
+  MaxPathLen = 32768
 
-
-var g_pipe: Handle
-var g_overlapped = Overlapped()
-var g_buffer: array[MaxFilenameLen+3, byte]
+var
+  g_pipe: Handle
+  g_overlapped = Overlapped()
+  g_buffer: array[MaxPathLen+3, byte]
 
 # Pipe names must start with "\\.\pipe\"
 const PipeName = "\\\\.\\pipe\\gridmonger"
@@ -47,17 +39,10 @@ proc commonInit(): bool =
     nil   # unnamed event object
   )
   if g_overlapped.hEvent == 0:
-    #echo fmt"CreateEvent failed, error code: {GetLastError()}"
+    echo fmt"CreateEvent failed, error code: {GetLastError()}"
     discard
   else:
     result = true
-
-# }}}
-
-# {{{ isAppInstanceAlreadyRunning*()
-proc isAppInstanceAlreadyRunning*(): bool =
-  discard CreateMutex(nil, true, "Global\\Gridmonger")
-  result = GetLastError() == ErrorAlreadyExists
 
 # }}}
 
@@ -77,31 +62,26 @@ proc initClient*(): bool =
     0
   )
   if g_pipe == InvalidHandleValue:
-    #echo fmt"Cannot open named pipe, error code: {GetLastError()}"
+    echo fmt"Cannot open named pipe, error code: {GetLastError()}"
     discard
   else:
     result = true
 
 # }}}
-# {{{ deinitClient*()
-proc deinitClient*() =
-  discard CloseHandle(g_pipe)
-
-# }}}
 # {{{ sendFocusMessage*()
 proc sendFocusMessage*() =
-  g_buffer[0] = mkFocus.byte
+  g_buffer[0] = aeFocus.byte
   sendMessage(numBytes=1)
 
 # }}}
 # {{{ sendOpenFileMessage*()
-proc sendOpenFileMessage*(filename: string) =
-  var filename = filename.substr(0, MaxFilenameLen-1)
-  g_buffer[0] = mkOpenFile.byte
-  cast[ptr int16](g_buffer[1].addr)[] = filename.len.int16
-  copyMem(g_buffer[3].addr, filename[0].addr, filename.len)
+proc sendOpenFileMessage*(path: string) =
+  var path = path.substr(0, MaxPathLen-1)
+  g_buffer[0] = aeOpenFile.byte
+  cast[ptr int16](g_buffer[1].addr)[] = path.len.int16
+  copyMem(g_buffer[3].addr, path[0].addr, path.len)
 
-  sendMessage(numBytes=filename.len.int32 + 3)
+  sendMessage(numBytes=path.len.int32 + 3)
 
 # }}}
 
@@ -123,14 +103,14 @@ proc initServer*(): bool =
     nil  # use default security attributes
   )
   if g_pipe == InvalidHandleValue:
-    #echo fmt"Cannot create named pipe, error code: {GetLastError()}"
+    echo fmt"Cannot create named pipe, error code: {GetLastError()}"
     discard
   else:
     result = true
 
 # }}}
 # {{{ tryReceiveMessage*()
-proc tryReceiveMessage*(): Option[Message] =
+proc tryReceiveMessage*(): Option[AppEvent] =
   discard ConnectNamedPipe(g_pipe, g_overlapped.addr)
 
   if ReadFile(g_pipe, g_buffer[0].addr, g_buffer.len.int32, nil,
@@ -142,7 +122,7 @@ proc tryReceiveMessage*(): Option[Message] =
       # connect
       discard DisconnectNamedPipe(g_pipe)
     else:
-      #echo fmt"Cannot connect to named pipe, error code: {GetLastError()}"
+      echo fmt"Cannot connect to named pipe, error code: {GetLastError()}"
       discard
 
   # Because the last `wait` arg is set to false, this will only succeed
@@ -151,42 +131,27 @@ proc tryReceiveMessage*(): Option[Message] =
   if GetOverlappedResult(g_pipe, g_overlapped.addr,
                          numBytesTransferred.addr, false) == 0:
 
-    #echo fmt"Error getting overlapped result, error code: {GetLastError()}"
+    echo fmt"Error getting overlapped result, error code: {GetLastError()}"
     discard
   else:
-    let msgKind = cast[MessageKind](g_buffer[0])
-    var msg = Message(kind: msgKind)
+    let eventKind = cast[AppEventKind](g_buffer[0])
+    var event = AppEvent(kind: eventKind)
 
-    case msg.kind
-    of mkFocus: discard
-    of mkOpenFile:
+    case event.kind
+    of aeFocus: discard
+    of aeOpenFile:
       let length = cast[ptr int16](g_buffer[1].addr)[]
-      msg.filename = newString(length)
-      copyMem(msg.filename[0].addr, g_buffer[3].addr, length)
+      event.path = newString(length)
+      copyMem(event.path[0].addr, g_buffer[3].addr, length)
 
-    result = msg.some
+    result = event.some
 
 # }}}
 
+# {{{ shutdown*()
+proc shutdown*() =
+  discard CloseHandle(g_pipe)
 
-when isMainModule:
-  import os
-
-  echo "Starting..."
-  if isAppInstanceAlreadyRunning():
-    echo "*** CLIENT ***"
-    if initClient():
-      sendOpenFileMessage("quixotic")
-      deinitClient()
-
-  else:
-    if initServer():
-      echo "*** SERVER ***"
-      while true:
-        let msg = tryReceiveMessage()
-        if msg.isSome:
-          echo msg.get
-        sleep(100)
-
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
