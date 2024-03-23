@@ -9487,10 +9487,10 @@ proc createSplashWindow(mousePassthrough: bool = false; a) =
   cfg.transparentFramebuffer = true
   cfg.decorated = false
   cfg.floating = true
+  cfg.mousePassthrough = mousePassthrough
 
   when defined(windows):
     cfg.hideFromTaskbar = true
-    cfg.mousePassthru = mousePassthru
   else:
     cfg.version = glv32
     cfg.forwardCompat = true
