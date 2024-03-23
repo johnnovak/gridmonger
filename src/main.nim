@@ -8241,8 +8241,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         )
 
     func sortByTextLocationType(a, b: NotesListCacheEntry): int =
-      let noteA = l.getNote(a.row, b.col).get
-      let noteB = l.getNote(a.row, b.col).get
+      let noteA = l.getNote(a.row, a.col).get
+      let noteB = l.getNote(b.row, b.col).get
       var c = sortByTextAndLocation((a.row, a.col), noteA,
                                     (b.row, b.col), noteB)
       if c != 0: return c
@@ -8273,6 +8273,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   lp.rowPad      = 0
   lp.labelWidth  = w
   lp.leftPad     = 0
+  lp.sectionPad  = 0
 
   initAutoLayout(lp)
 
@@ -8282,8 +8283,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   for e in nls.cache:
     let note = l.getNote(e.row, e.col).get
 
-    koi.nextRowHeight(e.height)
-    koi.nextItemHeight(e.height)
+    const MinHeight = 32
+    let height = max(MinHeight, e.height)
+
+    koi.nextRowHeight(height)
+    koi.nextItemHeight(height)
 
     if noteButton(e.id, textX, textY=17, textW, markerX, note):
       moveCursorTo(Location(level: ui.cursor.level, row: e.row, col: e.col), a)
