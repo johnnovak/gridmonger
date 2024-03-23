@@ -2519,6 +2519,7 @@ proc updateWidgetStyles(a) =
   with a.theme.iconRadioButtonsStyle:
     buttonPadHoriz             = 4.0
     buttonPadVert              = 4.0
+    buttonCornerRadius         = 0.0
     buttonFillColor            = w.getColorOrDefault("background.normal")
     buttonFillColorHover       = w.getColorOrDefault("background.hover")
     buttonFillColorDown        = w.getColorOrDefault("background.active")
@@ -2529,6 +2530,7 @@ proc updateWidgetStyles(a) =
     label.fontSize = 18.0
     label.padHoriz = 0
     label.padHoriz = 0
+    label.align    = haCenter
 
   # Drop down
   let dd = cfg.getObjectOrEmpty("ui.drop-down")
