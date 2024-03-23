@@ -18,7 +18,7 @@
         https://glad.dav1d.de/#profile=core&language=nim&specification=gl&api=gl%3D3.2
 ]#
 
-import strutils
+import std/strutils
 
 var glVersionMajor, glVersionMinor: int
 

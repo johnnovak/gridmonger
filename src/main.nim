@@ -17,6 +17,7 @@ import std/strformat
 import std/strutils
 import std/tables
 import std/times
+import std/unicode
 
 import deps/with
 import glad/gl
@@ -47,7 +48,6 @@ import persistence
 import rect
 import selection
 import theme
-import unicode
 import utils as gmUtils
 
 when defined(windows):

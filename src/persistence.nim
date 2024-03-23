@@ -1,8 +1,8 @@
 import std/algorithm
-import std/math
-import std/logging except Level
-import std/options
 import std/enumutils
+import std/logging except Level
+import std/math
+import std/options
 import std/strformat
 import std/strutils
 import std/sugar

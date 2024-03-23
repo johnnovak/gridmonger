@@ -6,6 +6,7 @@ import std/typetraits
 
 import common
 
+
 # {{{ alias*()
 template alias*(newName: untyped, call: untyped) =
   template newName(): untyped {.redefine.} = call

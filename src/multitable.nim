@@ -1,5 +1,6 @@
 import std/tables
 
+
 const DefaultInitialSize = 64
 
 type SeqMultiTable[A, B] = object

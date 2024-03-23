@@ -1,11 +1,11 @@
 import std/deques
 import std/math
 import std/options
-import std/unicode
 import std/streams
 import std/strformat
 import std/strutils
 import std/tables
+import std/unicode
 
 # {{{ UnicodeScanner
 

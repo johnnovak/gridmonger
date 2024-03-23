@@ -1,6 +1,7 @@
 import std/options
 import std/streams
 import std/strformat
+import std/strutils
 
 import koi
 import nanovg
@@ -9,7 +10,6 @@ import cfghelper
 import common
 import fieldlimits
 import hocon
-import strutils
 import utils
 
 

@@ -5,7 +5,7 @@
 ## example an initialiser or what would normally be seen as a method in a
 ## object oriented approach.
 
-import macros
+import std/macros
 
 proc getAllIdentDefs(x: NimNode): seq[NimNode] =
   for n in x:

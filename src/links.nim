@@ -8,6 +8,7 @@ import rect
 import selection
 import utils
 
+
 const DefaultInitialSize = 64
 
 using

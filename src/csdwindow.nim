@@ -1,5 +1,6 @@
 import std/lenientops
 import std/logging
+import std/strformat
 
 import glfw
 import icons
@@ -10,7 +11,6 @@ import common
 import deps/with
 import rect
 import utils
-import strformat
 
 # {{{ Constants
 const

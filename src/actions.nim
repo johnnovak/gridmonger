@@ -2,6 +2,7 @@ import std/math
 import std/options
 import std/sets
 import std/strformat
+import std/tables
 
 import koi/undomanager
 
@@ -11,7 +12,6 @@ import links
 import map
 import rect
 import selection
-import tables
 import utils
 
 

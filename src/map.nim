@@ -3,6 +3,7 @@ import std/options
 import std/sequtils
 import std/sets
 import std/strformat
+import std/tables
 
 import common
 import deps/with
@@ -10,7 +11,6 @@ import level
 import links
 import rect
 import regions
-import tables
 import utils
 
 
