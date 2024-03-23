@@ -503,6 +503,8 @@ type
   NotesListState = object
     currFilter:     NotesListFilter
     prevFilter:     NotesListFilter
+    showCoords:     bool
+    currentRegion:  bool
     linkCursor:     bool
     cache:          seq[NotesListCacheEntry]
     dirty:          bool
@@ -519,7 +521,7 @@ type
 
   NoteTypeFilter = enum
     nftNone   = "None"
-    nftNumber = "Number"
+    nftNumber = "Num"
     nftId     = "ID"
     nftIcon   = "Icon"
 
@@ -8164,18 +8166,18 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     l  = currLevel(a)
 
   const
-    TopPad     = 134
+    TopPad     = 137
     LeftPad    = 16
     RightPad   = 16
     TextIndent = 44
 
-  # Draw pane background
+  # Background
   vg.beginPath()
   vg.rect(x, y, w, h)
   vg.fillColor(lerp(ws.backgroundColor, black, 0.25))
   vg.fill()
 
-  # Top filter & options pane
+  # Filters & search
   vg.beginPath()
   vg.rect(x, y, w, TopPad)
   vg.fillColor(lerp(ws.backgroundColor, black, 0.15))
@@ -8183,27 +8185,66 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   var
     wx = LeftPad
-    wy = 43
+    wy = 44
     wh = 24
 
+  if koi.button(wx+244, wy, w=24, wh, "A",
+                tooltip = "Show all note types",
+                style = a.theme.buttonStyle):
+    nls.currFilter.typeFilter = @[nftNone, nftNumber, nftId, nftIcon]
+
   koi.multiRadioButtons(
-    wx, wy, w=w-LeftPad-RightPad, wh,
+    wx, wy, w=w-LeftPad-RightPad - 32, wh,
     nls.currFilter.typeFilter, style = a.theme.radioButtonStyle
   )
 
-  wy += 42
+  wy += 44
   koi.label(wx+3, wy, 60, wh, "Order by", style=a.theme.labelStyle)
 
   koi.dropDown(
-    wx+68, wy, w=60, wh,
-    nls.currFilter.order, style = a.theme.dropDownStyle
+    wx+68, wy, w=78, wh, nls.currFilter.order, style = a.theme.dropDownStyle
   )
 
-  wy += 35
+  discard koi.button(
+    wx+161, wy, w=45, wh, "(X,Y)",
+    tooltip = "Show note coordinates",
+    style = a.theme.buttonStyle
+  )
+
+  var cbStyle = a.theme.checkBoxStyle.deepCopy()
+  cbStyle.icon.fontSize = 14.0
+  cbStyle.iconActive    = "R"
+  cbStyle.iconInactive  = "R"
+
+  koi.checkBox(
+    wx+213, wy, w=24,
+    nls.currentRegion,
+    tooltip = "Show only notes from the current region",
+    style = cbStyle
+  )
+
+  cbStyle = a.theme.checkBoxStyle.deepCopy()
+  cbStyle.icon.fontSize = 14.0
+  cbStyle.iconActive   = IconLink
+  cbStyle.iconInactive = IconLink
+
+  koi.checkBox(
+    wx+244, wy, w=24,
+    nls.linkCursor,
+    tooltip = "Link cursor and note selection",
+    style = cbStyle
+  )
+
+  wy += 33
   koi.label(wx+3, wy, 60, wh, "Search", style=a.theme.labelStyle)
 
+  if koi.button(wx+244, wy, w=24, wh, IconTrash,
+                tooltip = "Clear search term",
+                style = a.theme.buttonStyle):
+    nls.currFilter.searchTerm = ""
+
   koi.textField(
-    wx+68, wy, w=190, wh,
+    wx+68, wy, w=169, wh,
     nls.currFilter.searchTerm,
     style = a.theme.textFieldStyle
   )
