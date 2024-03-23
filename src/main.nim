@@ -8729,7 +8729,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   vg.stroke()
 
   let
-    bw = 66.0
+    bw = 68.0
     bp = 7.0
     wh = 22.0
 
@@ -8757,7 +8757,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   vg.fillColor(gray(0.36))
   vg.fill()
 
-  cx = x+15
+  cx = x+17
   cy += 45.0
   koi.label(cx, cy, w, wh, "Theme")
 
@@ -8769,9 +8769,9 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   var themeIndex = a.theme.currThemeIndex
 
-  cx += 60.0
+  cx += 55.0
   koi.dropDown(
-    cx, cy, w=196.0, wh,
+    cx, cy, w=189.0, wh,
     themeNames,
     themeIndex,
     tooltip = "",
@@ -8788,7 +8788,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
       switchTheme(a)
 
   # User theme indicator
-  cx += 201
+  cx += 195
   var labelStyle = getDefaultLabelStyle()
 
   if not a.currThemeName.userTheme:
