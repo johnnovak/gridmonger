@@ -707,7 +707,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
   let action = proc (m: var Map): UndoStateData =
     let adjustLinks = loc.level < m.levels.high
 
-    let currSortedLevelIdx = m.findSortedLevelIdxByLevelIdx(usd.location.level)
+    let currSortedLevelIdx = m.findSortedLevelIdxForLevel(usd.location.level)
 
     # If the deleted level wasn't the last, moves the last level into
     # the "hole" created by the delete
@@ -726,7 +726,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
     if m.levels.len == 0:
       usd.location.level = 0
     else:
-      usd.location.level = m.sortedLevelIdxToLevelIdx[
+      usd.location.level = m.sortedLevelIndexes[
         min(currSortedLevelIdx, m.levels.high)
       ]
 
@@ -750,7 +750,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
       m.links.remapLevelIndex(oldIndex = loc.level, newIndex = m.levels.high)
       m.links.debugSanitise()
 
-    m.refreshSortedLevelNames()
+    m.sortLevels()
     m.links.addAll(oldLinks)
     m.links.debugSanitise()
 
@@ -1000,7 +1000,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     if reallocateRegions:
       m.reallocateRegions(loc.level, oldCoordOpts, oldRegionOpts, oldRegions)
 
-    m.refreshSortedLevelNames()
+    m.sortLevels()
     result = usd
 
 
@@ -1032,7 +1032,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
 
-    m.refreshSortedLevelNames()
+    m.sortLevels()
     result = usd
 
 

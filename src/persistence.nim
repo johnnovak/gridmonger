@@ -921,7 +921,7 @@ proc readMapFile*(path: string): tuple[map: Map,
 
     rr.cursor = levelListCursor.get
     m.levels = readLevelList_v1_v2(rr)
-    m.refreshSortedLevelNames()
+    m.sortLevels()
 
     rr.cursor = linksCursor.get
     m.links = readLinks_v1_v2(rr, m.levels)

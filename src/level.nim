@@ -16,6 +16,7 @@ const
   MoveBufferLevelIndex* = 1_000_000.Natural
 
 # {{{ CellGrid
+
 # {{{ rows*()
 proc rows*(l): Natural {.inline.} =
   l.cellGrid.rows
@@ -95,8 +96,10 @@ proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
   not l.isEmpty(r,c) or not l.isNeighbourCellEmpty(r,c, {dir})
 
 # }}}
+
 # }}}
 # {{{ Annotations
+
 # {{{ getAnnotation*()
 proc getAnnotation*(l; r,c: Natural): Option[Annotation] =
   l.annotations[r,c]
@@ -170,8 +173,10 @@ proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
                     destCol + c - srcRect.c1] = a
 
 # }}}
+
 # }}}
 # {{{ Regions
+
 # {{{ setRegion*()
 proc setRegion*(l; rc: RegionCoords, region: Region) =
   l.regions.setRegion(rc, region)
@@ -255,6 +260,7 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
   result = destRegions
 
 # }}}
+
 # }}}
 
 # {{{ hasTrail*()

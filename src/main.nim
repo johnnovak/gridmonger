@@ -1584,7 +1584,7 @@ func viewCol(a): int =
 # }}}
 # {{{ currSortedLevelIdx()
 func currSortedLevelIdx(a): Natural =
-  a.doc.map.findSortedLevelIdxByLevelIdx(a.ui.cursor.level)
+  a.doc.map.findSortedLevelIdxForLevel(a.ui.cursor.level)
 
 # }}}
 # {{{ currLevel()
@@ -5912,7 +5912,7 @@ proc selectPrevLevel(a) =
   var si = currSortedLevelIdx(a)
   if si > 0:
     var cur = a.ui.cursor
-    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si - 1]
+    cur.level = a.doc.map.sortedLevelIndexes[si - 1]
     setCursor(cur, a)
 
 # }}}
@@ -5921,7 +5921,7 @@ proc selectNextLevel(a) =
   var si = currSortedLevelIdx(a)
   if si < a.doc.map.levels.len-1:
     var cur = a.ui.cursor
-    cur.level = a.doc.map.sortedLevelIdxToLevelIdx[si + 1]
+    cur.level = a.doc.map.sortedLevelIndexes[si + 1]
     setCursor(cur, a)
 
 # }}}
@@ -7542,7 +7542,7 @@ proc renderLevelDropdown(a) =
 
   if sortedLevelIdx != prevSortedLevelIdx:
     var cur = ui.cursor
-    cur.level = map.sortedLevelIdxToLevelIdx[sortedLevelIdx]
+    cur.level = map.sortedLevelIndexes[sortedLevelIdx]
     setCursor(cur, a)
 
 # }}}

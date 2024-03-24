@@ -90,8 +90,8 @@ type
 
     links*:        Links
 
-    sortedLevelNames*:         seq[string]
-    sortedLevelIdxToLevelIdx*: Table[Natural, Natural]
+    sortedLevelNames*:   seq[string]
+    sortedLevelIndexes*: seq[Natural]
 
 
   Links* = object

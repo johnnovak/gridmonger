@@ -35,23 +35,22 @@ proc newMap*(title, game, author, creationTime: string): Map =
     columnStart: 1
   )
 
-  m.sortedLevelNames = @[]
-  m.sortedLevelIdxToLevelIdx = initTable[Natural, Natural]()
+  m.sortedLevelNames   = @[]
+  m.sortedLevelIndexes = @[]
 
   result = m
 
 # }}}
 
-# {{{ findSortedLevelIdxByLevelIdx*()
-proc findSortedLevelIdxByLevelIdx*(m; i: Natural): Natural =
-  for sortedLevelIdx, levelIdx in m.sortedLevelIdxToLevelIdx.pairs:
-    if i == levelIdx:
-      return sortedLevelIdx
-  assert false
+# {{{ findSortedLevelIdxForLevel*()
+proc findSortedLevelIdxForLevel*(m; level: Natural): Natural =
+  let idx = m.sortedLevelIndexes.find(level)
+  assert idx > -1
+  idx.Natural
 
 # }}}
-# {{{ refreshSortedLevelNames*()
-proc refreshSortedLevelNames*(m) =
+# {{{ sortLevels*()
+proc sortLevels*(m) =
   proc mkSortedLevelName(l: Level): string =
     let elevation = if l.elevation == 0: "G" else: $l.elevation
     if l.levelName == "":
@@ -70,13 +69,13 @@ proc refreshSortedLevelNames*(m) =
 
       return cmp(a.level.levelName, b.level.levelName)
   )
-  m.sortedLevelNames = newSeqOfCap[string](m.levels.len)
-  m.sortedLevelIdxToLevelIdx.clear()
 
-  for (sortedIdx, levelWithIdx) in sortedLevelsWithIndex.pairs:
-    let (level, levelIdx) = levelWithIdx
+  m.sortedLevelNames   = @[]
+  m.sortedLevelIndexes = @[]
+
+  for (level, levelIdx) in sortedLevelsWithIndex:
     m.sortedLevelNames.add(mkSortedLevelName(level))
-    m.sortedLevelIdxToLevelIdx[sortedIdx] = levelIdx
+    m.sortedLevelIndexes.add(levelIdx)
 
 # }}}
 
