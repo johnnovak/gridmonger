@@ -1002,6 +1002,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     l.coordOpts         = coordOpts
     l.regionOpts        = regionOpts
     l.notes             = notes
+    l.dirty             = true
 
     if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
@@ -1037,6 +1038,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     l.coordOpts         = oldCoordOpts
     l.regionOpts        = oldRegionOpts
     l.regions           = oldRegions
+    l.dirty             = true
 
     if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)

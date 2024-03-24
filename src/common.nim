@@ -132,6 +132,8 @@ type
 
     cellGrid*:          CellGrid
 
+    dirty*:             bool
+
 
   RegionOptions* = object
     enabled*:         bool

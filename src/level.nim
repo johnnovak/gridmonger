@@ -555,6 +555,8 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   if initRegions and l.regionOpts.enabled:
     l.regions = initRegionsFrom(destLevel=l)
 
+  l.dirty = true
+
   result = l
 
 # }}}

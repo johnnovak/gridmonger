@@ -8328,7 +8328,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   var rebuildNotesCache = nls.currFilter != nls.prevFilter or
                           ui.cursor.level != ui.prevCursor.level or
-                          l.annotations.dirty or map.levelsDirty
+                          map.levelsDirty or l.dirty or l.annotations.dirty
 
   if map.levelsDirty:
     for l in map.levels:
