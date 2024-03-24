@@ -2,7 +2,6 @@ import std/algorithm
 import std/options
 import std/sequtils
 import std/sets
-import std/strformat
 import std/tables
 
 import common
@@ -25,6 +24,9 @@ proc newMap*(title, game, author, creationTime: string): Map =
   m.creationTime = creationTime
 
   m.levels = @[]
+  # Start with dirty until cleared
+  m.levelsDirty = true
+
   m.links = initLinks()
 
   m.coordOpts = CoordinateOptions(
@@ -42,22 +44,8 @@ proc newMap*(title, game, author, creationTime: string): Map =
 
 # }}}
 
-# {{{ findSortedLevelIdxForLevel*()
-proc findSortedLevelIdxForLevel*(m; level: Natural): Natural =
-  let idx = m.sortedLevelIndexes.find(level)
-  assert idx > -1
-  idx.Natural
-
-# }}}
 # {{{ sortLevels*()
 proc sortLevels*(m) =
-  proc mkSortedLevelName(l: Level): string =
-    let elevation = if l.elevation == 0: "G" else: $l.elevation
-    if l.levelName == "":
-      fmt"{l.locationName} ({elevation})"
-    else:
-      fmt"{l.locationName} {EnDash} {l.levelName} ({elevation})"
-
   var sortedLevelsWithIndex = zip(m.levels, (0..m.levels.high).toSeq)
   sortedLevelsWithIndex.sort(
     proc (a, b: tuple[level: Level, idx: int]): int =
@@ -74,11 +62,23 @@ proc sortLevels*(m) =
   m.sortedLevelIndexes = @[]
 
   for (level, levelIdx) in sortedLevelsWithIndex:
-    m.sortedLevelNames.add(mkSortedLevelName(level))
+    m.sortedLevelNames.add(level.getDetailedName())
     m.sortedLevelIndexes.add(levelIdx)
 
 # }}}
+# {{{ sortedLevels*()
+iterator sortedLevels*(m): tuple[levelIdx: Natural, level: Level] =
+  for i in m.sortedLevelIndexes:
+    yield (i, m.levels[i])
 
+# }}}
+# {{{ findSortedLevelIdxForLevel*()
+proc findSortedLevelIdxForLevel*(m; level: Natural): Natural =
+  let idx = m.sortedLevelIndexes.find(level)
+  assert idx > -1
+  idx.Natural
+
+# }}}
 # {{{ hasLevels*()
 func hasLevels*(m): bool =
   m.levels.len > 0
@@ -87,16 +87,32 @@ func hasLevels*(m): bool =
 # {{{ addLevel*()
 proc addLevel*(m; l: Level) =
   m.levels.add(l)
-  m.refreshSortedLevelNames()
+  m.sortLevels()
+  m.levelsDirty = true
+
+# }}}
+# {{{ setLevel*()
+proc setLevel*(m; idx: Natural, l: Level) =
+  m.levels[idx] = l
+  m.sortLevels()
+  m.levelsDirty = true
 
 # }}}
 # {{{ delLevel*()
 proc delLevel*(m; levelIdx: Natural) =
   m.levels.del(levelIdx)
-  m.refreshSortedLevelNames()
+  m.sortLevels()
+  m.levelsDirty = true
 
 # }}}
 
+# {{{ allNotes*()
+iterator allNotes*(m): tuple[loc: Location, note: Annotation] =
+  for levelIdx, l in m.levels:
+    for note in l.allNotes():
+      yield (Location(level: levelIdx, row: note.row, col: note.col),
+             note.annotation)
+# }}}
 # {{{ hasNote*()
 proc hasNote*(m; loc: Location): bool {.inline.} =
   m.levels[loc.level].hasNote(loc.row, loc.col)

@@ -290,7 +290,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     elif srcFloor == fExitDoor:            destFloor = fEntranceDoor
     elif srcFloor in LinkStairs:
       let
-        srcElevation = m.levels[src.level].elevation
+        srcElevation  = m.levels[src.level].elevation
         destElevation = m.levels[dest.level].elevation
 
       if srcElevation < destElevation:
@@ -317,6 +317,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
       m.links.set(dest, src)
     else:
       m.links.set(src, dest)
+
     m.levels[dest.level].reindexNotes()
     result = usd
 
@@ -740,17 +741,17 @@ proc deleteLevel*(map; loc: Location; um): Location =
     let restoredLevel = undoLevel.deepCopy
 
     if loc.level > m.levels.high:
-      m.levels.add(restoredLevel)
+      m.addLevel(restoredLevel)
     else:
       # Move to the end
       let lastLevel = m.levels[loc.level]
-      m.levels.add(lastLevel)
+      m.addLevel(lastLevel)
+      m.setLevel(idx=loc.level, restoredLevel)
+      m.sortLevels()
 
-      m.levels[loc.level] = restoredLevel
       m.links.remapLevelIndex(oldIndex = loc.level, newIndex = m.levels.high)
       m.links.debugSanitise()
 
-    m.sortLevels()
     m.links.addAll(oldLinks)
     m.links.debugSanitise()
 
@@ -822,7 +823,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     oldRegions = map.levels[loc.level].regions
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel.deepCopy
+    m.setLevel(idx=loc.level, undoLevel.deepCopy)
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
@@ -856,7 +857,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
                                           newLevelRect, wraparound=false)
 
   let action = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = m.newLevelFrom(loc.level, cropRect)
+    m.setLevel(idx=loc.level, m.newLevelFrom(loc.level, cropRect))
 
     # Adjust links
     for src in oldLinks.sources: m.links.delBySrc(src)
@@ -875,7 +876,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     oldRegions = map.levels[loc.level].regions
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel.deepCopy
+    m.setLevel(idx=loc.level, undoLevel.deepCopy)
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
@@ -931,7 +932,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       discard l.paste(rowOffs, colOffs, sb.level, sb.selection,
                       pasteTrail=true)
 
-    m.levels[loc.level] = l
+    m.setLevel(idx=loc.level, l)
 
     for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
@@ -947,7 +948,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
   let undoLevel = sb.level.deepCopy
 
   let undoAction = proc (m: var Map): UndoStateData =
-    m.levels[loc.level] = undoLevel.deepCopy
+    m.setLevel(idx=loc.level, undoLevel.deepCopy)
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)

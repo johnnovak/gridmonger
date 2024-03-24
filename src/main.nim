@@ -503,31 +503,40 @@ type
   NotesListState = object
     currFilter:     NotesListFilter
     prevFilter:     NotesListFilter
-    showCoords:     bool
-    currentRegion:  bool
     linkCursor:     bool
+    grouping:       int
     cache:          seq[NotesListCacheEntry]
-    dirty:          bool
+    sectionStates:  seq[bool]
 
   NotesListCacheEntry = object
     id:             ItemId
-    row, col:       Natural
+    location:       Location
     height:         float
 
   NotesListFilter = object
-    typeFilter:     seq[NoteTypeFilter]
-    order:          NoteOrder
+    scope:          NoteScopeFilter
+    noteType:       seq[NoteTypeFilter]
     searchTerm:     string
+    grouping:       NoteGrouping
+    ordering:       NoteOrdering
+
+  NoteScopeFilter = enum
+    nsfMap    = "Map"
+    nsfLevel  = "Level"
+    nsfRegion = "Region"
 
   NoteTypeFilter = enum
-    nftNone   = "None"
-    nftNumber = "Num"
-    nftId     = "ID"
-    nftIcon   = "Icon"
+    ntfNone   = "None"
+    ntfNumber = "Num"
+    ntfId     = "ID"
+    ntfIcon   = "Icon"
 
-  NoteOrder = enum
-    nfoType   = "Type"
-    nfoText   = "Text"
+  NoteGrouping = enum
+    ngNone, ngLevelOrRegion, ngLevelAndRegion
+
+  NoteOrdering = enum
+    noType    = "Type"
+    noText    = "Text"
 
 
   StatusMessage = object
@@ -8065,10 +8074,10 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
 proc toAnnotationKindSet(filter: seq[NoteTypeFilter]): set[AnnotationKind] =
   for f in filter:
     case f
-    of nftNone:   result.incl(akComment)
-    of nftNumber: result.incl(akIndexed)
-    of nftId:     result.incl(akCustomId)
-    of nftIcon:   result.incl(akIcon)
+    of ntfNone:   result.incl(akComment)
+    of ntfNumber: result.incl(akIndexed)
+    of ntfId:     result.incl(akCustomId)
+    of ntfIcon:   result.incl(akIcon)
 
 # {{{ Note sort functions
 func toSortOrder(ak: AnnotationKind): int =
@@ -8079,26 +8088,27 @@ func toSortOrder(ak: AnnotationKind): int =
   of akComment:  3
   of akLabel:    4
 
-func sortByNoteType(a, b: Annotation): int =
+func sortByNoteType(x, y: Annotation): int =
   var c = 0
-  if a.kind == b.kind:
-    case a.kind:
+  if x.kind == y.kind:
+    case x.kind:
     of akComment, akLabel: discard
     of akIndexed:
-      c   = cmp(a.index,    b.index);    if c != 0: return c
+      c   = cmp(x.index,    y.index);    if c != 0: return c
     of akCustomId:
-      c   = cmp(a.customId, b.customId); if c != 0: return c
+      c   = cmp(x.customId, y.customId); if c != 0: return c
     of akIcon:
-      c   = cmp(a.icon,     b.icon);     if c != 0: return c
+      c   = cmp(x.icon,     y.icon);     if c != 0: return c
     return 0
   else:
-    cmp(a.kind.toSortOrder, b.kind.toSortOrder)
+    cmp(x.kind.toSortOrder, y.kind.toSortOrder)
 
-func sortByTextAndLocation(locA: tuple[row, col: Natural], a: Annotation,
-                           locB: tuple[row, col: Natural], b: Annotation): int =
-  var c = cmpIgnoreCase(a.text, b.text); if c != 0: return c
-  c     = cmp(locA.row, locB.row);       if c != 0: return c
-  return  cmp(locA.col, locB.col)
+func sortByTextAndLocation(locX: Location, x: Annotation,
+                           locY: Location, y: Annotation): int =
+  var c = cmpIgnoreCase(x.text, y.text); if c != 0: return c
+  c     = cmp(locX.level, locY.level);   if c != 0: return c
+  c     = cmp(locX.row,   locY.row);     if c != 0: return c
+  return  cmp(locX.col,   locY.col)
 
 # }}}
 # {{{ noteButton()
@@ -8162,11 +8172,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   alias(nls, ui.notesListState)
 
   let
-    ws = a.theme.windowTheme
-    l  = currLevel(a)
+    ws  = a.theme.windowTheme
+    l   = currLevel(a)
+    map = a.doc.map
 
   const
-    TopPad     = 137
+    TopPad     = 169
     LeftPad    = 16
     RightPad   = 16
     TextIndent = 44
@@ -8188,42 +8199,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     wy = 44
     wh = 24
 
-  if koi.button(wx+244, wy, w=24, wh, "A",
-                tooltip = "Show all note types",
-                style = a.theme.buttonStyle):
-    nls.currFilter.typeFilter = @[nftNone, nftNumber, nftId, nftIcon]
-
-  koi.multiRadioButtons(
+  # Scope filter
+  koi.radioButtons(
     wx, wy, w=w-LeftPad-RightPad - 32, wh,
-    nls.currFilter.typeFilter, style = a.theme.radioButtonStyle
+    nls.currFilter.scope, style = a.theme.radioButtonStyle
   )
 
-  wy += 44
-  koi.label(wx+3, wy, 60, wh, "Order by", style=a.theme.labelStyle)
-
-  koi.dropDown(
-    wx+68, wy, w=78, wh, nls.currFilter.order, style = a.theme.dropDownStyle
-  )
-
-  discard koi.button(
-    wx+161, wy, w=45, wh, "(X,Y)",
-    tooltip = "Show note coordinates",
-    style = a.theme.buttonStyle
-  )
-
+  # Link to cursor
   var cbStyle = a.theme.checkBoxStyle.deepCopy()
-  cbStyle.icon.fontSize = 14.0
-  cbStyle.iconActive    = "R"
-  cbStyle.iconInactive  = "R"
-
-  koi.checkBox(
-    wx+213, wy, w=24,
-    nls.currentRegion,
-    tooltip = "Show only notes from the current region",
-    style = cbStyle
-  )
-
-  cbStyle = a.theme.checkBoxStyle.deepCopy()
   cbStyle.icon.fontSize = 14.0
   cbStyle.iconActive   = IconLink
   cbStyle.iconInactive = IconLink
@@ -8235,32 +8218,79 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     style = cbStyle
   )
 
+  # Note types filter
   wy += 33
-  koi.label(wx+3, wy, 60, wh, "Search", style=a.theme.labelStyle)
+  if koi.button(wx+244, wy, w=24, wh, "A",
+                tooltip = "Show all note types",
+                style = a.theme.buttonStyle):
+    nls.currFilter.noteType = @[ntfNone, ntfNumber, ntfId, ntfIcon]
+
+  koi.multiRadioButtons(
+    wx, wy, w=w-LeftPad-RightPad - 32, wh,
+    nls.currFilter.noteType, style = a.theme.radioButtonStyle
+  )
+
+  # Note text filter
+  wy += 44
+  koi.label(wx+1, wy, 60, wh, "Search", style=a.theme.labelStyle)
 
   if koi.button(wx+244, wy, w=24, wh, IconTrash,
+                disabled = nls.currFilter.searchTerm.isEmptyOrWhitespace,
                 tooltip = "Clear search term",
                 style = a.theme.buttonStyle):
     nls.currFilter.searchTerm = ""
 
   koi.textField(
-    wx+68, wy, w=169, wh,
+    wx+53, wy, w=188, wh,
     nls.currFilter.searchTerm,
     style = a.theme.textFieldStyle
   )
 
-  # Determine note list dirty state
-  if nls.currFilter != nls.prevFilter:
-    nls.dirty = true
+  # Grouping
+  wy += 33
+  koi.label(wx+1, wy, 50, wh, "Group", style=a.theme.labelStyle)
 
-  elif l.annotations.dirty:
-    nls.dirty = true
-    l.annotations.dirty = false
+  let groupingItems = case nls.currFilter.scope:
+                      of nsfMap:    @["None", "Levels", "Levels, Regions"]
+                      of nsfLevel:  @["None", "Regions"]
+                      of nsfRegion: @["None"]
 
-  elif ui.cursor.level != ui.prevCursor.level:
-    nls.dirty = true
+  nls.grouping = nls.grouping.clamp(0, groupingItems.len-1)
+  nls.currFilter.grouping = NoteGrouping(nls.grouping)
+
+  # Ordering
+  koi.dropDown(
+    wx+53, wy, w=114, wh,
+    groupingItems, nls.grouping,
+    disabled=(nls.currFilter.scope == nsfRegion),
+    style = a.theme.dropDownStyle
+  )
+
+  koi.label(wx+178, wy, 60, wh, "Order", style=a.theme.labelStyle)
+
+  koi.dropDown(
+    wx+220, wy, w=48, wh, nls.currFilter.ordering, style = a.theme.dropDownStyle
+  )
 
 
+  # Sort functions
+  func sortByTextLocationType(x, y: NotesListCacheEntry): int =
+    let noteX = map.getNote(x.location).get
+    let noteY = map.getNote(y.location).get
+    var c = sortByTextAndLocation(x.location, noteX,
+                                  y.location, noteY)
+    if c != 0: return c
+    sortByNoteType(noteX, noteY)
+
+  func sortByTypeTextLocation(x, y: NotesListCacheEntry): int =
+    let noteX = map.getNote(x.location).get
+    let noteY = map.getNote(y.location).get
+    var c = sortByNoteType(noteX, noteY)
+    if c != 0: return c
+    sortByTextAndLocation(x.location, noteX,
+                          y.location, noteY)
+
+  # Rebuild/reset caches if needed
   const
     NoteHorizOffs  = -8
     NoteVertPad    = 18
@@ -8274,58 +8304,89 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     vg.setFont(14, "sans-bold")
     vg.textLineHeight(1.4)
 
-  # Refresh cache if needed
-  if nls.dirty:
-    let annotationKindFilter = nls.currFilter.typeFilter.toAnnotationKindSet
+  setFont()
 
-    setFont()
+  let
+    annotationKindFilter = nls.currFilter.noteType.toAnnotationKindSet
+    searchTerms = nls.currFilter.searchTerm.strip.toLower.splitWhitespace
 
-    nls.cache = newSeqOfCap[NotesListCacheEntry](l.numAnnotations())
+  proc maybeAddCacheEntry(s: var seq[NotesListCacheEntry], loc: Location,
+                          note: Annotation, vg: NVGContext) =
+    if note.kind in annotationKindFilter and
+       (searchTerms.len == 0 or
+        searchTerms.anyIt(note.text.toLower.contains(it))):
 
-    let searchTerms = nls.currFilter.searchTerm.strip.toLower.splitWhitespace
+      let
+        idString   = fmt"notes-list:{loc.level}:{loc.row}:{loc.col}"
+        id         = hashId(idString)
+        textBounds = vg.textBoxBounds(textX, y, textW, note.text)
+        height     = textBounds.y2 - textBounds.y1 + NoteVertPad
 
-    for (r,c, note) in l.allNotes():
-      if note.kind in annotationKindFilter:
-        if searchTerms.len > 0:
-          var found = false
-          for term in searchTerms:
-            if note.text.toLower.contains(term):
-              found = true
-              break
-          if not found: continue
+      s.add(
+        NotesListCacheEntry(id: id, location: loc, height: height)
+      )
 
-        let
-          idString   = fmt"notes-list:{r}:{c}"
-          id         = hashId(idString)
-          textBounds = vg.textBoxBounds(textX, y, textW, note.text)
-          height     = textBounds.y2 - textBounds.y1 + NoteVertPad
+  proc sortCacheEntries(s: var seq[NotesListCacheEntry],
+                        ordering: NoteOrdering) =
+    case ordering
+    of noType: s.sort(sortByTypeTextLocation)
+    of noText: s.sort(sortByTextLocationType)
 
-        nls.cache.add(
-          NotesListCacheEntry(id: id, row: r, col: c, height: height)
+
+  var rebuildNotesCache = nls.currFilter != nls.prevFilter or
+                          ui.cursor.level != ui.prevCursor.level or
+                          l.annotations.dirty or map.levelsDirty
+
+  if map.levelsDirty:
+    nls.sectionStates = newSeq[bool](map.levels.len)
+    nls.sectionStates.fill(true)
+
+  if l.annotations.dirty:
+    l.annotations.dirty = false
+
+  if map.levelsDirty:
+    map.levelsDirty = false
+
+
+  if rebuildNotesCache:
+    # Clear cache
+    nls.cache = newSeq[NotesListCacheEntry]()
+
+    case nls.currFilter.scope:
+    of nsfMap:
+      case nls.currFilter.grouping:
+      of ngNone:
+        for (loc, note) in map.allNotes():
+          nls.cache.maybeAddCacheEntry(loc, note, vg)
+        sortCacheEntries(nls.cache, nls.currFilter.ordering)
+
+      of ngLevelOrRegion, ngLevelAndRegion:
+        for (levelIdx, level) in map.sortedLevels:
+          var s = newSeq[NotesListCacheEntry]()
+          for (r,c, note) in level.allNotes():
+            s.maybeAddCacheEntry(
+              Location(level: levelIdx, row: r, col: c),
+              note, vg
+            )
+
+          sortCacheEntries(s, nls.currFilter.ordering)
+          nls.cache.add(s)
+        # TODO regions
+
+    of nsfLevel:
+      for (r,c, note) in l.allNotes():
+        nls.cache.maybeAddCacheEntry(
+          Location(level: a.ui.cursor.level, row: r, col: c),
+          note, vg
         )
+      sortCacheEntries(nls.cache, nls.currFilter.ordering)
+      # TODO regions
 
-    func sortByTextLocationType(a, b: NotesListCacheEntry): int =
-      let noteA = l.getNote(a.row, a.col).get
-      let noteB = l.getNote(b.row, b.col).get
-      var c = sortByTextAndLocation((a.row, a.col), noteA,
-                                    (b.row, b.col), noteB)
-      if c != 0: return c
-      sortByNoteType(noteA, noteB)
-
-    func sortByTypeTextLocation(a, b: NotesListCacheEntry): int =
-      let noteA = l.getNote(a.row, a.col).get
-      let noteB = l.getNote(b.row, b.col).get
-      var c = sortByNoteType(noteA, noteB)
-      if c != 0: return c
-      sortByTextAndLocation((a.row, a.col), noteA,
-                            (b.row, b.col), noteB)
-
-    case nls.currFilter.order
-    of nfoType: nls.cache.sort(sortByTypeTextLocation)
-    of nfoText: nls.cache.sort(sortByTextLocationType)
+    of nsfRegion:
+      # TODO
+      discard
 
     nls.prevFilter = nls.currFilter
-    nls.dirty = false
 
   # Scroll view with notes
   koi.beginScrollView(x, y+TopPad, w, h-TopPad,
@@ -8344,17 +8405,41 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Render note buttons
   setFont()
 
+  var
+    prevEntry: Option[NotesListCacheEntry]
+    levelSectionIdx = 0
+    addNote = false
+
+  let grp = nls.currFilter.grouping
+  let (levelSections, regionSections) =
+    case nls.currFilter.scope:
+    of nsfMap:    (grp != ngNone, grp == ngLevelAndRegion)
+    of nsfLevel:  (false,         grp == ngLevelOrRegion)
+    of nsfRegion: (false,         false)
+
   for e in nls.cache:
-    let note = l.getNote(e.row, e.col).get
+    let note = map.getNote(e.location).get
 
-    const MinHeight = 32
-    let height = max(MinHeight, e.height)
+    if levelSections:
+      if prevEntry.isNone or e.location.level != prevEntry.get.location.level:
+        let l = map.levels[e.location.level]
+        addNote = koi.sectionHeader(l.getDetailedName(short=true),
+                                        nls.sectionStates[levelSectionIdx])
+        inc(levelSectionIdx)
+    else:
+      addNote = true
 
-    koi.nextRowHeight(height)
-    koi.nextItemHeight(height)
+    if addNote:
+      const MinHeight = 32
+      let height = max(MinHeight, e.height)
 
-    if noteButton(e.id, textX, textY=17, textW, markerX, note):
-      moveCursorTo(Location(level: ui.cursor.level, row: e.row, col: e.col), a)
+      koi.nextRowHeight(height)
+      koi.nextItemHeight(height)
+
+      if noteButton(e.id, textX, textY=17, textW, markerX, note):
+        moveCursorTo(e.location, a)
+
+    prevEntry = e.some
 
   koi.endScrollView()
 
@@ -9893,9 +9978,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   # TODO init from config
   with a.ui.notesListState:
-    currFilter.typeFilter = @[nftNone, nftNumber, nftId, nftIcon]
-    currFilter.order      = nfoType
-    dirty                 = true
+    currFilter.noteType = @[ntfNone, ntfNumber, ntfId, ntfIcon]
+    currFilter.ordering = noType
 
   loadFonts(a)
   loadAndSetIcon(a)

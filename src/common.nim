@@ -86,8 +86,9 @@ type
     notes*:        string
 
     levels*:       seq[Level]
-    coordOpts*:    CoordinateOptions
+    levelsDirty*:  bool
 
+    coordOpts*:    CoordinateOptions
     links*:        Links
 
     sortedLevelNames*:   seq[string]

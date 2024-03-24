@@ -1,5 +1,6 @@
 import std/math
 import std/options
+import std/strformat
 
 import annotations
 import common
@@ -260,6 +261,19 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
   result = destRegions
 
 # }}}
+
+# }}}
+
+# {{{ getDetailedName*()
+proc getDetailedName*(l; short = false): string =
+  let elevation = if l.elevation == 0: "G" else: $l.elevation
+  if l.levelName == "":
+    fmt"{l.locationName} ({elevation})"
+  else:
+    if short:
+      fmt"{l.levelName} ({elevation})"
+    else:
+      fmt"{l.locationName} {EnDash} {l.levelName} ({elevation})"
 
 # }}}
 
