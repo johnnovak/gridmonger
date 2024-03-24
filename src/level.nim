@@ -507,6 +507,9 @@ proc isSpecialLevelIndex*(idx: Natural): bool =
 # }}}
 
 # {{{ newLevel*()
+
+var g_levelIdCounter = 0
+
 const DefaultCoordOpts = CoordinateOptions(
   origin:      coNorthWest,
   rowStyle:    csNumber,
@@ -531,6 +534,10 @@ proc newLevel*(locationName, levelName: string, elevation: int,
                initRegions: bool = true): Level =
 
   var l = new Level
+
+  l.id = g_levelIdCounter
+  inc(g_levelIdCounter)
+
   l.locationName = locationName
   l.levelName = levelName
   l.elevation = elevation

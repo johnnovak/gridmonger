@@ -115,6 +115,7 @@ type
 
 
   Level* = ref object
+    id*:                int
     locationName*:      string
     levelName*:         string
     elevation*:         int

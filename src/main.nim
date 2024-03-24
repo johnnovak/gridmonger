@@ -506,7 +506,7 @@ type
     linkCursor:     bool
     grouping:       int
     cache:          seq[NotesListCacheEntry]
-    sectionStates:  seq[bool]
+    sectionStates:  Table[int, bool]
 
   NotesListCacheEntry = object
     id:             ItemId
@@ -8331,8 +8331,9 @@ proc renderNotesListPane(x, y, w, h: float; a) =
                           l.annotations.dirty or map.levelsDirty
 
   if map.levelsDirty:
-    nls.sectionStates = newSeq[bool](map.levels.len)
-    nls.sectionStates.fill(true)
+    for l in map.levels:
+      if l.id notin nls.sectionStates:
+        nls.sectionStates[l.id] = true
 
   if l.annotations.dirty:
     l.annotations.dirty = false
@@ -8400,7 +8401,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   var
     prevEntry: Option[NotesListCacheEntry]
-    levelSectionIdx = 0
     addNote = false
 
   let grp = nls.currFilter.grouping
@@ -8417,8 +8417,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       if prevEntry.isNone or e.location.level != prevEntry.get.location.level:
         let l = map.levels[e.location.level]
         addNote = koi.sectionHeader(l.getDetailedName(short=true),
-                                        nls.sectionStates[levelSectionIdx])
-        inc(levelSectionIdx)
+                                    nls.sectionStates[l.id])
     else:
       addNote = true
 
@@ -9973,6 +9972,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   with a.ui.notesListState:
     currFilter.noteType = @[ntfNone, ntfNumber, ntfId, ntfIcon]
     currFilter.ordering = noType
+    sectionStates = initTable[int, bool]()
 
   loadFonts(a)
   loadAndSetIcon(a)

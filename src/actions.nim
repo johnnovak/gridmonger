@@ -772,6 +772,8 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
   # Do action
   let
+    levelId = map.levels[loc.level].id
+
     oldLinks = map.links.filterByLevel(loc.level)
 
     (copyRect, destRow, destCol) =
@@ -793,7 +795,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
                             l.regionOpts,
                             l.notes,
                             initRegions=false)
-
+    newLevel.id = levelId
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
 
     # Adjust links
@@ -847,6 +849,8 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
   # Do action
   let
+    levelId = map.levels[loc.level].id
+
     oldLinks = map.links.filterByLevel(loc.level)
 
     newLevelRect = rectI(0, 0, cropRect.rows, cropRect.cols)
@@ -857,10 +861,12 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
                                           newLevelRect, wraparound=false)
 
   let action = proc (m: var Map): UndoStateData =
-    m.setLevel(idx=loc.level, m.newLevelFrom(loc.level, cropRect))
+    var newLevel = m.newLevelFrom(loc.level, cropRect)
+    newLevel.id = levelId
+    m.setLevel(idx=loc.level, newLevel)
 
     # Adjust links
-    for src in oldLinks.sources: m.links.delBySrc(src)
+    for src in oldLinks.sources:m.links.delBySrc(src)
     m.links.addAll(newLinks)
     m.links.debugSanitise()
 
@@ -899,17 +905,17 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     actionName: "Nudge level", location: loc, undoLocation: loc
   )
 
-  let levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
+  let
+    levelId = map.levels[loc.level].id
 
-  let oldLinks = map.links.filterByLevel(loc.level)
-  let newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
-                                            levelRect, wraparound)
+    levelRect = rectI(0, 0, sb.level.rows, sb.level.cols)
+
+    oldLinks = map.links.filterByLevel(loc.level)
+    newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
+                                          levelRect, wraparound)
   map.links.debugSanitise()
 
   # Do action
-  #
-  # The level is cleared for the duration of the nudge operation and it is
-  # stored temporarily in the SelectionBuffer
   let action = proc (m: var Map): UndoStateData =
     var l = newLevel(
       sb.level.locationName, sb.level.levelName, sb.level.elevation,
@@ -919,6 +925,8 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
       sb.level.notes,
       initRegions=false
     )
+
+    l.id = levelId
 
     if wraparound:
       discard l.pasteWithWraparound(destRow=rowOffs, destCol=colOffs,
