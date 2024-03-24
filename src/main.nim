@@ -6696,16 +6696,7 @@ proc handleGlobalKeyEvents(a) =
         let sel = newSelection(l.rows, l.cols)
         sel.fill(true)
 
-        # The level is cleared for the duration of the nudge operation and it
-        # is stored temporarily in the SelectionBuffer.
         ui.nudgeBuf = SelectionBuffer(level: l, selection: sel).some
-
-        map.levels[cur.level] = newLevel(
-          l.locationName, l.levelName, l.elevation,
-          l.rows, l.cols,
-          l.overrideCoordOpts, l.coordOpts,
-          l.regionOpts
-        )
 
         dp.selStartRow = 0
         dp.selStartCol = 0
@@ -7742,6 +7733,8 @@ proc renderLevel(x, y, w, h: float,
 
       else: SelectionBuffer.none
     )
+
+    dp.drawLevel = ui.editMode != emNudgePreview
 
     drawLevel(
       a.doc.map,

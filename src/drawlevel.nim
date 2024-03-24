@@ -80,6 +80,9 @@ type
     # Used as either the copy buffer or the nudge buffer
     selectionBuffer*:  Option[SelectionBuffer]
 
+    # The current level must not be drawn in nudge preview mode
+    drawLevel*:        bool
+
     # Start drawing coords for the selection buffer (can be negative)
     selStartRow*:      int
     selStartCol*:      int
@@ -2733,15 +2736,22 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   alias(vg, ctx.vg)
   alias(l, map.levels[level])
 
-  let viewBuf = newLevelFrom(l,
-    rectN(
-      dp.viewStartRow,
-      dp.viewStartCol,
-      dp.viewStartRow + dp.viewRows,
-      dp.viewStartCol + dp.viewCols
-    ),
-    border = ViewBufBorder
-  )
+  let viewBuf = if dp.drawLevel:
+      newLevelFrom(l,
+        rectN(
+          dp.viewStartRow,
+          dp.viewStartCol,
+          dp.viewStartRow + dp.viewRows,
+          dp.viewStartCol + dp.viewCols
+        ),
+        border = ViewBufBorder
+      )
+    else:
+      newLevel(
+        locationName = "", levelName = "", elevation = 0,
+        rows = dp.viewRows + ViewBufBorder*2,
+        cols = dp.viewCols + ViewBufBorder*2
+      )
 
   assert dp.viewStartRow + dp.viewRows <= l.rows
   assert dp.viewStartCol + dp.viewCols <= l.cols
@@ -2754,7 +2764,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   else:                         drawBackground(ctx)
 
   # outlineBuf has the same dimensions as viewBuf
-  let outlineBuf = if lt.outlineStyle >= osSquareEdges:
+  let outlineBuf = if dp.drawLevel and lt.outlineStyle >= osSquareEdges:
     renderEdgeOutlines(viewBuf).some
   else:
     OutlineBuf.none
@@ -2763,8 +2773,9 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   drawBackgroundGrid(viewBuf, ctx)
 
-  if lt.outlineStyle == osCell: drawCellOutlines(l, ctx)
-  elif outlineBuf.isSome:       drawEdgeOutlines(l, outlineBuf.get, ctx)
+  if dp.drawLevel:
+    if lt.outlineStyle == osCell: drawCellOutlines(l, ctx)
+    elif outlineBuf.isSome:       drawEdgeOutlines(l, outlineBuf.get, ctx)
 
   drawCellBackgroundsAndGrid(viewBuf, ctx)
 
