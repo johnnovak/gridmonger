@@ -1,38 +1,55 @@
-                      Gridmonger map file format
-                      ==========================
-                             Versions 1-2
+
+
+                         Gridmonger map file format
+                         ==========================
+                                 Version 4
+
+
+                     https://gridmonger.johnnovak.net/
+
 
 
 1. File format & structure
---------------------------
+==========================
 
 Gridmonger map files (.gmm extension) are stored in the generic RIFF container
 format with the form type ID 'GRMM'.
 
+Multi-byte numbers are stored in little-endian byte order in RIFF files.
+
 The structure of a GRMM RIFF file is as follows:
 
-  RIFF ('GRMM'          # Gridmonger map file
-      LIST ('map '      # Map
-          'prop'        # Map properties
-          'coor'        # Global coordinate options
+  RIFF ('GRMM'           Gridmonger map file
+      LIST ('map '       Map (group chunk)
+          'prop'         Map properties
+          'coor'         Global coordinate options
       )
-      LIST ('lvls'      # List of levels (min=0, max=999)
-          LIST ('lvl '  # Level
-              'prop'    # Level properties
-              'coor'    # Level coordinate options
-              'cell'    # Cells
-              'anno'    # Annotation
-              'regn'    # Regions
+      LIST ('lvls'       List of levels (min=0, max=999) (group chunk)
+          LIST ('lvl '   Level (group chunk)
+              'prop'       Level properties
+              'coor'       Level coordinate options
+              'cell'       Cell data
+              'anno'       Annotations
+              'regn'       Regions
           )
-              ...       (repeat number of levels times)
+          ...            <repeat number of levels (numLevels) times>
       )
-      'lnks'            # Map links
-      'stat'            # App state (optional)
+      'lnks'             Map links
+
+      LIST ('stat'       Gridmonger app/UI state (group chunk, optional)
+           'disp'          Display related settings
+           'opts'          Options
+           'tool'          Tools
+           'notl'          Notes list
   )
 
 
+The 'stat' chunk can be safely ignored by 3rd party tools only interested in
+the map data.
+
+
 2. Description of GRMM chunks
------------------------------
+=============================
 
 Notes:
 
@@ -44,7 +61,10 @@ Notes:
     are regular ASCII string.
 
 
-'prop' (map)
+Map chunks (in 'map ' group chunk)
+----------------------------------
+
+'prop'      Map properties
     UINT16  version             (min=1, max=1)
     WSTR    title               (minRuneLen=1, maxRuneLen=100)
     WSTR    game                (maxRuneLen=100)
@@ -52,8 +72,7 @@ Notes:
     BSTR    creationTime        (len=19, local time as 'YYYY-MM-DD HH:mm:ss')
     WSTR    notes               (maxRuneLen=8000)
 
-
-'coor' (map or level)
+'coor'      Global coordinate options
     UINT8   origin              (0=north-west, 1=south-west)
     UINT8   rowStyle            (0=number, 1=letter)
     UINT8   columnStyle         (0=number, 1=letter)
@@ -61,7 +80,10 @@ Notes:
     INT16   columnStart         (min=-9999, max=9999)
 
 
-'prop' (level)
+Level chunks  (in 'lvl ' group chunk)
+-------------------------------------
+
+'prop'      Level properties
     WSTR    locationName        (minRuneLen=1, maxRuneLen=100)
     WSTR    levelName           (maxRuneLen=100)
     INT16   elevation           (min=-200, max=200)
@@ -71,24 +93,33 @@ Notes:
     WSTR    notes               (maxRuneLen=8000)
 
 
-'cell'
-    Cell data is stored in layers (similar in concept to bitmaps).
-    Each layer can use a different compressions method.
-    The data stored per layer, and the order of layers are as follows:
+'coor'      Level properties
+    UINT8   origin              (0=north-west, 1=south-west)
+    UINT8   rowStyle            (0=number, 1=letter)
+    UINT8   columnStyle         (0=number, 1=letter)
+    INT16   rowStart            (min=-9999, max=9999)
+    INT16   columnStart         (min=-9999, max=9999)
 
-      UINT8   floor             (see Floor enum in common.nim for mappings)
-      UINT8   floorOrientation  (0=horiz, 1=vert)
-      UINT8   floorColor        (max=9)
-      UINT8   wallNorth         (see Wall enum in common.nim for mappings)
-      UINT8   wallWest          (see Wall enum in common.nim for mappings)
-      UINT8   trail             (0=off, 1=on)
+
+'cell'      Cell data
+    Cell data is stored in six layers (similar in concept to bitmaps).
+    Each layer can use a different compressions method.
+
+    The data stored per layer and their order are as follows:
+
+      floor             UINT8   (see Floor enum in common.nim for mappings)
+      floorOrientation  UINT8   (0=horiz, 1=vert)
+      floorColor        UINT8   (max=9)
+      wallNorth         UINT8   (see Wall enum in common.nim for mappings)
+      wallWest          UINT8   (see Wall enum in common.nim for mappings)
+      trail             UINT8   (0=off, 1=on)
 
     Layer format:
 
       UINT8   compressionType
 
       if compressionType == 0   (uncompressed)
-        uncompressed data as (numRows * numColums) bytes
+        (UINT8 * numRows * numColums)    uncompressed data
 
       if compressionType == 1   (run-length encoded)
         UINT32   length     length of compressed data in bytes
@@ -96,7 +127,7 @@ Notes:
 
         The compression uses simple RLE encoding:
 
-        - Values less than 0x80 are literal values
+        - Values less than 0x80 are literal values.
         - Values greater than or equal to 0x80 are header values, followed
           by a single data byte. The lower 7-bits of the header is
           (repeatCount - 1); the data byte should be repeated repeatCount
@@ -106,7 +137,7 @@ Notes:
         no data; the whole layer should be filled with zeroes
 
 
-'anno'
+'anno'      Annotations
     UINT16  numAnnotations      (max=9999)
 
     numAnnotations records of:
@@ -133,23 +164,23 @@ Notes:
       WSTR    text              (minRuneLen=1, maxRuneLen=4000)
 
 
-'regn'
+'regn'      Regions
     UINT8   enableRegions       (0=off, 1=on)
     UINT16  rowsPerRegion       (min=2, max=3333)
     UINT16  columnsPerRegion    (min=2, max=3333)
     UINT16  numRegions
     UINT8   perRegionCoords     (0=off, 1=on)
 
-    numRegion times:
-    UINT16  row*                (max=3332)
-    UINT16  column*             (max=3332)
-    WSTR    name                (minRuneLen=1, maxRuneLen=100)
-    WSTR    notes               (maxRuneLen=8000)
+    numRegions records of:
 
-    * row & column are not cell but region coordinates
+      WSTR    name              (minRuneLen=1, maxRuneLen=100)
+      WSTR    notes             (maxRuneLen=8000)
 
 
-'lnks'
+Map links chunk
+---------------
+
+'lnks'      Map links
     UINT16  numLinks            (max=9999)
 
     numLinks records of:
@@ -163,30 +194,89 @@ Notes:
       UINT16  destColumn        (max=numColumns-1 of the given level)
 
 
-'stat'
-    BSTR    themeName*          	(minLen=1, maxLen=100)
+App state chunks (in 'stat' group chunk, optional)
+--------------------------------------------------
+
+'disp'      Display related settings
+    BSTR    themeName*          (minLen=1, maxLen=100)
 
     * Cannot start or end with a space or '.'
       The following characters are disallowed:
         '/', '\', ':', '*', '?', '"', '<', '>', '|', '^', <zero byte>
 
-    UINT8   zoomLevel           	(min=1, max=20)
-    UINT8   currLevel           	(max=numLevels-1)
-    UINT16  cursorRow           	(max=numRows-1    of the given level)
-    UINT16  cursorColumn        	(max=numColumns-1 of the given level)
-    UINT16  viewStartRow        	(max=numRows-1    of the given level)
-    UINT16  viewStartColumn     	(max=numColumns-1 of the given level)
+    UINT8   zoomLevel           (min=1, max=20)
+    UINT8   currLevel           (max=numLevels-1)
+    UINT16  cursorRow           (max=numRows-1    of the given level)
+    UINT16  cursorColumn        (max=numColumns-1 of the given level)
+    UINT16  viewStartRow        (max=numRows-1    of the given level)
+    UINT16  viewStartColumn     (max=numColumns-1 of the given level)
 
+
+'opts'      Options
     UINT8   optShowCellCoords       (0=off, 1=on)
     UINT8   optShowToolsPane        (0=off, 1=on)
     UINT8   optShowCurrentNotePane  (0=off, 1=on)
     UINT8   optShowNotesListPane    (0=off, 1=on)
     UINT8   optWasdMode             (0=off, 1=on)
     UINT8   optWalkMode             (0=off, 1=on)
+    UINT8   optWraparound           (0=off, 1=on) TODO
 
-	TODO opt wraparound?
 
-    UINT8   currFloorColor      	(max=9)
-    UINT8   currSpecialWall     	(max=11, see SpecialWalls array in
-	                                         main.nim for mappings)
+'tool'      Tools
+    UINT8   currFloorColor      (max=9)
+    UINT8   currSpecialWall     (max=11, see SpecialWalls array in
+                                         common.nim for mappings)
+
+'notl'      Notes list
+    UINT8   linkCursor        (0=off, 1=on)
+    UINT8   scopeFilter       (0=map, 1=level, 2=region)
+    UINT8   noteTypeFilter    (bitset: b0=none, b1=number, b2=id, b3=icon)
+    WSTR    searchTerm        (maxRuneLen=100)
+    UINT8   groupBy           (0=none, 1=levels/regions, 2=levels and regions)
+    UINT8   orderBy           (0=note type, 1=note text)
+
+    numLevels records of:
+
+        UINT32   levelId
+        UINT8    levelSection     (0=closed, 1=open)
+
+        if numRegions > 0 for the level (enableRegions can still be 0):
+
+          UINT32   regionId
+          UINT8    regionSection  (0=closed, 1=open)
+
+
+3. Version history
+==================
+
+Version 4
+---------
+[Gridmonger v1.2.0 - 2024-04-22]
+
+  - Remove redundant region coordinates from the 'regn' chunk.
+  - Convert 'disp' chunk into a group chunk with multiple subchunks and:
+    - Add 'optWraparound' to the 'opts' subchunk.
+    - Add 'notl' subchunk.
+
+
+Version 3
+---------
+[Gridmonger v1.1.0 - 2023-02-02]
+
+  - Add Column (100) and Statue (110) 'floor' types to the 'cell' chunk.
+
+
+Version 2
+---------
+[Gridmonger v1.0.0 – 2022-11-06]
+
+  - Allow multiple source links for teleporters (more than one 'src' location
+    pointing to the same 'dest' location).
+
+
+Version 1
+---------
+[Gridmonger v0.9 – 2022-09-21]
+
+  - First version.
 
