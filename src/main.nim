@@ -7569,8 +7569,8 @@ proc renderRegionDropDown(a) =
     )
 
     koi.dropDown(
-      x = round(mainPane.x1 + (mainPane.w - regionDropDownWidth) * 0.5),
-      y = 73.0,
+      x = round(mainPane.w - regionDropDownWidth) * 0.5,
+      y = 49.0,
       w = regionDropDownWidth,
       h = 24.0,
       sortedRegionNames,
