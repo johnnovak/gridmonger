@@ -507,6 +507,7 @@ type
     grouping:       int
     cache:          seq[NotesListCacheEntry]
     sectionStates:  Table[int, bool]
+    activeId:       Option[ItemId]
 
   NotesListCacheEntry = object
     id:             ItemId
@@ -8106,7 +8107,7 @@ func sortByTextAndLocation(locX: Location, x: Annotation,
 # }}}
 # {{{ noteButton()
 proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
-                note: Annotation): bool =
+                note: Annotation, active: bool): bool =
   alias(ui, g_app.ui)
 
   koi.autoLayoutPre()
@@ -8128,9 +8129,9 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
       result = true
 
   addDrawLayer(koi.currentLayer(), vg):
-    let state = if   koi.isHot(id) and koi.hasNoActiveItem(): wsHover
-                elif koi.isHot(id) and koi.isActive(id):      wsDown
-                else:                                         wsNormal
+    let state = if active or (koi.isHot(id) and koi.isActive(id)): wsDown
+                elif koi.isHot(id) and koi.hasNoActiveItem():      wsHover
+                else:                                              wsNormal
 
     if state in {wsHover, wsDown}:
       vg.beginPath()
@@ -8198,7 +8199,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.currFilter.scope, style = a.theme.radioButtonStyle
   )
 
-  # Link to cursor
+  # Link cursor
   var cbStyle = a.theme.checkBoxStyle.deepCopy()
   cbStyle.icon.fontSize = 14.0
   cbStyle.iconActive   = IconLink
@@ -8311,7 +8312,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
       let
         idString   = fmt"notes-list:{loc.level}:{loc.row}:{loc.col}"
-        id         = hashId(idString)
+        id         = koi.hashId(idString)
         textBounds = vg.textBoxBounds(textX, y, textW, note.text)
         height     = textBounds.y2 - textBounds.y1 + NoteVertPad
 
@@ -8383,7 +8384,9 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.prevFilter = nls.currFilter
 
   # Scroll view with notes
-  koi.beginScrollView(x, y+TopPad, w, h-TopPad,
+  let scrollViewId = koi.hashId("notes-panel:scroll-view")
+
+  koi.beginScrollView(scrollViewId, x, y+TopPad, w, h-TopPad,
                       style=a.theme.notesListScrollViewStyle)
 
   var lp = DefaultAutoLayoutParams
@@ -8410,6 +8413,16 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     of nsfLevel:  (false,         grp == ngLevelOrRegion)
     of nsfRegion: (false,         false)
 
+  # Sync current note to cursor
+  let currNote = map.getNote(ui.cursor)
+
+  if currNote.isNone:
+    nls.activeId = ItemId.none
+
+  let syncToCursor = nls.linkCursor and currNote.isSome and
+                     ui.cursor != ui.prevCursor
+  var startY: float
+
   for e in nls.cache:
     let note = map.getNote(e.location).get
 
@@ -8428,12 +8441,23 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       koi.nextRowHeight(height)
       koi.nextItemHeight(height)
 
-      if noteButton(e.id, textX, textY=17, textW, markerX, note):
+      if syncToCursor and ui.cursor == e.location:
+        startY = koi.autoLayoutNextY()
+        nls.activeId = e.id.some
+
+      if noteButton(e.id, textX, textY=17, textW, markerX, note,
+                    active = (nls.activeId.isSome and
+                              nls.activeId.get == e.id)):
         moveCursorTo(e.location, a)
+        if nls.linkCursor:
+          nls.activeId = e.id.some
 
     prevEntry = e.some
 
   koi.endScrollView()
+
+  if syncToCursor:
+    koi.setScrollViewStartY(scrollViewId, startY)
 
 # }}}
 # }}}
