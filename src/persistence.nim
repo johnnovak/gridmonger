@@ -116,17 +116,23 @@ type
 # }}}
 # {{{ FourCCs
 const
+  # Format type ID
   FourCC_GRMM      = "GRMM"
-  FourCC_GRMM_cell = "cell"
-  FourCC_GRMM_coor = "coor"
-  FourCC_GRMM_stat = "stat"
-  FourCC_GRMM_lnks = "lnks"
-  FourCC_GRMM_lvl  = "lvl "
+
+  # Group chunks
   FourCC_GRMM_lvls = "lvls"
   FourCC_GRMM_map  = "map "
+  FourCC_GRMM_stat = "stat"
+
+  # Chunks
   FourCC_GRMM_anno = "anno"
+  FourCC_GRMM_cell = "cell"
+  FourCC_GRMM_coor = "coor"
+  FourCC_GRMM_lnks = "lnks"
+  FourCC_GRMM_lvl  = "lvl "
   FourCC_GRMM_prop = "prop"
   FourCC_GRMM_regn = "regn"
+
 # }}}
 
 # {{{ Read
