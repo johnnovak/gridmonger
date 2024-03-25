@@ -9,9 +9,16 @@ BUGS
   mode, move a few steps, disable trail mode, move a few steps, repeat a few
   times, then undo back to the beginning)
 
+- color picker:
+	- changing to HSV or Hex for the first time turns colour to black
+	- switching form Hex to HSV changes colour
+
 
 TODO
 ====
+
+  - test loading v1, v2, and v3 map versions
+  - fix invalid mp links on-the-fly
 
   - finish diagonal movement (numpad, yubn)
   - improve restoring the windows size on screen dimension changes
