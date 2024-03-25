@@ -143,6 +143,7 @@ type
 
   Regions* = OrderedTable[RegionCoords, Region]
 
+  # The top-left region has region coordinate (0,0)
   RegionCoords* = object
     row*, col*: Natural
 
