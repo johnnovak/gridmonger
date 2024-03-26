@@ -8384,9 +8384,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.prevFilter = nls.currFilter
 
   # Scroll view with notes
-  let scrollViewId = koi.hashId("notes-panel:scroll-view")
+  let
+    scrollViewId = koi.hashId("notes-panel:scroll-view")
+    scrollViewHeight = h-TopPad
 
-  koi.beginScrollView(scrollViewId, x, y+TopPad, w, h-TopPad,
+  koi.beginScrollView(scrollViewId, x, y+TopPad, w, scrollViewHeight,
                       style=a.theme.notesListScrollViewStyle)
 
   var lp = DefaultAutoLayoutParams
@@ -8421,7 +8423,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   let syncToCursor = nls.linkCursor and currNote.isSome and
                      ui.cursor != ui.prevCursor
-  var startY: float
+
+  var startY, itemHeight: float
+
+  if syncToCursor and levelSections:
+    nls.sectionStates[l.id] = true
 
   for e in nls.cache:
     let note = map.getNote(e.location).get
@@ -8442,8 +8448,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       koi.nextItemHeight(height)
 
       if syncToCursor and ui.cursor == e.location:
-        startY = koi.autoLayoutNextY()
-        nls.activeId = e.id.some
+        startY       = koi.autoLayoutNextY()
+        itemHeight   = height
+        # This is a trick to get rid of some flicker caused by the
+        # 1-frame delay between drawing the selected item then
+        # changing the Y position  of the scroll view.
+        nls.activeId = ItemId.none
 
       if noteButton(e.id, textX, textY=17, textW, markerX, note,
                     active = (nls.activeId.isSome and
@@ -8452,12 +8462,17 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         if nls.linkCursor:
           nls.activeId = e.id.some
 
+      # Make sure the selection only gets draw in the next frame.
+      if syncToCursor and ui.cursor == e.location:
+        nls.activeId = e.id.some
+
     prevEntry = e.some
 
   koi.endScrollView()
 
   if syncToCursor:
-    koi.setScrollViewStartY(scrollViewId, startY)
+    koi.setScrollViewStartY(scrollViewId, startY - scrollViewHeight/2 +
+                                          itemHeight)
 
 # }}}
 # }}}
