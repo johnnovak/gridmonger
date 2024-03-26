@@ -2,9 +2,11 @@
 
 <p align="center"><em>Your trusty old-school cRPG mapping companion</em></p>
 
+
 ## Project homepage
 
 [https://gridmonger.johnnovak.net](https://gridmonger.johnnovak.net)
+
 
 ## Build instructions
 
@@ -13,28 +15,29 @@ Requires [Nim](https://nim-lang.org/) 2.0.2
 ### Dependencies
 
 * [koi](https://github.com/johnnovak/koi)
-* [nim-glfw](https://github.com/johnnovak/nim-glfw)
-* [nim-nanovg](https://github.com/johnnovak/nim-nanovg/)
 * [nim-osdialog](https://github.com/johnnovak/nim-osdialog)
 * [nim-riff](https://github.com/johnnovak/nim-riff)
-* [winim](https://github.com/khchen/winim)
+* [semver](https://github.com/euantorano/semver.nim)
+* [winim](https://github.com/khchen/winim) (Windows only)
 
 You can install the dependencies with [Nimble](https://github.com/nim-lang/nimble):
 
 ```
-nimble install koi glfw nanovg osdialog riff winim
+nimble install koi osdialog riff semver winim
 ```
+
+`winim` is only needed for the Windows builds.
 
 
 ### Compiling
 
-The `main` branch is usualy in flux as it often contains work-in-progress
+The `main` branch is usually in flux as it often contains work-in-progress
 changes intended go into the next release. Check out the latest tag instead to
 build the last stable version:
 
 ```bash
 git tag
-# replace with the highest tag
+# replace with the latest tag
 git checkout v1.1.0
 ```
 
