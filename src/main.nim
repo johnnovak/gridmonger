@@ -10260,7 +10260,7 @@ proc main() =
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
-        glfw.waitEvents()
+        glfw.waitEventsTimeout(15)
 
     cleanup(a)
 
