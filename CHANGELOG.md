@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.0 – 2024-04-xx
+## v1.2.0 – 2024-04-25
 
 ### New features
 
@@ -22,6 +22,7 @@
   are displayed in the search results).
 - You can now load map files by drag & dropping their icons onto the program
   window or taskbar icon.
+- Option to get a notification when a new version is available.
 - macOS: Support for opening map files from the Finder.
 
 ### Enhancements

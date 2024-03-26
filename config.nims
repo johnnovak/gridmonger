@@ -52,6 +52,7 @@ proc setCommonCompileParams() =
   --gc:orc
   --threads:on
   --deepcopy:on
+  --d:ssl
   --d:nimPreviewFloatRoundtrip
   --d:nvgGL3
   --d:glfwStaticLib

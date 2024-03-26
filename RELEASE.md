@@ -34,7 +34,8 @@ All commands below must be executed from the project root directory.
 
 ### 1. Update current version
 
-Bump up the version in `CURRENT_VERSION`, commit and push the change.
+Bump up the version in `CURRENT_VERSION` and `docs/latest_version`, then
+commit and push the changes.
 
 
 ### 2. Build the manual

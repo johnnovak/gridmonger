@@ -27,9 +27,9 @@ Options:
 
 proc printVersion() =
   echo fmt"""
-{FullVersionInfo}
-{CompiledAtInfo}
-{DevelopedByInfo}
+{FullVersionString}
+{CompiledAt}
+{DevelopedBy}
 https://gridmonger.johnnovak.net/"""
 
 

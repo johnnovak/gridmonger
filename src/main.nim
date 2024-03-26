@@ -1,17 +1,18 @@
 # {{{ Imports
 
 import std/algorithm
-import std/exitprocs
 import std/browsers
+import std/exitprocs
+import std/httpclient
 import std/lenientops
 import std/logging
 import std/macros
 import std/math
+import std/monotimes
 import std/options
 import std/os
 import std/sequtils
 import std/sets
-import std/monotimes
 import std/streams
 import std/strformat
 import std/strutils except strip, splitWhitespace
@@ -19,6 +20,7 @@ import std/tables
 import std/times
 import std/unicode
 
+# Libraries
 import deps/with
 import glad/gl
 
@@ -31,11 +33,14 @@ from koi/utils as koiUtils import lerp, invLerp, remap
 import nanovg
 when not defined(DEBUG): import osdialog
 
+import semver
+
+# Internal
 import actions
-import cmdline
-import converters
 import cfghelper
+import cmdline
 import common
+import converters
 import csdwindow
 import drawlevel
 import fieldlimits
@@ -49,6 +54,7 @@ import selection
 import theme
 import undomanager
 import utils as gmUtils
+import versionchecker
 
 when defined(windows):
   import platform/windows/appevents
@@ -350,12 +356,16 @@ type
     themeEditor: ThemeEditor
     quickRef:    QuickRef
     splash:      Splash
-    aboutLogo:   AboutLogo
 
     shouldClose: bool
     updateUI:    bool
 
     logFile:     File
+
+    versionChecker:     VersionChecker
+    latestVersion:      Option[VersionInfo]
+    versionCheckFailed: bool
+    versionCheckDone:   bool
 
 
   WalkCursorMode = enum
@@ -367,16 +377,19 @@ type
 
 
   Preferences = object
+    # Startup tab
     showSplash:         bool
     autoCloseSplash:    bool
     splashTimeoutSecs:  Natural
-
     loadLastMap:        bool
-    vsync:              bool
 
+    # General tab
     autosave*:          bool
     autosaveFreqMins:   Natural
+    vsync:              bool
+    checkForUpdates:    bool
 
+    # Editing tab
     movementWraparound: bool
     openEndedExcavate:  bool
     walkCursorMode:     WalkCursorMode
@@ -544,11 +557,13 @@ type
     icon:           string
     message:        string
     commands:       seq[string]
-    warning:        string
+    warningMsg:     string
+    warningIcon:    string
     warningColor:   Color
     warningT0:      MonoTime
     warningTimeout: Duration
 
+    warningNoOverwrite:              bool
     keepMessageAfterWarningExpired:  bool
 
 
@@ -685,9 +700,13 @@ type
 
 
   AboutDialogParams = object
-    logoPaint:    Paint
-    outlinePaint: Paint
-    shadowPaint:  Paint
+    aboutLogo:          AboutLogo
+
+  AboutLogo = object
+    logo:               ImageData
+    logoImage:          Image
+    logoPaint:          Paint
+    updateLogoImage:    bool
 
 
   PreferencesDialogParams = object
@@ -704,6 +723,7 @@ type
     autosave:           bool
     autosaveFreqMins:   string
     vsync:              bool
+    checkForUpdates:    bool
 
     # Editing tab
     movementWraparound: bool
@@ -893,13 +913,6 @@ type
     updateLogoImage:     bool
     updateOutlineImage:  bool
     updateShadowImage:   bool
-
-
-  AboutLogo = object
-    logo:             ImageData
-    logoImage:        Image
-    logoPaint:        Paint
-    updateLogoImage:  bool
 
 
   QuickRefItemKind = enum
@@ -1622,10 +1635,14 @@ func coordOptsForCurrLevel(a): CoordinateOptions =
 proc setStatusMessage(icon, msg: string, commands: seq[string]; a) =
   alias(s, a.ui.status)
 
-  s.icon = icon
-  s.message = msg
-  s.warning = ""
-  s.commands = commands
+  s.icon       = icon
+  s.message    = msg
+  s.commands   = commands
+
+  if not s.warningNoOverwrite:
+    s.warningMsg = ""
+
+  koi.setFramesLeft()
 
 
 proc setStatusMessage(icon, msg: string; a) =
@@ -1638,27 +1655,46 @@ proc setStatusMessage(msg: string; a) =
 # {{{ clearStatusMessage()
 proc clearStatusMessage(a) =
   setStatusMessage(NoIcon, msg = "", commands = @[], a)
+  koi.setFramesLeft()
 
 # }}}
 # {{{ setWarningMessage()
-proc setWarningMessage(msg: string, keepStatusMessage = false; a) =
+proc setWarningMessage(msg: string, keepStatusMessage = false,
+                       noOverwrite = false,
+                       timeout = WarningMessageTimeout,
+                       icon = IconWarning; a) =
   alias(s, a.ui.status)
 
-  s.warning = msg
-  s.warningT0 = getMonoTime()
-  s.warningTimeout = WarningMessageTimeout
-  s.warningColor = a.theme.statusBarTheme.warningTextColor
+  if s.warningNoOverwrite:
+    return
+
+  s.warningMsg     = msg
+  s.warningIcon    = icon
+  s.warningColor   = a.theme.statusBarTheme.warningTextColor
+  s.warningT0      = getMonoTime()
+  s.warningTimeout = timeout
+
+  s.warningNoOverwrite = noOverwrite
   s.keepMessageAfterWarningExpired = keepStatusMessage
+
+  koi.setFramesLeft()
 
 # }}}
 # {{{ setErrorMessage()
 proc setErrorMessage(msg: string; a) =
   alias(s, a.ui.status)
 
-  s.warning = msg
+  if s.warningNoOverwrite:
+    return
+
+  s.warningMsg     = msg
+  s.warningIcon    = IconWarning
+  s.warningColor   = a.theme.statusBarTheme.errorTextColor
   s.warningTimeout = InfiniteDuration
-  s.warningColor = a.theme.statusBarTheme.errorTextColor
+
   s.keepMessageAfterWarningExpired = false
+
+  koi.setFramesLeft()
 
 # }}}
 # {{{ setSelectModeSelectMessage()
@@ -2856,7 +2892,7 @@ proc saveAppConfig(a) =
 
   var cfg = newHoconObject()
 
-  cfg.set("config-version", AppVersion)
+  cfg.set("config-version", $AppVersion)
 
   var p = "preferences."
   cfg.set(p & "load-last-map",                  a.prefs.loadLastMap)
@@ -2870,6 +2906,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
   cfg.set(p & "editing.walk-cursor-mode",       enumToDashCase($a.prefs.walkCursorMode))
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
+  cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
   p = "last-state."
   cfg.set(p & "last-document", a.doc.path)
@@ -3506,20 +3543,25 @@ proc closeDialog(a) =
 # }}}
 
 # {{{ About dialog
+proc initVersionChecking(a)
 
 proc openAboutDialog(a) =
+  if a.latestVersion.isNone:
+    initVersionChecking(a)
+
   a.dialogs.activeDialog = dlgAboutDialog
+
 
 proc openUserManual(a)
 proc openWebsite(a)
 
-proc aboutDialog(a) =
-  alias(al, a.aboutLogo)
+proc aboutDialog(dlg: var AboutDialogParams; a) =
+  alias(al, dlg.aboutLogo)
   alias(vg, a.vg)
 
-  const
-    DlgWidth = 370.0
-    DlgHeight = 440.0
+  let
+    DlgWidth  = 390
+    DlgHeight = if a.prefs.checkForUpdates: 470 else: 438
 
   let
     dialogX = floor(calcDialogX(DlgWidth, a))
@@ -3557,14 +3599,44 @@ proc aboutDialog(a) =
   var labelStyle = a.theme.labelStyle.deepCopy()
   labelStyle.align = haCenter
 
-  y += 265
-  koi.label(0, y, w, h, VersionInfo, style=labelStyle)
+  y += 275
+  koi.label(0, y, w, h, VersionString, style=labelStyle)
 
   y += 25
-  koi.label(0, y, w, h, DevelopedByInfo, style=labelStyle)
+  koi.label(0, y, w, h, DevelopedBy, style=labelStyle)
 
+  # Check for updates
+  if a.prefs.checkForUpdates:
+    y += 32
+    if a.latestVersion.isNone:
+      try:
+        a.latestVersion = a.versionChecker.tryFetchLatestVersion()
+        koi.setFramesLeft()
+      except CatchableError as e:
+        logError(e, "Error fetching version information")
+        a.versionCheckFailed = true
+
+    if a.latestVersion.isSome or a.versionCheckFailed:
+      let st = labelStyle.deepCopy()
+
+      var msg: string
+      if a.latestVersion.isSome:
+        let v = a.latestVersion.get
+        msg = if v.version > AppVersion:
+                fmt"A more recent version is available: v{v.version}"
+              else: "You're running the latest version."
+        a.versionCheckDone = true
+
+      else:
+        msg = "Error fetching version information"
+
+      st.color = a.theme.statusBarTheme.warningTextColor
+
+      koi.label(0, y, w, h, msg, style=st)
+
+  # Buttons
   x = (DlgWidth - (2*DlgButtonWidth + 1*DlgButtonPad)) * 0.5
-  y += 50
+  y += 40
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Manual",
                 style=a.theme.buttonStyle):
     openUserManual(a)
@@ -3576,7 +3648,7 @@ proc aboutDialog(a) =
 
 
   proc closeAction(a) =
-    a.aboutLogo.updateLogoImage = true
+    a.dialogs.aboutDialog.aboutLogo.updateLogoImage = true
     closeDialog(a)
 
 
@@ -3613,6 +3685,7 @@ proc openPreferencesDialog(a) =
   dlg.autosave           = a.prefs.autosave
   dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
   dlg.vsync              = a.prefs.vsync
+  dlg.checkForUpdates    = a.prefs.checkForUpdates
 
   dlg.movementWraparound = a.prefs.movementWraparound
   dlg.openEndedExcavate  = a.prefs.openEndedExcavate
@@ -3725,6 +3798,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.vsync, style = a.theme.checkBoxStyle)
 
+      koi.label("Check for updates", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.checkForUpdates, style = a.theme.checkBoxStyle)
+
   elif dlg.activeTab == 2:  # Editing
     group:
       koi.label("Movement wraparound", style=a.theme.labelStyle)
@@ -3741,7 +3819,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.checkBox(dlg.yubnMovementKeys, style = a.theme.checkBoxStyle)
 
       koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
-      koi.nextItemWidth(80)
+      koi.nextItemWidth(60)
       koi.dropDown(dlg.walkCursorMode, style = a.theme.dropDownStyle)
 
   koi.endView()
@@ -3761,6 +3839,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.autosave           = dlg.autosave
     a.prefs.autosaveFreqMins   = parseInt(dlg.autosaveFreqMins).Natural
     a.prefs.vsync              = dlg.vsync
+
+    if not a.prefs.checkForUpdates and dlg.checkForUpdates:
+      initVersionChecking(a)
+
+    a.prefs.checkForUpdates    = dlg.checkForUpdates
 
     # Editing
     a.prefs.movementWraparound = dlg.movementWraparound
@@ -8670,7 +8753,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       let path = "ui.about-dialog.logo"
       colorProp("Logo", path)
       if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
-        a.aboutLogo.updateLogoImage = true
+        a.dialogs.aboutDialog.aboutLogo.updateLogoImage = true
 
     if koi.subSectionHeader("Quick Help", te.sectionQuickHelp):
       p = "ui.quick-help."
@@ -9085,16 +9168,19 @@ proc renderStatusBar(x, y, w, h: float; a) =
   var x = 10.0
 
   # Clear expired warning messages
-  if status.warning != "":
+  if status.warningMsg != "":
     let dt = getMonoTime() - status.warningT0
     if dt > status.warningTimeout:
-      status.warning = ""
+      status.warningMsg = ""
+      status.warningNoOverwrite = false
 
       if not status.keepMessageAfterWarningExpired:
         clearStatusMessage(a)
+    else:
+      koi.setFramesLeft()
 
   # Display message
-  if status.warning == "":
+  if status.warningMsg == "":
     vg.fillColor(s.textColor)
     discard vg.text(IconPosX, ty, status.icon)
 
@@ -9115,8 +9201,8 @@ proc renderStatusBar(x, y, w, h: float; a) =
   # Display warning
   else:
     vg.fillColor(status.warningColor)
-    discard vg.text(IconPosX, ty, IconWarning)
-    discard vg.text(MessagePosX, ty, status.warning)
+    discard vg.text(IconPosX, ty, status.warningIcon)
+    discard vg.text(MessagePosX, ty, status.warningMsg)
 
   vg.restore()
 
@@ -9272,7 +9358,7 @@ proc renderDialogs(a) =
   of dlgNone: discard
 
   of dlgAboutDialog:
-    aboutDialog(a)
+    aboutDialog(dlg.aboutDialog, a)
 
   of dlgPreferencesDialog:
     preferencesDialog(dlg.preferencesDialog, a)
@@ -9791,7 +9877,7 @@ proc loadSplashImages(a) =
 # }}}
 # {{{ loadAboutLogoImage()
 proc loadAboutLogoImage(a) =
-  alias(al, a.aboutLogo)
+  alias(al, a.dialogs.aboutDialog.aboutLogo)
 
   al.logo = loadImage(a.paths.dataDir / "logo-small.png")
   createAlpha(al.logo)
@@ -9907,6 +9993,8 @@ proc initPreferences(cfg: HoconNode; a) =
 
     vsync = prefs.getBoolOrDefault("video.vsync", true)
 
+    checkForUpdates = prefs.getBoolOrDefault("check-for-updates", true)
+
     const MovementWraparoundKey = "editing.movement-wraparound"
     if prefs.getOpt(MovementWraparoundKey).isSome:
       movementWraparound = prefs.getBoolOrDefault(
@@ -9997,6 +10085,14 @@ proc dropCb(window: Window, paths: PathDropInfo) =
 
 # }}}
 
+# {{{ initVersionChecking()
+proc initVersionChecking(a) =
+  initVersionChecker(a.versionChecker)
+  a.latestVersion      = VersionInfo.none
+  a.versionCheckFailed = false
+  a.versionCheckDone   = false
+
+# }}}
 # {{{ initApp()
 proc initApp(configFile: Option[string], mapFile: Option[string],
              winCfg: HoconNode, hideSplash = false; a) =
@@ -10094,6 +10190,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   a.win.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar", true)
   a.win.snapWindowToVisibleArea()
 
+  initVersionChecking(a)
+
 # }}}
 # {{{ cleanup()
 proc cleanup(a) =
@@ -10156,6 +10254,30 @@ when not defined(DEBUG):
 
 # }}}
 
+# {{{ handleCheckForUpdates()
+proc handleCheckForUpdates(a) =
+  if a.prefs.checkForUpdates and not a.versionCheckFailed:
+    if a.latestVersion.isNone:
+      try:
+        a.latestVersion = a.versionChecker.tryFetchLatestVersion()
+        koi.setFramesLeft()
+      except CatchableError as e:
+        logError(e, "Error fetching version information")
+        a.versionCheckFailed = true
+    else:
+      if not a.versionCheckDone:
+        let v = a.latestVersion.get
+        if v.version > AppVersion:
+          setWarningMessage(
+            "Good news! A more recent version of Gridmonger is available: " &
+            fmt"v{v.version} — {v.message}",
+            keepStatusMessage=true, noOverwrite=true,
+            timeout=initDuration(seconds = 7),
+            icon=IconMug, a=a
+          )
+        a.versionCheckDone = true
+
+# }}}
 # {{{ main()
 proc main() =
 
@@ -10179,8 +10301,8 @@ proc main() =
     createDirs(a)
     initLogger(a)
 
-    info(FullVersionInfo)
-    info(CompiledAtInfo)
+    info(FullVersionString)
+    info(CompiledAt)
     info(fmt"Paths: {a.paths}")
 
     let (configFile, mapFile, winCfg) = parseCommandLineParams()
@@ -10213,7 +10335,7 @@ proc main() =
       # Render app
       glfw.makeContextCurrent(a.win.glfwWin)
 
-      if a.aboutLogo.logo.data == nil:
+      if a.dialogs.aboutDialog.aboutLogo.logo.data == nil:
         loadAboutLogoImage(a)
 
       csdwindow.renderFrame(a.win, a.vg)
@@ -10243,6 +10365,7 @@ proc main() =
         glfw.swapBuffers(a.splash.win)
 
       handleAutoSaveMap(a)
+      handleCheckForUpdates(a)
 
       # Handle app events
       let event = appEvents.tryReceiveEvent()
