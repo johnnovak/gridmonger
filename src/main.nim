@@ -26,7 +26,6 @@ import glfw
 from glfw/wrapper import IconImageObj
 
 import koi
-import koi/undomanager
 from koi/utils as koiUtils import lerp, invLerp, remap
 
 import nanovg
@@ -48,6 +47,7 @@ import persistence
 import rect
 import selection
 import theme
+import undomanager
 import utils as gmUtils
 
 when defined(windows):

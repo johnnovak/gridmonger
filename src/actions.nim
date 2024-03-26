@@ -4,14 +4,13 @@ import std/sets
 import std/strformat
 import std/tables
 
-import koi/undomanager
-
 import common
 import level
 import links
 import map
 import rect
 import selection
+import undomanager
 import utils
 
 
