@@ -4711,7 +4711,15 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
   proc cancelAction(a) =
     closeDialog(a)
 
+  let l = currLevel(a)
+  var sizeChanged = false
+  try:
+    sizeChanged = parseInt(dlg.rows) != l.rows or
+                  parseInt(dlg.cols) != l.cols
+  except: discard
+
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
+                disabled = not sizeChanged,
                 style=a.theme.buttonStyle):
     okAction(dlg, a)
 
@@ -4733,7 +4741,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
       dlg.activateFirstTextField = true
 
     elif ke.isShortcutDown(scCancel, a): cancelAction(a)
-    elif ke.isShortcutDown(scAccept, a): okAction(dlg, a)
+    elif ke.isShortcutDown(scAccept, a) and sizeChanged: okAction(dlg, a)
     else: eventHandled = false
 
     if eventHandled: setEventHandled()
