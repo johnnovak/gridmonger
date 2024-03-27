@@ -531,7 +531,6 @@ type
     scope:          NoteScopeFilter
     noteType:       seq[NoteTypeFilter]
     searchTerm:     string
-    grouping:       NoteGrouping
     ordering:       NoteOrdering
 
   NoteScopeFilter = enum
@@ -544,9 +543,6 @@ type
     ntfNumber = "Num"
     ntfId     = "ID"
     ntfIcon   = "Icon"
-
-  NoteGrouping = enum
-    ngNone, ngLevelOrRegion, ngLevelAndRegion
 
   NoteOrdering = enum
     noType    = "Type"
@@ -8315,36 +8311,29 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.currFilter.searchTerm = ""
 
   koi.textField(
-    wx+53, wy, w=188, wh,
-    nls.currFilter.searchTerm,
+    wx+64, wy, w=177, wh, nls.currFilter.searchTerm,
     style = a.theme.textFieldStyle
   )
 
-  # Grouping
-  wy += 33
-  koi.label(wx+1, wy, 50, wh, "Group", style=a.theme.labelStyle)
-
-  let groupingItems = case nls.currFilter.scope:
-                      of nsfMap:    @["None", "Levels", "Levels, Regions"]
-                      of nsfLevel:  @["None", "Regions"]
-                      of nsfRegion: @["None"]
-
-  nls.grouping = nls.grouping.clamp(0, groupingItems.len-1)
-  nls.currFilter.grouping = NoteGrouping(nls.grouping)
-
   # Ordering
+  wy += 33
+
+  koi.label(wx+1, wy, 60, wh, "Order by", style=a.theme.labelStyle)
+
   koi.dropDown(
-    wx+53, wy, w=114, wh,
-    groupingItems, nls.grouping,
-    disabled=(nls.currFilter.scope == nsfRegion),
+    wx+64, wy, w=48, wh, nls.currFilter.ordering,
     style = a.theme.dropDownStyle
   )
 
-  koi.label(wx+178, wy, 60, wh, "Order", style=a.theme.labelStyle)
+  if koi.button(wx+213, wy, w=24, wh, IconPlus, tooltip = "Expand all",
+                style = a.theme.buttonStyle):
+    for id in nls.sectionStates.keys:
+      nls.sectionStates[id] = true
 
-  koi.dropDown(
-    wx+220, wy, w=48, wh, nls.currFilter.ordering, style = a.theme.dropDownStyle
-  )
+  if koi.button(wx+244, wy, w=24, wh, IconMinus, tooltip = "Collapse all",
+                style = a.theme.buttonStyle):
+    for id in nls.sectionStates.keys:
+      nls.sectionStates[id] = false
 
 
   # Sort functions
@@ -8429,24 +8418,17 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
     case nls.currFilter.scope:
     of nsfMap:
-      case nls.currFilter.grouping:
-      of ngNone:
-        for loc, note in map.allNotes():
-          nls.cache.maybeAddCacheEntry(loc, note, vg)
-        sortCacheEntries(nls.cache, nls.currFilter.ordering)
+      for levelIdx, level in map.sortedLevels:
+        var s = newSeq[NotesListCacheEntry]()
+        for r,c, note in level.allNotes():
+          s.maybeAddCacheEntry(
+            Location(level: levelIdx, row: r, col: c),
+            note, vg
+          )
 
-      of ngLevelOrRegion, ngLevelAndRegion:
-        for levelIdx, level in map.sortedLevels:
-          var s = newSeq[NotesListCacheEntry]()
-          for r,c, note in level.allNotes():
-            s.maybeAddCacheEntry(
-              Location(level: levelIdx, row: r, col: c),
-              note, vg
-            )
-
-          sortCacheEntries(s, nls.currFilter.ordering)
-          nls.cache.add(s)
-        # TODO regions
+        sortCacheEntries(s, nls.currFilter.ordering)
+        nls.cache.add(s)
+      # TODO regions
 
     of nsfLevel:
       for r,c, note in l.allNotes():
@@ -8488,12 +8470,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     prevEntry: Option[NotesListCacheEntry]
     addNote = false
 
-  let grp = nls.currFilter.grouping
   let (levelSections, regionSections) =
     case nls.currFilter.scope:
-    of nsfMap:    (grp != ngNone, grp == ngLevelAndRegion)
-    of nsfLevel:  (false,         grp == ngLevelOrRegion)
-    of nsfRegion: (false,         false)
+    of nsfMap:    (true,  true)
+    of nsfLevel:  (false, true)
+    of nsfRegion: (false, false)
 
   # Sync current note to cursor
   let currNote = map.getNote(ui.cursor)
