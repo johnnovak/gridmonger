@@ -2,6 +2,8 @@
 
 <p align="center"><em>Your trusty old-school cRPG mapping companion</em></p>
 
+![Gridmonger in action](extras/screenshots/mm-theme-editor.png)
+
 
 ## Project homepage
 
