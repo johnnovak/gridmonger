@@ -55,7 +55,7 @@ proc mkRefObjectTypeDef(name: string, recList: NimNode): NimNode =
 
 proc makeStyleTypeDef(name: string, props: seq[(string, NimNode)]): NimNode =
   var recList = nnkRecList.newTree
-  for (propName, propType) in props:
+  for propName, propType in props:
     recList.add(
       mkProperty(propName, propType)
     )

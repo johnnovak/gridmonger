@@ -8434,14 +8434,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     of nsfMap:
       case nls.currFilter.grouping:
       of ngNone:
-        for (loc, note) in map.allNotes():
+        for loc, note in map.allNotes():
           nls.cache.maybeAddCacheEntry(loc, note, vg)
         sortCacheEntries(nls.cache, nls.currFilter.ordering)
 
       of ngLevelOrRegion, ngLevelAndRegion:
-        for (levelIdx, level) in map.sortedLevels:
+        for levelIdx, level in map.sortedLevels:
           var s = newSeq[NotesListCacheEntry]()
-          for (r,c, note) in level.allNotes():
+          for r,c, note in level.allNotes():
             s.maybeAddCacheEntry(
               Location(level: levelIdx, row: r, col: c),
               note, vg
@@ -8452,7 +8452,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         # TODO regions
 
     of nsfLevel:
-      for (r,c, note) in l.allNotes():
+      for r,c, note in l.allNotes():
         nls.cache.maybeAddCacheEntry(
           Location(level: a.ui.cursor.level, row: r, col: c),
           note, vg

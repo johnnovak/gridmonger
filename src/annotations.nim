@@ -87,7 +87,8 @@ proc delAnnotations*(a; rect: Rect[Natural]) =
     if rect.contains(r,c):
       toDel.add((r,c))
 
-  for (r,c) in toDel: a.delAnnotation(r,c)
+  for (r,c) in toDel:
+    a.delAnnotation(r,c)
 
 # }}}
 

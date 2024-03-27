@@ -168,7 +168,7 @@ template allLabels*(l): tuple[row, col: Natural, annotation: Annotation] =
 # {{{ copyAnnotationsFrom*()
 proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
                           srcLevel: Level, srcRect: Rect[Natural]) =
-  for (r,c, a) in srcLevel.annotations.allAnnotations:
+  for r,c, a in srcLevel.annotations.allAnnotations:
     if srcRect.contains(r,c):
       l.annotations[destRow + r - srcRect.r1,
                     destCol + c - srcRect.c1] = a

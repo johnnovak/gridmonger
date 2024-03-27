@@ -1110,7 +1110,7 @@ proc writeLevelAnnotations(rw; l: Level) =
 
   rw.write(l.numAnnotations.uint16)
 
-  for (row, col, anno) in l.allAnnotations:
+  for row, col, anno in l.allAnnotations:
     rw.write(row.uint16)
     rw.write(col.uint16)
 
