@@ -38,6 +38,7 @@
   zero if there is no user input.
 - The user manual has been overhauled for improved wording and clarity.
 - Minor improvements to some of the bundled themes.
+- Improved status bar messages, dialogs, and more status icons.
 
 ### Fixes
 

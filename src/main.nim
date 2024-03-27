@@ -1694,7 +1694,7 @@ proc setErrorMessage(msg: string; a) =
 # {{{ setSelectModeSelectMessage()
 proc setSelectModeSelectMessage(a) =
   setStatusMessage(
-    IconSelection, "Mark selection",
+    IconGrid, "Mark selection",
     @[scSelectionDraw.toStr(a),    "draw",
       scSelectionErase.toStr(a),   "erase",
       scSelectionAddRect.toStr(a), "add rect",
@@ -1710,7 +1710,7 @@ proc setSelectModeSelectMessage(a) =
 # {{{ setSelectModeSpecialActionsMessage()
 proc setSelectModeSpecialActionsMessage(a) =
   setStatusMessage(
-    IconSelection, "Mark selection",
+    IconGrid, "Mark selection",
     @[scSelectionEraseArea.toStr(a),         "erase",
       scSelectionFillArea.toStr(a),          "fill",
       scSelectionSurroundArea.toStr(a),      "surround",
@@ -1744,7 +1744,7 @@ proc setNudgePreviewModeMessage(a) =
 # }}}
 # {{{ setPastePreviewModeMessage()
 proc setPastePreviewModeMessage(a) =
-  setStatusMessage(IconTiles, "Paste selection",
+  setStatusMessage(IconPaste, "Paste selection",
                    @[IconArrowsAll, "placement",
                    scTogglePasteWraparound.toStr(a),
                    mkWraparoundMessage(a),
@@ -1753,7 +1753,7 @@ proc setPastePreviewModeMessage(a) =
 # }}}
 # {{{ setMovePreviewModeMessage()
 proc setMovePreviewModeMessage(a) =
-  setStatusMessage(IconTiles, "Move selection",
+  setStatusMessage(IconArrowsAll, "Move selection",
                    @[IconArrowsAll, "placement",
                    scTogglePasteWraparound.toStr(a),
                    mkWraparoundMessage(a),
@@ -2436,6 +2436,9 @@ proc saveTheme(a) =
     saveTheme(a.theme.config, themePath)
     a.themeEditor.modified = false
 
+    setStatusMessage(IconFloppy,
+                     fmt"User theme '{a.currThemeName.name}' saved", a)
+
   except CatchableError as e:
     let msgPrefix = fmt"Error saving theme '{a.currThemeName.name}'"
     logError(e, msgPrefix)
@@ -2461,10 +2464,14 @@ proc deleteTheme(theme: ThemeName; a): bool =
 
 # }}}
 # {{{ copyTheme()
-proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
+proc copyTheme(theme: ThemeName, newThemeName, newThemePath: string; a): bool =
   try:
     copyFileWithPermissions(themePath(a.currThemeName, a), newThemePath)
     result = true
+
+    setStatusMessage(IconFloppy,
+                     fmt"User theme '{newThemeName}' created", a)
+
   except CatchableError as e:
     let msgPrefix = "Error copying theme"
     logError(e, msgPrefix)
@@ -2472,10 +2479,14 @@ proc copyTheme(theme: ThemeName, newThemePath: string; a): bool =
 
 # }}}
 # {{{ renameTheme()
-proc renameTheme(theme: ThemeName, newThemePath: string; a): bool =
+proc renameTheme(theme: ThemeName, newThemeName, newThemePath: string; a): bool =
   try:
     moveFile(themePath(a.currThemeName, a), newThemePath)
     result = true
+
+    setStatusMessage(IconFloppy,
+                     fmt"User theme renamed to '{newThemeName}'", a)
+
   except CatchableError as e:
     let msgPrefix = "Error renaming theme"
     logError(e, msgPrefix)
@@ -4552,7 +4563,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
                                dlg.notes,
                                a.doc.undoManager)
 
-    setStatusMessage(fmt"Level properties updated", a)
+    setStatusMessage(IconFile, fmt"Level properties updated", a)
     closeDialog(a)
 
 
@@ -4613,7 +4624,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
   let h = DlgItemHeight
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCrop}  Resize Level",
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconEnlarge}  Resize Level",
                   x = calcDialogX(DlgWidth, a).some,
                   style = a.theme.dialogStyle)
 
@@ -4693,7 +4704,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 
     a.opts.drawTrail = false
 
-    setStatusMessage(IconCrop, "Level resized", a)
+    setStatusMessage(IconEnlarge, "Level resized", a)
     closeDialog(a)
 
 
@@ -4967,7 +4978,8 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 
     actions.setNote(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
-    setStatusMessage(IconComment, "Set cell note", a)
+    let msg = "Note " & (if dlg.editMode: "updated" else: "added")
+    setStatusMessage(IconComment, msg, a)
     closeDialog(a)
 
 
@@ -5023,20 +5035,20 @@ proc openEditLabelDialog(a) =
   alias(dlg, a.dialogs.editLabelDialog)
 
   let cur = a.ui.cursor
-  let l = currLevel(a)
+  let l   = currLevel(a)
   dlg.row = cur.row
   dlg.col = cur.col
 
   let label = l.getLabel(cur.row, cur.col)
 
   if label.isSome:
-    let label = label.get
+    let label    = label.get
     dlg.editMode = true
-    dlg.text = label.text
-    dlg.color = label.labelColor
+    dlg.text     = label.text
+    dlg.color    = label.labelColor
   else:
     dlg.editMode = false
-    dlg.text = ""
+    dlg.text     = ""
 
   a.dialogs.activeDialog = dlgEditLabelDialog
 
@@ -5053,7 +5065,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 
   let title = (if dlg.editMode: "Edit" else: "Add") & " Label"
 
-  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCommentInv}  {title}",
+  koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconText}  {title}",
                   x = calcDialogX(DlgWidth, a).some,
                   style = a.theme.dialogStyle)
 
@@ -5113,7 +5125,8 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     var note = Annotation(kind: akLabel, text: dlg.text, labelColor: dlg.color)
     actions.setLabel(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
-    setStatusMessage(IconComment, "Set label", a)
+    let msg = "Label " & (if dlg.editMode: "added" else: "updated")
+    setStatusMessage(IconText, msg, a)
     closeDialog(a)
 
 
@@ -5175,7 +5188,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
   let l = currLevel(a)
 
   koi.beginDialog(DlgWidth, DlgHeight,
-                  fmt"{IconCommentInv}  Edit Region Properties",
+                  fmt"{IconFile}  Edit Region Properties",
                   x = calcDialogX(DlgWidth, a).some,
                   style = a.theme.dialogStyle)
 
@@ -5242,7 +5255,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     actions.setRegionProperties(map, cur, regionCoords, region,
                                 a.doc.undoManager)
 
-    setStatusMessage(IconComment, "Region properties updated", a)
+    setStatusMessage(IconFile, "Region properties updated", a)
     closeDialog(a)
 
 
@@ -5453,7 +5466,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  koi.label(x, y, LabelWidth, h, "New Theme Name", style=a.theme.labelStyle)
+  koi.label(x, y, LabelWidth, h, "New theme name", style=a.theme.labelStyle)
   koi.textField(
     x + LabelWidth, y, w=196, h,
     dlg.newThemeName,
@@ -5494,7 +5507,7 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
     let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
                                                           ThemeExt)
     proc copyTheme(a) =
-      if copyTheme(a.currThemeName, newThemePath, a):
+      if copyTheme(a.currThemeName, dlg.newThemeName, newThemePath, a):
         buildThemeList(a)
         # We need to set the current theme index directly (instead of setting
         # nextThemeIndex) to prevent reloading the theme, thus avoid losing
@@ -5567,7 +5580,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  koi.label(x, y, LabelWidth, h, "New Theme Name", style=a.theme.labelStyle)
+  koi.label(x, y, LabelWidth, h, "New theme name", style=a.theme.labelStyle)
   koi.textField(
     x + LabelWidth, y, w=196, h,
     dlg.newThemeName,
@@ -5608,7 +5621,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
     let newThemePath = a.paths.userThemesDir / addFileExt(dlg.newThemeName,
                                                           ThemeExt)
     proc renameTheme(a) =
-      if renameTheme(a.currThemeName, newThemePath, a):
+      if renameTheme(a.currThemeName, dlg.newThemeName, newThemePath, a):
         buildThemeList(a)
         # We need to set the current theme index directly (instead of setting
         # nextThemeIndex) to prevent reloading the theme, thus avoid losing
@@ -5678,7 +5691,7 @@ proc deleteThemeDialog(a) =
   var y = DlgTopPad
 
   koi.label(
-    x, y, DlgWidth, h, "Are you sure you want to delete the theme?",
+    x, y, DlgWidth, h, "Are you sure you want to delete this theme?",
     style=a.theme.labelStyle
   )
 
@@ -5844,7 +5857,7 @@ proc doSetDrawWallActionMessage(name: string; a) =
     commands.add("Shift")
     commands.add(mkRepeatWallActionString(name, a))
 
-  setStatusMessage("", fmt"Draw {name}", commands, a)
+  setStatusMessage(IconBorders, fmt"Draw {name}", commands, a)
 
 
 proc setDrawWallActionMessage(a) =
@@ -5858,7 +5871,7 @@ proc doSetDrawWallActionRepeatMessage(name: string, a) =
              else:
                IconArrowsHoriz
 
-  setStatusMessage("", fmt"Draw {name} repeat",
+  setStatusMessage(IconEllipses, fmt"Draw {name} repeat",
                    @[icon, mkRepeatWallActionString(name, a)], a)
 
 
@@ -6060,7 +6073,7 @@ proc pickFloorColor(a) =
 
   if floor != fEmpty:
     a.ui.currFloorColor = a.doc.map.getFloorColor(a.ui.cursor)
-    setStatusMessage(NoIcon, "Picked floor colour", a)
+    setStatusMessage(IconColorPicker, "Picked floor colour", a)
   else:
     setWarningMessage("Cannot pick floor colour of an empty cell", a=a)
 
@@ -6300,7 +6313,7 @@ proc setSelectJumpToLinkSrcActionMessage(a) =
   let count = a.ui.jumpToSrcLocations.len
   let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
 
-  setStatusMessage(NoIcon,
+  setStatusMessage(IconEllipses,
                    fmt"Select {linkFloorToString(floor)} source ({currIdx} of {count})",
                    @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"],
                    a)
@@ -6571,6 +6584,7 @@ proc handleGlobalKeyEvents(a) =
       else:
         if handleMoveCursor(ke, allowPan=true, allowJump=true,
                             allowWasdKeys=true, allowDiagonal=true, a):
+          # TODO what's this?
           setStatusMessage("moved", a)
 
       if   ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
@@ -6612,7 +6626,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scSetFloorColor, a):
         ui.editMode = emColorFloor
-        setStatusMessage(IconEraser, "Set floor colour",
+        setStatusMessage(IconBrush, "Set floor colour",
                          @[IconArrowsAll, "set colour"], a)
 
         if not map.isEmpty(cur):
@@ -6710,7 +6724,7 @@ proc handleGlobalKeyEvents(a) =
           actions.clearTrailInLevel(map, cur, bbox.get, um, groupWithPrev=true,
                                     actionName="Excavate trail in level")
 
-          setStatusMessage(IconPencil, "Trail excavated in level", a)
+          setStatusMessage(IconShoePrints, "Trail excavated in level", a)
         else:
           setWarningMessage("No trail to excavate", a=a)
 
@@ -7221,7 +7235,7 @@ proc handleGlobalKeyEvents(a) =
           actions.fillSelection(map, cur.level, selection, bbox.get,
                                 ui.currFloorColor, um)
           exitSelectMode(a)
-          setStatusMessage(IconPencil, "Filled selection", a)
+          setStatusMessage(IconFill, "Filled selection", a)
 
       elif ke.isShortcutDown(scSelectionSurroundArea, a):
         let selection = ui.selection.get
@@ -7230,7 +7244,7 @@ proc handleGlobalKeyEvents(a) =
           actions.surroundSelectionWithWalls(map, cur.level, selection,
                                              bbox.get, um)
           exitSelectMode(a)
-          setStatusMessage(IconPencil, "Surrounded selection with walls", a)
+          setStatusMessage(IconBorders, "Surrounded selection with walls", a)
 
       elif ke.isShortcutDown(scSelectionSetFloorColorArea, a):
         let selection = ui.selection.get
@@ -7239,7 +7253,7 @@ proc handleGlobalKeyEvents(a) =
           actions.setSelectionFloorColor(map, cur.level, selection,
                                          bbox.get, ui.currFloorColor, um)
           exitSelectMode(a)
-          setStatusMessage(IconPencil, "Set floor colour of selection", a)
+          setStatusMessage(IconBrush, "Set floor colour of selection", a)
 
       elif ke.isShortcutDown(scSelectionCropArea, a):
         let sel = ui.selection.get
@@ -7248,7 +7262,7 @@ proc handleGlobalKeyEvents(a) =
           let newCur = actions.cropLevel(map, cur, bbox.get, um)
           moveCursorTo(newCur, a)
           exitSelectMode(a)
-          setStatusMessage(IconPencil, "Cropped level to selection", a)
+          setStatusMessage(IconCrop, "Cropped level to selection", a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
@@ -7371,7 +7385,7 @@ proc handleGlobalKeyEvents(a) =
                                um, groupWithPrev=true,
                                actionName="Move selection")
         ui.editMode = emNormal
-        setStatusMessage(IconPaste, "Moved selection", a)
+        setStatusMessage(IconArrowsAll, "Moved selection", a)
 
       elif ke.isShortcutDown(scCancel, a):
         exitMovePreviewMode(a)
@@ -8325,12 +8339,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     style = a.theme.dropDownStyle
   )
 
-  if koi.button(wx+213, wy, w=24, wh, IconPlus, tooltip = "Expand all",
+  if koi.button(wx+213, wy, w=24, wh, IconPlusSmall, tooltip = "Expand all",
                 style = a.theme.buttonStyle):
     for id in nls.sectionStates.keys:
       nls.sectionStates[id] = true
 
-  if koi.button(wx+244, wy, w=24, wh, IconMinus, tooltip = "Collapse all",
+  if koi.button(wx+244, wy, w=24, wh, IconMinusSmall, tooltip = "Collapse all",
                 style = a.theme.buttonStyle):
     for id in nls.sectionStates.keys:
       nls.sectionStates[id] = false
