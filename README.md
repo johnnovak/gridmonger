@@ -5,7 +5,7 @@
 ![Gridmonger in action](extras/screenshots/mm-theme-editor.png)
 
 
-## Project homepage
+## Website
 
 [https://gridmonger.johnnovak.net](https://gridmonger.johnnovak.net)
 
@@ -68,7 +68,7 @@ The [website](https://gridmonger.johnnovak.net) (GitHub Pages site) and
 [manual](https://gridmonger.johnnovak.net/manual/contents.html) are generated
 from [Sphinx](https://www.sphinx-doc.org) sources.
 
-The website is published from the `/docs` directory of the `master` branch.
+The website is published from the [docs](docs) directory of the `master` branch.
 
 #### Requirements
 
@@ -111,11 +111,11 @@ Most icons are from the below sources available through the app, some are my
 own creations, then a few were converted from random free SVG clipart I found
 online.
 
-- IcoMoon - Free (GPL / CC BY 4.0) — http://keyamoon.com/
-- Font Awesome (CC BY 4.0) — https://fontawesome.com/
-- Zondicons (CC BY 4.0) — http://www.zondicons.com/
-- Brankic 1979 (Freeware) —  https://www.brankic1979.com/iconss/ 
-- Material Icons (Apache License 2.0) — https://fonts.google.com/icons
+- **IcoMoon - Free** (GPL / CC BY 4.0) — http://keyamoon.com/
+- **Font Awesome** (CC BY 4.0) — https://fontawesome.com/
+- **Zondicons** (CC BY 4.0) — http://www.zondicons.com/
+- **Brankic 1979** (Freeware) —  https://www.brankic1979.com/iconss/ 
+- **Material Icons** (Apache License 2.0) — https://fonts.google.com/icons
 
 
 ## License
