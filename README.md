@@ -5,7 +5,7 @@
 ![Gridmonger in action](extras/screenshots/mm-theme-editor.png)
 
 
-## Website
+## Project website
 
 [https://gridmonger.johnnovak.net](https://gridmonger.johnnovak.net)
 
@@ -62,7 +62,7 @@ Run `nim help` for the full list of build tasks.
 enable portable mode (that's what you normally want during development).
 
 
-### Building the manual & website
+## Manual & website
 
 The [website](https://gridmonger.johnnovak.net) (GitHub Pages site) and
 [manual](https://gridmonger.johnnovak.net/manual/contents.html) are generated
@@ -70,7 +70,7 @@ from [Sphinx](https://www.sphinx-doc.org) sources.
 
 The website is published from the [docs](docs) directory of the `master` branch.
 
-#### Requirements
+### Requirements
 
 - [Sphinx](https://www.sphinx-doc.org/en/master/usage/installation.html) 7.2+
 - [Sass](https://sass-lang.com/) 1.57+
@@ -79,7 +79,7 @@ The website is published from the [docs](docs) directory of the `master` branch.
 - Zip 3.0+
 
 
-#### Building
+### Building
 
 - To build the website, run `nim site`
 - To build the manual, run `nim manual`
@@ -87,14 +87,14 @@ The website is published from the [docs](docs) directory of the `master` branch.
   files, run `nim packageManual`
 - Check out the [release build instructions](https://github.com/johnnovak/gridmonger/blob/master/RELEASE.md#build-instructions) for further details.
 
-#### Theme development
+### Theme development
 
 You can run `make watch_docs_css` or `make watch_frontpage_css` from the
 `sphinx-doc` directory to regenerate the CSS when the SASS files are changed
 during theme development.
 
 
-### Packaging & release process
+## Packaging & release process
 
 See [RELEASE.md](/RELEASE.md).
 
