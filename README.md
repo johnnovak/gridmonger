@@ -100,6 +100,24 @@ during theme development.
 See [RELEASE.md](/RELEASE.md)
 
 
+## Credits
+
+The typeface used for all user interface text is [Roboto](https://fonts.google.com/specimen/Roboto) by Google (Regular, Bold, and Black variants).
+
+The font used for the Gridmonger logo is [Versal Gothic](https://www.dafont.com/versal.font) by [Juan Casco](https://juancascofonts.blogspot.com/).
+
+The TTF icon font was created with the amazing [IcoMoon App](https://icomoon.io/).
+Most icons are from the below sources available through the app, some are my
+own creations, then a few were converted from random free SVG clipart I found
+online.
+
+- IcoMoon - Free (GPL / CC BY 4.0) — http://keyamoon.com/
+- Font Awesome (CC BY 4.0) — https://fontawesome.com/
+- Zondicons (CC BY 4.0) — http://www.zondicons.com/
+- Brankic 1979 (Freeware) —  https://www.brankic1979.com/iconss/ 
+- Material Icons (Apache License 2.0) — https://fonts.google.com/icons
+
+
 ## License
 
 Developed by John Novak <<john@johnnovak.net>>, 2020-2024
