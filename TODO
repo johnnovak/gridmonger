@@ -1,8 +1,6 @@
 BUGS
 ====
 
-- warning when closing new map that was never manually saved
-
 - selecting single line text selects whole line
 
 - trail mode in combination with undo/redo acts a bit weird (enable trail
@@ -12,6 +10,9 @@ BUGS
 
 TODO
 ====
+
+  - warning when closing new map that was never manually saved
+  - unlink command
 
   - test loading v1, v2, and v3 map versions
   - fix invalid map links on-the-fly
@@ -44,7 +45,6 @@ FEATURE & ENHANCEMENT IDEAS
     - export map as PNG
     - export map as PDF
     - full screen borderless
-    - legend / locations / notes window
 
     - levels:
       - change level size: add preserve coordinates option
