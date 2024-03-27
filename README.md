@@ -80,12 +80,9 @@ The website is published from the `/docs` directory of the `master` branch.
 #### Building
 
 - To build the website, run `nim site`
-
 - To build the manual, run `nim manual`
-
 - To create the zipped distribution package of the manual from the generated
   files, run `nim packageManual`
-
 - Check out the [release build instructions](https://github.com/johnnovak/gridmonger/blob/master/RELEASE.md#build-instructions) for further details.
 
 #### Theme development
@@ -97,14 +94,15 @@ during theme development.
 
 ### Packaging & release process
 
-See [RELEASE.md](/RELEASE.md)
+See [RELEASE.md](/RELEASE.md).
 
 
 ## Credits
 
-The typeface used for all user interface text is [Roboto](https://fonts.google.com/specimen/Roboto) by Google (Regular, Bold, and Black variants).
+The user interface uses the [Roboto](https://fonts.google.com/specimen/Roboto)
+font by Google for all text (Regular, Bold, and Black variants).
 
-The font used for the Gridmonger logo is [Versal Gothic](https://www.dafont.com/versal.font) by [Juan Casco](https://juancascofonts.blogspot.com/).
+The Gridmonger logo uses [Versal Gothic](https://www.dafont.com/versal.font) by [Juan Casco](https://juancascofonts.blogspot.com/).
 
 The TTF icon font was created with the amazing [IcoMoon App](https://icomoon.io/).
 Most icons are from the below sources available through the app, some are my
