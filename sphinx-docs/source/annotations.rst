@@ -58,9 +58,9 @@ Icon
     </div>
 
 
-To create a note, press :kbd:`N` or :kbd:`;` in a non-empty cell. A cell
-cannot have more than one note; if you use the shortcut in a cell that already
-has a note, you'll be editing it. To erase a note, press :kbd:`Shift+N` or
+To add a note, press :kbd:`N` or :kbd:`;` in a non-empty cell. A cell cannot
+have more than one note; if you use the shortcut in a cell that already has a
+note, you'll be editing it. To erase a note, press :kbd:`Shift+N` or
 :kbd:`Shift+;`.
 
 .. note::
@@ -89,8 +89,8 @@ This tooltip can also be toggled with :kbd:`Space` for the current cell.
 
 .. tip::
 
-    As creating and editing notes are frequently used actions, special
-    care has been taken to make the note dialog fully keyboard operable.
+    As creating and editing notes are frequently used actions, special care
+    has been taken to make the note dialog fully keyboard operable.
 
     Hold down :kbd:`Ctrl` and use the horizontal movement keys to navigate
     between the tabs, or press :kbd:`Ctrl+1-4` to jump to one of the
@@ -133,7 +133,7 @@ useful when placing labels in empty areas.
     </div>
 
 
-Press :kbd:`Ctrl+T` to create a label starting from the current cell. You can
+Press :kbd:`Ctrl+T` to add a label starting from the current cell. You can
 select the colour of the label from four predefined colours.
 
 Press :kbd:`Shift+Enter` to insert line breaks into the label text.

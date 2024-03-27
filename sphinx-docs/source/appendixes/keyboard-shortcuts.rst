@@ -1031,7 +1031,7 @@ Edit mode
             <kbd>;</kbd>
           </td>
           <td>
-            Create/edit note
+            Add/edit note
             <p>
               <span class="asterisk">*</span>
               Except for <span class="sc">YUBN keys</span>
@@ -1063,7 +1063,7 @@ Edit mode
               <kbd>Ctrl</kbd>+<kbd>T</kbd>
             </kbd>
           </td>
-          <td>Create/edit label</td>
+          <td>Add/edit label</td>
         </tr>
         <tr>
           <td>

@@ -1042,9 +1042,9 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       scPastePreview.sc,        "Enter paste preview mode".desc,
       QuickRefSepa,
 
-      scEditNote.sc,            "Create/edit note".desc,
+      scEditNote.sc,            "Add/edit note".desc,
       scEraseNote.sc,           "Erase note".desc,
-      scEditLabel.sc,           "Create/edit label".desc,
+      scEditLabel.sc,           "Add/edit label".desc,
       scEraseLabel.sc,          "Erase label".desc,
       QuickRefSepa,
 
@@ -5133,7 +5133,7 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
     var note = Annotation(kind: akLabel, text: dlg.text, labelColor: dlg.color)
     actions.setLabel(a.doc.map, a.ui.cursor, note, a.doc.undoManager)
 
-    let msg = "Label " & (if dlg.editMode: "added" else: "updated")
+    let msg = "Label " & (if dlg.editMode: "updated" else: "added")
     setStatusMessage(IconText, msg, a)
     closeDialog(a)
 
