@@ -517,6 +517,7 @@ type
     currFilter:     NotesListFilter
     prevFilter:     NotesListFilter
     linkCursor:     bool
+    prevLinkCursor: bool
     grouping:       int
     cache:          seq[NotesListCacheEntry]
     sectionStates:  Table[int, bool]
@@ -8207,7 +8208,7 @@ func sortByTextAndLocation(locX: Location, x: Annotation,
 # }}}
 # {{{ noteButton()
 proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
-                note: Annotation, active: bool): bool =
+                note: Annotation, selected: bool): bool =
   alias(ui, g_app.ui)
 
   koi.autoLayoutPre()
@@ -8229,20 +8230,18 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
       result = true
 
   addDrawLayer(koi.currentLayer(), vg):
-    let state = if active or (koi.isHot(id) and koi.isActive(id)): wsDown
-                elif koi.isHot(id) and koi.hasNoActiveItem():      wsHover
-                else:                                              wsNormal
+    let state = if koi.isHot(id) and koi.isActive(id):        wsDown
+                elif koi.isHot(id) and koi.hasNoActiveItem(): wsHover
+                else:                                         wsNormal
 
-    if state in {wsHover, wsDown}:
+    if selected or state in {wsHover, wsDown}:
       vg.beginPath()
-      vg.fillColor(black(0.2))
+      vg.fillColor(if selected or state == wsDown: black(0.24) else: black(0.15))
       vg.rect(x, y, w, h)
       vg.fill()
 
-    let textColor =
-      case state
-      of wsDisabled, wsNormal, wsActive, wsActiveHover: white(0.7)
-      of wsHover, wsDown, wsActiveDown:                 white()
+    let textColor = if selected or state == wsDown: white(0.9)
+                    else: white(0.7)
 
     if note.kind == akIndexed:
       renderNoteMarker(x + markerX + 3, y+2, w, h, note, textColor,
@@ -8304,6 +8303,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   cbStyle.icon.fontSize = 14.0
   cbStyle.iconActive   = IconLink
   cbStyle.iconInactive = IconLink
+
+  nls.prevLinkCursor = nls.linkCursor
 
   koi.checkBox(
     wx+244, wy, w=24,
@@ -8503,11 +8504,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Sync current note to cursor
   let currNote = map.getNote(ui.cursor)
 
-  if currNote.isNone:
+  if currNote.isNone or not nls.linkCursor:
     nls.activeId = ItemId.none
 
-  let syncToCursor = nls.linkCursor and currNote.isSome and
-                     ui.cursor != ui.prevCursor
+  let syncToCursor = (nls.linkCursor and currNote.isSome) and
+                     (ui.cursor != ui.prevCursor or not nls.prevLinkCursor)
 
   var startY, itemHeight: float
 
@@ -8541,8 +8542,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         nls.activeId = ItemId.none
 
       if noteButton(e.id, textX, textY=17, textW, markerX, note,
-                    active = (nls.activeId.isSome and
-                              nls.activeId.get == e.id)):
+                    selected = (nls.activeId.isSome and
+                                nls.activeId.get == e.id)):
         moveCursorTo(e.location, a)
         if nls.linkCursor:
           nls.activeId = e.id.some
