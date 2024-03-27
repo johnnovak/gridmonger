@@ -3162,10 +3162,9 @@ template coordinateFields() =
     )
 
   group:
-    let letterLabelX = x + 152
-
     koi.label("Column start", style=a.theme.labelStyle)
     var y = koi.autoLayoutNextY()
+    let letterLabelX = koi.autoLayoutNextX() + DlgNumberWidth + 14
 
     koi.nextItemWidth(DlgNumberWidth)
     koi.textField(
@@ -3178,6 +3177,8 @@ template coordinateFields() =
       ).some,
       style = a.theme.textFieldStyle
     )
+
+
     if CoordinateStyle(dlg.columnStyle) == csLetter:
       try:
         let i = parseInt(dlg.columnStart)
