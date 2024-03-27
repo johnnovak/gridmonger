@@ -8224,7 +8224,7 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
 
   if isHit(x, y, w-ScrollBarWidth, h):
     setHot(id)
-    if (koi.mbLeftDown() or koi.shiftDown()) and koi.hasNoActiveItem():
+    if koi.mbLeftDown() or koi.shiftDown():
       setActive(id)
       result = true
 
