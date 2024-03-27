@@ -13,8 +13,6 @@ BUGS
 TODO
 ====
 
-  - improve wall repeat warning message
-
   - test loading v1, v2, and v3 map versions
   - fix invalid map links on-the-fly
 

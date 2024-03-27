@@ -5879,7 +5879,7 @@ proc doSetDrawWallActionRepeatMessage(name: string, a) =
              else:
                IconArrowsHoriz
 
-  setStatusMessage(IconEllipses, fmt"Draw {name} repeat",
+  setStatusMessage(IconBorders, fmt"Draw {name} repeat",
                    @[icon, mkRepeatWallActionString(name, a)], a)
 
 
@@ -6321,7 +6321,7 @@ proc setSelectJumpToLinkSrcActionMessage(a) =
   let count = a.ui.jumpToSrcLocations.len
   let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
 
-  setStatusMessage(IconEllipses,
+  setStatusMessage(IconLink,
                    fmt"Select {linkFloorToString(floor)} source ({currIdx} of {count})",
                    @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"],
                    a)
@@ -6562,6 +6562,7 @@ proc handleGlobalKeyEvents(a) =
           actions.setWall(map, loc=newCur, undoLoc=cur, drawDir,
                           ui.drawWallRepeatWall, um,
                           groupWithPrev=opts.drawTrail)
+          setDrawWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
                             keepStatusMessage=true, a=a)
