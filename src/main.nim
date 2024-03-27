@@ -554,17 +554,19 @@ type
 
 
   StatusMessage = object
-    icon:           string
-    message:        string
-    commands:       seq[string]
-    warningMsg:     string
-    warningIcon:    string
-    warningColor:   Color
-    warningT0:      MonoTime
-    warningTimeout: Duration
+    icon:        string
+    message:     string
+    commands:    seq[string]
+    warning:     WarningStatusMessage
 
-    warningNoOverwrite:              bool
-    keepMessageAfterWarningExpired:  bool
+  WarningStatusMessage = object
+    icon:        string
+    message:     string
+    color:       Color
+    t0:          MonoTime
+    timeout:     Duration
+    overwrite:   bool
+    keepMessage: bool
 
 
   EditMode = enum
@@ -1635,47 +1637,44 @@ func coordOptsForCurrLevel(a): CoordinateOptions =
 proc setStatusMessage(icon, msg: string, commands: seq[string]; a) =
   alias(s, a.ui.status)
 
-  s.icon       = icon
-  s.message    = msg
-  s.commands   = commands
+  s.icon     = icon
+  s.message  = msg
+  s.commands = commands
 
-  if not s.warningNoOverwrite:
-    s.warningMsg = ""
+  if s.warning.overwrite:
+    s.warning.message = ""
 
   koi.setFramesLeft()
 
 
 proc setStatusMessage(icon, msg: string; a) =
-  setStatusMessage(icon, msg, commands = @[], a)
+  setStatusMessage(icon, msg, commands = @[], a=a)
 
 proc setStatusMessage(msg: string; a) =
-  setStatusMessage(NoIcon, msg, commands = @[], a)
+  setStatusMessage(NoIcon, msg, commands = @[], a=a)
 
 # }}}
 # {{{ clearStatusMessage()
 proc clearStatusMessage(a) =
-  setStatusMessage(NoIcon, msg = "", commands = @[], a)
-  koi.setFramesLeft()
+  setStatusMessage(msg = "", a=a)
 
 # }}}
 # {{{ setWarningMessage()
-proc setWarningMessage(msg: string, keepStatusMessage = false,
-                       noOverwrite = false,
-                       timeout = WarningMessageTimeout,
-                       icon = IconWarning; a) =
+proc setWarningMessage(msg: string, icon = IconWarning,
+                       timeout = WarningMessageTimeout, overwrite = true,
+                       keepStatusMessage = false; a) =
   alias(s, a.ui.status)
 
-  if s.warningNoOverwrite:
+  if not s.warning.overwrite:
     return
 
-  s.warningMsg     = msg
-  s.warningIcon    = icon
-  s.warningColor   = a.theme.statusBarTheme.warningTextColor
-  s.warningT0      = getMonoTime()
-  s.warningTimeout = timeout
-
-  s.warningNoOverwrite = noOverwrite
-  s.keepMessageAfterWarningExpired = keepStatusMessage
+  s.warning.icon        = icon
+  s.warning.message     = msg
+  s.warning.color       = a.theme.statusBarTheme.warningTextColor
+  s.warning.t0          = getMonoTime()
+  s.warning.timeout     = timeout
+  s.warning.overwrite   = overwrite
+  s.warning.keepMessage = keepStatusMessage
 
   koi.setFramesLeft()
 
@@ -1684,15 +1683,14 @@ proc setWarningMessage(msg: string, keepStatusMessage = false,
 proc setErrorMessage(msg: string; a) =
   alias(s, a.ui.status)
 
-  if s.warningNoOverwrite:
+  if not s.warning.overwrite:
     return
 
-  s.warningMsg     = msg
-  s.warningIcon    = IconWarning
-  s.warningColor   = a.theme.statusBarTheme.errorTextColor
-  s.warningTimeout = InfiniteDuration
-
-  s.keepMessageAfterWarningExpired = false
+  s.warning.icon        = IconWarning
+  s.warning.message     = msg
+  s.warning.color       = a.theme.statusBarTheme.errorTextColor
+  s.warning.timeout     = InfiniteDuration
+  s.warning.keepMessage = false
 
   koi.setFramesLeft()
 
@@ -3631,7 +3629,6 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
         msg = "Error fetching version information"
 
       st.color = a.theme.statusBarTheme.warningTextColor
-
       koi.label(0, y, w, h, msg, style=st)
 
   # Buttons
@@ -9168,19 +9165,19 @@ proc renderStatusBar(x, y, w, h: float; a) =
   var x = 10.0
 
   # Clear expired warning messages
-  if status.warningMsg != "":
-    let dt = getMonoTime() - status.warningT0
-    if dt > status.warningTimeout:
-      status.warningMsg = ""
-      status.warningNoOverwrite = false
+  if status.warning.message != "":
+    let dt = getMonoTime() - status.warning.t0
+    if dt > status.warning.timeout:
+      status.warning.message = ""
+      status.warning.overwrite = true
 
-      if not status.keepMessageAfterWarningExpired:
+      if not status.warning.keepMessage:
         clearStatusMessage(a)
     else:
       koi.setFramesLeft()
 
   # Display message
-  if status.warningMsg == "":
+  if status.warning.message == "":
     vg.fillColor(s.textColor)
     discard vg.text(IconPosX, ty, status.icon)
 
@@ -9200,9 +9197,9 @@ proc renderStatusBar(x, y, w, h: float; a) =
 
   # Display warning
   else:
-    vg.fillColor(status.warningColor)
-    discard vg.text(IconPosX, ty, status.warningIcon)
-    discard vg.text(MessagePosX, ty, status.warningMsg)
+    vg.fillColor(status.warning.color)
+    discard vg.text(IconPosX, ty, status.warning.icon)
+    discard vg.text(MessagePosX, ty, status.warning.message)
 
   vg.restore()
 
@@ -10142,6 +10139,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   else:
     setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
 
+  a.ui.status.warning.overwrite = true
+
   restoreUIStateFromConfig(cfg, a)
 
   updateWalkKeys(a)
@@ -10271,9 +10270,9 @@ proc handleCheckForUpdates(a) =
           setWarningMessage(
             "Good news! A more recent version of Gridmonger is available: " &
             fmt"v{v.version} — {v.message}",
-            keepStatusMessage=true, noOverwrite=true,
-            timeout=initDuration(seconds = 7),
-            icon=IconMug, a=a
+            icon=IconMug,
+            keepStatusMessage=true, timeout=initDuration(seconds = 7),
+            overwrite=false, a=a
           )
         a.versionCheckDone = true
 
