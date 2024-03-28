@@ -37,8 +37,8 @@
 - Idle perfomance has been improved; CPU and GPU utilisation is now close to
   zero if there is no user input.
 - The user manual has been overhauled for improved wording and clarity.
-- Minor improvements to some of the bundled themes.
 - Improved status bar messages, dialogs, and more status icons.
+- Minor improvements to some of the bundled themes.
 
 ### Fixes
 
@@ -57,6 +57,8 @@
   undoing the move could generate extra "invisible" invalid links. You could
   continue using the program and saving the map would still succeed, but you
   could not load it back later.
+- Canceling the "Save As" dialog invoked during the quit process no longer
+  exits and discards the map without saving.
 - If autosaving is enabled, the map no longer gets immediately auto-saved
   right after adding the first level to an empty map.
 - The autosave timer now resets when the autosave preference is turned on.

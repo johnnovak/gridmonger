@@ -3927,7 +3927,11 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   proc okAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
     saveMap(a)
-    dlg.nextAction(a)
+
+    # If the "Save As" dialog gets displayed and the user presses "Cancel",
+    # the path remains empty, in which case we abort calling the next action.
+    if a.doc.path != "":
+      dlg.nextAction(a)
 
   proc discardAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)

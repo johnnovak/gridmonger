@@ -11,7 +11,6 @@ BUGS
 TODO
 ====
 
-  - warning when closing new map that was never manually saved
   - unlink command
 
   - test loading v1, v2, and v3 map versions
