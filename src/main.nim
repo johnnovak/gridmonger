@@ -71,15 +71,15 @@ when defined(windows):
 
 # {{{ Constants
 const
-  ThemeExt = "gmtheme"
-  MapFileExt = "gmm"
-  BackupFileExt = "bak"
+  ThemeExt          = "gmtheme"
+  MapFileExt        = "gmm"
+  BackupFileExt     = "bak"
+  CrashAutosaveName = "Crash Autosave"
+  UntitledName      = "Untitled"
 
 when not defined(DEBUG):
   const
     GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
-
-    CrashAutosaveFilename = addFileExt("Crash Autosave", MapFileExt)
 
 const
   CursorJump   = 5
@@ -410,6 +410,7 @@ type
 
   Document = object
     path:               string
+    lastSavePath:       string
     map:                Map
     undoManager:        UndoManager[Map, UndoStateData]
 
@@ -2908,7 +2909,9 @@ proc saveAppConfig(a) =
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
   p = "last-state."
-  cfg.set(p & "last-document", a.doc.path)
+  cfg.set(p & "last-document", if a.doc.path == "": a.doc.lastSavePath
+                               else: a.doc.path)
+
   cfg.set(p & "theme-name",    a.currThemeName.name)
 
   p = "last-state.ui."
@@ -3034,6 +3037,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     currSpecialWall:        a.ui.currSpecialWall,
   )
 
+  echo fmt"Saving map to '{path}'"
   info(fmt"Saving map to '{path}'")
 
   if createBackup:
@@ -3049,6 +3053,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
 
   try:
     writeMapFile(a.doc.map, appState, path)
+    a.doc.lastSavePath = path
     a.doc.undoManager.setLastSaveState
 
     if not autosave:
@@ -3068,19 +3073,18 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
 when not defined(DEBUG):
 
   proc autoSaveMapOnCrash(a): string =
-    var fname: string
-    if a.doc.path == "":
-      let (path, _, _) = splitFile(a.doc.path)
-      fname = path
+    let (dir, name) = if a.doc.path == "":
+      (a.paths.autosaveDir, UntitledName)
     else:
-      fname = a.paths.autosaveDir
+      let (dir, name, _) = splitFile(a.doc.path)
+      (dir, name)
 
-    fname = fname / CrashAutosaveFilename
+    let path = findUniquePath(dir, fmt"{name} {CrashAutosaveName}", MapFileExt)
 
-    info(fmt"Auto-saving map to '{fname}'")
-    saveMap(fname, autosave=false, createBackup=false, a)
+    info(fmt"Autosaving map to '{path}'")
+    saveMap(path, autosave=false, createBackup=false, a)
 
-    result = fname
+    result = path
 
 # }}}
 
@@ -3815,7 +3819,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
     # General
     let
-      autosaveTurnedOn = not a.prefs.autoSave and dlg.autoSave
+      autosaveTurnedOn = not a.prefs.autosave and dlg.autosave
       oldFreqMins      = a.prefs.autosaveFreqMins
       newFreqMins      = parseInt(dlg.autosaveFreqMins).Natural
 
@@ -3826,7 +3830,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     if a.prefs.autosave:
       if autosaveTurnedOn or oldFreqMins != newFreqMins:
         appEvents.updateLastSavedTime()
-        appEvents.setAutoSaveTimeout(initDuration(seconds = newFreqMins))
+        appEvents.setAutoSaveTimeout(initDuration(minutes = newFreqMins))
     else:
       appEvents.disableAutoSave()
 
@@ -10076,7 +10080,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   if a.prefs.autosave:
     appEvents.setAutoSaveTimeout(
-      initDuration(seconds = a.prefs.autosaveFreqMins)
+      initDuration(minutes = a.prefs.autosaveFreqMins)
     )
   else: appEvents.disableAutoSave()
 
@@ -10215,13 +10219,13 @@ when not defined(DEBUG):
 
     if doAutoSave:
       if crashAutosavePath == "":
-        msg &= "Autosaving map has been unsuccesful.\n\n"
+        msg &= "Could not autosave map.\n\n"
       else:
-        msg &= "The map has been successfully autosaved as '" &
+        msg &= "The map has been autosaved as '" &
                crashAutosavePath
 
     msg &= "\n\nIf the problem persists, please refer to the 'Get Involved' " &
-           "section on the website at https://gridmonger.johnnovak.net"
+           "section on the website at https://gridmonger.johnnovak.net/"
 
     when not defined(DEBUG):
       discard osdialog_message(mblError, mbbOk, msg.cstring)
@@ -10253,11 +10257,15 @@ proc handleOpenFileEvent(event: AppEvent; a) =
 # }}}
 # {{{ handleAutoSaveEvent()
 proc handleAutoSaveEvent(event: AppEvent; a) =
-  let path = if a.doc.path == "":
-               a.paths.autosaveDir / addFileExt("Untitled", MapFileExt)
-             else: a.doc.path
+  if a.doc.undoManager.isModified:
+    echo "handleAutoSaveEvent"
+    var path = if a.doc.path == "": a.doc.lastSavePath
+               else: a.doc.path
+    if path == "":
+      path = findUniquePath(dir=a.paths.autosaveDir, name=UntitledName,
+                            ext=MapFileExt)
 
-  saveMap(path, autosave=true, createBackup=true, a)
+    saveMap(path, autosave=true, createBackup=true, a)
 
 # }}}
 # {{{ handleVersionUpdateEvent()

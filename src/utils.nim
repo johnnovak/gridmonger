@@ -1,5 +1,7 @@
 import std/hashes
 import std/options
+import std/os
+import std/strformat
 import std/strutils
 import std/times
 import std/typetraits
@@ -140,6 +142,16 @@ proc currentLocalDatetimeString*(): string =
 func first*[T](iterable: T): auto =
   for v in iterable:
     return v.some
+
+# }}}
+
+# {{{ findUniquePath*()
+proc findUniquePath*(dir: string, name: string, ext: string): string =
+  var n = 1
+  while true:
+    let path = dir / fmt"{name} {n}".addFileExt(ext)
+    if fileExists(path): inc(n)
+    else: return path
 
 # }}}
 
