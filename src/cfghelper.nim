@@ -49,10 +49,10 @@ proc parseColor*(s: string): Option[Color] =
   result = Color.none
   if s.len == 9 and s[0] == '#':
     try:
-      let r = s[1..2].parseHexInt()
-      let g = s[3..4].parseHexInt()
-      let b = s[5..6].parseHexInt()
-      let a = s[7..8].parseHexInt()
+      let r = s[1..2].parseHexInt
+      let g = s[3..4].parseHexInt
+      let b = s[5..6].parseHexInt
+      let a = s[7..8].parseHexInt
       result = rgba(r/255, g/255, b/255, a/255).some
     except ValueError:
       discard

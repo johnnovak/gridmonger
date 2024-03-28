@@ -62,7 +62,7 @@ proc sortLevels*(m) =
   m.sortedLevelIndexes = @[]
 
   for (level, levelIdx) in sortedLevelsWithIndex:
-    m.sortedLevelNames.add(level.getDetailedName())
+    m.sortedLevelNames.add(level.getDetailedName)
     m.sortedLevelIndexes.add(levelIdx)
 
 # }}}
@@ -87,21 +87,21 @@ func hasLevels*(m): bool =
 # {{{ addLevel*()
 proc addLevel*(m; l: Level) =
   m.levels.add(l)
-  m.sortLevels()
+  m.sortLevels
   m.levelsDirty = true
 
 # }}}
 # {{{ setLevel*()
 proc setLevel*(m; idx: Natural, l: Level) =
   m.levels[idx] = l
-  m.sortLevels()
+  m.sortLevels
   m.levelsDirty = true
 
 # }}}
 # {{{ delLevel*()
 proc delLevel*(m; levelIdx: Natural) =
   m.levels.del(levelIdx)
-  m.sortLevels()
+  m.sortLevels
   m.levelsDirty = true
 
 # }}}
@@ -109,7 +109,7 @@ proc delLevel*(m; levelIdx: Natural) =
 # {{{ allNotes*()
 iterator allNotes*(m): tuple[loc: Location, note: Annotation] =
   for levelIdx, l in m.levels:
-    for note in l.allNotes():
+    for note in l.allNotes:
       yield (Location(level: levelIdx, row: note.row, col: note.col),
              note.annotation)
 # }}}
@@ -388,7 +388,7 @@ proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
 
     let region = oldRegions.getRegion(oldRc)
 
-    if region.isSome and not region.get.isUntitledRegion():
+    if region.isSome and not region.get.isUntitledRegion:
       l.setRegion(rc, region.get)
     else:
       l.setRegion(rc, Region(name: l.regions.nextUntitledRegionName(index)))

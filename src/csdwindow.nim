@@ -115,16 +115,16 @@ proc cursorPos*(win): tuple[x, y: float64] =
   win.w.cursorPos
 
 proc show*(win) =
-  win.w.show()
+  win.w.show
 
 proc hide*(win) =
-  win.w.hide()
+  win.w.hide
 
 proc focus*(win) =
-  win.w.focus()
+  win.w.focus
 
 proc restore*(win) =
-  win.w.restore()
+  win.w.restore
 
 proc shouldClose*(win): bool =
   win.w.shouldClose
@@ -173,7 +173,7 @@ proc findCurrentMonitor*(win): Monitor =
 # }}}
 # {{{ snapWindowToVisibleArea*()
 proc snapWindowToVisibleArea*(win) =
-  let currMonitor = win.findCurrentMonitor()
+  let currMonitor = win.findCurrentMonitor
   let workAreaRect = currMonitor.workAreaRect
   let (w, h) = win.size
 
@@ -287,7 +287,7 @@ proc unmaximize*(win) =
 # {{{ maximize*()
 proc maximize*(win) =
   if not (win.maximized or win.maximizing):
-    let (x, y, w, h) = win.findCurrentMonitor().workArea
+    let (x, y, w, h) = win.findCurrentMonitor.workArea
     win.unmaximizedPos = win.w.pos
     win.unmaximizedSize = win.w.size
 
@@ -302,9 +302,9 @@ proc maximize*(win) =
 # }}}
 # {{{ snapToLeft*()
 proc snapToLeft*(win) =
-  win.unmaximize()
+  win.unmaximize
 
-  let wa = win.findCurrentMonitor().workArea
+  let wa = win.findCurrentMonitor.workArea
   let windowWidth = wa.w div 2
   win.w.pos = (wa.x, wa.y)
   win.w.size = (windowWidth, wa.h)
@@ -312,9 +312,9 @@ proc snapToLeft*(win) =
 # }}}
 # {{{ snapToRight*()
 proc snapToRight*(win) =
-  win.unmaximize()
+  win.unmaximize
 
-  let wa = win.findCurrentMonitor().workArea
+  let wa = win.findCurrentMonitor.workArea
   let windowWidth = wa.w div 2
   win.w.pos = (wa.x + windowWidth, wa.y)
   win.w.size = (windowWidth, wa.h)
@@ -339,10 +339,10 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
     ty = TitleBarHeight * TextVertAlignFactor
 
   koi.addDrawLayer(layerWindowDecoration, vg):
-    vg.beginPath()
+    vg.beginPath
     vg.rect(0, 0, winWidth.float, TitleBarHeight)
     vg.fillColor(bgColor)
-    vg.fill()
+    vg.fill
 
     vg.setFont(TitleBarFontSize)
     vg.fillColor(textColor)
@@ -364,15 +364,15 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   var x = (winWidth - TitleBarWindowButtonsTotalWidth).float
 
   if koi.button(x, by, bw.float, bh, IconWindowLeft, style=buttonStyle):
-    win.snapToLeft()
+    win.snapToLeft
 
   x += bw
   if koi.button(x, by, bw, bh, IconWindowRight, style=buttonStyle):
-    win.snapToRight()
+    win.snapToRight
 
   x += bw + TitleBarWindowStandardButtonsLeftPad
   if koi.button(x, by, bw, bh, IconWindowMinimise, style=buttonStyle):
-    win.w.iconify()
+    win.w.iconify
 
   x += bw
   if koi.button(x, by, bw, bh,
@@ -381,9 +381,9 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
 
     if not win.maximizing:  # workaround to avoid double-activation
       if win.maximized:
-        win.unmaximize()
+        win.unmaximize
       else:
-        win.maximize()
+        win.maximize
 
   x += bw
   if koi.button(x, by, bw, bh, IconWindowClose, style=buttonStyle):
@@ -478,7 +478,7 @@ proc handleWindowDragEvents(win) =
             win.mx0 += win.posX0.float
             win.posX0 = 0
 
-          let (_, _, workAreaWidth, _) = win.findCurrentMonitor().workArea
+          let (_, _, workAreaWidth, _) = win.findCurrentMonitor.workArea
           let dx = win.posX0 + oldWidth - workAreaWidth
           if dx > 0:
             win.posX0 = workAreaWidth - oldWidth
@@ -550,7 +550,7 @@ proc handleWindowDragEvents(win) =
 
     else:
       win.dragState = wdsNone
-      showCursor()
+      koi.showCursor()
 
 # }}}
 
@@ -585,11 +585,11 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
 
   # Window border
   koi.addDrawLayer(layerWindowDecoration, vg):
-    vg.beginPath()
+    vg.beginPath
     vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
     vg.strokeColor(win.theme.borderColor)
     vg.strokeWidth(1.0)
-    vg.stroke()
+    vg.stroke
 
   # Main frame drawing ends
   koi.endFrame()

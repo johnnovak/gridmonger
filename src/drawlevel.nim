@@ -278,7 +278,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
     var image = vg.renderToImage(
       width  = sp.int,
       height = sp.int,
-      getPxRatio(),
+      koi.getPxRatio(),
       {ifRepeatX, ifRepeatY}
     ):
       var sw: float
@@ -294,11 +294,11 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
       vg.strokeColor(strokeColor)
       vg.strokeWidth(sw)
 
-      vg.beginPath()
+      vg.beginPath
       for i in 0..10:
         vg.moveTo(-2, i*sp + 2.0)
         vg.lineTo(i*sp + 2.0, -2)
-      vg.stroke()
+      vg.stroke
 
       vg.shapeAntiAlias(true)
 
@@ -427,9 +427,9 @@ proc drawBackground(ctx) =
     w = dp.gridSize * dp.viewCols + 1
     h = dp.gridSize * dp.viewRows + 1
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(dp.startX, dp.startY, w, h)
-  vg.fill()
+  vg.fill
 
 # }}}
 # {{{ drawBackgroundHatch()
@@ -440,7 +440,7 @@ proc drawBackgroundHatch(ctx) =
 
   let sw = lt.backgroundHatchWidth
 
-  vg.save()
+  vg.save
 
   vg.strokeColor(lt.backgroundHatchColor)
   vg.strokeWidth(sw)
@@ -462,7 +462,7 @@ proc drawBackgroundHatch(ctx) =
     x2 = startX + offs
     y2 = startY - offs
 
-  vg.beginPath()
+  vg.beginPath
   while x1 < dp.startX + offs:
     vg.moveTo(x1, y1)
     vg.lineTo(x2, y2)
@@ -470,9 +470,9 @@ proc drawBackgroundHatch(ctx) =
     x2 += lineSpacing
     y1 += lineSpacing
     y2 += lineSpacing
-  vg.stroke()
+  vg.stroke
 
-  vg.restore()
+  vg.restore
 
 # }}}
 # {{{ drawCellCoords()
@@ -556,7 +556,7 @@ proc drawCellOutlines(l: Level; ctx) =
   vg.strokeWidth(sw)
   vg.fillColor(lt.outlineColor)
   vg.strokeColor(lt.outlineColor)
-  vg.beginPath()
+  vg.beginPath
 
   forAllViewCells_CellCoords:
     if l.isEmpty(row, col) and isOutline(row, col):
@@ -565,8 +565,8 @@ proc drawCellOutlines(l: Level; ctx) =
 
       vg.rect(x, y, dp.gridSize, dp.gridSize)
 
-  vg.fill()
-  vg.stroke()
+  vg.fill
+  vg.stroke
 
 # }}}
 # {{{ drawCellHighlight()
@@ -574,10 +574,10 @@ proc drawCellHighlight(x, y: float; color: Color; ctx) =
   let vg = ctx.vg
   let dp = ctx.dp
 
-  vg.beginPath()
+  vg.beginPath
   vg.fillColor(color)
   vg.rect(x, y, dp.gridSize, dp.gridSize)
-  vg.fill()
+  vg.fill
 
 # }}}
 # {{{ drawCursor()
@@ -599,7 +599,7 @@ proc drawCursor(ctx) =
       a2 = a*0.5
 
     vg.fillColor(lt.cursorColor)
-    vg.beginPath()
+    vg.beginPath
 
     if dp.cursorOrient.isSome:
       case dp.cursorOrient.get
@@ -625,7 +625,7 @@ proc drawCursor(ctx) =
     else:
       vg.rect(x, y, a, a)
 
-    vg.fill()
+    vg.fill
 
 # }}}
 # {{{ drawCursorGuides()
@@ -646,7 +646,7 @@ proc drawCursorGuides(ctx) =
   vg.strokeWidth(sw)
 
   # vert
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x=snap(x, sw),
           y=snap(dp.startY, sw),
           w=dp.gridSize,
@@ -656,11 +656,11 @@ proc drawCursorGuides(ctx) =
           y=snap(dp.startY + dp.gridSize * (cursorViewRow+1), sw),
           w=dp.gridSize,
           h=dp.gridSize * (dp.viewRows - cursorViewRow-1))
-  vg.fill()
-  vg.stroke()
+  vg.fill
+  vg.stroke
 
   # horiz
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x=snap(dp.startX, sw),
           y=snap(y, sw),
           w=dp.gridSize * cursorViewCol,
@@ -670,8 +670,8 @@ proc drawCursorGuides(ctx) =
           y=snap(y, sw),
           w=dp.gridSize * (dp.viewCols - cursorViewCol-1),
           h=dp.gridSize)
-  vg.fill()
-  vg.stroke()
+  vg.fill
+  vg.stroke
 
 # }}}
 # {{{ drawEdgeOutlines()
@@ -705,25 +705,25 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
         vg.moveTo(x1, y1)
         vg.arc(x1, y1, w, 0, PI*0.5, pwCW)
         vg.lineTo(x1, y1)
-        vg.closePath()
+        vg.closePath
 
       if olNE in cell:
         vg.moveTo(x2, y1)
         vg.arc(x2, y1, w, PI*0.5, PI, pwCW)
         vg.lineTo(x2, y1)
-        vg.closePath()
+        vg.closePath
 
       if olSE in cell:
         vg.moveTo(x2, y2)
         vg.arc(x2, y2, w, PI, PI*1.5, pwCW)
         vg.lineTo(x2, y2)
-        vg.closePath()
+        vg.closePath
 
       if olSW in cell:
         vg.moveTo(x1, y2)
         vg.arc(x1, y2, w, PI*1.5, 0, pwCW)
         vg.lineTo(x1, y2)
-        vg.closePath()
+        vg.closePath
 
 
     proc drawSquareEdges() =
@@ -765,7 +765,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
       drawSquareEdges()
 
 
-  vg.beginPath()
+  vg.beginPath
 
   var
     startBufRow = ViewBufBorder
@@ -791,7 +791,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
         let viewCol = bufCol - ViewBufBorder
         draw(viewRow, viewCol, cell)
 
-  vg.fill()
+  vg.fill
 
 # }}}
 # {{{ drawFloorBg()
@@ -800,13 +800,13 @@ proc drawFloorBg(x, y: float; color: Color; ctx) =
   alias(vg, ctx.vg)
   alias(lt, ctx.lt)
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x, y, dp.gridSize, dp.gridSize)
 
   vg.fillColor(lt.backgroundColor)
-  vg.fill()
+  vg.fill
   vg.fillColor(color)
-  vg.fill()
+  vg.fill
 
 # }}}
 # {{{ drawTrail()
@@ -831,9 +831,9 @@ proc drawTrail(x, y: float; isActiveCursor: bool; ctx) =
     y1 = snap(y + offs - sw2, sw)
 
   vg.fillColor(color)
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x1, y1, a, a)
-  vg.fill()
+  vg.fill
 
 # }}}
 # {{{ drawGrid()
@@ -856,12 +856,12 @@ proc drawGrid(x, y: float; color: Color; gridStyle: GridStyle; ctx) =
       x2 = x + dp.gridSize
       y2 = y + dp.gridSize
 
-    vg.beginPath()
+    vg.beginPath
     vg.moveTo(snap(x1, sw), snap(y, sw))
     vg.lineTo(snap(x2, sw), snap(y, sw))
     vg.moveTo(snap(x, sw), snap(y1, sw))
     vg.lineTo(snap(x, sw), snap(y2, sw))
-    vg.stroke()
+    vg.stroke
 
   of gsLoose:
     let
@@ -871,12 +871,12 @@ proc drawGrid(x, y: float; color: Color; gridStyle: GridStyle; ctx) =
       x2 = x + dp.gridSize - offs
       y2 = y + dp.gridSize - offs
 
-    vg.beginPath()
+    vg.beginPath
     vg.moveTo(snap(x1, sw), snap(y, sw))
     vg.lineTo(snap(x2, sw), snap(y, sw))
     vg.moveTo(snap(x, sw), snap(y1, sw))
     vg.lineTo(snap(x, sw), snap(y2, sw))
-    vg.stroke()
+    vg.stroke
 
   of gsCross:
     let
@@ -889,7 +889,7 @@ proc drawGrid(x, y: float; color: Color; gridStyle: GridStyle; ctx) =
       y2 = y + dp.gridSize - offs
       ye = y + dp.gridSize
 
-    vg.beginPath()
+    vg.beginPath
     vg.moveTo(snap(x, sw), snap(y, sw))
     vg.lineTo(snap(x1, sw), snap(y, sw))
     vg.moveTo(snap(x2, sw), snap(y, sw))
@@ -899,7 +899,7 @@ proc drawGrid(x, y: float; color: Color; gridStyle: GridStyle; ctx) =
     vg.lineTo(snap(x, sw), snap(y1, sw))
     vg.moveTo(snap(x, sw), snap(y2, sw))
     vg.lineTo(snap(x, sw), snap(ye, sw))
-    vg.stroke()
+    vg.stroke
 
 # }}}
 # {{{ drawIcon()
@@ -931,7 +931,7 @@ proc drawIndexedNote(x, y: float; index, colorIdx: Natural;
                 else: lt.noteIndexBackgroundColor[colorIdx]
 
   vg.fillColor(bgColor)
-  vg.beginPath()
+  vg.beginPath
 
   case shape:
   of nbsCircle:
@@ -939,7 +939,7 @@ proc drawIndexedNote(x, y: float; index, colorIdx: Natural;
   of nbsRectangle:
     vg.rect(x, y, size, size)
 
-  vg.fill()
+  vg.fill
 
   var fontSizeFactor = if   index <  10: 0.43
                        elif index < 100: 0.4
@@ -993,12 +993,12 @@ proc drawNote(x, y: float; note: Annotation; isCursorActive: bool; ctx) =
     let w = dp.gridSize*0.3
 
     vg.fillColor(lt.noteCommentColor)
-    vg.beginPath()
+    vg.beginPath
     vg.moveTo(x + dp.gridSize - w, y)
     vg.lineTo(x + dp.gridSize + 1, y + w+1)
     vg.lineTo(x + dp.gridSize + 1, y)
-    vg.closePath()
-    vg.fill()
+    vg.closePath
+    vg.fill
 
   # }}}
 # {{{ drawLabel()
@@ -1007,13 +1007,13 @@ proc drawLabel(x, y: float; label: Annotation; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
 
-  vg.save()
+  vg.save
 
   let w = dp.gridSize * dp.viewCols
   let h = dp.gridSize * dp.viewRows
   vg.intersectScissor(dp.startX, dp.startY, w, h)
 
-  vg.beginPath()
+  vg.beginPath
 
   vg.setFont((dp.gridSize * 0.48).float)
   vg.fillColor(lt.labelTextColor[label.labelColor])
@@ -1027,7 +1027,7 @@ proc drawLabel(x, y: float; label: Annotation; ctx) =
     label.text
   )
 
-  vg.restore()
+  vg.restore
 
 # }}}
 # {{{ drawLinkMarker()
@@ -1039,12 +1039,12 @@ proc drawLinkMarker(x, y: float; ctx) =
   let w = dp.gridSize*0.3
 
   vg.fillColor(lt.linkMarkerColor)
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(x,   y + dp.gridSize - w)
   vg.lineTo(x,   y + dp.gridSize)
   vg.lineTo(x+w, y + dp.gridSize)
-  vg.closePath()
-  vg.fill()
+  vg.closePath
+  vg.fill
 
 # }}}
 
@@ -1068,7 +1068,7 @@ proc drawInnerShadows(viewBuf: Level; ctx) =
   alias(vg, ctx.vg)
 
   vg.fillColor(lt.shadowInnerColor)
-  vg.beginPath()
+  vg.beginPath
 
   let shadowWidth = dp.gridSize * lt.shadowInnerWidthFactor
 
@@ -1089,7 +1089,7 @@ proc drawInnerShadows(viewBuf: Level; ctx) =
       if not emptyN and not emptyW and emptyNW:
         vg.rect(x, y, shadowWidth, shadowWidth)
 
-  vg.fill()
+  vg.fill
 
 # }}}
 # {{{ drawOuterShadows()
@@ -1099,7 +1099,7 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
   alias(vg, ctx.vg)
 
   vg.fillColor(lt.shadowOuterColor)
-  vg.beginPath()
+  vg.beginPath
 
   let shadowWidth = dp.gridSize * lt.shadowOuterWidthFactor
 
@@ -1120,7 +1120,7 @@ proc drawOuterShadows(viewBuf: Level; ctx) =
       if emptyN and emptyW and not emptyNW:
         vg.rect(x, y, shadowWidth, shadowWidth)
 
-  vg.fill()
+  vg.fill
 
 # }}}
 
@@ -1182,10 +1182,10 @@ proc drawSolidWallHoriz*(x, y: float; orientation: Orientation,
     xe = snap(x + dp.gridSize + xeOffs, sw)
     y = snap(y + regionBorderYAdjustment(orientation, regionBorder, ctx), sw)
 
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawIllusoryWallHoriz*()
@@ -1208,12 +1208,12 @@ proc drawIllusoryWallHoriz*(x, y: float; orientation: Orientation;
   vg.lineCap(lcjSquare)
 
   var x = xs
-  vg.beginPath()
+  vg.beginPath
   while x <= xe:
     vg.moveTo(snap(x, sw), y)
     vg.lineTo(snap(min(x+len, xe), sw), y)
     x += pad
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawInvisibleWallHoriz*()
@@ -1239,12 +1239,12 @@ proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
   vg.strokeWidth(sw)
 
   var x = xs
-  vg.beginPath()
+  vg.beginPath
   while x <= xe:
     vg.moveTo(snap(x, sw), y)
     vg.lineTo(snap(min(x+len, xe), sw), y)
     x += pad
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawDoorHoriz*()
@@ -1273,14 +1273,14 @@ proc drawDoorHoriz*(x, y: float; orientation: Orientation;
   let color = getForegroundNormalColor(isCursorActive, ctx)
 
   # Wall start
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(xs, sw), snap(wy, sw))
   vg.lineTo(snap(x1+1-xoffs, sw), snap(wy, sw))
 
   # Wall end
   vg.moveTo(snap(x2+xoffs, sw), snap(wy, sw))
   vg.lineTo(snap(xe, sw), snap(wy, sw))
-  vg.stroke()
+  vg.stroke
 
   # Door
   sw = dp.thinStrokeWidth
@@ -1289,17 +1289,17 @@ proc drawDoorHoriz*(x, y: float; orientation: Orientation;
   vg.fillColor(color)
   vg.lineCap(lcjSquare)
 
-  vg.beginPath()
+  vg.beginPath
 
   if fill:
     if dp.lineWidth == lwThin:
       vg.rect(x1+1, y1-1, x2-x1, y2-y1+2+1)
     else:
       vg.rect(snap(x1, sw), snap(y1-2, sw), x2-x1+1, y2-y1+4)
-    vg.fill()
+    vg.fill
   else:
     vg.rect(snap(x1+1, sw), snap(y1-1, sw), x2-x1-1, y2-y1+2)
-    vg.stroke()
+    vg.stroke
 
 # }}}
 # {{{ drawLockedDoorHoriz*()
@@ -1333,14 +1333,14 @@ proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
   let color = getForegroundNormalColor(isCursorActive, ctx)
 
   # Wall start
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(xs, sw), snap(wy, sw))
   vg.lineTo(snap(x1, sw), snap(wy, sw))
 
   # Wall end
   vg.moveTo(snap(x2+xoffs, sw), snap(wy, sw))
   vg.lineTo(snap(xe, sw), snap(wy, sw))
-  vg.stroke()
+  vg.stroke
 
   drawIcon(x, y-dp.gridSize*0.5, 0.01, -0.04, "S", dp.gridSize,
            color, fontSizeFactor=0.43, ctx.vg)
@@ -1373,14 +1373,14 @@ proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
   let color = getForegroundNormalColor(isCursorActive, ctx)
 
   # Wall start
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(xs, sw), snap(wy, sw))
   vg.lineTo(snap(x1-xoffs, sw), snap(wy, sw))
 
   # Wall end
   vg.moveTo(snap(x2+xoffs, sw), snap(wy, sw))
   vg.lineTo(snap(xe, sw), snap(wy, sw))
-  vg.stroke()
+  vg.stroke
 
   # Door opening
   sw = dp.normalStrokeWidth
@@ -1388,12 +1388,12 @@ proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
   vg.strokeColor(color)
   vg.lineCap(lcjSquare)
 
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(x1, sw), snap(y1, sw))
   vg.lineTo(snap(x1, sw), snap(y2, sw))
   vg.moveTo(snap(x2, sw), snap(y1, sw))
   vg.lineTo(snap(x2, sw), snap(y2, sw))
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawOneWayDoorHoriz*()
@@ -1418,14 +1418,14 @@ proc drawOneWayDoorHoriz*(x, y: float; orientation: Orientation;
   let color = getForegroundNormalColor(isCursorActive, ctx)
 
   # Wall start
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(xs, sw), snap(wy, sw))
   vg.lineTo(snap(x1+xoffs + xeOffs, sw), snap(wy, sw))
 
   # Wall end
   vg.moveTo(snap(x2+xoffs, sw), snap(wy, sw))
   vg.lineTo(snap(xe, sw), snap(wy, sw))
-  vg.stroke()
+  vg.stroke
 
   var ox, oy: float
   var icon: string
@@ -1479,9 +1479,9 @@ proc drawLeverHoriz*(x, y: float; orientation: Orientation;
     ly = if northEast: y else: y-lw
 
   vg.fillColor(color)
-  vg.beginPath()
+  vg.beginPath
   vg.rect(lx, ly, lw, lw)
-  vg.fill()
+  vg.fill
 
   drawSolidWallHoriz(x, y, orientation, isCursorActive=false, regionBorder,
                      ctx)
@@ -1522,7 +1522,7 @@ proc drawNicheHoriz*(x, y: float; orientation: Orientation;
     yn = if northEast: y-nicheDepth else: y+nicheDepth
 
   # Background
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x1, y, x2-x1, yn-y)
 
   if dp.backgroundImage.isSome:
@@ -1530,22 +1530,22 @@ proc drawNicheHoriz*(x, y: float; orientation: Orientation;
   else:
     vg.fillColor(lt.backgroundColor)
 
-  vg.fill()
+  vg.fill
   vg.fillColor(lt.floorBackgroundColor[floorColor])
-  vg.fill()
+  vg.fill
 
   # Wall
   let wy = y + regionBorderYAdjustment(orientation, regionBorder, ctx)
 
   let o = if dp.lineWidth == lwThin: 1 else: 0
 
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(xs, sw), snap(wy, sw))
   vg.lineTo(snap(x1-xoffs+o, sw), snap(wy, sw))
 
   vg.moveTo(snap(x2+xoffs + xeOffs, sw), snap(wy, sw))
   vg.lineTo(snap(xe, sw), snap(wy, sw))
-  vg.stroke()
+  vg.stroke
 
   # Niche
   sw = dp.normalStrokeWidth
@@ -1554,12 +1554,12 @@ proc drawNicheHoriz*(x, y: float; orientation: Orientation;
   vg.strokeColor(lt.foregroundNormalNormalColor)
   vg.lineCap(lcjRound)
 
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(x1, sw), snap(y, sw))
   vg.lineTo(snap(x1, sw), snap(yn, sw))
   vg.lineTo(snap(x2, sw), snap(yn, sw))
   vg.lineTo(snap(x2, sw), snap(y, sw))
-  vg.stroke()
+  vg.stroke
 
 
 proc drawNicheHorizNE*(x, y: float; orientation: Orientation;
@@ -1600,9 +1600,9 @@ proc drawStatueHoriz*(x, y: float; orientation: Orientation;
     a2 = ca+da
 
   vg.fillColor(color)
-  vg.beginPath()
+  vg.beginPath
   vg.arc(cx, cy, dp.gridSize*0.27, a1, a2, pwCW)
-  vg.fill()
+  vg.fill
 
   drawSolidWallHoriz(x, y, orientation, isCursorActive=false, regionBorder,
                      ctx)
@@ -1642,14 +1642,14 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
   let wy = y + regionBorderYAdjustment(orientation, regionBorder, ctx)
 
   # Wall start
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(xs, sw), snap(wy, sw))
   vg.lineTo(snap(x1, sw), snap(wy, sw))
 
   # Wall end
   vg.moveTo(snap(x2, sw), snap(wy, sw))
   vg.lineTo(snap(xe, sw), snap(wy, sw))
-  vg.stroke()
+  vg.stroke
 
   # Keyhole border
   sw = dp.thinStrokeWidth
@@ -1661,7 +1661,7 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
   vg.strokeWidth(sw)
   vg.strokeColor(lt.foregroundNormalNormalColor)
   vg.lineCap(lcjSquare)
-  vg.beginPath()
+  vg.beginPath
   vg.rect(kx, ky, kl, kl)
 
   if dp.backgroundImage.isSome:
@@ -1669,8 +1669,8 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
   else:
     vg.fillColor(lt.floorBackgroundColor[0])
 
-  vg.fill()
-  vg.stroke()
+  vg.fill
+  vg.stroke
 
   # Keyhole
   var i, h: float
@@ -1683,9 +1683,9 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
 
   if h >= 2:
     vg.fillColor(lt.foregroundNormalNormalColor)
-    vg.beginPath()
+    vg.beginPath
     vg.rect(kx+i, ky+i, h, h)
-    vg.fill()
+    vg.fill
 
 # }}}
 # {{{ drawWritingHoriz*()
@@ -1735,13 +1735,13 @@ proc drawEmptyRegionBorderWallHoriz*(x, y: float; ctx) =
     y = snap(y, sw)
 
   vg.lineCap(lcjSquare)
-  vg.beginPath()
+  vg.beginPath
 
   vg.strokeColor(lt.regionBorderEmptyColor)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawEmptyRegionBorderWallVert*()
@@ -1750,7 +1750,7 @@ proc drawEmptyRegionBorderWallVert*(x, y: float; ctx) =
 
   setVertTransform(x, y, ctx)
   drawEmptyRegionBorderWallHoriz(x=0, y=ctx.dp.vertRegionBorderYOffs, ctx)
-  vg.resetTransform()
+  vg.resetTransform
 
 # }}}
 # {{{ drawRegionBorderEdgeHoriz*()
@@ -1772,13 +1772,13 @@ proc drawRegionBorderEdgeHoriz*(x, y: float; color: Color; west: bool; ctx) =
     xe = xs - EdgeLen
 
   vg.lineCap(lcjSquare)
-  vg.beginPath()
+  vg.beginPath
 
   vg.strokeColor(color)
   vg.strokeWidth(sw)
   vg.moveTo(xs, y)
   vg.lineTo(xe, y)
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawRegionBorderEdgeVert*()
@@ -1788,7 +1788,7 @@ proc drawRegionBorderEdgeVert*(x, y: float; color: Color; north: bool; ctx) =
   setVertTransform(x, y, ctx)
   drawRegionBorderEdgeHoriz(0, (if ctx.dp.lineWidth == lwThin: 0 else: -1),
                             color, north, ctx)
-  vg.resetTransform()
+  vg.resetTransform
 
 # }}}
 
@@ -1806,10 +1806,10 @@ proc drawSecretDoorBlock(x, y: float; floorColor: Natural;
   let paint = if isCursorActive: dp.cursorLineHatchPatterns[dp.lineHatchSize]
               else: dp.lineHatchPatterns[dp.lineHatchSize]
 
-  vg.beginPath()
+  vg.beginPath
   vg.fillPaint(paint)
   vg.rect(x, y, dp.gridSize, dp.gridSize)
-  vg.fill()
+  vg.fill
 
   let
     icon = "S"
@@ -1848,9 +1848,9 @@ proc drawPressurePlate(x, y: float; isCursorActive: bool; ctx) =
   vg.strokeColor(color)
   vg.strokeWidth(sw)
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(snap(x + offs, sw), snap(y + offs, sw), a, a)
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawHiddenPressurePlate()
@@ -1868,9 +1868,9 @@ proc drawHiddenPressurePlate(x, y: float; isCursorActive: bool; ctx) =
   vg.strokeColor(color)
   vg.strokeWidth(sw)
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(snap(x + offs, sw), snap(y + offs, sw), a, a)
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawOpenPitWithColor()
@@ -1894,9 +1894,9 @@ proc drawOpenPitWithColor(x, y: float; color: Color; ctx) =
   let a = dp.gridSize - 2*offs + sw
 
   vg.fillColor(color)
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x1, y1, a, a)
-  vg.fill()
+  vg.fill
 
 # }}}
 # {{{ drawOpenPit()
@@ -1927,13 +1927,13 @@ proc drawClosedPitWithColor(x, y: float; color: Color; ctx) =
   vg.strokeColor(color)
   vg.strokeWidth(sw)
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x1, y1, a, a)
   vg.moveTo(x1+1, y1+1)
   vg.lineTo(x2-1, y2-1)
   vg.moveTo(x2-1, y1+1)
   vg.lineTo(x1+1, y2-1)
-  vg.stroke()
+  vg.stroke
 
 # }}}
 # {{{ drawClosedPit()
@@ -2047,22 +2047,22 @@ proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
 
   let color = getForegroundNormalColor(isCursorActive, ctx)
 
-  vg.beginPath()
+  vg.beginPath
   vg.fillColor(bgCol)
   vg.rect(x1, y1, w, h)
-  vg.fill()
+  vg.fill
 
   var sw = dp.normalStrokeWidth
   vg.strokeWidth(sw)
   vg.strokeColor(color)
   vg.lineCap(lcjSquare)
 
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(snap(x1, sw), snap(y1, sw))
   vg.lineTo(snap(x1, sw), snap(y2, sw))
   vg.moveTo(snap(x2, sw), snap(y1, sw))
   vg.lineTo(snap(x2, sw), snap(y2, sw))
-  vg.stroke()
+  vg.stroke
 
   # Shading
   sw = 1.0
@@ -2071,14 +2071,14 @@ proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
   var yy = y1 + step/2
 
   vg.strokeWidth(sw)
-  vg.beginPath()
+  vg.beginPath
 
   for i in 1..numLines:
     vg.moveTo(snap(x1, sw), snap(yy, sw))
     vg.lineTo(snap(x2, sw), snap(yy, sw))
     yy += step
 
-  vg.stroke()
+  vg.stroke
 
 # }}}
 
@@ -2094,7 +2094,7 @@ proc drawBackgroundGrid(viewBuf: Level; ctx) =
     w = dp.gridSize * dp.viewCols + 1
     h = dp.gridSize * dp.viewRows + 1
 
-  vg.save()
+  vg.save
   vg.intersectScissor(dp.startX, dp.startY, w, h)
 
   for viewRow in 0..dp.viewRows:
@@ -2105,7 +2105,7 @@ proc drawBackgroundGrid(viewBuf: Level; ctx) =
         drawGrid(x, y, lt.gridBackgroundGridColor, lt.gridBackgroundStyle,
                  ctx)
 
-  vg.restore()
+  vg.restore
 
 # }}}
 # {{{ drawCellBackgroundsAndGrid()
@@ -2153,13 +2153,13 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
     of Vert:
       setVertTransform(x + floor(dp.gridSize*(1 - offsetFactor)), y, ctx)
       drawProc(0, 0, orientation, isCursorActive=isCursorActive, ctx=ctx)
-      vg.resetTransform()
+      vg.resetTransform
 
   template draw(drawProc: untyped) =
     drawProc(x, y, isCursorActive=isCursorActive, ctx)
 
 
-  vg.save()
+  vg.save
 
   if f != fBridge:
     vg.intersectScissor(x, y, dp.gridSize+1, dp.gridSize+1)
@@ -2342,7 +2342,7 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
       drawProc(0, 0, orientation,
                isCursorActive=cursorActive, regionBorder=regionBorder,
                ctx=ctx)
-      vg.resetTransform()
+      vg.resetTransform
 
   template drawOrientedWithFloorColor(drawProc: untyped, floorColor: Natural) =
     case orientation
@@ -2353,7 +2353,7 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
       setVertTransform(x, y, ctx)
       drawProc(0, 0, orientation, floorColor,
                isCursorActive=false, regionBorder=regionBorder, ctx=ctx)
-      vg.resetTransform()
+      vg.resetTransform
 
   case wall
   of wNone:          discard
@@ -2756,7 +2756,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   assert dp.viewStartRow + dp.viewRows <= l.rows
   assert dp.viewStartCol + dp.viewCols <= l.cols
 
-  vg.save()
+  vg.save
 
   setLevelClippingRect(l, ctx)
 
@@ -2806,7 +2806,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
 
   setLevelClippingRect(l, ctx)
 
-  vg.restore()
+  vg.restore
 
   if dp.drawCellCoords:
     drawCellCoords(l, ctx)

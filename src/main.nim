@@ -135,7 +135,7 @@ const
   InfiniteDuration      = initDuration(seconds = int64.high)
 
 const
-  SpecialWallTooltips = SpecialWalls.mapIt(($it).title())
+  SpecialWallTooltips = SpecialWalls.mapIt(($it).title)
 
   FloorGroup1 = @[
     fDoor,
@@ -1427,7 +1427,7 @@ let DefaultAppShortcuts = {
 # }}}
 
 # {{{ makeYubnAppShortcuts()
-proc mkYubnAppShortcuts(): Table[AppShortcut, seq[KeyShortcut]] =
+proc mkYubnAppShortcuts: Table[AppShortcut, seq[KeyShortcut]] =
   var sc = DefaultAppShortcuts
 
   # remove keyY mappings
@@ -1450,7 +1450,7 @@ proc mkYubnAppShortcuts(): Table[AppShortcut, seq[KeyShortcut]] =
 proc toStr(k: Key): string =
   case k
   of key0..key9: $k
-  of keyA..keyZ, keyF1..keyF25: ($k).toUpper()
+  of keyA..keyZ, keyF1..keyF25: ($k).toUpper
   of keyUnknown: "???"
   of keySpace: "Space"
   of keyApostrophe: "'"
@@ -1522,17 +1522,17 @@ proc toStr(k: KeyShortcut): string =
   if mkCtrl  in k.mods: s.add("Ctrl")
   if mkShift in k.mods: s.add("Shift")
   if mkAlt   in k.mods: s.add("Alt")
-  s.add(k.key.toStr())
+  s.add(k.key.toStr)
   s.join("+")
 
 proc toStr(sc: AppShortcut; a; idx = -1): string =
   var s: seq[string] = @[]
   if idx == -1:
     for k in a.ui.shortcuts[sc]:
-      s.add(k.toStr())
+      s.add(k.toStr)
     result = s.join("/")
   else:
-    result = a.ui.shortcuts[sc][idx].toStr()
+    result = a.ui.shortcuts[sc][idx].toStr
 # }}}
 
 # }}}
@@ -2219,7 +2219,7 @@ proc returnToNormalMode(a) =
 template createImage(d: var ImageData): Image =
   vg.createImageRGBA(
     d.width, d.height,
-    data = toOpenArray(d.data, 0, d.size()-1)
+    data = toOpenArray(d.data, 0, d.size-1)
   )
 
 # }}}
@@ -2280,7 +2280,7 @@ proc updateShortcuts(a) =
 
 # }}}
 # {{{ hasKeyEvent()
-proc hasKeyEvent(): bool =
+proc hasKeyEvent: bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
 
 # }}}
@@ -2423,7 +2423,7 @@ proc loadTheme(theme: ThemeName; a) =
   info(fmt"Loading theme '{theme.name}' from '{path}'")
 
   a.theme.config = loadTheme(path)
-  a.logfile.flushFile()
+  a.logfile.flushFile
 
 # }}}
 # {{{ saveTheme(a)
@@ -2445,7 +2445,7 @@ proc saveTheme(a) =
     logError(e, msgPrefix)
     setWarningMessage(fmt"{msgPrefix}: {e.msg}", a=a)
   finally:
-    a.logFile.flushFile()
+    a.logFile.flushFile
 
 # }}}
 # {{{ deleteTheme()
@@ -2456,7 +2456,7 @@ proc deleteTheme(theme: ThemeName; a): bool =
       info(fmt"Deleting theme '{theme.name}' at '{path}'")
 
       removeFile(path)
-      a.logfile.flushFile()
+      a.logfile.flushFile
       result = true
     except CatchableError as e:
       let msgPrefix = "Error deleting theme"
@@ -2550,7 +2550,7 @@ proc updateWidgetStyles(a) =
     fillColorDown     = w.getColorOrDefault("background.active")
     fillColorDisabled = w.getColorOrDefault("background.disabled")
 
-    label       = labelStyle.deepCopy()
+    label       = labelStyle.deepCopy
     label.align = haCenter
 
   # Radio button
@@ -2564,7 +2564,7 @@ proc updateWidgetStyles(a) =
     buttonFillColorActive      = buttonFillColorDown
     buttonFillColorActiveHover = buttonFillColorDown
 
-    label       = labelStyle.deepCopy()
+    label       = labelStyle.deepCopy
     label.align = haCenter
 
   # Icon radio button
@@ -2580,7 +2580,7 @@ proc updateWidgetStyles(a) =
     buttonFillColorActive      = buttonFillColorDown
     buttonFillColorActiveHover = buttonFillColorDown
 
-    label          = labelStyle.deepCopy()
+    label          = labelStyle.deepCopy
     label.fontSize = 18.0
     label.padHoriz = 0
     label.padHoriz = 0
@@ -2598,13 +2598,13 @@ proc updateWidgetStyles(a) =
     buttonFillColorDown     = w.getColorOrDefault("background.active")
     buttonFillColorDisabled = w.getColorOrDefault("background.disabled")
 
-    label          = labelStyle.deepCopy()
+    label          = labelStyle.deepCopy
     label.padHoriz = 8.0
 
     itemListCornerRadius     = buttonCornerRadius
     itemBackgroundColorHover = w.getColorOrDefault("background.active")
 
-    if dd.isEmpty():
+    if dd.isEmpty:
       itemListFillColor = lerp(cfg.getColorOrDefault("ui.dialog.background"),
                                black(), 0.4)
 
@@ -2706,7 +2706,7 @@ proc updateWidgetStyles(a) =
       feather = d.getFloatOrDefault("shadow.feather")
       color   = d.getColorOrDefault("shadow.color")
 
-  a.theme.aboutDialogStyle = a.theme.dialogStyle.deepCopy()
+  a.theme.aboutDialogStyle = a.theme.dialogStyle.deepCopy
   a.theme.aboutDialogStyle.drawTitleBar = false
 
   # Label
@@ -2804,7 +2804,7 @@ proc updateWidgetStyles(a) =
       thumbFillColorDown  = c.withAlpha(0.6)
 
   # Notes list pane
-  a.theme.notesListScrollViewStyle = getDefaultScrollViewStyle()
+  a.theme.notesListScrollViewStyle = koi.getDefaultScrollViewStyle()
 
   with a.theme.notesListScrollViewStyle:
     with scrollBarStyle:
@@ -2819,17 +2819,17 @@ proc updateTheme(a) =
   updateWidgetStyles(a)
 
   a.theme.statusBarTheme = cfg.getObjectOrEmpty("ui.status-bar")
-                              .toStatusBarTheme()
+                              .toStatusBarTheme
 
   a.theme.toolbarPaneTheme = cfg.getObjectOrEmpty("pane.toolbar")
-                                .toToolbarPaneTheme()
+                                .toToolbarPaneTheme
 
   a.theme.notesPaneTheme = cfg.getObjectOrEmpty("pane.notes")
-                              .toNotesPaneTheme()
+                              .toNotesPaneTheme
 
-  a.theme.levelTheme = cfg.getObjectOrEmpty("level").toLevelTheme()
+  a.theme.levelTheme = cfg.getObjectOrEmpty("level").toLevelTheme
 
-  a.theme.windowTheme = cfg.getObjectOrEmpty("ui.window").toWindowTheme()
+  a.theme.windowTheme = cfg.getObjectOrEmpty("ui.window").toWindowTheme
   a.win.theme = a.theme.windowTheme
 
   a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelTheme, a.vg,
@@ -2847,7 +2847,7 @@ proc switchTheme(themeIndex: Natural; a) =
   a.theme.currThemeIndex = themeIndex
 
   a.themeEditor.modified = false
-  a.theme.prevConfig = a.theme.config.deepCopy()
+  a.theme.prevConfig = a.theme.config.deepCopy
 
 # }}}
 
@@ -2860,7 +2860,7 @@ proc loadAppConfigOrDefault(path: string): HoconNode =
   try:
     s = newFileStream(path)
     var p = initHoconParser(s)
-    result = p.parse()
+    result = p.parse
   except CatchableError as e:
     logging.warn(
       fmt"Cannot load config file '{path}', using default config. " &
@@ -2868,7 +2868,7 @@ proc loadAppConfigOrDefault(path: string): HoconNode =
     )
     result = newHoconObject()
   finally:
-    if s != nil: s.close()
+    if s != nil: s.close
 
 # }}}
 # {{{ saveAppConfig()
@@ -2882,7 +2882,7 @@ proc saveAppConfig(cfg: HoconNode, path: string) =
       fmt"Cannot write config file '{path}'. Error message: {e.msg}"
     )
   finally:
-    if s != nil: s.close()
+    if s != nil: s.close
 
 # }}}
 # {{{ saveAppConfig()
@@ -2919,7 +2919,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "theme-name",    a.currThemeName.name)
 
   p = "last-state.ui."
-  cfg.set(p & "zoom-level",                    dp.getZoomLevel())
+  cfg.set(p & "zoom-level",                    dp.getZoomLevel)
   cfg.set(p & "current-level",                 cur.level)
   cfg.set(p & "cursor.row",                    cur.row)
   cfg.set(p & "cursor.column",                 cur.col)
@@ -3021,7 +3021,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
   let appState = AppState(
     themeName:              a.currThemeName.name,
 
-    zoomLevel:              dp.getZoomLevel(),
+    zoomLevel:              dp.getZoomLevel,
     currLevel:              cur.level,
     cursorRow:              cur.row,
     cursorCol:              cur.col,
@@ -3049,12 +3049,12 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
       let msgPrefix = "Error creating backup file"
       logError(e, msgPrefix)
       setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
-      a.logFile.flushFile()
+      a.logFile.flushFile
       return
 
   try:
     writeMapFile(a.doc.map, appState, path)
-    a.doc.undoManager.setLastSaveState()
+    a.doc.undoManager.setLastSaveState
 
     if not autosave:
       setStatusMessage(IconFloppy, fmt"Map '{path}' saved", a)
@@ -3064,7 +3064,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     let prefix = if autosave: "Autosave failed: " else: ""
     setErrorMessage(fmt"{prefix}{e.msg}", a)
   finally:
-    a.logFile.flushFile()
+    a.logFile.flushFile
 
 # }}}
 # {{{ handleAutoSaveMap()
@@ -3516,11 +3516,11 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
 
     var cx, cy, cw, ch: float
     if state in {wsHover, wsDown, wsActive, wsActiveHover, wsActiveDown}:
-      vg.beginPath()
+      vg.beginPath
       vg.strokeColor(cursorColor)
       vg.strokeWidth(sw)
       vg.rect(x, y, w-Pad, h-Pad)
-      vg.stroke()
+      vg.stroke
 
       cx = x+SelPad
       cy = y+SelPad
@@ -3533,10 +3533,10 @@ proc colorRadioButtonDrawProc(colors: seq[Color],
       cw = w-Pad
       ch = h-Pad
 
-    vg.beginPath()
+    vg.beginPath
     vg.fillColor(col)
     vg.rect(cx, cy, cw, ch)
-    vg.fill()
+    vg.fill
 
 # }}}
 
@@ -3603,7 +3603,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 
   koi.image(0, 0, DlgWidth, DlgHeight, al.logoPaint)
 
-  var labelStyle = a.theme.labelStyle.deepCopy()
+  var labelStyle = a.theme.labelStyle.deepCopy
   labelStyle.align = haCenter
 
   y += 275
@@ -3617,14 +3617,14 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
     y += 32
     if a.latestVersion.isNone:
       try:
-        a.latestVersion = a.versionChecker.tryFetchLatestVersion()
+        a.latestVersion = a.versionChecker.tryFetchLatestVersion
         koi.setFramesLeft()
       except CatchableError as e:
         logError(e, "Error fetching version information")
         a.versionCheckFailed = true
 
     if a.latestVersion.isSome or a.versionCheckFailed:
-      let st = labelStyle.deepCopy()
+      let st = labelStyle.deepCopy
 
       var msg: string
       if a.latestVersion.isSome:
@@ -6170,7 +6170,7 @@ proc handleLevelMouseEvents(a) =
     let sensitivity = remap(
       inMin=MinZoomLevel, inMax=MaxZoomLevel,
       outMin=SensitivityMin, outMax=SensitivityMax,
-      dp.getZoomLevel().float
+      dp.getZoomLevel.float
     )
     let colSteps = (dx / sensitivity).int
     let rowSteps = (dy / sensitivity).int
@@ -6373,9 +6373,9 @@ proc handleGlobalKeyEvents(a) =
   proc turnRight(dir: CardinalDir): CardinalDir =
     CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
 
-  template backward(): auto = turnLeft(turnLeft(ui.cursorOrient))
-  template left():     auto = turnLeft(ui.cursorOrient)
-  template right():    auto = turnRight(ui.cursorOrient)
+  template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
+  template left:     auto = turnLeft(ui.cursorOrient)
+  template right:    auto = turnRight(ui.cursorOrient)
 
   # {{{ handleMoveWalk()
   proc handleMoveWalk(ke: Event; a) =
@@ -6729,7 +6729,7 @@ proc handleGlobalKeyEvents(a) =
           setWarningMessage("Cannot erase trail when draw trail is on", a=a)
 
       elif ke.isShortcutDown(scExcavateTrail, a):
-        let bbox = l.calcTrailBoundingBox()
+        let bbox = l.calcTrailBoundingBox
         if bbox.isSome:
           actions.excavateTrail(map, cur, bbox.get, ui.currFloorColor, um)
           actions.clearTrailInLevel(map, cur, bbox.get, um, groupWithPrev=true,
@@ -6740,7 +6740,7 @@ proc handleGlobalKeyEvents(a) =
           setWarningMessage("No trail to excavate", a=a)
 
       elif ke.isShortcutDown(scClearTrail, a):
-        let bbox = l.calcTrailBoundingBox()
+        let bbox = l.calcTrailBoundingBox
         if bbox.isSome:
           actions.clearTrailInLevel(map, cur, bbox.get, um)
           setStatusMessage(IconEraser, "Cleared trail in level", a)
@@ -6853,12 +6853,12 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scZoomIn, repeat=true, a=a):
         zoomIn(a)
         setStatusMessage(IconZoomIn,
-          fmt"Zoomed in – level {dp.getZoomLevel()}", a)
+          fmt"Zoomed in – level {dp.getZoomLevel}", a)
 
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a):
         zoomOut(a)
         setStatusMessage(IconZoomOut,
-                         fmt"Zoomed out – level {dp.getZoomLevel()}", a)
+                         fmt"Zoomed out – level {dp.getZoomLevel}", a)
 
       elif ke.isShortcutDown(scEditNote, a):
         if map.isEmpty(cur):
@@ -7288,7 +7288,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scCancel, a):
         exitSelectMode(a)
-        a.clearStatusMessage()
+        a.clearStatusMessage
 
       elif ke.isShortcutDown(scOpenUserManual, a):
         openUserManual(a)
@@ -7658,7 +7658,7 @@ proc renderRegionDropDown(a) =
     mainPane = mainPaneRect(a)
 
   if currRegion.isSome:
-    var sortedRegionNames = l.regionNames()
+    var sortedRegionNames = l.regionNames
     sort(sortedRegionNames)
 
     let currRegionName = currRegion.get.name
@@ -7699,7 +7699,7 @@ proc renderModeAndOptionIndicators(x, y: float; a) =
 
   let lt = a.theme.levelTheme
 
-  vg.save()
+  vg.save
 
   vg.fillColor(lt.coordinatesHighlightColor)
 
@@ -7714,7 +7714,7 @@ proc renderModeAndOptionIndicators(x, y: float; a) =
     vg.setFont(19, "sans-bold")
     discard vg.text(x, y+1, IconShoePrints)
 
-  vg.restore()
+  vg.restore
 
 # }}}
 # {{{ renderNoteTooltip()
@@ -7766,10 +7766,10 @@ proc renderNoteTooltip(x, y: float, levelDrawWidth, levelDrawHeight: float,
                   lt.noteTooltipShadowStyle)
 
     vg.fillColor(a.theme.levelTheme.noteTooltipBackgroundColor)
-    vg.beginPath()
+    vg.beginPath
     vg.roundedRect(noteBoxX, noteBoxY, noteBoxW, noteBoxH,
                    r=lt.noteTooltipCornerRadius)
-    vg.fill()
+    vg.fill
 
     vg.fillColor(a.theme.levelTheme.noteTooltipTextColor)
     vg.textBox(textX, textY, breakWidth, note.text)
@@ -7941,10 +7941,10 @@ proc specialWallDrawProc(lt: LevelTheme,
 
     const Pad = 5
 
-    vg.beginPath()
+    vg.beginPath
     vg.fillColor(bgCol)
     vg.rect(x, y, w-Pad, h-Pad)
-    vg.fill()
+    vg.fill
 
     dp.setZoomLevel(lt, 4)
     let ctx = DrawLevelContext(lt: lt, dp: dp, vg: vg)
@@ -7953,13 +7953,13 @@ proc specialWallDrawProc(lt: LevelTheme,
     var cy = y + 15
 
     template drawAtZoomLevel(zl: Natural, body: untyped) =
-      vg.save()
+      vg.save
       # A bit messy... but so is life! =8)
       dp.setZoomLevel(lt, zl)
       vg.intersectScissor(x+4.5, y+3, w-Pad*2-4, h-Pad*2-2)
       body
       dp.setZoomLevel(lt, 4)
-      vg.restore()
+      vg.restore
 
     let ot = Horiz
 
@@ -8007,11 +8007,11 @@ proc renderToolsPane(x, y, w, h: float; a) =
   alias(lt, a.theme.levelTheme)
   alias(vg, a.vg)
 
-#  vg.beginPath()
+#  vg.beginPath
 #  vg.strokeWidth(1)
 #  vg.strokeColor(green())
 #  vg.rect(x, y, w, h)
-#  vg.stroke()
+#  vg.stroke
 
   var
     toolItemsPerColumn = 12
@@ -8083,7 +8083,7 @@ proc renderIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
   alias(vg, a.vg)
 
   vg.fillColor(bgColor)
-  vg.beginPath()
+  vg.beginPath
 
   case shape
   of nbsCircle:
@@ -8092,7 +8092,7 @@ proc renderIndexedNote(x, y: float; size: float; bgColor, fgColor: Color;
     let pad = 4.0
     vg.rect(x+pad, y+pad, size-pad*2, size-pad*2)
 
-  vg.fill()
+  vg.fill
 
   var fontSizeFactor = if   index <  10: 0.4
                        elif index < 100: 0.37
@@ -8112,7 +8112,7 @@ proc renderNoteMarker(x, y, w, h: float, note: Annotation, textColor: Color,
 
   let s = a.theme.notesPaneTheme
 
-  vg.save()
+  vg.save
 
   case note.kind
   of akIndexed:
@@ -8139,7 +8139,7 @@ proc renderNoteMarker(x, y, w, h: float, note: Annotation, textColor: Color,
 
   of akLabel: discard
 
-  vg.restore()
+  vg.restore
 
 # }}}
 # {{{ renderCurrentNotePane()
@@ -8235,10 +8235,10 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
                 else:                                         wsNormal
 
     if selected or state in {wsHover, wsDown}:
-      vg.beginPath()
+      vg.beginPath
       vg.fillColor(if selected or state == wsDown: black(0.24) else: black(0.15))
       vg.rect(x, y, w, h)
-      vg.fill()
+      vg.fill
 
     let textColor = if selected or state == wsDown: white(0.9)
                     else: white(0.7)
@@ -8276,16 +8276,16 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     TextIndent = 44
 
   # Background
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x, y, w, h)
   vg.fillColor(lerp(ws.backgroundColor, black, 0.25))
-  vg.fill()
+  vg.fill
 
   # Filters & search
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x, y, w, TopPad)
   vg.fillColor(lerp(ws.backgroundColor, black, 0.15))
-  vg.fill()
+  vg.fill
 
   var
     wx = LeftPad
@@ -8299,7 +8299,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   )
 
   # Link cursor
-  var cbStyle = a.theme.checkBoxStyle.deepCopy()
+  var cbStyle = a.theme.checkBoxStyle.deepCopy
   cbStyle.icon.fontSize = 14.0
   cbStyle.iconActive   = IconLink
   cbStyle.iconInactive = IconLink
@@ -8388,7 +8388,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     textX   = markerX + TextIndent
     textW   = w - TextIndent - LeftPad - RightPad - NoteHorizOffs
 
-  template setFont() =
+  template setFont =
     vg.setFont(14, "sans-bold")
     vg.textLineHeight(1.4)
 
@@ -8445,7 +8445,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     of nsfMap:
       for levelIdx, level in map.sortedLevels:
         var s = newSeq[NotesListCacheEntry]()
-        for r,c, note in level.allNotes():
+        for r,c, note in level.allNotes:
           s.maybeAddCacheEntry(
             Location(level: levelIdx, row: r, col: c),
             note, vg
@@ -8456,7 +8456,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       # TODO regions
 
     of nsfLevel:
-      for r,c, note in l.allNotes():
+      for r,c, note in l.allNotes:
         nls.cache.maybeAddCacheEntry(
           Location(level: a.ui.cursor.level, row: r, col: c),
           note, vg
@@ -8566,12 +8566,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 # }}}
 # {{{ Theme editor
 
-var ThemeEditorScrollViewStyle = getDefaultScrollViewStyle()
+var ThemeEditorScrollViewStyle = koi.getDefaultScrollViewStyle()
 with ThemeEditorScrollViewStyle:
   vertScrollBarWidth      = 14.0
   scrollBarStyle.thumbPad = 4.0
 
-var ThemeEditorSliderStyle = getDefaultSliderStyle()
+var ThemeEditorSliderStyle = koi.getDefaultSliderStyle()
 with ThemeEditorSliderStyle:
   trackCornerRadius = 8.0
   valueCornerRadius = 6.0
@@ -8946,7 +8946,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   koi.endScrollView()
 
-  a.theme.prevConfig = cfg.deepCopy()
+  a.theme.prevConfig = cfg.deepCopy
 
 # }}}
 # {{{ renderThemeEditorPane()
@@ -8958,20 +8958,20 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   let propsHeight = h - topSectionHeight
 
   # Background
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x, y, w, h)
   vg.fillColor(gray(0.3))
-  vg.fill()
+  vg.fill
 
   # Left separator line
   vg.strokeWidth(1.0)
   vg.lineCap(lcjSquare)
 
-  vg.beginPath()
+  vg.beginPath
   vg.moveTo(x+0.5, y)
   vg.lineTo(x+0.5, y+h)
   vg.strokeColor(gray(0.1))
-  vg.stroke()
+  vg.stroke
 
   let
     bw = 68.0
@@ -8984,12 +8984,12 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   # Theme pane title
   const TitleHeight = 34
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x+1, y, w, h=TitleHeight)
   vg.fillColor(gray(0.25))
-  vg.fill()
+  vg.fill
 
-  let titleStyle = getDefaultLabelStyle()
+  let titleStyle = koi.getDefaultLabelStyle()
   titleStyle.align = haCenter
 
   cy += 6.0
@@ -8997,10 +8997,10 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
             style=titleStyle)
 
   # Theme name & action buttons
-  vg.beginPath()
+  vg.beginPath
   vg.rect(x+1, y+TitleHeight, w, h=96)
   vg.fillColor(gray(0.36))
-  vg.fill()
+  vg.fill
 
   cx = x+17
   cy += 45.0
@@ -9034,7 +9034,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   # User theme indicator
   cx += 195
-  var labelStyle = getDefaultLabelStyle()
+  var labelStyle = koi.getDefaultLabelStyle()
 
   if not a.currThemeName.userTheme:
     labelStyle.color = labelStyle.color.withAlpha(0.3)
@@ -9043,7 +9043,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   # User theme override indicator
   cx += 13
-  labelStyle = getDefaultLabelStyle()
+  labelStyle = koi.getDefaultLabelStyle()
 
   if not a.currThemeName.override:
     labelStyle.color = labelStyle.color.withAlpha(0.3)
@@ -9054,7 +9054,7 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
   cx += 16
 
   if a.themeEditor.modified:
-    koi.label(cx, cy, 20, wh, IconAsterisk, style=getDefaultLabelStyle())
+    koi.label(cx, cy, 20, wh, IconAsterisk, style=koi.getDefaultLabelStyle())
 
   # Theme action buttons
   cx = x+15
@@ -9102,10 +9102,10 @@ proc renderCommand(x, y: float; command: string; bgColor, textColor: Color;
   let w = vg.textWidth(command)
   let (x, y) = (round(x), round(y))
 
-  vg.beginPath()
+  vg.beginPath
   vg.roundedRect(x, y-10, w+10, 18, 3)
   vg.fillColor(bgColor)
-  vg.fill()
+  vg.fill
 
   vg.fillColor(textColor)
   discard vg.text(x+5, y, command)
@@ -9131,13 +9131,13 @@ proc renderStatusBar(x, y, w, h: float; a) =
   let ty = h * TextVertAlignFactor
 
   # Bar background
-  vg.save()
+  vg.save
   vg.translate(x, y)
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(0, 0, w, h)
   vg.fillColor(s.backgroundColor)
-  vg.fill()
+  vg.fill
 
   # Display cursor coordinates
   vg.setFont(14, "sans-bold")
@@ -9207,7 +9207,7 @@ proc renderStatusBar(x, y, w, h: float; a) =
     discard vg.text(IconPosX, ty, status.warning.icon)
     discard vg.text(MessagePosX, ty, status.warning.message)
 
-  vg.restore()
+  vg.restore
 
 # }}}
 # {{{ renderQuickReference()
@@ -9247,7 +9247,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
         heightInc = 0.0
         var ys = y
         for sc in shortcuts:
-          let shortcut = sc.toStr()
+          let shortcut = sc.toStr
           discard renderCommand(x, ys, shortcut,
                                 commandBgColor, commandTextColor, a)
           ys += RowHeight
@@ -9258,7 +9258,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
       of qkKeyShortcuts:
         var sx = x
         for idx, sc in item.keyShortcuts:
-          let shortcut = sc.toStr()
+          let shortcut = sc.toStr
           var xa = renderCommand(sx, y, shortcut,
                                  commandBgColor, commandTextColor, a)
           if idx < item.keyShortcuts.high:
@@ -9296,15 +9296,15 @@ proc renderQuickReference(x, y, w, h: float; a) =
   let yOffs = max((h - 840) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
-    vg.save()
+    vg.save
     vg.intersectScissor(x, y, w, h)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     # Background
-    vg.beginPath()
+    vg.beginPath
     vg.rect(x, y, w, h)
     vg.fillColor(bgColor)
-    vg.fill()
+    vg.fill
 
     # Title
     vg.setFont(20, "sans-bold")
@@ -9350,7 +9350,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
   koi.endScrollView(viewHeight)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
-    vg.restore()
+    vg.restore
 
 # }}}
 # {{{ renderDialogs()
@@ -9424,7 +9424,7 @@ proc renderUI(a) =
     toolsPaneHeight = toolsPaneHeight(mainPane.h)
 
   # Clear background
-  vg.beginPath()
+  vg.beginPath
 
   # Make sure the background image extends to the notes list pane if open
   vg.rect(0, mainPane.y1, mainPane.w + mainPane.x1, mainPane.h)
@@ -9434,10 +9434,10 @@ proc renderUI(a) =
   else:
     vg.fillColor(a.theme.windowTheme.backgroundColor)
 
-  vg.fill()
+  vg.fill
 
   if a.opts.showQuickReference:
-    var w = winWidth()
+    var w = koi.winWidth()
     if a.opts.showThemeEditor: w -= ThemePaneWidth
 
     renderQuickReference(x=0, y=mainPane.y1, w=w, h=mainPane.h, a)
@@ -9521,7 +9521,7 @@ proc renderUI(a) =
 
   # Status bar
   let statusBarY = mainPane.y1 + mainPane.h
-  renderStatusBar(0, statusBarY, winWidth(), StatusBarHeight, a)
+  renderStatusBar(0, statusBarY, koi.winWidth(), StatusBarHeight, a)
 
   # Theme editor pane
   # XXX hack, we need to render the theme editor before the dialogs, so
@@ -9637,7 +9637,7 @@ proc renderFrameCb(a) =
       glfw.makeContextCurrent(a.splash.win)
       closeSplash(a)
       glfw.makeContextCurrent(a.win.glfwWin)
-      a.win.focus()
+      a.win.focus
 
   if not a.opts.showThemeEditor or not uiRendered:
     renderUI(a)
@@ -9702,19 +9702,19 @@ proc renderFrameSplash(a) =
     scale=scale
   )
 
-  vg.beginPath()
+  vg.beginPath
   vg.rect(0, 0, winWidth, winHeight)
 
   vg.fillPaint(s.shadowPaint)
-  vg.fill()
+  vg.fill
 
   vg.fillPaint(s.outlinePaint)
-  vg.fill()
+  vg.fill
 
   vg.fillPaint(s.logoPaint)
-  vg.fill()
+  vg.fill
 
-  vg.endFrame()
+  vg.endFrame
 
 
   if not a.opts.showThemeEditor and a.splash.win.shouldClose:
@@ -9743,7 +9743,7 @@ proc renderFrameSplash(a) =
 
   if shouldCloseSplash(a):
     closeSplash(a)
-    a.win.focus()
+    a.win.focus
 
 # }}}
 
@@ -9787,7 +9787,7 @@ proc showSplash(a) =
 
   s.win.size = (w, h)
   s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
-  s.win.show()
+  s.win.show
 
   if not a.opts.showThemeEditor:
     koi.setFocusCaptured(true)
@@ -9797,7 +9797,7 @@ proc showSplash(a) =
 proc closeSplash(a) =
   alias(s, a.splash)
 
-  s.win.destroy()
+  s.win.destroy
   s.win = nil
 
   s.vg.deleteImage(s.logoImage)
@@ -10075,8 +10075,8 @@ proc handleOpenFileEvent(path: string; a) =
   returnToNormalMode(a)
   openMap(path, a)
   # TODO not needed on macOS at least
-#  a.win.restore()
-  a.win.focus()
+#  a.win.restore
+  a.win.focus
   koi.setFramesLeft()
 
 # }}}
@@ -10178,7 +10178,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   let height = mergedWinCfg.getNaturalOrDefault("height", DefaultWindowHeight)
                            .limit(WindowWidthLimits)
 
-  let (_, _, defaultMaxWidth, defaultMaxHeight) = getPrimaryMonitor().workArea
+  let (_, _, defaultMaxWidth,
+             defaultMaxHeight) = glfw.getPrimaryMonitor().workArea
 
   let defaultXPos = (defaultMaxWidth - width) div 2
   var xpos = mergedWinCfg.getIntOrDefault("x-position", defaultXPos)
@@ -10190,10 +10191,10 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   a.win.pos = (xpos, ypos)
 
   if mergedWinCfg.getBoolOrDefault("maximized", false):
-    a.win.maximize()
+    a.win.maximize
 
   a.win.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar", true)
-  a.win.snapWindowToVisibleArea()
+  a.win.snapWindowToVisibleArea
 
   initVersionChecking(a)
 
@@ -10208,16 +10209,16 @@ proc cleanup(a) =
   if a.splash.vg != nil:
     nvgDeleteContext(a.splash.vg)
 
-  a.win.glfwWin.destroy()
+  a.win.glfwWin.destroy
   if a.splash.win != nil:
-    a.splash.win.destroy()
+    a.splash.win.destroy
 
   glfw.terminate()
 
   info("Cleanup successful, bye!")
 
   if a.logFile != nil:
-    a.logFile.close()
+    a.logFile.close
 
 # }}}
 # {{{ crashHandler() =
@@ -10264,7 +10265,7 @@ proc handleCheckForUpdates(a) =
   if a.prefs.checkForUpdates and not a.versionCheckFailed:
     if a.latestVersion.isNone:
       try:
-        a.latestVersion = a.versionChecker.tryFetchLatestVersion()
+        a.latestVersion = a.versionChecker.tryFetchLatestVersion
         koi.setFramesLeft()
       except CatchableError as e:
         logError(e, "Error fetching version information")
@@ -10334,7 +10335,7 @@ proc main() =
     else: # Windows, Linux
       initApp(configFile, mapFile, winCfg, a=a)
 
-    a.win.show()
+    a.win.show
 
     while not a.shouldClose:
       # Render app
@@ -10355,7 +10356,7 @@ proc main() =
           loadSplashImages(a)
         showSplash(a)
         if a.opts.showThemeEditor:
-          a.win.focus()
+          a.win.focus
 
       if a.splash.win != nil:
         glfw.makeContextCurrent(a.splash.win)
@@ -10378,7 +10379,7 @@ proc main() =
         let event = event.get
         case event.kind
         of aeFocus:
-          a.win.focus()
+          a.win.focus
           koi.setFramesLeft()
 
         of aeOpenFile:
@@ -10388,6 +10389,7 @@ proc main() =
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
+        # TODO
         glfw.waitEventsTimeout(15)
 
     cleanup(a)

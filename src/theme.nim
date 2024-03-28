@@ -23,7 +23,7 @@ const DefaultThemeString = slurp("../Themes/Default.gmtheme")
 
 let s = newStringStream(DefaultThemeString)
 var p = initHoconParser(s)
-let DefaultThemeConfig* = p.parse()
+let DefaultThemeConfig* = p.parse
 
 # }}}
 
@@ -195,7 +195,7 @@ proc loadTheme*(filename: string): HoconNode =
   try:
     s = newFileStream(filename)
     var p = initHoconParser(s)
-    let cfg = p.parse()
+    let cfg = p.parse
 
     cfg.limit("ui.dialog.corner-radius",      DialogCornerRadiusLimits)
     cfg.limit("ui.dialog.outer-border.width", DialogBorderWidthLimits)
@@ -218,11 +218,11 @@ proc loadTheme*(filename: string): HoconNode =
     cfg.limit("level.shadow.inner.width-factor", ShadowWidthFactorLimits)
     cfg.limit("level.shadow.outer.width-factor", ShadowWidthFactorLimits)
 
-    result = DefaultThemeConfig.deepCopy()
+    result = DefaultThemeConfig.deepCopy
     result.merge(cfg)
 
   finally:
-    if s != nil: s.close()
+    if s != nil: s.close
 
 # }}}
 # {{{ saveTheme*()
@@ -232,7 +232,7 @@ proc saveTheme*(config: HoconNode, filename: string) =
     s = newFileStream(filename, fmWrite)
     config.write(s)
   finally:
-    if s != nil: s.close()
+    if s != nil: s.close
 
 # }}}
 #

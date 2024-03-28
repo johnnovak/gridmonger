@@ -47,7 +47,7 @@ proc storeUndoState*[S, R](m: var UndoManager[S, R],
     m.currState = 0
   else:
     # Discard later states if we're not at the last one
-    m.truncateUndoState()
+    m.truncateUndoState
 
   m.states[m.currState].action = action
   m.states.add(UndoState[S, R](action: nil, undoAction: undoAction,
@@ -63,7 +63,7 @@ proc canUndo*[S, R](m: UndoManager[S, R]): bool =
 # }}}
 # {{{ undo*()
 proc undo*[S, R](m: var UndoManager[S, R], s: var S): R =
-  if m.canUndo():
+  if m.canUndo:
     result = m.states[m.currState].undoAction(s)
     let undoNextState = m.states[m.currState].groupWithPrev
     dec(m.currState)
@@ -79,7 +79,7 @@ proc canRedo*[S, R](m: UndoManager[S, R]): bool =
 # }}}
 # {{{ redo*()
 proc redo*[S, R](m: var UndoManager[S, R], s: var S): R =
-  if m.canRedo():
+  if m.canRedo:
     result = m.states[m.currState].action(s)
     inc(m.currState)
     let redoNextState = m.currState+1 <= m.states.high and

@@ -46,11 +46,11 @@ proc encode*(e; data: byte): bool =
 
   if data == e.prevData:
     if e.runLength == 0x80:
-      result = e.flush()
+      result = e.flush
     else:
       inc(e.runLength)
   else:
-    result = e.flush()
+    result = e.flush
 
   e.prevData = data
 
@@ -107,7 +107,7 @@ when isMainModule:
 
     for d in s:
       discard e.encode(d.byte)
-    discard e.flush()
+    discard e.flush
 
     assert e.buf[0] == 0x83
     assert e.buf[1] == 'A'.byte
@@ -130,7 +130,7 @@ when isMainModule:
 
     var i = 0
     while true:
-      let b = d.decode()
+      let b = d.decode
       if b.isNone: break
       else:
         outbuf[i] = b.get
@@ -147,15 +147,15 @@ when isMainModule:
 
       for i in 1..len:
         discard e.encode(5)
-      discard e.flush()
+      discard e.flush
 
     template verify(e: RunLengthEncoder, d: RunLengthDecoder, len: Natural) =
       e.buf.setLen(e.encodedLength)
       initRunLengthDecoder(d, e.buf)
 
       for i in 1..len:
-        assert d.decode().get == 5
-      assert d.decode() == byte.none
+        assert d.decode.get == 5
+      assert d.decode == byte.none
 
     block:
       let len = 127
@@ -215,7 +215,7 @@ when isMainModule:
       for i in 0..255:
         for _ in 1..repeats:
           discard e.encode(i.byte)
-      discard e.flush()
+      discard e.flush
 
     template verify(e: RunLengthEncoder, d: RunLengthDecoder,
                     repeats: Natural) =
@@ -224,8 +224,8 @@ when isMainModule:
 
       for i in 0..255:
         for _ in 1..repeats:
-          assert d.decode().get == i.byte
-      assert d.decode() == byte.none
+          assert d.decode.get == i.byte
+      assert d.decode == byte.none
 
     fill(e, 1)
     assert e.encodedLength == 128 + 128*2

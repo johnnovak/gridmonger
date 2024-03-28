@@ -34,7 +34,7 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
 
   let action = proc (actionMap: var Map): UndoStateData =
     actionBody
-    actionMap.levels[loc.level].reindexNotes()
+    actionMap.levels[loc.level].reindexNotes
     result = usd
 
   var oldLinks = map.links
@@ -48,7 +48,7 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
       srcLevel = undoLevel,
       srcRect  = rectN(0, 0, undoLevel.rows, undoLevel.cols)
     )
-    m.levels[loc.level].reindexNotes()
+    m.levels[loc.level].reindexNotes
 
     # Delete existing links in undo area
     let delRect = rectN(
@@ -59,7 +59,7 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
     )
 
     m.links = oldLinks
-    m.links.debugSanitise()
+    m.links.debugSanitise
     result = usd
 
   um.storeUndoState(action, undoAction, groupWithPrev)
@@ -317,7 +317,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     else:
       m.links.set(src, dest)
 
-    m.levels[dest.level].reindexNotes()
+    m.levels[dest.level].reindexNotes
     result = usd
 
   # Undo action
@@ -351,7 +351,7 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
       srcLevel = undoLevel,
       srcRect  = rectN(0, 0, 1, 1)  # single cell
     )
-    m.levels[dest.level].reindexNotes()
+    m.levels[dest.level].reindexNotes
 
     # Delete existing links in undo area
     m.links.delBySrc(dest)
@@ -461,7 +461,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
   let level = loc.level
   var oldLinks = map.links.filterByInRect(level, bbox, sel.some)
-  map.links.debugSanitise()
+  map.links.debugSanitise
 
   proc transformAndCollectLinks(origLinks: Links, selection: Selection,
                                 bbox: Rect[Natural]): Links =
@@ -685,7 +685,7 @@ proc addNewLevel*(map; loc: Location,
 
     for src in m.links.filterByLevel(level).sources:
       m.links.delBySrc(src)
-      m.links.debugSanitise()
+      m.links.debugSanitise
 
     result = usd
 
@@ -720,7 +720,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
       let oldLevelIdx = m.levels.high+1
       let newLevelIdx = loc.level
       m.links.remapLevelIndex(oldLevelIdx, newLevelIdx)
-      m.links.debugSanitise()
+      m.links.debugSanitise
 
     var usd = usd
     if m.levels.len == 0:
@@ -746,13 +746,13 @@ proc deleteLevel*(map; loc: Location; um): Location =
       let lastLevel = m.levels[loc.level]
       m.addLevel(lastLevel)
       m.setLevel(idx=loc.level, restoredLevel)
-      m.sortLevels()
+      m.sortLevels
 
       m.links.remapLevelIndex(oldIndex = loc.level, newIndex = m.levels.high)
-      m.links.debugSanitise()
+      m.links.debugSanitise
 
     m.links.addAll(oldLinks)
-    m.links.debugSanitise()
+    m.links.debugSanitise
 
     result = usd
 
@@ -800,7 +800,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
     # Adjust links
     for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
-    m.links.debugSanitise()
+    m.links.debugSanitise
 
     # Adjust regions
     let (regionOffsRow, regionOffsCol) = calcRegionResizeOffsets(
@@ -828,7 +828,7 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
-    m.links.debugSanitise()
+    m.links.debugSanitise
 
     m.levels[loc.level].regions = oldRegions
 
@@ -867,7 +867,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     # Adjust links
     for src in oldLinks.sources:m.links.delBySrc(src)
     m.links.addAll(newLinks)
-    m.links.debugSanitise()
+    m.links.debugSanitise
 
     var usd = usd
     usd.location.col = max(usd.location.col.int + colOffs, 0).Natural
@@ -885,7 +885,7 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
-    m.links.debugSanitise()
+    m.links.debugSanitise
 
     m.levels[loc.level].regions = oldRegions
 
@@ -912,7 +912,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     oldLinks = map.links.filterByLevel(loc.level)
     newLinks = oldLinks.shiftLinksInLevel(loc.level, rowOffs, colOffs,
                                           levelRect, wraparound)
-  map.links.debugSanitise()
+  map.links.debugSanitise
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
@@ -943,7 +943,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
     for src in oldLinks.sources: m.links.delBySrc(src)
     m.links.addAll(newLinks)
-    m.links.debugSanitise()
+    m.links.debugSanitise
 
     var usd = usd
     usd.location.row = max(usd.location.row + rowOffs, 0)
@@ -959,7 +959,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
     for src in newLinks.sources: m.links.delBySrc(src)
     m.links.addAll(oldLinks)
-    m.links.debugSanitise()
+    m.links.debugSanitise
 
     result = usd
 
@@ -1009,7 +1009,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     if reallocateRegions:
       m.reallocateRegions(loc.level, oldCoordOpts, oldRegionOpts, oldRegions)
 
-    m.sortLevels()
+    m.sortLevels
     result = usd
 
 
@@ -1042,7 +1042,7 @@ proc setLevelProperties*(map; loc: Location, locationName, levelName: string,
     if adjustLinkedStairs:
       m.normaliseLinkedStairs(loc.level)
 
-    m.sortLevels()
+    m.sortLevels
     result = usd
 
 

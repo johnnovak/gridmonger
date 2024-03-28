@@ -27,7 +27,7 @@ proc `$`(c: Color): string =
 
 
 proc styleClassName(name: string): string =
-  name.capitalizeAscii() & "Style"
+  name.capitalizeAscii & "Style"
 
 proc mkPublicName(name: string): NimNode =
   nnkPostfix.newTree(
@@ -111,7 +111,7 @@ proc handleProperty(
   if propType.kind == nnkIdent:
     case propType.strVal
     of "string", "bool", "Color", "float":
-      let getter = newIdentNode("get" & propType.strVal.capitalizeAscii())
+      let getter = newIdentNode("get" & propType.strVal.capitalizeAscii)
 
       parseThemeFrag.add quote do:
         config.`getter`(`configSectionName`, `propName`, `toProp`)
@@ -189,7 +189,7 @@ macro defineTheme(arg: untyped): untyped =
       let subsectionName = subsection[0].strVal
       let subsectionNameSym = newIdentNode(subsectionName)
 
-      let prefixedSubsectionName = sectionName & subsectionName.capitalizeAscii()
+      let prefixedSubsectionName = sectionName & subsectionName.capitalizeAscii
       let subsectionClassNameSym = newIdentNode(styleClassName(prefixedSubsectionName))
 
       let propsList = subsection[1]
@@ -429,7 +429,7 @@ proc toToolbarPaneStyle*(cfg: HoconNode): ToolbarPaneStyle =
 
 proc loadThemeHocon*(filename: string): HoconNode =
   var p = initHoconParser(newFileStream(filename))
-  let cfg = p.parse()
+  let cfg = p.parse
 
   cfg.limit("ui.dialog.corner-radius",      UiDialogCornerRadiusLimits)
   cfg.limit("ui.dialog.outer-border.width", UiDialogOuterBorderWidthLimits)

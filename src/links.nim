@@ -61,7 +61,7 @@ proc debugSanitise*(l) =
       echo "========================================================="
       echo "Stack trace:\n" & getStackTrace()
       echo "---------------------------------------------------------"
-      l.dump()
+      l.dump
 
 # }}}
 # {{{ delBySrc*()

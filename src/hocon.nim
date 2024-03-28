@@ -33,7 +33,7 @@ proc readNextRune(s): Rune =
     raise newException(IOError, "Unexpected end of file")
 
   if s.stream.atEnd: raiseEOFError()
-  s.readBuf[0] = cast[char](s.stream.readUint8())
+  s.readBuf[0] = cast[char](s.stream.readUint8)
 
   let
     runeLen = s.readBuf.runeLenAt(0)
@@ -48,19 +48,19 @@ proc readNextRune(s): Rune =
 proc peekRune(s; lookahead: Natural = 1): Rune =
   assert(lookahead >= 1)
   while lookahead > s.peekBuf.len:
-    s.peekBuf.addLast(s.readNextRune())
+    s.peekBuf.addLast(s.readNextRune)
   s.peekBuf[lookahead-1]
 
 proc eatRune(s): Rune =
-  if s.peekBuf.len > 0: s.peekBuf.popFirst()
-  else: s.readNextRune()
+  if s.peekBuf.len > 0: s.peekBuf.popFirst
+  else: s.readNextRune
 
 proc atEnd(s): bool =
-  s.stream.atEnd()
+  s.stream.atEnd
 
 proc close(s) =
   if s.stream != nil:
-    s.stream.close()
+    s.stream.close
     s.stream = nil
 
 # }}}
@@ -138,7 +138,7 @@ proc initTokeniser(stream: Stream): Tokeniser =
 
 proc raiseTokeniserError(t; msg, details: string,
                          line = t.line, column = t.column) {.noReturn.} =
-  t.scanner.close()
+  t.scanner.close
   raise newException(HoconTokeniserError,
     fmt"{msg} at line {line}, column {column}: {details}"
   )
@@ -148,10 +148,10 @@ proc peekRune(t; lookahead: Natural = 1): Rune =
 
 proc eatRune(t): Rune =
   inc(t.column)
-  t.scanner.eatRune()
+  t.scanner.eatRune
 
 proc readEscape(t; line, col: Natural): Rune =
-  let rune = t.eatRune()
+  let rune = t.eatRune
   case rune
   of Rune('"'):  Rune('"')
   of Rune('\\'): Rune('\\')
@@ -162,7 +162,7 @@ proc readEscape(t; line, col: Natural): Rune =
   of Rune('r'):  Rune('\r')
   of Rune('t'):  Rune('\t')
   of Rune('u'):
-    let hexStr = $t.eatRune() & $t.eatRune() & $t.eatRune() & $t.eatRune()
+    let hexStr = $t.eatRune & $t.eatRune & $t.eatRune & $t.eatRune
     try:
       Rune(fromHex[int32](hexStr))
     except ValueError:
@@ -179,11 +179,11 @@ proc readEscape(t; line, col: Natural): Rune =
 proc readQuotedString(t): Token =
   var str = ""
 
-  discard t.eatRune()
+  discard t.eatRune
   let line = t.line
   let col = t.column
 
-  var rune = t.eatRune()
+  var rune = t.eatRune
 
   while rune != Rune('"'):
     if rune.ord notin validQuotedStringRuneRange:
@@ -196,25 +196,25 @@ proc readQuotedString(t): Token =
     else:
       str &= rune
 
-    rune = t.eatRune()
+    rune = t.eatRune
 
   Token(kind: tkString, str: str, line: line, column: col)
 
 
 proc readUnquotedStringOrBooleanOrNull(t): Token =
   var str = ""
-  var rune = t.eatRune()
+  var rune = t.eatRune
   let line = t.line
   let col = t.column
 
   while true:
     str &= rune
-    rune = t.peekRune()
+    rune = t.peekRune
     if rune == Rune('\n') or
        rune in whitespaceRunes or
        rune in forbiddenRunes: break
     else:
-      rune = t.eatRune()
+      rune = t.eatRune
 
   case str
   of "true", "yes", "on":
@@ -229,18 +229,18 @@ proc readUnquotedStringOrBooleanOrNull(t): Token =
 
 proc readNumberOrString(t): Token =
   var str = ""
-  var rune = t.eatRune()
+  var rune = t.eatRune
   let line = t.line
   let col = t.column
 
   while true:
     str &= rune
-    rune = t.peekRune()
+    rune = t.peekRune
     if rune == Rune('\n') or
        rune in whitespaceRunes or
        rune in forbiddenRunes: break
     else:
-      rune = t.eatRune()
+      rune = t.eatRune
 
   try:
     discard parseFloat(str)
@@ -251,21 +251,21 @@ proc readNumberOrString(t): Token =
 
 proc skipComment(t) =
   while true:
-    let rune = t.peekRune()
+    let rune = t.peekRune
     if rune == Rune('\n'): return
-    discard t.eatRune()
+    discard t.eatRune
 
 
 proc readNextToken(t): Token =
 
   proc mkSimpleToken(t; kind: TokenKind): Token =
-    discard t.eatRune()
+    discard t.eatRune
     Token(kind: kind, line: t.line, column: t.column)
 
-  var rune = t.peekRune()
+  var rune = t.peekRune
   while rune in whitespaceRunes:
-    discard t.eatRune()
-    rune = t.peekRune()
+    discard t.eatRune
+    rune = t.peekRune
 
   case rune
   of Rune('{'): t.mkSimpleToken(tkLeftBrace)
@@ -283,41 +283,41 @@ proc readNextToken(t): Token =
     token
 
   of Rune('0')..Rune('9'), Rune('-'), Rune('.'):
-    t.readNumberOrString()
+    t.readNumberOrString
 
   of Rune('"'):
-    t.readQuotedString()
+    t.readQuotedString
 
   of Rune('#'):
-    t.skipComment()
-    t.readNextToken()
+    t.skipComment
+    t.readNextToken
 
   of Rune('/'):
     if t.peekRune(2) == Rune('/'):
-      t.skipComment()
-      t.readNextToken()
+      t.skipComment
+      t.readNextToken
     else:
-      t.readUnquotedStringOrBooleanOrNull()
+      t.readUnquotedStringOrBooleanOrNull
 
   else:
-    t.readUnquotedStringOrBooleanOrNull()
+    t.readUnquotedStringOrBooleanOrNull
 
 
 proc peekToken(t; lookahead: Natural = 1): Token =
   assert(lookahead >= 1)
   while lookahead > t.peekBuf.len:
-    t.peekBuf.addLast(t.readNextToken())
+    t.peekBuf.addLast(t.readNextToken)
   t.peekBuf[lookahead-1]
 
 proc eatToken(t): Token =
-  if t.peekBuf.len > 0: t.peekBuf.popFirst()
-  else: t.readNextToken()
+  if t.peekBuf.len > 0: t.peekBuf.popFirst
+  else: t.readNextToken
 
 proc atEnd(t): bool =
-  t.scanner.atEnd()
+  t.scanner.atEnd
 
 proc close(t) =
-  t.scanner.close()
+  t.scanner.close
 
 # }}}
 # {{{ HoconParser
@@ -397,33 +397,33 @@ proc initHoconParser*(stream: Stream): HoconParser =
   result.tokeniser = initTokeniser(stream)
 
 proc raiseUnexpectedTokenError(p; token: Token) {.noReturn.} =
-  p.tokeniser.close()
+  p.tokeniser.close
   raise newException(HoconParseError, fmt"Unexpected token: {token}")
 
-proc peekToken(p): Token = p.tokeniser.peekToken()
-proc eatToken(p):  Token = p.tokeniser.eatToken()
+proc peekToken(p): Token = p.tokeniser.peekToken
+proc eatToken(p):  Token = p.tokeniser.eatToken
 
 
 proc eatEither(p; kinds: varargs[TokenKind]): Token =
-  let token = p.tokeniser.eatToken()
+  let token = p.tokeniser.eatToken
   if token.kind notin kinds:
     p.raiseUnexpectedTokenError(token)
   else: token
 
 proc eatNewLines(p): bool =
-  if p.tokeniser.atEnd(): return
-  var token = p.peekToken()
+  if p.tokeniser.atEnd: return
+  var token = p.peekToken
   while token.kind == tkNewLine:
     result = true
-    discard p.eatToken()
-    if p.tokeniser.atEnd(): return
-    token = p.peekToken()
+    discard p.eatToken
+    if p.tokeniser.atEnd: return
+    token = p.peekToken
 
 proc eatNewLinesOrSingleComma(p): bool =
-  var newlinesRead = p.eatNewLines()
-  if p.tokeniser.atEnd(): return
-  if p.peekToken().kind == tkComma:
-    discard p.eatToken()
+  var newlinesRead = p.eatNewLines
+  if p.tokeniser.atEnd: return
+  if p.peekToken.kind == tkComma:
+    discard p.eatToken
     true
   else: newLinesRead
 
@@ -431,30 +431,30 @@ proc parseObject(p; allowImplicitBraces: bool = false): HoconNode
 proc parseArray(p): HoconNode
 
 proc parseNode(p): HoconNode =
-  let token = p.peekToken()
+  let token = p.peekToken
   case token.kind:
   of tkString:
-    discard p.eatToken()
+    discard p.eatToken
     HoconNode(kind: hnkString, str: token.str)
 
   of tkNumber:
-    discard p.eatToken()
+    discard p.eatToken
     HoconNode(kind: hnkNumber, num: parseFloat(token.num))
 
   of tkTrue:
-    discard p.eatToken()
+    discard p.eatToken
     HoconNode(kind: hnkBool, bool: true)
 
   of tkFalse:
-    discard p.eatToken()
+    discard p.eatToken
     HoconNode(kind: hnkBool, bool: false)
 
   of tkNull:
-    discard p.eatToken()
+    discard p.eatToken
     HoconNode(kind: hnkNull)
 
-  of tkLeftBrace:   p.parseObject()
-  of tkLeftBracket: p.parseArray()
+  of tkLeftBrace:   p.parseObject
+  of tkLeftBracket: p.parseArray
   else:
     p.raiseUnexpectedTokenError(token)
 
@@ -463,16 +463,16 @@ proc parseObject(p; allowImplicitBraces: bool = false): HoconNode =
   var implicitBraces = false
   var skipFirstPeek = false
 
-  var token = p.peekToken()
+  var token = p.peekToken
   if token.kind == tkLeftBrace:
-    discard p.eatToken()
-    discard p.eatNewLines()
+    discard p.eatToken
+    discard p.eatNewLines
   else:
     if allowImplicitBraces:
       implicitBraces = true
       if token.kind == tkNewLine:
-        discard p.eatToken()
-        discard p.eatNewLines()
+        discard p.eatToken
+        discard p.eatNewLines
       else:
         skipFirstPeek = true
     else:
@@ -482,11 +482,11 @@ proc parseObject(p; allowImplicitBraces: bool = false): HoconNode =
 
   var sepa = true
   while true:
-    if implicitBraces and p.tokeniser.atEnd():
+    if implicitBraces and p.tokeniser.atEnd:
       break
 
     if not skipFirstPeek:
-      token = p.peekToken()
+      token = p.peekToken
     skipFirstPeek = false
 
     case token.kind
@@ -494,24 +494,24 @@ proc parseObject(p; allowImplicitBraces: bool = false): HoconNode =
       if implicitBraces:
         p.raiseUnexpectedTokenError(token)
       else:
-        discard p.eatToken()
+        discard p.eatToken
         break
 
     of tkString:
       if not sepa:
         p.raiseUnexpectedTokenError(token)
-      let key = p.eatToken().str
-      discard p.eatNewLines()
+      let key = p.eatToken.str
+      discard p.eatNewLines
 
-      let node = if p.peekToken().kind == tkLeftBrace:
-        p.parseObject()
+      let node = if p.peekToken.kind == tkLeftBrace:
+        p.parseObject
       else:
         discard p.eatEither(tkColon, tkEquals)
-        discard p.eatNewLines()
-        p.parseNode()
+        discard p.eatNewLines
+        p.parseNode
 
       result.fields[key] = node
-      sepa = p.eatNewLinesOrSingleComma()
+      sepa = p.eatNewLinesOrSingleComma
 
     else:
       p.raiseUnexpectedTokenError(token)
@@ -519,41 +519,41 @@ proc parseObject(p; allowImplicitBraces: bool = false): HoconNode =
 
 proc parseArray(p): HoconNode =
   discard p.eatEither(tkLeftBracket)
-  discard p.eatNewLines()
+  discard p.eatNewLines
 
   result = HoconNode(kind: hnkArray)
 
   var sepa = true
   while true:
-    let token = p.peekToken()
+    let token = p.peekToken
     case token.kind
     of tkRightBracket:
-      discard p.eatToken()
+      discard p.eatToken
       break
     else:
       if not sepa:
         p.raiseUnexpectedTokenError(token)
-      discard p.eatNewLines()
+      discard p.eatNewLines
 
-      let node = if p.peekToken().kind == tkLeftBrace:
-        p.parseObject()
+      let node = if p.peekToken.kind == tkLeftBrace:
+        p.parseObject
       else:
-        p.parseNode()
+        p.parseNode
 
       result.elems.add(node)
-      sepa = p.eatNewLinesOrSingleComma()
+      sepa = p.eatNewLinesOrSingleComma
 
 
 proc parse*(p): HoconNode =
-  discard p.eatNewLines()
+  discard p.eatNewLines
 
-  let token = p.peekToken()
+  let token = p.peekToken
   result = if token.kind == tkLeftBracket:
-    p.parseArray()
+    p.parseArray
   else:
     p.parseObject(allowImplicitBraces=true)
 
-  p.tokeniser.close()
+  p.tokeniser.close
 
 # }}}
 
@@ -632,7 +632,7 @@ proc write*(node: HoconNode, stream: Stream,
           escape = true
           break
 
-      if escape: stream.write(curr.str.escape())
+      if escape: stream.write(curr.str.escape)
       else:      stream.write(curr.str)
 
     of hnkNumber:
@@ -664,8 +664,8 @@ type
   HoconPathError*  = object of KeyError
   HoconValueError* = object of ValueError
 
-proc newHoconObject*(): HoconNode = HoconNode(kind: hnkObject)
-proc newHoconArray*():  HoconNode = HoconNode(kind: hnkArray)
+proc newHoconObject*: HoconNode = HoconNode(kind: hnkObject)
+proc newHoconArray*:  HoconNode = HoconNode(kind: hnkArray)
 
 proc raiseHoconPathError*(path, message: string) {.noReturn.} =
   raise newException(HoconPathError,
@@ -686,7 +686,7 @@ proc isEmpty*(node: HoconNode): bool =
 
 proc hasOnlyDigits(s: string): bool =
   for c in s:
-    if not c.isDigit(): return false
+    if not c.isDigit: return false
   true
 
 # {{{ Getters
@@ -694,7 +694,7 @@ proc hasOnlyDigits(s: string): bool =
 proc get*(node: HoconNode, path: string): HoconNode =
   var curr = node
   for key in path.split('.'):
-    if key.hasOnlyDigits():
+    if key.hasOnlyDigits:
       let idx = parseInt(key)
       if curr.kind != hnkArray:
         raiseHoconPathError(path, fmt"'{key}' is not an array")
@@ -719,7 +719,7 @@ proc get*(node: HoconNode, path: string): HoconNode =
 proc getOpt*(node: HoconNode, path: string): Option[HoconNode] =
   var curr = node
   for key in path.split('.'):
-    if key.hasOnlyDigits():
+    if key.hasOnlyDigits:
       let idx = parseInt(key)
       if curr.kind != hnkArray:
         return
@@ -947,14 +947,14 @@ when isMainModule:
   # {{{ scanner test - read
   block:
     var s = initUnicodeScanner(newStringStream(testString))
-    assert s.eatRune() == rune1
-    assert s.eatRune() == rune2
-    assert s.eatRune() == rune3
-    assert s.eatRune() == rune4
-    assert s.eatRune() == rune5
+    assert s.eatRune == rune1
+    assert s.eatRune == rune2
+    assert s.eatRune == rune3
+    assert s.eatRune == rune4
+    assert s.eatRune == rune5
 
     try:
-      discard s.eatRune()
+      discard s.eatRune
       assert false
     except IOError:
       discard
@@ -963,19 +963,19 @@ when isMainModule:
   # {{{ scanner test - peek
   block:
     var s = initUnicodeScanner(newStringStream(testString))
-    assert s.peekRune()  == rune1
-    assert s.peekRune()  == rune1
-    assert s.eatRune()  == rune1
+    assert s.peekRune  == rune1
+    assert s.peekRune  == rune1
+    assert s.eatRune  == rune1
 
-    assert s.peekRune()  == rune2
+    assert s.peekRune  == rune2
     assert s.peekRune(2) == rune3
-    assert s.peekRune()  == rune2
+    assert s.peekRune  == rune2
     assert s.peekRune(2) == rune3
     assert s.peekRune(2) == rune3
     assert s.peekRune(3) == rune4
     assert s.peekRune(4) == rune5
     assert s.peekRune(4) == rune5
-    assert s.peekRune()  == rune2
+    assert s.peekRune  == rune2
     assert s.peekRune(2) == rune3
     assert s.peekRune(3) == rune4
     assert s.peekRune(4) == rune5
@@ -986,13 +986,13 @@ when isMainModule:
     except IOError:
       discard
 
-    assert s.eatRune()  == rune2
-    assert s.eatRune()  == rune3
-    assert s.eatRune()  == rune4
-    assert s.eatRune()  == rune5
+    assert s.eatRune  == rune2
+    assert s.eatRune  == rune3
+    assert s.eatRune  == rune4
+    assert s.eatRune  == rune5
 
     try:
-      discard s.peekRune()
+      discard s.peekRune
       assert false
     except IOError:
       discard
@@ -1003,11 +1003,11 @@ when isMainModule:
     let testString = "{foo:bar}"
     var t = initTokeniser(newStringStream(testString))
 
-    assert t.eatToken() == Token(kind: tkLeftBrace, line: 1, column: 1)
-    assert t.eatToken() == Token(kind: tkString, str: "foo", line: 1, column: 2)
-    assert t.eatToken() == Token(kind: tkColon, line: 1, column: 5)
-    assert t.eatToken() == Token(kind: tkString, str: "bar", line: 1, column: 6)
-    assert t.eatToken() == Token(kind: tkRightBrace, line: 1, column: 9)
+    assert t.eatToken == Token(kind: tkLeftBrace, line: 1, column: 1)
+    assert t.eatToken == Token(kind: tkString, str: "foo", line: 1, column: 2)
+    assert t.eatToken == Token(kind: tkColon, line: 1, column: 5)
+    assert t.eatToken == Token(kind: tkString, str: "bar", line: 1, column: 6)
+    assert t.eatToken == Token(kind: tkRightBrace, line: 1, column: 9)
 
   # }}}
   # {{{ tokeniser test - strings
@@ -1017,7 +1017,7 @@ when isMainModule:
 """
     var t = initTokeniser(newStringStream(testString))
 
-    assert t.eatToken() == Token(kind: tkString, str: "C:\\AUTOEXEC.BAT", line: 1, column: 1)
+    assert t.eatToken == Token(kind: tkString, str: "C:\\AUTOEXEC.BAT", line: 1, column: 1)
 
   # }}}
   # {{{ tokeniser test - booleans & null
@@ -1033,13 +1033,13 @@ when isMainModule:
     var t = initTokeniser(newStringStream(testString))
 
     # TODO
-#    assert t.eatToken() == Token(kind: tkLeftBrace, line: 1, column: 1)
+#    assert t.eatToken == Token(kind: tkLeftBrace, line: 1, column: 1)
 
-#    assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 2)
-#    assert t.eatToken() == Token(kind: tkString, str: "true_", line: 2, column: 3)
-#    assert t.eatToken() == Token(kind: tkEquals, line: 2, column: 9)
-#    assert t.eatToken() == Token(kind: tkNumber, num: "1", line: 2, column: 11)
-#    assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 12)
+#    assert t.eatToken == Token(kind: tkNewline, line: 1, column: 2)
+#    assert t.eatToken == Token(kind: tkString, str: "true_", line: 2, column: 3)
+#    assert t.eatToken == Token(kind: tkEquals, line: 2, column: 9)
+#    assert t.eatToken == Token(kind: tkNumber, num: "1", line: 2, column: 11)
+#    assert t.eatToken == Token(kind: tkNewline, line: 1, column: 12)
 
   # }}}
   # {{{ tokeniser test - complex
@@ -1056,41 +1056,41 @@ when isMainModule:
 """
     var t = initTokeniser(newStringStream(testString))
 
-    assert t.eatToken() == Token(kind: tkLeftBrace, line: 1, column: 1)
-    assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 2)
+    assert t.eatToken == Token(kind: tkLeftBrace, line: 1, column: 1)
+    assert t.eatToken == Token(kind: tkNewline, line: 1, column: 2)
 
-    assert t.eatToken() == Token(kind: tkString, str: "array", line: 2, column: 3)
-    assert t.eatToken() == Token(kind: tkColon, line: 2, column: 8)
-    assert t.eatToken() == Token(kind: tkLeftBracket, line: 2, column: 10)
-    assert t.eatToken() == Token(kind: tkString, str: "a", line: 2, column: 11)
-    assert t.eatToken() == Token(kind: tkComma, line: 2, column: 12)
-    assert t.eatToken() == Token(kind: tkString, str: "b", line: 2, column: 14)
-    assert t.eatToken() == Token(kind: tkRightBracket, line: 2, column: 15)
-    assert t.eatToken() == Token(kind: tkNewline, line: 2, column: 16)
+    assert t.eatToken == Token(kind: tkString, str: "array", line: 2, column: 3)
+    assert t.eatToken == Token(kind: tkColon, line: 2, column: 8)
+    assert t.eatToken == Token(kind: tkLeftBracket, line: 2, column: 10)
+    assert t.eatToken == Token(kind: tkString, str: "a", line: 2, column: 11)
+    assert t.eatToken == Token(kind: tkComma, line: 2, column: 12)
+    assert t.eatToken == Token(kind: tkString, str: "b", line: 2, column: 14)
+    assert t.eatToken == Token(kind: tkRightBracket, line: 2, column: 15)
+    assert t.eatToken == Token(kind: tkNewline, line: 2, column: 16)
 
-    assert t.eatToken() == Token(kind: tkString, str: "quoted", line: 3, column: 3)
-    assert t.eatToken() == Token(kind: tkColon, line: 3, column: 11)
-    assert t.eatToken() == Token(kind: tkNull, line: 3, column: 13)
-    assert t.eatToken() == Token(kind: tkComma, line: 3, column: 17)
-    assert t.eatToken() == Token(kind: tkNewline, line: 3, column: 18)
+    assert t.eatToken == Token(kind: tkString, str: "quoted", line: 3, column: 3)
+    assert t.eatToken == Token(kind: tkColon, line: 3, column: 11)
+    assert t.eatToken == Token(kind: tkNull, line: 3, column: 13)
+    assert t.eatToken == Token(kind: tkComma, line: 3, column: 17)
+    assert t.eatToken == Token(kind: tkNewline, line: 3, column: 18)
 
-    assert t.eatToken() == Token(kind: tkString, str: "t", line: 4, column: 3)
-    assert t.eatToken() == Token(kind: tkEquals, line: 4, column: 5)
-    assert t.eatToken() == Token(kind: tkTrue, line: 4, column: 7)
-    assert t.eatToken() == Token(kind: tkNewline, line: 4, column: 11)
+    assert t.eatToken == Token(kind: tkString, str: "t", line: 4, column: 3)
+    assert t.eatToken == Token(kind: tkEquals, line: 4, column: 5)
+    assert t.eatToken == Token(kind: tkTrue, line: 4, column: 7)
+    assert t.eatToken == Token(kind: tkNewline, line: 4, column: 11)
 
-    assert t.eatToken() == Token(kind: tkString, str: "f", line: 5, column: 3)
-    assert t.eatToken() == Token(kind: tkEquals, line: 5, column: 5)
-    assert t.eatToken() == Token(kind: tkFalse, line: 5, column: 7)
-    assert t.eatToken() == Token(kind: tkNewline, line: 5, column: 12)
-    assert t.eatToken() == Token(kind: tkNewline, line: 6, column: 1)
+    assert t.eatToken == Token(kind: tkString, str: "f", line: 5, column: 3)
+    assert t.eatToken == Token(kind: tkEquals, line: 5, column: 5)
+    assert t.eatToken == Token(kind: tkFalse, line: 5, column: 7)
+    assert t.eatToken == Token(kind: tkNewline, line: 5, column: 12)
+    assert t.eatToken == Token(kind: tkNewline, line: 6, column: 1)
 
-    assert t.eatToken() == Token(kind: tkString, str: "concat", line: 7, column: 3)
-    assert t.eatToken() == Token(kind: tkColon, line: 7, column: 11)
-    assert t.eatToken() == Token(kind: tkString, str: "falseSTRING", line: 7, column: 12)
-    assert t.eatToken() == Token(kind: tkNewline, line: 7, column: 23)
+    assert t.eatToken == Token(kind: tkString, str: "concat", line: 7, column: 3)
+    assert t.eatToken == Token(kind: tkColon, line: 7, column: 11)
+    assert t.eatToken == Token(kind: tkString, str: "falseSTRING", line: 7, column: 12)
+    assert t.eatToken == Token(kind: tkNewline, line: 7, column: 23)
 
-    assert t.eatToken() == Token(kind: tkRightBrace, line: 8, column: 1)
+    assert t.eatToken == Token(kind: tkRightBrace, line: 8, column: 1)
 
   # }}}
   # {{{ tokeniser test - numbers
@@ -1103,59 +1103,59 @@ when isMainModule:
 """
     var t = initTokeniser(newStringStream(testString))
 
-    assert t.eatToken() == Token(kind: tkNumber, num: "0", line: 1, column: 1)
-    assert t.eatToken() == Token(kind: tkNumber, num: "01", line: 1, column: 3)
-    assert t.eatToken() == Token(kind: tkNumber, num: "1", line: 1, column: 6)
-    assert t.eatToken() == Token(kind: tkNumber, num: "-1", line: 1, column: 8)
-    assert t.eatToken() == Token(kind: tkNewline, line: 1, column: 10)
+    assert t.eatToken == Token(kind: tkNumber, num: "0", line: 1, column: 1)
+    assert t.eatToken == Token(kind: tkNumber, num: "01", line: 1, column: 3)
+    assert t.eatToken == Token(kind: tkNumber, num: "1", line: 1, column: 6)
+    assert t.eatToken == Token(kind: tkNumber, num: "-1", line: 1, column: 8)
+    assert t.eatToken == Token(kind: tkNewline, line: 1, column: 10)
 
-    assert t.eatToken() == Token(kind: tkNumber, num: "1.", line: 2, column: 1)
-    assert t.eatToken() == Token(kind: tkNumber, num: "1.0123", line: 2, column: 4)
-    assert t.eatToken() == Token(kind: tkNumber, num: ".4", line: 2, column: 11)
-    assert t.eatToken() == Token(kind: tkNewline, line: 2, column: 13)
+    assert t.eatToken == Token(kind: tkNumber, num: "1.", line: 2, column: 1)
+    assert t.eatToken == Token(kind: tkNumber, num: "1.0123", line: 2, column: 4)
+    assert t.eatToken == Token(kind: tkNumber, num: ".4", line: 2, column: 11)
+    assert t.eatToken == Token(kind: tkNewline, line: 2, column: 13)
 
-    assert t.eatToken() == Token(kind: tkNumber, num: "1e5", line: 3, column: 1)
-    assert t.eatToken() == Token(kind: tkNumber, num: "00e5", line: 3, column: 5)
-    assert t.eatToken() == Token(kind: tkNumber, num: "1e-5", line: 3, column: 10)
-    assert t.eatToken() == Token(kind: tkNumber, num: "1e04", line: 3, column: 15)
-    assert t.eatToken() == Token(kind: tkNumber, num: "-1.e-005", line: 3, column: 20)
-    assert t.eatToken() == Token(kind: tkNewline, line: 3, column: 28)
+    assert t.eatToken == Token(kind: tkNumber, num: "1e5", line: 3, column: 1)
+    assert t.eatToken == Token(kind: tkNumber, num: "00e5", line: 3, column: 5)
+    assert t.eatToken == Token(kind: tkNumber, num: "1e-5", line: 3, column: 10)
+    assert t.eatToken == Token(kind: tkNumber, num: "1e04", line: 3, column: 15)
+    assert t.eatToken == Token(kind: tkNumber, num: "-1.e-005", line: 3, column: 20)
+    assert t.eatToken == Token(kind: tkNewline, line: 3, column: 28)
 
-    assert t.eatToken() == Token(kind: tkNumber, num: "1.e-5", line: 4, column: 1)
-    assert t.eatToken() == Token(kind: tkNumber, num: "1.234e-5", line: 4, column: 7)
-    assert t.eatToken() == Token(kind: tkNewline, line: 4, column: 15)
+    assert t.eatToken == Token(kind: tkNumber, num: "1.e-5", line: 4, column: 1)
+    assert t.eatToken == Token(kind: tkNumber, num: "1.234e-5", line: 4, column: 7)
+    assert t.eatToken == Token(kind: tkNewline, line: 4, column: 15)
 
   # }}}
   # {{{ equality test
   block:
     let n1 = HoconNode(kind: hnkBool, bool: true)
-    assert n1 == n1.deepCopy()
+    assert n1 == n1.deepCopy
 
     let n2 = HoconNode(kind: hnkString, str: "foo")
-    assert n2 == n2.deepCopy()
+    assert n2 == n2.deepCopy
 
     let n3 = HoconNode(kind: hnkNull)
-    assert n3 == n3.deepCopy()
+    assert n3 == n3.deepCopy
 
     let n4 = HoconNode(kind: hnkNumber, num: 123.456)
-    assert n4 == n4.deepCopy()
+    assert n4 == n4.deepCopy
 
     var arr = newHoconArray()
     arr.elems.add(n1)
     arr.elems.add(n2)
     arr.elems.add(n3)
-    assert arr == arr.deepCopy()
+    assert arr == arr.deepCopy
 
     var obj = newHoconObject()
     obj.set("a", true)
     obj.set("b", 42)
     obj.set("c", "foo")
-    assert obj == obj.deepCopy()
+    assert obj == obj.deepCopy
 
     var obj2 = newHoconObject()
-    obj.set("o2", obj.deepCopy())
-    obj.set("a", arr.deepCopy())
-    assert obj2 == obj2.deepCopy()
+    obj.set("o2", obj.deepCopy)
+    obj.set("a", arr.deepCopy)
+    assert obj2 == obj2.deepCopy
 
   # }}}
   # {{{ parser test
@@ -1176,7 +1176,7 @@ when isMainModule:
 """
 
     var p = initHoconParser(newStringStream(testString))
-    let root = p.parse()
+    let root = p.parse
 #    printTree(root)
 
     block:
@@ -1248,7 +1248,7 @@ objB { b: false }
 c = "d"
 """
     var p = initHoconParser(newStringStream(testString))
-    let root = p.parse()
+    let root = p.parse
 
 #    echo '-'.repeat(40)
 #    printTree(root)
@@ -1305,7 +1305,7 @@ c = "d"
 }
 """
     var p = initHoconParser(newStringStream(srcObj))
-    let src = p.parse()
+    let src = p.parse
 
     block:
       var st = newStringStream()
@@ -1328,7 +1328,7 @@ c = "d"
 }
 """
     p = initHoconParser(newStringStream(destObj))
-    let dest = p.parse()
+    let dest = p.parse
 
     dest.merge(src)
 

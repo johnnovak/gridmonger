@@ -145,7 +145,7 @@ template allNotes*(l): tuple[row, col: Natural, annotation: Annotation] =
 # }}}
 # {{{ reindexNotes*()
 proc reindexNotes*(l) =
-  l.annotations.reindexNotes()
+  l.annotations.reindexNotes
 
 # }}}
 
@@ -161,7 +161,7 @@ proc getLabel*(l; r,c: Natural): Option[Annotation] =
 # }}}
 # {{{ allLabels*()
 template allLabels*(l): tuple[row, col: Natural, annotation: Annotation] =
-  l.annotations.allLabels()
+  l.annotations.allLabels
 
 # }}}
 #
@@ -190,17 +190,17 @@ proc getRegion*(l; rc: RegionCoords): Option[Region] =
 # }}}
 # {{{ allRegions*()
 template allRegions*(l): tuple[regionCoords: RegionCoords, region: Region] =
-  l.regions.allRegions()
+  l.regions.allRegions
 
 # }}}
 # {{{ numRegions*()
 proc numRegions*(l): Natural =
-  l.regions.numRegions()
+  l.regions.numRegions
 
 # }}}
 # {{{ regionNames*()
 proc regionNames*(l): seq[string] =
-  l.regions.regionNames()
+  l.regions.regionNames
 
 # }}}
 # {{{ findFirstRegionByName*()
@@ -289,7 +289,7 @@ proc setTrail*(l; r,c: Natural, t: bool) {.inline.} =
 # }}}
 # {{{ calcTrailBoundingBox*()
 proc calcTrailBoundingBox*(l): Option[Rect[Natural]] {.inline.} =
-  l.cellGrid.calcTrailBoundingBox()
+  l.cellGrid.calcTrailBoundingBox
 
 # }}}
 

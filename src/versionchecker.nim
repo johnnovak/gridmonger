@@ -34,7 +34,7 @@ proc fetchLatestVersion(): Future[string] {.async.} =
   try:
     return await client.getContent(LatestVersionUrl)
   finally:
-    client.close()
+    client.close
 
 
 proc tryFetchLatestVersion*(v: var VersionChecker): Option[VersionInfo] =

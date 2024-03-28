@@ -45,9 +45,9 @@ macro prop(label: static[string], path: untyped): untyped =
 
   elif propType == float.getTypeInst:
     let limitSym = newIdentNode(
-      sectionName.capitalizeAscii() &
-      subsectionName.capitalizeAscii() &
-      propName.capitalizeAscii() &
+      sectionName.capitalizeAscii &
+      subsectionName.capitalizeAscii &
+      propName.capitalizeAscii &
       "Limits"
     )
 

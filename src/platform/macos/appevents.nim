@@ -29,7 +29,7 @@ proc pollOpenedFilenamesFunc() {.thread.} =
         t.hasData = true
 
         # Main event loop might be stuck at waitEvents(), so wake it up
-        postEmptyEvent()
+        glfw.postEmptyEvent()
 
     sleep(100)
 

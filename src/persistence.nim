@@ -360,11 +360,11 @@ proc readLevelProperties_v1_v2(rr): Level =
   debug(fmt"Reading level properties...")
   pushDebugIndent()
 
-  let locationName = rr.readWStr()
+  let locationName = rr.readWStr
   checkStringLength(locationName, "lvl.prop.locationName",
                     LevelLocationNameLimits)
 
-  let levelName = rr.readWStr()
+  let levelName = rr.readWStr
   checkStringLength(levelName, "lvl.prop.levelName", LevelNameLimits)
 
   let elevation = rr.read(int16).int
@@ -379,7 +379,7 @@ proc readLevelProperties_v1_v2(rr): Level =
   let overrideCoordOpts = rr.read(uint8)
   checkBool(overrideCoordOpts, "lvl.prop.overrideCoordOpts")
 
-  let notes = rr.readWStr()
+  let notes = rr.readWStr
   checkStringLength(notes, "lvl.prop.notes", NotesLimits)
 
   result = newLevel(locationName, levelName, elevation, numRows, numColumns)
@@ -425,7 +425,7 @@ proc readLevelCells_v1_v2(rr; numCells: Natural): seq[Cell] =
       initRunLengthDecoder(d, compressedBuf)
 
       for c {.inject.} in cells.mitems:
-        let b = d.decode()
+        let b = d.decode
         if b.isSome:
           let data {.inject.} = b.get
           checkField
@@ -519,7 +519,7 @@ proc readLevelAnnotations_v1_v2(rr; l: Level) =
       anno.icon = icon
 
     of akCustomId:
-      let customId = rr.readBStr()
+      let customId = rr.readBStr
       checkStringLength(customId, "lvl.anno.customId", NoteCustomIdLimits)
       anno.customId = customId
 
@@ -528,7 +528,7 @@ proc readLevelAnnotations_v1_v2(rr; l: Level) =
       checkValueRange(labelColor, "lvl.anno.labelColor", NoteColorLimits)
       anno.labelColor = labelColor
 
-    let text = rr.readWStr()
+    let text = rr.readWStr
 
     let textLimits = case anno.kind
                      of akComment:  NoteTextLimits
@@ -623,10 +623,10 @@ proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
     let col = rr.read(uint16)
     checkValueRange(col, "lvl.regn.region.column", RegionColumnLimits)
 
-    let name = rr.readWStr()
+    let name = rr.readWStr
     checkStringLength(name, "lvl.regn.region.name", RegionNameLimits)
 
-    let notes = rr.readWStr()
+    let notes = rr.readWStr
     checkStringLength(notes, "lvl.regn.region.notes", NotesLimits)
 
     regions.setRegion(
@@ -654,10 +654,10 @@ proc readLevel_v1_v2(rr): Level =
     cellCursor = Cursor.none
     annoCursor = Cursor.none
 
-  if not rr.hasSubChunks():
+  if not rr.hasSubChunks:
     raiseMapReadError(fmt"'{FourCC_GRMM_lvl}' group chunk is empty")
 
-  var ci = rr.enterGroup()
+  var ci = rr.enterGroup
 
   while true:
     if ci.kind == ckChunk:
@@ -693,8 +693,8 @@ proc readLevel_v1_v2(rr): Level =
     else: # group chunk
       invalidChunkError(ci.id, groupChunkId.get)
 
-    if rr.hasNextChunk():
-      ci = rr.nextChunk()
+    if rr.hasNextChunk:
+      ci = rr.nextChunk
     else: break
 
   if propCursor.isNone: chunkNotFoundError(FourCC_GRMM_prop)
@@ -734,8 +734,8 @@ proc readLevelList_v1_v2(rr): seq[Level] =
 
   var levels = newSeq[Level]()
 
-  if rr.hasSubChunks():
-    var ci = rr.enterGroup()
+  if rr.hasSubChunks:
+    var ci = rr.enterGroup
 
     while true:
       if ci.kind == ckGroup:
@@ -747,15 +747,15 @@ proc readLevelList_v1_v2(rr): seq[Level] =
             )
 
           levels.add(readLevel_v1_v2(rr))
-          rr.exitGroup()
+          rr.exitGroup
         else:
           invalidListChunkError(ci.formatTypeId, FourCC_GRMM_lvls)
 
       else: # not group chunk
         invalidChunkError(ci.id, FourCC_GRMM_lvls)
 
-      if rr.hasNextChunk():
-        ci = rr.nextChunk()
+      if rr.hasNextChunk:
+        ci = rr.nextChunk
       else: break
 
   debug(fmt"{levels.len} levels read")
@@ -775,20 +775,20 @@ proc readMapProperties_v1_v2(rr): Map =
   if version > CurrentMapVersion:
     raiseMapReadError(fmt"Unsupported map file version: {version}")
 
-  let title = rr.readWStr()
+  let title = rr.readWStr
   checkStringLength(title, "map.prop.title", MapTitleLimits)
 
-  let game = rr.readWStr()
+  let game = rr.readWStr
   checkStringLength(game, "map.prop.game", MapGameLimits)
 
-  let author = rr.readWStr()
+  let author = rr.readWStr
   checkStringLength(author, "map.prop.author", MapAuthorLimits)
 
-  let creationTime = rr.readBStr()
+  let creationTime = rr.readBStr
   checkStringLength(creationTime, "map.prop.creationTime",
                     MapCreationTimeLimits)
 
-  let notes = rr.readWStr()
+  let notes = rr.readWStr
   checkStringLength(notes, "map.prop.notes", NotesLimits)
 
   result = newMap(title, game, author, creationTime)
@@ -807,10 +807,10 @@ proc readMap_v1_v2(rr): Map =
     propCursor = Cursor.none
     coorCursor = Cursor.none
 
-  if not rr.hasSubChunks():
+  if not rr.hasSubChunks:
     raiseMapReadError(fmt"'{FourCC_GRMM_map}' group chunk is empty")
 
-  var ci = rr.enterGroup()
+  var ci = rr.enterGroup
 
   while true:
     if ci.kind == ckChunk:
@@ -831,8 +831,8 @@ proc readMap_v1_v2(rr): Map =
     else: # group chunk
       invalidChunkError(ci.id, groupChunkId.get)
 
-    if rr.hasNextChunk():
-      ci = rr.nextChunk()
+    if rr.hasNextChunk:
+      ci = rr.nextChunk
     else: break
 
   if propCursor.isNone: chunkNotFoundError(FourCC_GRMM_prop)
@@ -875,10 +875,10 @@ proc readMapFile*(path: string): tuple[map: Map,
       appStateCursor = Cursor.none
 
     # Find chunks
-    if not rr.hasSubchunks():
+    if not rr.hasSubchunks:
       raiseMapReadError("RIFF chunk contains no subchunks")
 
-    var ci = rr.enterGroup()
+    var ci = rr.enterGroup
 
     while true:
       if ci.kind == ckGroup:
@@ -912,8 +912,8 @@ proc readMapFile*(path: string): tuple[map: Map,
           debug(fmt"Skiping unknown top level chunk, " &
                 fmt"chunkId: {fourCCToCharStr(ci.id)}")
 
-      if rr.hasNextChunk():
-        ci = rr.nextChunk()
+      if rr.hasNextChunk:
+        ci = rr.nextChunk
       else: break
 
     # Check for mandatory chunks
@@ -927,7 +927,7 @@ proc readMapFile*(path: string): tuple[map: Map,
 
     rr.cursor = levelListCursor.get
     m.levels = readLevelList_v1_v2(rr)
-    m.sortLevels()
+    m.sortLevels
 
     rr.cursor = linksCursor.get
     m.links = readLinks_v1_v2(rr, m.levels)
@@ -944,7 +944,7 @@ proc readMapFile*(path: string): tuple[map: Map,
   except CatchableError as e:
     raise newException(MapReadError, fmt"Error reading map file: {e.msg}", e)
   finally:
-    if rr != nil: rr.close()
+    if rr != nil: rr.close
 
 # }}}
 # }}}
@@ -979,7 +979,7 @@ proc writeAppState(rw; s: AppState) =
   rw.write(s.currFloorColor.uint8)
   rw.write(s.currSpecialWall.uint8)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeLinks()
@@ -1002,7 +1002,7 @@ proc writeLinks(rw; links: Links) =
     writeLocation(src)
     writeLocation(dest)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeCoordinateOptions()
@@ -1015,7 +1015,7 @@ proc writeCoordinateOptions(rw; co: CoordinateOptions) =
   rw.write(co.rowStart.int16)
   rw.write(co.columnStart.int16)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeLevelRegions()
@@ -1035,7 +1035,7 @@ proc writeLevelRegions(rw; l: Level) =
     rw.writeWStr(r.name)
     rw.writeWStr(r.notes)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # # {{{ writeLevelProperties()
@@ -1053,7 +1053,7 @@ proc writeLevelProperties(rw; l: Level) =
 
   rw.writeWStr(l.notes)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeLevelCells()
@@ -1078,7 +1078,7 @@ proc writeLevelCells(rw; cells: seq[Cell]) =
         if not e.encode(field.uint8):
           compressFailed = true
           break
-      if not e.flush():
+      if not e.flush:
         compressFailed = true
 
       let compressRatio = (e.encodedLength + 4) / cells.len
@@ -1101,7 +1101,7 @@ proc writeLevelCells(rw; cells: seq[Cell]) =
   writeLayer: c.wallW
   writeLayer: c.trail
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeLevelAnnotations()
@@ -1132,7 +1132,7 @@ proc writeLevelAnnotations(rw; l: Level) =
 
     rw.writeWStr(anno.text)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeLevel()
@@ -1145,7 +1145,7 @@ proc writeLevel(rw; l: Level) =
   writeLevelCells(rw, l.cellGrid.cells)
   writeLevelAnnotations(rw, l)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeLevelList()
@@ -1155,7 +1155,7 @@ proc writeLevelList(rw; levels: seq[Level]) =
   for l in levels:
     writeLevel(rw, l)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeMapProperties()
@@ -1169,7 +1169,7 @@ proc writeMapProperties(rw; m: Map) =
   rw.writeBStr(m.creationTime)
   rw.writeWStr(m.notes)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeMap()
@@ -1179,7 +1179,7 @@ proc writeMap(rw; m: Map) =
   writeMapProperties(rw, m)
   writeCoordinateOptions(rw, m.coordOpts)
 
-  rw.endChunk()
+  rw.endChunk
 
 # }}}
 # {{{ writeMapFile*()
@@ -1200,7 +1200,7 @@ proc writeMapFile*(m: Map, appState: AppState, path: string) =
   except CatchableError as e:
     raise newException(MapReadError, fmt"Error writing map file: {e.msg}", e)
   finally:
-    if rw != nil: rw.close()
+    if rw != nil: rw.close
 
 # }}}
 # }}}
