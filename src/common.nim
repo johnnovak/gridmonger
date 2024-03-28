@@ -33,14 +33,6 @@ const
 
 
 type
-  AppEventKind* = enum
-    aeFocus, aeOpenFile
-
-  AppEvent* = object
-    case kind*:    AppEventKind
-    of aeFocus:    discard
-    of aeOpenFile: path*: string
-
   Location* = object
     level*:     Natural
     row*, col*: Natural

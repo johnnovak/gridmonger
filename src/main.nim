@@ -33,10 +33,14 @@ from koi/utils as koiUtils import lerp, invLerp, remap
 import nanovg
 when not defined(DEBUG): import osdialog
 
+when defined(windows):
+  import platform/windows/console
+
 import semver
 
 # Internal
 import actions
+import appevents
 import cfghelper
 import cmdline
 import common
@@ -54,14 +58,6 @@ import selection
 import theme
 import undomanager
 import utils as gmUtils
-import versionchecker
-
-when defined(windows):
-  import platform/windows/appevents
-  import platform/windows/console
-
-elif defined(macosx):
-  import platform/macos/appevents
 
 # }}}
 
@@ -362,10 +358,8 @@ type
 
     logFile:     File
 
-    versionChecker:     VersionChecker
-    latestVersion:      Option[VersionInfo]
-    versionCheckFailed: bool
-    versionCheckDone:   bool
+    latestVersion:     Option[VersionInfo]
+    versionFetchError: Option[CatchableError]
 
 
   WalkCursorMode = enum
@@ -418,7 +412,6 @@ type
     path:               string
     map:                Map
     undoManager:        UndoManager[Map, UndoStateData]
-    lastAutosaveTime:   MonoTime
 
   Options = object
     showCurrentNotePane:  bool
@@ -2953,13 +2946,13 @@ proc loadMap(path: string; a): bool =
   info(fmt"Loading map '{path}'...")
 
   try:
-    let t0 = getMonoTime()
-    let (map, appState) = readMapFile(path)
-    let dt = getMonoTime() - t0
+    let
+      t0 = getMonoTime()
+      (map, appState) = readMapFile(path)
+      dt = getMonoTime() - t0
 
-    a.doc.map = map
+    a.doc.map  = map
     a.doc.path = path
-    a.doc.lastAutosaveTime = getMonoTime()
 
     if appState.isSome:
       let s = appState.get
@@ -2997,6 +2990,8 @@ proc loadMap(path: string; a): bool =
       resetCursorAndViewStart(a)
 
     initUndoManager(a.doc.undoManager)
+
+    appEvents.updateLastSavedTime()
 
     let message = fmt"Map '{path}' loaded in " &
                   fmt"{durationToFloatMillis(dt):.2f} ms"
@@ -3058,6 +3053,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
 
     if not autosave:
       setStatusMessage(IconFloppy, fmt"Map '{path}' saved", a)
+      appEvents.updateLastSavedTime()
 
   except CatchableError as e:
     logError(e)
@@ -3065,19 +3061,6 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     setErrorMessage(fmt"{prefix}{e.msg}", a)
   finally:
     a.logFile.flushFile
-
-# }}}
-# {{{ handleAutoSaveMap()
-proc handleAutoSaveMap(a) =
-  if a.prefs.autosave and a.doc.undoManager.isModified:
-    let dt = getMonoTime() - a.doc.lastAutosaveTime
-    if dt > initDuration(minutes = a.prefs.autosaveFreqMins):
-      let path = if a.doc.path == "":
-                   a.paths.autosaveDir / addFileExt("Untitled", MapFileExt)
-                 else: a.doc.path
-
-      saveMap(path, autosave=true, createBackup=true, a)
-      a.doc.lastAutosaveTime = getMonoTime()
 
 # }}}
 # {{{ autoSaveMapOnCrash()
@@ -3554,7 +3537,7 @@ proc initVersionChecking(a)
 
 proc openAboutDialog(a) =
   if a.latestVersion.isNone:
-    initVersionChecking(a)
+    appEvents.fetchLatestVersion()
 
   a.dialogs.activeDialog = dlgAboutDialog
 
@@ -3615,15 +3598,8 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   # Check for updates
   if a.prefs.checkForUpdates:
     y += 32
-    if a.latestVersion.isNone:
-      try:
-        a.latestVersion = a.versionChecker.tryFetchLatestVersion
-        koi.setFramesLeft()
-      except CatchableError as e:
-        logError(e, "Error fetching version information")
-        a.versionCheckFailed = true
 
-    if a.latestVersion.isSome or a.versionCheckFailed:
+    if a.latestVersion.isSome or a.versionFetchError.isSome:
       let st = labelStyle.deepCopy
 
       var msg: string
@@ -3632,7 +3608,6 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
         msg = if v.version > AppVersion:
                 fmt"A more recent version is available: v{v.version}"
               else: "You're running the latest version."
-        a.versionCheckDone = true
 
       else:
         msg = "Error fetching version information"
@@ -3839,15 +3814,25 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.loadLastMap        = dlg.loadLastMap
 
     # General
-    if not a.prefs.autoSave and dlg.autoSave:
-      a.doc.lastAutosaveTime = getMonoTime()
+    let
+      autosaveTurnedOn = not a.prefs.autoSave and dlg.autoSave
+      oldFreqMins      = a.prefs.autosaveFreqMins
+      newFreqMins      = parseInt(dlg.autosaveFreqMins).Natural
 
     a.prefs.autosave           = dlg.autosave
-    a.prefs.autosaveFreqMins   = parseInt(dlg.autosaveFreqMins).Natural
+    a.prefs.autosaveFreqMins   = newFreqMins
     a.prefs.vsync              = dlg.vsync
+
+    if a.prefs.autosave:
+      if autosaveTurnedOn or oldFreqMins != newFreqMins:
+        appEvents.updateLastSavedTime()
+        appEvents.setAutoSaveTimeout(initDuration(seconds = newFreqMins))
+    else:
+      appEvents.disableAutoSave()
 
     if not a.prefs.checkForUpdates and dlg.checkForUpdates:
       initVersionChecking(a)
+      appEvents.fetchLatestVersion()
 
     a.prefs.checkForUpdates    = dlg.checkForUpdates
 
@@ -4073,6 +4058,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
     a.doc.map.notes = dlg.notes
 
     initUndoManager(a.doc.undoManager)
+
+    appEvents.updateLastSavedTime()
 
     resetCursorAndViewStart(a)
     setStatusMessage(IconFile, "New map created", a)
@@ -10069,34 +10056,15 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
 
 # }}}
 
-# {{{ handleOpenFileEvent()
-proc handleOpenFileEvent(path: string; a) =
-  closeDialog(a)
-  returnToNormalMode(a)
-  openMap(path, a)
-  # TODO not needed on macOS at least
-#  a.win.restore
-  a.win.focus
-  koi.setFramesLeft()
-
-# }}}
-# {{{ dropCb()
-proc dropCb(window: Window, paths: PathDropInfo) =
-  if paths.len > 0:
-    let path = paths.items.toSeq[0]
-    handleOpenFileEvent($path, g_app)
-
-# }}}
-
 # {{{ initVersionChecking()
 proc initVersionChecking(a) =
-  initVersionChecker(a.versionChecker)
-  a.latestVersion      = VersionInfo.none
-  a.versionCheckFailed = false
-  a.versionCheckDone   = false
+  a.latestVersion     = VersionInfo.none
+  a.versionFetchError = CatchableError.none
 
 # }}}
 # {{{ initApp()
+proc dropCb(window: Window, paths: PathDropInfo)
+
 proc initApp(configFile: Option[string], mapFile: Option[string],
              winCfg: HoconNode, hideSplash = false; a) =
 
@@ -10105,6 +10073,12 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   let cfg = loadAppConfigOrDefault(a.paths.configFile)
   initPreferences(cfg, a)
+
+  if a.prefs.autosave:
+    appEvents.setAutoSaveTimeout(
+      initDuration(seconds = a.prefs.autosaveFreqMins)
+    )
+  else: appEvents.disableAutoSave()
 
   # TODO init from config
   with a.ui.notesListState:
@@ -10197,6 +10171,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   a.win.snapWindowToVisibleArea
 
   initVersionChecking(a)
+  appEvents.fetchLatestVersion()
 
 # }}}
 # {{{ cleanup()
@@ -10259,31 +10234,62 @@ when not defined(DEBUG):
 # }}}
 
 # }}}
+# {{{ App events
 
-# {{{ handleCheckForUpdates()
-proc handleCheckForUpdates(a) =
-  if a.prefs.checkForUpdates and not a.versionCheckFailed:
-    if a.latestVersion.isNone:
-      try:
-        a.latestVersion = a.versionChecker.tryFetchLatestVersion
-        koi.setFramesLeft()
-      except CatchableError as e:
-        logError(e, "Error fetching version information")
-        a.versionCheckFailed = true
-    else:
-      if not a.versionCheckDone:
-        let v = a.latestVersion.get
-        if v.version > AppVersion:
-          setWarningMessage(
-            "Good news! A more recent version of Gridmonger is available: " &
-            fmt"v{v.version} — {v.message}",
-            icon=IconMug,
-            keepStatusMessage=true, timeout=initDuration(seconds = 7),
-            overwrite=false, a=a
-          )
-        a.versionCheckDone = true
+# {{{ handleFocusEvent()
+proc handleFocusEvent(event: AppEvent; a) =
+  a.win.focus
 
 # }}}
+# {{{ handleOpenFileEvent()
+proc handleOpenFileEvent(event: AppEvent; a) =
+  closeDialog(a)
+  returnToNormalMode(a)
+  openMap(event.path, a)
+  # TODO not needed on macOS at least
+#  a.win.restore
+  a.win.focus
+
+# }}}
+# {{{ handleAutoSaveEvent()
+proc handleAutoSaveEvent(event: AppEvent; a) =
+  let path = if a.doc.path == "":
+               a.paths.autosaveDir / addFileExt("Untitled", MapFileExt)
+             else: a.doc.path
+
+  saveMap(path, autosave=true, createBackup=true, a)
+
+# }}}
+# {{{ handleVersionUpdateEvent()
+proc handleVersionUpdateEvent(event: AppEvent; a) =
+  a.latestVersion     = event.versionInfo
+  a.versionFetchError = event.error
+
+  if a.latestVersion.isSome:
+    let v = a.latestVersion.get
+    if v.version > AppVersion and a.dialogs.activeDialog != dlgAboutDialog:
+      setWarningMessage(
+        "Good news! A more recent version of Gridmonger is available: " &
+        fmt"v{v.version} — {v.message}",
+        icon=IconMug,
+        keepStatusMessage=true, timeout=initDuration(seconds = 7),
+        overwrite=false, a=a
+      )
+
+# }}}
+
+# {{{ dropCb()
+proc dropCb(window: Window, paths: PathDropInfo) =
+  if paths.len > 0:
+    let path = paths.items.toSeq[0]
+    handleOpenFileEvent(AppEvent(kind: aeOpenFile, path: $path), g_app)
+
+# }}}
+
+# }}}
+
+# }}}
+
 # {{{ main()
 proc main() =
 
@@ -10299,8 +10305,6 @@ proc main() =
 
   g_app = new AppContext
   alias(a, g_app)
-
-  a.doc.lastAutosaveTime = getMonoTime()
 
   try:
     initPaths(a)
@@ -10325,7 +10329,7 @@ proc main() =
     when defined(macosx):
       sleep(80)
 
-      let event = appEvents.tryReceiveEvent()
+      let event = appEvents.tryRecv()
       if event.isSome and event.get.kind == aeOpenFile:
         initApp(configFile, mapFile=event.get.path.some, winCfg,
                 hideSplash=true, a)
@@ -10370,27 +10374,23 @@ proc main() =
       if a.splash.win != nil:
         glfw.swapBuffers(a.splash.win)
 
-      handleAutoSaveMap(a)
-      handleCheckForUpdates(a)
-
       # Handle app events
-      let event = appEvents.tryReceiveEvent()
+      let event = appEvents.tryRecv()
       if event.isSome:
         let event = event.get
         case event.kind
-        of aeFocus:
-          a.win.focus
-          koi.setFramesLeft()
+        of aeFocus:         handleFocusEvent(event, a)
+        of aeOpenFile:      handleOpenFileEvent(event, a)
+        of aeAutoSave:      handleAutoSaveEvent(event, a)
+        of aeVersionUpdate: handleVersionUpdateEvent(event, a)
 
-        of aeOpenFile:
-          handleOpenFileEvent(event.path, a)
+        koi.setFramesLeft()
 
       # Poll/wait for events
       if koi.shouldRenderNextFrame():
         glfw.pollEvents()
       else:
-        # TODO
-        glfw.waitEventsTimeout(15)
+        glfw.waitEvents()
 
     cleanup(a)
 
