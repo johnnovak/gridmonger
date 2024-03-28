@@ -57,12 +57,13 @@
   undoing the move could generate extra "invisible" invalid links. You could
   continue using the program and saving the map would still succeed, but you
   could not load it back later.
+- If autosaving is enabled, the map no longer gets immediately auto-saved
+  right after adding the first level to an empty map.
+- The autosave timer now resets when the autosave preference is turned on.
+- Autosaved untitled maps that have never been manually saved are now
+  auto-numbered and are restored if the **Load last map** preference is enabled.
 - The notes pane now fills the window horizontally when the tools pane is
   hidden.
-- If auto-saving is enabled, the map no longer gets immediately auto-saved
-  right after adding the first level to an empty map.
-- The auto-save timer now resets when the auto-save is enabled from a disabled
-  state.
 
 ---
 

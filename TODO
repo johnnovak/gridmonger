@@ -23,8 +23,6 @@ TODO
   - window handling bugs:
     - crash when dragging maximised window
 
-  - autosave does not save new map that hasn't been saved before
-
   - if a new map has been autosaved but never saved manually, quitting would
 	proceed without a warning and the map will be lost
 
