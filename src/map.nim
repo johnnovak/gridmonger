@@ -3,11 +3,13 @@ import std/options
 import std/sequtils
 import std/sets
 import std/tables
+import std/unicode
 
 import common
 import deps/with
 import level
 import links
+import naturalsort
 import rect
 import regions
 import utils
@@ -49,13 +51,15 @@ proc sortLevels*(m) =
   var sortedLevelsWithIndex = zip(m.levels, (0..m.levels.high).toSeq)
   sortedLevelsWithIndex.sort(
     proc (a, b: tuple[level: Level, idx: int]): int =
-      var c = cmp(a.level.locationName, b.level.locationName)
+      var c = cmpNaturalIgnoreCase(a.level.locationName.toRunes,
+                                   b.level.locationName.toRunes)
       if c != 0: return c
 
       c = cmp(b.level.elevation, a.level.elevation)
       if c != 0: return c
 
-      return cmp(a.level.levelName, b.level.levelName)
+      return cmpNaturalIgnoreCase(a.level.levelName.toRunes,
+                                  b.level.levelName.toRunes)
   )
 
   m.sortedLevelNames   = @[]

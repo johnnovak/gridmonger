@@ -36,6 +36,7 @@
 - Restoring the window size and position on startup is now more robust.
 - Idle perfomance has been improved; CPU and GPU utilisation is now close to
   zero if there is no user input.
+- All sorted items use [natural sort order](https://en.wikipedia.org/wiki/Natural_sort_order) now.
 - The user manual has been overhauled for improved wording and clarity.
 - Improved status bar messages, dialogs, and more status icons.
 - Minor improvements to some of the bundled themes.

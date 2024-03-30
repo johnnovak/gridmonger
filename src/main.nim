@@ -52,6 +52,7 @@ import hocon
 import icons
 import level
 import map
+import naturalsort
 import persistence
 import rect
 import selection
@@ -2405,7 +2406,8 @@ proc buildThemeList(a) =
     raise newException(IOError, "Cannot find any themes, exiting")
 
   themeNames.sort(
-    proc (a, b: ThemeName): int = cmp(a.name, b.name)
+    proc (a, b: ThemeName): int =
+      cmpNaturalIgnoreCase(a.name.toRunes, b.name.toRunes)
   )
 
   a.theme.themeNames = themeNames
@@ -7653,8 +7655,7 @@ proc renderRegionDropDown(a) =
     mainPane = mainPaneRect(a)
 
   if currRegion.isSome:
-    var sortedRegionNames = l.regionNames
-    sort(sortedRegionNames)
+    var sortedRegionNames = l.regionNames.naturalSort
 
     let currRegionName = currRegion.get.name
     var sortedRegionIdx = sortedRegionNames.find(currRegionName)
@@ -8195,9 +8196,10 @@ func sortByNoteType(x, y: Annotation): int =
 
 func sortByTextAndLocation(locX: Location, x: Annotation,
                            locY: Location, y: Annotation): int =
-  var c = cmpIgnoreCase(x.text, y.text); if c != 0: return c
-  c     = cmp(locX.level, locY.level);   if c != 0: return c
-  c     = cmp(locX.row,   locY.row);     if c != 0: return c
+  var c = cmpNaturalIgnoreCase(x.text.toRunes,
+                               y.text.toRunes); if c != 0: return c
+  c     = cmp(locX.level, locY.level);          if c != 0: return c
+  c     = cmp(locX.row,   locY.row);            if c != 0: return c
   return  cmp(locX.col,   locY.col)
 
 # }}}
