@@ -3039,7 +3039,6 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     currSpecialWall:        a.ui.currSpecialWall,
   )
 
-  echo fmt"Saving map to '{path}'"
   info(fmt"Saving map to '{path}'")
 
   if createBackup:
@@ -10265,7 +10264,6 @@ proc handleOpenFileEvent(event: AppEvent; a) =
 # {{{ handleAutoSaveEvent()
 proc handleAutoSaveEvent(event: AppEvent; a) =
   if a.doc.undoManager.isModified:
-    echo "handleAutoSaveEvent"
     var path = if a.doc.path == "": a.doc.lastSavePath
                else: a.doc.path
     if path == "":
