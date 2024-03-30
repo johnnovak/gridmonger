@@ -8426,12 +8426,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     for l in map.levels:
       if l.id notin nls.sectionStates:
         nls.sectionStates[l.id] = true
+    map.levelsDirty = false
 
   if l.annotations.dirty:
     l.annotations.dirty = false
 
-  if map.levelsDirty:
-    map.levelsDirty = false
+  if l.dirty:
+    l.dirty = false
 
 
   if rebuildNotesCache:
@@ -8465,7 +8466,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       # TODO
       discard
 
-    nls.prevFilter = nls.currFilter
+  nls.prevFilter = nls.currFilter
 
   # Scroll view with notes
   let
