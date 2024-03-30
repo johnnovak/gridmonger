@@ -5,6 +5,7 @@ import std/strformat
 import std/strutils
 import std/times
 import std/typetraits
+import std/unicode
 
 import common
 
@@ -14,9 +15,26 @@ template alias*(newName: untyped, call: untyped) =
   template newName(): untyped {.redefine.} = call
 
 # }}}
+# {{{ first*()
+func first*[T](iterable: T): auto =
+  for v in iterable:
+    return v.some
+
+# }}}
+# {{{ isDigit*()
+proc isDigit*(r: Rune): bool =
+  ord(r) >= ord('0') and ord(r) <= ord('9')
+
+# }}}
+
 # {{{ durationToFloatMillis*()
 proc durationToFloatMillis*(d: Duration): float64 =
   inNanoseconds(d).float64 * 1e-6
+
+# }}}
+# {{{ currentLocalDatetimeString*()
+proc currentLocalDatetimeString*(): string =
+  now().format("yyyy-MM-dd HH:mm:ss")
 
 # }}}
 
@@ -131,20 +149,6 @@ func isValidFilename*(filename: string): bool =
   else: true
 
 # }}}
-
-# {{{ currentLocalDatetimeString*()
-proc currentLocalDatetimeString*(): string =
-  now().format("yyyy-MM-dd HH:mm:ss")
-
-# }}}
-
-# {{{ first*()
-func first*[T](iterable: T): auto =
-  for v in iterable:
-    return v.some
-
-# }}}
-
 # {{{ findUniquePath*()
 proc findUniquePath*(dir: string, name: string, ext: string): string =
   var n = 1
