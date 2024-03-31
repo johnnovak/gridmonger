@@ -5,7 +5,6 @@ import std/strformat
 import std/strutils
 import std/times
 import std/typetraits
-import std/unicode
 
 import common
 
@@ -22,8 +21,8 @@ func first*[T](iterable: T): auto =
 
 # }}}
 # {{{ isDigit*()
-proc isDigit*(r: Rune): bool =
-  ord(r) >= ord('0') and ord(r) <= ord('9')
+#proc isDigit*(r: Rune): bool =
+#  ord(r) >= ord('0') and ord(r) <= ord('9')
 
 # }}}
 
