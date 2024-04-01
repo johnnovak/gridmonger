@@ -29,6 +29,13 @@ been already saved...) Also, if you're going to experiment with the editing
 functions on the included example maps, it's best to either turn autosave off,
 or create backup copies of the example maps first.
 
+.. important::
+
+    If autosaves are enabled and the current map hasn't been manually saved
+    yet, an autosave file ``Untitled 1.gmm`` will be created in the special
+    ``Autosave`` folder located in your :ref:`appendixes/user-data-folder:User
+    Data Folder`.
+
 Below the autosave settings, you have the option to **Enable vertical sync**.
 The program does its drawing just like a game engine; it's locked to your
 desktop refresh rate if vertical sync is on. Disabling it may increase the
