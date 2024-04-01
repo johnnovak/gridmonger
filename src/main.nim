@@ -8352,11 +8352,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
                 style = a.theme.buttonStyle):
     for id in nls.sectionStates.keys:
       nls.sectionStates[id] = true
+      nls.regionStates[id]  = true
 
   if koi.button(wx+244, wy, w=24, wh, IconMinusSmall, tooltip = "Collapse all",
                 style = a.theme.buttonStyle):
     for id in nls.sectionStates.keys:
       nls.sectionStates[id] = false
+      nls.regionStates[id]  = false
 
 
   # Sort functions
@@ -8456,11 +8458,18 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
     of nsfLevel:
       for r,c, note in l.allNotes:
+#        if l.regionOpts.enabled:
+#          var s = newSeq[NotesListCacheEntry]()
+#          for region in l.regions
+#        else:
         nls.cache.maybeAddCacheEntry(
           Location(level: a.ui.cursor.level, row: r, col: c),
           note, vg
         )
+
+#      if not l.regionOpts.enabled:
       sortCacheEntries(nls.cache, nls.currFilter.ordering)
+
       # TODO regions
 
     of nsfRegion:
