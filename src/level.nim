@@ -255,7 +255,7 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
     else:
       destRegions.setRegion(
         destRegionCoord,
-        Region(name: destLevel.regions.nextUntitledRegionName(index))
+        initRegion(name=destLevel.regions.nextUntitledRegionName(index))
       )
 
   result = destRegions

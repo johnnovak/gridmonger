@@ -10,6 +10,19 @@ using
   r: Regions
   vr: var Regions
 
+
+# {{{ initRegion*()
+var g_regionIdCounter = 0
+
+proc initRegion*(name: string, notes: string = ""): Region =
+  result.id = g_regionIdCounter
+  inc(g_regionIdCounter)
+
+  result.name = name
+  result.notes = notes
+
+# }}}
+
 # {{{ initRegions*()
 proc initRegions*(): Regions =
   result = initOrderedTable[RegionCoords, Region]()

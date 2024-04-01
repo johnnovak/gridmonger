@@ -55,6 +55,7 @@ import map
 import naturalsort
 import persistence
 import rect
+import regions
 import selection
 import theme
 import undomanager
@@ -516,6 +517,7 @@ type
     grouping:       int
     cache:          seq[NotesListCacheEntry]
     sectionStates:  Table[int, bool]
+    regionStates:   Table[int, bool]
     activeId:       Option[ItemId]
 
   NotesListCacheEntry = object
@@ -5256,7 +5258,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     let cur = a.ui.cursor
 
     let regionCoords = map.getRegionCoords(cur)
-    let region = Region(name: dlg.name, notes: dlg.notes)
+    let region = initRegion(name=dlg.name, notes=dlg.notes)
 
     actions.setRegionProperties(map, cur, regionCoords, region,
                                 a.doc.undoManager)

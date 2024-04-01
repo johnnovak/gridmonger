@@ -112,11 +112,10 @@ type
     locationName*:      string
     levelName*:         string
     elevation*:         int
+    notes*:             string
 
     overrideCoordOpts*: bool
     coordOpts*:         CoordinateOptions
-
-    notes*:             string
 
     regionOpts*:        RegionOptions
     regions*:           Regions
@@ -141,6 +140,7 @@ type
     row*, col*: Natural
 
   Region* = object
+    id*:    int
     name*:  string
     notes*: string
 

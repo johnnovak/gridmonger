@@ -631,7 +631,7 @@ proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
 
     regions.setRegion(
       RegionCoords(row: row, col: col),
-      Region(name: name, notes: notes)
+      initRegion(name=name, notes=notes)
     )
 
     popDebugIndent()

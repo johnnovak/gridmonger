@@ -395,7 +395,8 @@ proc reallocateRegions*(m; level: Natural, oldCoordOpts: CoordinateOptions,
     if region.isSome and not region.get.isUntitledRegion:
       l.setRegion(rc, region.get)
     else:
-      l.setRegion(rc, Region(name: l.regions.nextUntitledRegionName(index)))
+      let region = initRegion(name=l.regions.nextUntitledRegionName(index))
+      l.setRegion(rc, region)
 
 # }}}
 # {{{ calcRegionResizeOffsets*()
