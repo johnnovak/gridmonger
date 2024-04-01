@@ -145,7 +145,7 @@ proc versionFetcher {.thread.} =
         try:
           response = client.getContent(LatestVersionUrl)
           break
-        except HttpRequestError as e:
+        except CatchableError as e:
           event.error = cast[CatchableError](e[]).some
         finally:
           client.close
