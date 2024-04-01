@@ -11,6 +11,9 @@ BUGS
 TODO
 ====
 
+  - fix not quitting immediately if checking for updates is enabled and
+	there's no network
+
   - unlink command
 
   - test loading v1, v2, and v3 map versions
