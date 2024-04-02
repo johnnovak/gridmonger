@@ -1601,14 +1601,9 @@ func viewCol(a): int =
   viewCol(a.ui.cursor.col, a)
 
 # }}}
-# {{{ currSortedLevelIdx()
-func currSortedLevelIdx(a): Natural =
-  a.doc.map.findSortedLevelIdxForLevel(a.ui.cursor.level)
-
-# }}}
 # {{{ currLevel()
 func currLevel(a): common.Level =
-  a.doc.map.levels[a.ui.cursor.level]
+  a.doc.map.levels[a.ui.cursor.levelId]
 
 # }}}
 # {{{ currRegion()
@@ -1623,7 +1618,7 @@ func currRegion(a): Option[Region] =
 # }}}
 # {{{ coordOptsForCurrLevel()
 func coordOptsForCurrLevel(a): CoordinateOptions =
-  a.doc.map.coordOptsForLevel(a.ui.cursor.level)
+  a.doc.map.coordOptsForLevel(a.ui.cursor.levelId)
 
 # }}}
 
@@ -1844,17 +1839,17 @@ proc setCursor(newCur: Location; a) =
     if not doc.map.hasLevels:
       return
 
-    if newCur.level != ui.cursor.level:
+    if newCur.levelId != ui.cursor.levelId:
       opts.drawTrail = false
 
     if opts.drawTrail and newCur != ui.cursor:
       actions.drawTrail(doc.map, loc=newCur, undoLoc=ui.prevCursor,
                         doc.undoManager)
 
-    let l = doc.map.levels[newCur.level]
+    let l = doc.map.levels[newCur.levelId]
 
     ui.cursor = Location(
-      level: newCur.level,
+      levelId: newCur.levelId,
       row: newCur.row.clamp(0, l.rows - 1),
       col: newCur.col.clamp(0, l.cols - 1)
     )
@@ -1869,7 +1864,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
   alias(dp, a.ui.drawLevelParams)
 
-  let l = a.doc.map.levels[cur.level]
+  let l = a.doc.map.levels[cur.levelId]
   let sm = ScrollMargin
   var cur = cur
 
@@ -1917,6 +1912,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
     let viewCol = viewCol(cur.col, a)
     if viewCol < sm:
+      # TODO use clamp
       dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
 
   of dirN:
@@ -1924,6 +1920,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
     let viewRow = viewRow(cur.row, a)
     if viewRow < sm:
+      # TODO use clamp
       dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
 
   result = cur
@@ -1963,7 +1960,7 @@ proc moveCursorDiagonal(dir: Direction, steps: Natural = 1; a) =
 # {{{ moveCursorTo()
 proc moveCursorTo(loc: Location; a) =
   var cur = a.ui.cursor
-  cur.level = loc.level
+  cur.levelId = loc.levelId
 
   let dx = loc.col - cur.col
   let dy = loc.row - cur.row
@@ -2004,7 +2001,7 @@ proc locationAtMouse(clampToBounds=false, a): Option[Location] =
 
   if clampToBounds:
     result = Location(
-      level: a.ui.cursor.level,
+      levelId: a.ui.cursor.levelId,
       row: mouseRow.clamp(dp.viewStartRow, dp.viewStartRow + dp.viewRows-1),
       col: mouseCol.clamp(dp.viewStartCol, dp.viewStartCol + dp.viewCols-1)
     ).some
@@ -2014,7 +2011,7 @@ proc locationAtMouse(clampToBounds=false, a): Option[Location] =
        mouseViewCol >= 0 and mouseCol < dp.viewStartCol + dp.viewCols:
 
       result = Location(
-        level: a.ui.cursor.level,
+        levelId: a.ui.cursor.levelId,
         row: mouseRow,
         col: mouseCol
       ).some
@@ -2027,12 +2024,14 @@ proc stepLevelView(dir: CardinalDir; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
+  # TODO use clamp
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
 
   var newViewStartCol = dp.viewStartCol
   var newViewStartRow = dp.viewStartRow
 
+  # TODO use clamp
   case dir:
   of dirE: newViewStartCol = min(dp.viewStartCol + 1, maxViewStartCol)
   of dirW: newViewStartCol = max(dp.viewStartCol - 1, 0)
@@ -2055,6 +2054,7 @@ proc moveLevelView(dir: Direction, steps: Natural = 1; a) =
   a.opts.drawTrail = false
 
   let l = currLevel(a)
+  # TODO use clamp
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
 
@@ -2073,9 +2073,9 @@ proc moveLevelView(dir: Direction, steps: Natural = 1; a) =
 # {{{ resetCursorAndViewStart()
 proc resetCursorAndViewStart(a) =
   with a.ui.cursor:
-    level = 0
-    row   = 0
-    col   = 0
+    levelId = 0
+    row     = 0
+    col     = 0
 
   with a.ui.drawLevelParams:
     viewStartRow = 0
@@ -2096,9 +2096,11 @@ proc updateViewAndCursorPos(levelDrawWidth, levelDrawHeight: float; a) =
 
   let l = currLevel(a)
 
+  # TODO use clamp
   dp.viewRows = min(dp.numDisplayableRows(levelDrawHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(levelDrawWidth), l.cols)
 
+  # TODO use clamp
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
 
@@ -2113,9 +2115,9 @@ proc updateViewAndCursorPos(levelDrawWidth, levelDrawHeight: float; a) =
 
   let cur = a.ui.cursor
   let newCur = Location(
-    level: cur.level,
-    col:   viewEndCol.clamp(dp.viewStartCol, cur.col),
-    row:   viewEndRow.clamp(dp.viewStartRow, cur.row)
+    levelId: cur.levelId,
+    col:     viewEndCol.clamp(dp.viewStartCol, cur.col),
+    row:     viewEndRow.clamp(dp.viewStartRow, cur.row)
   )
 
   if newCur != cur:
@@ -2181,7 +2183,7 @@ proc exitNudgePreviewMode(a) =
   ui.editMode = emNormal
 
   # Reset the current level reference to the level in the nudge buffer
-  map.levels[cur.level] = ui.nudgeBuf.get.level
+  map.levels[cur.levelId] = ui.nudgeBuf.get.level
   ui.nudgeBuf = SelectionBuffer.none
 
   clearStatusMessage(a)
@@ -2920,7 +2922,8 @@ proc saveAppConfig(a) =
 
   p = "last-state.ui."
   cfg.set(p & "zoom-level",                    dp.getZoomLevel)
-  cfg.set(p & "current-level",                 cur.level)
+  # TODO current-level-id
+  cfg.set(p & "current-level",                 cur.levelId)
   cfg.set(p & "cursor.row",                    cur.row)
   cfg.set(p & "cursor.column",                 cur.col)
   cfg.set(p & "view-start.row",                dp.viewStartRow)
@@ -2982,7 +2985,7 @@ proc loadMap(path: string; a): bool =
         drawCellCoords = s.optShowCellCoords
 
       with a.ui.cursor:
-        level = s.currLevel
+        levelId = s.currLevelId
         row   = s.cursorRow
         col   = s.cursorCol
 
@@ -3024,7 +3027,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     themeName:              a.currThemeName.name,
 
     zoomLevel:              dp.getZoomLevel,
-    currLevel:              cur.level,
+    currLevelId:            cur.levelId,
     cursorRow:              cur.row,
     cursorCol:              cur.col,
     viewStartRow:           dp.viewStartRow,
@@ -3336,7 +3339,7 @@ template validateLevelFields(dlg, map, validationError: untyped) =
   if dlg.locationName == "":
     validationError = mkValidationError("Location name is mandatory")
   else:
-    for l in map.levels:
+    for _, l in map.levels:
       if l.locationName == dlg.locationName and
          l.levelName == dlg.levelName and
          $l.elevation == dlg.elevation:
@@ -5752,10 +5755,10 @@ proc undoAction(a) =
 
   if um.canUndo:
     let
-      drawTrail = a.opts.drawTrail
+      drawTrail     = a.opts.drawTrail
       undoStateData = um.undo(a.doc.map)
-      newCur = undoStateData.undoLocation
-      levelChange = newCur.level != a.ui.cursor.level
+      newCur        = undoStateData.undoLocation
+      levelChange   = newCur.levelId != a.ui.cursor.levelId
 
     a.opts.drawTrail = false
 
@@ -5776,10 +5779,10 @@ proc redoAction(a) =
 
   if um.canRedo:
     let
-      drawTrail = a.opts.drawTrail
+      drawTrail     = a.opts.drawTrail
       undoStateData = um.redo(a.doc.map)
-      newCur = undoStateData.location
-      levelChange = newCur.level != a.ui.cursor.level
+      newCur        = undoStateData.location
+      levelChange   = newCur.levelId != a.ui.cursor.levelId
 
     a.opts.drawTrail = false
 
@@ -6016,19 +6019,27 @@ proc selectNextTheme(a) =
 
 # {{{ selectPrevLevel()
 proc selectPrevLevel(a) =
-  var si = currSortedLevelIdx(a)
-  if si > 0:
-    var cur = a.ui.cursor
-    cur.level = a.doc.map.sortedLevelIndexes[si - 1]
+  alias(map, a.doc.map)
+
+  var cur = a.ui.cursor
+  let levelIdx = map.sortedLevelIds.find(cur.levelId)
+  assert(levelIdx > -1)
+
+  if levelIdx > 0:
+    cur.levelId = map.sortedLevelIds[levelIdx-1]
     setCursor(cur, a)
 
 # }}}
 # {{{ selectNextLevel()
 proc selectNextLevel(a) =
-  var si = currSortedLevelIdx(a)
-  if si < a.doc.map.levels.len-1:
-    var cur = a.ui.cursor
-    cur.level = a.doc.map.sortedLevelIndexes[si + 1]
+  alias(map, a.doc.map)
+
+  var cur = a.ui.cursor
+  let levelIdx = map.sortedLevelIds.find(cur.levelId)
+  assert(levelIdx > -1)
+
+  if levelIdx < map.sortedLevelNames.high:
+    cur.levelId = map.sortedLevelIds[levelIdx+1]
     setCursor(cur, a)
 
 # }}}
@@ -6039,6 +6050,7 @@ proc centerCursorAfterZoom(a) =
 
   let viewCol = round(a.ui.prevCursorViewX / dp.gridSize).int
   let viewRow = round(a.ui.prevCursorViewY / dp.gridSize).int
+  # TODO use clamp
   dp.viewStartCol = max(cur.col - viewCol, 0)
   dp.viewStartRow = max(cur.row - viewRow, 0)
 
@@ -6773,7 +6785,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scPaste, a):
         if ui.copyBuf.isSome:
           actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
-                                 pasteBufferLevelIndex=Natural.none,
+                                 pasteBufferLevelId=Natural.none,
                                  wraparound=false, um)
 
           setStatusMessage(IconPaste, "Buffer pasted", a)
@@ -7207,14 +7219,14 @@ proc handleGlobalKeyEvents(a) =
         if bbox.isSome:
           let bbox = bbox.get
           var bboxTopLeft = Location(
-            level: cur.level,
-            col: bbox.c1,
-            row: bbox.r1
+            levelId: cur.levelId,
+            col:     bbox.c1,
+            row:     bbox.r1
           )
           ui.pasteUndoLocation = bboxTopLeft
 
           actions.cutSelection(map, bboxTopLeft, bbox, selection,
-                               linkDestLevelIndex=MoveBufferLevelIndex, um)
+                               linkDestLevelId=MoveBufferLevelId, um)
           exitSelectMode(a)
 
           # Enter paste preview mode
@@ -7233,7 +7245,7 @@ proc handleGlobalKeyEvents(a) =
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
-          actions.eraseSelection(map, cur.level, selection, bbox.get, um)
+          actions.eraseSelection(map, cur.levelId, selection, bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconEraser, "Erased selection", a)
 
@@ -7241,7 +7253,7 @@ proc handleGlobalKeyEvents(a) =
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
-          actions.fillSelection(map, cur.level, selection, bbox.get,
+          actions.fillSelection(map, cur.levelId, selection, bbox.get,
                                 ui.currFloorColor, um)
           exitSelectMode(a)
           setStatusMessage(IconFill, "Filled selection", a)
@@ -7250,7 +7262,7 @@ proc handleGlobalKeyEvents(a) =
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
-          actions.surroundSelectionWithWalls(map, cur.level, selection,
+          actions.surroundSelectionWithWalls(map, cur.levelId, selection,
                                              bbox.get, um)
           exitSelectMode(a)
           setStatusMessage(IconBorders, "Surrounded selection with walls", a)
@@ -7259,7 +7271,7 @@ proc handleGlobalKeyEvents(a) =
         let selection = ui.selection.get
         let bbox = selection.boundingBox
         if bbox.isSome:
-          actions.setSelectionFloorColor(map, cur.level, selection,
+          actions.setSelectionFloorColor(map, cur.levelId, selection,
                                          bbox.get, ui.currFloorColor, um)
           exitSelectMode(a)
           setStatusMessage(IconBrush, "Set floor colour of selection", a)
@@ -7353,7 +7365,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scPasteAccept, a):
         actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
-                               pasteBufferLevelIndex=Natural.none,
+                               pasteBufferLevelId=Natural.none,
                                wraparound=opts.pasteWraparound,
                                um, pasteTrail=true)
         ui.editMode = emNormal
@@ -7389,7 +7401,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scPasteAccept, a):
         actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
                                ui.nudgeBuf.get,
-                               pasteBufferLevelIndex=MoveBufferLevelIndex.some,
+                               pasteBufferLevelId=MoveBufferLevelId.some,
                                wraparound=opts.pasteWraparound,
                                um, groupWithPrev=true,
                                actionName="Move selection")
@@ -7413,6 +7425,7 @@ proc handleGlobalKeyEvents(a) =
 
         let step = if mkCtrl in mods: CursorJump else: 1
 
+        # TODO use clamp
         case dir:
         of dirE: dp.selStartCol = min(dp.selStartCol + step,  cols-1)
         of dirS: dp.selStartRow = min(dp.selStartRow + step,  rows-1)
@@ -7614,17 +7627,18 @@ proc renderLevelDropdown(a) =
   alias(map, a.doc.map)
 
   let
+    cur        = a.ui.cursor
     mainPane   = mainPaneRect(a)
-    levelNames = map.sortedLevelNames
 
-  var sortedLevelIdx = currSortedLevelIdx(a)
+  var sortedLevelIdx = map.sortedLevelIds.find(cur.levelId)
+  assert(sortedLevelIdx > -1)
   let prevSortedLevelIdx = sortedLevelIdx
 
+  # Set width dynamically
   vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
 
-  # Level drop-down
   let levelDropDownWidth = round(
-    vg.textWidth(levelNames[sortedLevelIdx]) +
+    vg.textWidth(map.sortedLevelNames[sortedLevelIdx]) +
     a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
   )
 
@@ -7633,7 +7647,7 @@ proc renderLevelDropdown(a) =
     y = 19.0,
     w = levelDropDownWidth,
     h = 24.0,
-    levelNames,
+    map.sortedLevelNames,
     sortedLevelIdx,
     tooltip = "",
     disabled = not (ui.editMode in {emNormal, emSetCellLink}),
@@ -7641,8 +7655,8 @@ proc renderLevelDropdown(a) =
   )
 
   if sortedLevelIdx != prevSortedLevelIdx:
-    var cur = ui.cursor
-    cur.level = map.sortedLevelIndexes[sortedLevelIdx]
+    var cur = cur
+    cur.levelId = map.sortedLevelIds[sortedLevelIdx]
     setCursor(cur, a)
 
 # }}}
@@ -7656,7 +7670,7 @@ proc renderRegionDropDown(a) =
     mainPane = mainPaneRect(a)
 
   if currRegion.isSome:
-    var sortedRegionNames = l.regionNames.naturalSort
+    var sortedRegionNames = l.regionNames.naturalSortIgnoreCase
 
     let currRegionName = currRegion.get.name
     var sortedRegionIdx = sortedRegionNames.find(currRegionName)
@@ -7683,10 +7697,10 @@ proc renderRegionDropDown(a) =
       let currRegionName = sortedRegionNames[sortedRegionIdx]
       let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
 
-      let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.level,
+      let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.levelId,
                                                      regionCoords)
 
-      centerCursorAt(Location(level: ui.cursor.level, row: r, col: c), a)
+      centerCursorAt(Location(levelId: ui.cursor.levelId, row: r, col: c), a)
 
 # }}}
 # {{{ renderModeAndOptionIndicators()
@@ -7837,7 +7851,7 @@ proc renderLevel(x, y, w, h: float,
 
     drawLevel(
       a.doc.map,
-      ui.cursor.level,
+      ui.cursor.levelId,
       DrawLevelContext(lt: a.theme.levelTheme, dp: dp, vg: a.vg)
     )
 
@@ -8199,9 +8213,9 @@ func sortByTextAndLocation(locX: Location, x: Annotation,
                            locY: Location, y: Annotation): int =
   var c = cmpNaturalIgnoreCase(x.text.toRunes,
                                y.text.toRunes); if c != 0: return c
-  c     = cmp(locX.level, locY.level);          if c != 0: return c
-  c     = cmp(locX.row,   locY.row);            if c != 0: return c
-  return  cmp(locX.col,   locY.col)
+  c     = cmp(locX.levelId, locY.levelId);      if c != 0: return c
+  c     = cmp(locX.row,     locY.row);          if c != 0: return c
+  return  cmp(locX.col,     locY.col)
 
 # }}}
 # {{{ noteButton()
@@ -8405,7 +8419,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         searchTerms.anyIt(note.text.toLower.contains(it))):
 
       let
-        idString   = fmt"notes-list:{loc.level}:{loc.row}:{loc.col}"
+        idString   = fmt"notes-list:{loc.levelId}:{loc.row}:{loc.col}"
         id         = koi.hashId(idString)
         textBounds = vg.textBoxBounds(textX, y, textW, note.text)
         height     = textBounds.y2 - textBounds.y1 + NoteVertPad
@@ -8422,11 +8436,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
 
   var rebuildNotesCache = nls.currFilter != nls.prevFilter or
-                          ui.cursor.level != ui.prevCursor.level or
+                          ui.cursor.levelId != ui.prevCursor.levelId or
                           map.levelsDirty or l.dirty or l.annotations.dirty
 
   if map.levelsDirty:
-    for l in map.levels:
+    for _, l in map.levels:
       if l.id notin nls.sectionStates:
         nls.sectionStates[l.id] = true
     map.levelsDirty = false
@@ -8444,11 +8458,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
     case nls.currFilter.scope:
     of nsfMap:
-      for levelIdx, level in map.sortedLevels:
+      for levelId in map.sortedLevelIds:
+        let level = map.levels[levelId]
         var s = newSeq[NotesListCacheEntry]()
         for r,c, note in level.allNotes:
           s.maybeAddCacheEntry(
-            Location(level: levelIdx, row: r, col: c),
+            Location(levelId: levelId, row: r, col: c),
             note, vg
           )
 
@@ -8463,7 +8478,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 #          for region in l.regions
 #        else:
         nls.cache.maybeAddCacheEntry(
-          Location(level: a.ui.cursor.level, row: r, col: c),
+          Location(levelId: a.ui.cursor.levelId, row: r, col: c),
           note, vg
         )
 
@@ -8527,8 +8542,10 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     let note = map.getNote(e.location).get
 
     if levelSections:
-      if prevEntry.isNone or e.location.level != prevEntry.get.location.level:
-        let l = map.levels[e.location.level]
+      if prevEntry.isNone or
+         e.location.levelId != prevEntry.get.location.levelId:
+
+        let l = map.levels[e.location.levelId]
         addNote = koi.sectionHeader(l.getDetailedName(short=true),
                                     nls.sectionStates[l.id])
     else:
@@ -9301,6 +9318,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
         y += SepaHeight
 
 
+  # TODO use clamp
   let yOffs = max((h - 840) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
@@ -10066,14 +10084,15 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
     drawCellCoords = uiCfg.getBoolOrDefault("option.show-cell-coords", true)
 
   with a.ui.cursor:
-    let currLevel = uiCfg.getNaturalOrDefault("current-level", 0)
+    # TODO current-level-id
+    let currLevelId = uiCfg.getNaturalOrDefault("current-level", 0)
 
-    if currLevel > a.doc.map.levels.high:
+    if currLevelId >= a.doc.map.levels.len:
       resetCursorAndViewStart(a)
     else:
-      level = currLevel
-      row   = uiCfg.getNaturalOrDefault("cursor.row",    0)
-      col   = uiCfg.getNaturalOrDefault("cursor.column", 0)
+      levelId = currLevelId
+      row     = uiCfg.getNaturalOrDefault("cursor.row",    0)
+      col   =   uiCfg.getNaturalOrDefault("cursor.column", 0)
 
 # }}}
 

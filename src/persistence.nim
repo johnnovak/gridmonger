@@ -19,6 +19,7 @@ import level
 import links
 import map
 import regions
+import tables
 import rle
 import utils
 
@@ -36,6 +37,7 @@ proc pushDebugIndent() =
   currDebugIndent += DebugIndent
 
 proc popDebugIndent() =
+  # TODO use clamp
   currDebugIndent = max(currDebugIndent - DebugIndent, 0)
 
 template debug(s: string) =
@@ -97,7 +99,7 @@ type
     themeName*:         string
 
     zoomLevel*:         range[MinZoomLevel..MaxZoomLevel]
-    currLevel*:         Natural
+    currLevelId*:       Natural
     cursorRow*:         Natural
     cursorCol*:         Natural
     viewStartRow*:      Natural
@@ -243,9 +245,9 @@ proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum],
 
 # {{{ readLocation()
 proc readLocation(rr): Location =
-  result.level = rr.read(uint16).int
-  result.row = rr.read(uint16)
-  result.col = rr.read(uint16)
+  result.levelId = rr.read(uint16).Natural
+  result.row     = rr.read(uint16)
+  result.col     = rr.read(uint16)
 
 # }}}
 # {{{ readAppState_v1_v2()
@@ -261,10 +263,10 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
 
   # Cursor position
   let maxLevelIndex = NumLevelsLimits.maxInt - 1
-  let currLevel = rr.read(uint16).int
-  checkValueRange(currLevel, "stat.currLevel", max=maxLevelIndex)
+  let currLevelId = rr.read(uint16).int
+  checkValueRange(currLevelId, "stat.currLevelId", max=maxLevelIndex)
 
-  let l = m.levels[currLevel]
+  let l = m.levels[currLevelId]
 
   let cursorRow = rr.read(uint16)
   checkValueRange(cursorRow, "stat.cursorRow", max=l.rows.uint16-1)
@@ -305,7 +307,7 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
     themeName:       themeName,
 
     zoomLevel:       zoomLevel,
-    currLevel:       currLevel,
+    currLevelId:     currLevelId,
     cursorRow:       cursorRow,
     cursorCol:       cursorCol,
     viewStartRow:    viewStartRow,
@@ -325,7 +327,7 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
 
 # }}}
 # {{{ readLinks_v1_v2()
-proc readLinks_v1_v2(rr; levels: seq[Level]): Links =
+proc readLinks_v1_v2(rr; levels: OrderedTable[Natural, Level]): Links =
   debug(fmt"Reading links...")
   pushDebugIndent()
 
@@ -338,14 +340,14 @@ proc readLinks_v1_v2(rr; levels: seq[Level]): Links =
     pushDebugIndent()
 
     let src = readLocation(rr)
-    checkValueRange(src.level, "lnks.srcLevel", max=maxLevelIndex)
-    checkValueRange(src.row, "lnks.srcRow",    max=levels[src.level].rows-1)
-    checkValueRange(src.col, "lnks.srcColumh", max=levels[src.level].cols-1)
+    checkValueRange(src.levelId, "lnks.srcLevel", max=maxLevelIndex)
+    checkValueRange(src.row, "lnks.srcRow",    max=levels[src.levelId].rows-1)
+    checkValueRange(src.col, "lnks.srcColumh", max=levels[src.levelId].cols-1)
 
     let dest = readLocation(rr)
-    checkValueRange(dest.level, "lnks.destLevel", max=maxLevelIndex)
-    checkValueRange(dest.row, "lnks.destRow",    max=levels[dest.level].rows-1)
-    checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.level].cols-1)
+    checkValueRange(dest.levelId, "lnks.destLevel", max=maxLevelIndex)
+    checkValueRange(dest.row, "lnks.destRow",    max=levels[dest.levelId].rows-1)
+    checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.levelId].cols-1)
 
     result.set(src, dest)
     dec(numLinks)
@@ -728,11 +730,11 @@ proc readLevel_v1_v2(rr): Level =
 
 # }}}
 # {{{ readLevelList_v1_v2()
-proc readLevelList_v1_v2(rr): seq[Level] =
+proc readLevelList_v1_v2(rr): OrderedTable[Natural, Level] =
   debug(fmt"Reading level list...")
   pushDebugIndent()
 
-  var levels = newSeq[Level]()
+  var levels = initOrderedTable[Natural, Level]()
 
   if rr.hasSubChunks:
     var ci = rr.enterGroup
@@ -746,7 +748,8 @@ proc readLevelList_v1_v2(rr): seq[Level] =
               fmt"Map cannot contain more than {NumLevelsLimits.maxInt} levels"
             )
 
-          levels.add(readLevel_v1_v2(rr))
+          let level = readLevel_v1_v2(rr)
+          levels[level.id] = level
           rr.exitGroup
         else:
           invalidListChunkError(ci.formatTypeId, FourCC_GRMM_lvls)
@@ -962,7 +965,7 @@ proc writeAppState(rw; s: AppState) =
 
   # Cursor position
   rw.write(s.zoomLevel.uint8)
-  rw.write(s.currLevel.uint16)
+  rw.write(s.currLevelId.uint16)
   rw.write(s.cursorRow.uint16)
   rw.write(s.cursorCol.uint16)
   rw.write(s.viewStartRow.uint16)
@@ -993,7 +996,7 @@ proc writeLinks(rw; links: Links) =
   sort(sortedKeys)
 
   proc writeLocation(loc: Location) =
-    rw.write(loc.level.uint16)
+    rw.write(loc.levelId.uint16)
     rw.write(loc.row.uint16)
     rw.write(loc.col.uint16)
 
@@ -1149,10 +1152,10 @@ proc writeLevel(rw; l: Level) =
 
 # }}}
 # {{{ writeLevelList()
-proc writeLevelList(rw; levels: seq[Level]) =
+proc writeLevelList(rw; levels: OrderedTable[Natural, Level]) =
   rw.beginListChunk(FourCC_GRMM_lvls)
 
-  for l in levels:
+  for l in levels.values:
     writeLevel(rw, l)
 
   rw.endChunk

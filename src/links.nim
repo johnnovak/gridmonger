@@ -17,7 +17,7 @@ using
 
 # {{{ initLinks*()
 proc initLinks*(initialSize: Natural = DefaultInitialSize): Links =
-  result.srcToDest = initOrderedTable[Location, Location](initialSize)
+  result.srcToDest  = initOrderedTable[Location, Location](initialSize)
   result.destToSrcs = initOrderedTable[Location, HashSet[Location]](initialSize)
 
 # }}}
@@ -53,7 +53,7 @@ proc debugSanitise*(l) =
   when defined(DEBUG):
     var dump = false
     for src, dest in l:
-      if src.level > 100 or dest.level > 100:
+      if src.levelId > 1000 or dest.levelId > 1000:
         dump = true
         break
 
@@ -121,11 +121,11 @@ proc getByDest*(l; dest: Location): Option[HashSet[Location]] =
 # }}}
 
 # {{{ filterBySrcInRect*()
-proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural],
+proc filterBySrcInRect*(l; levelId: Natural, rect: Rect[Natural],
                         sel: Option[Selection] = Selection.none): Links =
   result = initLinks()
   var src: Location
-  src.level = level
+  src.levelId = levelId
 
   for r in rect.r1..<rect.r2:
     for c in rect.c1..<rect.c2:
@@ -139,11 +139,11 @@ proc filterBySrcInRect*(l; level: Natural, rect: Rect[Natural],
 
 # }}}
 # {{{ filterByDestInRect*()
-proc filterByDestInRect*(l; level: Natural, rect: Rect[Natural],
+proc filterByDestInRect*(l; levelId: Natural, rect: Rect[Natural],
                          sel: Option[Selection] = Selection.none): Links =
   result = initLinks()
   var dest: Location
-  dest.level = level
+  dest.levelId = levelId
 
   for r in rect.r1..<rect.r2:
     for c in rect.c1..<rect.c2:
@@ -166,56 +166,39 @@ proc addAll*(vl, l) =
 # }}}
 
 # {{{ filterByInRect*()
-proc filterByInRect*(l; level: Natural, rect: Rect[Natural],
+proc filterByInRect*(l; levelId: Natural, rect: Rect[Natural],
                      sel: Option[Selection] = Selection.none): Links =
-  result = l.filterBySrcInRect(level, rect, sel)
-  result.addAll(l.filterByDestInRect(level, rect, sel))
+  result = l.filterBySrcInRect(levelId, rect, sel)
+  result.addAll(l.filterByDestInRect(levelId, rect, sel))
 
 # }}}
 
 # {{{ filterBySrcLevel*()
-proc filterBySrcLevel*(l; level: Natural): Links =
+proc filterBySrcLevel*(l; levelId: Natural): Links =
   result = initLinks()
   for src, dest in l:
-    if src.level == level:
+    if src.levelId == levelId:
       result.set(src, dest)
 
 # }}}
 # {{{ filterByDestLevel*()
-proc filterByDestLevel*(l; level: Natural): Links =
+proc filterByDestLevel*(l; levelId: Natural): Links =
   result = initLinks()
   for src, dest in l:
-    if dest.level == level:
+    if dest.levelId == levelId:
       result.set(src, dest)
 
 # }}}
 # {{{ filterByLevel*()
-proc filterByLevel*(l; level: Natural): Links =
-  result = l.filterBySrcLevel(level)
-  result.addAll(l.filterByDestLevel(level))
+proc filterByLevel*(l; levelId: Natural): Links =
+  result = l.filterBySrcLevel(levelId)
+  result.addAll(l.filterByDestLevel(levelId))
 
 
 # }}}
 
-# {{{ remapLevelIndex*()
-proc remapLevelIndex*(vl; oldIndex, newIndex: Natural) =
-  var links = vl.filterByLevel(oldIndex)
-
-  for src in links.srcToDest.keys: vl.delBySrc(src)
-
-  for src, dest in links:
-    var src = src
-    var dest = dest
-
-    if src.level  == oldIndex: src.level  = newIndex
-    if dest.level == oldIndex: dest.level = newIndex
-
-    vl.set(src, dest)
-
-
-# }}}
 # {{{ shiftLinksInLevel*()
-proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
+proc shiftLinksInLevel*(l; levelId: Natural, rowOffs, colOffs: int,
                         levelRect: Rect[int], wraparound: bool): Links =
   result = initLinks()
 
@@ -223,7 +206,7 @@ proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
     var src = src
     var dest = dest
 
-    if src.level == level:
+    if src.levelId == levelId:
       var r = src.row.int + rowOffs
       var c = src.col.int + colOffs
 
@@ -237,7 +220,7 @@ proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
         else:
           continue
 
-    if dest.level == level:
+    if dest.levelId == levelId:
       var r = dest.row.int + rowOffs
       var c = dest.col.int + colOffs
 
@@ -257,9 +240,9 @@ proc shiftLinksInLevel*(l; level: Natural, rowOffs, colOffs: int,
 
 # {{{ Tests
 when isMainModule:
-  let loc1 = Location(level: 0, row: 0, col: 0)
-  let loc2 = Location(level: 0, row: 1, col: 0)
-  let loc3 = Location(level: 0, row: 0, col: 1)
+  let loc1 = Location(levelId: 0, row: 0, col: 0)
+  let loc2 = Location(levelId: 0, row: 1, col: 0)
+  let loc3 = Location(levelId: 0, row: 0, col: 1)
   var l = initLinks()
 
   assert l.len == 0

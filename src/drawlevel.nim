@@ -16,6 +16,7 @@ import level
 import links
 import rect
 import selection
+import tables
 import utils
 
 
@@ -225,11 +226,13 @@ proc decZoomLevel*(lt; dp) =
 # }}}
 # {{{ numDisplayableRows*()
 proc numDisplayableRows*(dp; height: float): Natural =
+  # TODO use clamp
   max(height / dp.gridSize, 0).int
 
 # }}}
 # {{{ numDisplayableCols*()
 proc numDisplayableCols*(dp; width: float): Natural =
+  # TODO use clamp
   max(width / dp.gridSize, 0).int
 
 # }}}
@@ -2269,11 +2272,11 @@ proc drawLabels(viewBuf: Level; ctx) =
 
 # }}}
 # {{{ drawLinkMarkers()
-proc drawLinkMarkers(map: Map, level: Natural; ctx) =
+proc drawLinkMarkers(map: Map, levelId: Natural; ctx) =
   alias(dp, ctx.dp)
 
   var loc: Location
-  loc.level = level
+  loc.levelId = levelId
 
   forAllViewCells_CellCoords:
     (loc.row, loc.col) = (row, col)
@@ -2281,8 +2284,8 @@ proc drawLinkMarkers(map: Map, level: Natural; ctx) =
     let srcLoc = map.links.getBySrc(loc)
     let destLoc = map.links.getByDest(loc)
 
-    if (srcLoc.isSome  and not isSpecialLevelIndex(srcLoc.get.level)) or
-       (destLoc.isSome and destLoc.get.anyIt(not isSpecialLevelIndex(it.level))):
+    if (srcLoc.isSome  and not isSpecialLevelId(srcLoc.get.levelId)) or
+       (destLoc.isSome and destLoc.get.anyIt(not isSpecialLevelId(it.levelId))):
 
       let x = cellX(viewCol, dp)
       let y = cellY(viewRow, dp)
@@ -2325,6 +2328,7 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
     bufCol = viewCol.toBufCol
 
   let (isCursorActiveNE, isCursorActiveSW) = case orientation
+  # TODO use clamp
     of Horiz:
       (isCursorActive(viewRow,           viewCol, dp),
        isCursorActive(max(viewRow-1, 0), viewCol, dp))
@@ -2627,6 +2631,7 @@ proc drawSelectionHighlight(levelRows, levelCols: Natural; ctx) =
     viewSelStartRow = dp.selStartRow - dp.viewStartRow
     viewSelStartCol = dp.selStartCol - dp.viewStartCol
 
+    # TODO use clamp
     (rows, cols) = if dp.selectionWraparound:
                      (sel.rows.int, sel.cols.int)
                    else:
@@ -2718,9 +2723,11 @@ proc mergeSelectionAndOutlineBuffers(level, viewBuf: Level,
 
     if outlineBuf.isSome:
       let ob = outlineBuf.get
+      # TODO use clamp
       let endRow = min(startRow + selBufLevel.rows-1, ob.rows-1)
       let endCol = min(startCol + selBufLevel.cols-1, ob.cols-1)
 
+      # TODO use clamp
       let sr = max(startRow, 0)
       let sc = max(startCol, 0)
       for r in sr..endRow:
@@ -2730,11 +2737,11 @@ proc mergeSelectionAndOutlineBuffers(level, viewBuf: Level,
 # }}}
 
 # {{{ drawLevel*()
-proc drawLevel*(map: Map, level: Natural; ctx) =
+proc drawLevel*(map: Map, levelId: Natural; ctx) =
   alias(dp, ctx.dp)
   alias(lt, ctx.lt)
   alias(vg, ctx.vg)
-  alias(l, map.levels[level])
+  alias(l, map.levels[levelId])
 
   let viewBuf = if dp.drawLevel:
       newLevelFrom(l,
@@ -2788,7 +2795,7 @@ proc drawLevel*(map: Map, level: Natural; ctx) =
   drawNotes(viewBuf, ctx)
 
   if not drawSelectionBuffer:
-    drawLinkMarkers(map, level, ctx)
+    drawLinkMarkers(map, levelId, ctx)
 
   if lt.shadowInnerWidthFactor > 0: drawInnerShadows(viewBuf, ctx)
   if lt.shadowOuterWidthFactor > 0: drawOuterShadows(viewBuf, ctx)

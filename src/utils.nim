@@ -43,7 +43,7 @@ proc linkFloorToString*(f: Floor): string =
 # {{{ hash*(l: Location)
 proc hash*(l: Location): Hash =
   var h: Hash = 0
-  h = h !& hash(l.level)
+  h = h !& hash(l.levelId)
   h = h !& hash(l.row)
   h = h !& hash(l.col)
   result = !$h
@@ -58,9 +58,10 @@ proc hash*(rc: RegionCoords): Hash =
 
 # }}}
 # {{{ `<`*(a, b: Location)
+# TODO why needed?
 proc `<`*(a, b: Location): bool =
-  if   a.level < b.level: return true
-  elif a.level > b.level: return false
+  if   a.levelId < b.levelId: return true
+  elif a.levelId > b.levelId: return false
 
   elif a.row < b.row: return true
   elif a.row > b.row: return false

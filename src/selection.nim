@@ -40,11 +40,13 @@ proc copyFrom*(dest: var Selection, destRow, destCol: Natural,
   let
     srcRow   = srcRect.r1
     srcCol   = srcRect.c1
+    # TODO use clamp
     srcRows  = max(src.rows - srcRow, 0)
     srcCols  = max(src.cols - srcCol, 0)
     destRows = max(dest.rows - destRow, 0)
     destCols = max(dest.cols - destCol, 0)
 
+    # TODO use clamp
     rows = min(min(srcRows, destRows), srcRect.rows)
     cols = min(min(srcCols, destCols), srcRect.cols)
 

@@ -34,7 +34,7 @@ const
 
 type
   Location* = object
-    level*:     Natural
+    levelId*:   Natural
     row*, col*: Natural
 
   CardinalDir* = enum
@@ -78,14 +78,14 @@ type
     creationTime*: string
     notes*:        string
 
-    levels*:       seq[Level]
+    levels*:       OrderedTable[Natural, Level]
     levelsDirty*:  bool
 
     coordOpts*:    CoordinateOptions
     links*:        Links
 
-    sortedLevelNames*:   seq[string]
-    sortedLevelIndexes*: seq[Natural]
+    sortedLevelIds*:   seq[Natural]
+    sortedLevelNames*: seq[string]
 
 
   Links* = object
@@ -106,9 +106,8 @@ type
     csNumber = 0
     csLetter = 1
 
-
   Level* = ref object
-    id*:                int
+    id*:                Natural
     locationName*:      string
     levelName*:         string
     elevation*:         int
@@ -140,7 +139,7 @@ type
     row*, col*: Natural
 
   Region* = object
-    id*:    int
+    id*:    Natural
     name*:  string
     notes*: string
 

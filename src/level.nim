@@ -14,7 +14,7 @@ using l: Level
 
 const
   # internal ID, never written to disk
-  MoveBufferLevelIndex* = 1_000_000.Natural
+  MoveBufferLevelId* = Natural.high
 
 # {{{ CellGrid
 
@@ -500,9 +500,9 @@ proc calcResizeParams*(
   result = (copyRect, destRow.Natural, destCol.Natural)
 
 # }}}
-# {{{ isSpecialLevelIndex*()
-proc isSpecialLevelIndex*(idx: Natural): bool =
-  idx >= MoveBufferLevelIndex
+# {{{ isSpecialLevelId*()
+proc isSpecialLevelId*(id: Natural): bool =
+  id >= MoveBufferLevelId
 
 # }}}
 
