@@ -20,11 +20,6 @@ func first*[T](iterable: T): auto =
     return v.some
 
 # }}}
-# {{{ isDigit*()
-#proc isDigit*(r: Rune): bool =
-#  ord(r) >= ord('0') and ord(r) <= ord('9')
-
-# }}}
 
 # {{{ durationToFloatMillis*()
 proc durationToFloatMillis*(d: Duration): float64 =
