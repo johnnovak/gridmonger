@@ -251,7 +251,7 @@ proc readLocation(rr): Location =
 
 # }}}
 # {{{ readAppState_v1_v2()
-proc readAppState_v1_v2(rr; m: Map): AppState =
+proc readAppState_v1_v2(rr; map: Map): AppState =
   debug(fmt"Reading app state...")
   pushDebugIndent()
 
@@ -262,11 +262,11 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
   checkValueRange(zoomLevel, "stat.zoomLevel", ZoomLevelLimits)
 
   # Cursor position
-  let maxLevelIndex = NumLevelsLimits.maxInt - 1
-  let currLevelId = rr.read(uint16).int
-  checkValueRange(currLevelId, "stat.currLevelId", max=maxLevelIndex)
+  let maxLevelIndex = NumLevelsLimits.maxInt-1
+  var currLevelIndex = rr.read(uint16).int
+  checkValueRange(currLevelIndex, "stat.currLevelIndex", max=maxLevelIndex)
 
-  let l = m.levels[currLevelId]
+  let l = map.levels[currLevelIndex]
 
   let cursorRow = rr.read(uint16)
   checkValueRange(cursorRow, "stat.cursorRow", max=l.rows.uint16-1)
@@ -307,7 +307,7 @@ proc readAppState_v1_v2(rr; m: Map): AppState =
     themeName:       themeName,
 
     zoomLevel:       zoomLevel,
-    currLevelId:     currLevelId,
+    currLevelId:     currLevelIndex,
     cursorRow:       cursorRow,
     cursorCol:       cursorCol,
     viewStartRow:    viewStartRow,
@@ -334,7 +334,7 @@ proc readLinks_v1_v2(rr; levels: OrderedTable[Natural, Level]): Links =
   var numLinks = rr.read(uint16).int
   checkValueRange(numLinks, "links.numLinks", NumLinksLimits)
 
-  let maxLevelIndex = NumLevelsLimits.maxInt - 1
+  let maxLevelIndex = NumLevelsLimits.maxInt-1
 
   while numLinks > 0:
     pushDebugIndent()
@@ -358,7 +358,7 @@ proc readLinks_v1_v2(rr; levels: OrderedTable[Natural, Level]): Links =
 
 # }}}
 # {{{ readLevelProperties_v1_v2()
-proc readLevelProperties_v1_v2(rr): Level =
+proc readLevelProperties_v1_v2(rr; levelId: Natural): Level =
   debug(fmt"Reading level properties...")
   pushDebugIndent()
 
@@ -384,7 +384,8 @@ proc readLevelProperties_v1_v2(rr): Level =
   let notes = rr.readWStr
   checkStringLength(notes, "lvl.prop.notes", NotesLimits)
 
-  result = newLevel(locationName, levelName, elevation, numRows, numColumns)
+  result = newLevel(locationName, levelName, elevation, numRows, numColumns,
+                    overrideId = levelId.some)
   result.overrideCoordOpts = overrideCoordOpts.bool
   result.notes = notes
 
@@ -644,7 +645,7 @@ proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
 
 # }}}
 # {{{ readLevel_v1_v2()
-proc readLevel_v1_v2(rr): Level =
+proc readLevel_v1_v2(rr; levelId: Natural): Level =
   debug(fmt"Reading level...")
   pushDebugIndent()
 
@@ -705,7 +706,7 @@ proc readLevel_v1_v2(rr): Level =
   if cellCursor.isNone: chunkNotFoundError(FourCC_GRMM_cell)
 
   rr.cursor = propCursor.get
-  var level = readLevelProperties_v1_v2(rr)
+  var level = readLevelProperties_v1_v2(rr, levelId)
 
   rr.cursor = coorCursor.get
   level.coordOpts = readCoordinateOptions_v1_v2(rr, groupChunkId.get)
@@ -735,6 +736,7 @@ proc readLevelList_v1_v2(rr): OrderedTable[Natural, Level] =
   pushDebugIndent()
 
   var levels = initOrderedTable[Natural, Level]()
+  var levelId = 0
 
   if rr.hasSubChunks:
     var ci = rr.enterGroup
@@ -748,8 +750,12 @@ proc readLevelList_v1_v2(rr): OrderedTable[Natural, Level] =
               fmt"Map cannot contain more than {NumLevelsLimits.maxInt} levels"
             )
 
-          let level = readLevel_v1_v2(rr)
-          levels[level.id] = level
+          # The level IDs must be set to their indices in the map file to
+          # ensure they are in sync with link (see writeLinks()).
+          let level = readLevel_v1_v2(rr, levelId)
+          levels[levelId] = level
+          inc(levelId)
+
           rr.exitGroup
         else:
           invalidListChunkError(ci.formatTypeId, FourCC_GRMM_lvls)
@@ -926,21 +932,21 @@ proc readMapFile*(path: string): tuple[map: Map,
 
     # Load chunks
     rr.cursor = mapCursor.get
-    let m = readMap_v1_v2(rr)
+    let map = readMap_v1_v2(rr)
 
     rr.cursor = levelListCursor.get
-    m.levels = readLevelList_v1_v2(rr)
-    m.sortLevels
+    map.levels = readLevelList_v1_v2(rr)
+    map.sortLevels
 
     rr.cursor = linksCursor.get
-    m.links = readLinks_v1_v2(rr, m.levels)
+    map.links = readLinks_v1_v2(rr, map.levels)
 
     if appStateCursor.isSome:
       rr.cursor = appStateCursor.get
-      let appState = readAppState_v1_v2(rr, m)
-      result = (m, appState.some)
+      let appState = readAppState_v1_v2(rr, map)
+      result = (map, appState.some)
     else:
-      result = (m, AppState.none)
+      result = (map, AppState.none)
 
   except MapReadError as e:
     raise e
@@ -958,14 +964,17 @@ using rw: RiffWriter
 var g_runLengthEncoder: RunLengthEncoder
 
 # {{{ writeAppState()
-proc writeAppState(rw; s: AppState) =
+proc writeAppState(rw; map: Map, s: AppState) =
   rw.beginChunk(FourCC_GRMM_stat)
 
   rw.writeBStr(s.themeName)
 
+  let currLevelIndex = map.sortedLevelIds.find(s.currLevelId)
+  assert(currLevelIndex > -1)
+
   # Cursor position
   rw.write(s.zoomLevel.uint8)
-  rw.write(s.currLevelId.uint16)
+  rw.write(currLevelIndex.uint16)
   rw.write(s.cursorRow.uint16)
   rw.write(s.cursorCol.uint16)
   rw.write(s.viewStartRow.uint16)
@@ -986,22 +995,33 @@ proc writeAppState(rw; s: AppState) =
 
 # }}}
 # {{{ writeLinks()
-proc writeLinks(rw; links: Links) =
+proc writeLinks(rw; map: Map) =
   rw.beginChunk(FourCC_GRMM_lnks)
-  rw.write(links.len.uint16)
+  rw.write(map.links.len.uint16)
 
-  var sortedKeys = collect(newSeqOfCap(links.len)):
-    for k in links.sources: k
+  # We map level IDs to their indices in sortedLevelIds when writing the
+  # links. Because we write the levels in the order they appear in
+  # sortedLevelIds, the indices will point to the correct levels.
+  #
+  # When loading the levels back, we assign the the first level ID 0, the
+  # second ID 1, etc. (their indices in the map file) to ensure the level IDs
+  # are in sync with the links.
+
+  let levelIdToIndex = collect:
+    for idx, id in map.sortedLevelIds: {id: idx}
+
+  var sortedKeys = collect:
+    for k in map.links.sources: k
 
   sort(sortedKeys)
 
   proc writeLocation(loc: Location) =
-    rw.write(loc.levelId.uint16)
+    rw.write(levelIdToIndex[loc.levelId].uint16)
     rw.write(loc.row.uint16)
     rw.write(loc.col.uint16)
 
   for src in sortedKeys:
-    let dest = links.getBySrc(src).get
+    let dest = map.links.getBySrc(src).get
     writeLocation(src)
     writeLocation(dest)
 
@@ -1152,51 +1172,53 @@ proc writeLevel(rw; l: Level) =
 
 # }}}
 # {{{ writeLevelList()
-proc writeLevelList(rw; levels: OrderedTable[Natural, Level]) =
+proc writeLevelList(rw; map: Map) =
   rw.beginListChunk(FourCC_GRMM_lvls)
 
-  for l in levels.values:
-    writeLevel(rw, l)
+  # We must write the levels in sortedLevelIds order to ensure the links
+  # are in sync with the level IDs (see writeLinks()).
+  for levelId in map.sortedLevelIds:
+    writeLevel(rw, map.levels[levelId])
 
   rw.endChunk
 
 # }}}
 # {{{ writeMapProperties()
-proc writeMapProperties(rw; m: Map) =
+proc writeMapProperties(rw; map: Map) =
   rw.beginChunk(FourCC_GRMM_prop)
 
   rw.write(CurrentMapVersion.uint16)
-  rw.writeWStr(m.title)
-  rw.writeWStr(m.game)
-  rw.writeWStr(m.author)
-  rw.writeBStr(m.creationTime)
-  rw.writeWStr(m.notes)
+  rw.writeWStr(map.title)
+  rw.writeWStr(map.game)
+  rw.writeWStr(map.author)
+  rw.writeBStr(map.creationTime)
+  rw.writeWStr(map.notes)
 
   rw.endChunk
 
 # }}}
 # {{{ writeMap()
-proc writeMap(rw; m: Map) =
+proc writeMap(rw; map: Map) =
   rw.beginListChunk(FourCC_GRMM_map)
 
-  writeMapProperties(rw, m)
-  writeCoordinateOptions(rw, m.coordOpts)
+  writeMapProperties(rw, map)
+  writeCoordinateOptions(rw, map.coordOpts)
 
   rw.endChunk
 
 # }}}
 # {{{ writeMapFile*()
-proc writeMapFile*(m: Map, appState: AppState, path: string) =
+proc writeMapFile*(map: Map, appState: AppState, path: string) =
   initDebugIndent()
 
   var rw: RiffWriter
   try:
     rw = createRiffFile(path, FourCC_GRMM)
 
-    writeMap(rw, m)
-    writeLevelList(rw, m.levels)
-    writeLinks(rw, m.links)
-    writeAppState(rw, appState)
+    writeMap(rw, map)
+    writeLevelList(rw, map)
+    writeLinks(rw, map)
+    writeAppState(rw, map, appState)
 
   except MapReadError as e:
     raise e

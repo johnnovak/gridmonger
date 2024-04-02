@@ -397,12 +397,13 @@ proc calcRegionResizeOffsets*(
 
 # }}}
 
-# {{{ newLevelFrom*()
-proc newLevelFrom*(m; srcLevelId: Natural, srcRect: Rect[Natural]): Level =
+proc newLevelFrom*(m; srcLevelId: Natural, srcRect: Rect[Natural],
+                   overrideId: Option[Natural] = Natural.none): Level =
+
   let src = m.levels[srcLevelId]
   alias(ro, src.regionOpts)
 
-  var dest = newLevelFrom(src, srcRect)
+  var dest = newLevelFrom(src, srcRect, overrideId=overrideId)
 
   # Copy regions
   let (copyRect, _, _) = calcNewLevelFromParams(src, srcRect)

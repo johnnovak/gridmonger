@@ -2751,13 +2751,15 @@ proc drawLevel*(map: Map, levelId: Natural; ctx) =
           dp.viewStartRow + dp.viewRows,
           dp.viewStartCol + dp.viewCols
         ),
-        border = ViewBufBorder
+        border = ViewBufBorder,
+        overrideId = 0.Natural.some
       )
     else:
       newLevel(
         locationName = "", levelName = "", elevation = 0,
         rows = dp.viewRows + ViewBufBorder*2,
-        cols = dp.viewCols + ViewBufBorder*2
+        cols = dp.viewCols + ViewBufBorder*2,
+        overrideId = 0.Natural.some
       )
 
   assert dp.viewStartRow + dp.viewRows <= l.rows

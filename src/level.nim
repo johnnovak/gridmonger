@@ -12,9 +12,7 @@ import selection
 
 using l: Level
 
-const
-  # internal ID, never written to disk
-  MoveBufferLevelId* = Natural.high
+const MoveBufferLevelId* = Natural.high
 
 # {{{ CellGrid
 
@@ -309,9 +307,9 @@ proc eraseOrphanedWalls*(l; r,c: Natural) =
 # {{{ eraseCellWalls*()
 proc eraseCellWalls*(l; r,c: Natural) =
   l.setWall(r,c, dirN, wNone)
-  l.setWall(r,c, dirW,  wNone)
+  l.setWall(r,c, dirW, wNone)
   l.setWall(r,c, dirS, wNone)
-  l.setWall(r,c, dirE,  wNone)
+  l.setWall(r,c, dirE, wNone)
 
 # }}}
 # {{{ eraseCell*()
@@ -527,20 +525,24 @@ const DefaultRegionOpts = RegionOptions(
 
 proc newLevel*(locationName, levelName: string, elevation: int,
                rows, cols: Natural,
-               overrideCoordOpts: bool = false,
+               overrideCoordOpts = false,
                coordOpts: CoordinateOptions = DefaultCoordOpts,
                regionOpts: RegionOptions = DefaultRegionOpts,
                notes: string = "",
-               initRegions: bool = true): Level =
+               initRegions = true,
+               overrideId: Option[Natural] = Natural.none): Level =
 
   var l = new Level
 
-  l.id = g_levelIdCounter
-  inc(g_levelIdCounter)
+  if overrideId.isSome:
+    l.id = overrideId.get
+  else:
+    l.id = g_levelIdCounter
+    inc(g_levelIdCounter)
 
   l.locationName = locationName
-  l.levelName = levelName
-  l.elevation = elevation
+  l.levelName    = levelName
+  l.elevation    = elevation
 
   l.overrideCoordOpts = overrideCoordOpts
   l.coordOpts = coordOpts
@@ -565,8 +567,8 @@ proc calcNewLevelFromParams*(
   srcLevel: Level, srcRect: Rect[Natural], border: Natural = 0
 ): tuple[copyRect: Rect[Natural], destRow, destCol: Natural] =
 
-  assert srcRect.r1 < srcLevel.rows
-  assert srcRect.c1 < srcLevel.cols
+  assert srcRect.r1  < srcLevel.rows
+  assert srcRect.c1  < srcLevel.cols
   assert srcRect.r2 <= srcLevel.rows
   assert srcRect.c2 <= srcLevel.cols
 
@@ -601,7 +603,8 @@ proc calcNewLevelFromParams*(
 # NOTE: This method doesn't copy the regions.
 
 proc newLevelFrom*(srcLevel: Level, srcRect: Rect[Natural],
-                   border: Natural = 0): Level =
+                   border: Natural = 0,
+                   overrideId: Option[Natural] = Natural.none): Level =
 
   let (copyRect, destRow, destCol) = calcNewLevelFromParams(srcLevel, srcRect,
                                                             border)
@@ -612,7 +615,8 @@ proc newLevelFrom*(srcLevel: Level, srcRect: Rect[Natural],
     cols = srcRect.cols + border*2,
     srcLevel.overrideCoordOpts, srcLevel.coordOpts, srcLevel.regionOpts,
     srcLevel.notes,
-    initRegions=false
+    initRegions = false,
+    overrideId = overrideId
   )
 
   result.copyCellsAndAnnotationsFrom(destRow, destCol, srcLevel, copyRect)

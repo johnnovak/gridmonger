@@ -771,15 +771,13 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
       levelId = loc.levelId
       l = m.levels[levelId]
 
+    # Propagate ID as this is the same level, just resized
     var newLevel = newLevel(l.locationName, l.levelName, l.elevation,
                             newRows, newCols,
                             l.overrideCoordOpts, l.coordOpts,
                             l.regionOpts,
                             l.notes,
-                            initRegions=false)
-
-    # Propagate ID as this is the same level, just resized
-    newLevel.id = levelId
+                            initRegions=false, overrideId=levelId.some)
 
     newLevel.copyCellsAndAnnotationsFrom(destRow, destCol, l, copyRect)
 
@@ -846,12 +844,10 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
                                           newLevelRect, wraparound=false)
 
   let action = proc (m: var Map): UndoStateData =
-    let levelId  = loc.levelId
-    var newLevel = m.newLevelFrom(levelId, cropRect)
+    let levelId = loc.levelId
 
     # Propagate ID as this is the same level, just cropped
-    newLevel.id = levelId
-
+    let newLevel = m.newLevelFrom(levelId, cropRect, overrideId=levelId.some)
     m.setLevel(newLevel)
 
     # Adjust links
@@ -907,17 +903,15 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
+    # Propagate ID as this is the same level, just nudged
     var l = newLevel(
       sb.level.locationName, sb.level.levelName, sb.level.elevation,
       sb.level.rows, sb.level.cols,
       sb.level.overrideCoordOpts, sb.level.coordOpts,
       sb.level.regionOpts,
       sb.level.notes,
-      initRegions=false
+      initRegions=false, overrideId=levelId.some
     )
-
-    # Propagate ID as this is the same level, just nudged
-    l.id = levelId
 
     if wraparound:
       discard l.pasteWithWraparound(destRow=rowOffs, destCol=colOffs,

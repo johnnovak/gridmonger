@@ -185,11 +185,11 @@ Map links chunk
 
     numLinks records of:
 
-      UINT16  srcLevel          (max=numLevels-1)
+      UINT16  srcLevelIndex     (max=numLevels-1)
       UINT16  srcRow            (max=numRows-1    of the given level)
       UINT16  srcColumn         (max=numColumns-1 of the given level)
 
-      UINT16  destLevel         (max=numLevel-1)
+      UINT16  destLevelIndex    (max=numLevel-1)
       UINT16  destRow           (max=numRows-1    of the given level)
       UINT16  destColumn        (max=numColumns-1 of the given level)
 
@@ -205,7 +205,7 @@ App state chunks (in 'stat' group chunk, optional)
         '/', '\', ':', '*', '?', '"', '<', '>', '|', '^', <zero byte>
 
     UINT8   zoomLevel           (min=1, max=20)
-    UINT8   currLevel           (max=numLevels-1)
+    UINT8   currLevelIndex      (max=numLevels-1)
     UINT16  cursorRow           (max=numRows-1    of the given level)
     UINT16  cursorColumn        (max=numColumns-1 of the given level)
     UINT16  viewStartRow        (max=numRows-1    of the given level)
@@ -237,7 +237,7 @@ App state chunks (in 'stat' group chunk, optional)
 
     numLevels records of:
 
-        UINT32   levelId
+        UINT32   levelIndex
         UINT8    levelSection     (0=closed, 1=open)
 
         if numRegions > 0 for the level (enableRegions can still be 0):
@@ -254,9 +254,9 @@ Version 4
 [Gridmonger v1.2.0 - 2024-04-22]
 
   - Remove redundant region coordinates from the 'regn' chunk.
-  - Convert 'disp' chunk into a group chunk with multiple subchunks and:
-    - Add 'optWraparound' to the 'opts' subchunk.
-    - Add 'notl' subchunk.
+  - Convert 'disp' chunk into a group chunk with multiple subchunks and
+    - add 'optWraparound' to the 'opts' subchunk.
+    - add 'notl' subchunk.
 
 
 Version 3

@@ -107,7 +107,9 @@ type
     csLetter = 1
 
   Level* = ref object
+    # Internal ID, never written to disk
     id*:                Natural
+
     locationName*:      string
     levelName*:         string
     elevation*:         int
@@ -139,7 +141,9 @@ type
     row*, col*: Natural
 
   Region* = object
+    # Internal ID, never written to disk
     id*:    Natural
+
     name*:  string
     notes*: string
 
