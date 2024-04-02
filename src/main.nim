@@ -16,6 +16,7 @@ import std/sets
 import std/streams
 import std/strformat
 import std/strutils except strip, splitWhitespace
+import std/sugar
 import std/tables
 import std/times
 import std/unicode
@@ -935,8 +936,9 @@ proc sc(sc: AppShortcut): QuickRefItem =
   QuickRefItem(kind: qkShortcut, shortcut: sc)
 
 proc sc(sc: seq[AppShortcut], sepa = '/'; a): QuickRefItem =
-  var shortcuts: seq[KeyShortcut] = @[]
-  for s in sc: shortcuts.add(a.ui.shortcuts[s][0])
+  let shortcuts = collect:
+    for s in sc: a.ui.shortcuts[s][0]
+
   QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts, sepa: sepa)
 
 proc sc(sc: KeyShortcut): QuickRefItem =
@@ -1523,10 +1525,9 @@ proc toStr(k: KeyShortcut): string =
   s.join("+")
 
 proc toStr(sc: AppShortcut; a; idx = -1): string =
-  var s: seq[string] = @[]
   if idx == -1:
-    for k in a.ui.shortcuts[sc]:
-      s.add(k.toStr)
+    var s = collect:
+      for k in a.ui.shortcuts[sc]: k.toStr
     result = s.join("/")
   else:
     result = a.ui.shortcuts[sc][idx].toStr
@@ -4952,6 +4953,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
   if dlg.kind in {akComment, akIndexed}:
     if dlg.text == "":
       validationErrors.add(mkValidationError("Text is mandatory"))
+
   if dlg.kind == akCustomId:
     if dlg.customId == "":
       validationErrors.add(mkValidationError("ID is mandatory"))
@@ -8062,11 +8064,9 @@ proc renderToolsPane(x, y, w, h: float; a) =
   )
 
   # Floor colours
-  var floorColors = newSeqOfCap[Color](lt.floorBackgroundColor.len)
-
-  for fc in 0..lt.floorBackgroundColor.high:
-    let c = calcBlendedFloorColor(fc, lt.floorTransparent, lt)
-    floorColors.add(c)
+  var floorColors = collect:
+    for fc in 0..lt.floorBackgroundColor.high:
+      calcBlendedFloorColor(fc, lt.floorTransparent, lt)
 
   koi.radioButtons(
     x = colorX,
@@ -9033,9 +9033,8 @@ proc renderThemeEditorPane(x, y, w, h: float; a) =
 
   let buttonsDisabled = koi.isDialogOpen()
 
-  var themeNames = newSeq[string]()
-  for t in a.theme.themeNames:
-    themeNames.add(t.name)
+  let themeNames = collect:
+    for t in a.theme.themeNames: t.name
 
   var themeIndex = a.theme.currThemeIndex
 

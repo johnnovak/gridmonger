@@ -1,4 +1,5 @@
 import std/options
+import std/sugar
 import std/strutils
 import std/tables
 
@@ -59,9 +60,8 @@ proc numRegions*(r): Natural = r.len
 # }}}
 # {{{ regionNames*()
 proc regionNames*(r): seq[string] =
-  result = @[]
-  for r in r.values:
-    result.add(r.name)
+  result = collect:
+    for r in r.values: r.name
 
 # }}}
 

@@ -1,6 +1,7 @@
 import std/algorithm
 import std/options
 import std/sets
+import std/sugar
 import std/tables
 import std/unicode
 
@@ -60,12 +61,11 @@ proc sortLevels*(m) =
                                   b.level.levelName.toRunes)
   )
 
-  m.sortedLevelIds   = @[]
-  m.sortedLevelNames = @[]
+  m.sortedLevelIds = collect:
+    for id, _ in m.levels: id
 
-  for _, level in m.levels:
-    m.sortedLevelIds.add(level.id)
-    m.sortedLevelNames.add(level.getDetailedName)
+  m.sortedLevelNames = collect:
+    for _, level in m.levels: level.getDetailedName
 
 # }}}
 # {{{ hasLevels*()

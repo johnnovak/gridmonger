@@ -1,5 +1,6 @@
 import std/algorithm
 import std/options
+import std/sugar
 import std/tables
 
 import common
@@ -81,11 +82,9 @@ iterator allAnnotations*(a): tuple[row, col: Natural, annotation: Annotation] =
 # }}}
 # {{{ delAnnotations*()
 proc delAnnotations*(a; rect: Rect[Natural]) =
-  var toDel: seq[(Natural, Natural)]
-
-  for r,c, _ in a.allAnnotations:
-    if rect.contains(r,c):
-      toDel.add((r,c))
+  let toDel = collect:
+    for r,c, _ in a.allAnnotations:
+      if rect.contains(r,c): (r,c)
 
   for (r,c) in toDel:
     a.delAnnotation(r,c)
@@ -117,10 +116,9 @@ iterator allNotes*(a): tuple[row, col: Natural, annotation: Annotation] =
 # }}}
 # {{{ reindexNotes*()
 proc reindexNotes*(a) =
-  var keys: seq[int] = @[]
-  for k, n in a.annotations:
-    if n.kind == akIndexed:
-      keys.add(k)
+  var keys = collect:
+    for k, n in a.annotations:
+      if n.kind == akIndexed: k
 
   sort(keys)
   for i, k in keys:
