@@ -88,12 +88,123 @@ proc delLevel*(m; levelId: Natural) =
 
 # }}}
 
-# {{{ allNotes*()
-iterator allNotes*(m): tuple[loc: Location, note: Annotation] =
-  for levelId, l in m.levels:
-    for note in l.allNotes:
+# {{{ coordOptsForLevel*()
+func coordOptsForLevel*(m; levelId: Natural): CoordinateOptions =
+  let l = m.levels[levelId]
+  if l.overrideCoordOpts: l.coordOpts else: m.coordOpts
+
+# }}}
+
+# {{{ getRegionRect()
+proc getRegionRect(m; levelId: Natural, rc: RegionCoords): Rect[Natural] =
+  let l = m.levels[levelId]
+  var r: Rect[Natural]
+
+  with l.regionOpts:
+    r.c1 = rc.col * colsPerRegion
+    r.c2 = min(r.c1 + colsPerRegion, l.cols)
+
+    case m.coordOptsForLevel(levelId).origin
+    of coNorthWest:
+      r.r1 = rc.row * rowsPerRegion
+      r.r2 = min(r.r1 + rowsPerRegion, l.rows)
+
+    # TODO use clamp
+    of coSouthWest:
+      r.r2 = max(l.rows - rc.row*rowsPerRegion, 0)
+      r.r1 = max(r.r2.int - rowsPerRegion, 0)
+
+  result = r
+
+# }}}
+# {{{ getRegionCoords*()
+proc getRegionCoords*(m; loc: Location): RegionCoords =
+  let
+    l = m.levels[loc.levelId]
+
+    # TODO use clamp
+    row = case m.coordOptsForLevel(loc.levelId).origin
+          of coNorthWest: loc.row
+          of coSouthWest: max((l.rows-1).int - loc.row, 0)
+
+  result.row = row     div l.regionOpts.rowsPerRegion
+  result.col = loc.col div l.regionOpts.colsPerRegion
+
+# }}}
+# {{{ getRegionCenterLocation*()
+proc getRegionCenterLocation*(m; levelId: Natural,
+                              rc: RegionCoords): tuple[row, col: Natural] =
+  let
+    l = m.levels[levelId]
+    r = m.getRegionRect(levelId, rc)
+
+  let
+    centerRow = min(r.r1 + (r.r2-r.r1-1) div 2, l.rows-1)
+    centerCol = min(r.c1 + (r.c2-r.c1-1) div 2, l.cols-1)
+
+  (centerRow.Natural, centerCol.Natural)
+
+# }}}
+# {{{ reallocateRegions*()
+proc reallocateRegions*(m; levelId: Natural, oldCoordOpts: CoordinateOptions,
+                        oldRegionOpts: RegionOptions, oldRegions: Regions) =
+
+  let
+    l = m.levels[levelId]
+    coordOpts = m.coordOptsForLevel(levelId)
+    flipVert = coordOpts.origin != oldCoordOpts.origin
+
+  var index = 1
+
+  l.regions = initRegions()
+
+  for rc in l.allRegionCoords:
+    let oldRc = if flipVert:
+                  RegionCoords(row: l.regionRows(oldRegionOpts)-1 - rc.row,
+                               col: rc.col)
+                else: rc
+
+    let region = oldRegions[oldRc]
+
+    if region.isSome and not region.get.isUntitledRegion:
+      l.regions[rc] = region.get
+    else:
+      let region = initRegion(name=l.regions.nextUntitledRegionName(index))
+      l.regions[rc] = region
+
+# }}}
+# {{{ calcRegionResizeOffsets*()
+proc calcRegionResizeOffsets*(
+  m; levelId: Natural, newRows, newCols: Natural, anchor: Direction
+ ): tuple[rowOffs, colOffs: int] =
+
+  let l = m.levels[levelId]
+  let srcRect = getSrcRectAlignedToDestRect(l, newRows, newCols, anchor)
+
+  with l.regionOpts:
+    result.colOffs = -srcRect.c1 div colsPerRegion
+
+    result.rowOffs = (case m.coordOptsForLevel(levelId).origin
+                      of coNorthWest: -srcRect.r1
+                      of coSouthWest:
+                        -(newRows - srcRect.r2)) div rowsPerRegion
+
+# }}}
+
+# {{{ regionNotes*()
+iterator regionNotes*(
+  m; levelId: Natural, rc: RegionCoords
+): tuple[loc: Location, note: Annotation] =
+
+  let
+    level = m.levels[levelId]
+    rect  = m.getRegionRect(levelId, rc)
+
+  for note in level.allNotes:
+    if rect.contains(note.row, note.col):
       yield (Location(levelId: levelId, row: note.row, col: note.col),
              note.annotation)
+
 # }}}
 # {{{ hasNote*()
 proc hasNote*(m; loc: Location): bool {.inline.} =
@@ -260,7 +371,6 @@ proc getLinkedLocations*(m; loc: Location): HashSet[Location] =
         result.incl(src)
 
 # }}}
-
 # {{{ normaliseLinkedStairs*()
 proc normaliseLinkedStairs*(m; levelId: Natural) =
   let l = m.levels[levelId]
@@ -292,108 +402,6 @@ proc deleteLinksFromOrToLevel*(m; levelId: Natural) =
   var linksToDelete = m.links.filterByLevel(levelId)
   for src in linksToDelete.sources:
     m.links.delBySrc(src)
-
-# }}}
-
-# {{{ coordOptsForLevel*()
-func coordOptsForLevel*(m; levelId: Natural): CoordinateOptions =
-  let l = m.levels[levelId]
-  if l.overrideCoordOpts: l.coordOpts else: m.coordOpts
-
-# }}}
-# {{{ getRegionCoords*()
-proc getRegionCoords*(m; loc: Location): RegionCoords =
-  let
-    l = m.levels[loc.levelId]
-
-    # TODO use clamp
-    row = case m.coordOptsForLevel(loc.levelId).origin
-          of coNorthWest: loc.row
-          of coSouthWest: max((l.rows-1).int - loc.row, 0)
-
-  result.row = row     div l.regionOpts.rowsPerRegion
-  result.col = loc.col div l.regionOpts.colsPerRegion
-
-# }}}
-# {{{ getRegionRect*()
-proc getRegionRect*(m; levelId: Natural, rc: RegionCoords): Rect[Natural] =
-  let l = m.levels[levelId]
-  var r: Rect[Natural]
-
-  with l.regionOpts:
-    r.c1 = rc.col * colsPerRegion
-    r.c2 = min(r.c1 + colsPerRegion, l.cols)
-
-    case m.coordOptsForLevel(levelId).origin
-    of coNorthWest:
-      r.r1 = rc.row * rowsPerRegion
-      r.r2 = min(r.r1 + rowsPerRegion, l.rows)
-
-    # TODO use clamp
-    of coSouthWest:
-      r.r2 = max(l.rows - rc.row*rowsPerRegion, 0)
-      r.r1 = max(r.r2.int - rowsPerRegion, 0)
-
-  result = r
-
-# }}}
-# {{{ getRegionCenterLocation*()
-proc getRegionCenterLocation*(m; levelId: Natural,
-                              rc: RegionCoords): tuple[row, col: Natural] =
-  let
-    l = m.levels[levelId]
-    r = m.getRegionRect(levelId, rc)
-
-  let
-    centerRow = min(r.r1 + (r.r2-r.r1-1) div 2, l.rows-1)
-    centerCol = min(r.c1 + (r.c2-r.c1-1) div 2, l.cols-1)
-
-  (centerRow.Natural, centerCol.Natural)
-
-# }}}
-# {{{ reallocateRegions*()
-proc reallocateRegions*(m; levelId: Natural, oldCoordOpts: CoordinateOptions,
-                        oldRegionOpts: RegionOptions, oldRegions: Regions) =
-
-  let
-    l = m.levels[levelId]
-    coordOpts = m.coordOptsForLevel(levelId)
-    flipVert = coordOpts.origin != oldCoordOpts.origin
-
-  var index = 1
-
-  l.regions = initRegions()
-
-  for rc in l.allRegionCoords:
-    let oldRc = if flipVert:
-                  RegionCoords(row: l.regionRows(oldRegionOpts)-1 - rc.row,
-                               col: rc.col)
-                else: rc
-
-    let region = oldRegions[oldRc]
-
-    if region.isSome and not region.get.isUntitledRegion:
-      l.regions[rc] = region.get
-    else:
-      let region = initRegion(name=l.regions.nextUntitledRegionName(index))
-      l.regions[rc] = region
-
-# }}}
-# {{{ calcRegionResizeOffsets*()
-proc calcRegionResizeOffsets*(
-  m; levelId: Natural, newRows, newCols: Natural, anchor: Direction
- ): tuple[rowOffs, colOffs: int] =
-
-  let l = m.levels[levelId]
-  let srcRect = getSrcRectAlignedToDestRect(l, newRows, newCols, anchor)
-
-  with l.regionOpts:
-    result.colOffs = -srcRect.c1 div colsPerRegion
-
-    result.rowOffs = (case m.coordOptsForLevel(levelId).origin
-                      of coNorthWest: -srcRect.r1
-                      of coSouthWest:
-                        -(newRows - srcRect.r2)) div rowsPerRegion
 
 # }}}
 

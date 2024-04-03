@@ -518,13 +518,22 @@ type
     grouping:       int
     cache:          seq[NotesListCacheEntry]
     sectionStates:  Table[int, bool]
-    regionStates:   Table[int, bool]
+    regionStates:   Table[RegionCoords, bool]
     activeId:       Option[ItemId]
 
+  NotesListCacheEntryKind = enum
+    nckNote, nckLevel, nckRegion
+
   NotesListCacheEntry = object
-    id:             ItemId
-    location:       Location
-    height:         float
+    case kind*: NotesListCacheEntryKind
+    of nckNote:
+      id:           ItemId
+      location:     Location
+      height:       float
+    of nckLevel:
+      levelId:      Natural
+    of nckRegion:
+      regionCoords: RegionCoords
 
   NotesListFilter = object
     scope:          NoteScopeFilter
@@ -8364,13 +8373,17 @@ proc renderNotesListPane(x, y, w, h: float; a) =
                 style = a.theme.buttonStyle):
     for id in nls.sectionStates.keys:
       nls.sectionStates[id] = true
-      nls.regionStates[id]  = true
+
+    for rc in nls.regionStates.keys:
+      nls.regionStates[rc] = true
 
   if koi.button(wx+244, wy, w=24, wh, IconMinusSmall, tooltip = "Collapse all",
                 style = a.theme.buttonStyle):
     for id in nls.sectionStates.keys:
       nls.sectionStates[id] = false
-      nls.regionStates[id]  = false
+
+    for rc in nls.regionStates.keys:
+      nls.regionStates[rc] = false
 
 
   # Sort functions
@@ -8392,8 +8405,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   # Rebuild/reset caches if needed
   const
-    NoteHorizOffs  = -8
-    NoteVertPad    = 18
+    NoteHorizOffs = -8
+    NoteVertPad   = 18
 
   let
     markerX = LeftPad + NoteHorizOffs
@@ -8423,7 +8436,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         height     = textBounds.y2 - textBounds.y1 + NoteVertPad
 
       s.add(
-        NotesListCacheEntry(id: id, location: loc, height: height)
+        NotesListCacheEntry(kind: nckNote, id: id, location: loc,
+                            height: height)
       )
 
   proc sortCacheEntries(s: var seq[NotesListCacheEntry],
@@ -8441,6 +8455,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     for _, l in map.levels:
       if l.id notin nls.sectionStates:
         nls.sectionStates[l.id] = true
+
+      if l.regionOpts.enabled:
+        for regionCoords, _ in l.regions.sortedRegions:
+          nls.regionStates[regionCoords] = true
+
     map.levelsDirty = false
 
   if l.annotations.dirty:
@@ -8459,31 +8478,46 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       for levelId in map.sortedLevelIds:
         let level = map.levels[levelId]
         var s = newSeq[NotesListCacheEntry]()
+
         for r,c, note in level.allNotes:
           s.maybeAddCacheEntry(
             Location(levelId: levelId, row: r, col: c),
             note, vg
           )
 
-        sortCacheEntries(s, nls.currFilter.ordering)
-        nls.cache.add(s)
+        if s.len > 0:
+          nls.cache.add(NotesListCacheEntry(kind: nckLevel, levelId: levelId))
+
+          sortCacheEntries(s, nls.currFilter.ordering)
+          nls.cache.add(s)
       # TODO regions
 
     of nsfLevel:
-      for r,c, note in l.allNotes:
-#        if l.regionOpts.enabled:
-#          var s = newSeq[NotesListCacheEntry]()
-#          for region in l.regions
-#        else:
-        nls.cache.maybeAddCacheEntry(
-          Location(levelId: a.ui.cursor.levelId, row: r, col: c),
-          note, vg
-        )
+      let levelId = l.id
 
-#      if not l.regionOpts.enabled:
-      sortCacheEntries(nls.cache, nls.currFilter.ordering)
+      if l.regionOpts.enabled:
+        for regionCoords, region in l.regions.sortedRegions:
+          var s = newSeq[NotesListCacheEntry]()
 
-      # TODO regions
+          for loc, note in map.regionNotes(levelId, regionCoords):
+            s.maybeAddCacheEntry(
+              Location(levelId: levelId, row: loc.row, col: loc.col),
+              note, vg
+            )
+          if s.len > 0:
+            nls.cache.add(NotesListCacheEntry(kind: nckRegion,
+                                              regionCoords: regionCoords))
+
+            sortCacheEntries(s, nls.currFilter.ordering)
+            nls.cache.add(s)
+
+      else:
+        for r,c, note in l.allNotes:
+          nls.cache.maybeAddCacheEntry(
+            Location(levelId: levelId, row: r, col: c),
+            note, vg
+          )
+        sortCacheEntries(nls.cache, nls.currFilter.ordering)
 
     of nsfRegion:
       # TODO
@@ -8512,16 +8546,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Render note buttons
   setFont()
 
-  var
-    prevEntry: Option[NotesListCacheEntry]
-    addNote = false
-
-  let (levelSections, regionSections) =
-    case nls.currFilter.scope:
-    of nsfMap:    (true,  true)
-    of nsfLevel:  (false, true)
-    of nsfRegion: (false, false)
-
   # Sync current note to cursor
   let currNote = map.getNote(ui.cursor)
 
@@ -8533,23 +8557,28 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   var startY, itemHeight: float
 
-  if syncToCursor and levelSections:
+  if syncToCursor and nls.currFilter.scope == nsfMap:
     nls.sectionStates[l.id] = true
 
+  var addNote = true
+
   for e in nls.cache:
-    let note = map.getNote(e.location).get
+    case e.kind
+    of nckLevel:
+      let l = map.levels[e.levelId]
+      addNote = koi.sectionHeader(l.getDetailedName(short=true),
+                                  nls.sectionStates[l.id])
 
-    if levelSections:
-      if prevEntry.isNone or
-         e.location.levelId != prevEntry.get.location.levelId:
+    of nckRegion:
+      let region = l.regions[e.regionCoords].get
+      addNote = koi.subsectionHeader(region.name,
+                                     nls.regionStates[e.regionCoords])
 
-        let l = map.levels[e.location.levelId]
-        addNote = koi.sectionHeader(l.getDetailedName(short=true),
-                                    nls.sectionStates[l.id])
-    else:
-      addNote = true
+    of nckNote:
+      if not addNote: continue
 
-    if addNote:
+      let note = map.getNote(e.location).get
+
       const MinHeight = 32
       let height = max(MinHeight, e.height)
 
@@ -8575,7 +8604,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       if syncToCursor and ui.cursor == e.location:
         nls.activeId = e.id.some
 
-    prevEntry = e.some
 
   koi.endScrollView()
 
@@ -10121,7 +10149,6 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   with a.ui.notesListState:
     currFilter.noteType = @[ntfNone, ntfNumber, ntfId, ntfIcon]
     currFilter.ordering = noType
-    sectionStates = initTable[int, bool]()
 
   loadFonts(a)
   loadAndSetIcon(a)

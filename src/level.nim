@@ -138,7 +138,7 @@ proc getNote*(l; r,c: Natural): Option[Annotation] =
 # }}}
 # {{{ allNotes*()
 template allNotes*(l): tuple[row, col: Natural, annotation: Annotation] =
-  l.annotations.allNotes()
+  l.annotations.notes()
 
 # }}}
 # {{{ reindexNotes*()
@@ -212,8 +212,9 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
     let srcRegion = if srcLevel.isNone or srcRegionRow < 0 or srcRegionCol < 0:
                       Region.none
                     else:
-                      srcLevel.get.regions[RegionCoords(row: srcRegionRow,
-                                                        col: srcRegionCol)]
+                      let rc = RegionCoords(row: srcRegionRow,
+                                            col: srcRegionCol)
+                      srcLevel.get.regions[rc]
 
     if srcRegion.isSome and not srcRegion.get.isUntitledRegion():
       destRegions[destRegionCoord] = srcRegion.get

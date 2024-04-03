@@ -136,8 +136,8 @@ type
 
   Regions* = object
     regionsByCoords*:   OrderedTable[RegionCoords, Region]
-#    sortedRegionIds*:   seq[Natural]
-#    sortedRegionNames*: seq[string]
+    sortedRegionIds*:   seq[Natural]
+    sortedRegionNames*: seq[string]
 
 
   # The top-left region has region coordinate (0,0)
@@ -145,9 +145,6 @@ type
     row*, col*: Natural
 
   Region* = object
-    # Internal ID, never written to disk
-    id*:    Natural
-
     name*:  string
     notes*: string
 

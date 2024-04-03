@@ -104,8 +104,8 @@ proc getNote*(a; r,c: Natural): Option[Annotation] =
     if a.get.isNote: result = a
 
 # }}}
-# {{{ allNotes*()
-iterator allNotes*(a): tuple[row, col: Natural, annotation: Annotation] =
+# {{{ notes*()
+iterator notes*(a): tuple[row, col: Natural, annotation: Annotation] =
   for k, annot in a.annotations:
     if annot.isNote:
       let (r,c) = a.keyToCoords(k)

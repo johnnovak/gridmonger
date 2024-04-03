@@ -1050,7 +1050,7 @@ proc writeLevelRegions(rw; l: Level) =
 
   rw.write(l.regions.numRegions.uint16)
 
-  for rc, r in l.regions.allRegions:
+  for rc, r in l.regions.sortedRegions:
     rw.write(rc.row.uint16)
     rw.write(rc.col.uint16)
     rw.writeWStr(r.name)

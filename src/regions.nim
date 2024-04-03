@@ -4,6 +4,7 @@ import std/strutils
 import std/tables
 
 import common
+import naturalsort
 import utils
 
 
@@ -13,20 +14,16 @@ using
 
 
 # {{{ initRegion*()
-var g_regionIdCounter = 0
-
 proc initRegion*(name: string, notes: string = ""): Region =
-  result.id = g_regionIdCounter
-  inc(g_regionIdCounter)
-
-  result.name = name
+  result.name  = name
   result.notes = notes
 
 # }}}
 
 # {{{ initRegions*()
 proc initRegions*(): Regions =
-  result.regionsByCoords = initOrderedTable[RegionCoords, Region]()
+  result.regionsByCoords   = initOrderedTable[RegionCoords, Region]()
+  result.sortedRegionNames = @[]
 
 # }}}
 # {{{ dump*()
@@ -34,6 +31,18 @@ proc dump*(r) =
   for k,v in r.regionsByCoords:
     echo "key: ", k, ", val: ", v
   echo ""
+
+# }}}
+
+# {{{ sortRegions*()
+proc sortRegions*(vr) =
+  vr.regionsByCoords.sort(
+    proc (a, b: tuple[rc: RegionCoords, region: Region]): int =
+      return cmpNaturalIgnoreCase(a.region.name, b.region.name)
+  )
+
+  vr.sortedRegionNames = collect:
+    for _, region in vr.regionsByCoords: region.name
 
 # }}}
 
@@ -47,6 +56,7 @@ proc `[]`*(r; rc: RegionCoords): Option[Region] =
 # {{{ `[]=`*()
 proc `[]=`*(vr; rc: RegionCoords, region: Region) =
   vr.regionsByCoords[rc] = region
+  vr.sortRegions
 
 # }}}
 # {{{ numRegions*()
@@ -54,16 +64,10 @@ proc numRegions*(r): Natural =
   r.regionsByCoords.len
 
 # }}}
-# {{{ allRegions*()
-iterator allRegions*(r): tuple[regionCoords: RegionCoords, region: Region] =
+# {{{ sortedRegions*()
+iterator sortedRegions*(r): tuple[regionCoords: RegionCoords, region: Region] =
   for rc, region in r.regionsByCoords:
     yield (rc, region)
-
-# }}}
-# {{{ regionNames*()
-proc sortedRegionNames*(r): seq[string] =
-  result = collect:
-    for r in r.regionsByCoords.values: r.name
 
 # }}}
 
