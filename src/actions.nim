@@ -9,6 +9,7 @@ import level
 import links
 import map
 import rect
+import regions
 import selection
 import undomanager
 import utils
@@ -1112,16 +1113,16 @@ proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
   # Do action
   let action = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.levelId]
-    l.setRegion(rc, region)
+    l.regions[rc] = region
     result = usd
 
   # Undo action
   let l = map.levels[loc.levelId]
-  let oldRegion = l.getRegion(rc).get
+  let oldRegion = l.regions[rc].get
 
   var undoAction = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.levelId]
-    l.setRegion(rc, oldRegion)
+    l.regions[rc] = oldRegion
     result = usd
 
   um.storeUndoState(action, undoAction)

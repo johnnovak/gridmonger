@@ -370,13 +370,13 @@ proc reallocateRegions*(m; levelId: Natural, oldCoordOpts: CoordinateOptions,
                                col: rc.col)
                 else: rc
 
-    let region = oldRegions.getRegion(oldRc)
+    let region = oldRegions[oldRc]
 
     if region.isSome and not region.get.isUntitledRegion:
-      l.setRegion(rc, region.get)
+      l.regions[rc] = region.get
     else:
       let region = initRegion(name=l.regions.nextUntitledRegionName(index))
-      l.setRegion(rc, region)
+      l.regions[rc] = region
 
 # }}}
 # {{{ calcRegionResizeOffsets*()
@@ -397,6 +397,7 @@ proc calcRegionResizeOffsets*(
 
 # }}}
 
+# {{{ newLevelFrom*()
 proc newLevelFrom*(m; srcLevelId: Natural, srcRect: Rect[Natural],
                    overrideId: Option[Natural] = Natural.none): Level =
 
@@ -417,6 +418,7 @@ proc newLevelFrom*(m; srcLevelId: Natural, srcRect: Rect[Natural],
 
   dest.regions = initRegionsFrom(src.some, dest, rowOffs, colOffs)
   result = dest
+# }}}
 
 # }}}
 

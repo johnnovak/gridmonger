@@ -632,10 +632,8 @@ proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
     let notes = rr.readWStr
     checkStringLength(notes, "lvl.regn.region.notes", NotesLimits)
 
-    regions.setRegion(
-      RegionCoords(row: row, col: col),
-      initRegion(name=name, notes=notes)
-    )
+    let rc = RegionCoords(row: row, col: col)
+    regions[rc] = initRegion(name=name, notes=notes)
 
     popDebugIndent()
 
@@ -1050,9 +1048,9 @@ proc writeLevelRegions(rw; l: Level) =
   rw.write(l.regionOpts.colsPerRegion.uint16)
   rw.write(l.regionOpts.perRegionCoords.uint8)
 
-  rw.write(l.numRegions.uint16)
+  rw.write(l.regions.numRegions.uint16)
 
-  for rc, r in l.allRegions:
+  for rc, r in l.regions.allRegions:
     rw.write(rc.row.uint16)
     rw.write(rc.col.uint16)
     rw.writeWStr(r.name)

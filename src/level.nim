@@ -174,39 +174,6 @@ proc copyAnnotationsFrom*(l; destRow, destCol: Natural,
 # }}}
 
 # }}}
-# {{{ Regions
-
-# {{{ setRegion*()
-proc setRegion*(l; rc: RegionCoords, region: Region) =
-  l.regions.setRegion(rc, region)
-
-# }}}
-# {{{ getRegion*()
-proc getRegion*(l; rc: RegionCoords): Option[Region] =
-  l.regions.getRegion(rc)
-
-# }}}
-# {{{ allRegions*()
-template allRegions*(l): tuple[regionCoords: RegionCoords, region: Region] =
-  l.regions.allRegions
-
-# }}}
-# {{{ numRegions*()
-proc numRegions*(l): Natural =
-  l.regions.numRegions
-
-# }}}
-# {{{ regionNames*()
-proc regionNames*(l): seq[string] =
-  l.regions.regionNames
-
-# }}}
-# {{{ findFirstRegionByName*()
-proc findFirstRegionByName*(l; name: string): Option[tuple[regionCoords: RegionCoords,
-                                                           region: Region]] =
-  l.regions.findFirstRegionByName(name)
-
-# }}}
 
 # {{{ regionRows*()
 proc regionRows*(l; ro: RegionOptions): Natural =
@@ -245,16 +212,14 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
     let srcRegion = if srcLevel.isNone or srcRegionRow < 0 or srcRegionCol < 0:
                       Region.none
                     else:
-                      srcLevel.get.getRegion(RegionCoords(row: srcRegionRow,
-                                                          col: srcRegionCol))
+                      srcLevel.get.regions[RegionCoords(row: srcRegionRow,
+                                                        col: srcRegionCol)]
 
     if srcRegion.isSome and not srcRegion.get.isUntitledRegion():
-      destRegions.setRegion(destRegionCoord, srcRegion.get)
+      destRegions[destRegionCoord] = srcRegion.get
     else:
-      destRegions.setRegion(
-        destRegionCoord,
-        initRegion(name=destLevel.regions.nextUntitledRegionName(index))
-      )
+      let name = destLevel.regions.nextUntitledRegionName(index)
+      destRegions[destRegionCoord] = initRegion(name=name)
 
   result = destRegions
 

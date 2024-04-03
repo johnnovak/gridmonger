@@ -1612,7 +1612,7 @@ func currRegion(a): Option[Region] =
   let l = currLevel(a)
   if l.regionOpts.enabled:
     let rc = a.doc.map.getRegionCoords(a.ui.cursor)
-    l.getRegion(rc)
+    l.regions[rc]
   else:
     Region.none
 
@@ -5243,7 +5243,7 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
     validationError = mkValidationError("Name is mandatory")
   else:
     if dlg.name != currRegion(a).get.name:
-      for name in l.regionNames:
+      for name in l.regions.sortedRegionNames:
         if name == dlg.name:
           validationError = mkValidationError(
             "A region already exists with the same name"
@@ -7672,10 +7672,8 @@ proc renderRegionDropDown(a) =
     mainPane = mainPaneRect(a)
 
   if currRegion.isSome:
-    var sortedRegionNames = l.regionNames.naturalSortIgnoreCase
-
     let currRegionName = currRegion.get.name
-    var sortedRegionIdx = sortedRegionNames.find(currRegionName)
+    var sortedRegionIdx = l.regions.sortedRegionNames.find(currRegionName)
     let prevSortedRegionIdx = sortedRegionIdx
 
     let regionDropDownWidth = round(
@@ -7688,7 +7686,7 @@ proc renderRegionDropDown(a) =
       y = 49.0,
       w = regionDropDownWidth,
       h = 24.0,
-      sortedRegionNames,
+      l.regions.sortedRegionNames,
       sortedRegionIdx,
       tooltip = "",
       disabled = not (ui.editMode in {emNormal, emSetCellLink}),
@@ -7696,8 +7694,8 @@ proc renderRegionDropDown(a) =
     )
 
     if sortedRegionIdx != prevSortedRegionIdx :
-      let currRegionName = sortedRegionNames[sortedRegionIdx]
-      let (regionCoords, _) = l.findFirstRegionByName(currRegionName).get
+      let currRegionName = l.regions.sortedRegionNames[sortedRegionIdx]
+      let (regionCoords, _) = l.regions.findFirstByName(currRegionName).get
 
       let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.levelId,
                                                      regionCoords)

@@ -134,7 +134,11 @@ type
     rowsPerRegion*:   Natural
     perRegionCoords*: bool
 
-  Regions* = OrderedTable[RegionCoords, Region]
+  Regions* = object
+    regionsByCoords*:   OrderedTable[RegionCoords, Region]
+#    sortedRegionIds*:   seq[Natural]
+#    sortedRegionNames*: seq[string]
+
 
   # The top-left region has region coordinate (0,0)
   RegionCoords* = object

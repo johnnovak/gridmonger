@@ -26,50 +26,52 @@ proc initRegion*(name: string, notes: string = ""): Region =
 
 # {{{ initRegions*()
 proc initRegions*(): Regions =
-  result = initOrderedTable[RegionCoords, Region]()
+  result.regionsByCoords = initOrderedTable[RegionCoords, Region]()
 
 # }}}
 # {{{ dump*()
 proc dump*(r) =
-  for k,v in r:
+  for k,v in r.regionsByCoords:
     echo "key: ", k, ", val: ", v
   echo ""
 
 # }}}
 
-# {{{ setRegion*()
-proc setRegion*(vr; rc: RegionCoords, region: Region) =
-  vr[rc] = region
+# {{{ `[]`*()
+proc `[]`*(r; rc: RegionCoords): Option[Region] =
+  if r.regionsByCoords.hasKey(rc):
+    r.regionsByCoords[rc].some
+  else: Region.none
 
 # }}}
-# {{{ getRegion*()
-proc getRegion*(r; rc: RegionCoords): Option[Region] =
-  if r.hasKey(rc): r[rc].some
-  else: Region.none
+# {{{ `[]=`*()
+proc `[]=`*(vr; rc: RegionCoords, region: Region) =
+  vr.regionsByCoords[rc] = region
+
+# }}}
+# {{{ numRegions*()
+proc numRegions*(r): Natural =
+  r.regionsByCoords.len
 
 # }}}
 # {{{ allRegions*()
 iterator allRegions*(r): tuple[regionCoords: RegionCoords, region: Region] =
-  for rc, r in r:
-    yield (rc, r)
-
-# }}}
-# {{{ numRegions*()
-proc numRegions*(r): Natural = r.len
+  for rc, region in r.regionsByCoords:
+    yield (rc, region)
 
 # }}}
 # {{{ regionNames*()
-proc regionNames*(r): seq[string] =
+proc sortedRegionNames*(r): seq[string] =
   result = collect:
-    for r in r.values: r.name
+    for r in r.regionsByCoords.values: r.name
 
 # }}}
 
-# {{{ findFirstRegionByName*()
-proc findFirstRegionByName*(r; name: string): Option[(RegionCoords, Region)] =
-  for rc, r in r:
-    if r.name == name:
-      return (rc, r).some
+# {{{ findFirstByName*()
+proc findFirstByName*(r; name: string): Option[(RegionCoords, Region)] =
+  for rc, region in r.regionsByCoords:
+    if region.name == name:
+      return (rc, region).some
   result = (RegionCoords, Region).none
 
 # }}}
@@ -85,8 +87,9 @@ proc nextUntitledRegionName*(r; index: var int): string =
   while true:
     let name = UntitledRegionPrefix & $index
     inc(index)
-    var region = r.findFirstRegionByName(name)
-    if region.isNone: return name
+    var region = r.findFirstByName(name)
+    if region.isNone:
+      return name
 
 # }}}
 
