@@ -30,7 +30,7 @@ proc printVersion() =
 {FullVersionString}
 {CompiledAt}
 {DevelopedBy}
-https://gridmonger.johnnovak.net/"""
+{ProjectHomeUrl}"""
 
 
 proc quitWithError(msg: string) {.noReturn.} =

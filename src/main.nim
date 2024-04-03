@@ -5922,7 +5922,7 @@ proc openUserManual(a) =
 # }}}
 # {{{ openWebsite()
 proc openWebsite(a) =
-  openDefaultBrowser("https://gridmonger.johnnovak.net")
+  openDefaultBrowser(ProjectHomeUrl)
 
 # }}}
 
@@ -10284,8 +10284,8 @@ when not defined(DEBUG):
         msg &= "The map has been autosaved as '" &
                crashAutosavePath
 
-    msg &= "\n\nIf the problem persists, please refer to the 'Get Involved' " &
-           "section on the website at https://gridmonger.johnnovak.net/"
+    msg &= "\n\nIf the problem persists, please refer to the " &
+           fmt"'Get Involved' section on the website at {ProjectHomeUrl}"
 
     when not defined(DEBUG):
       discard osdialog_message(mblError, mbbOk, msg.cstring)

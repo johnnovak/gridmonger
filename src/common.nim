@@ -11,10 +11,12 @@ import rect
 
 
 const
-  AppVersion*  = parseVersion(staticRead("../CURRENT_VERSION").strip)
-  CompileYear* = CompileDate[0..3]
+  ProjectHomeUrl* = "https://gridmonger.johnnovak.net/"
 
-  BuildGitHash* = strutils.strip(staticExec("git rev-parse --short HEAD"))
+  AppVersion*     = parseVersion(staticRead("../CURRENT_VERSION").strip)
+  CompileYear*    = CompileDate[0..3]
+
+  BuildGitHash*   = strutils.strip(staticExec("git rev-parse --short HEAD"))
 
   VersionString*     = fmt"Version {AppVersion} ({BuildGitHash})"
   FullVersionString* = fmt"Gridmonger {VersionString} [{hostOS}/{hostCPU}]"
