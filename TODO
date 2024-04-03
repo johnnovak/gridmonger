@@ -13,9 +13,6 @@ TODO
 
   - region dropdown scrollbar is displayed with a large horiz offset
 
-  - fix not quitting immediately if checking for updates is enabled and
-	there's no network
-
   - add unlink command
 
   - test loading v1, v2, and v3 map versions

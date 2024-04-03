@@ -1,13 +1,17 @@
 import std/httpclient
 import std/monotimes
+import std/math
 import std/options
 import std/os
+import std/strformat
 import std/strutils
 import std/times
 import std/typedthreads
 
 import glfw
 import semver
+
+import common
 
 when defined(windows):
   import platform/windows/ipc
@@ -126,44 +130,62 @@ var
 # {{{ versionFetcher()
 proc versionFetcher {.thread.} =
   const
-    LatestVersionUrl = "https://gridmonger.johnnovak.net/latest_version"
-    MaxTries = 5
+    LatestVersionUrl   = fmt"{ProjectHomeUrl}latest_version"
+    NumTries           = 5
+    TickDurationMs     = 100
+    RetryIntervalMs    = 2000
+    RetryIntervalTicks = ceil(RetryIntervalMs / TickDurationMs).int
 
-  while true:
-    let msg = g_versionFetcherCh.recv
-    case msg
-    of vfkShutdown: break
+  block topLoop:
+    while true:
+      let msg = g_versionFetcherCh.recv
+      case msg
+      of vfkShutdown:
+        break topLoop
 
-    of vfkFetch:
-      var
-        event    = AppEvent(kind: aeVersionUpdate)
-        numTry   = 1
-        response = ""
+      of vfkFetch:
+        var
+          event    = AppEvent(kind: aeVersionUpdate)
+          response = ""
 
-      while true:
-        var client = newHttpClient()
-        try:
-          response = client.getContent(LatestVersionUrl)
-          break
-        except CatchableError as e:
-          event.error = cast[CatchableError](e[]).some
-        finally:
-          client.close
+          numTry    = 1
+          triesLeft = NumTries
+          ticksLeft = RetryIntervalTicks
 
-        inc(numTry)
-        if numTry > MaxTries: break
-        sleep(2000)
+        while triesLeft > 0:
+          while ticksLeft > 0:
+            # We drain messages at the tick interval to avoid the process
+            # potentially hanging for the retry sleep duration at exit.
+            let (dataAvailable, msg) = g_versionFetcherCh.tryRecv
+            if dataAvailable:
+              case msg
+              of vfkShutdown: break topLoop
+              of vfkFetch:    discard # fetch already in progress
 
-      if response != "":
-        try:
-          let parts = response.split("|")
-          event.versionInfo = VersionInfo(
-            version: parseVersion(parts[0]),
-            message: parts[1]
-          ).some
-        except: discard
+            var client = newHttpClient()
+            try:
+              response = client.getContent(LatestVersionUrl)
+              break
+            except CatchableError as e:
+              event.error = cast[CatchableError](e[]).some
+            finally:
+              client.close
 
-      sendAppEvent(event)
+            sleep(TickDurationMs)
+            dec(ticksLeft)
+
+          dec(triesLeft)
+
+        if response != "":
+          try:
+            let parts = response.split("|")
+            event.versionInfo = VersionInfo(
+              version: parseVersion(parts[0]),
+              message: parts[1]
+            ).some
+          except: discard
+
+        sendAppEvent(event)
 
 # }}}
 
