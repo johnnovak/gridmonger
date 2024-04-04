@@ -23,15 +23,15 @@ import std/unicode
 
 # Libraries
 import glad/gl
-
 import glfw
-from glfw/wrapper import IconImageObj
 
 import koi
-from koi/utils as koiUtils import lerp, invLerp, remap
+from koi/utils import lerp, invLerp, remap
 
 import nanovg
-when not defined(DEBUG): import osdialog
+
+when not defined(DEBUG):
+  import osdialog
 
 when defined(windows):
   import platform/windows/console
@@ -9898,10 +9898,10 @@ proc closeSplash(a) =
 proc loadAndSetIcon(a) =
   alias(p, a.paths)
 
-  var icons: array[5, wrapper.IconImageObj]
+  var icons: array[5, IconImageObj]
 
   proc add(idx: Natural, img: ImageData) =
-    icons[idx].width = img.width.int32
+    icons[idx].width  = img.width.int32
     icons[idx].height = img.height.int32
     icons[idx].pixels = cast[ptr uint8](img.data)
 

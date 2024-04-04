@@ -12,6 +12,7 @@ import common
 import utils/misc
 import utils/rect
 
+
 # {{{ Constants
 const
   TitleBarFontSize    = 14.0
