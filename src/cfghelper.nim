@@ -7,7 +7,7 @@ import std/unicode
 import nanovg
 
 import fieldlimits
-import logging except Level
+import logging
 import utils/hocon
 
 
