@@ -14,10 +14,10 @@ import utils/rect
 const
   ProjectHomeUrl* = "https://gridmonger.johnnovak.net/"
 
-  AppVersion*     = parseVersion(staticRead("../CURRENT_VERSION").strip)
-  CompileYear*    = CompileDate[0..3]
+  AppVersion*  = parseVersion(staticRead("../CURRENT_VERSION").strip)
+  CompileYear* = CompileDate[0..3]
 
-  BuildGitHash*   = strutils.strip(staticExec("git rev-parse --short HEAD"))
+  BuildGitHash* = strutils.strip(staticExec("git rev-parse --short HEAD"))
 
   VersionString*     = fmt"Version {AppVersion} ({BuildGitHash})"
   FullVersionString* = fmt"Gridmonger {VersionString} [{hostOS}/{hostCPU}]"
