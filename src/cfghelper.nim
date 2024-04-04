@@ -7,8 +7,8 @@ import std/unicode
 import nanovg
 
 import fieldlimits
-import hocon
 import logging except Level
+import utils/hocon
 
 
 using cfg: HoconNode

@@ -5,9 +5,9 @@ import std/strformat
 import annotations
 import common
 import cellgrid
-import rect
 import regions
 import selection
+import utils/rect
 
 
 using l: Level

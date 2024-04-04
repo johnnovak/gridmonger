@@ -22,7 +22,6 @@ import std/times
 import std/unicode
 
 # Libraries
-import deps/with
 import glad/gl
 
 import glfw
@@ -38,6 +37,7 @@ when defined(windows):
   import platform/windows/console
 
 import semver
+import with
 
 # Internal
 import actions
@@ -49,18 +49,18 @@ import converters
 import csdwindow
 import drawlevel
 import fieldlimits
-import hocon
 import icons
 import level
 import map
-import naturalsort
 import persistence
-import rect
 import regions
 import selection
 import theme
 import undomanager
-import utils as gmUtils
+import utils/hocon
+import utils/misc as gmUtils
+import utils/naturalsort
+import utils/rect
 
 # }}}
 

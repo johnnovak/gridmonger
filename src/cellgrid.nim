@@ -1,8 +1,7 @@
 import std/options
 
 import common
-import rect
-import utils
+import utils/rect
 
 
 using g: CellGrid

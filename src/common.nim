@@ -1,3 +1,4 @@
+import std/hashes
 import std/sets
 import std/strformat
 import std/strutils
@@ -7,7 +8,7 @@ import koi
 import nanovg
 import semver
 
-import rect
+import utils/rect
 
 
 const
@@ -315,6 +316,38 @@ const
   LinkDoors*           = {fEntranceDoor, fExitDoor}
 
   LinkSources* = LinkPitSources + LinkTeleports + LinkStairs + LinkDoors
+
+
+func linkFloorToString*(f: Floor): string =
+  if   f in LinkPitSources:      return "pit"
+  elif f in LinkPitDestinations: return "pit"
+  elif f in LinkStairs:          return "stairs"
+  elif f in LinkDoors:           return "door"
+  elif f in LinkTeleports:       return "teleport"
+
+func hash*(rc: RegionCoords): Hash =
+  var h: Hash = 0
+  h = h !& hash(rc.row)
+  h = h !& hash(rc.col)
+  !$h
+
+func hash*(l: Location): Hash =
+  var h: Hash = 0
+  h = h !& hash(l.levelId)
+  h = h !& hash(l.row)
+  h = h !& hash(l.col)
+  !$h
+
+func `<`*(a, b: Location): bool =
+  if   a.levelId < b.levelId: true
+  elif a.levelId > b.levelId: false
+
+  elif a.row < b.row: true
+  elif a.row > b.row: false
+
+  elif a.col < b.col: true
+  else: false
+
 
 type
   WindowTheme* = ref object

@@ -21,11 +21,12 @@ Requires [Nim](https://nim-lang.org/) 2.0.2
 * [nim-riff](https://github.com/johnnovak/nim-riff)
 * [semver](https://github.com/euantorano/semver.nim)
 * [winim](https://github.com/khchen/winim) (Windows only)
+* [with](https://github.com/zevv/with)
 
 You can install the dependencies with [Nimble](https://github.com/nim-lang/nimble):
 
 ```
-nimble install koi osdialog riff semver winim
+nimble install koi osdialog riff semver winim with
 ```
 
 `winim` is only needed for the Windows builds.

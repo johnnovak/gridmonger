@@ -8,11 +8,11 @@ import common
 import level
 import links
 import map
-import rect
 import regions
 import selection
 import undomanager
-import utils
+import utils/misc
+import utils/rect
 
 
 type UndoStateData* = object

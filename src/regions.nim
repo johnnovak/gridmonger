@@ -4,8 +4,7 @@ import std/strutils
 import std/tables
 
 import common
-import naturalsort
-import utils
+import utils/naturalsort
 
 
 using

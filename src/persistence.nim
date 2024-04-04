@@ -7,6 +7,7 @@ import std/strformat
 import std/strutils
 import std/sugar
 import std/unicode
+import std/tables
 
 import riff
 
@@ -19,9 +20,8 @@ import level
 import links
 import map
 import regions
-import tables
-import rle
-import utils
+import utils/misc
+import utils/rle
 
 
 const CurrentMapVersion = 3

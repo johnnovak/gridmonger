@@ -5,14 +5,15 @@ import std/sugar
 import std/tables
 import std/unicode
 
+import with
+
 import common
-import deps/with
 import level
 import links
-import naturalsort
-import rect
 import regions
-import utils
+import utils/misc
+import utils/naturalsort
+import utils/rect
 
 
 using m: Map

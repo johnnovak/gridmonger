@@ -6,11 +6,11 @@ import glfw
 import icons
 import koi
 import nanovg
+import with
 
 import common
-import deps/with
-import rect
-import utils
+import utils/misc
+import utils/rect
 
 # {{{ Constants
 const

@@ -4,7 +4,7 @@ import std/strformat
 import std/strutils
 
 import common
-import hocon
+import utils/hocon
 
 
 proc printHelp() =

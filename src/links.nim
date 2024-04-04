@@ -4,9 +4,8 @@ import std/sets
 import std/tables
 
 import common
-import rect
 import selection
-import utils
+import utils/rect
 
 
 const DefaultInitialSize = 64

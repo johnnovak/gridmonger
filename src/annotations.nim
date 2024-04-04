@@ -4,7 +4,7 @@ import std/sugar
 import std/tables
 
 import common
-import rect
+import utils/rect
 
 
 using a: Annotations

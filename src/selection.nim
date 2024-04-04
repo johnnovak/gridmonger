@@ -1,7 +1,7 @@
 import std/options
 
 import common
-import rect
+import utils/rect
 
 
 using s: Selection
