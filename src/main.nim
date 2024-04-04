@@ -45,7 +45,6 @@ import appevents
 import cfghelper
 import cmdline
 import common
-import converters
 import csdwindow
 import drawlevel
 import fieldlimits
@@ -57,6 +56,7 @@ import regions
 import selection
 import theme
 import undomanager
+import utils/converters
 import utils/hocon
 import utils/misc as gmUtils
 import utils/naturalsort

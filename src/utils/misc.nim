@@ -5,7 +5,6 @@ import std/strutils
 import std/times
 import std/typetraits
 
-
 # {{{ alias*()
 template alias*(newName: untyped, call: untyped) =
   template newName(): untyped {.redefine.} = call
