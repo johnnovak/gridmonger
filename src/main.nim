@@ -8027,12 +8027,6 @@ proc renderToolsPane(x, y, w, h: float; a) =
   alias(lt, a.theme.levelTheme)
   alias(vg, a.vg)
 
-#  vg.beginPath
-#  vg.strokeWidth(1)
-#  vg.strokeColor(green())
-#  vg.rect(x, y, w, h)
-#  vg.stroke
-
   var
     toolItemsPerColumn = 12
     toolX = x
@@ -10223,7 +10217,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   updateShortcuts(a)
   updateLastCursorViewCoords(a)
 
-  a.ui.toolbarDrawParams = a.ui.drawLevelParams.deepCopy
+  a.ui.toolbarDrawParams = newDrawLevelParams()
 
   a.splash.show = not hideSplash and a.prefs.showSplash
   a.splash.t0 = getMonoTime()
