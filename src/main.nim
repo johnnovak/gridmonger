@@ -8575,8 +8575,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   let syncToCursor = (nls.linkCursor and currNote.isSome) and
                      (ui.cursor != ui.prevCursor or not nls.prevLinkCursor)
 
-  if syncToCursor and nls.currFilter.scope == nsfMap:
-    nls.sectionStates[l.id] = true
+  if syncToCursor:
+    if nls.currFilter.scope == nsfMap:
+      nls.sectionStates[l.id] = true
+
+    if nls.currFilter.scope in {nsfMap, nsfLevel}:
+      if l.regionOpts.enabled:
+        let rc = map.getRegionCoords(ui.cursor)
+        nls.regionStates[(l.id, rc)] = true
 
   # Render note buttons
   let textX = markerX + TextIndent
@@ -8614,10 +8620,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       if syncToCursor and ui.cursor == e.location:
         startY       = koi.autoLayoutNextY()
         itemHeight   = height
-        # This is a trick to get rid of some flicker caused by the
-        # 1-frame delay between drawing the selected item then
-        # changing the Y position  of the scroll view.
-        nls.activeId = ItemId.none
+        nls.activeId = e.id.some
 
       if noteButton(e.id, textX, textY=17, textW, markerX, note,
                     selected = (nls.activeId.isSome and
@@ -8626,15 +8629,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         if nls.linkCursor:
           nls.activeId = e.id.some
 
-      # Make sure the selection only gets draw in the next frame.
-      if syncToCursor and ui.cursor == e.location:
-        nls.activeId = e.id.some
-
 
   koi.endScrollView()
 
   if syncToCursor:
-    koi.setScrollViewStartY(scrollViewId, startY - scrollViewHeight/2 +
+    koi.setScrollViewStartY(scrollViewId, startY - scrollViewHeight * 0.45 +
                                           itemHeight)
 
 # }}}
