@@ -24,9 +24,9 @@ import utils/misc
 import utils/rle
 
 
-const CurrentMapVersion = 3
+const CurrentMapVersion = 4
 
-# {{{ Debug logging helper
+# {{{ Debug logging
 const DebugIndent = 2
 var currDebugIndent = 0
 
@@ -116,24 +116,37 @@ type
     currSpecialWall*:   range[0..SpecialWalls.high]
 
 # }}}
-# {{{ FourCCs
+# {{{ Chunk IDs
 const
   # Format type ID
-  FourCC_GRMM      = "GRMM"
+  FourCC_GRMM = "GRMM"
 
   # Group chunks
+  # ============
+  FourCC_GRMM_lvl  = "lvl "
   FourCC_GRMM_lvls = "lvls"
   FourCC_GRMM_map  = "map "
   FourCC_GRMM_stat = "stat"
 
   # Chunks
+  # ======
+
+  # Common 'map ' and 'lvl ' subchunks
+  FourCC_GRMM_coor = "coor"
+  FourCC_GRMM_prop = "prop"
+
+  # 'lvl ' subchunks
   FourCC_GRMM_anno = "anno"
   FourCC_GRMM_cell = "cell"
-  FourCC_GRMM_coor = "coor"
-  FourCC_GRMM_lnks = "lnks"
-  FourCC_GRMM_lvl  = "lvl "
-  FourCC_GRMM_prop = "prop"
   FourCC_GRMM_regn = "regn"
+
+  FourCC_GRMM_lnks = "lnks"
+
+  # 'stat' subchunks
+  FourCC_GRMM_disp = "disp"
+  FourCC_GRMM_notl = "notl"
+  FourCC_GRMM_opts = "opts"
+  FourCC_GRMM_tool = "tool"
 
 # }}}
 
@@ -250,8 +263,8 @@ proc readLocation(rr): Location =
   result.col     = rr.read(uint16)
 
 # }}}
-# {{{ readAppState_v1_v2()
-proc readAppState_v1_v2(rr; map: Map): AppState =
+# {{{ readAppState_preV4()
+proc readAppState_preV4(rr; map: Map): AppState =
   debug(fmt"Reading app state...")
   pushDebugIndent()
 
@@ -326,8 +339,138 @@ proc readAppState_v1_v2(rr; map: Map): AppState =
   popDebugIndent()
 
 # }}}
-# {{{ readLinks_v1_v2()
-proc readLinks_v1_v2(rr; levels: OrderedTable[Natural, Level]): Links =
+# {{{ readAppState_V4()
+proc readAppState_V4(rr; map: Map): AppState =
+  debug(fmt"Reading app state...")
+  pushDebugIndent()
+
+  var ci = rr.enterGroup
+
+  var
+    dispCursor = Cursor.none
+    notlCursor = Cursor.none
+    optsCursor = Cursor.none
+    toolCursor = Cursor.none
+
+  let groupChunkId = FourCC_GRMM_stat.some
+
+  while true:
+    if ci.kind == ckChunk:
+      case ci.id
+      of FourCC_GRMM_disp:
+        if dispCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRMM_disp, groupChunkId)
+        dispCursor = rr.cursor.some
+
+      of FourCC_GRMM_notl:
+        if notlCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRMM_notl, groupChunkId)
+        notlCursor = rr.cursor.some
+
+      of FourCC_GRMM_opts:
+        if optsCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRMM_opts, groupChunkId)
+        optsCursor = rr.cursor.some
+
+      of FourCC_GRMM_tool:
+        if toolCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRMM_tool, groupChunkId)
+        toolCursor = rr.cursor.some
+
+      else:
+        invalidChunkError(ci.id, FourCC_GRMM_stat)
+
+    else: # group chunk
+      invalidChunkError(ci.id, groupChunkId.get)
+
+    if rr.hasNextChunk:
+      ci = rr.nextChunk
+    else: break
+
+
+  var app = AppState(zoomLevel: DefaultZoomLevel)
+
+  # Display state
+  if dispCursor.isSome:
+    rr.cursor = dispCursor.get
+
+    let themeName = rr.readBStr()
+    checkStringLength(themeName, "stat.themeName", ThemeNameLimits)
+    app.themeName = themeName
+
+    let zoomLevel = rr.read(uint8)
+    checkValueRange(zoomLevel, "stat.zoomLevel", ZoomLevelLimits)
+    app.zoomLevel = zoomLevel
+
+    let maxLevelIndex = NumLevelsLimits.maxInt-1
+    var currLevelIndex = rr.read(uint16).int
+    checkValueRange(currLevelIndex, "stat.currLevelIndex", max=maxLevelIndex)
+    app.currLevelId = currLevelIndex
+
+    let l = map.levels[currLevelIndex]
+
+    let cursorRow = rr.read(uint16)
+    checkValueRange(cursorRow, "stat.cursorRow", max=l.rows.uint16-1)
+    app.cursorRow = cursorRow
+
+    let cursorCol = rr.read(uint16)
+    checkValueRange(cursorCol, "stat.cursorCol", max=l.cols.uint16-1)
+    app.cursorCol = cursorCol
+
+    let viewStartRow = rr.read(uint16)
+    checkValueRange(viewStartRow, "stat.viewStartRow", max=l.rows.uint16-1)
+    app.viewStartRow = viewStartRow
+
+    let viewStartCol = rr.read(uint16)
+    checkValueRange(viewStartCol, "stat.viewStartCol", max=l.cols.uint16-1)
+    app.viewStartCol = viewStartCol
+
+  # Options state
+  if optsCursor.isSome:
+    rr.cursor = optsCursor.get
+
+    let optShowCellCoords = rr.read(uint8)
+    checkBool(optShowCellCoords, "stat.optShowCellCoords")
+    app.optShowCellCoords = optShowCellCoords.bool
+
+    let optShowToolsPane = rr.read(uint8)
+    checkBool(optShowToolsPane, "stat.optShowToolsPane")
+    app.optShowToolsPane = optShowToolsPane.bool
+
+    let optShowCurrentNotePane = rr.read(uint8)
+    checkBool(optShowCurrentNotePane, "stat.optShowCurrentNotePane")
+    app.optShowCurrentNotePane = optShowCurrentNotePane.bool
+
+    let optWasdMode = rr.read(uint8)
+    checkBool(optWasdMode, "stat.optWasdMode")
+    app.optWasdMode = optWasdMode.bool
+
+    let optWalkMode = rr.read(uint8)
+    checkBool(optWalkMode, "stat.optWalkMode")
+    app.optWalkMode = optWalkMode.bool
+
+  # Tools pane state
+  if toolCursor.isSome:
+    rr.cursor = toolCursor.get
+
+    let currFloorColor = rr.read(uint8)
+    checkValueRange(currFloorColor, "stat.currFloorColor", CellFloorColorLimits)
+    app.currFloorColor = currFloorColor
+
+    let currSpecialWall = rr.read(uint8)
+    checkValueRange(currSpecialWall, "stat.currSpecialWall", SpecialWallLimits)
+    app.currSpecialWall = currSpecialWall
+
+  # Note list pane state
+#  if toolCursor.isSome:
+
+  result = app
+
+  popDebugIndent()
+
+# }}}
+# {{{ readLinks()
+proc readLinks(rr; levels: OrderedTable[Natural, Level]): Links =
   debug(fmt"Reading links...")
   pushDebugIndent()
 
@@ -357,8 +500,8 @@ proc readLinks_v1_v2(rr; levels: OrderedTable[Natural, Level]): Links =
   popDebugIndent()
 
 # }}}
-# {{{ readLevelProperties_v1_v2()
-proc readLevelProperties_v1_v2(rr; levelId: Natural): Level =
+# {{{ readLevelProperties()
+proc readLevelProperties(rr; levelId: Natural): Level =
   debug(fmt"Reading level properties...")
   pushDebugIndent()
 
@@ -392,10 +535,10 @@ proc readLevelProperties_v1_v2(rr; levelId: Natural): Level =
   popDebugIndent()
 
 # }}}
-# {{{ readLevelCells_v1_v2()
+# {{{ readLevelCells()
 {.push warning[HoleEnumConv]:off.}
 
-proc readLevelCells_v1_v2(rr; numCells: Natural): seq[Cell] =
+proc readLevelCells(rr; numCells: Natural): seq[Cell] =
 
   template readLayer(fieldType: typedesc, field, checkField: untyped) =
     debug("Reading layer: " & $fieldType)
@@ -479,8 +622,8 @@ proc readLevelCells_v1_v2(rr; numCells: Natural): seq[Cell] =
 {.pop}
 
 # }}}
-# {{{ readLevelAnnotations_v1_v2()
-proc readLevelAnnotations_v1_v2(rr; l: Level) =
+# {{{ readLevelAnnotations()
+proc readLevelAnnotations(rr; l: Level) =
   debug(fmt"Reading level annotations...")
   pushDebugIndent()
 
@@ -550,8 +693,8 @@ proc readLevelAnnotations_v1_v2(rr; l: Level) =
   popDebugIndent()
 
 # }}}
-# {{{ readCoordinateOptions_v1_v2*()
-proc readCoordinateOptions_v1_v2(rr; parentChunk: string): CoordinateOptions =
+# {{{ readCoordinateOptions*()
+proc readCoordinateOptions(rr; parentChunk: string): CoordinateOptions =
   debug(fmt"Reading coordinate options...")
   pushDebugIndent()
 
@@ -585,9 +728,10 @@ proc readCoordinateOptions_v1_v2(rr; parentChunk: string): CoordinateOptions =
   popDebugIndent()
 
 # }}}
-# {{{ readLevelRegions_v1_v2*()
-proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
-                                       regions: Regions] =
+# {{{ readLevelRegions*()
+proc readLevelRegions(rr; regionCols: Natural,
+                      version: Natural): tuple[regionOpts: RegionOptions,
+                                               regions: Regions] =
   debug(fmt"Reading level regions...")
   pushDebugIndent()
 
@@ -616,15 +760,21 @@ proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
 
   var regions: Regions = initRegions()
 
-  for i in 0..<numRegions:
-    debug(fmt"index: {i}")
+  for regionIdx in 0..<numRegions:
+    debug(fmt"index: {regionIdx}")
     pushDebugIndent()
 
-    let row = rr.read(uint16)
-    checkValueRange(row, "lvl.regn.region.row", RegionRowLimits)
+    let regionCoords = if version < 4:
+      let row = rr.read(uint16)
+      checkValueRange(row, "lvl.regn.region.row", RegionRowLimits)
 
-    let col = rr.read(uint16)
-    checkValueRange(col, "lvl.regn.region.column", RegionColumnLimits)
+      let col = rr.read(uint16)
+      checkValueRange(col, "lvl.regn.region.column", RegionColumnLimits)
+
+      RegionCoords(row: row, col: col)
+    else:
+      RegionCoords(row: regionIdx div regionCols,
+                   col: regionIdx mod regionCols)
 
     let name = rr.readWStr
     checkStringLength(name, "lvl.regn.region.name", RegionNameLimits)
@@ -632,8 +782,7 @@ proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
     let notes = rr.readWStr
     checkStringLength(notes, "lvl.regn.region.notes", NotesLimits)
 
-    let rc = RegionCoords(row: row, col: col)
-    regions[rc] = initRegion(name=name, notes=notes)
+    regions[regionCoords] = initRegion(name=name, notes=notes)
 
     popDebugIndent()
 
@@ -642,8 +791,8 @@ proc readLevelRegions_v1_v2(rr): tuple[regionOpts: RegionOptions,
   popDebugIndent()
 
 # }}}
-# {{{ readLevel_v1_v2()
-proc readLevel_v1_v2(rr; levelId: Natural): Level =
+# {{{ readLevel()
+proc readLevel(rr; levelId: Natural; version: Natural): Level =
   debug(fmt"Reading level...")
   pushDebugIndent()
 
@@ -704,32 +853,33 @@ proc readLevel_v1_v2(rr; levelId: Natural): Level =
   if cellCursor.isNone: chunkNotFoundError(FourCC_GRMM_cell)
 
   rr.cursor = propCursor.get
-  var level = readLevelProperties_v1_v2(rr, levelId)
+  var level = readLevelProperties(rr, levelId)
 
   rr.cursor = coorCursor.get
-  level.coordOpts = readCoordinateOptions_v1_v2(rr, groupChunkId.get)
+  level.coordOpts = readCoordinateOptions(rr, groupChunkId.get)
 
   rr.cursor = regnCursor.get
-  (level.regionOpts, level.regions) = readLevelRegions_v1_v2(rr)
+  (level.regionOpts, level.regions) = readLevelRegions(rr, level.regionCols,
+                                                       version)
 
   rr.cursor = cellCursor.get
 
   # +1 needed because of the south & east borders
   let numCells = (level.rows+1) * (level.cols+1)
 
-  level.cellGrid.cells = readLevelCells_v1_v2(rr, numCells)
+  level.cellGrid.cells = readLevelCells(rr, numCells)
 
   if annoCursor.isSome:
     rr.cursor = annoCursor.get
-    readLevelAnnotations_v1_v2(rr, level)
+    readLevelAnnotations(rr, level)
 
   result = level
 
   popDebugIndent()
 
 # }}}
-# {{{ readLevelList_v1_v2()
-proc readLevelList_v1_v2(rr): OrderedTable[Natural, Level] =
+# {{{ readLevelList()
+proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
   debug(fmt"Reading level list...")
   pushDebugIndent()
 
@@ -750,7 +900,7 @@ proc readLevelList_v1_v2(rr): OrderedTable[Natural, Level] =
 
           # The level IDs must be set to their indices in the map file to
           # ensure they are in sync with link (see writeLinks()).
-          let level = readLevel_v1_v2(rr, levelId)
+          let level = readLevel(rr, levelId, version)
           levels[levelId] = level
           inc(levelId)
 
@@ -772,12 +922,12 @@ proc readLevelList_v1_v2(rr): OrderedTable[Natural, Level] =
   popDebugIndent()
 
 # }}}
-# {{{ readMapProperties_v1_v2()
-proc readMapProperties_v1_v2(rr): Map =
+# {{{ readMapProperties()
+proc readMapProperties(rr): tuple[map: Map, version: Natural] =
   debug(fmt"Reading map properties...")
   pushDebugIndent()
 
-  let version = rr.read(uint16)
+  let version = rr.read(uint16).Natural
   debug(fmt"map.prop.version: {version}")
   if version > CurrentMapVersion:
     raiseMapReadError(fmt"Unsupported map file version: {version}")
@@ -798,14 +948,16 @@ proc readMapProperties_v1_v2(rr): Map =
   let notes = rr.readWStr
   checkStringLength(notes, "map.prop.notes", NotesLimits)
 
-  result = newMap(title, game, author, creationTime)
-  result.notes = notes
+  let map = newMap(title, game, author, creationTime)
+  map.notes = notes
+
+  result = (map, version)
 
   popDebugIndent()
 
 # }}}
-# {{{ readMap_v1_v2()
-proc readMap_v1_v2(rr): Map =
+# {{{ readMap()
+proc readMap(rr): tuple[map: Map, version: Natural] =
   debug(fmt"Reading GRMM.map chunk...")
   pushDebugIndent()
 
@@ -846,12 +998,12 @@ proc readMap_v1_v2(rr): Map =
   if coorCursor.isNone: chunkNotFoundError(FourCC_GRMM_coor)
 
   rr.cursor = propCursor.get
-  var map = readMapProperties_v1_v2(rr)
+  var (map, version) = readMapProperties(rr)
 
   rr.cursor = coorCursor.get
-  map.coordOpts = readCoordinateOptions_v1_v2(rr, groupChunkId.get)
+  map.coordOpts = readCoordinateOptions(rr, groupChunkId.get)
 
-  result = map
+  result = (map, version)
 
   popDebugIndent()
 
@@ -876,10 +1028,11 @@ proc readMapFile*(path: string): tuple[map: Map,
     debug(fmt"Map headers OK")
 
     var
-      mapCursor = Cursor.none
-      linksCursor = Cursor.none
-      levelListCursor = Cursor.none
-      appStateCursor = Cursor.none
+      mapCursor           = Cursor.none
+      linksCursor         = Cursor.none
+      levelListCursor     = Cursor.none
+      appStateCursor      = Cursor.none
+      appStateGroupCursor = Cursor.none
 
     # Find chunks
     if not rr.hasSubchunks:
@@ -900,11 +1053,17 @@ proc readMapFile*(path: string): tuple[map: Map,
           if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_lvls)
           levelListCursor = rr.cursor.some
 
-        else: discard   # skip unknown top level group chunks
+        of FourCC_GRMM_stat:
+          debug(fmt"GRMM.stat group chunk found")
+          if appStateGroupCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_stat)
+          appStateGroupCursor = rr.cursor.some
+
+        else:
+          debug(fmt"Skiping unknown top level group chunk, " &
+                fmt"formatTypeID: {fourCCToCharStr(ci.formatTypeID)}")
 
       elif ci.kind == ckChunk:
         case ci.id
-
         of FourCC_GRMM_lnks:
           debug(fmt"GRMM.lnks chunk found")
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_lnks)
@@ -930,21 +1089,27 @@ proc readMapFile*(path: string): tuple[map: Map,
 
     # Load chunks
     rr.cursor = mapCursor.get
-    let map = readMap_v1_v2(rr)
+    let (map, version) = readMap(rr)
 
-    rr.cursor = levelListCursor.get
-    map.levels = readLevelList_v1_v2(rr)
+    rr.cursor  = levelListCursor.get
+    map.levels = readLevelList(rr, version)
     map.sortLevels
 
     rr.cursor = linksCursor.get
-    map.links = readLinks_v1_v2(rr, map.levels)
+    map.links = readLinks(rr, map.levels)
 
-    if appStateCursor.isSome:
+    let appState = if appStateCursor.isSome:
       rr.cursor = appStateCursor.get
-      let appState = readAppState_v1_v2(rr, map)
-      result = (map, appState.some)
+      readAppState_preV4(rr, map).some
+
+    elif appStateGroupCursor.isSome:
+      rr.cursor = appStateGroupCursor.get
+      readAppState_V4(rr, map).some
+
     else:
-      result = (map, AppState.none)
+      AppState.none
+
+    result = (map, appState)
 
   except MapReadError as e:
     raise e
@@ -954,6 +1119,7 @@ proc readMapFile*(path: string): tuple[map: Map,
     if rr != nil: rr.close
 
 # }}}
+
 # }}}
 # {{{ Write
 
@@ -963,118 +1129,111 @@ var g_runLengthEncoder: RunLengthEncoder
 
 # {{{ writeAppState()
 proc writeAppState(rw; map: Map, s: AppState) =
-  rw.beginChunk(FourCC_GRMM_stat)
+  rw.listChunk(FourCC_GRMM_stat):
 
-  rw.writeBStr(s.themeName)
+    # Display state
+    rw.chunk(FourCC_GRMM_disp):
+      rw.writeBStr(s.themeName)
 
-  let currLevelIndex = map.sortedLevelIds.find(s.currLevelId)
-  assert(currLevelIndex > -1)
+      let currLevelIndex = map.sortedLevelIds.find(s.currLevelId)
+      assert(currLevelIndex > -1)
 
-  # Cursor position
-  rw.write(s.zoomLevel.uint8)
-  rw.write(currLevelIndex.uint16)
-  rw.write(s.cursorRow.uint16)
-  rw.write(s.cursorCol.uint16)
-  rw.write(s.viewStartRow.uint16)
-  rw.write(s.viewStartCol.uint16)
+      rw.write(s.zoomLevel.uint8)
+      rw.write(currLevelIndex.uint16)
+      rw.write(s.cursorRow.uint16)
+      rw.write(s.cursorCol.uint16)
+      rw.write(s.viewStartRow.uint16)
+      rw.write(s.viewStartCol.uint16)
 
-  # Options
-  rw.write(s.optShowCellCoords.uint8)
-  rw.write(s.optShowToolsPane.uint8)
-  rw.write(s.optShowCurrentNotePane.uint8)
-  rw.write(s.optWasdMode.uint8)
-  rw.write(s.optWalkMode.uint8)
+    # Options state
+    rw.chunk(FourCC_GRMM_opts):
+      rw.write(s.optShowCellCoords.uint8)
+      rw.write(s.optShowToolsPane.uint8)
+      rw.write(s.optShowCurrentNotePane.uint8)
+      rw.write(s.optWasdMode.uint8)
+      rw.write(s.optWalkMode.uint8)
 
-  # Tools pane state
-  rw.write(s.currFloorColor.uint8)
-  rw.write(s.currSpecialWall.uint8)
+    # Tools pane state
+    rw.chunk(FourCC_GRMM_tool):
+      rw.write(s.currFloorColor.uint8)
+      rw.write(s.currSpecialWall.uint8)
 
-  rw.endChunk
+    # Notes list pane state
+#    rw.chunk(FourCC_GRMM_notl):
 
 # }}}
 # {{{ writeLinks()
 proc writeLinks(rw; map: Map) =
-  rw.beginChunk(FourCC_GRMM_lnks)
-  rw.write(map.links.len.uint16)
+  rw.chunk(FourCC_GRMM_lnks):
+    rw.write(map.links.len.uint16)
 
-  # We map level IDs to their indices in sortedLevelIds when writing the
-  # links. Because we write the levels in the order they appear in
-  # sortedLevelIds, the indices will point to the correct levels.
-  #
-  # When loading the levels back, we assign the the first level ID 0, the
-  # second ID 1, etc. (their indices in the map file) to ensure the level IDs
-  # are in sync with the links.
+    # We map level IDs to their indices in sortedLevelIds when writing the
+    # links. Because we write the levels in the order they appear in
+    # sortedLevelIds, the indices will point to the correct levels.
+    #
+    # When loading the levels back, we assign the the first level ID 0, the
+    # second ID 1, etc. (their indices in the map file) to ensure the level IDs
+    # are in sync with the links.
 
-  let levelIdToIndex = collect:
-    for idx, id in map.sortedLevelIds: {id: idx}
+    let levelIdToIndex = collect:
+      for idx, id in map.sortedLevelIds: {id: idx}
 
-  var sortedKeys = collect:
-    for k in map.links.sources: k
+    var sortedKeys = collect:
+      for k in map.links.sources: k
 
-  sort(sortedKeys)
+    sort(sortedKeys)
 
-  proc writeLocation(loc: Location) =
-    rw.write(levelIdToIndex[loc.levelId].uint16)
-    rw.write(loc.row.uint16)
-    rw.write(loc.col.uint16)
+    proc writeLocation(loc: Location) =
+      rw.write(levelIdToIndex[loc.levelId].uint16)
+      rw.write(loc.row.uint16)
+      rw.write(loc.col.uint16)
 
-  for src in sortedKeys:
-    let dest = map.links.getBySrc(src).get
-    writeLocation(src)
-    writeLocation(dest)
-
-  rw.endChunk
+    for src in sortedKeys:
+      let dest = map.links.getBySrc(src).get
+      writeLocation(src)
+      writeLocation(dest)
 
 # }}}
 # {{{ writeCoordinateOptions()
 proc writeCoordinateOptions(rw; co: CoordinateOptions) =
-  rw.beginChunk(FourCC_GRMM_coor)
-
-  rw.write(co.origin.uint8)
-  rw.write(co.rowStyle.uint8)
-  rw.write(co.columnStyle.uint8)
-  rw.write(co.rowStart.int16)
-  rw.write(co.columnStart.int16)
-
-  rw.endChunk
+  rw.chunk(FourCC_GRMM_coor):
+    rw.write(co.origin.uint8)
+    rw.write(co.rowStyle.uint8)
+    rw.write(co.columnStyle.uint8)
+    rw.write(co.rowStart.int16)
+    rw.write(co.columnStart.int16)
 
 # }}}
 # {{{ writeLevelRegions()
 proc writeLevelRegions(rw; l: Level) =
-  rw.beginChunk(FourCC_GRMM_regn)
+  rw.chunk(FourCC_GRMM_regn):
+    rw.write(l.regionOpts.enabled.uint8)
+    rw.write(l.regionOpts.rowsPerRegion.uint16)
+    rw.write(l.regionOpts.colsPerRegion.uint16)
+    rw.write(l.regionOpts.perRegionCoords.uint8)
 
-  rw.write(l.regionOpts.enabled.uint8)
-  rw.write(l.regionOpts.rowsPerRegion.uint16)
-  rw.write(l.regionOpts.colsPerRegion.uint16)
-  rw.write(l.regionOpts.perRegionCoords.uint8)
+    rw.write(l.regions.numRegions.uint16)
 
-  rw.write(l.regions.numRegions.uint16)
-
-  for rc, r in l.regions.sortedRegions:
-    rw.write(rc.row.uint16)
-    rw.write(rc.col.uint16)
-    rw.writeWStr(r.name)
-    rw.writeWStr(r.notes)
-
-  rw.endChunk
+    # We need to write regions
+    for rc in l.regionCoords:
+      let r = l.regions[rc].get
+      rw.writeWStr(r.name)
+      rw.writeWStr(r.notes)
 
 # }}}
 # # {{{ writeLevelProperties()
 proc writeLevelProperties(rw; l: Level) =
-  rw.beginChunk(FourCC_GRMM_prop)
+  rw.chunk(FourCC_GRMM_prop):
+    rw.writeWStr(l.locationName)
+    rw.writeWStr(l.levelName)
+    rw.write(l.elevation.int16)
 
-  rw.writeWStr(l.locationName)
-  rw.writeWStr(l.levelName)
-  rw.write(l.elevation.int16)
+    rw.write(l.rows.uint16)
+    rw.write(l.cols.uint16)
 
-  rw.write(l.rows.uint16)
-  rw.write(l.cols.uint16)
+    rw.write(l.overrideCoordOpts.uint8)
 
-  rw.write(l.overrideCoordOpts.uint8)
-
-  rw.writeWStr(l.notes)
-
-  rw.endChunk
+    rw.writeWStr(l.notes)
 
 # }}}
 # {{{ writeLevelCells()
@@ -1113,96 +1272,78 @@ proc writeLevelCells(rw; cells: seq[Cell]) =
           rw.write(field.uint)
 
 
-  rw.beginChunk(FourCC_GRMM_cell)
-
-  writeLayer: c.floor
-  writeLayer: c.floorOrientation
-  writeLayer: c.floorColor
-  writeLayer: c.wallN
-  writeLayer: c.wallW
-  writeLayer: c.trail
-
-  rw.endChunk
+  rw.chunk(FourCC_GRMM_cell):
+    writeLayer: c.floor
+    writeLayer: c.floorOrientation
+    writeLayer: c.floorColor
+    writeLayer: c.wallN
+    writeLayer: c.wallW
+    writeLayer: c.trail
 
 # }}}
 # {{{ writeLevelAnnotations()
 proc writeLevelAnnotations(rw; l: Level) =
-  rw.beginChunk(FourCC_GRMM_anno)
+  rw.chunk(FourCC_GRMM_anno):
+    rw.write(l.numAnnotations.uint16)
 
-  rw.write(l.numAnnotations.uint16)
+    for row, col, anno in l.allAnnotations:
+      rw.write(row.uint16)
+      rw.write(col.uint16)
 
-  for row, col, anno in l.allAnnotations:
-    rw.write(row.uint16)
-    rw.write(col.uint16)
+      rw.write(anno.kind.uint8)
+      case anno.kind
+      of akComment: discard
+      of akIndexed:
+        rw.write(anno.index.uint16)
+        rw.write(anno.indexColor.uint8)
 
-    rw.write(anno.kind.uint8)
-    case anno.kind
-    of akComment: discard
-    of akIndexed:
-      rw.write(anno.index.uint16)
-      rw.write(anno.indexColor.uint8)
+      of akCustomId:
+        rw.writeBStr(anno.customId)
 
-    of akCustomId:
-      rw.writeBStr(anno.customId)
+      of akIcon:
+        rw.write(anno.icon.uint8)
 
-    of akIcon:
-      rw.write(anno.icon.uint8)
+      of akLabel:
+        rw.write(anno.labelColor.uint8)
 
-    of akLabel:
-      rw.write(anno.labelColor.uint8)
-
-    rw.writeWStr(anno.text)
-
-  rw.endChunk
+      rw.writeWStr(anno.text)
 
 # }}}
 # {{{ writeLevel()
 proc writeLevel(rw; l: Level) =
-  rw.beginListChunk(FourCC_GRMM_lvl)
-
-  writeLevelProperties(rw, l)
-  writeCoordinateOptions(rw, l.coordOpts)
-  writeLevelRegions(rw, l)
-  writeLevelCells(rw, l.cellGrid.cells)
-  writeLevelAnnotations(rw, l)
-
-  rw.endChunk
+  rw.listChunk(FourCC_GRMM_lvl):
+    writeLevelProperties(rw, l)
+    writeCoordinateOptions(rw, l.coordOpts)
+    writeLevelRegions(rw, l)
+    writeLevelCells(rw, l.cellGrid.cells)
+    writeLevelAnnotations(rw, l)
 
 # }}}
 # {{{ writeLevelList()
 proc writeLevelList(rw; map: Map) =
-  rw.beginListChunk(FourCC_GRMM_lvls)
-
-  # We must write the levels in sortedLevelIds order to ensure the links
-  # are in sync with the level IDs (see writeLinks()).
-  for levelId in map.sortedLevelIds:
-    writeLevel(rw, map.levels[levelId])
-
-  rw.endChunk
+  rw.listChunk(FourCC_GRMM_lvls):
+    # We must write the levels in sortedLevelIds order to ensure the links
+    # are in sync with the level IDs (see writeLinks()).
+    for levelId in map.sortedLevelIds:
+      writeLevel(rw, map.levels[levelId])
 
 # }}}
 # {{{ writeMapProperties()
 proc writeMapProperties(rw; map: Map) =
-  rw.beginChunk(FourCC_GRMM_prop)
-
-  rw.write(CurrentMapVersion.uint16)
-  rw.writeWStr(map.title)
-  rw.writeWStr(map.game)
-  rw.writeWStr(map.author)
-  rw.writeBStr(map.creationTime)
-  rw.writeWStr(map.notes)
-
-  rw.endChunk
+  rw.chunk(FourCC_GRMM_prop):
+    rw.write(CurrentMapVersion.uint16)
+    rw.writeWStr(map.title)
+    rw.writeWStr(map.game)
+    rw.writeWStr(map.author)
+    rw.writeBStr(map.creationTime)
+    rw.writeWStr(map.notes)
 
 # }}}
 # {{{ writeMap()
 proc writeMap(rw; map: Map) =
-  rw.beginListChunk(FourCC_GRMM_map)
-
-  writeMapProperties(rw, map)
-  writeCoordinateOptions(rw, map.coordOpts)
-
-  rw.endChunk
+  rw.listChunk(FourCC_GRMM_map):
+    writeMapProperties(rw, map)
+    writeCoordinateOptions(rw, map.coordOpts)
 
 # }}}
 # {{{ writeMapFile*()
@@ -1226,6 +1367,7 @@ proc writeMapFile*(map: Map, appState: AppState, path: string) =
     if rw != nil: rw.close
 
 # }}}
+
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

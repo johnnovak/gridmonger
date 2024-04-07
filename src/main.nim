@@ -10131,7 +10131,7 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
 
   a.ui.drawLevelParams.setZoomLevel(
     a.theme.levelTheme,
-    uiCfg.getNaturalOrDefault("zoom-level", 9).limit(ZoomLevelLimits)
+    uiCfg.getNaturalOrDefault("zoom-level", DefaultZoomLevel).limit(ZoomLevelLimits)
   )
 
   with a.ui.drawLevelParams:

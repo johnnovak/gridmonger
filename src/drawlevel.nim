@@ -21,8 +21,10 @@ import utils/rect
 
 
 const
-  MinZoomLevel* = 1
-  MaxZoomLevel* = 20
+  MinZoomLevel*     = 1
+  MaxZoomLevel*     = 20
+  DefaultZoomLevel* = 9
+
   MinGridSize   = 13.0
   ZoomStep      = 2.0
 

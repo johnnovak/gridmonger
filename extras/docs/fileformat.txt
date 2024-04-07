@@ -12,8 +12,8 @@
 1. File format & structure
 ==========================
 
-Gridmonger map files (.gmm extension) are stored in the generic RIFF container
-format with the form type ID 'GRMM'.
+Gridmonger map files (.gmm extension) are stored in the generic RIFF
+container format with the form type ID 'GRMM'.
 
 Multi-byte numbers are stored in little-endian byte order in RIFF files.
 
@@ -37,15 +37,15 @@ The structure of a GRMM RIFF file is as follows:
       'lnks'             Map links
 
       LIST ('stat'       Gridmonger app/UI state (group chunk, optional)
-           'disp'          Display related settings
-           'opts'          Options
-           'tool'          Tools
-           'notl'          Notes list
+           'disp'          Display state (optional)
+           'opts'          Options state (optional)
+           'tool'          Tools pane state (optional)
+           'notl'          Notes list pane state (optional)
   )
 
 
-The 'stat' chunk can be safely ignored by 3rd party tools only interested in
-the map data.
+The 'stat' chunk can be safely ignored by 3rd party tools only interested
+in the map data.
 
 
 2. Description of GRMM chunks
@@ -102,6 +102,9 @@ Level chunks  (in 'lvl ' group chunk)
 
 
 'cell'      Cell data
+	Cells are stored in row-major order; (0,0) is the top-left cell,
+	(0,1) the cell right to it, etc.
+
     Cell data is stored in six layers (similar in concept to bitmaps).
     Each layer can use a different compressions method.
 
@@ -171,10 +174,14 @@ Level chunks  (in 'lvl ' group chunk)
     UINT16  numRegions
     UINT8   perRegionCoords     (0=off, 1=on)
 
-    numRegions records of:
+    numRegions records of: *
 
       WSTR    name              (minRuneLen=1, maxRuneLen=100)
       WSTR    notes             (maxRuneLen=8000)
+
+	* Regions are written ordered by their region coordinates.
+	  The top-left region has region coordinates (0,0), the region right
+	  to it (0,1), etc.
 
 
 Map links chunk
@@ -197,7 +204,7 @@ Map links chunk
 App state chunks (in 'stat' group chunk, optional)
 --------------------------------------------------
 
-'disp'      Display related settings
+'disp'      Display state (optional)
     BSTR    themeName*          (minLen=1, maxLen=100)
 
     * Cannot start or end with a space or '.'
@@ -212,7 +219,7 @@ App state chunks (in 'stat' group chunk, optional)
     UINT16  viewStartColumn     (max=numColumns-1 of the given level)
 
 
-'opts'      Options
+'opts'      Options state (optional)
     UINT8   optShowCellCoords       (0=off, 1=on)
     UINT8   optShowToolsPane        (0=off, 1=on)
     UINT8   optShowCurrentNotePane  (0=off, 1=on)
@@ -222,12 +229,12 @@ App state chunks (in 'stat' group chunk, optional)
     UINT8   optWraparound           (0=off, 1=on) TODO
 
 
-'tool'      Tools
+'tool'      Tools pane state (optional)
     UINT8   currFloorColor      (max=9)
     UINT8   currSpecialWall     (max=11, see SpecialWalls array in
                                          common.nim for mappings)
 
-'notl'      Notes list
+'notl'      Notes list pane state (optional)
     UINT8   linkCursor        (0=off, 1=on)
     UINT8   scopeFilter       (0=map, 1=level, 2=region)
     UINT8   noteTypeFilter    (bitset: b0=none, b1=number, b2=id, b3=icon)

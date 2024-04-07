@@ -189,8 +189,8 @@ proc regionCols*(l; ro: RegionOptions): Natural =
 proc regionCols*(l): Natural = l.regionCols(l.regionOpts)
 
 # }}}
-# {{{ allRegionCoords*()
-iterator allRegionCoords*(l): RegionCoords =
+# {{{ regionCoords*()
+iterator regionCoords*(l): RegionCoords =
   for r in 0..<l.regionRows:
     for c in 0..<l.regionCols:
       yield RegionCoords(row: r, col: c)
@@ -205,7 +205,7 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
   var destRegions = initRegions()
   var index = 1
 
-  for destRegionCoord in destLevel.allRegionCoords:
+  for destRegionCoord in destLevel.regionCoords:
     let srcRegionRow = destRegionCoord.row.int + regionRowOffs
     let srcRegionCol = destRegionCoord.col.int + regionColOffs
 

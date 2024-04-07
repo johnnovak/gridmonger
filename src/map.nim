@@ -159,7 +159,7 @@ proc reallocateRegions*(m; levelId: Natural, oldCoordOpts: CoordinateOptions,
 
   l.regions = initRegions()
 
-  for rc in l.allRegionCoords:
+  for rc in l.regionCoords:
     let oldRc = if flipVert:
                   RegionCoords(row: l.regionRows(oldRegionOpts)-1 - rc.row,
                                col: rc.col)
