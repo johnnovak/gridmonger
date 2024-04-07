@@ -729,7 +729,7 @@ proc readCoordinateOptions(rr; parentChunk: string): CoordinateOptions =
 
 # }}}
 # {{{ readLevelRegions*()
-proc readLevelRegions(rr; regionCols: Natural,
+proc readLevelRegions(rr; levelCols: Natural,
                       version: Natural): tuple[regionOpts: RegionOptions,
                                                regions: Regions] =
   debug(fmt"Reading level regions...")
@@ -760,6 +760,8 @@ proc readLevelRegions(rr; regionCols: Natural,
 
   var regions: Regions = initRegions()
 
+  let regionCols = ceil(levelCols / regionOpts.colsPerRegion).int
+
   for regionIdx in 0..<numRegions:
     debug(fmt"regionIdx: {regionIdx}")
     pushDebugIndent()
@@ -775,6 +777,8 @@ proc readLevelRegions(rr; regionCols: Natural,
     else:
       RegionCoords(row: regionIdx div regionCols,
                    col: regionIdx mod regionCols)
+
+    debug(fmt"regionCoords: {regionCoords}")
 
     let name = rr.readWStr
     checkStringLength(name, "lvl.regn.region.name", RegionNameLimits)
@@ -862,8 +866,7 @@ proc readLevel(rr; levelId: Natural; version: Natural): Level =
   level.coordOpts = readCoordinateOptions(rr, groupChunkId.get)
 
   rr.cursor = regnCursor.get
-  (level.regionOpts, level.regions) = readLevelRegions(rr, level.regionCols,
-                                                       version)
+  (level.regionOpts, level.regions) = readLevelRegions(rr, level.cols, version)
 
   rr.cursor = cellCursor.get
 
@@ -1217,7 +1220,8 @@ proc writeLevelRegions(rw; l: Level) =
 
     rw.write(l.regions.numRegions.uint16)
 
-    # We need to write regions
+    # We write the regions row by row starting at the top-left corner
+    # at (0,0) region coords.
     for rc in l.regionCoords:
       let r = l.regions[rc].get
       rw.writeWStr(r.name)
