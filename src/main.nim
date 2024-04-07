@@ -8515,24 +8515,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
                 style = a.theme.buttonStyle):
     setExpandedStates(expanded=false, a)
 
-  # Handle dirty flags
-  if map.levelsDirty:
-    for _, l in map.levels:
-      if l.id notin nls.sectionStates:
-        nls.sectionStates[l.id] = true
-
-      if l.regionOpts.enabled:
-        for regionCoords, _ in l.regions.sortedRegions:
-          nls.regionStates[(l.id, regionCoords)] = true
-
-    map.levelsDirty = false
-
-  if l.annotations.dirty:
-    l.annotations.dirty = false
-
-  if l.dirty:
-    l.dirty = false
-
   # Rebuild cache if necessary.
   #
   # Make sure to set the font parameters prior to that as the notes' text
@@ -8555,6 +8537,24 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     rebuildNotesListCache(textW, a)
 
   nls.prevFilter = nls.currFilter
+
+  # Handle dirty flags
+  if map.levelsDirty:
+    for _, l in map.levels:
+      if l.id notin nls.sectionStates:
+        nls.sectionStates[l.id] = true
+
+      if l.regionOpts.enabled:
+        for regionCoords, _ in l.regions.sortedRegions:
+          nls.regionStates[(l.id, regionCoords)] = true
+
+    map.levelsDirty = false
+
+  if l.annotations.dirty:
+    l.annotations.dirty = false
+
+  if l.dirty:
+    l.dirty = false
 
   # Scroll view with notes
   let
