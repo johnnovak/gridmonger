@@ -9495,7 +9495,7 @@ proc renderDialogs(a) =
     deleteThemeDialog(a)
 
 # }}}
-#
+
 # {{{ renderUI()
 proc renderUI(a) =
   alias(ui, a.ui)
@@ -9828,8 +9828,6 @@ proc renderFrameSplash(a) =
   if shouldCloseSplash(a):
     closeSplash(a)
     a.win.focus
-
-# }}}
 
 # }}}
 
@@ -10204,6 +10202,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   else:
     a.theme.config = DefaultThemeConfig
 
+  a.ui.status.warning.overwrite = true
+
   # Init map & load last map, or map from command line
   a.doc.map = newMap("Untitled Map", game="", author="",
                      creationTime=currentLocalDatetimeString())
@@ -10215,8 +10215,6 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
     discard loadMap(mapFileName, a)
   else:
     setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
-
-  a.ui.status.warning.overwrite = true
 
   restoreUIStateFromConfig(cfg, a)
 
@@ -10383,8 +10381,6 @@ proc dropCb(window: Window, paths: PathDropInfo) =
   if paths.len > 0:
     let path = paths.items.toSeq[0]
     handleOpenFileEvent(AppEvent(kind: aeOpenFile, path: $path), g_app)
-
-# }}}
 
 # }}}
 
