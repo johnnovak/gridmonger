@@ -2466,12 +2466,14 @@ proc deleteTheme(theme: ThemeName; a): bool =
       info(fmt"Deleting theme '{theme.name}' at '{path}'")
 
       removeFile(path)
-      a.logfile.flushFile
       result = true
+
     except CatchableError as e:
       let msgPrefix = "Error deleting theme"
       logError(e, msgPrefix)
       setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
+    finally:
+      a.logfile.flushFile
 
 # }}}
 # {{{ copyTheme()
@@ -2487,6 +2489,8 @@ proc copyTheme(theme: ThemeName, newThemeName, newThemePath: string; a): bool =
     let msgPrefix = "Error copying theme"
     logError(e, msgPrefix)
     setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
+  finally:
+    a.logfile.flushFile
 
 # }}}
 # {{{ renameTheme()
@@ -2502,6 +2506,8 @@ proc renameTheme(theme: ThemeName, newThemeName, newThemePath: string; a): bool 
     let msgPrefix = "Error renaming theme"
     logError(e, msgPrefix)
     setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
+  finally:
+    a.logfile.flushFile
 
 # }}}
 
@@ -2882,7 +2888,7 @@ proc loadAppConfigOrDefault(path: string): HoconNode =
 
 # }}}
 # {{{ saveAppConfig()
-proc saveAppConfig(cfg: HoconNode, path: string) =
+proc saveAppConfig(cfg: HoconNode, path: string; a) =
   var s: FileStream
   try:
     s = newFileStream(path, fmWrite)
@@ -2892,6 +2898,7 @@ proc saveAppConfig(cfg: HoconNode, path: string) =
       fmt"Cannot write config file '{path}'. Error message: {e.msg}"
     )
   finally:
+    a.logfile.flushFile
     if s != nil: s.close
 
 # }}}
@@ -2954,7 +2961,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "width",          width)
   cfg.set(p & "height",         height)
 
-  saveAppConfig(cfg, a.paths.configFile)
+  saveAppConfig(cfg, a.paths.configFile, a)
 
 # }}}
 
@@ -3021,10 +3028,11 @@ proc loadMap(path: string; a): bool =
     result = true
 
   except CatchableError as e:
-    logError(e)
-    setErrorMessage(e.msg, a)
+    let msgPrefix = "Error loading map"
+    logError(e, msgPrefix)
+    setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
   finally:
-    a.logFile.flushFile()
+    a.logFile.flushFile
 
 # }}}
 # {{{ saveMap()
@@ -3064,7 +3072,6 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
       let msgPrefix = "Error creating backup file"
       logError(e, msgPrefix)
       setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
-      a.logFile.flushFile
       return
 
   try:
@@ -9629,6 +9636,8 @@ proc renderFramePreCb(a) =
 
     except CatchableError as e:
       logError(e, "Error loading theme when switching theme")
+      a.logfile.flushFile
+
       let name = a.theme.themeNames[themeIndex].name
 
       setErrorMessage(fmt"Cannot load theme '{name}': {e.msg}", a)
@@ -9637,7 +9646,6 @@ proc renderFramePreCb(a) =
 
     # nextThemeIndex will be reset at the start of the current frame after
     # displaying the status message
-
 
   if a.theme.nextThemeIndex.isSome:
     loadPendingTheme(a.theme.nextThemeIndex.get, a)

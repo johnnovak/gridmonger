@@ -949,7 +949,7 @@ proc readMapFile*(path: string): tuple[map: Map,
   except MapReadError as e:
     raise e
   except CatchableError as e:
-    raise newException(MapReadError, fmt"Error reading map file: {e.msg}", e)
+    raise newException(MapReadError, e.msg, e)
   finally:
     if rr != nil: rr.close
 
