@@ -11,6 +11,8 @@ BUGS
 TODO
 ====
 
+  - save copy first, then rename
+
   - region dropdown scrollbar is displayed with a large horiz offset
 
   - add unlink command
