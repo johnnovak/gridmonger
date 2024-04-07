@@ -3020,8 +3020,9 @@ proc loadMap(path: string; a): bool =
 
     appEvents.updateLastSavedTime()
 
-    let message = fmt"Map '{path}' loaded in " &
-                  fmt"{durationToFloatMillis(dt):.2f} ms"
+    var message = fmt"Map '{path}' loaded"
+    when defined(DEBUG):
+      message &= fmt"in {durationToFloatMillis(dt):.2f} ms"
 
     info(message)
     setStatusMessage(IconFloppy, message, a)
