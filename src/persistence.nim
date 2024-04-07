@@ -761,7 +761,7 @@ proc readLevelRegions(rr; regionCols: Natural,
   var regions: Regions = initRegions()
 
   for regionIdx in 0..<numRegions:
-    debug(fmt"index: {regionIdx}")
+    debug(fmt"regionIdx: {regionIdx}")
     pushDebugIndent()
 
     let regionCoords = if version < 4:
@@ -782,10 +782,13 @@ proc readLevelRegions(rr; regionCols: Natural,
     let notes = rr.readWStr
     checkStringLength(notes, "lvl.regn.region.notes", NotesLimits)
 
-    regions[regionCoords] = initRegion(name=name, notes=notes)
+    # Optimisation: sorting only once at the end speeds up the loading
+    # massively
+    regions.regionsByCoords[regionCoords] = initRegion(name=name, notes=notes)
 
     popDebugIndent()
 
+  regions.sortRegions
   result = (regionOpts, regions)
 
   popDebugIndent()
