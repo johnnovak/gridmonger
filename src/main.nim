@@ -4094,6 +4094,8 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 
     a.opts.drawTrail = false
 
+    setNextLevelId(0)
+
     a.doc.path = ""
     a.doc.map = newMap(dlg.title, dlg.game, dlg.author,
                        creationTime=now().format("yyyy-MM-dd HH:mm:ss"))

@@ -40,7 +40,8 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
 
   var oldLinks = map.links
 
-  let undoLevel = map.newLevelFrom(loc.levelId, rect)
+  let undoLevel = map.newLevelFrom(loc.levelId, rect,
+                                   overrideId=0.Natural.some)
 
   let undoAction = proc (m: var Map): UndoStateData =
     m.levels[loc.levelId].copyCellsAndAnnotationsFrom(
@@ -327,7 +328,8 @@ proc setLink*(map; src, dest: Location, floorColor: Natural; um) =
     c = dest.col
     rect = rectN(r, c, r+1, c+1)  # single cell
 
-  let undoLevel = map.newLevelFrom(dest.levelId, rect)
+  let undoLevel = map.newLevelFrom(dest.levelId, rect,
+                                   overrideId=0.Natural.some)
 
   var oldLinks = initLinks()
 
@@ -686,6 +688,7 @@ proc addNewLevel*(map; loc: Location,
   # Undo action
   let undoAction = proc (m: var Map): UndoStateData =
     m.delLevel(newLevelId)
+    setNextLevelId(newLevelId)
 
     for src in m.links.filterByLevel(newLevelId).sources:
       m.links.delBySrc(src)
@@ -904,6 +907,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
+
     # Propagate ID as this is the same level, just nudged
     var l = newLevel(
       sb.level.locationName, sb.level.levelName, sb.level.elevation,

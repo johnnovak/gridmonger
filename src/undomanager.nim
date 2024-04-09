@@ -68,7 +68,7 @@ proc undo*[S, R](m: var UndoManager[S, R], s: var S): R =
     let undoNextState = m.states[m.currState].groupWithPrev
     dec(m.currState)
     if undoNextState:
-      discard m.undo(s)
+      result = m.undo(s)
 
 # }}}
 

@@ -476,9 +476,14 @@ proc isSpecialLevelId*(id: Natural): bool =
 
 # }}}
 
-# {{{ newLevel*()
+# {{{ setNextLevelId*()
+var g_nextLevelId = 0
 
-var g_levelIdCounter = 0
+proc setNextLevelId*(nextId: Natural) =
+  g_nextLevelId = nextId
+
+# }}}
+# {{{ newLevel*()
 
 const DefaultCoordOpts = CoordinateOptions(
   origin:      coNorthWest,
@@ -509,8 +514,8 @@ proc newLevel*(locationName, levelName: string, elevation: int,
   if overrideId.isSome:
     l.id = overrideId.get
   else:
-    l.id = g_levelIdCounter
-    inc(g_levelIdCounter)
+    l.id = g_nextLevelId
+    inc(g_nextLevelId)
 
   l.locationName = locationName
   l.levelName    = levelName

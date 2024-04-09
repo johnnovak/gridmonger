@@ -519,7 +519,7 @@ proc readLinks(
 
 # }}}
 # {{{ readLevelProperties()
-proc readLevelProperties(rr; levelId: Natural): Level =
+proc readLevelProperties(rr): Level =
   debug(fmt"Reading level properties...")
   pushDebugIndent()
 
@@ -545,8 +545,7 @@ proc readLevelProperties(rr; levelId: Natural): Level =
   let notes = rr.readWStr
   checkStringLength(notes, "lvl.prop.notes", NotesLimits)
 
-  result = newLevel(locationName, levelName, elevation, numRows, numColumns,
-                    overrideId = levelId.some)
+  result = newLevel(locationName, levelName, elevation, numRows, numColumns)
   result.overrideCoordOpts = overrideCoordOpts.bool
   result.notes = notes
 
@@ -820,7 +819,7 @@ proc readLevelRegions(rr; levelCols: Natural,
 
 # }}}
 # {{{ readLevel()
-proc readLevel(rr; levelId: Natural; version: Natural): Level =
+proc readLevel(rr; version: Natural): Level =
   debug(fmt"Reading level...")
   pushDebugIndent()
 
@@ -881,7 +880,7 @@ proc readLevel(rr; levelId: Natural; version: Natural): Level =
   if cellCursor.isNone: chunkNotFoundError(FourCC_GRMM_cell)
 
   rr.cursor = propCursor.get
-  var level = readLevelProperties(rr, levelId)
+  var level = readLevelProperties(rr)
 
   rr.cursor = coorCursor.get
   level.coordOpts = readCoordinateOptions(rr, groupChunkId.get)
@@ -911,7 +910,6 @@ proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
   pushDebugIndent()
 
   var levels = initOrderedTable[Natural, Level]()
-  var levelId = 0
 
   if rr.hasSubChunks:
     var ci = rr.enterGroup
@@ -927,9 +925,8 @@ proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
 
           # The level IDs must be set to their indices in the map file to
           # ensure they are in sync with link (see writeLinks()).
-          let level = readLevel(rr, levelId, version)
-          levels[levelId] = level
-          inc(levelId)
+          let level = readLevel(rr, version)
+          levels[level.id] = level
 
           rr.exitGroup
         else:
@@ -1134,9 +1131,11 @@ proc readMapFile*(path: string): tuple[map: Map,
     elif appStateGroupCursor.isSome:
       rr.cursor = appStateGroupCursor.get
       readAppState_V4(rr, map).some
-
     else:
       AppState.none
+
+    # Level IDs start from zero when loading a map
+    setNextLevelId(map.levels.len)
 
     result = (map, appState, warning)
 
