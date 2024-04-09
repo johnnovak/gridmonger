@@ -60,6 +60,8 @@ proc `[]=`*(vr; rc: RegionCoords, region: Region) =
 # }}}
 # {{{ numRegions*()
 proc numRegions*(r): Natural =
+  # Note that this can return a non-zero value even if regions are disabled
+  # the Level's RegionOpts (see `Level.regions` in `common.nim`).
   r.regionsByCoords.len
 
 # }}}

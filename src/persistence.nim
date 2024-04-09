@@ -755,6 +755,9 @@ proc readLevelRegions(rr; levelCols: Natural,
     perRegionCoords: perRegionCoords.bool
   )
 
+  # Note that regions can be present even if `regionOpts.enabled` is false.
+  # We always load regions, even if they are disabled, to preserve their names
+  # and notes (see `Level.regions` in `common.nim`).
   let numRegions = rr.read(uint16).Natural
   debug(fmt"numRegions: {numRegions}")
 
@@ -1220,12 +1223,17 @@ proc writeLevelRegions(rw; l: Level) =
 
     rw.write(l.regions.numRegions.uint16)
 
-    # We write the regions row by row starting at the top-left corner
-    # at (0,0) region coords.
-    for rc in l.regionCoords:
-      let r = l.regions[rc].get
-      rw.writeWStr(r.name)
-      rw.writeWStr(r.notes)
+    # `numRegions` can be non-zero even if `regionOpts.enabled` is `false`.
+    # We always write regions if they are present to preserve their names and
+    # notes (see `Level.regions` in `common.nim`).
+    if l.regions.numRegions > 0:
+
+      # Write regions row by row starting from region coords (0,0)
+      # (top-left corner), then go left to right, top to bottom.
+      for rc in l.regionCoords:
+        let r = l.regions[rc].get
+        rw.writeWStr(r.name)
+        rw.writeWStr(r.notes)
 
 # }}}
 # # {{{ writeLevelProperties()

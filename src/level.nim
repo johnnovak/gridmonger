@@ -191,6 +191,12 @@ proc regionCols*(l): Natural = l.regionCols(l.regionOpts)
 # }}}
 # {{{ regionCoords*()
 iterator regionCoords*(l): RegionCoords =
+  # Iterate through all region coords, starting from (0,0) (top-left corner),
+  # then going left to right, top to bottom.
+  #
+  # This just generates the coordinates, regardless whether regions are
+  # enabled in RegionOptions or whether Regions contains any regions.
+  #
   for r in 0..<l.regionRows:
     for c in 0..<l.regionCols:
       yield RegionCoords(row: r, col: c)

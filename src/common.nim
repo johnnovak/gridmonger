@@ -121,6 +121,10 @@ type
     overrideCoordOpts*: bool
     coordOpts*:         CoordinateOptions
 
+    # Note that Regions *can* contain region data even if regions are disabled
+    # (regionOpts.enabled = false). This is to preserve the region names and
+    # notes when regions are temporarily disabled. Also, we always write the
+    # region data into the map file, even if regions are disabled.
     regionOpts*:        RegionOptions
     regions*:           Regions
 
@@ -129,7 +133,6 @@ type
     cellGrid*:          CellGrid
 
     dirty*:             bool
-
 
   RegionOptions* = object
     enabled*:         bool

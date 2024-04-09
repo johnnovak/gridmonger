@@ -51,14 +51,12 @@ in the map data.
 2. Description of GRMM chunks
 =============================
 
-Notes:
+- Strings that have their lengths specified with 'minRuneLen' & 'maxRuneLen'
+  are in UTF-8. A single UTF-8 rune is encoded as a 1 to 4 byte sequence, so
+  the byte limits of UTF-8 strings are (minRuneLen*4) to (maxRuneLen*4).
 
-  - Strings that have their lengths specified with 'minRuneLen' & 'maxRuneLen'
-    are in UTF-8. A single UTF-8 rune is encoded as a 1 to 4 byte sequence, so
-    the byte limits of UTF-8 strings are (minRuneLen*4) to (maxRuneLen*4).
-
-  - Strings that have their lengths specified with 'len', 'minLen' & 'maxLen'
-    are regular ASCII string.
+- Strings that have their lengths specified with 'len', 'minLen' & 'maxLen'
+  are regular ASCII string.
 
 
 Map chunks (in 'map ' group chunk)
@@ -102,8 +100,8 @@ Level chunks  (in 'lvl ' group chunk)
 
 
 'cell'      Cell data
-	Cells are stored in row-major order; (0,0) is the top-left cell,
-	(0,1) the cell right to it, etc.
+    Cells are stored in row-major order; (0,0) is the top-left cell,
+    (0,1) the cell right to it, etc.
 
     Cell data is stored in six layers (similar in concept to bitmaps).
     Each layer can use a different compressions method.
@@ -171,17 +169,22 @@ Level chunks  (in 'lvl ' group chunk)
     UINT8   enableRegions       (0=off, 1=on)
     UINT16  rowsPerRegion       (min=2, max=3333)
     UINT16  columnsPerRegion    (min=2, max=3333)
-    UINT16  numRegions
+    UINT16  numRegions *
     UINT8   perRegionCoords     (0=off, 1=on)
 
-    numRegions records of: *
+    numRegions records of: **
 
       WSTR    name              (minRuneLen=1, maxRuneLen=100)
       WSTR    notes             (maxRuneLen=8000)
 
-	* Regions are written ordered by their region coordinates.
-	  The top-left region has region coordinates (0,0), the region right
-	  to it (0,1), etc.
+    *   Regions can be present (numRegions > 0) even if enableRegions is 0
+        (off). This is to preserve their names and notes when they're
+        re-enabled.
+
+    **  Regions are written ordered by their region coordinates, left to
+        right, top to bottom. The top-left region has region coordinates
+        (0,0), the region right to it (0,1), etc.
+
 
 
 Map links chunk
@@ -205,7 +208,7 @@ App state chunks (in 'stat' group chunk, optional)
 --------------------------------------------------
 
 'disp'      Display state (optional)
-    BSTR    themeName*          (minLen=1, maxLen=100)
+    BSTR    themeName *         (minLen=1, maxLen=100)
 
     * Cannot start or end with a space or '.'
       The following characters are disallowed:
@@ -247,7 +250,8 @@ App state chunks (in 'stat' group chunk, optional)
         UINT32   levelIndex
         UINT8    levelSection     (0=closed, 1=open)
 
-        if numRegions > 0 for the level (enableRegions can still be 0):
+        if numRegions > 0 for the level
+        (note that regn.enableRegions can still be 0 (off)):
 
           UINT32   regionId
           UINT8    regionSection  (0=closed, 1=open)
