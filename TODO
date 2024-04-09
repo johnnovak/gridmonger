@@ -11,8 +11,6 @@ BUGS
 TODO
 ====
 
-  - save copy first, then rename
-
   - add unlink command
 
   - test loading v1, v2, and v3 map versions

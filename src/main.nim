@@ -19,6 +19,7 @@ import std/strutils except strip, splitWhitespace
 import std/sugar
 import std/tables
 import std/times
+import std/tempfiles
 import std/unicode
 
 # Libraries
@@ -3068,15 +3069,20 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
   if createBackup:
     try:
       if fileExists(path):
-        moveFile(path, fmt"{path}.{BackupFileExt}")
+        copyFile(path, fmt"{path}.{BackupFileExt}")
     except CatchableError as e:
       let msgPrefix = "Error creating backup file"
       logError(e, msgPrefix)
       setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
       return
 
+  let (dir, name, _) = splitFile(path)
+  let tempPath = genTempPath(prefix=fmt"{name} ", suffix=".gmm.tmp", dir=dir)
+
   try:
-    writeMapFile(a.doc.map, appState, path)
+    writeMapFile(a.doc.map, appState, tempPath)
+    moveFile(tempPath, path)
+
     a.doc.lastSavePath = path
     a.doc.undoManager.setLastSaveState
 
@@ -3085,9 +3091,13 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
       appEvents.updateLastSavedTime()
 
   except CatchableError as e:
-    logError(e)
-    let prefix = if autosave: "Autosave failed: " else: ""
-    setErrorMessage(fmt"{prefix}{e.msg}", a)
+    let msgPrefix = if autosave: "Autosaving map failed"
+                    else: "Saving map failed"
+    logError(e, msgPrefix)
+    setErrorMessage(fmt"{msgPrefix}: {e.msg}", a)
+
+    if fileExists(tempPath):
+      removeFile(tempPath)
   finally:
     a.logFile.flushFile
 

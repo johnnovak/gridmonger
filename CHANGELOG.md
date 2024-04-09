@@ -37,6 +37,8 @@
 - Idle perfomance has been improved; CPU and GPU utilisation is now close to
   zero if there is no user input.
 - All sorted items use [natural sort order](https://en.wikipedia.org/wiki/Natural_sort_order) now.
+- Maps are now saved to a temp file first then are renamed to minimise the
+  chance of data corruption.
 - The user manual has been overhauled for improved wording and clarity.
 - Improved status bar messages, dialogs, and more status icons.
 - Minor improvements to some of the bundled themes.
