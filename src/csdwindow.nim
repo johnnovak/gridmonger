@@ -1,5 +1,5 @@
 import std/lenientops
-import std/logging
+import std/logging as log
 import std/strformat
 
 import glfw
@@ -247,7 +247,7 @@ proc newCSDWindow*(): CSDWindow =
   setMonitorCb:
     proc(m: Monitor, connected: bool) =
       let state = if connected: "connected" else: "disconnected"
-      logging.info(fmt"Monitor '{m.name}' has been {state}")
+      log.info(fmt"Monitor '{m.name}' has been {state}")
 
       if not connected:
         snapWindowToVisibleArea(g_window)

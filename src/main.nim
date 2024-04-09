@@ -5,7 +5,7 @@ import std/browsers
 import std/exitprocs
 import std/httpclient
 import std/lenientops
-import std/logging except Level
+import std/logging as log except Level
 import std/macros
 import std/math
 import std/monotimes
@@ -1589,7 +1589,7 @@ proc logError(e: ref Exception, msgPrefix: string = "") =
   if msgPrefix != "":
     msg = msgPrefix & "\n" & msg
 
-  logging.error(msg)
+  log.error(msg)
 
 # }}}
 
@@ -2431,7 +2431,7 @@ proc buildThemeList(a) =
 # {{{ loadTheme()
 proc loadTheme(theme: ThemeName; a) =
   var path = themePath(theme, a)
-  info(fmt"Loading theme '{theme.name}' from '{path}'")
+  log.info(fmt"Loading theme '{theme.name}' from '{path}'")
 
   a.theme.config = loadTheme(path)
   a.logfile.flushFile
@@ -2464,7 +2464,7 @@ proc deleteTheme(theme: ThemeName; a): bool =
   if theme.userTheme:
     try:
       var path = themePath(theme, a)
-      info(fmt"Deleting theme '{theme.name}' at '{path}'")
+      log.info(fmt"Deleting theme '{theme.name}' at '{path}'")
 
       removeFile(path)
       result = true
@@ -2518,13 +2518,13 @@ proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
     let imgPath = a.paths.userThemeImagesDir / imageName
     result = loadImage(imgPath, a)
     if result.isNone:
-      info("Cannot load image from user theme images directory: " &
-           fmt"'{imgPath}'. Attempting default theme images directory.")
+      log.info("Cannot load image from user theme images directory: " &
+               fmt"'{imgPath}'. Attempting default theme images directory.")
 
   let imgPath = a.paths.themeImagesDir / imageName
   result = loadImage(imgPath, a)
   if result.isNone:
-    logging.error(
+    log.error(
       "Cannot load image from default theme images directory: '{imgPath}'"
     )
 
@@ -2879,7 +2879,7 @@ proc loadAppConfigOrDefault(path: string): HoconNode =
     var p = initHoconParser(s)
     result = p.parse
   except CatchableError as e:
-    logging.warn(
+    log.warn(
       fmt"Cannot load config file '{path}', using default config. " &
       fmt"Error message: {e.msg}"
     )
@@ -2895,7 +2895,7 @@ proc saveAppConfig(cfg: HoconNode, path: string; a) =
     s = newFileStream(path, fmWrite)
     cfg.write(s)
   except CatchableError as e:
-    logging.error(
+    log.error(
       fmt"Cannot write config file '{path}'. Error message: {e.msg}"
     )
   finally:
@@ -2971,7 +2971,7 @@ proc saveAppConfig(a) =
 
 # {{{ loadMap()
 proc loadMap(path: string; a): bool =
-  info(fmt"Loading map '{path}'...")
+  log.info(fmt"Loading map '{path}'...")
 
   try:
     let
@@ -3064,7 +3064,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     currSpecialWall:        a.ui.currSpecialWall,
   )
 
-  info(fmt"Saving map to '{path}'")
+  log.info(fmt"Saving map to '{path}'")
 
   if createBackup:
     try:
@@ -3115,7 +3115,7 @@ when not defined(DEBUG):
 
     let path = findUniquePath(dir, fmt"{name} {CrashAutosaveName}", MapFileExt)
 
-    info(fmt"Autosaving map to '{path}'")
+    log.info(fmt"Autosaving map to '{path}'")
     saveMap(path, autosave=false, createBackup=false, a)
 
     result = path
@@ -9945,7 +9945,7 @@ proc loadFonts(a) =
     try:
       a.vg.createFont(fontName, path)
     except CatchableError as e:
-      logging.error(fmt"Cannot load font '{path}'")
+      log.error(fmt"Cannot load font '{path}'")
       raise e
 
   discard         loadFont("sans",       p.dataDir / "Roboto-Regular.ttf", a)
@@ -9986,7 +9986,7 @@ proc initGfx(a) =
   let win = newCSDWindow()
 
   if not gladLoadGL(getProcAddress):
-    logging.error("Error initialising OpenGL")
+    log.error("Error initialising OpenGL")
     quit(QuitFailure)
 
   let version  = cast[cstring](glGetString(GL_VERSION))
@@ -9999,7 +9999,7 @@ GPU info:
   Renderer: {renderer}
   Version:  {version}"""
 
-  info(msg)
+  log.info(msg)
 
   nvgInit(getProcAddress)
   let vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
@@ -10282,7 +10282,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 # }}}
 # {{{ cleanup()
 proc cleanup(a) =
-  info("Exiting app...")
+  log.info("Exiting app...")
 
   koi.deinit()
 
@@ -10296,7 +10296,7 @@ proc cleanup(a) =
 
   glfw.terminate()
 
-  info("Cleanup successful, bye!")
+  log.info("Cleanup successful, bye!")
 
   if a.logFile != nil:
     a.logFile.close
@@ -10418,13 +10418,13 @@ proc main() =
     createDirs(a)
     initLogger(a)
 
-    info(FullVersionString)
-    info(CompiledAt)
-    info(fmt"Paths: {a.paths}")
+    log.info(FullVersionString)
+    log.info(CompiledAt)
+    log.info(fmt"Paths: {a.paths}")
 
     let (configFile, mapFile, winCfg) = parseCommandLineParams()
-    info(fmt"Command line parameters: configFile: {configFile}, " &
-         fmt"mapFile: {mapFile}, winCfg: {winCfg}")
+    log.info(fmt"Command line parameters: configFile: {configFile}, " &
+             fmt"mapFile: {mapFile}, winCfg: {winCfg}")
 
     initGfx(a)
 

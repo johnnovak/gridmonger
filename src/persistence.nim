@@ -1,6 +1,6 @@
 import std/algorithm
 import std/enumutils
-import std/logging except Level
+import std/logging as log except Level
 import std/math
 import std/options
 import std/strformat
@@ -41,7 +41,10 @@ proc popDebugIndent() =
   currDebugIndent = max(currDebugIndent - DebugIndent, 0)
 
 template debug(s: string) =
-  debug(" ".repeat(currDebugIndent) & s)
+  log.debug(" ".repeat(currDebugIndent) & s)
+
+template warn(s: string) =
+  log.warn(" ".repeat(currDebugIndent) & s)
 
 # }}}
 # {{{ Field limits

@@ -1,4 +1,5 @@
 import std/math
+import std/logging as log
 import std/options
 import std/strformat
 import std/strutils
@@ -7,7 +8,6 @@ import std/unicode
 import nanovg
 
 import fieldlimits
-import logging
 import utils/hocon
 
 
@@ -34,7 +34,7 @@ proc getObjectOrEmpty*(cfg; path: string): HoconNode =
 
 proc invalidValueError(path, valueType, value: string) =
   let msg = fmt"Invalid {valueType} value for path '{path}': {value}"
-  error(msg)
+  log.error(msg)
 
 
 proc getStringOrDefault*(cfg; path: string, default: string = ""): string =
@@ -42,7 +42,7 @@ proc getStringOrDefault*(cfg; path: string, default: string = ""): string =
   try:
     result = cfg.getString(path)
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 
 proc parseColor*(s: string): Option[Color] =
@@ -68,7 +68,7 @@ proc getColorOrDefault*(cfg; path: string, default: Color = black()): Color =
       else:
         result = col.get
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 
 proc getBoolOrDefault*(cfg; path: string, default: bool = false): bool =
@@ -76,7 +76,7 @@ proc getBoolOrDefault*(cfg; path: string, default: bool = false): bool =
   try:
     result = cfg.getBool(path)
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 
 proc getFloatOrDefault*(cfg; path: string, default: float = 0): float =
@@ -84,21 +84,21 @@ proc getFloatOrDefault*(cfg; path: string, default: float = 0): float =
   try:
     result = cfg.getFloat(path)
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 proc getIntOrDefault*(cfg; path: string, default: int = 0): int =
   result = default
   try:
     result = cfg.getInt(path)
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 proc getNaturalOrDefault*(cfg; path: string, default: Natural = 0): Natural =
   result = default
   try:
     result = cfg.getNatural(path)
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 proc getNaturalOrDefault*(cfg; path: string, limits: FieldLimits,
                           default: Natural = 0): Natural =
@@ -110,9 +110,9 @@ proc getNaturalOrDefault*(cfg; path: string, limits: FieldLimits,
       i = cfg.getNatural(path)
       result = i.limit(limits)
     else:
-      error(fmt"Invalid FieldLimits for Natural type: {limits}")
+      log.error(fmt"Invalid FieldLimits for Natural type: {limits}")
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum],
                        default = T.low): T =
@@ -124,7 +124,7 @@ proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum],
       except ValueError:
         invalidValueError(path, "enum", v)
   except CatchableError as e:
-    error(e.msg)
+    log.error(e.msg)
 
 proc enumToDashCase*(val: string): string =
   val.toLower.replace(' ', '-')
