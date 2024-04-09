@@ -2433,6 +2433,7 @@ proc loadTheme(theme: ThemeName; a) =
   var path = themePath(theme, a)
   log.info(fmt"Loading theme '{theme.name}' from '{path}'")
 
+  # TODO error handling?
   a.theme.config = loadTheme(path)
   a.logfile.flushFile
 
@@ -2454,7 +2455,7 @@ proc saveTheme(a) =
   except CatchableError as e:
     let msgPrefix = fmt"Error saving theme '{a.currThemeName.name}'"
     logError(e, msgPrefix)
-    setWarningMessage(fmt"{msgPrefix}: {e.msg}", a=a)
+    setErrorMessage(fmt"{msgPrefix}: {e.msg}", a=a)
   finally:
     a.logFile.flushFile
 
@@ -2976,7 +2977,7 @@ proc loadMap(path: string; a): bool =
   try:
     let
       t0 = getMonoTime()
-      (map, appState) = readMapFile(path)
+      (map, appState, warning) = readMapFile(path)
       dt = getMonoTime() - t0
 
     a.doc.map  = map
@@ -3023,10 +3024,17 @@ proc loadMap(path: string; a): bool =
 
     var message = fmt"Map '{path}' loaded"
     when defined(DEBUG):
-      message &= fmt"in {durationToFloatMillis(dt):.2f} ms"
+      message &= fmt" in {durationToFloatMillis(dt):.2f} ms"
 
-    info(message)
-    setStatusMessage(IconFloppy, message, a)
+    if warning.len > 0:
+      message &= fmt" with warnings: {warning}"
+
+    if warning.len > 0:
+      log.warn(message)
+      setWarningMessage(message, a=a)
+    else:
+      log.info(message)
+      setStatusMessage(IconFloppy, message, a)
     result = true
 
   except CatchableError as e:

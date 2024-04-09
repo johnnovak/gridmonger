@@ -14,7 +14,6 @@ TODO
   - add unlink command
 
   - test loading v1, v2, and v3 map versions
-  - fix invalid map links on-the-fly
 
   - finish diagonal movement (numpad, YUBN)
   - improve restoring the window's size on screen dimension changes

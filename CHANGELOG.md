@@ -55,11 +55,13 @@
 - Fix moving selections not moving links correctly (or at all).
 - Fix moving selections leaving copies of the original labels if they were on
   empty cells.
-- Fix evil move selection link corruption bug. Moving cells that contain
+- Fix evil link corruption bug. Moving cells that contain
   links, then either cancelling the move operation or performing it and then
-  undoing the move could generate extra "invisible" invalid links. You could
-  continue using the program and saving the map would still succeed, but you
-  could not load it back later.
+  undoing the move could generate extra "invisible links" that are invalid.
+  Saving the map would still succeed, but would result in a corrupted map
+  file that you could not load back in the previous version.
+- Such corrupted map files are now fixed on load (by removing invalid
+  links) and a warning is displayed.
 - Canceling the *Save As* dialog invoked during the quit process no longer
   exits and discards the map without saving.
 - If autosaving is enabled, the map no longer gets immediately autosaved

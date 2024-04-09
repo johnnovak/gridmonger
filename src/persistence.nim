@@ -473,7 +473,10 @@ proc readAppState_V4(rr; map: Map): AppState =
 
 # }}}
 # {{{ readLinks()
-proc readLinks(rr; levels: OrderedTable[Natural, Level]): Links =
+proc readLinks(
+  rr; levels: OrderedTable[Natural, Level]
+): tuple[links: Links, warning: string] =
+
   debug(fmt"Reading links...")
   pushDebugIndent()
 
@@ -482,24 +485,36 @@ proc readLinks(rr; levels: OrderedTable[Natural, Level]): Links =
 
   let maxLevelIndex = NumLevelsLimits.maxInt-1
 
+  pushDebugIndent()
+
+  var links   = initLinks()
+  var warning = ""
+
   while numLinks > 0:
-    pushDebugIndent()
+    try:
+      let src = readLocation(rr)
+      let srcLevel = levels[src.levelId]
+      checkValueRange(src.levelId,  "lnks.srcLevel",   max=maxLevelIndex)
+      checkValueRange(src.row,      "lnks.srcRow",     max=srcLevel.rows-1)
+      checkValueRange(src.col,      "lnks.srcColumh",  max=srcLevel.cols-1)
 
-    let src = readLocation(rr)
-    checkValueRange(src.levelId, "lnks.srcLevel", max=maxLevelIndex)
-    checkValueRange(src.row, "lnks.srcRow",    max=levels[src.levelId].rows-1)
-    checkValueRange(src.col, "lnks.srcColumh", max=levels[src.levelId].cols-1)
+      let dest = readLocation(rr)
+      let destLevel = levels[dest.levelId]
+      checkValueRange(dest.levelId, "lnks.destLevel",  max=maxLevelIndex)
+      checkValueRange(dest.row,     "lnks.destRow",    max=destLevel.rows-1)
+      checkValueRange(dest.col,     "lnks.destColumn", max=destLevel.cols-1)
 
-    let dest = readLocation(rr)
-    checkValueRange(dest.levelId, "lnks.destLevel", max=maxLevelIndex)
-    checkValueRange(dest.row, "lnks.destRow",    max=levels[dest.levelId].rows-1)
-    checkValueRange(dest.col, "lnks.destColumn", max=levels[dest.levelId].cols-1)
+      links.set(src, dest)
 
-    result.set(src, dest)
+    except MapReadError as e:
+      warn("Skipping invalid link: " & e.msg)
+      warning = "invalid links have been skipped"
+
     dec(numLinks)
 
-    popDebugIndent()
+  result = (links, warning)
 
+  popDebugIndent()
   popDebugIndent()
 
 # }}}
@@ -1023,7 +1038,8 @@ proc readMap(rr): tuple[map: Map, version: Natural] =
 # # {{{ readMapFile*()
 # TODO return display related info and info chunk data as well
 proc readMapFile*(path: string): tuple[map: Map,
-                                       appState: Option[AppState]] =
+                                       appState: Option[AppState],
+                                       warning: string] =
   initDebugIndent()
 
   var rr: RiffReader
@@ -1108,7 +1124,8 @@ proc readMapFile*(path: string): tuple[map: Map,
     map.sortLevels
 
     rr.cursor = linksCursor.get
-    map.links = readLinks(rr, map.levels)
+    var warning = ""
+    (map.links, warning) = readLinks(rr, map.levels)
 
     let appState = if appStateCursor.isSome:
       rr.cursor = appStateCursor.get
@@ -1121,7 +1138,7 @@ proc readMapFile*(path: string): tuple[map: Map,
     else:
       AppState.none
 
-    result = (map, appState)
+    result = (map, appState, warning)
 
   except MapReadError as e:
     raise e
