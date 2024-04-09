@@ -13,16 +13,11 @@ TODO
 
   - add unlink command
 
-  - test loading v1, v2, and v3 map versions
-
   - finish diagonal movement (numpad, YUBN)
   - improve restoring the window's size on screen dimension changes
 
   - window handling bugs:
     - crash when dragging maximised window
-
-  - if a new map has been autosaved but never saved manually, quitting would
-	proceed without a warning and the map will be lost
 
   - test extensively & update manual
 
