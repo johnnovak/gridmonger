@@ -8442,11 +8442,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   var
     wx = LeftPad
     wy = 44
+
+  let
     wh = 24
+    ButtonWidth = 24
 
   # Scope filter
   koi.radioButtons(
-    wx, wy, w=w-LeftPad-RightPad - 32, wh,
+    wx, wy, w=w-LeftPad-RightPad - 30, wh,
     nls.currFilter.scope, style = a.theme.radioButtonStyle
   )
 
@@ -8459,7 +8462,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   nls.prevLinkCursor = nls.linkCursor
 
   koi.checkBox(
-    wx+244, wy, w=24,
+    wx+245, wy, w=ButtonWidth,
     nls.linkCursor,
     tooltip = "Link cursor and note selection",
     style = cbStyle
@@ -8467,13 +8470,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   # Note types filter
   wy += 33
-  if koi.button(wx+244, wy, w=24, wh, "A",
+  if koi.button(wx+245, wy, w=ButtonWidth, wh, "A",
                 tooltip = "Show all note types",
                 style = a.theme.buttonStyle):
     nls.currFilter.noteType = @[ntfNone, ntfNumber, ntfId, ntfIcon]
 
   koi.multiRadioButtons(
-    wx, wy, w=w-LeftPad-RightPad - 32, wh,
+    wx, wy, w=w-LeftPad-RightPad - 30, wh,
     nls.currFilter.noteType, style = a.theme.radioButtonStyle
   )
 
@@ -8481,14 +8484,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   wy += 44
   koi.label(wx+1, wy, 60, wh, "Search", style=a.theme.labelStyle)
 
-  if koi.button(wx+244, wy, w=24, wh, IconTrash,
+  if koi.button(wx+245, wy, w=ButtonWidth, wh, IconTrash,
                 disabled = nls.currFilter.searchTerm.isEmptyOrWhitespace,
                 tooltip = "Clear search term",
                 style = a.theme.buttonStyle):
     nls.currFilter.searchTerm = ""
 
   koi.textField(
-    wx+64, wy, w=177, wh, nls.currFilter.searchTerm,
+    wx+64, wy, w=174, wh, nls.currFilter.searchTerm,
     style = a.theme.textFieldStyle
   )
 
@@ -8498,7 +8501,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   koi.label(wx+1, wy, 60, wh, "Order by", style=a.theme.labelStyle)
 
   koi.dropDown(
-    wx+64, wy, w=48, wh, nls.currFilter.ordering,
+    wx+64, wy, w=65, wh, nls.currFilter.ordering,
     style = a.theme.dropDownStyle
   )
 
@@ -8525,12 +8528,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
                                of nsfLevel:  not l.regionOpts.enabled
                                of nsfRegion: true
 
-  if koi.button(wx+213, wy, w=24, wh, IconPlusSmall, tooltip = "Expand all",
+  if koi.button(wx+214, wy, w=ButtonWidth, wh, IconPlusSmall,
+                tooltip = "Expand all",
                 disabled = expandCollapseDisabled,
                 style = a.theme.buttonStyle):
     setExpandedStates(expanded=true, a)
 
-  if koi.button(wx+244, wy, w=24, wh, IconMinusSmall, tooltip = "Collapse all",
+  if koi.button(wx+245, wy, w=ButtonWidth, wh, IconMinusSmall,
+                tooltip = "Collapse all",
                 disabled = expandCollapseDisabled,
                 style = a.theme.buttonStyle):
     setExpandedStates(expanded=false, a)
