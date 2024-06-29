@@ -238,23 +238,20 @@ App state chunks (in 'stat' group chunk, optional)
                                          common.nim for mappings)
 
 'notl'      Notes list pane state (optional)
-    UINT8   linkCursor        (0=off, 1=on)
     UINT8   scopeFilter       (0=map, 1=level, 2=region)
-    UINT8   noteTypeFilter    (bitset: b0=none, b1=number, b2=id, b3=icon)
+    UINT8   noteTypeFilter    (bit vector: b0=none, b1=number, b2=id, b3=icon)
     WSTR    searchTerm        (maxRuneLen=100)
-    UINT8   groupBy           (0=none, 1=levels/regions, 2=levels and regions)
-    UINT8   orderBy           (0=note type, 1=note text)
+    UINT8   orderBy           (0=noteType, 1=noteText)
+    UINT8   linkCursor        (0=off, 1=on)
 
-    numLevels records of:
+    numLevels records of (ordered by levelIndex):
 
-        UINT32   levelIndex
-        UINT8    levelSection     (0=closed, 1=open)
+      UINT8    levelSectionState     (0=closed, 1=open)
 
-        if numRegions > 0 for the level
-        (note that regn.enableRegions can still be 0 (off)):
+      if numRegions > 0 for the level (ordered by regionIndex)
+      (note that regn.enableRegions can still be 0 (off)):
 
-          UINT32   regionId
-          UINT8    regionSection  (0=closed, 1=open)
+        UINT8    regionSectionState  (0=closed, 1=open)
 
 
 3. Version history
