@@ -22,11 +22,8 @@ import utils/rect
 
 const
   MinZoomLevel*     = 1
-  MaxZoomLevel*     = 20
+  MaxZoomLevel*     = 50
   DefaultZoomLevel* = 9
-
-  MinGridSize   = 13.0
-  ZoomStep      = 2.0
 
   UltraThinStrokeWidth = 1.0
 
@@ -183,21 +180,31 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
   assert zl >= MinZoomLevel
   assert zl <= MaxZoomLevel
 
+  const
+    MinGridSize = 13.0
+    ZoomStep = 2.0
+    LargeZoomLevelStart = 20
+
+  let step = if zl <= LargeZoomLevelStart: ZoomStep
+             else:
+               let x = (zl - LargeZoomLevelStart) / 30
+               ZoomStep + x*x
+
   dp.zoomLevel = zl
-  dp.gridSize = MinGridSize + zl*ZoomStep
+  dp.gridSize = MinGridSize + zl*step
 
   dp.lineWidth = lt.lineWidth
 
   if dp.lineWidth == lwThin:
-    dp.thinStrokeWidth = 1.0
-    dp.normalStrokeWidth = 1.0
-    dp.vertTransformXOffs = 1.0
+    dp.thinStrokeWidth       = 1.0
+    dp.normalStrokeWidth     = 1.0
+    dp.vertTransformXOffs    = 1.0
     dp.vertRegionBorderYOffs = 0.0
 
   elif zl < 3 or dp.lineWidth == lwNormal:
-    dp.thinStrokeWidth = 2.0
-    dp.normalStrokeWidth = 2.0
-    dp.vertTransformXOffs = 0.0
+    dp.thinStrokeWidth       =  2.0
+    dp.normalStrokeWidth     =  2.0
+    dp.vertTransformXOffs    =  0.0
     dp.vertRegionBorderYOffs = -1.0
 
   dp.cellCoordsFontSize = if   zl <= 2:   9.0
