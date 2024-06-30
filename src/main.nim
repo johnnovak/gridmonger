@@ -571,7 +571,7 @@ type
     emSelectDraw
     emSelectErase
     emSelectRect
-    emSetCellLink,
+    emSetCellLink
     emSelectJumpToLinkSrc
 
     # Special "momentary" mode; after exiting emPanLevel, the previous edit
@@ -586,6 +586,7 @@ type
     dwaNone  = "none"
     dwaSet   = "set"
     dwaClear = "clear"
+
 
   Theme = object
     config:                   HoconNode
@@ -630,6 +631,7 @@ type
     name:      string
     userTheme: bool
     override:  bool
+
 
   Dialog = enum
     dlgNone
@@ -911,7 +913,7 @@ type
     of qkKeyShortcuts:    keyShortcuts:    seq[KeyShortcut]
     of qkCustomShortcuts: customShortcuts: seq[string]
     of qkDescription:     description:     string
-    of qkSeparator:      discard
+    of qkSeparator:       discard
 
 
 var g_app: AppContext
@@ -8748,7 +8750,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
   var p: string
 
-  # {{{ -- User interface section
+  # {{{ User interface section
   if koi.sectionHeader("User Interface", te.sectionUserInterface):
 
     if koi.subSectionHeader("Window", te.sectionTitleBar):
@@ -8903,7 +8905,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         koi.checkBox(a.splash.show)
 
   # }}}
-  # {{{ -- Level section
+  # {{{ Level section
   if koi.sectionHeader("Level", te.sectionLevel):
     if koi.subSectionHeader("General", te.sectionLevelGeneral):
       p = "level.general."
@@ -9033,7 +9035,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Shadow",               p & "shadow.color")
 
   # }}}
-  # {{{ -- Panes section
+  # {{{ Panes section
 
   if koi.sectionHeader("Panes", te.sectionPanes):
     if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
