@@ -1146,7 +1146,8 @@ proc readMapFile*(path: string): tuple[map: Map,
     result = (map, appState, warning)
 
   except MapReadError as e:
-    raise e
+    raise newException(MapReadError,
+                       fmt"{e.msg} (at file position {rr.getFilePos})")
   except CatchableError as e:
     raise newException(MapReadError, e.msg, e)
   finally:
