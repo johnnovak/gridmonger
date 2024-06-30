@@ -94,9 +94,9 @@ type
   MapReadError* = object of IOError
 
   CompressionType = enum
-    ctUncompressed     = 0
-    ctRunLengthEncoded = 1
-    ctZeroes           = 2
+    ctUncompressed     = (0, "uncompressed")
+    ctRunLengthEncoded = (1, "run-length encoded")
+    ctZeroes           = (2, "zeroes")
 
   AppState* = object
     themeName*:         string
@@ -557,14 +557,18 @@ proc readLevelProperties(rr): Level =
 
 proc readLevelCells(rr; numCells: Natural): seq[Cell] =
 
-  template readLayer(fieldType: typedesc, field, checkField: untyped) =
-    debug("Reading layer: " & $fieldType)
+  template readLayer(name: string; fieldType: typedesc;
+                     field, checkField: untyped) =
+    debug("Reading " &  $name & " layer")
     pushDebugIndent()
 
     let ct = rr.read(uint8)
     checkEnum(ct, "lvl.cell.compressionType", CompressionType)
 
-    case CompressionType(ct)
+    let compressionType = CompressionType(ct)
+    debug("Compression type: " & $compressionType)
+
+    case compressionType:
     of ctUncompressed:
       for c {.inject.} in cells.mitems:
         let data {.inject.} = rr.read(uint8)
@@ -573,6 +577,8 @@ proc readLevelCells(rr; numCells: Natural): seq[Cell] =
 
     of ctRunLengthEncoded:
       let compressedSize = rr.read(uint32)
+      debug("Compressed size: " & $compressedSize)
+
       if compressedSize.int > numCells:
         raiseMapReadError(
           "Error decompressing level cell data: invalid compressed size: " &
@@ -614,22 +620,22 @@ proc readLevelCells(rr; numCells: Natural): seq[Cell] =
 
   var compressedBuf: seq[byte]
 
-  readLayer(Floor): c.floor
+  readLayer("floor", Floor): c.floor
   do: checkEnum(data, "lvl.cell.floor", Floor, debugLog=off)
 
-  readLayer(Orientation): c.floorOrientation
+  readLayer("floorOrientation", Orientation): c.floorOrientation
   do: checkEnum(data, "lvl.cell.floorOrientation", Orientation, debugLog=off)
 
-  readLayer(byte): c.floorColor
+  readLayer("floorColor", byte): c.floorColor
   do: checkValueRange(data, "lvl.cell.floorColor", CellFloorColorLimits, debugLog=off)
 
-  readLayer(Wall): c.wallN
+  readLayer("wallNorth", Wall): c.wallN
   do: checkEnum(data, "lvl.cell.wallN", Wall, debugLog=off)
 
-  readLayer(Wall): c.wallW
+  readLayer("wallWest", Wall): c.wallW
   do: checkEnum(data, "lvl.cell.wallW", Wall, debugLog=off)
 
-  readLayer(bool): c.trail
+  readLayer("trail", bool): c.trail
   do: checkBool(data, "lvl.cell.trail", debugLog=off)
 
   result = cells
