@@ -108,3 +108,14 @@ FONTS
   - https://fonts.google.com/specimen/Grenze
   - https://fonts.google.com/specimen/Fondamento
 
+
+
+PNG writing
+
+LodePNG is the best
+https://github.com/lvandeve/lodepng
+
+https://github.com/richgel999/miniz
+
+stb_image_writer + miniz
+https://blog.gibson.sh/2015/07/18/comparing-png-compression-ratios-of-stb_image_write-lodepng-miniz-and-libpng/
