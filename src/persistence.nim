@@ -3,6 +3,7 @@ import std/enumutils
 import std/logging as log except Level
 import std/math
 import std/options
+import std/setutils
 import std/strformat
 import std/strutils
 import std/sugar
@@ -100,15 +101,21 @@ type
     ctRunLengthEncoded = (1, "run-length encoded")
     ctZeroes           = (2, "zeroes")
 
-  AppState* = object
-    themeName*:         string
+  AppStateNotesListPane* = ref object
+    filter*:          NotesListFilter
+    linkCursor*:      bool
+    sectionStates*:   Table[Natural, bool]
+    regionStates*:    Table[tuple[levelId: Natural, rc: RegionCoords], bool]
 
-    zoomLevel*:         range[MinZoomLevel..MaxZoomLevel]
-    currLevelId*:       Natural
-    cursorRow*:         Natural
-    cursorCol*:         Natural
-    viewStartRow*:      Natural
-    viewStartCol*:      Natural
+  AppState* = ref object
+    themeName*:              string
+
+    zoomLevel*:              range[MinZoomLevel..MaxZoomLevel]
+    currLevelId*:            Natural
+    cursorRow*:              Natural
+    cursorCol*:              Natural
+    viewStartRow*:           Natural
+    viewStartCol*:           Natural
 
     optShowCellCoords*:      bool
     optShowToolsPane*:       bool
@@ -117,8 +124,10 @@ type
     optWasdMode*:            bool
     optWalkMode*:            bool
 
-    currFloorColor*:    range[0..LevelTheme.floorBackgroundColor.high]
-    currSpecialWall*:   range[0..SpecialWalls.high]
+    currFloorColor*:         range[0..LevelTheme.floorBackgroundColor.high]
+    currSpecialWall*:        range[0..SpecialWalls.high]
+
+    notesListPaneState*:     Option[AppStateNotesListPane]
 
 # }}}
 # {{{ Chunk IDs
@@ -261,13 +270,6 @@ proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum],
 
 # }}}
 
-# {{{ readLocation()
-proc readLocation(rr): Location =
-  result.levelId = rr.read(uint16).Natural
-  result.row     = rr.read(uint16)
-  result.col     = rr.read(uint16)
-
-# }}}
 # {{{ readAppState_preV4()
 proc readAppState_preV4(rr; map: Map): AppState =
   debug(fmt"Reading app state...")
@@ -344,6 +346,70 @@ proc readAppState_preV4(rr; map: Map): AppState =
   popDebugIndent()
 
 # }}}
+# {{{ readLocation()
+proc readLocation(rr): Location =
+  result.levelId = rr.read(uint16).Natural
+  result.row     = rr.read(uint16)
+  result.col     = rr.read(uint16)
+
+# }}}
+# {{{ readNotesListPaneState()
+proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
+  debug(fmt"Reading notes list pane state...")
+
+  var s = AppStateNotesListPane()
+
+  # Filters
+  let scopeFilter = rr.read(uint8)
+  checkEnum(scopeFilter, "stat.notl.scopeFilter", NoteScopeFilter)
+  s.filter.scope = scopeFilter.NoteScopeFilter
+
+  # noteType is a bit-vector
+  let noteTypeFilter = rr.read(uint8)
+  let MaxNoteTypeFilterValue = cast[uint8](NoteTypeFilter.fullSet)
+
+  if noteTypeFilter > MaxNoteTypeFilterValue:
+    raiseMapReadError(
+      fmt"The value of 'noteTypeFilter' must be between 0 and " &
+      fmt"{MaxNoteTypeFilterValue}, actual value: {noteTypeFilter}"
+    )
+  s.filter.noteType = cast[set[NoteTypeFilter]](noteTypeFilter)
+
+  s.filter.searchTerm = rr.readWStr
+  checkStringLength(s.filter.searchTerm, "stat.notl.searchTerm",
+                    NotesListSearchTermLimits)
+
+  let orderBy = rr.read(uint8)
+  checkEnum(orderBy, "stat.notl.orderBy", NoteOrdering)
+  s.filter.orderBy = orderBy.NoteOrdering
+
+  let linkCursor = rr.read(uint8)
+  checkBool(linkCursor, "stat.notl.linkCursor")
+  s.linkCursor = linkCursor.bool
+
+  # Section states
+  for levelIndex in 0..<map.levels.len:
+    let sectionState = rr.read(uint8)
+    checkBool(sectionState, "stat.notl.sectionState")
+    s.sectionStates[levelIndex] = sectionState.bool
+
+    let l = map.levels[levelIndex]
+
+    # `numRegions` can be non-zero even if `regionOpts.enabled` is `false`.
+    if l.regions.numRegions > 0:
+
+      # Iterate through the regions starting from region coords (0,0)
+      # (top-left corner), then go left to right, top to bottom.
+      for rc in l.regionCoords:
+        let r = l.regions[rc].get
+
+        let regionState = rr.read(uint8)
+        checkBool(regionState, "stat.notl.regionState")
+        s.regionStates[(levelIndex.Natural, rc)] = regionState.bool
+
+  result = s
+
+# }}}
 # {{{ readAppState_V4()
 proc readAppState_V4(rr; map: Map): AppState =
   debug(fmt"Reading app state...")
@@ -353,9 +419,9 @@ proc readAppState_V4(rr; map: Map): AppState =
 
   var
     dispCursor = Cursor.none
-    notlCursor = Cursor.none
     optsCursor = Cursor.none
     toolCursor = Cursor.none
+    notlCursor = Cursor.none
 
   let groupChunkId = FourCC_GRMM_stat.some
 
@@ -367,11 +433,6 @@ proc readAppState_V4(rr; map: Map): AppState =
           chunkOnlyOnceError(FourCC_GRMM_disp, groupChunkId)
         dispCursor = rr.cursor.some
 
-      of FourCC_GRMM_notl:
-        if notlCursor.isSome:
-          chunkOnlyOnceError(FourCC_GRMM_notl, groupChunkId)
-        notlCursor = rr.cursor.some
-
       of FourCC_GRMM_opts:
         if optsCursor.isSome:
           chunkOnlyOnceError(FourCC_GRMM_opts, groupChunkId)
@@ -381,6 +442,11 @@ proc readAppState_V4(rr; map: Map): AppState =
         if toolCursor.isSome:
           chunkOnlyOnceError(FourCC_GRMM_tool, groupChunkId)
         toolCursor = rr.cursor.some
+
+      of FourCC_GRMM_notl:
+        if notlCursor.isSome:
+          chunkOnlyOnceError(FourCC_GRMM_notl, groupChunkId)
+        notlCursor = rr.cursor.some
 
       else:
         invalidChunkError(ci.id, FourCC_GRMM_stat)
@@ -467,7 +533,9 @@ proc readAppState_V4(rr; map: Map): AppState =
     app.currSpecialWall = currSpecialWall
 
   # Note list pane state
-#  if toolCursor.isSome:
+  if notlCursor.isSome:
+    rr.cursor = notlCursor.get
+    app.notesListPaneState = readNotesListPaneState(rr, map).some
 
   result = app
 
@@ -1164,6 +1232,38 @@ using rw: RiffWriter
 
 var g_runLengthEncoder: RunLengthEncoder
 
+# {{{ writeNotesListPaneState()
+proc writeNotesListPaneState(rw; map: Map, s: AppState) =
+  if s.notesListPaneState.isNone:
+    return
+
+  let nls = s.notesListPaneState.get
+
+  rw.chunk(FourCC_GRMM_notl):
+    rw.write(nls.filter.scope.uint8)
+
+    # noteType is a bit-vector
+    rw.write(cast[uint8](nls.filter.noteType))
+
+    rw.writeWStr(nls.filter.searchTerm)
+    rw.write(nls.filter.orderBy.uint8)
+    rw.write(nls.linkCursor.uint8)
+
+    for levelId in map.sortedLevelIds:
+      rw.write(nls.sectionStates[levelId].uint8)
+
+      let l = map.levels[levelId]
+
+      # `numRegions` can be non-zero even if `regionOpts.enabled` is `false`.
+      if l.regions.numRegions > 0:
+
+        # Iterate through the regions starting from region coords (0,0)
+        # (top-left corner), then go left to right, top to bottom.
+        for rc in l.regionCoords:
+          let r = l.regions[rc].get
+          rw.write(nls.regionStates[(levelId, rc)].uint8)
+
+# }}}
 # {{{ writeAppState()
 proc writeAppState(rw; map: Map, s: AppState) =
   rw.listChunk(FourCC_GRMM_stat):
@@ -1196,7 +1296,7 @@ proc writeAppState(rw; map: Map, s: AppState) =
       rw.write(s.currSpecialWall.uint8)
 
     # Notes list pane state
-#    rw.chunk(FourCC_GRMM_notl):
+    writeNotesListPaneState(rw, map, s)
 
 # }}}
 # {{{ writeLinks()
@@ -1209,8 +1309,8 @@ proc writeLinks(rw; map: Map) =
     # sortedLevelIds, the indices will point to the correct levels.
     #
     # When loading the levels back, we assign the the first level ID 0, the
-    # second ID 1, etc. (their indices in the map file) to ensure the level IDs
-    # are in sync with the links.
+    # second ID 1, etc. (their indices as they appear in the map file) to
+    # ensure the level IDs are in sync with the links.
 
     let levelIdToIndex = collect:
       for idx, id in map.sortedLevelIds: {id: idx}

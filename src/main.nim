@@ -518,7 +518,7 @@ type
     linkCursor:     bool
     prevLinkCursor: bool
     cache:          seq[NotesListCacheEntry]
-    sectionStates:  Table[int, bool]
+    sectionStates:  Table[Natural, bool]
     regionStates:   Table[tuple[levelId: Natural, rc: RegionCoords], bool]
     activeId:       Option[ItemId]
 
@@ -2991,6 +2991,14 @@ proc loadMap(path: string; a): bool =
         currFloorColor  = s.currFloorColor
         currSpecialWall = s.currSpecialWall
 
+      if s.notesListPaneState.isSome:
+        let nls = s.notesListPaneState.get
+        with a.ui.notesListState:
+          currFilter    = nls.filter
+          linkCursor    = nls.linkCursor
+          sectionStates = nls.sectionStates
+          regionStates  = nls.regionStates
+
       a.ui.drawLevelParams.setZoomLevel(a.theme.levelTheme, s.zoomLevel)
       a.ui.mouseCanStartExcavate = true
 
@@ -3027,6 +3035,7 @@ proc loadMap(path: string; a): bool =
 # {{{ saveMap()
 proc saveMap(path: string, autosave, createBackup: bool; a) =
   alias(dp, a.ui.drawLevelParams)
+  alias(nls, a.ui.notesListState)
 
   let cur = a.ui.cursor
 
@@ -3049,6 +3058,13 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
 
     currFloorColor:         a.ui.currFloorColor,
     currSpecialWall:        a.ui.currSpecialWall,
+
+    notesListPaneState:     AppStateNotesListPane(
+                              filter:        nls.currFilter,
+                              linkCursor:    nls.linkCursor,
+                              sectionStates: nls.sectionStates,
+                              regionStates:  nls.regionStates
+                            ).some
   )
 
   log.info(fmt"Saving map to '{path}'")
@@ -8245,7 +8261,7 @@ proc rebuildNotesListCache(textW: float; a) =
   # Rebuild/reset caches if needed
   const NoteVertPad = 18
 
-  proc toAnnotationKindSet(filter: seq[NoteTypeFilter]): set[AnnotationKind] =
+  proc toAnnotationKindSet(filter: set[NoteTypeFilter]): set[AnnotationKind] =
     for f in filter:
       case f
       of ntfNone:   result.incl(akComment)
@@ -8282,7 +8298,7 @@ proc rebuildNotesListCache(textW: float; a) =
 
 
   # Clear cache
-  nls.cache = newSeq[NotesListCacheEntry]()
+  nls.cache = @[]
 
   proc collectLevelNotes(l: Level; a): auto =
     var s = newSeq[NotesListCacheEntry]()
@@ -8452,7 +8468,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   if koi.button(wx+245, wy, w=ButtonWidth, wh, "A",
                 tooltip = "Show all note types",
                 style = a.theme.buttonStyle):
-    nls.currFilter.noteType = @[ntfNone, ntfNumber, ntfId, ntfIcon]
+    nls.currFilter.noteType = {ntfNone, ntfNumber, ntfId, ntfIcon}
 
   koi.multiRadioButtons(
     wx, wy, w=w-LeftPad-RightPad - 30, wh,
