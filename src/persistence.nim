@@ -466,34 +466,34 @@ proc readAppState_V4(rr; map: Map): AppState =
     rr.cursor = dispCursor.get
 
     let themeName = rr.readBStr()
-    checkStringLength(themeName, "stat.themeName", ThemeNameLimits)
+    checkStringLength(themeName, "disp.themeName", ThemeNameLimits)
     app.themeName = themeName
 
     let zoomLevel = rr.read(uint8)
-    checkValueRange(zoomLevel, "stat.zoomLevel", ZoomLevelLimits)
+    checkValueRange(zoomLevel, "disp.zoomLevel", ZoomLevelLimits)
     app.zoomLevel = zoomLevel
 
     let maxLevelIndex = NumLevelsLimits.maxInt-1
     var currLevelIndex = rr.read(uint16).int
-    checkValueRange(currLevelIndex, "stat.currLevelIndex", max=maxLevelIndex)
+    checkValueRange(currLevelIndex, "disp.currLevelIndex", max=maxLevelIndex)
     app.currLevelId = currLevelIndex
 
     let l = map.levels[currLevelIndex]
 
     let cursorRow = rr.read(uint16)
-    checkValueRange(cursorRow, "stat.cursorRow", max=l.rows.uint16-1)
+    checkValueRange(cursorRow, "disp.cursorRow", max=l.rows.uint16-1)
     app.cursorRow = cursorRow
 
     let cursorCol = rr.read(uint16)
-    checkValueRange(cursorCol, "stat.cursorCol", max=l.cols.uint16-1)
+    checkValueRange(cursorCol, "disp.cursorCol", max=l.cols.uint16-1)
     app.cursorCol = cursorCol
 
     let viewStartRow = rr.read(uint16)
-    checkValueRange(viewStartRow, "stat.viewStartRow", max=l.rows.uint16-1)
+    checkValueRange(viewStartRow, "disp.viewStartRow", max=l.rows.uint16-1)
     app.viewStartRow = viewStartRow
 
     let viewStartCol = rr.read(uint16)
-    checkValueRange(viewStartCol, "stat.viewStartCol", max=l.cols.uint16-1)
+    checkValueRange(viewStartCol, "disp.viewStartCol", max=l.cols.uint16-1)
     app.viewStartCol = viewStartCol
 
   # Options state
@@ -501,23 +501,23 @@ proc readAppState_V4(rr; map: Map): AppState =
     rr.cursor = optsCursor.get
 
     let optShowCellCoords = rr.read(uint8)
-    checkBool(optShowCellCoords, "stat.optShowCellCoords")
+    checkBool(optShowCellCoords, "opts.optShowCellCoords")
     app.optShowCellCoords = optShowCellCoords.bool
 
     let optShowToolsPane = rr.read(uint8)
-    checkBool(optShowToolsPane, "stat.optShowToolsPane")
+    checkBool(optShowToolsPane, "opts.optShowToolsPane")
     app.optShowToolsPane = optShowToolsPane.bool
 
     let optShowCurrentNotePane = rr.read(uint8)
-    checkBool(optShowCurrentNotePane, "stat.optShowCurrentNotePane")
+    checkBool(optShowCurrentNotePane, "opts.optShowCurrentNotePane")
     app.optShowCurrentNotePane = optShowCurrentNotePane.bool
 
     let optWasdMode = rr.read(uint8)
-    checkBool(optWasdMode, "stat.optWasdMode")
+    checkBool(optWasdMode, "opts.optWasdMode")
     app.optWasdMode = optWasdMode.bool
 
     let optWalkMode = rr.read(uint8)
-    checkBool(optWalkMode, "stat.optWalkMode")
+    checkBool(optWalkMode, "opts.optWalkMode")
     app.optWalkMode = optWalkMode.bool
 
   # Tools pane state
@@ -525,11 +525,11 @@ proc readAppState_V4(rr; map: Map): AppState =
     rr.cursor = toolCursor.get
 
     let currFloorColor = rr.read(uint8)
-    checkValueRange(currFloorColor, "stat.currFloorColor", CellFloorColorLimits)
+    checkValueRange(currFloorColor, "tool.currFloorColor", CellFloorColorLimits)
     app.currFloorColor = currFloorColor
 
     let currSpecialWall = rr.read(uint8)
-    checkValueRange(currSpecialWall, "stat.currSpecialWall", SpecialWallLimits)
+    checkValueRange(currSpecialWall, "tool.currSpecialWall", SpecialWallLimits)
     app.currSpecialWall = currSpecialWall
 
   # Note list pane state
