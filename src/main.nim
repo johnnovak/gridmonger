@@ -516,7 +516,6 @@ type
     prevFilter:     NotesListFilter
     linkCursor:     bool
     prevLinkCursor: bool
-    grouping:       int
     cache:          seq[NotesListCacheEntry]
     sectionStates:  Table[int, bool]
     regionStates:   Table[tuple[levelId: Natural, rc: RegionCoords], bool]
