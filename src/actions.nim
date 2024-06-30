@@ -713,7 +713,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
   # Do action
   let action = proc (m: var Map): UndoStateData =
     let sortedLevelIdx = m.sortedLevelIds.find(loc.levelId)
-    assert(sortedLevelIdx > -1)
+    assert sortedLevelIdx > -1
 
     m.delLevel(loc.levelId)
 

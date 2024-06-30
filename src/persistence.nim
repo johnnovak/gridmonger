@@ -1273,7 +1273,7 @@ proc writeAppState(rw; map: Map, s: AppState) =
       rw.writeBStr(s.themeName)
 
       let currLevelIndex = map.sortedLevelIds.find(s.currLevelId)
-      assert(currLevelIndex > -1)
+      assert currLevelIndex > -1
 
       rw.write(s.zoomLevel.uint8)
       rw.write(currLevelIndex.uint16)

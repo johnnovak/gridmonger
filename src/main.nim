@@ -1928,7 +1928,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural = 1; a) =
 # }}}
 # {{{ moveCursorDiagonal()
 proc moveCursorDiagonal(dir: Direction, steps: Natural = 1; a) =
-  assert(dir in @[NorthWest, NorthEast, SouthWest, SouthEast])
+  assert dir in @[NorthWest, NorthEast, SouthWest, SouthEast]
 
   let l = currLevel(a)
 
@@ -6057,7 +6057,7 @@ proc selectPrevLevel(a) =
 
   var cur = a.ui.cursor
   let levelIdx = map.sortedLevelIds.find(cur.levelId)
-  assert(levelIdx > -1)
+  assert levelIdx > -1
 
   if levelIdx > 0:
     cur.levelId = map.sortedLevelIds[levelIdx-1]
@@ -6070,7 +6070,7 @@ proc selectNextLevel(a) =
 
   var cur = a.ui.cursor
   let levelIdx = map.sortedLevelIds.find(cur.levelId)
-  assert(levelIdx > -1)
+  assert levelIdx > -1
 
   if levelIdx < map.sortedLevelNames.high:
     cur.levelId = map.sortedLevelIds[levelIdx+1]
@@ -7665,7 +7665,7 @@ proc renderLevelDropdown(a) =
     mainPane   = mainPaneRect(a)
 
   var sortedLevelIdx = map.sortedLevelIds.find(cur.levelId)
-  assert(sortedLevelIdx > -1)
+  assert sortedLevelIdx > -1
   let prevSortedLevelIdx = sortedLevelIdx
 
   # Set width dynamically

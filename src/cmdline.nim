@@ -84,7 +84,7 @@ proc parseCommandLineParams*(): tuple[configFile, mapFile: Option[string],
       of "ypos", "y":   winCfg.set("y-postion",  parseNaturalOpt(opt, arg))
       of "width", "W":  winCfg.set("width",      parseNaturalOpt(opt, arg))
       of "height", "H": winCfg.set("height",     parseNaturalOpt(opt, arg))
- 
+
       of "maximized", "m":
         winCfg.set("maximized", parseBoolOpt(opt, arg))
 
@@ -105,7 +105,7 @@ proc parseCommandLineParams*(): tuple[configFile, mapFile: Option[string],
         quitWithError(fmt"invalid option: {opt}")
 
     of cmdEnd:
-      assert(false) # cannot happen
+      assert false  # cannot happen
 
   result = (configFile, mapFile, winCfg)
 

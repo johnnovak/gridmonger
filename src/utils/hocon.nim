@@ -46,7 +46,7 @@ proc readNextRune(s): Rune =
 
 
 proc peekRune(s; lookahead: Natural = 1): Rune =
-  assert(lookahead >= 1)
+  assert lookahead >= 1
   while lookahead > s.peekBuf.len:
     s.peekBuf.addLast(s.readNextRune)
   s.peekBuf[lookahead-1]
@@ -304,7 +304,7 @@ proc readNextToken(t): Token =
 
 
 proc peekToken(t; lookahead: Natural = 1): Token =
-  assert(lookahead >= 1)
+  assert lookahead >= 1
   while lookahead > t.peekBuf.len:
     t.peekBuf.addLast(t.readNextToken)
   t.peekBuf[lookahead-1]

@@ -21,7 +21,7 @@ proc initRunLengthEncoder*(e; bufSize: Positive) =
 
 
 proc flush*(e): bool =
-  assert(e.runLength <= 0x80)
+  assert e.runLength <= 0x80
 
   if e.prevData > 0x7f or e.runLength > 2:
     if e.bufIdx > e.buf.len-2: return false
