@@ -8608,7 +8608,10 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   let syncToCursor = (nls.linkCursor and currNote.isSome) and
                      (ui.cursor != ui.prevCursor or not nls.prevLinkCursor)
 
-  if syncToCursor:
+  let currNoteInCache = nls.cache.anyIt(it.kind == nckNote and
+                                        it.location == ui.cursor)
+
+  if syncToCursor and currNoteInCache:
     if nls.currFilter.scope == nsfMap:
       nls.sectionStates[l.id] = true
 
@@ -8665,7 +8668,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   koi.endScrollView()
 
-  if syncToCursor:
+  if syncToCursor and currNoteInCache:
     koi.setScrollViewStartY(scrollViewId, startY - scrollViewHeight * 0.45 +
                                           itemHeight)
 
