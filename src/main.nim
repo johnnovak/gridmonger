@@ -13,13 +13,14 @@ import std/options
 import std/os
 import std/sequtils
 import std/sets
+import std/setutils
 import std/streams
 import std/strformat
 import std/strutils except strip, splitWhitespace
 import std/sugar
 import std/tables
-import std/times
 import std/tempfiles
+import std/times
 import std/unicode
 
 # Libraries
@@ -534,27 +535,6 @@ type
       levelId:      Natural
     of nckRegion:
       regionCoords: RegionCoords
-
-  NotesListFilter = object
-    scope:          NoteScopeFilter
-    noteType:       seq[NoteTypeFilter]
-    searchTerm:     string
-    ordering:       NoteOrdering
-
-  NoteScopeFilter = enum
-    nsfMap    = "Map"
-    nsfLevel  = "Level"
-    nsfRegion = "Region"
-
-  NoteTypeFilter = enum
-    ntfNone   = "None"
-    ntfNumber = "Num"
-    ntfId     = "ID"
-    ntfIcon   = "Icon"
-
-  NoteOrdering = enum
-    noType    = "Type"
-    noText    = "Text"
 
 
   StatusMessage = object
@@ -8295,8 +8275,8 @@ proc rebuildNotesListCache(textW: float; a) =
       )
 
   proc sortCacheEntries(s: var seq[NotesListCacheEntry],
-                        ordering: NoteOrdering) =
-    case ordering
+                        orderBy: NoteOrdering) =
+    case orderBy
     of noType: s.sort(sortByTypeTextLocation)
     of noText: s.sort(sortByTextLocationType)
 
@@ -8311,7 +8291,7 @@ proc rebuildNotesListCache(textW: float; a) =
         Location(levelId: l.id, row: r, col: c),
         note, vg
       )
-    sortCacheEntries(s, nls.currFilter.ordering)
+    sortCacheEntries(s, nls.currFilter.orderBy)
     s
 
   proc collectRegionNotes(l: Level, rc: RegionCoords; a): auto =
@@ -8321,7 +8301,7 @@ proc rebuildNotesListCache(textW: float; a) =
         Location(levelId: l.id, row: loc.row, col: loc.col),
         note, vg
       )
-    sortCacheEntries(s, nls.currFilter.ordering)
+    sortCacheEntries(s, nls.currFilter.orderBy)
     s
 
   proc collectAllRegionNotes(l: Level; a): seq[NotesListCacheEntry] =
@@ -8505,7 +8485,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   koi.label(wx+1, wy, 60, wh, "Order by", style=a.theme.labelStyle)
 
   koi.dropDown(
-    wx+64, wy, w=65, wh, nls.currFilter.ordering,
+    wx+64, wy, w=65, wh, nls.currFilter.orderBy,
     style = a.theme.dropDownStyle
   )
 
@@ -10208,8 +10188,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   # TODO init from config
   with a.ui.notesListState:
-    currFilter.noteType = @[ntfNone, ntfNumber, ntfId, ntfIcon]
-    currFilter.ordering = noType
+    currFilter.noteType = NoteTypeFilter.fullSet
+    currFilter.orderBy  = noType
 
   loadFonts(a)
   loadAndSetIcon(a)

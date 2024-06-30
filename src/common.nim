@@ -353,6 +353,29 @@ func `<`*(a, b: Location): bool =
 
 
 type
+  NotesListFilter* = object
+    scope*:      NoteScopeFilter
+    noteType*:   set[NoteTypeFilter]
+    searchTerm*: string
+    orderBy*:    NoteOrdering
+
+  NoteScopeFilter* = enum
+    nsfMap    = "Map"
+    nsfLevel  = "Level"
+    nsfRegion = "Region"
+
+  NoteTypeFilter* = enum
+    ntfNone   = ("None")
+    ntfNumber = ("Num")
+    ntfId     = ("ID")
+    ntfIcon   = ("Icon")
+
+  NoteOrdering* = enum
+    noType    = "Type"
+    noText    = "Text"
+
+
+type
   WindowTheme* = ref object
     borderColor*:                  Color
     backgroundColor*:              Color
