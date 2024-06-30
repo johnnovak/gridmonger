@@ -896,7 +896,7 @@ proc readLevel(rr; version: Natural): Level =
 
   rr.cursor = cellCursor.get
 
-  # +1 needed because of the south & east borders
+  # +1 is needed because of the south & east borders
   let numCells = (level.rows+1) * (level.cols+1)
 
   level.cellGrid.cells = readLevelCells(rr, numCells)
@@ -1399,8 +1399,6 @@ proc writeMapFile*(map: Map, appState: AppState, path: string) =
     writeLinks(rw, map)
     writeAppState(rw, map, appState)
 
-  except MapReadError as e:
-    raise e
   except CatchableError as e:
     raise newException(MapReadError, fmt"Error writing map file: {e.msg}", e)
   finally:
