@@ -88,6 +88,8 @@ const
   ZoomLevelLimits*         = intLimits(min=MinZoomLevel, max=MaxZoomLevel)
   SpecialWallLimits*       = intLimits(min=0, max=SpecialWalls.high)
 
+  NotesListSearchTermLimits* = strLimits(minRuneLen=0, maxRuneLen=100)
+
 # }}}
 # {{{ Types
 type

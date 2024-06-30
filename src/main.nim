@@ -8492,6 +8492,11 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   koi.textField(
     wx+64, wy, w=174, wh, nls.currFilter.searchTerm,
+    constraint = TextFieldConstraint(
+      kind:   tckString,
+      minLen: NotesListSearchTermLimits.minRuneLen,
+      maxLen: NotesListSearchTermLimits.maxRuneLen.some
+    ).some,
     style = a.theme.textFieldStyle
   )
 
