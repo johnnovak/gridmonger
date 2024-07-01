@@ -362,7 +362,7 @@ type
     ui:           UIState
     dialogs:      Dialogs
     layout:       Layout
-    savedLayouts: array[4, Layout]
+    savedLayouts: array[4, Option[Layout]]
 
     theme:        Theme
     themeEditor:  ThemeEditor
@@ -2981,6 +2981,47 @@ proc saveAppConfig(a) =
   cfg.set(p & "height",         height)
 
   saveAppConfig(cfg, a.paths.configFile, a)
+
+# }}}
+
+# }}}
+# {{{ Layout handling
+
+# {{{ saveLayout()
+proc saveLayout(layoutIdx: Natural; a) =
+  assert layoutIdx <= a.savedLayouts.high
+
+  var l = a.layout
+
+  l.windowPos    = a.win.pos
+  l.windowSize   = a.win.size
+  l.maximized    = a.win.maximized
+  l.showTitleBar = a.win.showTitleBar
+
+  a.savedLayouts[layoutIdx] = l.some
+
+  setStatusMessage(fmt"Layout {layoutIdx+1} saved", a)
+
+# }}}
+# {{{ restoreLayout()
+proc restoreLayout(layoutIdx: Natural; a) =
+  assert layoutIdx <= a.savedLayouts.high
+
+  if a.savedLayouts[layoutIdx].isSome:
+    a.layout = a.savedLayouts[layoutIdx].get
+
+    # The order matters; calling win.maximize & win.unmaximize must be done
+    # before setting win.size.
+    if a.layout.maximized: a.win.maximize
+    else:                  a.win.unmaximize
+
+    a.win.pos          = a.layout.windowPos
+    a.win.size         = a.layout.windowSize
+    a.win.showTitleBar = a.layout.showTitleBar
+
+    setStatusMessage(fmt"Layout {layoutIdx+1} restored", a)
+  else:
+    setWarningMessage(fmt"Layout {layoutIdx+1} is not set", a=a)
 
 # }}}
 
@@ -7063,6 +7104,17 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scToggleTitleBar, a):
         toggleTitleBar(a)
+ 
+      # Save/restore layout
+      elif ke.isShortcutDown(scSaveLayout1, a): saveLayout(0, a)
+      elif ke.isShortcutDown(scSaveLayout2, a): saveLayout(1, a)
+      elif ke.isShortcutDown(scSaveLayout3, a): saveLayout(2, a)
+      elif ke.isShortcutDown(scSaveLayout4, a): saveLayout(3, a)
+
+      elif ke.isShortcutDown(scRestoreLayout1, a): restoreLayout(0, a)
+      elif ke.isShortcutDown(scRestoreLayout2, a): restoreLayout(1, a)
+      elif ke.isShortcutDown(scRestoreLayout3, a): restoreLayout(2, a)
+      elif ke.isShortcutDown(scRestoreLayout4, a): restoreLayout(3, a)
 
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
