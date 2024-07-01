@@ -2972,6 +2972,26 @@ proc saveAppConfig(a) =
   cfg.set(p & "option.walk-mode",              a.ui.walkMode)
   cfg.set(p & "option.paste-wraparound",       a.ui.pasteWraparound)
 
+  proc mkLayoutObject(layout: Option[Layout]): HoconNode =
+    if layout.isSome:
+      let l = layout.get
+      var obj = newHoconObject()
+
+      obj.set("show-cell-coords",       l.showCellCoords)
+      obj.set("show-current-note-pane", l.showCurrentNotePane)
+      obj.set("show-notes-list-pane",   l.showNotesListPane)
+      obj.set("show-tools-pane",        l.showToolsPane)
+      obj.set("show-theme-editor",      l.showThemeEditor)
+
+      obj.set("window.pos",  hoconNode(@[l.windowPos.x, l.windowPos.y]))
+      obj.set("window.size", hoconNode(@[l.windowSize.w, l.windowSize.h]))
+      obj.set("window.maximized",      l.maximized)
+      obj.set("window.show-title-bar", l.showTitleBar)
+
+      result = obj
+    else:
+      result = hoconNodeNull
+
   p = "last-state.window."
   cfg.set(p & "maximized",      a.win.maximized)
   cfg.set(p & "show-title-bar", a.layout.showTitleBar)
@@ -2979,6 +2999,14 @@ proc saveAppConfig(a) =
   cfg.set(p & "y-position",     ypos)
   cfg.set(p & "width",          width)
   cfg.set(p & "height",         height)
+
+  var layoutsArr = hoconNode(@[
+    mkLayoutObject(a.savedLayouts[0]),
+    mkLayoutObject(a.savedLayouts[1]),
+    mkLayoutObject(a.savedLayouts[2]),
+    mkLayoutObject(a.savedLayouts[3])
+  ])
+  cfg.set("layouts", layoutsArr)
 
   saveAppConfig(cfg, a.paths.configFile, a)
 
