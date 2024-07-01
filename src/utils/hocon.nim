@@ -689,6 +689,28 @@ proc hasOnlyDigits(s: string): bool =
     if not c.isDigit: return false
   true
 
+template hoconNode*[T: SomeNumber](val: T): HoconNode =
+  HoconNode(kind: hnkNumber, num: val.float)
+
+template hoconNode*(val: string): HoconNode =
+  HoconNode(kind: hnkString, str: val)
+
+template hoconNode*(val: bool): HoconNode =
+  HoconNode(kind: hnkBool, bool: val)
+
+proc hoconNode*[T: SomeNumber | string | bool](s: seq[T]): HoconNode =
+  result = newHoconArray()
+  for v in s:
+    result.elems.add(hoconNode(v))
+
+proc hoconNode*(s: seq[HoconNode]): HoconNode =
+  result = newHoconArray()
+  for v in s:
+    result.elems.add(v)
+
+template hoconNodeNull*: HoconNode =
+  HoconNode(kind: hnkNull)
+
 # {{{ Getters
 
 proc get*(node: HoconNode, path: string): HoconNode =
