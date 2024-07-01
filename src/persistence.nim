@@ -118,12 +118,15 @@ type
     viewStartRow*:           Natural
     viewStartCol*:           Natural
 
+    # TODO get rid of opt prefix
     optShowCellCoords*:      bool
     optShowToolsPane*:       bool
     optShowCurrentNotePane*: bool
     optShowNotesListPane*:   bool
     optWasdMode*:            bool
     optWalkMode*:            bool
+    # TODO
+    # optPasteWraparound*:            bool
 
     currFloorColor*:         range[0..LevelTheme.floorBackgroundColor.high]
     currSpecialWall*:        range[0..SpecialWalls.high]
@@ -525,6 +528,11 @@ proc readAppState_V4(rr; map: Map): AppState =
     let optWalkMode = rr.read(uint8)
     checkBool(optWalkMode, "stat.opts.optWalkMode")
     app.optWalkMode = optWalkMode.bool
+
+    # TODO
+#    let optPasteWraparound = rr.read(uint8)
+#    checkBool(optPasteWraparound, "stat.opts.optPasteWraparound")
+#    app.optPasteWraparound = optPasteWraparound.bool
 
   # Tools pane state
   if toolCursor.isSome:
@@ -1298,6 +1306,8 @@ proc writeAppState(rw; map: Map, s: AppState) =
       rw.write(s.optShowCurrentNotePane.uint8)
       rw.write(s.optWasdMode.uint8)
       rw.write(s.optWalkMode.uint8)
+      # TODO
+#      rw.write(s.optPasteWraparound.uint8)
 
     # Tools pane state
     rw.chunk(FourCC_GRMM_tool):

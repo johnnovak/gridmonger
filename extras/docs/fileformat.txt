@@ -229,7 +229,7 @@ App state chunks (in 'stat' group chunk, optional)
     UINT8   optShowNotesListPane    (0=off, 1=on)
     UINT8   optWasdMode             (0=off, 1=on)
     UINT8   optWalkMode             (0=off, 1=on)
-    UINT8   optWraparound           (0=off, 1=on) TODO
+    UINT8   optPasteWraparound      (0=off, 1=on) TODO
 
 
 'tool'      Tools pane state (optional)
