@@ -2952,7 +2952,7 @@ proc saveAppConfig(a) =
 
   p = "last-state.window."
   cfg.set(p & "maximized",      a.win.maximized)
-  cfg.set(p & "show-title-bar", a.win.showTitleBar)
+  cfg.set(p & "show-title-bar", a.layout.showTitleBar)
   cfg.set(p & "x-position",     xpos)
   cfg.set(p & "y-position",     ypos)
   cfg.set(p & "width",          width)
@@ -6415,7 +6415,8 @@ proc showQuickReference(a) =
                      "F1", "open user manual"], a)
 
 proc toggleTitleBar(a) =
-  toggleShowOption(a.win.showTitleBar, NoIcon, "Title bar", a)
+  toggleShowOption(a.layout.showTitleBar, NoIcon, "Title bar", a)
+  a.win.showTitleBar = a.layout.showTitleBar
 
 # TODO separate into level events and global events?
 proc handleGlobalKeyEvents(a) =
@@ -10319,7 +10320,10 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   if mergedWinCfg.getBoolOrDefault("maximized", false):
     a.win.maximize
 
-  a.win.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar", true)
+  a.layout.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar",
+                                                        true)
+  a.win.showTitleBar = a.layout.showTitleBar
+
   a.win.snapWindowToVisibleArea
 
   initVersionChecking(a)
