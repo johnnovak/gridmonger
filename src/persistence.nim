@@ -104,6 +104,7 @@ type
   AppStateNotesListPane* = ref object
     filter*:          NotesListFilter
     linkCursor*:      bool
+    viewStartY*:      Natural
     sectionStates*:   Table[Natural, bool]
     regionStates*:    Table[tuple[levelId: Natural, rc: RegionCoords], bool]
 
@@ -386,6 +387,8 @@ proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
   let linkCursor = rr.read(uint8)
   checkBool(linkCursor, "stat.notl.linkCursor")
   s.linkCursor = linkCursor.bool
+
+  s.viewStartY = rr.read(uint32)
 
   # Section states
   for levelIndex in 0..<map.levels.len:
@@ -1253,6 +1256,7 @@ proc writeNotesListPaneState(rw; map: Map, s: AppState) =
     rw.writeWStr(nls.filter.searchTerm)
     rw.write(nls.filter.orderBy.uint8)
     rw.write(nls.linkCursor.uint8)
+    rw.write(nls.viewStartY.uint32)
 
     for levelId in map.sortedLevelIds:
       rw.write(nls.sectionStates[levelId].uint8)

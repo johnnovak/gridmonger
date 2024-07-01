@@ -543,6 +543,7 @@ type
     sectionStates:  Table[Natural, bool]
     regionStates:   Table[tuple[levelId: Natural, rc: RegionCoords], bool]
     activeId:       Option[ItemId]
+    viewStartY:     float
 
   NotesListCacheEntryKind = enum
     nckNote, nckLevel, nckRegion
@@ -3020,6 +3021,7 @@ proc loadMap(path: string; a): bool =
         with a.ui.notesListState:
           currFilter    = nls.filter
           linkCursor    = nls.linkCursor
+          viewStartY    = nls.viewStartY.float
           sectionStates = nls.sectionStates
           regionStates  = nls.regionStates
 
@@ -3086,6 +3088,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     notesListPaneState:     AppStateNotesListPane(
                               filter:        nls.currFilter,
                               linkCursor:    nls.linkCursor,
+                              viewStartY:    nls.viewStartY.Natural,
                               sectionStates: nls.sectionStates,
                               regionStates:  nls.regionStates
                             ).some
@@ -8606,12 +8609,15 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     l.dirty = false
 
   # Scroll view with notes
-  let
-    scrollViewId     = koi.hashId("notes-panel:scroll-view")
-    scrollViewHeight = h-TopPad
+  const ScrollViewId = koi.hashId("notes-panel:scroll-view")
 
-  koi.beginScrollView(scrollViewId, x, y+TopPad, w, scrollViewHeight,
+  let scrollViewHeight = h-TopPad
+
+  koi.beginScrollView(ScrollViewId, x, y+TopPad, w, scrollViewHeight,
                       style=a.theme.notesListScrollViewStyle)
+
+  # Needed to restore the scroll view position from the map file
+  koi.setScrollViewStartY(ScrollViewId, nls.viewStartY)
 
   var lp = DefaultAutoLayoutParams
   lp.itemsPerRow = 1
@@ -8689,12 +8695,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         if nls.linkCursor:
           nls.activeId = e.id.some
 
-
   koi.endScrollView()
 
   if syncToCursor and currNoteInCache:
-    koi.setScrollViewStartY(scrollViewId, startY - scrollViewHeight * 0.45 +
+    koi.setScrollViewStartY(ScrollViewId, startY - scrollViewHeight * 0.45 +
                                           itemHeight)
+
+  # Needed to save the scroll view position into the map file
+  nls.viewStartY = koi.getScrollViewStartY(ScrollViewId)
 
 # }}}
 # }}}

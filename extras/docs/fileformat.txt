@@ -243,6 +243,7 @@ App state chunks (in 'stat' group chunk, optional)
     WSTR    searchTerm        (maxRuneLen=100)
     UINT8   orderBy           (0=noteType, 1=noteText)
     UINT8   linkCursor        (0=off, 1=on)
+    UINT32  viewStartY
 
     numLevels records of (ordered by levelIndex):
 
