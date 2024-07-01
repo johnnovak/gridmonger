@@ -342,31 +342,28 @@ type AppShortcut = enum
 
 type
   AppContext = ref object
-    win:         CSDWindow
-    vg:          NVGContext
+    win:          CSDWindow
+    vg:           NVGContext
 
-    prefs:       Preferences
-    paths:       Paths
-    keys:        Keys
-    # TODO
-    #layouts:    array[4, Layout]
+    prefs:        Preferences
+    paths:        Paths
+    keys:         Keys
+    ui:           UIState
+    dialogs:      Dialogs
+    layout:       Layout
+    savedLayouts: array[4, Layout]
 
-    # TODO remove?
-    opts:        Options
-    ui:          UIState
-    dialogs:     Dialogs
+    theme:        Theme
+    themeEditor:  ThemeEditor
+    quickRef:     QuickRef
+    splash:       Splash
 
-    theme:       Theme
-    themeEditor: ThemeEditor
-    quickRef:    QuickRef
-    splash:      Splash
+    doc:          Document
 
-    doc:         Document
+    shouldClose:  bool
+    updateUI:     bool
 
-    shouldClose: bool
-    updateUI:    bool
-
-    logFile:     File
+    logFile:      File
 
     latestVersion:     Option[VersionInfo]
     versionFetchError: Option[CatchableError]
@@ -429,13 +426,6 @@ type
     lastSavePath:       string
     map:                Map
     undoManager:        UndoManager[Map, UndoStateData]
-
-  # TODO replace with Layout (currLayout)
-  Options = object
-    showCurrentNotePane:  bool
-    showNotesListPane:    bool
-    showToolsPane:        bool
-    showThemeEditor:      bool
 
 
   UIState = object
@@ -516,6 +506,7 @@ type
 
 
   Layout = object
+    showCellCoords:       bool
     showCurrentNotePane:  bool
     showNotesListPane:    bool
     showToolsPane:        bool
@@ -1774,10 +1765,10 @@ proc mainPaneRect(a): Rect[int] =
     x1 = 0
     x2 = koi.winWidth()
 
-  if a.opts.showThemeEditor:
+  if a.layout.showThemeEditor:
     x2 -= ThemePaneWidth
 
-  if a.doc.map.hasLevels and a.opts.showNotesListPane:
+  if a.doc.map.hasLevels and a.layout.showNotesListPane:
     x1 += NotesListPaneWidth.int
 
   let
@@ -1790,7 +1781,7 @@ proc mainPaneRect(a): Rect[int] =
 # {{{ toolsPaneWidth()
 proc toolsPaneWidth(a): float =
   let mainPane = mainPaneRect(a)
-  if a.opts.showToolsPane:
+  if a.layout.showToolsPane:
     if mainPane.h < ToolsPaneYBreakpoint2: ToolsPaneWidthWide
     else: ToolsPaneWidthNarrow
   else:
@@ -1814,7 +1805,7 @@ proc calculateLevelDrawArea(a): tuple[w, h: float] =
 
   var topPad, rightPad, bottomPad, leftPad: float
 
-  if dp.drawCellCoords:
+  if a.layout.showCellCoords:
     topPad    = LevelTopPad_Coords
     rightPad  = LevelRightPad_Coords
     bottomPad = LevelBottomPad_Coords
@@ -1837,11 +1828,11 @@ proc calculateLevelDrawArea(a): tuple[w, h: float] =
     w = mainPane.w - leftPad - rightPad
     h = mainPane.h - topPad  - bottomPad
 
-  if a.opts.showCurrentNotePane:
+  if a.layout.showCurrentNotePane:
    h -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
                                 CurrentNotePaneBottomPad
 
-  if a.opts.showToolsPane:
+  if a.layout.showToolsPane:
     w -= toolsPaneWidth(a)
 
   (w, h)
@@ -2951,10 +2942,10 @@ proc saveAppConfig(a) =
   cfg.set(p & "cursor.column",                 cur.col)
   cfg.set(p & "view-start.row",                dp.viewStartRow)
   cfg.set(p & "view-start.column",             dp.viewStartCol)
-  cfg.set(p & "option.show-cell-coords",       dp.drawCellCoords)
-  cfg.set(p & "option.show-tools-pane",        a.opts.showToolsPane)
-  cfg.set(p & "option.show-current-note-pane", a.opts.showCurrentNotePane)
-  cfg.set(p & "option.show-notes-list-pane",   a.opts.showNotesListPane)
+  cfg.set(p & "option.show-cell-coords",       a.layout.showCellCoords)
+  cfg.set(p & "option.show-tools-pane",        a.layout.showToolsPane)
+  cfg.set(p & "option.show-current-note-pane", a.layout.showCurrentNotePane)
+  cfg.set(p & "option.show-notes-list-pane",   a.layout.showNotesListPane)
   cfg.set(p & "option.wasd-mode",              a.ui.wasdMode)
   cfg.set(p & "option.walk-mode",              a.ui.walkMode)
   cfg.set(p & "option.paste-wraparound",       a.ui.pasteWraparound)
@@ -2994,7 +2985,8 @@ proc loadMap(path: string; a): bool =
       a.theme.nextThemeIndex = findThemeIndex(s.themeName, a)
       a.theme.hideThemeLoadedMessage = true
 
-      with a.opts:
+      with a.layout:
+        showCellCoords      = s.optShowCellCoords
         showToolsPane       = s.optShowToolsPane
         showCurrentNotePane = s.optShowCurrentNotePane
         showNotesListPane   = s.optShowNotesListPane
@@ -3002,7 +2994,6 @@ proc loadMap(path: string; a): bool =
       with a.ui.drawLevelParams:
         viewStartRow   = s.viewStartRow
         viewStartCol   = s.viewStartCol
-        drawCellCoords = s.optShowCellCoords
 
       with a.ui.cursor:
         levelId = s.currLevelId
@@ -3075,10 +3066,10 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     viewStartRow:           dp.viewStartRow,
     viewStartCol:           dp.viewStartCol,
 
-    optShowCellCoords:      dp.drawCellCoords,
-    optShowToolsPane:       a.opts.showToolsPane,
-    optShowCurrentNotePane: a.opts.showCurrentNotePane,
-    optShowNotesListPane:   a.opts.showNotesListPane,
+    optShowCellCoords:      a.layout.showCellCoords,
+    optShowToolsPane:       a.layout.showToolsPane,
+    optShowCurrentNotePane: a.layout.showCurrentNotePane,
+    optShowNotesListPane:   a.layout.showNotesListPane,
     optWasdMode:            a.ui.wasdMode,
     optWalkMode:            a.ui.walkMode,
 
@@ -3702,7 +3693,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 
 
   # HACK, HACK, HACK!
-  if not a.opts.showThemeEditor:
+  if not a.layout.showThemeEditor:
     if not koi.hasHotItem() and koi.hasEvent():
       let ev = koi.currEvent()
       if ev.kind == ekMouseButton and ev.button == mbLeft and ev.pressed:
@@ -6414,7 +6405,7 @@ template toggleOnOffOption(opt: untyped, icon, msg: string; a) =
   toggleOption(opt, icon, msg, on="on", off="off", a)
 
 proc toggleThemeEditor(a) =
-  toggleShowOption(a.opts.showThemeEditor, NoIcon, "Theme editor pane", a)
+  toggleShowOption(a.layout.showThemeEditor, NoIcon, "Theme editor pane", a)
 
 proc showQuickReference(a) =
   a.ui.showQuickReference = true
@@ -7020,18 +7011,18 @@ proc handleGlobalKeyEvents(a) =
 
       # Toggle options
       elif ke.isShortcutDown(scToggleCellCoords, a):
-        toggleShowOption(dp.drawCellCoords, NoIcon, "Cell coordinates", a)
+        toggleShowOption(a.layout.showCellCoords, NoIcon, "Cell coordinates", a)
 
       elif ke.isShortcutDown(scToggleCurrentNotePane, a):
-        toggleShowOption(opts.showCurrentNotePane, NoIcon,
+        toggleShowOption(a.layout.showCurrentNotePane, NoIcon,
                          "Current note pane", a)
 
       elif ke.isShortcutDown(scToggleNotesListPane, a):
-        toggleShowOption(opts.showNotesListPane, NoIcon,
+        toggleShowOption(a.layout.showNotesListPane, NoIcon,
                          "Note list pane", a)
 
       elif ke.isShortcutDown(scToggleToolsPane, a):
-        toggleShowOption(opts.showToolsPane, NoIcon, "Tools pane", a)
+        toggleShowOption(a.layout.showToolsPane, NoIcon, "Tools pane", a)
 
       elif ke.isShortcutDown(scToggleWalkMode, a):
         ui.walkMode = not ui.walkMode
@@ -7880,7 +7871,7 @@ proc renderLevel(x, y, w, h: float,
     dp.cellCoordOpts = coordOptsForCurrLevel(a)
     dp.regionOpts    = l.regionOpts
 
-    dp.pasteWraparound  = ui.pasteWraparound
+    dp.pasteWraparound     = ui.pasteWraparound
     dp.selectionWraparound = (ui.pasteWraparound and
                               ui.editMode != emNudgePreview)
 
@@ -7892,7 +7883,7 @@ proc renderLevel(x, y, w, h: float,
     else:
       dp.cursorOrient = CardinalDir.none
 
-    dp.selection = ui.selection
+    dp.selection     = ui.selection
     dp.selectionRect = ui.selRect
 
     dp.selectionBuffer = (
@@ -7907,7 +7898,8 @@ proc renderLevel(x, y, w, h: float,
       else: SelectionBuffer.none
     )
 
-    dp.drawLevel = ui.editMode != emNudgePreview
+    dp.drawLevel      = ui.editMode != emNudgePreview
+    dp.drawCellCoords = a.layout.showCellCoords
 
     drawLevel(
       a.doc.map,
@@ -9583,7 +9575,7 @@ proc renderUI(a) =
 
   if a.ui.showQuickReference:
     var w = koi.winWidth()
-    if a.opts.showThemeEditor: w -= ThemePaneWidth
+    if a.layout.showThemeEditor: w -= ThemePaneWidth
 
     renderQuickReference(x=0, y=mainPane.y1, w=w, h=mainPane.h, a)
 
@@ -9626,7 +9618,7 @@ proc renderUI(a) =
         a
       )
 
-      if a.opts.showToolsPane:
+      if a.layout.showToolsPane:
         renderToolsPane(
           x = mainPane.w - toolsPaneWidth(a),
           y = ToolsPaneTopPad,
@@ -9639,7 +9631,7 @@ proc renderUI(a) =
 
 
     if map.hasLevels:
-      if a.opts.showCurrentNotePane:
+      if a.layout.showCurrentNotePane:
         var paneWidth = mainPane.w - CurrentNotePaneLeftPad -
                                      CurrentNotePaneRightPad
 
@@ -9659,7 +9651,7 @@ proc renderUI(a) =
           a
         )
 
-      if a.opts.showNotesListPane:
+      if a.layout.showNotesListPane:
         renderNotesListPane(x = 0, y = mainPane.y1,
                             w = NotesListPaneWidth,
                             h = mainPane.h, a)
@@ -9672,7 +9664,7 @@ proc renderUI(a) =
   # XXX hack, we need to render the theme editor before the dialogs, so
   # that keyboard shortcuts in the the theme editor take precedence (e.g.
   # when pressing ESC to close the colorpicker, the dialog should not close)
-  if a.opts.showThemeEditor:
+  if a.layout.showThemeEditor:
     let
       mainPane = mainPaneRect(a)
       x = mainPane.x1 + mainPane.w
@@ -9769,7 +9761,7 @@ proc renderFrameCb(a) =
   # XXX HACK: If the theme pane is shown, widgets are handled first, then
   # the global shortcuts, so widget-specific shorcuts can take precedence
   var uiRendered = false
-  if a.opts.showThemeEditor:
+  if a.layout.showThemeEditor:
     renderUI(a)
     uiRendered = true
 
@@ -9779,13 +9771,13 @@ proc renderFrameCb(a) =
     else:                         handleGlobalKeyEvents_NoLevels(a)
 
   else:
-    if not a.opts.showThemeEditor and a.win.glfwWin.focused:
+    if not a.layout.showThemeEditor and a.win.glfwWin.focused:
       glfw.makeContextCurrent(a.splash.win)
       closeSplash(a)
       glfw.makeContextCurrent(a.win.glfwWin)
       a.win.focus
 
-  if not a.opts.showThemeEditor or not uiRendered:
+  if not a.layout.showThemeEditor or not uiRendered:
     renderUI(a)
 
   if a.win.shouldClose:
@@ -9863,17 +9855,17 @@ proc renderFrameSplash(a) =
   vg.endFrame
 
 
-  if not a.opts.showThemeEditor and a.splash.win.shouldClose:
+  if not a.layout.showThemeEditor and a.splash.win.shouldClose:
     a.shouldClose = true
 
   proc shouldCloseSplash(a): bool =
     alias(w, a.splash.win)
 
-    if a.opts.showThemeEditor:
+    if a.layout.showThemeEditor:
       not a.splash.show
     else:
       let autoClose =
-        if not a.opts.showThemeEditor and a.prefs.autoCloseSplash:
+        if not a.layout.showThemeEditor and a.prefs.autoCloseSplash:
           let dt = getMonoTime() - a.splash.t0
           koi.setFramesLeft()
           dt > initDuration(seconds = a.prefs.splashTimeoutSecs)
@@ -9933,7 +9925,7 @@ proc showSplash(a) =
   s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
   s.win.show
 
-  if not a.opts.showThemeEditor:
+  if not a.layout.showThemeEditor:
     koi.setFocusCaptured(true)
 
 # }}}
@@ -9957,7 +9949,7 @@ proc closeSplash(a) =
 
   s.show = false
 
-  if not a.opts.showThemeEditor:
+  if not a.layout.showThemeEditor:
     koi.setFocusCaptured(false)
 
 # }}}
@@ -10171,7 +10163,9 @@ proc initPreferences(cfg: HoconNode; a) =
 proc restoreUIStateFromConfig(cfg: HoconNode, a) =
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
 
-  with a.opts:
+  with a.layout:
+    showCellCoords = uiCfg.getBoolOrDefault("option.show-cell-coords", true)
+
     const ShowCurrentNotePaneKey = "option.show-current-note-pane"
     if uiCfg.getOpt(ShowCurrentNotePaneKey).isSome:
       showCurrentNotePane = uiCfg.getBoolOrDefault(
@@ -10201,7 +10195,6 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
   with a.ui.drawLevelParams:
     viewStartRow = uiCfg.getNaturalOrDefault("view-start.row", 0)
     viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
-    drawCellCoords = uiCfg.getBoolOrDefault("option.show-cell-coords", true)
 
   with a.ui.cursor:
     # TODO current-level-id
@@ -10513,13 +10506,13 @@ proc main() =
 
       # Render splash
       if a.splash.win == nil and a.splash.show:
-        createSplashWindow(mousePassthrough = a.opts.showThemeEditor, a)
+        createSplashWindow(mousePassthrough = a.layout.showThemeEditor, a)
         glfw.makeContextCurrent(a.splash.win)
 
         if a.splash.logo.data == nil:
           loadSplashImages(a)
         showSplash(a)
-        if a.opts.showThemeEditor:
+        if a.layout.showThemeEditor:
           a.win.focus
 
       if a.splash.win != nil:
