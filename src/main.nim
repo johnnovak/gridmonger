@@ -436,24 +436,16 @@ type
     showNotesListPane:    bool
     showToolsPane:        bool
     showThemeEditor:      bool
-    showQuickReference:   bool
-
-    # TODO move to UI state
-    drawTrail:            bool
-    walkMode:             bool
-    wasdMode:             bool
-
-    # TODO move to preferences
-    pasteWraparound:      bool
 
 
   UIState = object
-    status:             StatusMessage
-    notesListState:     NotesListState
-
+    # Editing
+    # -------
     editMode:           EditMode
     # to restore the previous edit mode when exiting emPanLevel
     prevEditMode:       EditMode
+
+    pasteWraparound:    bool
 
     # Navigation
     # ----------
@@ -461,6 +453,10 @@ type
     prevCursor:         Location
     cursorOrient:       CardinalDir           # used by Walk Mode
     prevMoveDir:        Option[CardinalDir]   # used by the exacavate tool
+
+    drawTrail:          bool
+    walkMode:           bool
+    wasdMode:           bool
 
     panLevelMode:       PanLevelMode
 
@@ -512,13 +508,18 @@ type
 
     manualNoteTooltipState: ManualNoteTooltipState
 
+    # Misc
+    # ----
+    status:              StatusMessage
+    notesListState:      NotesListState
+    showQuickReference:  bool
+
 
   Layout = object
     showCurrentNotePane:  bool
     showNotesListPane:    bool
     showToolsPane:        bool
     showThemeEditor:      bool
-    showQuickReference:   bool
 
     windowPos:            tuple[x, y: int32]
     windowSize:           tuple[w, h: int32]
@@ -1738,7 +1739,7 @@ proc setSetLinkDestinationMessage(floor: Floor; a) =
 # }}}
 # {{{ mkWraparoundMessage()
 proc mkWraparoundMessage(a): string =
-  "wraparound: " & (if a.opts.pasteWraparound: "on" else: "off")
+  "wraparound: " & (if a.ui.pasteWraparound: "on" else: "off")
 
 # }}}
 # {{{ setNudgePreviewModeMessage()
@@ -1854,9 +1855,9 @@ proc setCursor(newCur: Location; a) =
       return
 
     if newCur.levelId != ui.cursor.levelId:
-      opts.drawTrail = false
+      ui.drawTrail = false
 
-    if opts.drawTrail and newCur != ui.cursor:
+    if ui.drawTrail and newCur != ui.cursor:
       actions.drawTrail(doc.map, loc=newCur, undoLoc=ui.prevCursor,
                         doc.undoManager)
 
@@ -1887,7 +1888,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   template stepInc(curPos: Natural, maxPos: Natural) =
     let newPos = curPos + steps
     if newPos > maxPos and wraparound:
-      if steps > 1: a.opts.drawTrail = false
+      if steps > 1: a.ui.drawTrail = false
       curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
@@ -1897,7 +1898,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
     let newPos = curPos - steps
     let minPos = 0
     if newPos < minPos and wraparound:
-      if steps > 1: a.opts.drawTrail = false
+      if steps > 1: a.ui.drawTrail = false
       curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
@@ -1945,7 +1946,7 @@ proc moveCursor(dir: CardinalDir, steps: Natural = 1; a) =
   let cur = stepCursor(a.ui.cursor, dir, steps, a)
   if cur != a.ui.cursor:
     if steps > 1:
-      a.opts.drawTrail = false
+      a.ui.drawTrail = false
     a.ui.prevMoveDir = dir.some
     setCursor(cur, a)
 
@@ -2065,7 +2066,7 @@ proc stepLevelView(dir: CardinalDir; a) =
 proc moveLevelView(dir: Direction, steps: Natural = 1; a) =
   alias(dp, a.ui.drawLevelParams)
 
-  a.opts.drawTrail = false
+  a.ui.drawTrail = false
 
   let l = currLevel(a)
   # TODO use clamp
@@ -2143,7 +2144,7 @@ proc updateViewAndCursorPos(levelDrawWidth, levelDrawHeight: float; a) =
 proc enterSelectMode(a) =
   let l = currLevel(a)
 
-  a.opts.drawTrail = false
+  a.ui.drawTrail = false
   a.ui.editMode = emSelect
   a.ui.selection = some(newSelection(l.rows, l.cols))
   a.ui.drawLevelParams.drawCursorGuides = true
@@ -2954,9 +2955,9 @@ proc saveAppConfig(a) =
   cfg.set(p & "option.show-tools-pane",        a.opts.showToolsPane)
   cfg.set(p & "option.show-current-note-pane", a.opts.showCurrentNotePane)
   cfg.set(p & "option.show-notes-list-pane",   a.opts.showNotesListPane)
-  cfg.set(p & "option.wasd-mode",              a.opts.wasdMode)
-  cfg.set(p & "option.walk-mode",              a.opts.walkMode)
-  cfg.set(p & "option.paste-wraparound",       a.opts.pasteWraparound)
+  cfg.set(p & "option.wasd-mode",              a.ui.wasdMode)
+  cfg.set(p & "option.walk-mode",              a.ui.walkMode)
+  cfg.set(p & "option.paste-wraparound",       a.ui.pasteWraparound)
 
   p = "last-state.window."
   cfg.set(p & "maximized",      a.win.maximized)
@@ -2997,9 +2998,6 @@ proc loadMap(path: string; a): bool =
         showToolsPane       = s.optShowToolsPane
         showCurrentNotePane = s.optShowCurrentNotePane
         showNotesListPane   = s.optShowNotesListPane
-        wasdMode            = s.optWasdMode
-        walkMode            = s.optWalkMode
-        drawTrail           = false
 
       with a.ui.drawLevelParams:
         viewStartRow   = s.viewStartRow
@@ -3014,6 +3012,9 @@ proc loadMap(path: string; a): bool =
       with a.ui:
         currFloorColor  = s.currFloorColor
         currSpecialWall = s.currSpecialWall
+        wasdMode        = s.optWasdMode
+        walkMode        = s.optWalkMode
+        drawTrail       = false
 
       if s.notesListPaneState.isSome:
         let nls = s.notesListPaneState.get
@@ -3078,8 +3079,8 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     optShowToolsPane:       a.opts.showToolsPane,
     optShowCurrentNotePane: a.opts.showCurrentNotePane,
     optShowNotesListPane:   a.opts.showNotesListPane,
-    optWasdMode:            a.opts.wasdMode,
-    optWalkMode:            a.opts.walkMode,
+    optWasdMode:            a.ui.wasdMode,
+    optWalkMode:            a.ui.walkMode,
 
     currFloorColor:         a.ui.currFloorColor,
     currSpecialWall:        a.ui.currSpecialWall,
@@ -4113,7 +4114,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   proc okAction(dlg: NewMapDialogParams; a) =
     if validationError != "": return
 
-    a.opts.drawTrail = false
+    a.ui.drawTrail = false
 
     setNextLevelId(0)
 
@@ -4419,7 +4420,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
   proc okAction(dlg: LevelPropertiesDialogParams; a) =
     if validationError != "": return
 
-    a.opts.drawTrail = false
+    a.ui.drawTrail = false
 
     let
       rows = parseInt(dlg.rows)
@@ -4764,7 +4765,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
                                      align, a.doc.undoManager)
     moveCursorTo(newCur, a)
 
-    a.opts.drawTrail = false
+    a.ui.drawTrail = false
 
     setStatusMessage(IconEnlarge, "Level resized", a)
     closeDialog(a)
@@ -4840,7 +4841,7 @@ proc deleteLevelDialog(a) =
             style=a.theme.labelStyle)
 
   proc okAction(a) =
-    a.opts.drawTrail = false
+    a.ui.drawTrail = false
 
     let cur = actions.deleteLevel(map, a.ui.cursor, um)
     setCursor(cur, a)
@@ -5815,17 +5816,17 @@ proc undoAction(a) =
 
   if um.canUndo:
     let
-      drawTrail     = a.opts.drawTrail
+      drawTrail     = a.ui.drawTrail
       undoStateData = um.undo(a.doc.map)
       newCur        = undoStateData.undoLocation
       levelChange   = newCur.levelId != a.ui.cursor.levelId
 
-    a.opts.drawTrail = false
+    a.ui.drawTrail = false
 
     moveCursorTo(newCur, a)
 
     if not levelChange:
-      a.opts.drawTrail = drawTrail
+      a.ui.drawTrail = drawTrail
 
     setStatusMessage(IconUndo,
                      fmt"Undid action: {undoStateData.actionName}", a)
@@ -5839,17 +5840,17 @@ proc redoAction(a) =
 
   if um.canRedo:
     let
-      drawTrail     = a.opts.drawTrail
+      drawTrail     = a.ui.drawTrail
       undoStateData = um.redo(a.doc.map)
       newCur        = undoStateData.location
       levelChange   = newCur.levelId != a.ui.cursor.levelId
 
-    a.opts.drawTrail = false
+    a.ui.drawTrail = false
 
     moveCursorTo(newCur, a)
 
     if not levelChange:
-      a.opts.drawTrail = drawTrail
+      a.ui.drawTrail = drawTrail
 
     setStatusMessage(IconRedo,
                      fmt"Redid action: {undoStateData.actionName}", a)
@@ -6280,7 +6281,7 @@ proc handleLevelMouseEvents(a) =
 
   # {{{ WASD mode
 
-  if a.opts.wasdMode:
+  if a.ui.wasdMode:
     case ui.editMode
     of emNormal:
       if koi.mbLeftDown():
@@ -6416,7 +6417,7 @@ proc toggleThemeEditor(a) =
   toggleShowOption(a.opts.showThemeEditor, NoIcon, "Theme editor pane", a)
 
 proc showQuickReference(a) =
-  a.opts.showQuickReference = true
+  a.ui.showQuickReference = true
   setStatusMessage(IconQuestion, "Quick keyboard reference",
                    @[fmt"Ctrl+{IconArrowsHoriz}", "switch tab",
                      "Esc/Space/Enter", "exit",
@@ -6459,8 +6460,8 @@ proc handleGlobalKeyEvents(a) =
     var ke = ke
     ke.mods = ke.mods - {mkCtrl, mkAlt}
 
-    let k = if opts.wasdMode: a.keys.walkKeysWasd
-            else:             a.keys.walkKeysCursor
+    let k = if ui.wasdMode: a.keys.walkKeysWasd
+            else:           a.keys.walkKeysCursor
 
     if   ke.isKeyDown(k.forward,  repeat=true):
       moveCursor(ui.cursorOrient, s, a)
@@ -6502,7 +6503,7 @@ proc handleGlobalKeyEvents(a) =
   template moveKeyToCardinalDir(ke: Event, allowWasdKeys: bool,
                                 allowRepeat: bool): Option[CardinalDir] =
 
-    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
+    let k = if allowWasdKeys and ui.wasdMode: MoveKeysWasd
             else: MoveKeysCursor
 
     var kk = ke
@@ -6571,7 +6572,7 @@ proc handleGlobalKeyEvents(a) =
       else:
         s = CursorJump
 
-    let k = if allowWasdKeys and opts.wasdMode: MoveKeysWasd
+    let k = if allowWasdKeys and ui.wasdMode: MoveKeysWasd
             else: MoveKeysCursor
 
     var ke = ke
@@ -6634,7 +6635,7 @@ proc handleGlobalKeyEvents(a) =
           setCursor(newCur, a)
           actions.setWall(map, loc=newCur, undoLoc=cur, drawDir,
                           ui.drawWallRepeatWall, um,
-                          groupWithPrev=opts.drawTrail)
+                          groupWithPrev=ui.drawTrail)
           setDrawWallActionMessage(a)
         else:
           setWarningMessage("Cannot set wall of an empty cell",
@@ -6662,7 +6663,7 @@ proc handleGlobalKeyEvents(a) =
                          keyRightControl, keyRightShift, keyRightAlt}):
         resetManualNoteTooltip(a)
 
-      if opts.walkMode: handleMoveWalk(ke, a)
+      if ui.walkMode: handleMoveWalk(ke, a)
       else:
         if handleMoveCursor(ke, allowPan=true, allowJump=true,
                             allowWasdKeys=true, allowDiagonal=true, a):
@@ -6674,11 +6675,11 @@ proc handleGlobalKeyEvents(a) =
 
       let cur = ui.cursor
 
-      if not opts.wasdMode and ke.isShortcutDown(scExcavateTunnel, a):
+      if not ui.wasdMode and ke.isShortcutDown(scExcavateTunnel, a):
         ui.editMode = emExcavateTunnel
         startExcavateTunnelAction(a)
 
-      elif not (opts.wasdMode and opts.walkMode) and
+      elif not (ui.wasdMode and ui.walkMode) and
            ke.isShortcutDown(scEraseCell, a):
         ui.editMode = emEraseCell
         startEraseCellsAction(a)
@@ -6715,7 +6716,7 @@ proc handleGlobalKeyEvents(a) =
           actions.setFloorColor(map, loc=cur, undoLoc=cur,
                                 ui.currFloorColor, um, groupWithPrev=false)
 
-      elif not opts.wasdMode and ke.isShortcutDown(scDrawWall, a):
+      elif not ui.wasdMode and ke.isShortcutDown(scDrawWall, a):
         enterDrawWallMode(specialWall=false, a)
 
       elif ke.isShortcutDown(scDrawSpecialWall, a):
@@ -6793,7 +6794,7 @@ proc handleGlobalKeyEvents(a) =
         else: ui.currSpecialWall = 0
 
       elif ke.isShortcutDown(scEraseTrail, a):
-        if not opts.drawTrail:
+        if not ui.drawTrail:
           ui.editMode = emEraseTrail
           startEraseTrailAction(a)
         else:
@@ -6858,7 +6859,7 @@ proc handleGlobalKeyEvents(a) =
           dp.selStartRow = cur.row
           dp.selStartCol = cur.col
 
-          opts.drawTrail = false
+          ui.drawTrail = false
           ui.editMode = emPastePreview
 
           setPastePreviewModeMessage(a)
@@ -6875,7 +6876,7 @@ proc handleGlobalKeyEvents(a) =
         dp.selStartCol = 0
 
         ui.editMode = emNudgePreview
-        opts.drawTrail = false
+        ui.drawTrail = false
 
         setNudgePreviewModeMessage(a)
 
@@ -6903,8 +6904,8 @@ proc handleGlobalKeyEvents(a) =
 
           ui.jumpToDestLocation = cur
           ui.lastJumpToSrcLocation = ui.jumpToSrcLocations[ui.jumpToSrcLocationIdx]
-          ui.wasDrawingTrail = opts.drawTrail
-          opts.drawTrail = false
+          ui.wasDrawingTrail = ui.drawTrail
+          ui.drawTrail = false
 
           moveCursorTo(ui.lastJumpToSrcLocation, a)
           ui.editMode = emSelectJumpToLinkSrc
@@ -7033,17 +7034,17 @@ proc handleGlobalKeyEvents(a) =
         toggleShowOption(opts.showToolsPane, NoIcon, "Tools pane", a)
 
       elif ke.isShortcutDown(scToggleWalkMode, a):
-        opts.walkMode = not opts.walkMode
-        let msg = if opts.walkMode: "Walk mode" else: "Normal mode"
+        ui.walkMode = not ui.walkMode
+        let msg = if ui.walkMode: "Walk mode" else: "Normal mode"
         setStatusMessage(msg, a)
 
       elif ke.isShortcutDown(scToggleWasdMode, a):
-        toggleOnOffOption(opts.wasdMode, IconMouse, "WASD mode", a)
+        toggleOnOffOption(ui.wasdMode, IconMouse, "WASD mode", a)
 
       elif ke.isShortcutDown(scToggleDrawTrail, a):
-        if not opts.drawTrail:
+        if not ui.drawTrail:
           actions.drawTrail(map, loc=cur, undoLoc=cur, um)
-        toggleOnOffOption(opts.drawTrail, IconShoePrints, "Draw trail", a)
+        toggleOnOffOption(ui.drawTrail, IconShoePrints, "Draw trail", a)
 
       elif ke.isShortcutDown(scToggleTitleBar, a):
         toggleTitleBar(a)
@@ -7053,7 +7054,7 @@ proc handleGlobalKeyEvents(a) =
     of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
       let prevMoveDir = a.ui.prevMoveDir
 
-      if opts.walkMode: handleMoveWalk(ke, a)
+      if ui.walkMode: handleMoveWalk(ke, a)
       else:
         let allowDiagonal = ui.editMode != emExcavateTunnel
         discard handleMoveCursor(ke, allowPan=false, allowJump=false,
@@ -7064,7 +7065,7 @@ proc handleGlobalKeyEvents(a) =
       if cur != ui.prevCursor:
         if   ui.editMode == emExcavateTunnel:
           if a.prefs.openEndedExcavate:
-            let dir = if opts.walkMode: ui.cursorOrient.some
+            let dir = if ui.walkMode: ui.cursorOrient.some
                       else: moveKeyToCardinalDir(ke, allowWasdKeys=true,
                                                  allowRepeat=true)
 
@@ -7072,15 +7073,15 @@ proc handleGlobalKeyEvents(a) =
                                    ui.currFloorColor, dir,
                                    prevDir=prevMoveDir,
                                    prevLoc=ui.prevCursor.some,
-                                   um, groupWithPrev=opts.drawTrail)
+                                   um, groupWithPrev=ui.drawTrail)
           else:
             actions.excavateTunnel(a.doc.map, loc=cur, undoLoc=cur,
                                    a.ui.currFloorColor,
-                                   um=um, groupWithPrev=opts.drawTrail)
+                                   um=um, groupWithPrev=ui.drawTrail)
 
         elif ui.editMode == emEraseCell:
           actions.eraseCell(map, loc=cur, undoLoc=ui.prevCursor,
-                            um, groupWithPrev=opts.drawTrail)
+                            um, groupWithPrev=ui.drawTrail)
 
         elif ui.editMode == emEraseTrail:
           actions.eraseTrail(map, loc=cur, undoLoc=cur, um)
@@ -7088,15 +7089,15 @@ proc handleGlobalKeyEvents(a) =
         elif ui.editMode == emDrawClearFloor:
           actions.drawClearFloor(map, loc=cur, undoLoc=ui.prevCursor,
                                  ui.currFloorColor,
-                                 um, groupWithPrev=opts.drawTrail)
+                                 um, groupWithPrev=ui.drawTrail)
 
         elif ui.editMode == emColorFloor:
           if not map.isEmpty(cur):
             actions.setFloorColor(map, loc=cur, undoLoc=ui.prevCursor,
                                   ui.currFloorColor,
-                                  um, groupWithPrev=opts.drawTrail)
+                                  um, groupWithPrev=ui.drawTrail)
 
-      if not opts.wasdMode and ke.isShortcutUp(scExcavateTunnel, a):
+      if not ui.wasdMode and ke.isShortcutUp(scExcavateTunnel, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -7131,7 +7132,7 @@ proc handleGlobalKeyEvents(a) =
       handleMoveKeys(ke, allowWasdKeys=true, allowRepeat=false,
                      allowDiagonal=false, handleMoveKey)
 
-      if not opts.wasdMode and ke.isShortcutUp(scDrawWall, a):
+      if not ui.wasdMode and ke.isShortcutUp(scDrawWall, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -7160,7 +7161,7 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emDrawWall
         setDrawWallActionMessage(a)
 
-      if not opts.wasdMode and ke.isShortcutUp(scDrawWall, a):
+      if not ui.wasdMode and ke.isShortcutUp(scDrawWall, a):
         ui.editMode = emNormal
         clearStatusMessage(a)
 
@@ -7415,7 +7416,7 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartCol = cur.col
 
       if ke.isShortcutDown(scTogglePasteWraparound, a):
-        opts.pasteWraparound = not opts.pasteWraparound
+        ui.pasteWraparound = not ui.pasteWraparound
         setPastePreviewModeMessage(a)
 
       elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
@@ -7427,7 +7428,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scPasteAccept, a):
         actions.pasteSelection(map, loc=cur, undoLoc=cur, ui.copyBuf.get,
                                pasteBufferLevelId=Natural.none,
-                               wraparound=opts.pasteWraparound,
+                               wraparound=ui.pasteWraparound,
                                um, pasteTrail=true)
         ui.editMode = emNormal
         setStatusMessage(IconPaste, "Pasted buffer contents", a)
@@ -7450,7 +7451,7 @@ proc handleGlobalKeyEvents(a) =
       dp.selStartCol = cur.col
 
       if ke.isShortcutDown(scTogglePasteWraparound, a):
-        opts.pasteWraparound = not opts.pasteWraparound
+        ui.pasteWraparound = not ui.pasteWraparound
         setMovePreviewModeMessage(a)
 
       elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
@@ -7463,7 +7464,7 @@ proc handleGlobalKeyEvents(a) =
         actions.pasteSelection(map, loc=cur, undoLoc=ui.pasteUndoLocation,
                                ui.nudgeBuf.get,
                                pasteBufferLevelId=MoveBufferLevelId.some,
-                               wraparound=opts.pasteWraparound,
+                               wraparound=ui.pasteWraparound,
                                um, groupWithPrev=true,
                                actionName="Move selection")
         ui.editMode = emNormal
@@ -7500,7 +7501,7 @@ proc handleGlobalKeyEvents(a) =
       let cur = ui.cursor
 
       if ke.isShortcutDown(scTogglePasteWraparound, a):
-        opts.pasteWraparound = not opts.pasteWraparound
+        ui.pasteWraparound = not ui.pasteWraparound
         setNudgePreviewModeMessage(a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
@@ -7510,7 +7511,7 @@ proc handleGlobalKeyEvents(a) =
         let newCur = actions.nudgeLevel(map, cur,
                                         dp.selStartRow, dp.selStartCol,
                                         ui.nudgeBuf.get,
-                                        wraparound=opts.pasteWraparound, um)
+                                        wraparound=ui.pasteWraparound, um)
         moveCursorTo(newCur, a)
         ui.editMode = emNormal
         setStatusMessage(IconArrowsAll, "Nudged map", a)
@@ -7524,7 +7525,7 @@ proc handleGlobalKeyEvents(a) =
     # }}}
     # {{{ emSetCellLink
     of emSetCellLink:
-      if opts.walkMode: handleMoveWalk(ke, a)
+      if ui.walkMode: handleMoveWalk(ke, a)
       else:
         discard handleMoveCursor(ke, allowPan=true, allowJump=true,
                                  allowWasdKeys=true, allowDiagonal=false, a)
@@ -7592,14 +7593,14 @@ proc handleGlobalKeyEvents(a) =
         ui.editMode = emNormal
         if ui.wasDrawingTrail:
           actions.drawTrail(map, loc=ui.cursor, undoLoc=ui.jumpToDestLocation, um)
-          opts.drawTrail = true
+          ui.drawTrail = true
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scJumpToLinkedCell, a):
         moveCursorTo(ui.jumpToDestLocation, a)
         ui.editMode = emNormal
         if ui.wasDrawingTrail:
-          opts.drawTrail = true
+          ui.drawTrail = true
         clearStatusMessage(a)
 
     # }}}
@@ -7670,7 +7671,7 @@ proc handleQuickRefKeyEvents(a) =
          ke.isShortcutDown(scCancel, a) or
          isKeyDown(keySpace):
 
-      a.opts.showQuickReference = false
+      a.ui.showQuickReference = false
       clearStatusMessage(a)
 
 # }}}
@@ -7775,12 +7776,12 @@ proc renderModeAndOptionIndicators(x, y: float; a) =
 
   var x = x
 
-  if a.opts.wasdMode:
+  if a.ui.wasdMode:
     vg.setFont(15, "sans-bold")
     discard vg.text(x, y, fmt"WASD+{IconMouse}")
     x += 80
 
-  if a.opts.drawTrail:
+  if a.ui.drawTrail:
     vg.setFont(19, "sans-bold")
     discard vg.text(x, y+1, IconShoePrints)
 
@@ -7879,11 +7880,11 @@ proc renderLevel(x, y, w, h: float,
     dp.cellCoordOpts = coordOptsForCurrLevel(a)
     dp.regionOpts    = l.regionOpts
 
-    dp.pasteWraparound  = opts.pasteWraparound
-    dp.selectionWraparound = (opts.pasteWraparound and
+    dp.pasteWraparound  = ui.pasteWraparound
+    dp.selectionWraparound = (ui.pasteWraparound and
                               ui.editMode != emNudgePreview)
 
-    if opts.walkMode and
+    if ui.walkMode and
        ((ui.editMode in {emNormal, emExcavateTunnel, emEraseCell,
                          emDrawClearFloor}) or
         (ui.editMode == emPanLevel and ui.prevEditMode == emNormal)):
@@ -7924,7 +7925,7 @@ proc renderLevel(x, y, w, h: float,
 
   if koi.isHot(id) and
      ui.editMode == emNormal and
-     not (opts.wasdMode and isActive(id)) and
+     not (ui.wasdMode and isActive(id)) and
      (koi.mx() != ui.manualNoteTooltipState.mx or
       koi.my() != ui.manualNoteTooltipState.my):
 
@@ -9580,7 +9581,7 @@ proc renderUI(a) =
 
   vg.fill
 
-  if a.opts.showQuickReference:
+  if a.ui.showQuickReference:
     var w = koi.winWidth()
     if a.opts.showThemeEditor: w -= ThemePaneWidth
 
@@ -9773,7 +9774,7 @@ proc renderFrameCb(a) =
     uiRendered = true
 
   if a.splash.win == nil:
-    if a.opts.showQuickReference: handleQuickRefKeyEvents(a)
+    if a.ui.showQuickReference: handleQuickRefKeyEvents(a)
     elif a.doc.map.hasLevels:     handleGlobalKeyEvents(a)
     else:                         handleGlobalKeyEvents_NoLevels(a)
 
@@ -10186,9 +10187,11 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
 
     showNotesListPane = uiCfg.getBoolOrDefault("option.show-notes-list-pane", true)
     showToolsPane     = uiCfg.getBoolOrDefault("option.show-tools-pane",      true)
-    walkMode          = uiCfg.getBoolOrDefault("option.walk-mode",            false)
-    wasdMode          = uiCfg.getBoolOrDefault("option.wasd-mode",            false)
-    pasteWraparound   = uiCfg.getBoolOrDefault("option.paste-wraparound",     false)
+
+  with a.ui:
+    walkMode        = uiCfg.getBoolOrDefault("option.walk-mode",        false)
+    wasdMode        = uiCfg.getBoolOrDefault("option.wasd-mode",        false)
+    pasteWraparound = uiCfg.getBoolOrDefault("option.paste-wraparound", false)
 
   a.ui.drawLevelParams.setZoomLevel(
     a.theme.levelTheme,
