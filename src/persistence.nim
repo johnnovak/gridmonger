@@ -105,8 +105,8 @@ type
     filter*:          NotesListFilter
     linkCursor*:      bool
     viewStartY*:      Natural
-    sectionStates*:   Table[Natural, bool]
-    regionStates*:    Table[tuple[levelId: Natural, rc: RegionCoords], bool]
+    levelSections*:   Table[Natural, bool]
+    regionSections*:  Table[tuple[levelId: Natural, rc: RegionCoords], bool]
 
   AppState* = ref object
     themeName*:              string
@@ -397,7 +397,7 @@ proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
   for levelIndex in 0..<map.levels.len:
     let sectionState = rr.read(uint8)
     checkBool(sectionState, "stat.notl.sectionState")
-    s.sectionStates[levelIndex] = sectionState.bool
+    s.levelSections[levelIndex] = sectionState.bool
 
     let l = map.levels[levelIndex]
 
@@ -411,7 +411,7 @@ proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
 
         let regionState = rr.read(uint8)
         checkBool(regionState, "stat.notl.regionState")
-        s.regionStates[(levelIndex.Natural, rc)] = regionState.bool
+        s.regionSections[(levelIndex.Natural, rc)] = regionState.bool
 
   result = s
 
@@ -1267,7 +1267,7 @@ proc writeNotesListPaneState(rw; map: Map, s: AppState) =
     rw.write(nls.viewStartY.uint32)
 
     for levelId in map.sortedLevelIds:
-      rw.write(nls.sectionStates[levelId].uint8)
+      rw.write(nls.levelSections[levelId].uint8)
 
       let l = map.levels[levelId]
 
@@ -1278,7 +1278,7 @@ proc writeNotesListPaneState(rw; map: Map, s: AppState) =
         # (top-left corner), then go left to right, top to bottom.
         for rc in l.regionCoords:
           let r = l.regions[rc].get
-          rw.write(nls.regionStates[(levelId, rc)].uint8)
+          rw.write(nls.regionSections[(levelId, rc)].uint8)
 
 # }}}
 # {{{ writeAppState()

@@ -542,8 +542,8 @@ type
     linkCursor:     bool
     prevLinkCursor: bool
     cache:          seq[NotesListCacheEntry]
-    sectionStates:  Table[Natural, bool]
-    regionStates:   Table[tuple[levelId: Natural, rc: RegionCoords], bool]
+    levelSections:  Table[Natural, bool]
+    regionSections: Table[tuple[levelId: Natural, rc: RegionCoords], bool]
     activeId:       Option[ItemId]
     viewStartY:     float
 
@@ -3073,11 +3073,11 @@ proc loadMap(path: string; a): bool =
       if s.notesListPaneState.isSome:
         let nls = s.notesListPaneState.get
         with a.ui.notesListState:
-          currFilter    = nls.filter
-          linkCursor    = nls.linkCursor
-          viewStartY    = nls.viewStartY.float
-          sectionStates = nls.sectionStates
-          regionStates  = nls.regionStates
+          currFilter     = nls.filter
+          linkCursor     = nls.linkCursor
+          viewStartY     = nls.viewStartY.float
+          levelSections  = nls.levelSections
+          regionSections = nls.regionSections
 
       a.ui.drawLevelParams.setZoomLevel(a.theme.levelTheme, s.zoomLevel)
       a.ui.mouseCanStartExcavate = true
@@ -3140,11 +3140,11 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     currSpecialWall:        a.ui.currSpecialWall,
 
     notesListPaneState:     AppStateNotesListPane(
-                              filter:        nls.currFilter,
-                              linkCursor:    nls.linkCursor,
-                              viewStartY:    nls.viewStartY.Natural,
-                              sectionStates: nls.sectionStates,
-                              regionStates:  nls.regionStates
+                              filter:         nls.currFilter,
+                              linkCursor:     nls.linkCursor,
+                              viewStartY:     nls.viewStartY.Natural,
+                              levelSections:  nls.levelSections,
+                              regionSections: nls.regionSections
                             ).some
   )
 
@@ -8605,16 +8605,16 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   proc setExpandedStates(expanded: bool; a) =
     case nls.currFilter.scope:
     of nsfMap:
-      for k in nls.sectionStates.keys:
-        nls.sectionStates[k] = expanded
+      for k in nls.levelSections.keys:
+        nls.levelSections[k] = expanded
 
-      for k in nls.regionStates.keys:
-        nls.regionStates[k] = expanded
+      for k in nls.regionSections.keys:
+        nls.regionSections[k] = expanded
 
     of nsfLevel:
       if l.regionOpts.enabled:
         for regionCoords, _ in l.regions.sortedRegions:
-          nls.regionStates[(l.id, regionCoords)] = expanded
+          nls.regionSections[(l.id, regionCoords)] = expanded
 
     of nsfRegion: discard
 
@@ -8662,12 +8662,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Handle dirty flags
   if map.levelsDirty:
     for _, l in map.levels:
-      if l.id notin nls.sectionStates:
-        nls.sectionStates[l.id] = true
+      if l.id notin nls.levelSections:
+        nls.levelSections[l.id] = true
 
       if l.regionOpts.enabled:
         for regionCoords, _ in l.regions.sortedRegions:
-          nls.regionStates[(l.id, regionCoords)] = true
+          nls.regionSections[(l.id, regionCoords)] = true
 
     map.levelsDirty = false
 
@@ -8712,12 +8712,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   if syncToCursor and currNoteInCache:
     if nls.currFilter.scope == nsfMap:
-      nls.sectionStates[l.id] = true
+      nls.levelSections[l.id] = true
 
     if nls.currFilter.scope in {nsfMap, nsfLevel}:
       if l.regionOpts.enabled:
         let rc = map.getRegionCoords(ui.cursor)
-        nls.regionStates[(l.id, rc)] = true
+        nls.regionSections[(l.id, rc)] = true
 
   # Render note buttons
   let textX = markerX + TextIndent
@@ -8732,14 +8732,14 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     of nckLevel:
       currLevel = map.levels[e.levelId]
       addNote = koi.sectionHeader(currLevel.getDetailedName(short=true),
-                                  nls.sectionStates[currLevel.id])
+                                  nls.levelSections[currLevel.id])
 
     of nckRegion:
-      if nls.currFilter.scope == nsfLevel or nls.sectionStates[currLevel.id]:
+      if nls.currFilter.scope == nsfLevel or nls.levelSections[currLevel.id]:
         let region = currLevel.regions[e.regionCoords].get
         addNote = koi.subsectionHeader(region.name,
-                                       nls.regionStates[(currLevel.id,
-                                                         e.regionCoords)])
+                                       nls.regionSections[(currLevel.id,
+                                                           e.regionCoords)])
     of nckNote:
       if not addNote:
         continue
