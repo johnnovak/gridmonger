@@ -347,8 +347,7 @@ type
 
     prefs:       Preferences
     paths:       Paths
-    # TODO
-    #keys:        Keys
+    keys:        Keys
     # TODO
     #layouts:    array[4, Layout]
 
@@ -419,6 +418,12 @@ type
     logFile:            string
 
 
+  Keys = object
+    shortcuts:          Table[AppShortcut, seq[KeyShortcut]]
+    quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
+    walkKeysWasd:       WalkKeys
+    walkKeysCursor:     WalkKeys
+
   Document = object
     path:               string
     lastSavePath:       string
@@ -443,12 +448,6 @@ type
 
 
   UIState = object
-    # TODO move to top level 'keys'
-    shortcuts:          Table[AppShortcut, seq[KeyShortcut]]
-    quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
-    walkKeysWasd:       WalkKeys
-    walkKeysCursor:     WalkKeys
-
     status:             StatusMessage
     notesListState:     NotesListState
 
@@ -951,7 +950,7 @@ proc sc(sc: AppShortcut): QuickRefItem =
 
 proc sc(sc: seq[AppShortcut], sepa = '/'; a): QuickRefItem =
   let shortcuts = collect:
-    for s in sc: a.ui.shortcuts[s][0]
+    for s in sc: a.keys.shortcuts[s][0]
 
   QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts, sepa: sepa)
 
@@ -1242,8 +1241,8 @@ func mkWalkKeysWasd(walkKeysCursor: WalkKeys): WalkKeys =
   walkKeysCursor + WalkKeysWasd
 
 proc updateWalkKeys(a) =
-  a.ui.walkKeysCursor = mkWalkKeysCursor(a.prefs.walkCursorMode)
-  a.ui.walkKeysWasd   = mkWalkKeysWasd(a.ui.walkKeysCursor)
+  a.keys.walkKeysCursor = mkWalkKeysCursor(a.prefs.walkCursorMode)
+  a.keys.walkKeysWasd   = mkWalkKeysWasd(a.keys.walkKeysCursor)
 
 
 const
@@ -1541,10 +1540,10 @@ proc toStr(k: KeyShortcut): string =
 proc toStr(sc: AppShortcut; a; idx = -1): string =
   if idx == -1:
     var s = collect:
-      for k in a.ui.shortcuts[sc]: k.toStr
+      for k in a.keys.shortcuts[sc]: k.toStr
     result = s.join("/")
   else:
-    result = a.ui.shortcuts[sc][idx].toStr
+    result = a.keys.shortcuts[sc][idx].toStr
 # }}}
 
 # }}}
@@ -2287,10 +2286,10 @@ proc setSwapInterval(a) =
 
 # {{{ updateShortcuts()
 proc updateShortcuts(a) =
-  a.ui.shortcuts = if a.prefs.yubnMovementKeys: mkYubnAppShortcuts()
-                   else: DefaultAppShortcuts
+  a.keys.shortcuts = if a.prefs.yubnMovementKeys: mkYubnAppShortcuts()
+                     else: DefaultAppShortcuts
 
-  a.ui.quickRefShortcuts = mkQuickRefShortcuts(a)
+  a.keys.quickRefShortcuts = mkQuickRefShortcuts(a)
 
 # }}}
 # {{{ hasKeyEvent()
@@ -2324,11 +2323,11 @@ proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
       let currShortcut = mkKeyShortcut(ev.key, ev.mods)
       for sc in shortcuts:
         if ignoreMods:
-          for asc in a.ui.shortcuts[sc]:
+          for asc in a.keys.shortcuts[sc]:
             if asc.key == ev.key:
               return true
         else:
-          if currShortcut in a.ui.shortcuts[sc]:
+          if currShortcut in a.keys.shortcuts[sc]:
             return true
 
 # }}}
@@ -6460,7 +6459,8 @@ proc handleGlobalKeyEvents(a) =
     var ke = ke
     ke.mods = ke.mods - {mkCtrl, mkAlt}
 
-    let k = if opts.wasdMode: ui.walkKeysWasd else: ui.walkKeysCursor
+    let k = if opts.wasdMode: a.keys.walkKeysWasd
+            else:             a.keys.walkKeysCursor
 
     if   ke.isKeyDown(k.forward,  repeat=true):
       moveCursor(ui.cursorOrient, s, a)
@@ -9386,7 +9386,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
     for item in items:
       case item.kind
       of qkShortcut:
-        let shortcuts = a.ui.shortcuts[item.shortcut]
+        let shortcuts = a.keys.shortcuts[item.shortcut]
         heightInc = 0.0
         var ys = y
         for sc in shortcuts:
@@ -9485,7 +9485,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
   else: (300.0, DefaultColWidth + 30)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
-    let items = a.ui.quickRefShortcuts[a.quickRef.activeTab]
+    let items = a.keys.quickRefShortcuts[a.quickRef.activeTab]
     if items.len == 1: sx = radioButtonX + 70
     for r in items:
       renderSection(sx, sy, r, colWidth, a)
