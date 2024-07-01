@@ -579,12 +579,21 @@ proc write*(node: HoconNode, stream: Stream,
     case curr.kind
     of hnkArray:
       if prevType == wtFieldName: stream.write(" = ")
-      stream.write("[\n")
-      for val in curr.elems:
-        stream.write(" ".repeat((indent+1) * indentSize))
-        prevType = go(val, curr, depth+1, indent+1, wtOther)
-        stream.write("\n")
-      stream.write(" ".repeat((indent) * indentSize))
+
+      if curr.elems.len <= 4:
+        stream.write("[")
+        for idx, val in curr.elems:
+          prevType = go(val, curr, depth+1, indent+1, wtOther)
+          if idx < curr.elems.high:
+            stream.write(", ")
+      else:
+        stream.write("[\n")
+        for val in curr.elems:
+          stream.write(" ".repeat((indent+1) * indentSize))
+          prevType = go(val, curr, depth+1, indent+1, wtOther)
+          stream.write("\n")
+        stream.write(" ".repeat((indent) * indentSize))
+
       stream.write("]")
 
     of hnkObject:
