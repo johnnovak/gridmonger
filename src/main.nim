@@ -220,6 +220,11 @@ type AppShortcut = enum
   scNextTheme
 
   # Editing
+  scToggleWalkMode
+  scToggleWasdMode
+  scToggleDrawTrail
+  scTogglePasteWraparound
+
   scCycleFloorGroup1Forward
   scCycleFloorGroup2Forward
   scCycleFloorGroup3Forward
@@ -319,21 +324,27 @@ type AppShortcut = enum
   scSelectionSetFloorColorArea
   scSelectionCropArea
 
-  # Options
+  # Layout
   scToggleCellCoords
   scToggleCurrentNotePane
   scToggleNotesListPane
   scToggleToolsPane
-  scToggleWalkMode
-  scToggleWasdMode
-  scToggleDrawTrail
+  scToggleThemeEditor
   scToggleTitleBar
-  scTogglePasteWraparound
+
+  scSaveLayout1
+  scSaveLayout2
+  scSaveLayout3
+  scSaveLayout4
+
+  scRestoreLayout1
+  scRestoreLayout2
+  scRestoreLayout3
+  scRestoreLayout4
 
   # Misc
   scShowAboutDialog
   scOpenUserManual
-  scToggleThemeEditor
   scEditPreferences
   scToggleQuickReference
 
@@ -1244,9 +1255,9 @@ const
 
 # {{{ DefaultAppShortcuts
 
-# TODO Intoduce win/mac specific shorcuts, switchable at runtime via prefs?
-# (e.g. use Cmd instead of Ctrl in shortcuts on Mac; Mac specific text box
-# editing shortcuts, etc.)
+# TODO Introduce Windows/Mac specific shorcuts, switchable at runtime via
+# prefs? (e.g. use Cmd instead of Ctrl in shortcuts on Mac; Mac specific text
+# box editing shortcuts, etc.)
 let DefaultAppShortcuts = {
   # General
   scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
@@ -1288,6 +1299,11 @@ let DefaultAppShortcuts = {
   scNextTheme:          @[mkKeyShortcut(keyPageDown,      {mkCtrl})],
 
   # Editing
+  scToggleWalkMode:            @[mkKeyShortcut(keyGraveAccent, {})],
+  scToggleWasdMode:            @[mkKeyShortcut(keyTab,         {})],
+  scToggleDrawTrail:           @[mkKeyShortcut(keyT,           {})],
+  scTogglePasteWraparound:     @[mkKeyShortcut(keyW,           {})],
+
   scCycleFloorGroup1Forward:   @[mkKeyShortcut(key1,      {})],
   scCycleFloorGroup2Forward:   @[mkKeyShortcut(key2,      {})],
   scCycleFloorGroup3Forward:   @[mkKeyShortcut(key3,      {})],
@@ -1408,21 +1424,27 @@ let DefaultAppShortcuts = {
   scSelectionSetFloorColorArea:  @[mkKeyShortcut(keyC,        {mkCtrl})],
   scSelectionCropArea:           @[mkKeyShortcut(keyR,        {mkCtrl})],
 
-  # Options
+  # Layout
   scToggleCellCoords:      @[mkKeyShortcut(keyC,           {mkAlt})],
   scToggleCurrentNotePane: @[mkKeyShortcut(keyN,           {mkAlt})],
   scToggleNotesListPane:   @[mkKeyShortcut(keyL,           {mkAlt})],
   scToggleToolsPane:       @[mkKeyShortcut(keyT,           {mkAlt})],
-  scToggleWalkMode:        @[mkKeyShortcut(keyGraveAccent, {})],
-  scToggleWasdMode:        @[mkKeyShortcut(keyTab,         {})],
-  scToggleDrawTrail:       @[mkKeyShortcut(keyT,           {})],
+  scToggleThemeEditor:     @[mkKeyShortcut(keyF12,         {})],
   scToggleTitleBar:        @[mkKeyShortcut(keyT,           {mkAlt, mkShift})],
-  scTogglePasteWraparound: @[mkKeyShortcut(keyW,           {})],
+
+  scSaveLayout1:           @[mkKeyShortcut(keyF5,          {mkShift})],
+  scSaveLayout2:           @[mkKeyShortcut(keyF6,          {mkShift})],
+  scSaveLayout3:           @[mkKeyShortcut(keyF7,          {mkShift})],
+  scSaveLayout4:           @[mkKeyShortcut(keyF8,          {mkShift})],
+
+  scRestoreLayout1:        @[mkKeyShortcut(keyF5,          {})],
+  scRestoreLayout2:        @[mkKeyShortcut(keyF6,          {})],
+  scRestoreLayout3:        @[mkKeyShortcut(keyF7,          {})],
+  scRestoreLayout4:        @[mkKeyShortcut(keyF8,          {})],
 
   # Misc
   scShowAboutDialog:       @[mkKeyShortcut(keyA,           {mkCtrl})],
   scOpenUserManual:        @[mkKeyShortcut(keyF1,          {})],
-  scToggleThemeEditor:     @[mkKeyShortcut(keyF12,         {})],
   scEditPreferences:       @[mkKeyShortcut(keyU,           {mkCtrl, mkAlt})],
   scToggleQuickReference:  @[mkKeyShortcut(keySlash,       {mkShift})]
 
@@ -7010,7 +7032,21 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scToggleQuickReference, a):
         showQuickReference(a)
 
-      # Toggle options
+      # Toggle editing options
+      elif ke.isShortcutDown(scToggleWalkMode, a):
+        ui.walkMode = not ui.walkMode
+        let msg = if ui.walkMode: "Walk mode" else: "Normal mode"
+        setStatusMessage(msg, a)
+
+      elif ke.isShortcutDown(scToggleWasdMode, a):
+        toggleOnOffOption(ui.wasdMode, IconMouse, "WASD mode", a)
+
+      elif ke.isShortcutDown(scToggleDrawTrail, a):
+        if not ui.drawTrail:
+          actions.drawTrail(map, loc=cur, undoLoc=cur, um)
+        toggleOnOffOption(ui.drawTrail, IconShoePrints, "Draw trail", a)
+
+      # Toggle layout options
       elif ke.isShortcutDown(scToggleCellCoords, a):
         toggleShowOption(a.layout.showCellCoords, NoIcon, "Cell coordinates", a)
 
@@ -7024,19 +7060,6 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scToggleToolsPane, a):
         toggleShowOption(a.layout.showToolsPane, NoIcon, "Tools pane", a)
-
-      elif ke.isShortcutDown(scToggleWalkMode, a):
-        ui.walkMode = not ui.walkMode
-        let msg = if ui.walkMode: "Walk mode" else: "Normal mode"
-        setStatusMessage(msg, a)
-
-      elif ke.isShortcutDown(scToggleWasdMode, a):
-        toggleOnOffOption(ui.wasdMode, IconMouse, "WASD mode", a)
-
-      elif ke.isShortcutDown(scToggleDrawTrail, a):
-        if not ui.drawTrail:
-          actions.drawTrail(map, loc=cur, undoLoc=cur, um)
-        toggleOnOffOption(ui.drawTrail, IconShoePrints, "Draw trail", a)
 
       elif ke.isShortcutDown(scToggleTitleBar, a):
         toggleTitleBar(a)
