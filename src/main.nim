@@ -347,8 +347,12 @@ type
 
     prefs:       Preferences
     paths:       Paths
+    # TODO
+    #keys:        Keys
+    # TODO
+    #layouts:    array[4, Layout]
 
-    doc:         Document
+    # TODO remove?
     opts:        Options
     ui:          UIState
     dialogs:     Dialogs
@@ -357,6 +361,8 @@ type
     themeEditor: ThemeEditor
     quickRef:    QuickRef
     splash:      Splash
+
+    doc:         Document
 
     shouldClose: bool
     updateUI:    bool
@@ -419,24 +425,30 @@ type
     map:                Map
     undoManager:        UndoManager[Map, UndoStateData]
 
+  # TODO replace with Layout (currLayout)
   Options = object
     showCurrentNotePane:  bool
     showNotesListPane:    bool
     showToolsPane:        bool
+    showThemeEditor:      bool
+    showQuickReference:   bool
 
+    # TODO move to UI state
     drawTrail:            bool
     walkMode:             bool
     wasdMode:             bool
 
+    # TODO move to preferences
     pasteWraparound:      bool
-
-    showThemeEditor:      bool
-    showQuickReference:   bool
 
 
   UIState = object
+    # TODO move to top level 'keys'
     shortcuts:          Table[AppShortcut, seq[KeyShortcut]]
     quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
+    walkKeysWasd:       WalkKeys
+    walkKeysCursor:     WalkKeys
+
     status:             StatusMessage
     notesListState:     NotesListState
 
@@ -450,9 +462,6 @@ type
     prevCursor:         Location
     cursorOrient:       CardinalDir           # used by Walk Mode
     prevMoveDir:        Option[CardinalDir]   # used by the exacavate tool
-
-    walkKeysWasd:       WalkKeys
-    walkKeysCursor:     WalkKeys
 
     panLevelMode:       PanLevelMode
 
@@ -503,6 +512,19 @@ type
     backgroundImage:        Option[Paint]
 
     manualNoteTooltipState: ManualNoteTooltipState
+
+
+  Layout = object
+    showCurrentNotePane:  bool
+    showNotesListPane:    bool
+    showToolsPane:        bool
+    showThemeEditor:      bool
+    showQuickReference:   bool
+
+    windowPos:            tuple[x, y: int32]
+    windowSize:           tuple[w, h: int32]
+    maximized:            bool
+    showTitleBar:         bool
 
 
   ManualNoteTooltipState = object
@@ -6185,7 +6207,7 @@ proc handleLevelMouseEvents(a) =
   proc enterPanLevelMode(mode: PanLevelMode; a) =
     alias(ui, a.ui)
     ui.prevEditMode = ui.editMode
-    ui.editMode = emPanLevel;
+    ui.editMode = emPanLevel
     ui.mouseDragStartX = koi.mx()
     ui.mouseDragStartY = koi.my()
     ui.panLevelMode = mode
