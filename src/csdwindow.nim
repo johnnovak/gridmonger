@@ -582,7 +582,13 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
 
   handleWindowDragEvents(win)
 
+  if win.dragState == wdsResizing:
+    koi.setFocusCaptured(true)
+
   g_renderFrameProc(win)
+
+  if win.dragState == wdsResizing:
+    koi.setFocusCaptured(false)
 
   # Window border
   koi.addDrawLayer(layerWindowDecoration, vg):
