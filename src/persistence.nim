@@ -118,13 +118,12 @@ type
     viewStartRow*:           Natural
     viewStartCol*:           Natural
 
-    # TODO get rid of opt prefix
-    optShowCellCoords*:      bool
-    optShowToolsPane*:       bool
-    optShowCurrentNotePane*: bool
-    optShowNotesListPane*:   bool
-    optWasdMode*:            bool
-    optWalkMode*:            bool
+    showCellCoords*:      bool
+    showToolsPane*:       bool
+    showCurrentNotePane*: bool
+    showNotesListPane*:   bool
+    wasdMode*:            bool
+    walkMode*:            bool
     # TODO
     # optPasteWraparound*:            bool
 
@@ -305,20 +304,20 @@ proc readAppState_preV4(rr; map: Map): AppState =
   checkValueRange(viewStartCol, "stat.viewStartCol", max=l.cols.uint16-1)
 
   # Options
-  let optShowCellCoords = rr.read(uint8)
-  checkBool(optShowCellCoords, "stat.optShowCellCoords")
+  let showCellCoords = rr.read(uint8)
+  checkBool(showCellCoords, "stat.showCellCoords")
 
-  let optShowToolsPane = rr.read(uint8)
-  checkBool(optShowToolsPane, "stat.optShowToolsPane")
+  let showToolsPane = rr.read(uint8)
+  checkBool(showToolsPane, "stat.showToolsPane")
 
-  let optShowCurrentNotePane = rr.read(uint8)
-  checkBool(optShowCurrentNotePane, "stat.optShowCurrentNotePane")
+  let showCurrentNotePane = rr.read(uint8)
+  checkBool(showCurrentNotePane, "stat.showCurrentNotePane")
 
-  let optWasdMode = rr.read(uint8)
-  checkBool(optWasdMode, "stat.optWasdMode")
+  let wasdMode = rr.read(uint8)
+  checkBool(wasdMode, "stat.wasdMode")
 
-  let optWalkMode = rr.read(uint8)
-  checkBool(optWalkMode, "stat.optWalkMode")
+  let walkMode = rr.read(uint8)
+  checkBool(walkMode, "stat.walkMode")
 
   # Tools pane state
   let currFloorColor = rr.read(uint8)
@@ -337,11 +336,11 @@ proc readAppState_preV4(rr; map: Map): AppState =
     viewStartRow:    viewStartRow,
     viewStartCol:    viewStartCol,
 
-    optShowCellCoords:      optShowCellCoords.bool,
-    optShowToolsPane:       optShowToolsPane.bool,
-    optShowCurrentNotePane: optShowCurrentNotePane.bool,
-    optWasdMode:            optWasdMode.bool,
-    optWalkMode:            optWalkMode.bool,
+    showCellCoords:      showCellCoords.bool,
+    showToolsPane:       showToolsPane.bool,
+    showCurrentNotePane: showCurrentNotePane.bool,
+    wasdMode:            wasdMode.bool,
+    walkMode:            walkMode.bool,
 
     currFloorColor:  currFloorColor,
     currSpecialWall: currSpecialWall
@@ -509,30 +508,30 @@ proc readAppState_V4(rr; map: Map): AppState =
   if optsCursor.isSome:
     rr.cursor = optsCursor.get
 
-    let optShowCellCoords = rr.read(uint8)
-    checkBool(optShowCellCoords, "stat.opts.optShowCellCoords")
-    app.optShowCellCoords = optShowCellCoords.bool
+    let showCellCoords = rr.read(uint8)
+    checkBool(showCellCoords, "stat.opts.showCellCoords")
+    app.showCellCoords = showCellCoords.bool
 
-    let optShowToolsPane = rr.read(uint8)
-    checkBool(optShowToolsPane, "stat.opts.optShowToolsPane")
-    app.optShowToolsPane = optShowToolsPane.bool
+    let showToolsPane = rr.read(uint8)
+    checkBool(showToolsPane, "stat.opts.showToolsPane")
+    app.showToolsPane = showToolsPane.bool
 
-    let optShowCurrentNotePane = rr.read(uint8)
-    checkBool(optShowCurrentNotePane, "stat.opts.optShowCurrentNotePane")
-    app.optShowCurrentNotePane = optShowCurrentNotePane.bool
+    let showCurrentNotePane = rr.read(uint8)
+    checkBool(showCurrentNotePane, "stat.opts.showCurrentNotePane")
+    app.showCurrentNotePane = showCurrentNotePane.bool
 
-    let optWasdMode = rr.read(uint8)
-    checkBool(optWasdMode, "stat.opts.optWasdMode")
-    app.optWasdMode = optWasdMode.bool
+    let wasdMode = rr.read(uint8)
+    checkBool(wasdMode, "stat.opts.wasdMode")
+    app.wasdMode = wasdMode.bool
 
-    let optWalkMode = rr.read(uint8)
-    checkBool(optWalkMode, "stat.opts.optWalkMode")
-    app.optWalkMode = optWalkMode.bool
+    let walkMode = rr.read(uint8)
+    checkBool(walkMode, "stat.opts.walkMode")
+    app.walkMode = walkMode.bool
 
     # TODO
-#    let optPasteWraparound = rr.read(uint8)
-#    checkBool(optPasteWraparound, "stat.opts.optPasteWraparound")
-#    app.optPasteWraparound = optPasteWraparound.bool
+#    let pasteWraparound = rr.read(uint8)
+#    checkBool(pasteWraparound, "stat.opts.pasteWraparound")
+#    app.pasteWraparound = pasteWraparound.bool
 
   # Tools pane state
   if toolCursor.isSome:
@@ -1301,11 +1300,11 @@ proc writeAppState(rw; map: Map, s: AppState) =
 
     # Options state
     rw.chunk(FourCC_GRMM_opts):
-      rw.write(s.optShowCellCoords.uint8)
-      rw.write(s.optShowToolsPane.uint8)
-      rw.write(s.optShowCurrentNotePane.uint8)
-      rw.write(s.optWasdMode.uint8)
-      rw.write(s.optWalkMode.uint8)
+      rw.write(s.showCellCoords.uint8)
+      rw.write(s.showToolsPane.uint8)
+      rw.write(s.showCurrentNotePane.uint8)
+      rw.write(s.wasdMode.uint8)
+      rw.write(s.walkMode.uint8)
       # TODO
 #      rw.write(s.optPasteWraparound.uint8)
 

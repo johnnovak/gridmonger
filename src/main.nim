@@ -3077,10 +3077,10 @@ proc loadMap(path: string; a): bool =
       a.theme.hideThemeLoadedMessage = true
 
       with a.layout:
-        showCellCoords      = s.optShowCellCoords
-        showToolsPane       = s.optShowToolsPane
-        showCurrentNotePane = s.optShowCurrentNotePane
-        showNotesListPane   = s.optShowNotesListPane
+        showCellCoords      = s.showCellCoords
+        showToolsPane       = s.showToolsPane
+        showCurrentNotePane = s.showCurrentNotePane
+        showNotesListPane   = s.showNotesListPane
 
       with a.ui.drawLevelParams:
         viewStartRow   = s.viewStartRow
@@ -3094,8 +3094,8 @@ proc loadMap(path: string; a): bool =
       with a.ui:
         currFloorColor  = s.currFloorColor
         currSpecialWall = s.currSpecialWall
-        wasdMode        = s.optWasdMode
-        walkMode        = s.optWalkMode
+        wasdMode        = s.wasdMode
+        walkMode        = s.walkMode
         drawTrail       = false
 
       if s.notesListPaneState.isSome:
@@ -3157,12 +3157,12 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     viewStartRow:           dp.viewStartRow,
     viewStartCol:           dp.viewStartCol,
 
-    optShowCellCoords:      a.layout.showCellCoords,
-    optShowToolsPane:       a.layout.showToolsPane,
-    optShowCurrentNotePane: a.layout.showCurrentNotePane,
-    optShowNotesListPane:   a.layout.showNotesListPane,
-    optWasdMode:            a.ui.wasdMode,
-    optWalkMode:            a.ui.walkMode,
+    showCellCoords:         a.layout.showCellCoords,
+    showToolsPane:          a.layout.showToolsPane,
+    showCurrentNotePane:    a.layout.showCurrentNotePane,
+    showNotesListPane:      a.layout.showNotesListPane,
+    wasdMode:               a.ui.wasdMode,
+    walkMode:               a.ui.walkMode,
 
     currFloorColor:         a.ui.currFloorColor,
     currSpecialWall:        a.ui.currSpecialWall,

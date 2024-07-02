@@ -90,7 +90,6 @@ Level chunks  (in 'lvl ' group chunk)
     UINT8   overrideCoordOpts   (0=off, 1=on)
     WSTR    notes               (maxRuneLen=8000)
 
-
 'coor'      Level properties
     UINT8   origin              (0=north-west, 1=south-west)
     UINT8   rowStyle            (0=number, 1=letter)
@@ -223,13 +222,13 @@ App state chunks (in 'stat' group chunk, optional)
 
 
 'opts'      Options state (optional)
-    UINT8   optShowCellCoords       (0=off, 1=on)
-    UINT8   optShowToolsPane        (0=off, 1=on)
-    UINT8   optShowCurrentNotePane  (0=off, 1=on)
-    UINT8   optShowNotesListPane    (0=off, 1=on)
-    UINT8   optWasdMode             (0=off, 1=on)
-    UINT8   optWalkMode             (0=off, 1=on)
-    UINT8   optPasteWraparound      (0=off, 1=on) TODO
+    UINT8   showCellCoords       (0=off, 1=on)
+    UINT8   showToolsPane        (0=off, 1=on)
+    UINT8   showCurrentNotePane  (0=off, 1=on)
+    UINT8   showNotesListPane    (0=off, 1=on)
+    UINT8   wasdMode             (0=off, 1=on)
+    UINT8   walkMode             (0=off, 1=on)
+    UINT8   pasteWraparound      (0=off, 1=on) TODO
 
 
 'tool'      Tools pane state (optional)
