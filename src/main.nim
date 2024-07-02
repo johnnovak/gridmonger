@@ -83,8 +83,8 @@ const
   UntitledName      = "Untitled"
 
 when not defined(DEBUG):
-  const
-    GridmongerMapFileFilter = fmt"Gridmonger Map (*.{MapFileExt}):{MapFileExt}"
+  const GridmongerMapFileFilter = "Gridmonger Map" &
+                                  fmt" (*.{MapFileExt}):{MapFileExt}"
 
 const
   CursorJump   = 5
@@ -1124,7 +1124,9 @@ func mkQuickRefDialogs(a): seq[seq[QuickRefItem]] =
       @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Move between tabs".desc,
 
       @[KeyShortcut(key: key1, mods: {mkCtrl}),
-        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'), "Select tab 1-9".desc,
+        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'),
+      "Select tab 1-9".desc,
+
       QuickRefSepa,
 
       KeyShortcut(key: keyTab,
@@ -2513,7 +2515,8 @@ proc copyTheme(theme: ThemeName, newThemeName, newThemePath: string; a): bool =
 
 # }}}
 # {{{ renameTheme()
-proc renameTheme(theme: ThemeName, newThemeName, newThemePath: string; a): bool =
+proc renameTheme(theme: ThemeName,
+                 newThemeName, newThemePath: string; a): bool =
   try:
     moveFile(themePath(a.currThemeName, a), newThemePath)
     result = true
@@ -2531,7 +2534,7 @@ proc renameTheme(theme: ThemeName, newThemeName, newThemePath: string; a): bool 
 # }}}
 
 # {{{ loadThemeImage()
-proc loadThemeImage(imageName: string, userTheme: bool, a): Option[Paint] =
+proc loadThemeImage(imageName: string, userTheme: bool; a): Option[Paint] =
   if userTheme:
     let imgPath = a.paths.userThemeImagesDir / imageName
     result = loadImage(imgPath, a)
@@ -2946,7 +2949,10 @@ proc saveAppConfig(a) =
   cfg.set(p & "editing.movement-wraparound",    a.prefs.movementWraparound)
   cfg.set(p & "editing.open-ended-excavate",    a.prefs.openEndedExcavate)
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
-  cfg.set(p & "editing.walk-cursor-mode",       enumToDashCase($a.prefs.walkCursorMode))
+
+  cfg.set(p & "editing.walk-cursor-mode",
+          enumToDashCase($a.prefs.walkCursorMode)
+
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
@@ -6475,9 +6481,9 @@ proc setSelectJumpToLinkSrcActionMessage(a) =
   let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
 
   setStatusMessage(IconLink,
-                   fmt"Select {linkFloorToString(floor)} source ({currIdx} of {count})",
-                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"],
-                   a)
+                   fmt"Select {linkFloorToString(floor)} " &
+                   fmt"source ({currIdx} of {count})",
+                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"], a)
 
 # }}}
 # {{{ handleGlobalKeyEvents()
@@ -6665,11 +6671,19 @@ proc handleGlobalKeyEvents(a) =
     elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, s, a)
     elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, s, a)
     elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, s, a)
+
     elif allowPan:
-      if   ke.isKeyDown(k.left,  {mkShift}, repeat=true): moveLevelView(West,  s, a)
-      elif ke.isKeyDown(k.right, {mkShift}, repeat=true): moveLevelView(East,  s, a)
-      elif ke.isKeyDown(k.up,    {mkShift}, repeat=true): moveLevelView(North, s, a)
-      elif ke.isKeyDown(k.down,  {mkShift}, repeat=true): moveLevelView(South, s, a)
+      if   ke.isKeyDown(k.left, {mkShift}, repeat=true):
+        moveLevelView(West, s, a)
+
+      elif ke.isKeyDown(k.right, {mkShift}, repeat=true):
+        moveLevelView(East, s, a)
+
+      elif ke.isKeyDown(k.up, {mkShift}, repeat=true):
+        moveLevelView(North, s, a)
+
+      elif ke.isKeyDown(k.down, {mkShift}, repeat=true):
+        moveLevelView(South, s, a)
 
     if allowDiagonal:
       let d = DiagonalMoveKeysCursor
@@ -7144,7 +7158,8 @@ proc handleGlobalKeyEvents(a) =
 
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
-    of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor:
+    of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor,
+       emColorFloor:
       let prevMoveDir = a.ui.prevMoveDir
 
       if ui.walkMode: handleMoveWalk(ke, a)
@@ -7547,8 +7562,11 @@ proc handleGlobalKeyEvents(a) =
         ui.pasteWraparound = not ui.pasteWraparound
         setMovePreviewModeMessage(a)
 
-      elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
+      elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a):
+        selectPrevLevel(a)
+
+      elif ke.isShortcutDown(scNextLevel, repeat=true, a=a):
+        selectNextLevel(a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
@@ -7685,7 +7703,8 @@ proc handleGlobalKeyEvents(a) =
       if ke.isShortcutDown(scAccept, a) or ke.isShortcutDown(scCancel, a):
         ui.editMode = emNormal
         if ui.wasDrawingTrail:
-          actions.drawTrail(map, loc=ui.cursor, undoLoc=ui.jumpToDestLocation, um)
+          actions.drawTrail(map, loc=ui.cursor,
+                            undoLoc=ui.jumpToDestLocation, um)
           ui.drawTrail = true
         clearStatusMessage(a)
 
@@ -8506,7 +8525,8 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
 
     if selected or state in {wsHover, wsDown}:
       vg.beginPath
-      vg.fillColor(if selected or state == wsDown: black(0.24) else: black(0.15))
+      vg.fillColor(if selected or state == wsDown: black(0.24)
+                   else: black(0.15))
       vg.rect(x, y, w, h)
       vg.fill
 
@@ -9355,8 +9375,8 @@ proc renderCommand(x, y: float; command: string; a): float =
   let s = a.theme.statusBarTheme
 
   renderCommand(x, y, command,
-                bgColor=s.commandBackgroundColor, textColor=s.commandTextColor,
-                a)
+                bgColor=s.commandBackgroundColor,
+                textColor=s.commandTextColor, a)
 
 # }}}
 # {{{ renderStatusBar()
