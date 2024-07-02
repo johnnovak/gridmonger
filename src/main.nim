@@ -1117,9 +1117,21 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
   ]
 
 # }}}
-# {{{ mkQuickRefDialogs()
-func mkQuickRefDialogs(a): seq[seq[QuickRefItem]] =
+# {{{ mkQuickRefInterface()
+func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
   @[
+    @[
+      scSaveLayout1.sc, "Save window layout 1".desc,
+      scSaveLayout2.sc, "Save window layout 2".desc,
+      scSaveLayout3.sc, "Save window layout 3".desc,
+      scSaveLayout4.sc, "Save window layout 4".desc,
+      QuickRefSepa,
+
+      scRestoreLayout1.sc, "Restore window layout 1".desc,
+      scRestoreLayout2.sc, "Restore window layout 2".desc,
+      scRestoreLayout3.sc, "Restore window layout 3".desc,
+      scRestoreLayout4.sc, "Restore window layout 4".desc,
+    ],
     @[
       @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Move between tabs".desc,
 
@@ -1150,7 +1162,7 @@ func mkQuickRefShortcuts(a): seq[seq[seq[QuickRefItem]]] =
   @[
     mkQuickRefGeneral(a),
     mkQuickRefEditing(a),
-    mkQuickRefDialogs(a)
+    mkQuickRefInterface(a)
   ]
 
 # }}}
@@ -2908,7 +2920,7 @@ proc saveLayout(layoutIdx: Natural; a) =
   setLayoutWindowFields(l, a)
   a.savedLayouts[layoutIdx] = l.some
 
-  setStatusMessage(fmt"Layout {layoutIdx+1} saved", a)
+  setStatusMessage(fmt"Window layout {layoutIdx+1} saved", a)
 
 # }}}
 # {{{ restoreLayout()
@@ -2936,9 +2948,9 @@ proc restoreLayout(layoutIdx: Natural; a) =
   if a.savedLayouts[layoutIdx].isSome:
     restoreLayout(a.savedLayouts[layoutIdx].get, a)
 
-    setStatusMessage(fmt"Layout {layoutIdx+1} restored", a)
+    setStatusMessage(fmt"Window layout {layoutIdx+1} restored", a)
   else:
-    setWarningMessage(fmt"Layout {layoutIdx+1} is not set", a=a)
+    setWarningMessage(fmt"Window layout {layoutIdx+1} is not set", a=a)
 
 # }}}
 
@@ -7752,7 +7764,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
 # }}}
 # {{{ handleQuickRefKeyEvents()
 
-let QuickRefTabLabels = @["General", "Editing", "Dialogs"]
+let QuickRefTabLabels = @["General", "Editing", "Interface"]
 
 proc handleQuickRefKeyEvents(a) =
   if hasKeyEvent():
@@ -9587,7 +9599,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
   let (viewHeight, colWidth) = case a.quickRef.activeTab
   of 0: (520.0, DefaultColWidth)
   of 1: (655.0, DefaultColWidth)
-  else: (300.0, DefaultColWidth + 30)
+  else: (300.0, DefaultColWidth + 24)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     let items = a.keys.quickRefShortcuts[a.quickRef.activeTab]
