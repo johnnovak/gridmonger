@@ -270,10 +270,16 @@ proc titleBarHeight*(win): float =
 proc unmaximizedPos*(win): tuple[x, y: int32] =
   win.unmaximizedPos
 
+proc `unmaximizedPos=`*(win; pos: tuple[x, y: int32]) =
+  win.unmaximizedPos = pos
+
 # }}}
 # {{{ unmaximizedSize*
 proc unmaximizedSize*(win): tuple[w, h: int32] =
   win.unmaximizedSize
+
+proc `unmaximizedSize=`*(win; size: tuple[w, h: int32]) =
+  win.unmaximizedSize = size
 
 # }}}
 
