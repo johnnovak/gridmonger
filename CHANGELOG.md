@@ -4,7 +4,11 @@
 
 ### New features
 
-- Multi-monitor support.
+- A very flexible [notes list pane](TODO) has been added to view all your
+  notes in one place and filter them by various criteria, including full-text
+  search.
+- Up to four user-defined [window layouts](TODO).
+- Proper multi-monitor support.
 - Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
   and move or paste [selections](https://gridmonger.johnnovak.net/manual/advanced-editing.html#selections)
   with wraparound.
