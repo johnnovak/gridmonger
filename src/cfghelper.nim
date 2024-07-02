@@ -13,15 +13,14 @@ import utils/hocon
 
 using cfg: HoconNode
 
-proc `$`*(c: Color): string =
-  let
-    r = round(c.r * 255).int
-    g = round(c.g * 255).int
-    b = round(c.b * 255).int
-    a = round(c.a * 255).int
-  fmt"#{r:02x}{g:02x}{b:02x}{a:02x}"
+# {{{ invalidValueError*()
+proc invalidValueError(path, valueType, value: string) =
+  let msg = fmt"Invalid {valueType} value for path '{path}': {value}"
+  log.error(msg)
 
+# }}}
 
+# {{{ getObjectOrEmpty*()
 proc getObjectOrEmpty*(cfg; path: string): HoconNode =
   try:
     let n = cfg.get(path)
@@ -32,11 +31,20 @@ proc getObjectOrEmpty*(cfg; path: string): HoconNode =
   except CatchableError:
     result = newHoconObject()
 
-proc invalidValueError(path, valueType, value: string) =
-  let msg = fmt"Invalid {valueType} value for path '{path}': {value}"
-  log.error(msg)
+# }}}
+# {{{ getObjectOpt*()
+proc getObjectOpt*(cfg; path: string): Option[HoconNode] =
+  try:
+    let n = cfg.get(path)
+    if n.kind != hnkObject:
+      result = HoconNode.none
+    else:
+      result = n.some
+  except CatchableError:
+    result = HoconNode.none
 
-
+# }}}
+# {{{ getStringOrDefault*()
 proc getStringOrDefault*(cfg; path: string, default: string = ""): string =
   result = default
   try:
@@ -44,7 +52,19 @@ proc getStringOrDefault*(cfg; path: string, default: string = ""): string =
   except CatchableError as e:
     log.error(e.msg)
 
+# }}}
 
+# {{{ `$`*(c: Color)
+proc `$`*(c: Color): string =
+  let
+    r = round(c.r * 255).int
+    g = round(c.g * 255).int
+    b = round(c.b * 255).int
+    a = round(c.a * 255).int
+  fmt"#{r:02x}{g:02x}{b:02x}{a:02x}"
+
+# }}}
+# {{{ parseColor*()
 proc parseColor*(s: string): Option[Color] =
   result = Color.none
   if s.len == 9 and s[0] == '#':
@@ -57,6 +77,8 @@ proc parseColor*(s: string): Option[Color] =
     except ValueError:
       discard
 
+# }}}
+# {{{ getColorOrDefault*()
 proc getColorOrDefault*(cfg; path: string, default: Color = black()): Color =
   result = default
   try:
@@ -70,7 +92,9 @@ proc getColorOrDefault*(cfg; path: string, default: Color = black()): Color =
   except CatchableError as e:
     log.error(e.msg)
 
+# }}}
 
+# {{{ getBoolOrDefault*()
 proc getBoolOrDefault*(cfg; path: string, default: bool = false): bool =
   result = default
   try:
@@ -78,7 +102,8 @@ proc getBoolOrDefault*(cfg; path: string, default: bool = false): bool =
   except CatchableError as e:
     log.error(e.msg)
 
-
+# }}}
+# {{{ getFloatOrDefault*()
 proc getFloatOrDefault*(cfg; path: string, default: float = 0): float =
   result = default
   try:
@@ -86,6 +111,8 @@ proc getFloatOrDefault*(cfg; path: string, default: float = 0): float =
   except CatchableError as e:
     log.error(e.msg)
 
+# }}}
+# {{{ getIntOrDefault*()
 proc getIntOrDefault*(cfg; path: string, default: int = 0): int =
   result = default
   try:
@@ -93,12 +120,15 @@ proc getIntOrDefault*(cfg; path: string, default: int = 0): int =
   except CatchableError as e:
     log.error(e.msg)
 
+# }}}
+# {{{ getNaturalOrDefault*()
 proc getNaturalOrDefault*(cfg; path: string, default: Natural = 0): Natural =
   result = default
   try:
     result = cfg.getNatural(path)
   except CatchableError as e:
     log.error(e.msg)
+
 
 proc getNaturalOrDefault*(cfg; path: string, limits: FieldLimits,
                           default: Natural = 0): Natural =
@@ -114,6 +144,9 @@ proc getNaturalOrDefault*(cfg; path: string, limits: FieldLimits,
   except CatchableError as e:
     log.error(e.msg)
 
+# }}}
+
+# {{{ getEnumOrDefault*()
 proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum],
                        default = T.low): T =
   try:
@@ -126,8 +159,11 @@ proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum],
   except CatchableError as e:
     log.error(e.msg)
 
+# }}}
+# {{{ enumToDashCase*()
 proc enumToDashCase*(val: string): string =
   val.toLower.replace(' ', '-')
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
