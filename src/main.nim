@@ -518,15 +518,15 @@ type
 
 
   Layout = object
-    showCurrentNotePane:  bool
-    showNotesListPane:    bool
-    showToolsPane:        bool
-    showThemeEditor:      bool
+    showCurrentNotePane: bool
+    showNotesListPane:   bool
+    showToolsPane:       bool
+    showThemeEditor:     bool
 
-    windowPos:            tuple[x, y: int32]
-    windowSize:           tuple[w, h: int32]
-    maximized:            bool
-    showTitleBar:         bool
+    windowPos:           tuple[x, y: int32]
+    windowSize:          tuple[w, h: int32]
+    maximized:           bool
+    showTitleBar:        bool
 
 
   ManualNoteTooltipState = object
@@ -2890,6 +2890,59 @@ proc switchTheme(themeIndex: Natural; a) =
 # }}}
 
 # }}}
+# {{{ Layout handling
+
+# {{{ setLayoutWindowFields()
+proc setLayoutWindowFields(l: var Layout; a) =
+  l.windowPos    = if a.win.maximized: a.win.unmaximizedPos  else: a.win.pos
+  l.windowSize   = if a.win.maximized: a.win.unmaximizedSize else: a.win.size
+  l.maximized    = a.win.maximized
+  l.showTitleBar = a.win.showTitleBar
+
+# }}}
+# {{{ saveLayout()
+proc saveLayout(layoutIdx: Natural; a) =
+  assert layoutIdx <= a.savedLayouts.high
+
+  var l = a.layout
+  setLayoutWindowFields(l, a)
+  a.savedLayouts[layoutIdx] = l.some
+
+  setStatusMessage(fmt"Layout {layoutIdx+1} saved", a)
+
+# }}}
+# {{{ restoreLayout()
+proc restoreLayout(layout: Layout; a) =
+  a.layout = layout
+
+  if layout.maximized: a.win.maximize
+  else:                a.win.unmaximize
+
+  if layout.maximized:
+    a.win.unmaximizedPos  = layout.windowPos
+    a.win.unmaximizedSize = layout.windowSize
+  else:
+    a.win.pos  = layout.windowPos
+    a.win.size = layout.windowSize
+
+  a.win.showTitleBar = layout.showTitleBar
+
+  a.win.snapWindowToVisibleArea
+
+
+proc restoreLayout(layoutIdx: Natural; a) =
+  assert layoutIdx <= a.savedLayouts.high
+
+  if a.savedLayouts[layoutIdx].isSome:
+    restoreLayout(a.savedLayouts[layoutIdx].get, a)
+
+    setStatusMessage(fmt"Layout {layoutIdx+1} restored", a)
+  else:
+    setWarningMessage(fmt"Layout {layoutIdx+1} is not set", a=a)
+
+# }}}
+
+# }}}
 # {{{ Config handling
 
 # {{{ loadAppConfigOrDefault()
@@ -2923,27 +2976,16 @@ proc saveAppConfig(cfg: HoconNode, path: string; a) =
     a.logfile.flushFile
     if s != nil: s.close
 
-# }}}
-# {{{ saveAppConfig()
+
 proc saveAppConfig(a) =
-  alias(dp, a.ui.drawLevelParams)
-
-  let (xpos, ypos) = if a.win.maximized: a.win.unmaximizedPos else: a.win.pos
-
-  let (width, height) = if a.win.maximized: a.win.unmaximizedSize
-                        else: a.win.size
-
-  let cur = a.ui.cursor
-
   var cfg = newHoconObject()
-
   cfg.set("config-version", $AppVersion)
 
   var p = "preferences."
   cfg.set(p & "load-last-map",                  a.prefs.loadLastMap)
   cfg.set(p & "splash.show-at-startup",         a.prefs.showSplash)
-  cfg.set(p & "splash.auto-close",              a.prefs.autoCloseSplash)
-  cfg.set(p & "splash.auto-close-timeout-secs", a.prefs.splashTimeoutSecs)
+  cfg.set(p & "splash.auto-close.enabled",      a.prefs.autoCloseSplash)
+  cfg.set(p & "splash.auto-close.timeout-secs", a.prefs.splashTimeoutSecs)
   cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
   cfg.set(p & "editing.movement-wraparound",    a.prefs.movementWraparound)
@@ -2951,7 +2993,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
 
   cfg.set(p & "editing.walk-cursor-mode",
-          enumToDashCase($a.prefs.walkCursorMode)
+          enumToDashCase($a.prefs.walkCursorMode))
 
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
@@ -2960,22 +3002,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "last-document", if a.doc.path == "": a.doc.lastSavePath
                                else: a.doc.path)
 
-  cfg.set(p & "theme-name",    a.currThemeName.name)
-
-  p = "last-state.ui."
-  cfg.set(p & "zoom-level",                    dp.getZoomLevel)
-  cfg.set(p & "cursor.row",                    cur.row)
-  cfg.set(p & "cursor.column",                 cur.col)
-  cfg.set(p & "view-start.row",                dp.viewStartRow)
-  cfg.set(p & "view-start.column",             dp.viewStartCol)
-  cfg.set(p & "option.show-tools-pane",        a.layout.showToolsPane)
-  cfg.set(p & "option.show-current-note-pane", a.layout.showCurrentNotePane)
-  cfg.set(p & "option.show-notes-list-pane",   a.layout.showNotesListPane)
-  cfg.set(p & "option.wasd-mode",              a.ui.wasdMode)
-  cfg.set(p & "option.walk-mode",              a.ui.walkMode)
-  cfg.set(p & "option.paste-wraparound",       a.ui.pasteWraparound)
-  cfg.set(p & "current-level-id",         cur.levelId)
-  cfg.set(p & "option.show-cell-coords",  a.ui.showCellCoords)
+  cfg.set(p & "theme-name", a.currThemeName.name)
 
   proc mkLayoutObject(layout: Option[Layout]): HoconNode =
     if layout.isSome:
@@ -2989,71 +3016,34 @@ proc saveAppConfig(a) =
 
       obj.set("window.pos",  hoconNode(@[l.windowPos.x, l.windowPos.y]))
       obj.set("window.size", hoconNode(@[l.windowSize.w, l.windowSize.h]))
-      obj.set("window.maximized",      l.maximized)
-      obj.set("window.show-title-bar", l.showTitleBar)
+      obj.set("window.maximized",       l.maximized)
+      obj.set("window.show-title-bar",  l.showTitleBar)
 
       result = obj
     else:
       result = hoconNodeNull
 
-  p = "last-state.window."
-  cfg.set(p & "maximized",      a.win.maximized)
-  cfg.set(p & "show-title-bar", a.layout.showTitleBar)
-  cfg.set(p & "x-position",     xpos)
-  cfg.set(p & "y-position",     ypos)
-  cfg.set(p & "width",          width)
-  cfg.set(p & "height",         height)
+  p = "last-state."
+  cfg.set(p & "ui.current-level-id",  a.ui.cursor.levelId)
+  cfg.set(p & "ui.zoom-level",        a.ui.drawLevelParams.getZoomLevel)
+  cfg.set(p & "ui.cursor.row",        a.ui.cursor.row)
+  cfg.set(p & "ui.cursor.column",     a.ui.cursor.col)
+  cfg.set(p & "ui.view-start.row",    a.ui.drawLevelParams.viewStartRow)
+  cfg.set(p & "ui.view-start.column", a.ui.drawLevelParams.viewStartCol)
+  cfg.set(p & "ui.show-cell-coords",  a.ui.showCellCoords)
+  cfg.set(p & "ui.walk-mode",         a.ui.walkMode)
+  cfg.set(p & "ui.wasd-mode",         a.ui.wasdMode)
+  cfg.set(p & "ui.paste-wraparound",  a.ui.pasteWraparound)
 
-  var layoutsArr = hoconNode(@[
-    mkLayoutObject(a.savedLayouts[0]),
-    mkLayoutObject(a.savedLayouts[1]),
-    mkLayoutObject(a.savedLayouts[2]),
-    mkLayoutObject(a.savedLayouts[3])
-  ])
-  cfg.set("layouts", layoutsArr)
+  setLayoutWindowFields(a.layout, a)
+  cfg.set(p & "layout", mkLayoutObject(a.layout.some))
+
+  let layouts = collect:
+    for l in a.savedLayouts: mkLayoutObject(l)
+
+  cfg.set("saved-layouts", hoconNode(layouts))
 
   saveAppConfig(cfg, a.paths.configFile, a)
-
-# }}}
-
-# }}}
-# {{{ Layout handling
-
-# {{{ saveLayout()
-proc saveLayout(layoutIdx: Natural; a) =
-  assert layoutIdx <= a.savedLayouts.high
-
-  var l = a.layout
-
-  l.windowPos    = a.win.pos
-  l.windowSize   = a.win.size
-  l.maximized    = a.win.maximized
-  l.showTitleBar = a.win.showTitleBar
-
-  a.savedLayouts[layoutIdx] = l.some
-
-  setStatusMessage(fmt"Layout {layoutIdx+1} saved", a)
-
-# }}}
-# {{{ restoreLayout()
-proc restoreLayout(layoutIdx: Natural; a) =
-  assert layoutIdx <= a.savedLayouts.high
-
-  if a.savedLayouts[layoutIdx].isSome:
-    a.layout = a.savedLayouts[layoutIdx].get
-
-    # The order matters; calling win.maximize & win.unmaximize must be done
-    # before setting win.size.
-    if a.layout.maximized: a.win.maximize
-    else:                  a.win.unmaximize
-
-    a.win.pos          = a.layout.windowPos
-    a.win.size         = a.layout.windowSize
-    a.win.showTitleBar = a.layout.showTitleBar
-
-    setStatusMessage(fmt"Layout {layoutIdx+1} restored", a)
-  else:
-    setWarningMessage(fmt"Layout {layoutIdx+1} is not set", a=a)
 
 # }}}
 
@@ -10236,21 +10226,21 @@ proc initPreferences(cfg: HoconNode; a) =
   let prefs = cfg.getObjectOrEmpty("preferences")
 
   with a.prefs:
-    showSplash         = prefs.getBoolOrDefault("splash.show-at-startup", true)
+    showSplash = prefs.getBoolOrDefault("splash.show-at-startup", true)
 
-    autoCloseSplash    = prefs.getBoolOrDefault("splash.auto-close", false)
+    autoCloseSplash = prefs.getBoolOrDefault("splash.auto-close.enabled",
+                                             false)
 
-    splashTimeoutSecs  = prefs.getNaturalOrDefault(
-                           "splash.auto-close-timeout-secs", 3
-                         ).limit(SplashTimeoutSecsLimits)
+    splashTimeoutSecs = prefs.getNaturalOrDefault(
+                          "splash.auto-close.timeout-secs", 3
+                        ).limit(SplashTimeoutSecsLimits)
 
-    loadLastMap        = prefs.getBoolOrDefault("load-last-map", true)
+    loadLastMap = prefs.getBoolOrDefault("load-last-map", true)
 
-    autosave           = prefs.getBoolOrDefault("auto-save.enabled", true)
-
-    autosaveFreqMins   = prefs.getNaturalOrDefault(
-                           "auto-save.frequency-mins", 2
-                         ).limit(AutosaveFreqMinsLimits)
+    autosave = prefs.getBoolOrDefault("auto-save.enabled", true)
+    autosaveFreqMins = prefs.getNaturalOrDefault(
+                         "auto-save.frequency-mins", 2
+                       ).limit(AutosaveFreqMinsLimits)
 
     vsync = prefs.getBoolOrDefault("video.vsync", true)
 
@@ -10282,40 +10272,8 @@ proc initPreferences(cfg: HoconNode; a) =
 
 # }}}
 # {{{ restoreUIStateFromConfig()
-proc restoreUIStateFromConfig(cfg: HoconNode, a) =
+proc restoreUIStateFromConfig(cfg: HoconNode; a) =
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
-
-  with a.layout:
-    const ShowCurrentNotePaneKey = "option.show-current-note-pane"
-    if uiCfg.getOpt(ShowCurrentNotePaneKey).isSome:
-      showCurrentNotePane = uiCfg.getBoolOrDefault(
-        ShowCurrentNotePaneKey, true
-      )
-    else:
-      # TODO deprecated keys; drop support for these after a few releases
-      const ShowCurrentNotePaneKey_v110 = "option.show-notes-pane"
-      if uiCfg.getOpt(ShowCurrentNotePaneKey_v110).isSome:
-        showCurrentNotePane = uiCfg.getBoolOrDefault(
-          ShowCurrentNotePaneKey_v110, true
-        )
-
-    showNotesListPane = uiCfg.getBoolOrDefault("option.show-notes-list-pane", true)
-    showToolsPane     = uiCfg.getBoolOrDefault("option.show-tools-pane",      true)
-
-  with a.ui:
-    showCellCoords  = uiCfg.getBoolOrDefault("option.show-cell-coords", true)
-    walkMode        = uiCfg.getBoolOrDefault("option.walk-mode",        false)
-    wasdMode        = uiCfg.getBoolOrDefault("option.wasd-mode",        false)
-    pasteWraparound = uiCfg.getBoolOrDefault("option.paste-wraparound", false)
-
-  a.ui.drawLevelParams.setZoomLevel(
-    a.theme.levelTheme,
-    uiCfg.getNaturalOrDefault("zoom-level", DefaultZoomLevel).limit(ZoomLevelLimits)
-  )
-
-  with a.ui.drawLevelParams:
-    viewStartRow = uiCfg.getNaturalOrDefault("view-start.row", 0)
-    viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
 
   with a.ui.cursor:
     let currLevelId = uiCfg.getNaturalOrDefault("current-level-id", 0)
@@ -10325,7 +10283,73 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
     else:
       levelId = currLevelId
       row     = uiCfg.getNaturalOrDefault("cursor.row",    0)
-      col   =   uiCfg.getNaturalOrDefault("cursor.column", 0)
+      col     = uiCfg.getNaturalOrDefault("cursor.column", 0)
+
+  with a.ui.drawLevelParams:
+    viewStartRow = uiCfg.getNaturalOrDefault("view-start.row",    0)
+    viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
+
+  a.ui.drawLevelParams.setZoomLevel(
+    a.theme.levelTheme,
+    uiCfg.getNaturalOrDefault("zoom-level", DefaultZoomLevel)
+      .limit(ZoomLevelLimits)
+  )
+
+  with a.ui:
+    showCellCoords  = uiCfg.getBoolOrDefault("show-cell-coords", true)
+    walkMode        = uiCfg.getBoolOrDefault("walk-mode",        false)
+    wasdMode        = uiCfg.getBoolOrDefault("wasd-mode",        false)
+    pasteWraparound = uiCfg.getBoolOrDefault("paste-wraparound", false)
+
+# }}}
+# {{{ restoreLayoutsFromConfog()
+proc restoreLayoutsFromConfig(cfg: HoconNode; a) =
+  proc toLayout(cfg: HoconNode): Layout =
+    var l = Layout(
+      showCurrentNotePane: cfg.getBoolOrDefault("show-current-note-pane",
+                                                 true),
+      showNotesListPane: cfg.getBoolOrDefault("show-notes-list-pane", false),
+      showToolsPane:     cfg.getBoolOrDefault("show-tools-pane",      true),
+      showThemeEditor:   cfg.getBoolOrDefault("show-theme-editor",    false)
+    )
+
+    let
+      w = cfg.getNaturalOrDefault("window.size.0", DefaultWindowWidth)
+             .limit(WindowWidthLimits)
+
+      h = cfg.getNaturalOrDefault("window.size.1", DefaultWindowHeight)
+             .limit(WindowHeightLimits)
+
+    # Default to displaying the window centered on the primary monitor
+    let
+      (_, _, defaultMaxWidth,
+             defaultMaxHeight) = glfw.getPrimaryMonitor().workArea
+
+      cx = (defaultMaxWidth  - w) div 2
+      cy = (defaultMaxHeight - h) div 2
+
+      x = cfg.getNaturalOrDefault("window.pos.0", cx)
+      y = cfg.getNaturalOrDefault("window.pos.1", cy)
+
+    l.windowSize   = (w, h)
+    l.windowPos    = (x, y)
+    l.maximized    = cfg.getBoolOrDefault("window.maximized",      false)
+    l.showTitleBar = cfg.getBoolOrDefault("window.show-title-bar", true)
+
+    result = l
+
+
+  a.layout = cfg.getObjectOrEmpty("last-state.layout").toLayout
+  restoreLayout(a.layout, a)
+
+
+  proc maybeSetSavedLayout(idx: Natural; a) =
+    var obj = cfg.getObjectOpt(fmt"saved-layouts.{idx}")
+    if obj.isSome:
+      a.savedLayouts[idx] = obj.get.toLayout.some
+
+  for idx in 0..a.savedLayouts.high:
+    maybeSetSavedLayout(idx, a)
 
 # }}}
 
@@ -10410,40 +10434,10 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   # Init window
   a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePreCb(g_app)
   a.win.renderFrameCb = proc (win: CSDWindow) = renderFrameCb(g_app)
-  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrameCb(g_app)
 
   a.win.dropCb = dropCb
 
-  # Set window size & position
-  let mergedWinCfg = cfg.getObjectOrEmpty("last-state.window")
-  mergedWinCfg.merge(winCfg)
-
-  let width  = mergedWinCfg.getNaturalOrDefault("width", DefaultWindowWidth)
-                           .limit(WindowWidthLimits)
-
-  let height = mergedWinCfg.getNaturalOrDefault("height", DefaultWindowHeight)
-                           .limit(WindowWidthLimits)
-
-  let (_, _, defaultMaxWidth,
-             defaultMaxHeight) = glfw.getPrimaryMonitor().workArea
-
-  let defaultXPos = (defaultMaxWidth - width) div 2
-  var xpos = mergedWinCfg.getIntOrDefault("x-position", defaultXPos)
-
-  let defaultYPos = (defaultMaxHeight - height) div 2
-  var ypos = mergedWinCfg.getIntOrDefault("y-position", defaultYPos)
-
-  a.win.size = (width.int, height.int)
-  a.win.pos = (xpos, ypos)
-
-  if mergedWinCfg.getBoolOrDefault("maximized", false):
-    a.win.maximize
-
-  a.layout.showTitleBar = mergedWinCfg.getBoolOrDefault("show-title-bar",
-                                                        true)
-  a.win.showTitleBar = a.layout.showTitleBar
-
-  a.win.snapWindowToVisibleArea
+  restoreLayoutsFromConfig(cfg, a)
 
   initVersionChecking(a)
   appEvents.fetchLatestVersion()
