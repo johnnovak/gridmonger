@@ -455,6 +455,7 @@ type
     cursorOrient:       CardinalDir           # used by Walk Mode
     prevMoveDir:        Option[CardinalDir]   # used by the exacavate tool
 
+    showCellCoords:     bool
     drawTrail:          bool
     walkMode:           bool
     wasdMode:           bool
@@ -517,7 +518,6 @@ type
 
 
   Layout = object
-    showCellCoords:       bool
     showCurrentNotePane:  bool
     showNotesListPane:    bool
     showToolsPane:        bool
@@ -1827,7 +1827,7 @@ proc calculateLevelDrawArea(a): tuple[w, h: float] =
 
   var topPad, rightPad, bottomPad, leftPad: float
 
-  if a.layout.showCellCoords:
+  if a.ui.showCellCoords:
     topPad    = LevelTopPad_Coords
     rightPad  = LevelRightPad_Coords
     bottomPad = LevelBottomPad_Coords
@@ -2964,20 +2964,19 @@ proc saveAppConfig(a) =
   cfg.set(p & "cursor.column",                 cur.col)
   cfg.set(p & "view-start.row",                dp.viewStartRow)
   cfg.set(p & "view-start.column",             dp.viewStartCol)
-  cfg.set(p & "option.show-cell-coords",       a.layout.showCellCoords)
   cfg.set(p & "option.show-tools-pane",        a.layout.showToolsPane)
   cfg.set(p & "option.show-current-note-pane", a.layout.showCurrentNotePane)
   cfg.set(p & "option.show-notes-list-pane",   a.layout.showNotesListPane)
   cfg.set(p & "option.wasd-mode",              a.ui.wasdMode)
   cfg.set(p & "option.walk-mode",              a.ui.walkMode)
   cfg.set(p & "option.paste-wraparound",       a.ui.pasteWraparound)
+  cfg.set(p & "option.show-cell-coords",  a.ui.showCellCoords)
 
   proc mkLayoutObject(layout: Option[Layout]): HoconNode =
     if layout.isSome:
       let l = layout.get
       var obj = newHoconObject()
 
-      obj.set("show-cell-coords",       l.showCellCoords)
       obj.set("show-current-note-pane", l.showCurrentNotePane)
       obj.set("show-notes-list-pane",   l.showNotesListPane)
       obj.set("show-tools-pane",        l.showToolsPane)
@@ -3077,7 +3076,6 @@ proc loadMap(path: string; a): bool =
       a.theme.hideThemeLoadedMessage = true
 
       with a.layout:
-        showCellCoords      = s.showCellCoords
         showToolsPane       = s.showToolsPane
         showCurrentNotePane = s.showCurrentNotePane
         showNotesListPane   = s.showNotesListPane
@@ -3094,6 +3092,7 @@ proc loadMap(path: string; a): bool =
       with a.ui:
         currFloorColor  = s.currFloorColor
         currSpecialWall = s.currSpecialWall
+        showCellCoords  = s.showCellCoords
         wasdMode        = s.wasdMode
         walkMode        = s.walkMode
         drawTrail       = false
@@ -3157,7 +3156,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     viewStartRow:           dp.viewStartRow,
     viewStartCol:           dp.viewStartCol,
 
-    showCellCoords:         a.layout.showCellCoords,
+    showCellCoords:         a.ui.showCellCoords,
     showToolsPane:          a.layout.showToolsPane,
     showCurrentNotePane:    a.layout.showCurrentNotePane,
     showNotesListPane:      a.layout.showNotesListPane,
@@ -7117,7 +7116,7 @@ proc handleGlobalKeyEvents(a) =
 
       # Toggle layout options
       elif ke.isShortcutDown(scToggleCellCoords, a):
-        toggleShowOption(a.layout.showCellCoords, NoIcon, "Cell coordinates", a)
+        toggleShowOption(a.ui.showCellCoords, NoIcon, "Cell coordinates", a)
 
       elif ke.isShortcutDown(scToggleCurrentNotePane, a):
         toggleShowOption(a.layout.showCurrentNotePane, NoIcon,
@@ -8003,7 +8002,7 @@ proc renderLevel(x, y, w, h: float,
     )
 
     dp.drawLevel      = ui.editMode != emNudgePreview
-    dp.drawCellCoords = a.layout.showCellCoords
+    dp.drawCellCoords = a.ui.showCellCoords
 
     drawLevel(
       a.doc.map,
@@ -10268,8 +10267,6 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
   let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
 
   with a.layout:
-    showCellCoords = uiCfg.getBoolOrDefault("option.show-cell-coords", true)
-
     const ShowCurrentNotePaneKey = "option.show-current-note-pane"
     if uiCfg.getOpt(ShowCurrentNotePaneKey).isSome:
       showCurrentNotePane = uiCfg.getBoolOrDefault(
@@ -10287,6 +10284,7 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
     showToolsPane     = uiCfg.getBoolOrDefault("option.show-tools-pane",      true)
 
   with a.ui:
+    showCellCoords  = uiCfg.getBoolOrDefault("option.show-cell-coords", true)
     walkMode        = uiCfg.getBoolOrDefault("option.walk-mode",        false)
     wasdMode        = uiCfg.getBoolOrDefault("option.wasd-mode",        false)
     pasteWraparound = uiCfg.getBoolOrDefault("option.paste-wraparound", false)
