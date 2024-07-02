@@ -2958,8 +2958,6 @@ proc saveAppConfig(a) =
 
   p = "last-state.ui."
   cfg.set(p & "zoom-level",                    dp.getZoomLevel)
-  # TODO current-level-id
-  cfg.set(p & "current-level",                 cur.levelId)
   cfg.set(p & "cursor.row",                    cur.row)
   cfg.set(p & "cursor.column",                 cur.col)
   cfg.set(p & "view-start.row",                dp.viewStartRow)
@@ -2970,6 +2968,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "option.wasd-mode",              a.ui.wasdMode)
   cfg.set(p & "option.walk-mode",              a.ui.walkMode)
   cfg.set(p & "option.paste-wraparound",       a.ui.pasteWraparound)
+  cfg.set(p & "current-level-id",         cur.levelId)
   cfg.set(p & "option.show-cell-coords",  a.ui.showCellCoords)
 
   proc mkLayoutObject(layout: Option[Layout]): HoconNode =
@@ -10299,8 +10298,7 @@ proc restoreUIStateFromConfig(cfg: HoconNode, a) =
     viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
 
   with a.ui.cursor:
-    # TODO current-level-id
-    let currLevelId = uiCfg.getNaturalOrDefault("current-level", 0)
+    let currLevelId = uiCfg.getNaturalOrDefault("current-level-id", 0)
 
     if currLevelId >= a.doc.map.levels.len:
       resetCursorAndViewStart(a)
