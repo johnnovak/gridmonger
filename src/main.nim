@@ -91,9 +91,6 @@ const
   ScrollMargin = 3
 
 const
-  DefaultWindowWidth       = 700
-  DefaultWindowHeight      = 800
-
   StatusBarHeight          = 26.0
 
   LevelTopPad_Regions      = 28.0

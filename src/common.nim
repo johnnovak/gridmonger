@@ -31,12 +31,15 @@ const
   DevelopedBy*       = fmt"Developed by John Novak, 2020{EnDash}{CompileYear}"
 
 const
-  TextVertAlignFactor* = 0.55
+  MinWindowWidth*      = 640
+  MinWindowHeight*     = 520
 
+  DefaultWindowWidth*  = 700
+  DefaultWindowHeight* = 800
+
+const
+  TextVertAlignFactor*  = 0.55
   MaxLabelWidthInCells* = 15
-
-  MinWindowWidth*  = 640
-  MinWindowHeight* = 520
 
 
 type
