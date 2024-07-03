@@ -2912,7 +2912,7 @@ proc saveLayout(layoutIdx: Natural; a) =
   setLayoutWindowFields(l, a)
   a.savedLayouts[layoutIdx] = l.some
 
-  setStatusMessage(fmt"Window layout {layoutIdx+1} saved", a)
+  setStatusMessage(IconTiles, fmt"Window layout {layoutIdx+1} saved", a)
 
 # }}}
 # {{{ restoreLayout()
@@ -2940,9 +2940,9 @@ proc restoreLayout(layoutIdx: Natural; a) =
   if a.savedLayouts[layoutIdx].isSome:
     restoreLayout(a.savedLayouts[layoutIdx].get, a)
 
-    setStatusMessage(fmt"Window layout {layoutIdx+1} restored", a)
+    setStatusMessage(IconTiles, fmt"Window layout {layoutIdx+1} restored", a)
   else:
-    setWarningMessage(fmt"Window layout {layoutIdx+1} is not set", a=a)
+    setWarningMessage(fmt"Window layout {layoutIdx+1} is not set",a=a)
 
 # }}}
 
