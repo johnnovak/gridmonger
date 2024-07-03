@@ -12,6 +12,12 @@ import utils/rect
 
 
 const
+  ThinSp* = "\u2009"
+  HairSp* = "\u200a"
+  EnDash* = "\u2013"
+  EmDash* = "\u2014"
+
+const
   ProjectHomeUrl* = "https://gridmonger.johnnovak.net/"
 
   AppVersion*  = parseVersion(staticRead("../CURRENT_VERSION").strip)
@@ -25,8 +31,6 @@ const
   DevelopedBy*       = fmt"Developed by John Novak, 2020-{CompileYear}"
 
 const
-  EnDash* = "\u2013"
-
   TextVertAlignFactor* = 0.55
 
   MaxLabelWidthInCells* = 15
