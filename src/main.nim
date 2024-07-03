@@ -10330,8 +10330,8 @@ proc restoreLayoutsFromConfig(cfg: HoconNode; a) =
       cx = (defaultMaxWidth  - w) div 2
       cy = (defaultMaxHeight - h) div 2
 
-      x = cfg.getNaturalOrDefault("window.pos.0", cx)
-      y = cfg.getNaturalOrDefault("window.pos.1", cy)
+      x = cfg.getIntOrDefault("window.pos.0", cx)
+      y = cfg.getIntOrDefault("window.pos.1", cy)
 
     l.windowSize   = (w, h)
     l.windowPos    = (x, y)

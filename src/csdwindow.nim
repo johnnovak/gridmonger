@@ -1,5 +1,6 @@
 import std/lenientops
 import std/logging as log
+import std/options
 import std/strformat
 
 import glfw
@@ -176,24 +177,53 @@ proc findCurrentMonitor*(win): Monitor =
 proc snapWindowToVisibleArea*(win) =
   let currMonitor = win.findCurrentMonitor
   let workAreaRect = currMonitor.workAreaRect
-  let (w, h) = win.size
 
-  if not workAreaRect.contains(win.rect):
+  if workAreaRect.contains(win.rect):
+    # nothing to do
+    return
 
-    # Clamp window size to the extents of the current monitor
-    if w > workAreaRect.w or
-       h > workAreaRect.h or
-       w < MinWindowWidth or
-       h < MinWindowHeight:
-      win.size = (w.clamp(MinWindowWidth,  workAreaRect.w.int32),
-                  h.clamp(MinWindowHeight, workAreaRect.h.int32))
+  else:
+    var winRect = win.rect
+    let
+      overlap = workAreaRect.intersect(winRect)
+      percentOverlap = if overlap.isSome: overlap.get.area / winRect.area * 100
+                       else: 0
 
-    # Center window
-    let (cx, cy) = (workAreaRect.x1 + (workAreaRect.w div 2),
-                    workAreaRect.y1 + (workAreaRect.h div 2))
+    if percentOverlap >= 70:
+      # Try to fit the window to the work area by shifting it firt
+      if winRect.x2 > workAreaRect.x2:
+        winRect.shiftHoriz(workAreaRect.x2 - winRect.x2)
 
-    win.pos = (cx - (win.size.w div 2),
-               cy - (win.size.h div 2))
+      if winRect.y2 > workAreaRect.y2:
+        winRect.shiftVert(workAreaRect.y2 - winRect.y2)
+
+      if winRect.x1 < workAreaRect.x1:
+        winRect.shiftHoriz(workAreaRect.x1 - winRect.x1)
+
+      if winRect.y1 < workAreaRect.y1:
+        winRect.shiftVert(workAreaRect.y1 - winRect.y1)
+
+      # Chop off the rest
+      let r = winRect.intersect(workAreaRect)
+      if r.isSome:
+        winRect = r.get
+
+      win.pos  = (winRect.x1, winRect.y1)
+      win.size = (winRect.w,  winRect.h)
+
+    else:
+      # Center window to the primary monitor
+      let currMonitor = win.findCurrentMonitor
+      let workAreaRect = currMonitor.workAreaRect
+
+      if win.rect.w > workAreaRect.w or win.rect.h > workAreaRect.h:
+        win.size = (DefaultWindowWidth, DefaultWindowHeight)
+
+      let (cx, cy) = (workAreaRect.x1 + (workAreaRect.w div 2),
+                      workAreaRect.y1 + (workAreaRect.h div 2))
+
+      win.pos = (cx - (win.size.w div 2),
+                 cy - (win.size.h div 2))
 
 # }}}
 
