@@ -226,11 +226,11 @@ type
     dirty*:       bool
 
   AnnotationKind* = enum
-    akComment  = 0
-    akIndexed  = 1
-    akCustomId = 2
-    akIcon     = 3
-    akLabel    = 4
+    akComment  = (0, "comment")
+    akIndexed  = (1, "indexed")
+    akCustomId = (2, "custom ID")
+    akIcon     = (3, "icon")
+    akLabel    = (4, "label")
 
   Annotation* = object
     text*: string
