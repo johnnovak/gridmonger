@@ -1058,9 +1058,9 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       scPastePreview.sc,        "Enter paste preview mode".desc,
       QuickRefSepa,
 
-      scEditNote.sc,            "Add/edit note".desc,
+      scEditNote.sc,            "Add or edit note".desc,
       scEraseNote.sc,           "Erase note".desc,
-      scEditLabel.sc,           "Add/edit label".desc,
+      scEditLabel.sc,           "Add or edit label".desc,
       scEraseLabel.sc,          "Erase label".desc,
       QuickRefSepa,
 
@@ -1134,11 +1134,11 @@ func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
     ],
     @[
       @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}"].csc,
-      "Move between tabs".desc,
+      "Move between tabs in dialog".desc,
 
       @[KeyShortcut(key: key1, mods: {mkCtrl}),
         KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'),
-      "Select tab 1-9".desc,
+      "Select tab 1-9 in dialog".desc,
 
       QuickRefSepa,
 
@@ -9492,7 +9492,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
                      colWidth: float; a: AppContext) =
 
     const
-      RowHeight = 24.0
+      RowHeight  = 24.0
       SepaHeight = 14.0
 
     var
@@ -9591,7 +9591,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
   )
 
   koi.beginScrollView(x = x + (w - viewWidth)*0.5 + 4,
-                      y = y + 150+yOffs,
+                      y = y + 140+yOffs,
                       w = viewWidth, h = (h - 176))
 
   let a = a
@@ -9599,17 +9599,17 @@ proc renderQuickReference(x, y, w, h: float; a) =
 
   const DefaultColWidth = 105.0
 
-  let (viewHeight, colWidth) = case a.quickRef.activeTab
-  of 0: (520.0, DefaultColWidth)
-  of 1: (655.0, DefaultColWidth)
-  else: (300.0, DefaultColWidth + 24)
+  let (viewHeight, col1Width, col2Width) = case a.quickRef.activeTab
+  of 0: (520.0, DefaultColWidth, DefaultColWidth)
+  of 1: (655.0, DefaultColWidth, DefaultColWidth)
+  else: (300.0, DefaultColWidth, DefaultColWidth  + 20)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
-    let items = a.keys.quickRefShortcuts[a.quickRef.activeTab]
-    if items.len == 1: sx = radioButtonX + 70
-    for r in items:
-      renderSection(sx, sy, r, colWidth, a)
-      sx += columnWidth
+    let itemColumns = a.keys.quickRefShortcuts[a.quickRef.activeTab]
+    assert(itemColumns.len == 2)
+    renderSection(sx, sy, itemColumns[0], col1Width, a)
+    sx += columnWidth
+    renderSection(sx, sy, itemColumns[1], col2Width, a)
 
   koi.endScrollView(viewHeight)
 
