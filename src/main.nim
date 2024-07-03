@@ -893,6 +893,7 @@ type
 
     sectionPanes:            bool
     sectionCurrentNotePane:  bool
+    sectionNotesListPane:    bool
     sectionToolbarPane:      bool
 
     focusCaptured:           bool
@@ -9190,6 +9191,29 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Index",              p & "index")
       group:
         colorProp("Scroll Bar",         p & "scroll-bar")
+
+    if koi.subSectionHeader("Notes List Pane", te.sectionNotesListPane):
+      p = "pane.notes-list."
+      group:
+        colorProp("Controls Background",       p & "controls-background")
+        colorProp("List Background",           p & "list-background")
+      group:
+        colorProp("Item Background Hover",     p & "item.background.hover")
+        colorProp("Item Background Down",      p & "item.background.down")
+        colorProp("Item Background Active",    p & "item.background.active")
+      group:
+        colorProp("Item Text Normal",          p & "item.text.normal")
+        colorProp("Item Text Hover",           p & "item.text.hover")
+        colorProp("Item Text Down",            p & "item.text.down")
+        colorProp("Item Text Active",          p & "item.text.active")
+      group:
+        colorProp("Level Section Background",  p & "level-section.background")
+        colorProp("Level Section Text",        p & "level-section.text")
+      group:
+        colorProp("Region Section Background", p & "region-section.background")
+        colorProp("Region Section Text",       p & "region-section.text")
+      group:
+        colorProp("Scroll Bar",                p & "scroll-bar")
 
     if koi.subSectionHeader("Toolbar Pane", te.sectionToolbarPane):
       p = "pane.toolbar."

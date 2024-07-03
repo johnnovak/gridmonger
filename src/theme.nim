@@ -188,6 +188,32 @@ proc toCurrentNotePaneTheme*(cfg: HoconNode): CurrentNotePaneTheme =
   cfg.getColorOrDefaultArray("index-background", s.indexBackgroundColor)
 
 # }}}
+# {{{ toNotesListPaneTheme*()
+proc toNotesListPaneTheme*(cfg: HoconNode): NotesListPaneTheme =
+  alias(s, result)
+  s = new NotesListPaneTheme
+
+  s.controlsBackgroundColor = cfg.getColorOrDefault("controls-background")
+  s.listBackgroundColor     = cfg.getColorOrDefault("list-background")
+
+  s.itemBackgroundHoverColor  = cfg.getColorOrDefault("item.background.hover")
+  s.itemBackgroundDownColor   = cfg.getColorOrDefault("item.background.down")
+  s.itemBackgroundActiveColor = cfg.getColorOrDefault("item.background.active")
+
+  s.itemTextNormalColor = cfg.getColorOrDefault("item.text.normal")
+  s.itemTextHoverColor  = cfg.getColorOrDefault("item.text.hover")
+  s.itemTextDownColor   = cfg.getColorOrDefault("item.text.down")
+  s.itemTextActiveColor = cfg.getColorOrDefault("item.text.active")
+
+  s.levelSectionBackgroundColor  = cfg.getColorOrDefault("level-section.background")
+  s.levelSectionTextColor        = cfg.getColorOrDefault("level-section.text")
+
+  s.regionSectionBackgroundColor = cfg.getColorOrDefault("region-section.background")
+  s.regionSectionTextColor       = cfg.getColorOrDefault("region-section.text")
+
+  s.scrollBarColor = cfg.getColorOrDefault("scroll-bar")
+
+# }}}
 # {{{ toToolbarPaneTheme*()
 proc toToolbarPaneTheme*(cfg: HoconNode): ToolbarPaneTheme =
   alias(s, result)

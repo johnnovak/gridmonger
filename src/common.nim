@@ -416,6 +416,29 @@ type
     indexColor*:                   Color
     indexBackgroundColor*:         array[4, Color]
 
+
+  NotesListPaneTheme* = ref object
+    controlsBackgroundColor*:      Color
+    listBackgroundColor*:          Color
+
+    itemBackgroundHoverColor*:     Color
+    itemBackgroundDownColor*:      Color
+    itemBackgroundActiveColor*:    Color
+
+    itemTextNormalColor*:          Color
+    itemTextHoverColor*:           Color
+    itemTextDownColor*:            Color
+    itemTextActiveColor*:          Color
+
+    levelSectionBackgroundColor*:  Color
+    levelSectionTextColor*:        Color
+
+    regionSectionBackgroundColor*: Color
+    regionSectionTextColor*:       Color
+
+    scrollBarColor*:               Color
+
+
   ToolbarPaneTheme* = ref object
     buttonNormalColor*:            Color
     buttonHoverColor*:             Color
