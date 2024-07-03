@@ -57,6 +57,11 @@ proc coordRect*(x1,y1, x2,y2: int): Rect[int] =
 
 # }}}
 
+# {{{ area*()
+func area*[T: RectType](r: Rect[T]): T =
+  r.w * r.h
+
+# }}}
 # {{{ intersect*()
 proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
   let
@@ -76,6 +81,11 @@ proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
 
   else:
     none(Rect[T])
+
+# }}}
+# {{{ overlaps*()
+proc overlaps*[T: RectType](a, b: Rect[T]): bool =
+  a.intersect(b).isSome
 
 # }}}
 # {{{ contains*()
