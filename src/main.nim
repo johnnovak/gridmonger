@@ -1956,7 +1956,6 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
     let viewCol = viewCol(cur.col, a)
     if viewCol < sm:
-      # TODO use clamp
       dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
 
   of dirN:
@@ -1964,7 +1963,6 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
     let viewRow = viewRow(cur.row, a)
     if viewRow < sm:
-      # TODO use clamp
       dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
 
   result = cur
@@ -2068,14 +2066,12 @@ proc stepLevelView(dir: CardinalDir; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
-  # TODO use clamp
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
 
   var newViewStartCol = dp.viewStartCol
   var newViewStartRow = dp.viewStartRow
 
-  # TODO use clamp
   case dir:
   of dirE: newViewStartCol = min(dp.viewStartCol + 1, maxViewStartCol)
   of dirW: newViewStartCol = max(dp.viewStartCol - 1, 0)
@@ -2098,7 +2094,6 @@ proc moveLevelView(dir: Direction, steps: Natural = 1; a) =
   a.ui.drawTrail = false
 
   let l = currLevel(a)
-  # TODO use clamp
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
 
@@ -2140,11 +2135,9 @@ proc updateViewAndCursorPos(levelDrawWidth, levelDrawHeight: float; a) =
 
   let l = currLevel(a)
 
-  # TODO use clamp
   dp.viewRows = min(dp.numDisplayableRows(levelDrawHeight), l.rows)
   dp.viewCols = min(dp.numDisplayableCols(levelDrawWidth), l.cols)
 
-  # TODO use clamp
   let maxViewStartRow = max(l.rows - dp.viewRows, 0)
   let maxViewStartCol = max(l.cols - dp.viewCols, 0)
 
@@ -6201,7 +6194,6 @@ proc centerCursorAfterZoom(a) =
 
   let viewCol = round(a.ui.prevCursorViewX / dp.gridSize).int
   let viewRow = round(a.ui.prevCursorViewY / dp.gridSize).int
-  # TODO use clamp
   dp.viewStartCol = max(cur.col - viewCol, 0)
   dp.viewStartRow = max(cur.row - viewRow, 0)
 
@@ -7603,7 +7595,6 @@ proc handleGlobalKeyEvents(a) =
 
         let step = if mkCtrl in mods: CursorJump else: 1
 
-        # TODO use clamp
         case dir:
         of dirE: dp.selStartCol = min(dp.selStartCol + step,  cols-1)
         of dirS: dp.selStartRow = min(dp.selStartRow + step,  rows-1)
@@ -9556,7 +9547,6 @@ proc renderQuickReference(x, y, w, h: float; a) =
         y += SepaHeight
 
 
-  # TODO use clamp
   let yOffs = max((h - 840) * 0.5, 0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
