@@ -720,6 +720,7 @@ proc hoconNode*(s: seq[HoconNode]): HoconNode =
 template hoconNodeNull*: HoconNode =
   HoconNode(kind: hnkNull)
 
+# }}}
 # {{{ Getters
 
 proc get*(node: HoconNode, path: string): HoconNode =
@@ -788,7 +789,6 @@ proc getBool*(node: HoconNode; path: string): bool =
   else:
     raiseHoconValueError(v.kind, hnkBool, path)
 
-
 proc doGetFloat(n: HoconNode, path: string): float =
   case n.kind
   of hnkNumber: n.num
@@ -826,6 +826,7 @@ proc getArray*(node: HoconNode, path: string): seq[HoconNode] =
 # }}}
 # {{{ Setters
 
+# {{{ set*() - HoconNode
 proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
 
   proc isInt(s: string): bool =
@@ -898,11 +899,8 @@ proc set*(node: HoconNode, path: string, value: HoconNode, createPath = true) =
             raiseHoconPathError(path, fmt"'{key}' not found")
         curr = curr.fields[key]
 
-
-proc setNull*(node: HoconNode, path: string, createPath = true) =
-  let value = HoconNode(kind: hnkNull)
-  node.set(path, value, createPath)
-
+# }}}
+# {{{ set*() - primitive types
 proc set*(node: HoconNode, path: string, str: string, createPath = true) =
   let value = HoconNode(kind: hnkString, str: str)
   node.set(path, value, createPath)
@@ -915,7 +913,15 @@ proc set*(node: HoconNode, path: string, flag: bool, createPath = true) =
   let value = HoconNode(kind: hnkBool, bool: flag)
   node.set(path, value, createPath)
 
+# }}}
+# {{{ setNull*()
+proc setNull*(node: HoconNode, path: string, createPath = true) =
+  let value = HoconNode(kind: hnkNull)
+  node.set(path, value, createPath)
 
+# }}}
+#
+# {{{ merge*()
 proc merge*(dest: HoconNode, src: HoconNode, path: string = "") =
   proc append(path, el: string): string =
     if path == "": el
