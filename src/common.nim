@@ -28,7 +28,7 @@ const
   VersionString*     = fmt"Version {AppVersion} ({BuildGitHash})"
   FullVersionString* = fmt"Gridmonger {VersionString} [{hostOS}/{hostCPU}]"
   CompiledAt*        = fmt"Compiled at {CompileDate} {CompileTime}"
-  DevelopedBy*       = fmt"Developed by John Novak, 2020-{CompileYear}"
+  DevelopedBy*       = fmt"Developed by John Novak, 2020{EnDash}{CompileYear}"
 
 const
   TextVertAlignFactor* = 0.55

@@ -1133,7 +1133,8 @@ func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
       scRestoreLayout4.sc, "Restore window layout 4".desc,
     ],
     @[
-      @[fmt"Ctrl+{IconArrowsHoriz}"].csc, "Move between tabs".desc,
+      @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}"].csc,
+      "Move between tabs".desc,
 
       @[KeyShortcut(key: key1, mods: {mkCtrl}),
         KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'),
@@ -1141,8 +1142,8 @@ func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
 
       QuickRefSepa,
 
-      KeyShortcut(key: keyTab,
-                  mods: {mkShift}).sc, "Previous text input field".desc,
+      KeyShortcut(key: keyTab, mods: {mkShift}).sc,
+      "Previous text input field".desc,
 
       scNextTextField.sc, "Next text input field".desc,
       QuickRefSepa,
@@ -1563,13 +1564,13 @@ proc toStr(k: KeyShortcut): string =
   if mkShift in k.mods: s.add("Shift")
   if mkAlt   in k.mods: s.add("Alt")
   s.add(k.key.toStr)
-  s.join("+")
+  s.join(fmt"{HairSp}+{HairSp}")
 
 proc toStr(sc: AppShortcut; a; idx = -1): string =
   if idx == -1:
     var s = collect:
       for k in a.keys.shortcuts[sc]: k.toStr
-    result = s.join("/")
+    result = s.join(fmt"{HairSp}/{HairSp}")
   else:
     result = a.keys.shortcuts[sc][idx].toStr
 # }}}
@@ -6506,10 +6507,11 @@ proc toggleThemeEditor(a) =
 
 proc showQuickReference(a) =
   a.ui.showQuickReference = true
-  setStatusMessage(IconQuestion, "Quick keyboard reference",
-                   @[fmt"Ctrl+{IconArrowsHoriz}", "switch tab",
-                     "Esc/Space/Enter", "exit",
-                     "F1", "open user manual"], a)
+  setStatusMessage(
+    IconQuestion, "Quick keyboard reference",
+    @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}",          "switch tab",
+      fmt"Esc{HairSp}/{HairSp}Space{HairSp}/{HairSp}Enter", "exit",
+      "F1", "open user manual"], a)
 
 proc toggleTitleBar(a) =
   toggleShowOption(a.layout.showTitleBar, NoIcon, "Title bar", a)
