@@ -228,12 +228,7 @@ level {
     comment = "#ff3300cc"
     background-shape = circle
     index = "#ffffffd9"
-    index-background = [
-      "#cc6600ff"
-      "#c3971fff"
-      "#78822aff"
-      "#765e1cff"
-    ]
+    index-background = ["#cc6600ff", "#c3971fff", "#78822aff", "#765e1cff"]
 
     tooltip {
       background = "#2e2920ff"
@@ -247,12 +242,7 @@ level {
   }
 
   label {
-    text = [
-      "#00000090"
-      "#ffe7bedd"
-      "#9c632dff"
-      "#ffb635e4"
-    ]
+    text = ["#00000090", "#ffe7bedd", "#9c632dff", "#ffb635e4"]
   }
 
   level-drop-down {
@@ -275,16 +265,11 @@ level {
 }
 
 pane {
-  notes {
+  current-note {
     text = "#000000af"
     scroll-bar = "#00000000"
     index = "#ffffffd9"
-    index-background = [
-      "#cc6600ff"
-      "#c3971fff"
-      "#78822aff"
-      "#765e1cff"
-    ]
+    index-background = ["#cc6600ff", "#c3971fff", "#78822aff", "#765e1cff"]
   }
 
   toolbar {

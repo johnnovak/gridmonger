@@ -248,12 +248,7 @@ level {
   }
 
   label {
-    text = [
-      "#4e4432ff"
-      "#ffe7bedd"
-      "#864100ff"
-      "#ffb635e4"
-    ]
+    text = ["#4e4432ff", "#ffe7bedd", "#864100ff", "#ffb635e4"]
   }
 
   level-drop-down {
@@ -276,16 +271,11 @@ level {
 }
 
 pane {
-  notes {
+  current-note {
     text = "#000000af"
     scroll-bar = "#d3c5b8ff"
     index = "#ffffffaf"
-    index-background = [
-      "#735323ff"
-      "#bf462bff"
-      "#1573a7fc"
-      "#427834ff"
-    ]
+    index-background = ["#735323ff", "#bf462bff", "#1573a7fc", "#427834ff"]
   }
 
   toolbar {
