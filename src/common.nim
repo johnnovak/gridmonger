@@ -385,16 +385,20 @@ type
     borderColor*:                  Color
     backgroundColor*:              Color
     backgroundImage*:              string
+
     titleBackgroundColor*:         Color
     titleBackgroundInactiveColor*: Color
     titleColor*:                   Color
     titleInactiveColor*:           Color
+
     buttonColor*:                  Color
     buttonHoverColor*:             Color
     buttonDownColor*:              Color
     buttonInactiveColor*:          Color
+
     modifiedFlagColor*:            Color
     modifiedFlagInactiveColor*:    Color
+
 
   StatusBarTheme* = ref object
     backgroundColor*:              Color
@@ -402,8 +406,10 @@ type
     warningTextColor*:             Color
     errorTextColor*:               Color
     coordinatesColor*:             Color
+
     commandBackgroundColor*:       Color
     commandTextColor*:             Color
+
 
   CurrentNotePaneTheme* = ref object
     textColor*:                    Color
@@ -425,12 +431,15 @@ type
     trailNormalColor*:             Color
     trailCursorColor*:             Color
     pastePreviewColor*:            Color
+
     foregroundNormalNormalColor*:  Color
     foregroundNormalCursorColor*:  Color
     foregroundLightNormalColor*:   Color
     foregroundLightCursorColor*:   Color
+
     coordinatesNormalColor*:       Color
     coordinatesHighlightColor*:    Color
+
     regionBorderNormalColor*:      Color
     regionBorderEmptyColor*:       Color
 

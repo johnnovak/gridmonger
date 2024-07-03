@@ -64,23 +64,26 @@ proc toLevelTheme*(cfg: HoconNode): LevelTheme =
   s = new LevelTheme
 
   var p = "general."
-  s.lineWidth                   = cfg.getEnumOrDefault(p & "line-width", LineWidth)
-  s.backgroundColor             = cfg.getColorOrDefault(p & "background")
-  s.cursorColor                 = cfg.getColorOrDefault(p & "cursor")
-  s.cursorGuidesColor           = cfg.getColorOrDefault(p & "cursor-guides")
-  s.linkMarkerColor             = cfg.getColorOrDefault(p & "link-marker")
-  s.selectionColor              = cfg.getColorOrDefault(p & "selection")
-  s.trailNormalColor            = cfg.getColorOrDefault(p & "trail.normal")
-  s.trailCursorColor            = cfg.getColorOrDefault(p & "trail.cursor")
-  s.pastePreviewColor           = cfg.getColorOrDefault(p & "paste-preview")
+  s.lineWidth         = cfg.getEnumOrDefault(p & "line-width", LineWidth)
+  s.backgroundColor   = cfg.getColorOrDefault(p & "background")
+  s.cursorColor       = cfg.getColorOrDefault(p & "cursor")
+  s.cursorGuidesColor = cfg.getColorOrDefault(p & "cursor-guides")
+  s.linkMarkerColor   = cfg.getColorOrDefault(p & "link-marker")
+  s.selectionColor    = cfg.getColorOrDefault(p & "selection")
+  s.trailNormalColor  = cfg.getColorOrDefault(p & "trail.normal")
+  s.trailCursorColor  = cfg.getColorOrDefault(p & "trail.cursor")
+  s.pastePreviewColor = cfg.getColorOrDefault(p & "paste-preview")
+
   s.foregroundNormalNormalColor = cfg.getColorOrDefault(p & "foreground.normal.normal")
   s.foregroundNormalCursorColor = cfg.getColorOrDefault(p & "foreground.normal.cursor")
   s.foregroundLightNormalColor  = cfg.getColorOrDefault(p & "foreground.light.normal")
   s.foregroundLightCursorColor  = cfg.getColorOrDefault(p & "foreground.light.cursor")
-  s.coordinatesNormalColor      = cfg.getColorOrDefault(p & "coordinates.normal")
-  s.coordinatesHighlightColor   = cfg.getColorOrDefault(p & "coordinates.highlight")
-  s.regionBorderNormalColor     = cfg.getColorOrDefault(p & "region-border.normal")
-  s.regionBorderEmptyColor      = cfg.getColorOrDefault(p & "region-border.empty")
+
+  s.coordinatesNormalColor    = cfg.getColorOrDefault(p & "coordinates.normal")
+  s.coordinatesHighlightColor = cfg.getColorOrDefault(p & "coordinates.highlight")
+
+  s.regionBorderNormalColor = cfg.getColorOrDefault(p & "region-border.normal")
+  s.regionBorderEmptyColor  = cfg.getColorOrDefault(p & "region-border.empty")
 
   p = "background-hatch."
   s.backgroundHatchEnabled       = cfg.getBoolOrDefault(p & "enabled")
@@ -140,19 +143,23 @@ proc toWindowTheme*(cfg: HoconNode): WindowTheme =
   alias(s, result)
   s = new WindowTheme
 
-  s.borderColor                  = cfg.getColorOrDefault("border.color")
-  s.backgroundColor              = cfg.getColorOrDefault("background.color")
-  s.backgroundImage              = cfg.getStringOrDefault("background.image")
+  s.borderColor = cfg.getColorOrDefault("border.color")
+
+  s.backgroundColor = cfg.getColorOrDefault("background.color")
+  s.backgroundImage = cfg.getStringOrDefault("background.image")
+
   s.titleBackgroundColor         = cfg.getColorOrDefault("title.background.normal")
   s.titleBackgroundInactiveColor = cfg.getColorOrDefault("title.background.inactive")
   s.titleColor                   = cfg.getColorOrDefault("title.text.normal")
   s.titleInactiveColor           = cfg.getColorOrDefault("title.text.inactive")
-  s.modifiedFlagColor            = cfg.getColorOrDefault("modified-flag.normal")
-  s.modifiedFlagInactiveColor    = cfg.getColorOrDefault("modified-flag.inactive")
-  s.buttonColor                  = cfg.getColorOrDefault("button.normal")
-  s.buttonHoverColor             = cfg.getColorOrDefault("button.hover")
-  s.buttonDownColor              = cfg.getColorOrDefault("button.down")
-  s.buttonInactiveColor          = cfg.getColorOrDefault("button.inactive")
+
+  s.modifiedFlagColor         = cfg.getColorOrDefault("modified-flag.normal")
+  s.modifiedFlagInactiveColor = cfg.getColorOrDefault("modified-flag.inactive")
+
+  s.buttonColor         = cfg.getColorOrDefault("button.normal")
+  s.buttonHoverColor    = cfg.getColorOrDefault("button.hover")
+  s.buttonDownColor     = cfg.getColorOrDefault("button.down")
+  s.buttonInactiveColor = cfg.getColorOrDefault("button.inactive")
 
 # }}}
 # {{{ toStatusBarTheme*()
@@ -160,11 +167,12 @@ proc toStatusBarTheme*(cfg: HoconNode): StatusBarTheme =
   alias(s, result)
   s = new StatusBarTheme
 
-  s.backgroundColor        = cfg.getColorOrDefault("background")
-  s.textColor              = cfg.getColorOrDefault("text")
-  s.warningTextColor       = cfg.getColorOrDefault("warning")
-  s.errorTextColor         = cfg.getColorOrDefault("error")
-  s.coordinatesColor       = cfg.getColorOrDefault("coordinates")
+  s.backgroundColor  = cfg.getColorOrDefault("background")
+  s.textColor        = cfg.getColorOrDefault("text")
+  s.warningTextColor = cfg.getColorOrDefault("warning")
+  s.errorTextColor   = cfg.getColorOrDefault("error")
+  s.coordinatesColor = cfg.getColorOrDefault("coordinates")
+
   s.commandBackgroundColor = cfg.getColorOrDefault("command.background")
   s.commandTextColor       = cfg.getColorOrDefault("command.text")
 
@@ -187,6 +195,7 @@ proc toToolbarPaneTheme*(cfg: HoconNode): ToolbarPaneTheme =
 
   s.buttonNormalColor = cfg.getColorOrDefault("button.normal")
   s.buttonHoverColor  = cfg.getColorOrDefault("button.hover")
+
 # }}}
 
 # {{{ loadTheme*()

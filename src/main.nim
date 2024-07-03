@@ -7138,7 +7138,7 @@ proc handleGlobalKeyEvents(a) =
 
       elif ke.isShortcutDown(scToggleTitleBar, a):
         toggleTitleBar(a)
- 
+
       # Save/restore layout
       elif ke.isShortcutDown(scSaveLayout1, a): saveLayout(0, a)
       elif ke.isShortcutDown(scSaveLayout2, a): saveLayout(1, a)
@@ -9132,6 +9132,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         colorProp("Marker Normal",      p & "marker.normal")
         colorProp("Marker Cursor",      p & "marker.cursor")
+      group:
         colorProp("Comment",            p & "comment")
       group:
         enumProp( "Background Shape",   p & "background-shape",
