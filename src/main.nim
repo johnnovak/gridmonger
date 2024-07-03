@@ -644,7 +644,7 @@ type
 
     windowTheme:              WindowTheme
     statusBarTheme:           StatusBarTheme
-    notesPaneTheme:           NotesPaneTheme
+    currentNotePaneTheme:     CurrentNotePaneTheme
     toolbarPaneTheme:         ToolbarPaneTheme
     levelTheme:               LevelTheme
 
@@ -892,7 +892,7 @@ type
     sectionLabels:           bool
 
     sectionPanes:            bool
-    sectionNotesPane:        bool
+    sectionCurrentNotePane:  bool
     sectionToolbarPane:      bool
 
     focusCaptured:           bool
@@ -2822,7 +2822,7 @@ proc updateWidgetStyles(a) =
     label.colorDown  = ab.getColorOrDefault("label.down")
 
   # Current note pane
-  let pn = cfg.getObjectOrEmpty("pane.notes")
+  let pn = cfg.getObjectOrEmpty("pane.current-note")
 
   a.theme.noteTextAreaStyle = koi.getDefaultTextAreaStyle()
 
@@ -2866,8 +2866,8 @@ proc updateTheme(a) =
   a.theme.toolbarPaneTheme = cfg.getObjectOrEmpty("pane.toolbar")
                                 .toToolbarPaneTheme
 
-  a.theme.notesPaneTheme = cfg.getObjectOrEmpty("pane.notes")
-                              .toNotesPaneTheme
+  a.theme.currentNotePaneTheme = cfg.getObjectOrEmpty("pane.current-note")
+                                    .toCurrentNotePaneTheme
 
   a.theme.levelTheme = cfg.getObjectOrEmpty("level").toLevelTheme
 
@@ -8279,7 +8279,7 @@ proc renderNoteMarker(x, y, w, h: float, note: Annotation, textColor: Color,
                       indexedNoteSize: float = 36.0; a) =
   alias(vg, a.vg)
 
-  let s = a.theme.notesPaneTheme
+  let s = a.theme.currentNotePaneTheme
 
   vg.save
 
@@ -8325,7 +8325,7 @@ proc renderCurrentNotePane(x, y, w, h: float; a) =
     if note.text == "" or note.kind == akLabel: return
 
     renderNoteMarker(x, y, w, h, note,
-                     textColor=a.theme.notesPaneTheme.textColor, a=a)
+                     textColor=a.theme.currentNotePaneTheme.textColor, a=a)
 
     var text = note.text
     const TextIndent = 44
@@ -8545,6 +8545,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
   alias(nls, ui.notesListState)
+  alias(cfg, a.theme.config)
 
   let
     ws  = a.theme.windowTheme
@@ -9176,8 +9177,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
   # {{{ Panes section
 
   if koi.sectionHeader("Panes", te.sectionPanes):
-    if koi.subSectionHeader("Notes Pane", te.sectionNotesPane):
-      p = "pane.notes."
+    if koi.subSectionHeader("Current Note Pane", te.sectionCurrentNotePane):
+      p = "pane.current-note."
       group:
         colorProp("Text",               p & "text")
       group:

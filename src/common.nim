@@ -405,7 +405,7 @@ type
     commandBackgroundColor*:       Color
     commandTextColor*:             Color
 
-  NotesPaneTheme* = ref object
+  CurrentNotePaneTheme* = ref object
     textColor*:                    Color
     indexColor*:                   Color
     indexBackgroundColor*:         array[4, Color]

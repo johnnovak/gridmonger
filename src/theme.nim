@@ -169,10 +169,10 @@ proc toStatusBarTheme*(cfg: HoconNode): StatusBarTheme =
   s.commandTextColor       = cfg.getColorOrDefault("command.text")
 
 # }}}
-# {{{ toNotesPaneTheme*()
-proc toNotesPaneTheme*(cfg: HoconNode): NotesPaneTheme =
+# {{{ toCurrentNotePaneTheme*()
+proc toCurrentNotePaneTheme*(cfg: HoconNode): CurrentNotePaneTheme =
   alias(s, result)
-  s = new NotesPaneTheme
+  s = new CurrentNotePaneTheme
 
   s.textColor  = cfg.getColorOrDefault("text")
   s.indexColor = cfg.getColorOrDefault("index")
@@ -217,6 +217,13 @@ proc loadTheme*(filename: string): HoconNode =
 
     cfg.limit("level.shadow.inner.width-factor", ShadowWidthFactorLimits)
     cfg.limit("level.shadow.outer.width-factor", ShadowWidthFactorLimits)
+
+    # Try pre-v1.2.0 path
+    var paneNotesObj = cfg.getObjectOpt("pane.notes")
+    if paneNotesObj.isSome:
+      # migrate to the new format
+      cfg.set("pane.current-note", paneNotesObj.get)
+      cfg.del("pane.notes")
 
     result = DefaultThemeConfig.deepCopy
     result.merge(cfg)
