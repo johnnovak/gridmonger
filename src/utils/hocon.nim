@@ -940,6 +940,59 @@ proc merge*(dest: HoconNode, src: HoconNode, path: string = "") =
 
 # }}}
 
+# {{{ del*()
+proc del*(node: HoconNode, path: string) =
+
+  proc isInt(s: string): bool =
+    try:
+      discard parseInt(s)
+      true
+    except ValueError:
+      false
+
+  var curr = node
+  let pathElems = path.split('.')
+
+  for i, key {.inject.} in pathElems:
+    let isLast = i == pathElems.high
+
+    var arrayIdx = int.none
+    try:
+      arrayIdx = parseInt(key).some
+    except ValueError:
+      discard
+
+    if arrayIdx.isSome and arrayIdx.get < 0:
+      raiseHoconPathError(path,
+                          fmt"Array index must be positive: {arrayIdx.get}")
+
+    if arrayIdx.isSome: # array index
+      if curr.kind != hnkArray:
+        raiseHoconPathError(path, fmt"'{key}' is not an array")
+
+      var arrayExtended = false
+      let arrayIdx = arrayIdx.get
+      if arrayIdx > curr.elems.high:
+        raiseHoconPathError(path, fmt"Invalid array index: {arrayIdx}")
+
+      if isLast:
+        curr.elems.delete(arrayIdx)
+      else:
+        curr = curr.elems[arrayIdx]
+
+    else: # object key
+      if curr.kind != hnkObject:
+        raiseHoconPathError(path, fmt"'{key}' is not an object")
+
+      if isLast:
+        curr.fields.del(key)
+      else:
+        if not curr.fields.hasKey(key):
+          raiseHoconPathError(path, fmt"'{key}' not found")
+        curr = curr.fields[key]
+
+# }}}
+
 # }}}
 
 # {{{ Tests
