@@ -79,17 +79,17 @@ func opposite*(o: Orientation): Orientation =
 
 type
   Map* = ref object
-    title*:        string
-    game*:         string
-    author*:       string
-    creationTime*: string
-    notes*:        string
+    title*:            string
+    game*:             string
+    author*:           string
+    creationTime*:     string
+    notes*:            string
 
-    levels*:       OrderedTable[Natural, Level]
-    levelsDirty*:  bool
+    levels*:           OrderedTable[Natural, Level]
+    levelsDirty*:      bool
 
-    coordOpts*:    CoordinateOptions
-    links*:        Links
+    coordOpts*:        CoordinateOptions
+    links*:            Links
 
     sortedLevelIds*:   seq[Natural]
     sortedLevelNames*: seq[string]
@@ -133,16 +133,14 @@ type
     regions*:           Regions
 
     annotations*:       Annotations
-
     cellGrid*:          CellGrid
-
     dirty*:             bool
 
   RegionOptions* = object
-    enabled*:         bool
-    colsPerRegion*:   Natural
-    rowsPerRegion*:   Natural
-    perRegionCoords*: bool
+    enabled*:           bool
+    colsPerRegion*:     Natural
+    rowsPerRegion*:     Natural
+    perRegionCoords*:   bool
 
   Regions* = object
     regionsByCoords*:   OrderedTable[RegionCoords, Region]
@@ -223,9 +221,9 @@ type
     wWritingSW     = (71, "writing")
 
   Annotations* = ref object
-    cols*, rows*:  Natural
-    annotations*:  OrderedTable[Natural, Annotation]
-    dirty*:        bool
+    cols*, rows*: Natural
+    annotations*: OrderedTable[Natural, Annotation]
+    dirty*:       bool
 
   AnnotationKind* = enum
     akComment  = 0
@@ -278,14 +276,14 @@ type
     cells*:       seq[bool]
 
   SelectionRect* = object
-    startRow*: Natural
-    startCol*: Natural
-    rect*:     Rect[Natural]
-    selected*: bool
+    startRow*:    Natural
+    startCol*:    Natural
+    rect*:        Rect[Natural]
+    selected*:    bool
 
   SelectionBuffer* = object
-    level*:     Level
-    selection*: Selection
+    level*:       Level
+    selection*:   Selection
 
 
 type
@@ -294,21 +292,21 @@ type
     lwNormal = (1, "Normal")
 
   GridStyle* = enum
-    gsNone   = (0, "None")
-    gsSolid  = (1, "Solid")
-    gsLoose  = (2, "Loose")
-    gsCross  = (3, "Cross")
+    gsNone  = (0, "None")
+    gsSolid = (1, "Solid")
+    gsLoose = (2, "Loose")
+    gsCross = (3, "Cross")
 
   OutlineStyle* = enum
-    osNone                = (0, "None")
-    osCell                = (1, "Cell")
-    osSquareEdges         = (2, "Square Edges")
-    osRoundedEdges        = (3, "Rounded Edges")
-    osRoundedEdgesFilled  = (4, "Filled Rounded Edges")
+    osNone               = (0, "None")
+    osCell               = (1, "Cell")
+    osSquareEdges        = (2, "Square Edges")
+    osRoundedEdges       = (3, "Rounded Edges")
+    osRoundedEdgesFilled = (4, "Filled Rounded Edges")
 
   OutlineFillStyle* = enum
-    ofsSolid    = (0, "Solid")
-    ofsHatched  = (1, "Hatched")
+    ofsSolid   = (0, "Solid")
+    ofsHatched = (1, "Hatched")
 
   NoteBackgroundShape* = enum
     nbsCircle    = (0, "Circle")

@@ -3,8 +3,8 @@ import std/options
 import std/strformat
 
 import annotations
-import common
 import cellgrid
+import common
 import regions
 import selection
 import utils/rect
