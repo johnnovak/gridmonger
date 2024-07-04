@@ -645,6 +645,7 @@ type
     windowTheme:              WindowTheme
     statusBarTheme:           StatusBarTheme
     currentNotePaneTheme:     CurrentNotePaneTheme
+    notesListPaneTheme:       NotesListPaneTheme
     toolbarPaneTheme:         ToolbarPaneTheme
     levelTheme:               LevelTheme
 
@@ -2869,6 +2870,9 @@ proc updateTheme(a) =
 
   a.theme.currentNotePaneTheme = cfg.getObjectOrEmpty("pane.current-note")
                                     .toCurrentNotePaneTheme
+
+  a.theme.notesListPaneTheme = cfg.getObjectOrEmpty("pane.notes-list")
+                                  .toNotesListPaneTheme
 
   a.theme.levelTheme = cfg.getObjectOrEmpty("level").toLevelTheme
 
@@ -8491,8 +8495,9 @@ proc rebuildNotesListCache(textW: float; a) =
 # }}}
 # {{{ noteButton()
 proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
-                note: Annotation, selected: bool): bool =
+                note: Annotation, active: bool): bool =
   alias(ui, g_app.ui)
+  alias(nt, g_app.theme.notesListPaneTheme)
 
   koi.autoLayoutPre()
 
@@ -8517,15 +8522,24 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
                 elif koi.isHot(id) and koi.hasNoActiveItem(): wsHover
                 else:                                         wsNormal
 
-    if selected or state in {wsHover, wsDown}:
-      vg.beginPath
-      vg.fillColor(if selected or state == wsDown: black(0.24)
-                   else: black(0.15))
-      vg.rect(x, y, w, h)
-      vg.fill
+    var bgColor = case state
+                  of wsNormal: nt.listBackgroundColor
+                  of wsHover, wsDown:  nt.itemBackgroundHoverColor
+                  else:        nt.listBackgroundColor
 
-    let textColor = if selected or state == wsDown: white(0.9)
-                    else: white(0.7)
+    var textColor = case state
+                    of wsNormal: nt.itemTextNormalColor
+                    of wsHover, wsDown:  nt.itemTextHoverColor
+                    else:        nt.itemTextNormalColor
+
+    if active:
+      bgColor   = nt.itemBackgroundActiveColor
+      textColor = nt.itemTextActiveColor
+
+    vg.beginPath
+    vg.fillColor(bgColor)
+    vg.rect(x, y, w, h)
+    vg.fill
 
     if note.kind == akIndexed:
       renderNoteMarker(x + markerX + 3, y+2, w, h, note, textColor,
@@ -8546,7 +8560,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
   alias(nls, ui.notesListState)
-  alias(cfg, a.theme.config)
+  alias(nt, a.theme.notesListPaneTheme)
 
   let
     ws  = a.theme.windowTheme
@@ -8562,13 +8576,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Background
   vg.beginPath
   vg.rect(x, y, w, h)
-  vg.fillColor(lerp(ws.backgroundColor, black, 0.25))
+  vg.fillColor(nt.listBackgroundColor)
   vg.fill
 
   # Filters & search
   vg.beginPath
   vg.rect(x, y, w, TopPad)
-  vg.fillColor(lerp(ws.backgroundColor, black, 0.15))
+  vg.fillColor(nt.controlsBackgroundColor)
   vg.fill
 
   var
@@ -8799,8 +8813,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
         nls.activeId = e.id.some
 
       if noteButton(e.id, textX, textY=17, textW, markerX, note,
-                    selected = (nls.activeId.isSome and
-                                nls.activeId.get == e.id)):
+                    active = (nls.activeId.isSome and
+                              nls.activeId.get == e.id)):
         moveCursorTo(e.location, a)
         if nls.linkCursor:
           nls.activeId = e.id.some
