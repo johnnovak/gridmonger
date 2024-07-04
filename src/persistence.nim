@@ -1273,7 +1273,7 @@ proc writeNotesListPaneState(rw; map: Map, s: AppState) =
     rw.write(nls.viewStartY.uint32)
 
     for levelId in map.sortedLevelIds:
-      rw.write(nls.levelSections[levelId].uint8)
+      rw.write(nls.levelSections.getOrDefault(levelId, false).uint8)
 
       let l = map.levels[levelId]
 
@@ -1284,7 +1284,8 @@ proc writeNotesListPaneState(rw; map: Map, s: AppState) =
         # (top-left corner), then go left to right, top to bottom.
         for rc in l.regionCoords:
           let r = l.regions[rc].get
-          rw.write(nls.regionSections[(levelId, rc)].uint8)
+          let key = (levelId, rc)
+          rw.write(nls.regionSections.getOrDefault(key, false).uint8)
 
 # }}}
 # {{{ writeAppState()
