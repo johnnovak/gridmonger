@@ -38,7 +38,6 @@ proc pushDebugIndent() =
   currDebugIndent += DebugIndent
 
 proc popDebugIndent() =
-  # TODO use clamp
   currDebugIndent = max(currDebugIndent - DebugIndent, 0)
 
 template debug(s: string) =
