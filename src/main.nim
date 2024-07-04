@@ -547,6 +547,8 @@ type
     activeId:          Option[ItemId]
     viewStartY:        float
     restoreViewStartY: bool
+    newViewStartY:     Option[float]
+    newActiveId:       Option[ItemId]
 
 
   NotesListCacheEntryKind = enum
@@ -8751,6 +8753,16 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   let scrollViewHeight = h-TopPad
 
+  if nls.newActiveId.isSome and nls.newViewStartY.isSome:
+    # We'll get here in the next frame syncToCursor was triggered in.
+    # This one frame delay is necessary to completely eliminate flicker.
+    koi.setScrollViewStartY(ScrollViewId, nls.newViewStartY.get)
+    nls.activeId = nls.newActiveId
+
+    nls.newActiveId   = ItemId.none
+    nls.newViewStartY = float.none
+
+
   koi.beginScrollView(ScrollViewId, x, y+TopPad, w, scrollViewHeight,
                       style=a.theme.notesListScrollViewStyle)
 
@@ -8770,6 +8782,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   if currNote.isNone or not nls.linkCursor:
     nls.activeId = ItemId.none
 
+  # Syncing to cursor is only triggered a single time if we need to change
+  # the active list item and the scroll view's position
   let syncToCursor = (nls.linkCursor and currNote.isSome) and
                      (ui.cursor != ui.prevCursor or not nls.prevLinkCursor)
 
@@ -8819,9 +8833,10 @@ proc renderNotesListPane(x, y, w, h: float; a) =
       koi.nextItemHeight(height)
 
       if syncToCursor and ui.cursor == e.location:
-        startY       = koi.autoLayoutNextY()
-        itemHeight   = height
-        nls.activeId = e.id.some
+        startY          = koi.autoLayoutNextY()
+        itemHeight      = height
+        # We'll set the new active item in the next frame to eliminate flicker
+        nls.newActiveId = e.id.some
 
       if noteButton(e.id, textX, textY=17, textW, markerX, note,
                     active = (nls.activeId.isSome and
@@ -8837,8 +8852,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.restoreViewStartY = false
 
   if syncToCursor and currNoteInCache:
-    koi.setScrollViewStartY(ScrollViewId, startY - scrollViewHeight * 0.45 +
-                                          itemHeight)
+    # We'll set the new view position in the next frame to eliminate flicker
+    nls.newViewStartY = (startY - scrollViewHeight * 0.45 + itemHeight).some
 
   # Needed to save the scroll view position into the map file
   nls.viewStartY = koi.getScrollViewStartY(ScrollViewId)
