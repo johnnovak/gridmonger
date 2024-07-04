@@ -8737,11 +8737,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   if map.levelsDirty:
     for _, l in map.levels:
       if l.id notin nls.levelSections:
-        nls.levelSections[l.id] = true
+        nls.levelSections[l.id] = false
 
       if l.regionOpts.enabled:
         for regionCoords, _ in l.regions.sortedRegions:
-          nls.regionSections[(l.id, regionCoords)] = true
+          let key = (l.id, regionCoords)
+          if key notin nls.regionSections:
+            nls.regionSections[key] = false
 
     map.levelsDirty = false
 
