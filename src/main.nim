@@ -534,15 +534,20 @@ type
 
 
   NotesListState = object
-    currFilter:     NotesListFilter
-    prevFilter:     NotesListFilter
-    linkCursor:     bool
-    prevLinkCursor: bool
-    cache:          seq[NotesListCacheEntry]
-    levelSections:  Table[Natural, bool]
-    regionSections: Table[tuple[levelId: Natural, rc: RegionCoords], bool]
-    activeId:       Option[ItemId]
-    viewStartY:     float
+    currFilter:        NotesListFilter
+    prevFilter:        NotesListFilter
+    linkCursor:        bool
+    prevLinkCursor:    bool
+
+    levelSections:     Table[Natural, bool]
+    regionSections:    Table[tuple[levelId: Natural, rc: RegionCoords], bool]
+
+    cache:             seq[NotesListCacheEntry]
+
+    activeId:          Option[ItemId]
+    viewStartY:        float
+    restoreViewStartY: bool
+
 
   NotesListCacheEntryKind = enum
     nckNote, nckLevel, nckRegion
@@ -3104,11 +3109,12 @@ proc loadMap(path: string; a): bool =
       if s.notesListPaneState.isSome:
         let nls = s.notesListPaneState.get
         with a.ui.notesListState:
-          currFilter     = nls.filter
-          linkCursor     = nls.linkCursor
-          viewStartY     = nls.viewStartY.float
-          levelSections  = nls.levelSections
-          regionSections = nls.regionSections
+          currFilter        = nls.filter
+          linkCursor        = nls.linkCursor
+          viewStartY        = nls.viewStartY.float
+          restoreViewStartY = true
+          levelSections     = nls.levelSections
+          regionSections    = nls.regionSections
 
       a.ui.drawLevelParams.setZoomLevel(a.theme.levelTheme, s.zoomLevel)
       a.ui.mouseCanStartExcavate = true
@@ -8740,9 +8746,6 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   koi.beginScrollView(ScrollViewId, x, y+TopPad, w, scrollViewHeight,
                       style=a.theme.notesListScrollViewStyle)
 
-  # Needed to restore the scroll view position from the map file
-  koi.setScrollViewStartY(ScrollViewId, nls.viewStartY)
-
   var lp = DefaultAutoLayoutParams
   lp.itemsPerRow = 1
   lp.rowWidth    = w
@@ -8820,6 +8823,10 @@ proc renderNotesListPane(x, y, w, h: float; a) =
           nls.activeId = e.id.some
 
   koi.endScrollView()
+
+  if nls.restoreViewStartY:
+    koi.setScrollViewStartY(ScrollViewId, nls.viewStartY)
+    nls.restoreViewStartY = false
 
   if syncToCursor and currNoteInCache:
     koi.setScrollViewStartY(ScrollViewId, startY - scrollViewHeight * 0.45 +
