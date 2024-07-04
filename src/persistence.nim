@@ -94,7 +94,8 @@ const
 # }}}
 # {{{ Types
 type
-  MapReadError* = object of IOError
+  MapReadError*  = object of IOError
+  MapWriteError* = object of IOError
 
   CompressionType = enum
     ctUncompressed     = (0, "uncompressed")
@@ -166,6 +167,11 @@ const
   FourCC_GRMM_tool = "tool"
 
 # }}}
+
+proc logError(e: ref Exception) =
+  var msg = "Error writing map: " & e.msg &
+            "\n\nStack trace:\n" & getStackTrace(e)
+  log.error(msg)
 
 # {{{ Read
 
@@ -1231,9 +1237,11 @@ proc readMapFile*(path: string): tuple[map: Map,
     result = (map, appState, warning)
 
   except MapReadError as e:
+    logError(e)
     raise newException(MapReadError,
-                       fmt"{e.msg} (at file position {rr.getFilePos})")
+                       fmt"{e.msg} (at file position {rr.getFilePos})", e)
   except CatchableError as e:
+    logError(e)
     raise newException(MapReadError, e.msg, e)
   finally:
     if rr != nil: rr.close
@@ -1521,7 +1529,8 @@ proc writeMapFile*(map: Map, appState: AppState, path: string) =
     writeAppState(rw, map, appState)
 
   except CatchableError as e:
-    raise newException(MapReadError, fmt"Error writing map file: {e.msg}", e)
+    logError(e)
+    raise newException(MapWriteError, fmt"Error writing map file: {e.msg}", e)
   finally:
     if rw != nil: rw.close
 
