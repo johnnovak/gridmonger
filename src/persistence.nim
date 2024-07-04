@@ -400,7 +400,7 @@ proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
   # Section states
   for levelIndex in 0..<map.levels.len:
     let sectionState = rr.read(uint8)
-    checkBool(sectionState, "stat.notl.sectionState")
+    checkBool(sectionState, "stat.notl.levelSectionState")
     s.levelSections[levelIndex] = sectionState.bool
 
     let l = map.levels[levelIndex]
@@ -414,8 +414,9 @@ proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
         let r = l.regions[rc].get
 
         let regionState = rr.read(uint8)
-        checkBool(regionState, "stat.notl.regionState")
-        s.regionSections[(levelIndex.Natural, rc)] = regionState.bool
+        checkBool(regionState, "stat.notl.regionSectionState")
+        let key = (levelIndex.Natural, rc)
+        s.regionSections[key] = regionState.bool
 
   result = s
 
