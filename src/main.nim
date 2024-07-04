@@ -8721,12 +8721,15 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     markerX = LeftPad + NoteHorizOffs
     textW   = w - TextIndent - LeftPad - RightPad - NoteHorizOffs
 
+  var cacheRebuilt = false
+
   if map.levelsDirty or l.dirty or l.annotations.dirty or
      nls.currFilter != nls.prevFilter or
      ui.cursor.levelId != ui.prevCursor.levelId or
      (l.regionOpts.enabled and map.getRegionCoords(ui.cursor) !=
                                map.getRegionCoords(ui.prevCursor)):
     rebuildNotesListCache(textW, a)
+    cacheRebuilt = true
 
   nls.prevFilter = nls.currFilter
 
@@ -8784,8 +8787,16 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   # Syncing to cursor is only triggered a single time if we need to change
   # the active list item and the scroll view's position
-  let syncToCursor = (nls.linkCursor and currNote.isSome) and
-                     (ui.cursor != ui.prevCursor or not nls.prevLinkCursor)
+  #
+  # Triggering on cache rebuilds takes care of weird edge such as like deleting
+  # a note then undoing it, without changing the cursor position (this works
+  # because undo sets the current level's dirty flag).
+
+  let syncToCursor = nls.linkCursor and (
+                       cacheRebuilt or
+                       (currNote.isSome and (ui.cursor != ui.prevCursor or
+                                               not nls.prevLinkCursor))
+                     )
 
   let currNoteInCache = nls.cache.anyIt(it.kind == nckNote and
                                         it.location == ui.cursor)
