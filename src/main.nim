@@ -3049,8 +3049,12 @@ proc saveAppConfig(a) =
   cfg.set(p & "ui.wasd-mode",         a.ui.wasdMode)
   cfg.set(p & "ui.paste-wraparound",  a.ui.pasteWraparound)
 
-  setLayoutWindowFields(a.layout, a)
-  cfg.set(p & "layout", mkLayoutObject(a.layout.some))
+  var currLayout = a.layout
+  setLayoutWindowFields(currLayout, a)
+  # The theme editor is always hidden at startup
+  currLayout.showThemeEditor = false
+
+  cfg.set(p & "layout", mkLayoutObject(currLayout.some))
 
   let layouts = collect:
     for l in a.savedLayouts: mkLayoutObject(l)
@@ -10389,6 +10393,9 @@ proc restoreLayoutsFromConfig(cfg: HoconNode; a) =
 
 
   a.layout = cfg.getObjectOrEmpty("last-state.layout").toLayout
+  # The theme editor is always hidden at startup
+  a.layout.showThemeEditor = false
+
   restoreLayout(a.layout, a)
 
 
