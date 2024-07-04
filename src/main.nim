@@ -3564,8 +3564,12 @@ template validateCommonGeneralMapFields(dlg: untyped): string =
 
 # {{{ calcDialogX()
 proc calcDialogX(dlgWidth: float; a): float =
-  let mainPane = mainPaneRect(a)
-  mainPane.x1 + mainPane.w.float*0.5 - dlgWidth*0.5
+  var w = koi.winWidth()
+
+  if a.layout.showThemeEditor:
+    w -= ThemePaneWidth
+
+  w.float*0.5 - dlgWidth*0.5
 
 # }}}
 # {{{ dialogButtonsStartPos()
