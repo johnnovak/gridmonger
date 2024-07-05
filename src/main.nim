@@ -8610,7 +8610,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
   var
     wx = LeftPad
-    wy = 44
+    wy = y + 18
 
   let
     wh = 24

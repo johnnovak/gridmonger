@@ -7,8 +7,6 @@ BUGS
   mode, move a few steps, disable trail mode, move a few steps, repeat a few
   times, then undo back to the beginning)
 
-- notes list pane drawing bug when title bar is hidden
-
 
 TODO
 ====
