@@ -400,9 +400,9 @@ type
 
     # Editing tab
     movementWraparound: bool
-    openEndedExcavate:  bool
     walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
+    openEndedExcavate:  bool
 
 
   Paths = object
@@ -745,9 +745,9 @@ type
 
     # Editing tab
     movementWraparound: bool
-    openEndedExcavate:  bool
     walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
+    openEndedExcavate:  bool
 
 
   SaveDiscardMapDialogParams = object
@@ -2997,13 +2997,17 @@ proc saveAppConfig(a) =
   var cfg = newHoconObject()
   cfg.set("config-version", $AppVersion)
 
+  # Preferences
   var p = "preferences."
   cfg.set(p & "load-last-map",                  a.prefs.loadLastMap)
+
   cfg.set(p & "splash.show-at-startup",         a.prefs.showSplash)
   cfg.set(p & "splash.auto-close.enabled",      a.prefs.autoCloseSplash)
   cfg.set(p & "splash.auto-close.timeout-secs", a.prefs.splashTimeoutSecs)
+
   cfg.set(p & "auto-save.enabled",              a.prefs.autosave)
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
+
   cfg.set(p & "editing.movement-wraparound",    a.prefs.movementWraparound)
   cfg.set(p & "editing.open-ended-excavate",    a.prefs.openEndedExcavate)
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
@@ -3014,6 +3018,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
+  # Last state
   p = "last-state."
   cfg.set(p & "last-document", if a.doc.path == "": a.doc.lastSavePath
                                else: a.doc.path)
@@ -3061,6 +3066,7 @@ proc saveAppConfig(a) =
   let layouts = collect:
     for l in a.savedLayouts: mkLayoutObject(l)
 
+  # Layouts
   cfg.set("saved-layouts", hoconNode(layouts))
 
   saveAppConfig(cfg, a.paths.configFile, a)
@@ -3838,9 +3844,9 @@ proc openPreferencesDialog(a) =
   dlg.checkForUpdates    = a.prefs.checkForUpdates
 
   dlg.movementWraparound = a.prefs.movementWraparound
-  dlg.openEndedExcavate  = a.prefs.openEndedExcavate
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
   dlg.walkCursorMode     = a.prefs.walkCursorMode
+  dlg.openEndedExcavate  = a.prefs.openEndedExcavate
 
   a.dialogs.activeDialog = dlgPreferencesDialog
 
@@ -3959,18 +3965,19 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.movementWraparound, style = a.theme.checkBoxStyle)
 
-      koi.label("Open-ended exacavate", style=a.theme.labelStyle)
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.openEndedExcavate, style = a.theme.checkBoxStyle)
-
       koi.label("YUBN diagonal movement",
                  style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.yubnMovementKeys, style = a.theme.checkBoxStyle)
 
       koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
-      koi.nextItemWidth(60)
+      koi.nextItemWidth(70)
       koi.dropDown(dlg.walkCursorMode, style = a.theme.dropDownStyle)
+
+    group:
+      koi.label("Open-ended exacavate", style=a.theme.labelStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.openEndedExcavate, style = a.theme.checkBoxStyle)
 
   koi.endView()
 
