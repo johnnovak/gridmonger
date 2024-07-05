@@ -2353,11 +2353,11 @@ proc drawLinkMarkers(map: Map, levelId: Natural; ctx) =
   forAllViewCells_CellCoords:
     (loc.row, loc.col) = (row, col)
 
-    let srcLoc = map.links.getBySrc(loc)
-    let destLoc = map.links.getByDest(loc)
+    let srcLoc   = map.links.getBySrc(loc)
+    let destLocs = map.links.getByDest(loc)
 
-    if (srcLoc.isSome  and not isSpecialLevelId(srcLoc.get.levelId)) or
-       (destLoc.isSome and destLoc.get.anyIt(not isSpecialLevelId(it.levelId))):
+    if (srcLoc.isSome and not isSpecialLevelId(srcLoc.get.levelId)) or
+       (destLocs.isSome and destLocs.get.anyIt(not isSpecialLevelId(it.levelId))):
 
       let x = cellX(viewCol, dp)
       let y = cellY(viewRow, dp)
