@@ -15,6 +15,9 @@ TODO
 
   - finish diagonal movement (numpad, YUBN)
   - improve restoring the window's size on screen dimension changes
+  - test layout save/restore on multi-monitor setup
+  - test restore last layout on multi-monitor setup
+  - test loading v1.1.0 configs, themes and maps
 
   - window handling bugs:
     - crash when dragging maximised window
