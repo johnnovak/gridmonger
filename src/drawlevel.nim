@@ -97,14 +97,15 @@ type
     selectionWraparound*: bool
 
     # internal
-    zoomLevel:          range[MinZoomLevel..MaxZoomLevel]
-    gridSize:           float
-    cellCoordsFontSize: float
+    zoomLevel:           range[MinZoomLevel..MaxZoomLevel]
+    gridSize:            float
+    cellCoordsFontSize:  float
 
-    thinStrokeWidth:    float
-    normalStrokeWidth:  float
+    thinStrokeWidth:     float
+    normalStrokeWidth:   float
+    linkLineStrokeWidth: float
 
-    lineWidth:          LineWidth
+    lineWidth:           LineWidth
 
     # Various correction factors
     vertTransformXOffs:    float
@@ -219,6 +220,8 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
                      elif zl <= 12: 6
                      elif zl <= 17: 7
                      else:          8
+
+  dp.linkLineStrokeWidth = dp.gridsize / 8
 
 # }}}
 # {{{ incZoomLevel*()
@@ -415,7 +418,7 @@ func calcBlendedFloorColor*(floorColor: Natural, transparentFloor = false;
 
 # }}}
 # {{{ setLevelClippingRect()
-proc setLevelClippingRect(l: Level; ctx) =
+proc setLevelClippingRect(l: Level; expandBy: float = 0; ctx) =
   alias(dp, ctx.dp)
   alias(lt, ctx.lt)
   alias(vg, ctx.vg)
@@ -431,10 +434,10 @@ proc setLevelClippingRect(l: Level; ctx) =
       of lwThin:   ( 0,  0,  1,  1)
 
   var
-    x = dp.startX + ox
-    y = dp.startY + oy
-    w = dp.gridSize * dp.viewCols + ow
-    h = dp.gridSize * dp.viewRows + oh
+    x = dp.startX + ox - expandBy
+    y = dp.startY + oy - expandBy
+    w = dp.gridSize * dp.viewCols + ow + expandBy*2
+    h = dp.gridSize * dp.viewRows + oh + expandBy*2
 
   if lt.outlineOverscan:
     let
@@ -2726,6 +2729,52 @@ proc drawSelectionHighlight(levelRows, levelCols: Natural; ctx) =
 
 # }}}
 
+# {{{ drawLinkedCellsOverlay()
+proc drawLinkedCellsOverlay(map: Map, level: Level; ctx) =
+  alias(dp, ctx.dp)
+  alias(lt, ctx.lt)
+  alias(vg, ctx.vg)
+
+  vg.save
+
+  vg.resetScissor
+  setLevelClippingRect(level, expandBy=5.0, ctx)
+
+  vg.beginPath
+  vg.strokeColor(lt.linkMarkerColor.withAlpha(0.8))
+  vg.strokeWidth(dp.linkLineStrokeWidth)
+  vg.lineCap(lcjRound)
+
+  for srcRow in 0..<level.rows:
+    for srcCol in 0..<level.cols:
+      let destLoc = map.links.getBySrc(Location(levelId: level.id,
+                                                row: srcRow, col: srcCol))
+
+      if (destLoc.isSome and destLoc.get.levelId == level.id and
+          not isSpecialLevelId(destLoc.get.levelId)):
+        let destLoc = destLoc.get
+
+        let
+          srcX  = cellX(srcCol - dp.viewStartCol, dp)
+          srcY  = cellY(srcRow - dp.viewStartRow, dp)
+          srcCx = srcX + dp.gridSize / 2
+          srcCy = srcY + dp.gridSize / 2
+
+          rowDiff = destLoc.row - srcRow
+          colDiff = destLoc.col - srcCol
+
+          destCx = srcCx + colDiff * dp.gridSize
+          destCy = srcCy + rowDiff * dp.gridSize
+
+        vg.moveTo(srcCx, srcCy)
+        vg.lineTo(destCx, destCy)
+
+  vg.stroke()
+
+  vg.restore
+
+# }}}
+
 # {{{ renderEdgeOutlines()
 proc renderEdgeOutlines(viewBuf: Level): OutlineBuf =
   var ol = newOutlineBuf(viewBuf.rows, viewBuf.cols)
@@ -2836,7 +2885,7 @@ proc drawLevel*(map: Map, levelId: Natural; ctx) =
 
   vg.save
 
-  setLevelClippingRect(l, ctx)
+  setLevelClippingRect(l, ctx=ctx)
 
   if lt.backgroundHatchEnabled: drawBackgroundHatch(ctx)
   else:                         drawBackground(ctx)
@@ -2854,7 +2903,6 @@ proc drawLevel*(map: Map, levelId: Natural; ctx) =
   if dp.drawLevel:
     if lt.outlineStyle == osCell: drawCellOutlines(l, ctx)
     elif outlineBuf.isSome:       drawEdgeOutlines(l, outlineBuf.get, ctx)
-
   drawCellBackgroundsAndGrid(viewBuf, ctx)
 
   let drawSelectionBuffer = dp.selectionBuffer.isSome
@@ -2882,7 +2930,7 @@ proc drawLevel*(map: Map, levelId: Natural; ctx) =
   if drawSelectionBuffer: drawSelectionHighlight(l.rows, l.cols, ctx)
   if dp.drawCursorGuides: drawCursorGuides(ctx)
 
-  setLevelClippingRect(l, ctx)
+  drawLinkedCellsOverlay(map, l, ctx)
 
   vg.restore
 
