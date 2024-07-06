@@ -111,9 +111,9 @@ type
     vertTransformXOffs:    float
     vertRegionBorderYOffs: float
 
-    lineHatchPatterns:        LineHatchPatterns
-    cursorLineHatchPatterns:  LineHatchPatterns
-    lineHatchSize:            range[MinLineHatchSize..MaxLineHatchSize]
+    lineHatchPatterns:     LineHatchPatterns
+    cellLineHatchPatterns: LineHatchPatterns
+    lineHatchSize:         range[MinLineHatchSize..MaxLineHatchSize]
 
 
   Outline = enum
@@ -164,7 +164,7 @@ proc newDrawLevelParams*(): DrawLevelParams =
   for paint in result.lineHatchPatterns.mitems:
     paint.image = NoImage
 
-  for paint in result.cursorLineHatchPatterns.mitems:
+  for paint in result.cellLineHatchPatterns.mitems:
     paint.image = NoImage
 
   result.zoomLevel = MinZoomLevel
@@ -390,7 +390,7 @@ proc initDrawLevelParams*(dp; lt; vg: NVGContext, pxRatio: float) =
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
-  for paint in dp.cursorLineHatchPatterns:
+  for paint in dp.cellLineHatchPatterns:
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
@@ -398,7 +398,7 @@ proc initDrawLevelParams*(dp; lt; vg: NVGContext, pxRatio: float) =
                           dp.lineHatchPatterns)
 
   renderLineHatchPatterns(dp, vg, pxRatio, lt.foregroundNormalCursorColor,
-                          dp.cursorLineHatchPatterns)
+                          dp.cellLineHatchPatterns)
 
   dp.setZoomLevel(lt, dp.zoomLevel)
 
@@ -1878,7 +1878,7 @@ proc drawSecretDoorBlock(x, y: float; floorColor: Natural;
 
   alias(vg, ctx.vg)
 
-  let paint = if isCursorActive: dp.cursorLineHatchPatterns[dp.lineHatchSize]
+  let paint = if isCursorActive: dp.cellLineHatchPatterns[dp.lineHatchSize]
               else: dp.lineHatchPatterns[dp.lineHatchSize]
 
   vg.beginPath
