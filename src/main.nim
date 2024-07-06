@@ -647,7 +647,10 @@ type
 
     levelDropDownStyle:       DropDownStyle
     noteTextAreaStyle:        TextAreaStyle
-    notesListScrollViewStyle: ScrollViewStyle
+
+    notesListLevelSectionStyle:  SectionHeaderStyle
+    notesListRegionSectionStyle: SectionHeaderStyle
+    notesListScrollViewStyle:    ScrollViewStyle
 
     windowTheme:              WindowTheme
     statusBarTheme:           StatusBarTheme
@@ -2638,9 +2641,9 @@ proc updateWidgetStyles(a) =
     label.align    = haCenter
 
   # Drop down
-  let dd = cfg.getObjectOrEmpty("ui.drop-down")
-
   a.theme.dropDownStyle = koi.getDefaultDropDownStyle()
+
+  let dd = cfg.getObjectOrEmpty("ui.drop-down")
 
   with a.theme.dropDownStyle:
     buttonCornerRadius      = w.getFloatOrDefault("corner-radius")
@@ -2654,17 +2657,10 @@ proc updateWidgetStyles(a) =
 
     itemListCornerRadius     = buttonCornerRadius
     itemBackgroundColorHover = w.getColorOrDefault("background.active")
+    itemListFillColor        = dd.getColorOrDefault("item-list-background")
 
-    if dd.isEmpty:
-      itemListFillColor = lerp(cfg.getColorOrDefault("ui.dialog.background"),
-                               black(), 0.4)
-
-      item.color        = cfg.getColorOrDefault("ui.dialog.label")
-      item.colorHover   = w.getColorOrDefault("foreground.active")
-    else:
-      itemListFillColor = dd.getColorOrDefault("item-list-background")
-      item.color        = dd.getColorOrDefault("item.normal")
-      item.colorHover   = dd.getColorOrDefault("item.hover")
+    item.color        = cfg.getColorOrDefault("ui.dialog.label")
+    item.colorHover   = w.getColorOrDefault("foreground.active")
 
   # Text field
   a.theme.textFieldStyle = koi.getDefaultTextFieldStyle()
@@ -2855,12 +2851,32 @@ proc updateWidgetStyles(a) =
       thumbFillColorDown  = c.withAlpha(0.6)
 
   # Notes list pane
+  let nlp = cfg.getObjectOrEmpty("pane.notes-list")
+
   a.theme.notesListScrollViewStyle = koi.getDefaultScrollViewStyle()
 
   with a.theme.notesListScrollViewStyle:
     with scrollBarStyle:
-      discard
-      # TODO
+      let c = nlp.getColorOrDefault("scroll-bar")
+      thumbFillColor      = c.withAlpha(0.4)
+      thumbFillColorHover = c.withAlpha(0.5)
+      thumbFillColorDown  = c.withAlpha(0.6)
+
+  a.theme.notesListLevelSectionStyle = koi.getDefaultSectionHeaderStyle()
+
+  with a.theme.notesListLevelSectionStyle:
+    backgroundColor = nlp.getColorOrDefault("level-section.background")
+    label.color     = nlp.getColorOrDefault("level-section.text")
+    triangleColor   = nlp.getColorOrDefault("level-section.text")
+    separatorColor  = nlp.getColorOrDefault("section-separator")
+
+  a.theme.notesListRegionSectionStyle = koi.getDefaultSubSectionHeaderStyle()
+
+  with a.theme.notesListRegionSectionStyle:
+    backgroundColor = nlp.getColorOrDefault("region-section.background")
+    label.color     = nlp.getColorOrDefault("region-section.text")
+    triangleColor   = nlp.getColorOrDefault("region-section.text")
+    separatorColor  = nlp.getColorOrDefault("section-separator")
 
 # }}}
 # {{{ updateTheme()
@@ -8541,28 +8557,25 @@ proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
       result = true
 
   addDrawLayer(koi.currentLayer(), vg):
-    let state = if koi.isHot(id) and koi.isActive(id):        wsDown
-                elif koi.isHot(id) and koi.hasNoActiveItem(): wsHover
-                else:                                         wsNormal
+    let
+      state = if koi.isHot(id) and koi.isActive(id):        wsDown
+              elif koi.isHot(id) and koi.hasNoActiveItem(): wsHover
+              else:                                         wsNormal
 
-    var bgColor = case state
-                  of wsNormal: nt.listBackgroundColor
-                  of wsHover, wsDown:  nt.itemBackgroundHoverColor
-                  else:        nt.listBackgroundColor
+      hover = state in {wsHover, wsDown}
 
-    var textColor = case state
-                    of wsNormal: nt.itemTextNormalColor
-                    of wsHover, wsDown:  nt.itemTextHoverColor
-                    else:        nt.itemTextNormalColor
+    if active or hover:
+      let bgColor = if active: nt.itemBackgroundActiveColor
+                    else:      nt.itemBackgroundHoverColor
 
-    if active:
-      bgColor   = nt.itemBackgroundActiveColor
-      textColor = nt.itemTextActiveColor
+      vg.beginPath
+      vg.fillColor(bgColor)
+      vg.rect(x, y, w, h)
+      vg.fill
 
-    vg.beginPath
-    vg.fillColor(bgColor)
-    vg.rect(x, y, w, h)
-    vg.fill
+    let textColor = if active:  nt.itemTextActiveColor
+                    elif hover: nt.itemTextHoverColor
+                    else:       nt.itemTextNormalColor
 
     if note.kind == akIndexed:
       renderNoteMarker(x + markerX + 3, y+2, w, h, note, textColor,
@@ -8590,22 +8603,23 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     l   = currLevel(a)
     map = a.doc.map
 
+  const FilterPanelHeight = 169
+
   const
-    TopPad     = 169
     LeftPad    = 16
     RightPad   = 16
     TextIndent = 44
 
-  # Background
-  vg.beginPath
-  vg.rect(x, y, w, h)
-  vg.fillColor(nt.listBackgroundColor)
-  vg.fill
-
   # Filters & search
   vg.beginPath
-  vg.rect(x, y, w, TopPad)
+  vg.rect(x, y, w, FilterPanelHeight)
   vg.fillColor(nt.controlsBackgroundColor)
+  vg.fill
+
+  # Background
+  vg.beginPath
+  vg.rect(x, y+FilterPanelHeight, w, h-FilterPanelHeight)
+  vg.fillColor(nt.listBackgroundColor)
   vg.fill
 
   var
@@ -8763,7 +8777,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Scroll view with notes
   const ScrollViewId = koi.hashId("notes-panel:scroll-view")
 
-  let scrollViewHeight = h-TopPad
+  let scrollViewHeight = h-FilterPanelHeight
 
   if nls.newActiveId.isSome and nls.newViewStartY.isSome:
     # We'll get here in the next frame syncToCursor was triggered in.
@@ -8775,7 +8789,8 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     nls.newViewStartY = float.none
 
 
-  koi.beginScrollView(ScrollViewId, x, y+TopPad, w, scrollViewHeight,
+  koi.beginScrollView(ScrollViewId, x,
+                      y+FilterPanelHeight, w, scrollViewHeight,
                       style=a.theme.notesListScrollViewStyle)
 
   var lp = DefaultAutoLayoutParams
@@ -8832,14 +8847,18 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     of nckLevel:
       currLevel = map.levels[e.levelId]
       addNote = koi.sectionHeader(currLevel.getDetailedName(short=true),
-                                  nls.levelSections[currLevel.id])
+                                  nls.levelSections[currLevel.id],
+                                  style=a.theme.notesListLevelSectionStyle)
 
     of nckRegion:
       if nls.currFilter.scope == nsfLevel or nls.levelSections[currLevel.id]:
         let region = currLevel.regions[e.regionCoords].get
-        addNote = koi.subsectionHeader(region.name,
-                                       nls.regionSections[(currLevel.id,
-                                                           e.regionCoords)])
+
+        addNote = koi.subsectionHeader(
+          region.name,
+          nls.regionSections[(currLevel.id, e.regionCoords)],
+          style=a.theme.notesListRegionSectionStyle)
+
     of nckNote:
       if not addNote:
         continue
@@ -9273,20 +9292,20 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Controls Background",       p & "controls-background")
         colorProp("List Background",           p & "list-background")
       group:
-        colorProp("Item Background Hover",     p & "item.background.hover")
-        colorProp("Item Background Down",      p & "item.background.down")
-        colorProp("Item Background Active",    p & "item.background.active")
-      group:
-        colorProp("Item Text Normal",          p & "item.text.normal")
-        colorProp("Item Text Hover",           p & "item.text.hover")
-        colorProp("Item Text Down",            p & "item.text.down")
-        colorProp("Item Text Active",          p & "item.text.active")
-      group:
         colorProp("Level Section Background",  p & "level-section.background")
         colorProp("Level Section Text",        p & "level-section.text")
       group:
         colorProp("Region Section Background", p & "region-section.background")
         colorProp("Region Section Text",       p & "region-section.text")
+      group:
+        colorProp("Section Separator",         p & "section-separator")
+      group:
+        colorProp("Item Background Hover",     p & "item.background.hover")
+        colorProp("Item Background Active",    p & "item.background.active")
+      group:
+        colorProp("Item Text Normal",          p & "item.text.normal")
+        colorProp("Item Text Hover",           p & "item.text.hover")
+        colorProp("Item Text Active",          p & "item.text.active")
       group:
         colorProp("Scroll Bar",                p & "scroll-bar")
 

@@ -197,21 +197,10 @@ proc toNotesListPaneTheme*(cfg: HoconNode): NotesListPaneTheme =
   s.listBackgroundColor     = cfg.getColorOrDefault("list-background")
 
   s.itemBackgroundHoverColor  = cfg.getColorOrDefault("item.background.hover")
-  s.itemBackgroundDownColor   = cfg.getColorOrDefault("item.background.down")
   s.itemBackgroundActiveColor = cfg.getColorOrDefault("item.background.active")
-
-  s.itemTextNormalColor = cfg.getColorOrDefault("item.text.normal")
-  s.itemTextHoverColor  = cfg.getColorOrDefault("item.text.hover")
-  s.itemTextDownColor   = cfg.getColorOrDefault("item.text.down")
-  s.itemTextActiveColor = cfg.getColorOrDefault("item.text.active")
-
-  s.levelSectionBackgroundColor  = cfg.getColorOrDefault("level-section.background")
-  s.levelSectionTextColor        = cfg.getColorOrDefault("level-section.text")
-
-  s.regionSectionBackgroundColor = cfg.getColorOrDefault("region-section.background")
-  s.regionSectionTextColor       = cfg.getColorOrDefault("region-section.text")
-
-  s.scrollBarColor = cfg.getColorOrDefault("scroll-bar")
+  s.itemTextNormalColor       = cfg.getColorOrDefault("item.text.normal")
+  s.itemTextHoverColor        = cfg.getColorOrDefault("item.text.hover")
+  s.itemTextActiveColor       = cfg.getColorOrDefault("item.text.active")
 
 # }}}
 # {{{ toToolbarPaneTheme*()
@@ -260,6 +249,42 @@ proc loadTheme*(filename: string): HoconNode =
       cfg.set("pane.current-note", paneNotesObj.get)
       cfg.del("pane.notes")
 
+    # Default new settings
+    if cfg.getObjectOpt("ui.drop-down").isNone:
+      let color = lerp(cfg.getColorOrDefault("ui.dialog.background"),
+                       black(), 0.4)
+      cfg.set("ui.drop-down.item-list-background", $color)
+
+    if cfg.getObjectOpt("pane.notes-list").isNone:
+      var nl = newHoconObject()
+
+      let bgColor = cfg.getColorOrDefault("ui.dialog.background")
+
+      nl.set("controls-background", $lerp(bgColor, black(), 0.2))
+      nl.set("list-background", $bgColor)
+
+      var (blendCol, blendColInv) = if bgColor.isLight: (black(), white())
+                                    else:               (white(), black())
+
+      nl.set("item.background.hover",  $lerp(bgColor, blendCol, 0.08))
+      nl.set("item.background.active", $lerp(bgColor, blendCol, 0.15))
+
+      let textFg = cfg.getColorOrDefault("ui.dialog.label")
+      nl.set("item.text.normal", $textFg)
+      nl.set("item.text.hover",  $lerp(textFg, blendCol, 0.2))
+      nl.set("item.text.active", $lerp(textFg, blendCol, 0.4))
+
+      nl.set("level-section.background", $lerp(bgColor, blendColInv, 0.3))
+      nl.set("level-section.text",       $lerp(textFg,  blendCol,    0.2))
+
+      nl.set("region-section.background", $lerp(bgColor, blendColInv, 0.4))
+      nl.set("region-section.text",       $lerp(textFg,  blendCol,    0.2))
+
+      nl.set("section-separator", $lerp(bgColor, blendCol, 0.06))
+      nl.set("scroll-bar",        $lerp(bgColor, blendCol, 0.5))
+
+      cfg.set("pane.notes-list", nl)
+
     result = DefaultThemeConfig.deepCopy
     result.merge(cfg)
 
@@ -277,5 +302,5 @@ proc saveTheme*(config: HoconNode, filename: string) =
     if s != nil: s.close
 
 # }}}
-#
+
 # vim: et:ts=2:sw=2:fdm=marker
