@@ -9,15 +9,14 @@ jobs:
       matrix:
         os:
           # - ubuntu-latest
-          - windows-latest
+          # - windows-latest
           - macOS-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: jiro4989/setup-nim-action@v1
+      - uses: jiro4989/setup-nim-action@v2
         with:
-          nim-version: '1.6.8'
-      - run: nimble update
-      - run: nimble install glfw@#gridmonger 
-      - run: nimble -n install nanovg osdialog riff winim https://github.com/johnnovak/koi/
+          nim-version: '2.0.6'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nimble -n install koi osdialog riff semver winim  with
       - run: nim debug
       - run: nim release
