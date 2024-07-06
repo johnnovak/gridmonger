@@ -2176,6 +2176,22 @@ proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
   vg.stroke
 
 # }}}
+# {{{ drawArrowNE()
+proc drawArrowNE(x, y: float; orientation: Orientation; isCursorActive: bool;
+                 ctx) =
+  drawIcon(x, y, 0, 0, IconThinArrowUp, ctx.dp.gridSize,
+           getForegroundNormalColor(isCursorActive, ctx),
+           fontSizeFactor=0.7, ctx.vg)
+
+# }}}
+# {{{ drawArrowSW()
+proc drawArrowSW(x, y: float; orientation: Orientation; isCursorActive: bool;
+                 ctx) =
+  drawIcon(x, y, 0, 0, IconThinArrowDown, ctx.dp.gridSize,
+           getForegroundNormalColor(isCursorActive, ctx),
+           fontSizeFactor=0.7, ctx.vg)
+
+# }}}
 
 # }}}
 
@@ -2289,6 +2305,8 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   of fTeleportDestination: draw(drawTeleportDestination)
   of fInvisibleBarrier:    draw(drawInvisibleBarrier)
   of fBridge:              drawOriented(drawBridge, offsetFactor=0)
+  of fArrowNE:             drawOriented(drawArrowNE, offsetFactor=0)
+  of fArrowSW:             drawOriented(drawArrowSW, offsetFactor=0)
   of fColumn:              draw(drawColumn)
   of fStatue:              draw(drawStatue)
 

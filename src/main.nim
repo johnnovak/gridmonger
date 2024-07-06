@@ -175,7 +175,9 @@ const
   ]
 
   FloorGroup7 = @[
-    fBridge
+    fBridge,
+    fArrowNE,
+    fArrowSW
   ]
 
   FloorGroup8 = @[
@@ -1116,7 +1118,7 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
         scCycleFloorGroup6Backward].sc(a=a), "Cycle entry/exit".desc,
 
       @[scCycleFloorGroup7Forward,
-        scCycleFloorGroup7Backward].sc(a=a), "Draw bridge".desc,
+        scCycleFloorGroup7Backward].sc(a=a), "Cycle bridge/arrow".desc,
 
       @[scCycleFloorGroup8Forward,
         scCycleFloorGroup8Backward].sc(a=a), "Cycle column/statue".desc,
