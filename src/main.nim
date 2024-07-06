@@ -8995,6 +8995,8 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       group:
         let CRLimits = DialogCornerRadiusLimits
         floatProp("Corner Radius",    p & "corner-radius", CRLimits)
+
+      group:
         colorProp("Background",       p & "background")
         colorProp("Label",            p & "label")
         colorProp("Warning",          p & "warning")
@@ -9037,8 +9039,6 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       p = "ui.drop-down."
       group:
         colorProp("Item List Background", p & "item-list-background")
-        colorProp("Item Normal",          p & "item.normal")
-        colorProp("Item Hover",           p & "item.hover")
 
     if koi.subSectionHeader("Text Field", te.sectionTextField):
       p = "ui.text-field."
@@ -9056,9 +9056,11 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       p = "ui.status-bar."
       group:
         colorProp("Background",        p & "background")
+      group:
         colorProp("Text",              p & "text")
         colorProp("Warning",           p & "warning")
         colorProp("Error",             p & "error")
+      group:
         colorProp("Coordinates",       p & "coordinates")
       group:
         colorProp("Command Background",p & "command.background")
@@ -9145,25 +9147,32 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       let SpacingLimits = BackgroundHatchSpacingFactorLimits
 
       p = "level.background-hatch."
-      boolProp("Background Hatch?",     p & "enabled")
-      colorProp("Hatch Colour",         p & "color")
-      floatProp("Hatch Stroke Width",   p & "width",          WidthLimits)
-      floatProp("Hatch Spacing Factor", p & "spacing-factor", SpacingLimits)
+      group:
+        boolProp("Background Hatch?",     p & "enabled")
+      group:
+        colorProp("Hatch",                p & "color")
+        floatProp("Hatch Stroke Width",   p & "width",          WidthLimits)
+        floatProp("Hatch Spacing Factor", p & "spacing-factor", SpacingLimits)
 
     if koi.subSectionHeader("Grid", te.sectionGrid):
       p = "level.grid."
       group:
-        colorProp("Background Grid",       p & "background.grid")
         enumProp( "Background Grid Style", p & "background.style", GridStyle)
+        # if not None
+        colorProp("Background Grid",       p & "background.grid")
       group:
-        colorProp("Floor Grid",            p & "floor.grid")
         enumProp( "Floor Grid Style",      p & "floor.style",      GridStyle)
+        # if not None
+        colorProp("Floor Grid",            p & "floor.grid")
 
     if koi.subSectionHeader("Outline", te.sectionOutline):
       p = "level.outline."
       enumProp( "Style",         p & "style",        OutlineStyle)
+      # enabled: Style!=None
       enumProp( "Fill Style",    p & "fill-style",   OutlineFillStyle)
+      # enabled: Style>=Square Edges
       colorProp("Outline",       p & "color")
+      # enabled: Style>=Square Edges
       floatProp("Width",         p & "width-factor", OutlineWidthFactorLimits)
       boolProp( "Overscan",      p & "overscan")
 
@@ -9179,18 +9188,20 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
 
     if koi.subSectionHeader("Floor Colours", te.sectionFloorColors):
       p = "level.floor."
-      boolProp("Transparent?", p & "transparent")
+      group:
+        boolProp("Transparent?", p & "transparent")
 
-      colorProp("Color 1",  p & "background.0")
-      colorProp("Color 2",  p & "background.1")
-      colorProp("Color 3",  p & "background.2")
-      colorProp("Color 4",  p & "background.3")
-      colorProp("Color 5",  p & "background.4")
-      colorProp("Color 6",  p & "background.5")
-      colorProp("Color 7",  p & "background.6")
-      colorProp("Color 8",  p & "background.7")
-      colorProp("Color 9",  p & "background.8")
-      colorProp("Color 10", p & "background.9")
+      group:
+        colorProp("Colour 1",  p & "background.0")
+        colorProp("Colour 2",  p & "background.1")
+        colorProp("Colour 3",  p & "background.2")
+        colorProp("Colour 4",  p & "background.3")
+        colorProp("Colour 5",  p & "background.4")
+        colorProp("Colour 6",  p & "background.5")
+        colorProp("Colour 7",  p & "background.6")
+        colorProp("Colour 8",  p & "background.7")
+        colorProp("Colour 9",  p & "background.8")
+        colorProp("Colour 10", p & "background.9")
 
     if koi.subSectionHeader("Notes", te.sectionNotes):
       p = "level.note."
