@@ -8610,13 +8610,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
     RightPad   = 16
     TextIndent = 44
 
-  # Filters & search
+  # Top control panel
   vg.beginPath
   vg.rect(x, y, w, FilterPanelHeight)
   vg.fillColor(nt.controlsBackgroundColor)
   vg.fill
 
-  # Background
+  # Notes list background
   vg.beginPath
   vg.rect(x, y+FilterPanelHeight, w, h-FilterPanelHeight)
   vg.fillColor(nt.listBackgroundColor)
@@ -8777,7 +8777,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Scroll view with notes
   const ScrollViewId = koi.hashId("notes-panel:scroll-view")
 
-  let scrollViewHeight = h-FilterPanelHeight
+  let scrollViewHeight = h-FilterPanelHeight-1
 
   if nls.newActiveId.isSome and nls.newViewStartY.isSome:
     # We'll get here in the next frame syncToCursor was triggered in.
@@ -8790,7 +8790,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
 
 
   koi.beginScrollView(ScrollViewId, x,
-                      y+FilterPanelHeight, w, scrollViewHeight,
+                      y+FilterPanelHeight+1, w, scrollViewHeight,
                       style=a.theme.notesListScrollViewStyle)
 
   var lp = DefaultAutoLayoutParams
