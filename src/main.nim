@@ -3877,7 +3877,6 @@ proc openPreferencesDialog(a) =
   dlg.movementWraparound = a.prefs.movementWraparound
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
   dlg.walkCursorMode     = a.prefs.walkCursorMode
-  dlg.linkLinesMode      = a.prefs.linkLinesMode
   dlg.openEndedExcavate  = a.prefs.openEndedExcavate
 
   a.dialogs.activeDialog = dlgPreferencesDialog
@@ -9193,21 +9192,21 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       p = "level.grid."
       group:
         enumProp( "Background Grid Style", p & "background.style", GridStyle)
-        # if not None
+        # TODO enabled if style != None
         colorProp("Background Grid",       p & "background.grid")
       group:
         enumProp( "Floor Grid Style",      p & "floor.style",      GridStyle)
-        # if not None
+        # TODO enabled if style != None
         colorProp("Floor Grid",            p & "floor.grid")
 
     if koi.subSectionHeader("Outline", te.sectionOutline):
       p = "level.outline."
       enumProp( "Style",         p & "style",        OutlineStyle)
-      # enabled: Style!=None
+      # TODO enabled if Style!=None
       enumProp( "Fill Style",    p & "fill-style",   OutlineFillStyle)
-      # enabled: Style>=Square Edges
+      # TODO enabled if Style>=Square Edges
       colorProp("Outline",       p & "color")
-      # enabled: Style>=Square Edges
+      # TODO enabled if Style>=Square Edges
       floatProp("Width",         p & "width-factor", OutlineWidthFactorLimits)
       boolProp( "Overscan",      p & "overscan")
 
