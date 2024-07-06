@@ -2272,8 +2272,8 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
                              ctx
                            )
   of fSecretDoor:          drawOriented(drawSecretDoorHoriz)
-  of fOneWayDoor1:         drawOriented(drawOneWayDoorHorizNE)
-  of fOneWayDoor2:         drawOriented(drawOneWayDoorHorizSW)
+  of fOneWayDoorNE:        drawOriented(drawOneWayDoorHorizNE)
+  of fOneWayDoorSW:        drawOriented(drawOneWayDoorHorizSW)
   of fPressurePlate:       draw(drawPressurePlate)
   of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
   of fClosedPit:           draw(drawClosedPit)

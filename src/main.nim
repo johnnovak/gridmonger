@@ -144,8 +144,8 @@ const
   FloorGroup2 = @[
     fSecretDoor,
     fSecretDoorBlock,
-    fOneWayDoor1,
-    fOneWayDoor2
+    fOneWayDoorNE,
+    fOneWayDoorSW
   ]
 
   FloorGroup3 = @[
