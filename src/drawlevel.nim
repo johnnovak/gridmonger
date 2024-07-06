@@ -96,7 +96,8 @@ type
     pasteWraparound*:     bool
     selectionWraparound*: bool
 
-    # internal
+    # Internal
+    # --------
     zoomLevel:           range[MinZoomLevel..MaxZoomLevel]
     gridSize:            float
     cellCoordsFontSize:  float
@@ -107,13 +108,16 @@ type
 
     lineWidth:           LineWidth
 
+    # Pre-rendered line hatch patterns
+    lineHatchSize:            range[MinLineHatchSize..MaxLineHatchSize]
+
+    cellLineHatchPatterns:    LineHatchPatterns
+    cursorLineHatchPatterns:  LineHatchPatterns
+    outlineLineHatchPatterns: LineHatchPatterns
+
     # Various correction factors
     vertTransformXOffs:    float
     vertRegionBorderYOffs: float
-
-    lineHatchPatterns:     LineHatchPatterns
-    cellLineHatchPatterns: LineHatchPatterns
-    lineHatchSize:         range[MinLineHatchSize..MaxLineHatchSize]
 
 
   Outline = enum
@@ -161,10 +165,13 @@ using
 proc newDrawLevelParams*(): DrawLevelParams =
   result = new DrawLevelParams
 
-  for paint in result.lineHatchPatterns.mitems:
+  for paint in result.cellLineHatchPatterns.mitems:
     paint.image = NoImage
 
-  for paint in result.cellLineHatchPatterns.mitems:
+  for paint in result.cursorLineHatchPatterns.mitems:
+    paint.image = NoImage
+
+  for paint in result.outlineLineHatchPatterns.mitems:
     paint.image = NoImage
 
   result.zoomLevel = MinZoomLevel
@@ -347,7 +354,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
                              strokeColor: Color,
                              lineHatchPatterns: var LineHatchPatterns) =
 
-  for spacing in dp.lineHatchPatterns.low..dp.lineHatchPatterns.high:
+  for spacing in lineHatchPatterns.low..lineHatchPatterns.high:
     var sp = spacing * pxRatio
 
     var image = vg.renderToImage(
@@ -386,19 +393,26 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
 # }}}
 # {{{ initDrawLevelParams
 proc initDrawLevelParams*(dp; lt; vg: NVGContext, pxRatio: float) =
-  for paint in dp.lineHatchPatterns:
-    if paint.image != NoImage:
-      vg.deleteImage(paint.image)
-
   for paint in dp.cellLineHatchPatterns:
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
+  for paint in dp.cursorLineHatchPatterns:
+    if paint.image != NoImage:
+      vg.deleteImage(paint.image)
+
+  for paint in dp.outlineLineHatchPatterns:
+    if paint.image != NoImage:
+      vg.deleteImage(paint.image)
+
   renderLineHatchPatterns(dp, vg, pxRatio, lt.foregroundNormalNormalColor,
-                          dp.lineHatchPatterns)
+                          dp.cellLineHatchPatterns)
 
   renderLineHatchPatterns(dp, vg, pxRatio, lt.foregroundNormalCursorColor,
-                          dp.cellLineHatchPatterns)
+                          dp.cursorLineHatchPatterns)
+
+  renderLineHatchPatterns(dp, vg, pxRatio, lt.outlineColor,
+                          dp.outlineLineHatchPatterns)
 
   dp.setZoomLevel(lt, dp.zoomLevel)
 
@@ -757,7 +771,7 @@ proc drawEdgeOutlines(l: Level, ob: OutlineBuf; ctx) =
 
   case lt.outlineFillStyle
   of ofsSolid:   vg.fillColor(lt.outlineColor)
-  of ofsHatched: vg.fillPaint(dp.lineHatchPatterns[dp.lineHatchSize])
+  of ofsHatched: vg.fillPaint(dp.outlineLineHatchPatterns[dp.lineHatchSize])
 
   proc draw(r,c: int, cell: OutlineCell) =
     let
@@ -1878,8 +1892,8 @@ proc drawSecretDoorBlock(x, y: float; floorColor: Natural;
 
   alias(vg, ctx.vg)
 
-  let paint = if isCursorActive: dp.cellLineHatchPatterns[dp.lineHatchSize]
-              else: dp.lineHatchPatterns[dp.lineHatchSize]
+  let paint = if isCursorActive: dp.cursorLineHatchPatterns[dp.lineHatchSize]
+              else:              dp.cellLineHatchPatterns[dp.lineHatchSize]
 
   vg.beginPath
   vg.fillPaint(paint)
