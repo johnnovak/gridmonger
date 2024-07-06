@@ -93,6 +93,12 @@ type
 
     drawCursorGuides*: bool
 
+    drawLinkLines*:     bool
+
+    # If true, draw all link lines in level
+    # If false, only link linkes from/to the cursor position
+    drawAllLinkLines*:  bool
+
     pasteWraparound*:     bool
     selectionWraparound*: bool
 
@@ -2743,8 +2749,8 @@ proc drawSelectionHighlight(levelRows, levelCols: Natural; ctx) =
 
 # }}}
 
-# {{{ drawLinkedCellsOverlay()
-proc drawLinkedCellsOverlay(map: Map, level: Level; ctx) =
+# {{{ drawLinkLines()
+proc drawLinkLines(map: Map, level: Level; ctx) =
   alias(dp, ctx.dp)
   alias(lt, ctx.lt)
   alias(vg, ctx.vg)
@@ -2761,12 +2767,18 @@ proc drawLinkedCellsOverlay(map: Map, level: Level; ctx) =
 
   for srcRow in 0..<level.rows:
     for srcCol in 0..<level.cols:
-      let destLoc = map.links.getBySrc(Location(levelId: level.id,
-                                                row: srcRow, col: srcCol))
+      let srcLoc  = Location(levelId: level.id, row: srcRow, col: srcCol)
+      let destLoc = map.links.getBySrc(srcLoc)
 
       if (destLoc.isSome and destLoc.get.levelId == level.id and
           not isSpecialLevelId(destLoc.get.levelId)):
         let destLoc = destLoc.get
+
+        if not dp.drawAllLinkLines:
+          let cur = Location(levelId: level.id, row: dp.cursorRow,
+                                                col: dp.cursorCol)
+          if not (srcLoc == cur or destLoc == cur):
+            continue
 
         let
           srcX  = cellX(srcCol - dp.viewStartCol, dp)
@@ -2944,7 +2956,8 @@ proc drawLevel*(map: Map, levelId: Natural; ctx) =
   if drawSelectionBuffer: drawSelectionHighlight(l.rows, l.cols, ctx)
   if dp.drawCursorGuides: drawCursorGuides(ctx)
 
-  drawLinkedCellsOverlay(map, l, ctx)
+  if dp.drawLinkLines:
+    drawLinkLines(map, l, ctx)
 
   vg.restore
 

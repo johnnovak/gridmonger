@@ -305,6 +305,7 @@ type AppShortcut = enum
   scEraseLabel
 
   scShowNoteTooltip
+  scShowLinkLines
 
   # Select mode
   scSelectionDraw
@@ -385,6 +386,12 @@ type
     forward, backward, strafeLeft, strafeRight, turnLeft, turnRight: set[Key]
 
 
+  LinkLinesMode = enum
+    llmManual      = (0, "Manual toggle")
+    llmCurrentCell = (1, "Current cell")
+    llmAll         = (2, "All")
+
+
   Preferences = object
     # Startup tab
     showSplash:         bool
@@ -402,6 +409,7 @@ type
     movementWraparound: bool
     walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
+    linkLinesMode:      LinkLinesMode
     openEndedExcavate:  bool
 
 
@@ -490,6 +498,8 @@ type
     jumpToSrcLocationIdx:   Natural
     lastJumpToSrcLocation:  Location
     wasDrawingTrail:        bool
+
+    momentaryShowLinkLines: bool
 
     # Drawing
     # -------
@@ -750,6 +760,7 @@ type
     movementWraparound: bool
     walkCursorMode:     WalkCursorMode
     yubnMovementKeys:   bool
+    linkLinesMode:      LinkLinesMode
     openEndedExcavate:  bool
 
 
@@ -1016,12 +1027,15 @@ func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
 
       scToggleWalkMode.sc,        "Toggle walk mode".desc,
       scToggleWasdMode.sc,        "Toggle WASD mode".desc,
-      scShowNoteTooltip.sc,       "Toggle display note tooltip".desc,
       scToggleCellCoords.sc,      "Toggle cell coordinates".desc,
       scToggleCurrentNotePane.sc, "Toggle current note pane".desc,
       scToggleNotesListPane.sc,   "Toggle notes list pane".desc,
       scToggleToolsPane.sc,       "Toggle tools pane".desc,
       scToggleTitleBar.sc,        "Toggle title bar".desc,
+      QuickRefSepa,
+
+      scShowNoteTooltip.sc,       "Show note tooltip".desc,
+      scShowLinkLines.sc,         "Show all link lines".desc,
       QuickRefSepa,
 
       scPreviousTheme.sc,     "Previous theme".desc,
@@ -1426,6 +1440,7 @@ let DefaultAppShortcuts = {
   scEraseLabel:                @[mkKeyShortcut(keyT,          {mkShift})],
 
   scShowNoteTooltip:           @[mkKeyShortcut(keySpace,      {})],
+  scShowLinkLines:             @[mkKeyShortcut(keyApostrophe, {})],
 
   # Select mode
   scSelectionDraw:               @[mkKeyShortcut(keyD,        {})],
@@ -3040,11 +3055,15 @@ proc saveAppConfig(a) =
   cfg.set(p & "auto-save.frequency-mins",       a.prefs.autosaveFreqMins)
 
   cfg.set(p & "editing.movement-wraparound",    a.prefs.movementWraparound)
-  cfg.set(p & "editing.open-ended-excavate",    a.prefs.openEndedExcavate)
   cfg.set(p & "editing.yubn-movement-keys",     a.prefs.yubnMovementKeys)
 
   cfg.set(p & "editing.walk-cursor-mode",
           enumToDashCase($a.prefs.walkCursorMode))
+
+  cfg.set(p & "editing.open-ended-excavate",    a.prefs.openEndedExcavate)
+
+  cfg.set(p & "editing.link-lines-mode",
+          enumToDashCase($a.prefs.linkLinesMode))
 
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
@@ -3877,6 +3896,7 @@ proc openPreferencesDialog(a) =
   dlg.movementWraparound = a.prefs.movementWraparound
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
   dlg.walkCursorMode     = a.prefs.walkCursorMode
+  dlg.linkLinesMode      = a.prefs.linkLinesMode
   dlg.openEndedExcavate  = a.prefs.openEndedExcavate
 
   a.dialogs.activeDialog = dlgPreferencesDialog
@@ -3884,9 +3904,9 @@ proc openPreferencesDialog(a) =
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
-    DlgWidth  = 370.0
-    DlgHeight = 306.0
-    TabWidth  = 240.0
+    DlgWidth  = 420.0
+    DlgHeight = 345.0
+    TabWidth  = 360.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
                   x = calcDialogX(DlgWidth, a).some,
@@ -4006,6 +4026,11 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.dropDown(dlg.walkCursorMode, style = a.theme.dropDownStyle)
 
     group:
+      koi.label("Display link lines", style=a.theme.labelStyle)
+      koi.nextItemWidth(120)
+      koi.dropDown(dlg.linkLinesMode, style = a.theme.dropDownStyle)
+
+    group:
       koi.label("Open-ended exacavate", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.openEndedExcavate, style = a.theme.checkBoxStyle)
@@ -4045,9 +4070,10 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
     # Editing
     a.prefs.movementWraparound = dlg.movementWraparound
-    a.prefs.openEndedExcavate  = dlg.openEndedExcavate
     a.prefs.yubnMovementKeys   = dlg.yubnMovementKeys
     a.prefs.walkCursorMode     = dlg.walkCursorMode
+    a.prefs.linkLinesMode      = dlg.linkLinesMode
+    a.prefs.openEndedExcavate  = dlg.openEndedExcavate
 
     saveAppConfig(a)
     setSwapInterval(a)
@@ -4496,9 +4522,9 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
   alias(map, a.doc.map)
 
   const
-    DlgWidth = 460.0
+    DlgWidth  = 460.0
     DlgHeight = 436.0
-    TabWidth = 400.0
+    TabWidth  = 400.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconNewFile}  New Level",
                   x = calcDialogX(DlgWidth, a).some,
@@ -7114,6 +7140,12 @@ proc handleGlobalKeyEvents(a) =
               mx = koi.mx()
               my = koi.my()
 
+      elif ke.isShortcutDown(scShowLinkLines, a):
+        ui.momentaryShowLinkLines = true
+
+      elif ke.isShortcutUp(scShowLinkLines, a):
+        ui.momentaryShowLinkLines = false
+
       elif ke.isShortcutDown(scEditPreferences, a): openPreferencesDialog(a)
 
       elif ke.isShortcutDown(scNewLevel, a):
@@ -8073,6 +8105,23 @@ proc renderLevel(x, y, w, h: float,
 
     dp.drawLevel      = ui.editMode != emNudgePreview
     dp.drawCellCoords = a.ui.showCellCoords
+
+    # Configure draw link lines
+    dp.drawLinkLines    = false
+    dp.drawAllLinkLines = false
+
+    case a.prefs.linkLinesMode:
+    of llmManual: discard
+    of llmCurrentCell:
+      dp.drawLinkLines    = true
+    of llmAll:
+      dp.drawLinkLines    = true
+      dp.drawAllLinkLines = true
+
+    # The momentary toggle always shows all links lines
+    if ui.momentaryShowLinkLines:
+      dp.drawLinkLines    = true
+      dp.drawAllLinkLines = true
 
     drawLevel(
       a.doc.map,
@@ -10401,11 +10450,15 @@ proc initPreferences(cfg: HoconNode; a) =
           MovementWraparoundKey_v100, false
         )
 
-    openEndedExcavate = prefs.getBoolOrDefault("editing.open-ended-excavate")
     yubnMovementKeys = prefs.getBoolOrDefault("editing.yubn-movement-keys")
 
     walkCursorMode = prefs.getEnumOrDefault("editing.walk-cursor-mode",
                                             WalkCursorMode)
+
+    openEndedExcavate = prefs.getBoolOrDefault("editing.open-ended-excavate")
+
+    linkLinesMode = prefs.getEnumOrDefault("editing.link-lines-mode",
+                                            LinkLinesMode)
 
 # }}}
 # {{{ restoreUIStateFromConfig()
