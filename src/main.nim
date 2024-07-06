@@ -2709,6 +2709,20 @@ proc updateWidgetStyles(a) =
       thumbFillColorHover = c.withAlpha(0.5)
       thumbFillColorDown  = c.withAlpha(0.6)
 
+  # Default check box (for the theme editor)
+  var cbs = koi.getDefaultCheckBoxStyle()
+  with cbs:
+    fillColorActive       = black(0.3)
+    fillColorDown         = fillColorActive
+    fillColorActiveHover  = fillColorActive
+    icon.fontSize         = 12.0
+    icon.colorHover       = icon.color
+    icon.colorActiveHover = icon.colorActive
+    iconActive            = IconCheck
+    iconInactive          = NoIcon
+
+  koi.setDefaultCheckboxStyle(cbs)
+
   # Check box
   a.theme.checkBoxStyle = koi.getDefaultCheckBoxStyle()
 
@@ -2718,6 +2732,7 @@ proc updateWidgetStyles(a) =
     fillColorHover        = w.getColorOrDefault("background.hover")
     fillColorDown         = w.getColorOrDefault("background.active")
     fillColorActive       = fillColorDown
+    fillColorActiveHover  = fillColorDown
     fillColorDisabled     = w.getColorOrDefault("background.disabled")
 
     icon.fontSize         = 12.0
@@ -3862,6 +3877,7 @@ proc openPreferencesDialog(a) =
   dlg.movementWraparound = a.prefs.movementWraparound
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
   dlg.walkCursorMode     = a.prefs.walkCursorMode
+  dlg.linkLinesMode      = a.prefs.linkLinesMode
   dlg.openEndedExcavate  = a.prefs.openEndedExcavate
 
   a.dialogs.activeDialog = dlgPreferencesDialog
