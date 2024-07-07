@@ -1,4 +1,4 @@
-name: Build
+name: Build release
 
 on:
   push:
@@ -18,10 +18,36 @@ jobs:
           - macOS-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: '2.0.6'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nimble -y install koi osdialog riff semver winim  with
-      - run: nim debug
-      - run: nim release
+
+      - name: Inject version string
+        run: |
+          set -x
+          VERSION=$(cat CURRENT_VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Install Nim dependencies
+        run: nimble -y install koi osdialog riff semver winim with
+
+      - name: macOS arm64 release build
+        run: nim -f releaseMacX64
+
+      - name: macOS x86-64 release build
+        run: nim -f releaseMacArm64
+
+      - name: Create macOS universal binary
+        run: nim mergeMacUniversal
+
+      - name: Create macOS app bundle package
+        run: nim packageMac
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridmonger-v${{ env.VERSION }}-macos
+          path: gridmonger-v${{ env.VERSION }}-macos.zip
+          overwrite: true
