@@ -69,6 +69,13 @@ proc toLevelTheme*(cfg: HoconNode): LevelTheme =
   s.cursorColor       = cfg.getColorOrDefault(p & "cursor")
   s.cursorGuidesColor = cfg.getColorOrDefault(p & "cursor-guides")
   s.linkMarkerColor   = cfg.getColorOrDefault(p & "link-marker")
+
+  if cfg.getOpt(p & "link-line").isNone:
+    cfg.set(p & "link-line", $s.linkMarkerColor.withAlpha(0.8))
+
+  s.linkLineColor     = cfg.getColorOrDefault(p & "link-line")
+
+  s.linkLineColor     = cfg.getColorOrDefault(p & "link-line")
   s.selectionColor    = cfg.getColorOrDefault(p & "selection")
   s.trailNormalColor  = cfg.getColorOrDefault(p & "trail.normal")
   s.trailCursorColor  = cfg.getColorOrDefault(p & "trail.cursor")

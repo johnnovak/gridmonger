@@ -9211,6 +9211,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
         colorProp("Foreground Light Cursor",  p & "foreground.light.cursor")
       group:
         colorProp("Link Marker",              p & "link-marker")
+        colorProp("Link Line",                p & "link-line")
       group:
         colorProp("Trail Normal",             p & "trail.normal")
         colorProp("Trail Cursor",             p & "trail.cursor")

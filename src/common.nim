@@ -441,6 +441,7 @@ type
     cursorColor*:                  Color
     cursorGuidesColor*:            Color
     linkMarkerColor*:              Color
+    linkLineColor*:                Color
     selectionColor*:               Color
     trailNormalColor*:             Color
     trailCursorColor*:             Color

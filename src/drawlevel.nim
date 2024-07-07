@@ -2779,7 +2779,7 @@ proc drawLinkLines(map: Map, level: Level; ctx) =
   setLevelClippingRect(level, expandBy=5.0, ctx)
 
   vg.beginPath
-  vg.strokeColor(lt.linkMarkerColor.withAlpha(0.8))
+  vg.strokeColor(lt.linkLineColor)
   vg.strokeWidth(dp.linkLineStrokeWidth)
   vg.lineCap(lcjRound)
 
