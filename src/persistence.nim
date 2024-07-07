@@ -168,7 +168,7 @@ const
 # }}}
 
 proc logError(e: ref Exception) =
-  var msg = "Error writing map: " & e.msg &
+  var msg = "Map read/write error: " & e.msg &
             "\n\nStack trace:\n" & getStackTrace(e)
   log.error(msg)
 
