@@ -46,7 +46,7 @@ jobs:
         run: nim mergeMacUniversal
 
       - name: Create macOS app bundle
-        run: nim packageMacAppBundle
+        run: nim packageMac
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
