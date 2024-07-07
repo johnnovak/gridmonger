@@ -169,6 +169,8 @@ level {
       normal = "#c8641eff"
       empty = "#c8641e65"
     }
+
+    link-line = "#0075849e"
   }
 
   background-hatch {
@@ -308,8 +310,8 @@ pane {
       text = "#d0b89bff"
     }
 
-    scroll-bar = "#e2c29bff"
     section-separator = "#544c3bff"
+    scroll-bar = "#e2c29bff"
   }
 }
 

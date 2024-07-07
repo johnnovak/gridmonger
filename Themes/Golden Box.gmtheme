@@ -142,7 +142,7 @@ level {
     line-width = normal
     cursor = "#ffa600ff"
     cursor-guides = "#ffa60039"
-    link-marker = "#007381ed"
+    link-marker = "#006e7bed"
     selection = "#ff80806f"
     paste-preview = "#3f9fff70"
 
@@ -168,6 +168,8 @@ level {
       normal = "#924324ff"
       empty = "#92432563"
     }
+
+    link-line = "#006774cc"
   }
 
   background-hatch {

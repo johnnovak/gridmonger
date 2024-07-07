@@ -168,6 +168,8 @@ level {
       normal = "#a15235ff"
       empty = "#a1523590"
     }
+
+    link-line = "#0098aacc"
   }
 
   background-hatch {

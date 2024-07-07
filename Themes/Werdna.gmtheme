@@ -130,6 +130,10 @@ ui {
     outline = "#808080ff"
     shadow-alpha = 1
   }
+
+  drop-down {
+    item-list-background = "#1a1a1aff"
+  }
 }
 
 level {
@@ -164,6 +168,8 @@ level {
       normal = "#ff4d4db6"
       empty = "#ff4d4d51"
     }
+
+    link-line = "#00b3c8ac"
   }
 
   background-hatch {
@@ -277,6 +283,34 @@ pane {
       normal = "#000000ff"
       hover = "#2b2b2bff"
     }
+  }
+
+  notes-list {
+    controls-background = "#232323ff"
+    list-background = "#2c2c2cff"
+
+    item {
+      background {
+        hover = "#3d3d3dff"
+        active = "#4c4c4cff"
+      }
+      text {
+        normal = "#ffffff8e"
+        hover = "#ffffffa5"
+        active = "#ffffffbb"
+      }
+    }
+    level-section {
+      background = "#1f1f1fff"
+      text = "#ffffffa5"
+    }
+    region-section {
+      background = "#1a1a1aff"
+      text = "#ffffffa5"
+    }
+
+    section-separator = "#393939ff"
+    scroll-bar = "#969696ff"
   }
 }
 
