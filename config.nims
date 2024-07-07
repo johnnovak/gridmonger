@@ -13,9 +13,10 @@ const mingw32Dir = r"C:\dev\mingw32"
 
 const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
+const gitHash = strutils.strip(staticExec("git rev-parse --short=5 HEAD"))
 const currYear = CompileDate[0..3]
 
-const macPackageName = fmt"gridmonger-v{version}-macos.zip"
+const macPackageName = fmt"gridmonger-v{version}-{gitHash}-macos.zip"
 
 const dataDir = "Data"
 const exampleMapsDir = "Example Maps"
@@ -71,10 +72,10 @@ type Arch = enum
 let arch = if hostCPU == "i386": Arch32 else: Arch64
 
 proc getWinInstallerPackageName(arch: Arch): string =
-  fmt"gridmonger-v{version}-win{arch}-setup.exe"
+  fmt"gridmonger-v{version}-{gitHash}-win{arch}-setup.exe"
 
 proc getWinPortablePackageName(arch: Arch): string =
-  fmt"gridmonger-v{version}-win{arch}-portable.zip"
+  fmt"gridmonger-v{version}-{gitHash}-win{arch}-portable.zip"
 
 
 # All tasks must be executed from the project root directory!
