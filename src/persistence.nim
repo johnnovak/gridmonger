@@ -280,7 +280,7 @@ proc checkEnum(v: SomeInteger, name: string, E: typedesc[enum],
 
 # {{{ readAppState_preV4()
 proc readAppState_preV4(rr; map: Map): AppState =
-  debug(fmt"Reading app state...")
+  debug("Reading app state...")
   pushDebugIndent()
 
   let themeName = rr.readBStr()
@@ -363,7 +363,7 @@ proc readLocation(rr): Location =
 # }}}
 # {{{ readNotesListPaneState()
 proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
-  debug(fmt"Reading notes list pane state...")
+  debug("Reading notes list pane state...")
 
   var s = AppStateNotesListPane()
 
@@ -378,7 +378,7 @@ proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
 
   if noteTypeFilter > MaxNoteTypeFilterValue:
     raiseMapReadError(
-      fmt"The value of 'noteTypeFilter' must be between 0 and " &
+      "The value of 'noteTypeFilter' must be between 0 and " &
       fmt"{MaxNoteTypeFilterValue}, actual value: {noteTypeFilter}"
     )
   s.filter.noteType = cast[set[NoteTypeFilter]](noteTypeFilter)
@@ -423,7 +423,7 @@ proc readNotesListPaneState(rr; map: Map): AppStateNotesListPane =
 # }}}
 # {{{ readAppState_V4()
 proc readAppState_V4(rr; map: Map): AppState =
-  debug(fmt"Reading app state...")
+  debug("Reading app state...")
   pushDebugIndent()
 
   var ci = rr.enterGroup
@@ -568,7 +568,7 @@ proc readLinks(
   rr; levels: OrderedTable[Natural, Level]
 ): tuple[links: Links, warning: string] =
 
-  debug(fmt"Reading links...")
+  debug("Reading links...")
   pushDebugIndent()
 
   var numLinks = rr.read(uint16).int
@@ -611,7 +611,7 @@ proc readLinks(
 # }}}
 # {{{ readLevelProperties()
 proc readLevelProperties(rr): Level =
-  debug(fmt"Reading level properties...")
+  debug("Reading level properties...")
   pushDebugIndent()
 
   let locationName = rr.readWStr
@@ -702,7 +702,7 @@ proc readLevelCells(rr; numCells: Natural): seq[Cell] =
 
     popDebugIndent()
 
-  debug(fmt"Reading level cells...")
+  debug("Reading level cells...")
   pushDebugIndent()
   debug(fmt"numCells: {numCells}")
 
@@ -738,7 +738,7 @@ proc readLevelCells(rr; numCells: Natural): seq[Cell] =
 # }}}
 # {{{ readLevelAnnotations()
 proc readLevelAnnotations(rr; l: Level) =
-  debug(fmt"Reading level annotations...")
+  debug("Reading level annotations...")
   pushDebugIndent()
 
   let numAnnotations = rr.read(uint16).Natural
@@ -809,7 +809,7 @@ proc readLevelAnnotations(rr; l: Level) =
 # }}}
 # {{{ readCoordinateOptions*()
 proc readCoordinateOptions(rr; parentChunk: string): CoordinateOptions =
-  debug(fmt"Reading coordinate options...")
+  debug("Reading coordinate options...")
   pushDebugIndent()
 
   var parentChunk = strutils.strip(parentChunk)
@@ -846,7 +846,7 @@ proc readCoordinateOptions(rr; parentChunk: string): CoordinateOptions =
 proc readLevelRegions(rr; levelCols: Natural,
                       version: Natural): tuple[regionOpts: RegionOptions,
                                                regions: Regions] =
-  debug(fmt"Reading level regions...")
+  debug("Reading level regions...")
   pushDebugIndent()
 
   let enabled = rr.read(uint8)
@@ -917,7 +917,7 @@ proc readLevelRegions(rr; levelCols: Natural,
 # }}}
 # {{{ readLevel()
 proc readLevel(rr; version: Natural): Level =
-  debug(fmt"Reading level...")
+  debug("Reading level...")
   pushDebugIndent()
 
   let groupChunkId = FourCC_GRMM_lvls.some
@@ -1003,7 +1003,7 @@ proc readLevel(rr; version: Natural): Level =
 # }}}
 # {{{ readLevelList()
 proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
-  debug(fmt"Reading level list...")
+  debug("Reading level list...")
   pushDebugIndent()
 
   var levels = initOrderedTable[Natural, Level]()
@@ -1045,7 +1045,7 @@ proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
 # }}}
 # {{{ readMapProperties()
 proc readMapProperties(rr): tuple[map: Map, version: Natural] =
-  debug(fmt"Reading map properties...")
+  debug("Reading map properties...")
   pushDebugIndent()
 
   let version = rr.read(uint16).Natural
@@ -1079,7 +1079,7 @@ proc readMapProperties(rr): tuple[map: Map, version: Natural] =
 # }}}
 # {{{ readMap()
 proc readMap(rr): tuple[map: Map, version: Natural] =
-  debug(fmt"Reading GRMM.map chunk...")
+  debug("Reading GRMM.map chunk...")
   pushDebugIndent()
 
   let groupChunkId = FourCC_GRMM_map.some
@@ -1147,7 +1147,7 @@ proc readMapFile*(path: string): tuple[map: Map,
         fmt"RIFF formatTypeId: {fourCCToCharStr(riffChunk.formatTypeId)}"
       )
 
-    debug(fmt"Map headers OK")
+    debug("Map headers OK")
 
     var
       mapCursor           = Cursor.none
@@ -1166,38 +1166,38 @@ proc readMapFile*(path: string): tuple[map: Map,
       if ci.kind == ckGroup:
         case ci.formatTypeId
         of FourCC_GRMM_map:
-          debug(fmt"GRMM.map group chunk found")
+          debug("GRMM.map group chunk found")
           if mapCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_map)
           mapCursor = rr.cursor.some
 
         of FourCC_GRMM_lvls:
-          debug(fmt"GRMM.lvls group chunk found")
+          debug("GRMM.lvls group chunk found")
           if levelListCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_lvls)
           levelListCursor = rr.cursor.some
 
         of FourCC_GRMM_stat:
-          debug(fmt"GRMM.stat group chunk found")
+          debug("GRMM.stat group chunk found")
           if appStateGroupCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_stat)
           appStateGroupCursor = rr.cursor.some
 
         else:
-          debug(fmt"Skiping unknown top level group chunk, " &
+          debug("Skiping unknown top level group chunk, " &
                 fmt"formatTypeID: {fourCCToCharStr(ci.formatTypeID)}")
 
       elif ci.kind == ckChunk:
         case ci.id
         of FourCC_GRMM_lnks:
-          debug(fmt"GRMM.lnks chunk found")
+          debug("GRMM.lnks chunk found")
           if linksCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_lnks)
           linksCursor = rr.cursor.some
 
         of FourCC_GRMM_stat:
-          debug(fmt"GRMM.stat chunk found")
+          debug("GRMM.stat chunk found")
           if appStateCursor.isSome: chunkOnlyOnceError(FourCC_GRMM_stat)
           appStateCursor = rr.cursor.some
 
         else:
-          debug(fmt"Skiping unknown top level chunk, " &
+          debug("Skiping unknown top level chunk, " &
                 fmt"chunkId: {fourCCToCharStr(ci.id)}")
 
       if rr.hasNextChunk:
