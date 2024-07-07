@@ -23,7 +23,7 @@ const
   AppVersion*  = parseVersion(staticRead("../CURRENT_VERSION").strip)
   CompileYear* = CompileDate[0..3]
 
-  BuildGitHash* = strutils.strip(staticExec("git rev-parse --short HEAD"))
+  BuildGitHash* = strutils.strip(staticExec("git rev-parse --short=5 HEAD"))
 
   VersionString*     = fmt"Version {AppVersion} ({BuildGitHash})"
   FullVersionString* = fmt"Gridmonger {VersionString} [{hostOS}/{hostCPU}]"
