@@ -30,11 +30,6 @@ jobs:
       - name: Install GNU sed
         run: |
           brew install gnu-sed
-          which gsed
-
-          echo "/usr/local/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
-          which sed
-          sed --version
 
       - name: Install Sass
         run: |
@@ -56,7 +51,9 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build manual
-        run: nim manual
+        run: |
+          alias sed=gsed
+          nim manual
 
       - name: macOS arm64 release build
         run: nim -f releaseMacX64
