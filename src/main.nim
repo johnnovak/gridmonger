@@ -9201,31 +9201,31 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
     if koi.subSectionHeader("General", te.sectionLevelGeneral):
       p = "level.general."
       group:
-        colorProp("Background",            p & "background")
+        colorProp("Background",               p & "background")
       group:
-        enumProp( "Line Width",            p & "line-width", LineWidth)
+        enumProp( "Line Width",               p & "line-width", LineWidth)
       group:
         colorProp("Foreground Normal",        p & "foreground.normal.normal")
         colorProp("Foreground Normal Cursor", p & "foreground.normal.cursor")
         colorProp("Foreground Light",         p & "foreground.light.normal")
         colorProp("Foreground Light Cursor",  p & "foreground.light.cursor")
       group:
-        colorProp("Link Marker",           p & "link-marker")
+        colorProp("Link Marker",              p & "link-marker")
       group:
-        colorProp("Trail Normal",          p & "trail.normal")
-        colorProp("Trail Cursor",          p & "trail.cursor")
+        colorProp("Trail Normal",             p & "trail.normal")
+        colorProp("Trail Cursor",             p & "trail.cursor")
       group:
-        colorProp("Cursor",                p & "cursor")
-        colorProp("Cursor Guides",         p & "cursor-guides")
+        colorProp("Cursor",                   p & "cursor")
+        colorProp("Cursor Guides",            p & "cursor-guides")
       group:
-        colorProp("Selection",             p & "selection")
-        colorProp("Paste Preview",         p & "paste-preview")
+        colorProp("Selection",                p & "selection")
+        colorProp("Paste Preview",            p & "paste-preview")
       group:
-        colorProp("Coordinates Normal",    p & "coordinates.normal")
-        colorProp("Coordinates Highlight", p & "coordinates.highlight")
+        colorProp("Coordinates Normal",       p & "coordinates.normal")
+        colorProp("Coordinates Highlight",    p & "coordinates.highlight")
       group:
-        colorProp("Region Border Normal",  p & "region-border.normal")
-        colorProp("Region Border Empty",   p & "region-border.empty")
+        colorProp("Region Border Normal",     p & "region-border.normal")
+        colorProp("Region Border Empty",      p & "region-border.empty")
 
     if koi.subSectionHeader("Background Hatch", te.sectionBackgroundHatch):
       let WidthLimits = BackgroundHatchWidthLimits
