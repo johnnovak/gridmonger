@@ -15,8 +15,6 @@ const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
 const currYear = CompileDate[0..3]
 
-const macPackageName = fmt"gridmonger-v{version}-macos.zip"
-
 const dataDir = "Data"
 const exampleMapsDir = "Example Maps"
 const manualDir = "Manual"
@@ -25,6 +23,9 @@ const themesDir = "Themes"
 const distDir    = "dist"
 const distMacDir = distDir / "macos"
 const distWinDir = distDir / "windows"
+
+const macAppBundleName = "Gridmonger.app"
+const macPackageName = fmt"gridmonger-v{version}-macos.zip"
 
 const distManualName = "gridmonger-manual.zip"
 const distMapsName = "gridmonger-example-maps.zip"
@@ -149,9 +150,8 @@ task packageWinPortable, "create Windows portable package":
   rmDir packageDir
 
 
-task packageMac, "create macOS app bundle package":
-  let appBundleName = "Gridmonger.app"
-  let appBundleDir = distMacDir / appBundleName
+task packageMacAppBundle, "create macOS app bundle":
+  let appBundleDir = distMacDir / macAppBundleName
   let contentsDir = appBundleDir / "Contents"
   let macOsDir = contentsDir / "MacOS"
   let resourcesDir = contentsDir / "Resources"
@@ -183,10 +183,11 @@ task packageMac, "create macOS app bundle package":
   exec fmt"codesign --verbose --sign '-' --options runtime --deep {appBundleDir}"
   exec fmt"codesign --verify --deep --strict --verbose=2 {appBundleDir}"
 
-  # Make distribution ZIP file
+
+task packageMacZip, "create macOS ZIP package from the app bundle":
   withDir distMacDir:
-    createZip(zipName=macPackageName, srcPath=appBundleName)
-    rmDir appBundleName
+    createZip(zipName=macPackageName, srcPath=macAppBundleName)
+    rmDir macAppBundleName
 
 
 task packageManual, "create zipped manual package":
