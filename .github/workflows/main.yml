@@ -30,15 +30,22 @@ jobs:
       - name: Install Nim dependencies
         run: nimble -y install koi osdialog riff semver winim with
 
-      - name: Install manual generation dependencies
+      - name: Install Sass
         run: |
           npm install -g sass
           sass --version
 
+      - name: Install Sphinx
+        run: |
           pip install sphinx
           sphinx-build --version
 
-          brew install --default-names gnu-sed
+      - name: Install GNU sed
+        run: |
+          brew install gnu-sed
+          which gsed
+          echo "/usr/local/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
           which sed
           sed --version
 
