@@ -31,10 +31,13 @@ jobs:
         run: nimble -y install koi osdialog riff semver winim with
 
       - name: Install Sass
-        run: npm install -g sass
+        run: |
+          npm install -g sass
+          sass --version
 
       - name: Install sphinx
         run: pip install sphinx
+          sphinx-build --version
 
       - name: Inject version string
         run: |
