@@ -37,6 +37,9 @@ All commands below must be executed from the project root directory.
 Bump up the version in `CURRENT_VERSION` and `docs/latest_version`, then
 commit and push the changes.
 
+Work-in-progress development versions must have the `-alpha` suffix (e.g.,
+`1.2.0-alpha`).
+
 
 ### 2. Build the manual
 
@@ -83,7 +86,8 @@ Commit and push the changes in `docs/`.
 nim -f releaseMacX64
 nim -f releaseMacArm64
 nim mergeMacUniversal
-nim packageMac
+nim packageMacAppBundle
+nim packageMacZip
 nim publishPackageMac
 ```
 
