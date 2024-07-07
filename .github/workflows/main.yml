@@ -24,14 +24,14 @@ jobs:
           nim-version: '2.0.6'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Nim dependencies
+        run: nimble -y install koi osdialog riff semver winim with
+
       - name: Inject version string
         run: |
           set -x
-          VERSION=$(cat CURRENT_VERSION)
+          VERSION=$(./scripts/get-version.sh version-and-hash)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Install Nim dependencies
-        run: nimble -y install koi osdialog riff semver winim with
 
       - name: macOS arm64 release build
         run: nim -f releaseMacX64
@@ -42,12 +42,12 @@ jobs:
       - name: Create macOS universal binary
         run: nim mergeMacUniversal
 
-      - name: Create macOS app bundle package
-        run: nim packageMac
+      - name: Create macOS app bundle
+        run: nim packageMacAppBundle
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gridmonger-v${{ env.VERSION }}-macos
+          name: dist/macos/Gridmonger.app
           path: gridmonger-v${{ env.VERSION }}-macos.zip
           overwrite: true
