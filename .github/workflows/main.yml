@@ -53,6 +53,8 @@ jobs:
       - name: Build manual
         run: |
           alias sed=gsed
+          which sed
+          sed --version
           nim manual
 
       - name: macOS arm64 release build
