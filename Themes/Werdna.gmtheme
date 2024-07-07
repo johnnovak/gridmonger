@@ -122,7 +122,7 @@ ui {
       text = "#170707d7"
     }
 
-    title = "#d8d8d8ff"
+    title = "#696969ff"
   }
 
   splash-image {

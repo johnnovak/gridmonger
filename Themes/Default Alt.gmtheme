@@ -46,7 +46,7 @@ ui {
     }
     outer-border {
       color = "#666666ff"
-      width = 8
+      width = 5
     }
     shadow {
       enabled = no
@@ -129,6 +129,10 @@ ui {
     logo = "#3d3d3dff"
     outline = "#e6e6e6ff"
     shadow-alpha = 1
+  }
+
+  drop-down {
+    item-list-background = "#222222ff"
   }
 }
 
@@ -228,12 +232,7 @@ level {
     comment = "#ff3300cc"
     background-shape = circle
     index = "#ffffffff"
-    index-background = [
-      "#f75c4aff"
-      "#eb9062ff"
-      "#00b3c8ff"
-      "#13837fff"
-    ]
+    index-background = ["#f75c4aff", "#eb9062ff", "#00b3c8ff", "#13837fff"]
 
     tooltip {
       background = "#0d0d0dff"
@@ -247,12 +246,7 @@ level {
   }
 
   label {
-    text = [
-      "#353232ff"
-      "#ffffffff"
-      "#f75c4aff"
-      "#00b3c8ff"
-    ]
+    text = ["#353232ff", "#ffffffff", "#f75c4aff", "#00b3c8ff"]
   }
 
   level-drop-down {
@@ -275,16 +269,11 @@ level {
 }
 
 pane {
-  notes {
+  current-note {
     text = "#e6e6e6ff"
     scroll-bar = "#e6e6e6ff"
     index = "#ffffffff"
-    index-background = [
-      "#f75c4aff"
-      "#eb9062ff"
-      "#00b3c8ff"
-      "#1d8d89ff"
-    ]
+    index-background = ["#f75c4aff", "#eb9062ff", "#00b3c8ff", "#1d8d89ff"]
   }
 
   toolbar {
@@ -292,6 +281,34 @@ pane {
       normal = "#b0b0b0ff"
       hover = "#e0e0e0ff"
     }
+  }
+
+  notes-list {
+    controls-background = "#3e3e3eff"
+    list-background = "#4c4c4cff"
+
+    item {
+      background {
+        hover = "#ffffff11"
+        active = "#ffffff2d"
+      }
+      text {
+        normal = "#ffffffb3"
+        hover = "#ffffffc2"
+        active = "#ffffffee"
+      }
+    }
+    level-section {
+      background = "#262626ff"
+      text = "#ffffffc2"
+    }
+    region-section {
+      background = "#3e3e3eff"
+      text = "#ffffffc2"
+    }
+
+    section-separator = "#4d4d4dff"
+    scroll-bar = "#a4a4a4ff"
   }
 }
 

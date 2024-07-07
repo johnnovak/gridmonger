@@ -130,6 +130,10 @@ ui {
     outline = "#d8c08cff"
     shadow-alpha = 1
   }
+
+  drop-down {
+    item-list-background = "#262421ff"
+  }
 }
 
 level {
@@ -266,7 +270,7 @@ level {
 
 pane {
   current-note {
-    text = "#ffeeeed4"
+    text = "#ffe7cdd4"
     scroll-bar = "#00000000"
     index = "#ffffffff"
     index-background = ["#fd4948ff", "#32b6e5ff", "#4d8b41ff", "#876b20ff"]
@@ -277,6 +281,34 @@ pane {
       normal = "#8d7b69ff"
       hover = "#ad9983ff"
     }
+  }
+
+  notes-list {
+    controls-background = "#33302cff"
+    list-background = "#403c37ff"
+
+    item {
+      background {
+        hover = "#4f4c47ff"
+        active = "#5d5955ff"
+      }
+      text {
+        normal = "#fff2ddb7"
+        hover = "#fff5e4c5"
+        active = "#fff7ebd4"
+      }
+    }
+    level-section {
+      background = "#2d2a27ff"
+      text = "#fff5e4c5"
+    }
+    region-section {
+      background = "#262421ff"
+      text = "#fff5e4c5"
+    }
+
+    section-separator = "#4b4843ff"
+    scroll-bar = "#a09e9bff"
   }
 }
 

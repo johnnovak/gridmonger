@@ -114,21 +114,25 @@ ui {
   }
 
   quick-help {
-    background = "#003000ff"
-    text = "#d9d9d9ff"
+    background = "#002800ff"
+    text = "#00f700c9"
 
     command {
-      background = "#ffa600e9"
-      text = "#333333ff"
+      background = "#bfff00a1"
+      text = "#000000d2"
     }
 
-    title = "#000000ff"
+    title = "#00f7009c"
   }
 
   splash-image {
     logo = "#023402ff"
     outline = "#58a91bff"
     shadow-alpha = 1
+  }
+
+  drop-down {
+    item-list-background = "#001b00ff"
   }
 }
 
@@ -277,6 +281,34 @@ pane {
       normal = "#00000000"
       hover = "#002d00ff"
     }
+  }
+
+  notes-list {
+    controls-background = "#002400ff"
+    list-background = "#001d00ff"
+
+    item {
+      background {
+        hover = "#143e14ff"
+        active = "#264d26ff"
+      }
+      text {
+        normal = "#46d646ff"
+        hover = "#6bde6bff"
+        active = "#90e690ff"
+      }
+    }
+    level-section {
+      background = "#002000ff"
+      text = "#6bde6bff"
+    }
+    region-section {
+      background = "#001b00ff"
+      text = "#6bde6bff"
+    }
+
+    section-separator = "#0f3a0fff"
+    scroll-bar = "#809680ff"
   }
 }
 

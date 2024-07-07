@@ -32,7 +32,7 @@ ui {
   dialog {
     corner-radius = 0
     background = "#3d0011ff"
-    label = "#e0104bff"
+    label = "#d31248ff"
     warning = "#f8726dff"
     error = "#ff3f57ff"
 
@@ -94,7 +94,7 @@ ui {
     coordinates = "#ab0030ff"
 
     command {
-      background = "#b23a5bff"
+      background = "#d31248ff"
       text = "#000000d2"
     }
 
@@ -115,10 +115,10 @@ ui {
 
   quick-help {
     background = "#27000bff"
-    text = "#f72f67c9"
+    text = "#d31248ff"
 
     command {
-      background = "#b24f6aff"
+      background = "#d31248ff"
       text = "#000000d2"
     }
 
@@ -129,6 +129,10 @@ ui {
     logo = "#370211ff"
     outline = "#ac133eff"
     shadow-alpha = 1
+  }
+
+  drop-down {
+    item-list-background = "#25000aff"
   }
 }
 
@@ -277,6 +281,34 @@ pane {
       normal = "#00000000"
       hover = "#460c00ff"
     }
+  }
+
+  notes-list {
+    controls-background = "#24010bff"
+    list-background = "#000000ff"
+
+    item {
+      background {
+        hover = "#24010bff"
+        active = "#3a0112ff"
+      }
+      text {
+        normal = "#d31248ff"
+        hover = "#d31248ff"
+        active = "#ff1658ff"
+      }
+    }
+    level-section {
+      background = "#c80038ff"
+      text = "#1a0500ff"
+    }
+    region-section {
+      background = "#82082aff"
+      text = "#0d0300ff"
+    }
+
+    section-separator = "#000000ff"
+    scroll-bar = "#9e8088ff"
   }
 }
 

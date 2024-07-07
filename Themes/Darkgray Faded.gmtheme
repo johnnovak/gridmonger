@@ -130,6 +130,7 @@ ui {
     outline = "#babfc3ff"
     shadow-alpha = 1
   }
+
 }
 
 level {

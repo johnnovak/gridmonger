@@ -130,6 +130,10 @@ ui {
     outline = "#c1a776ff"
     shadow-alpha = 0.4903846153846154
   }
+
+  drop-down {
+    item-list-background = "#29251dff"
+  }
 }
 
 level {
@@ -283,6 +287,34 @@ pane {
       normal = "#baa064ff"
       hover = "#d4bb7eff"
     }
+  }
+
+  notes-list {
+    controls-background = "#3e3729ff"
+    list-background = "#4e4530ff"
+
+    item {
+      background {
+        hover = "#ffd0601b"
+        active = "#ffd06031"
+      }
+      text {
+        normal = "#cdbf9fff"
+        hover = "#cdbf9fff"
+        active = "#e1dbceff"
+      }
+    }
+    level-section {
+      background = "#363026ff"
+      text = "#dad0b7ff"
+    }
+    region-section {
+      background = "#29251dff"
+      text = "#cdc2a8ff"
+    }
+
+    section-separator = "#4f4a3cff"
+    scroll-bar = "#a29f98ff"
   }
 }
 

@@ -122,13 +122,17 @@ ui {
       text = "#000000ff"
     }
 
-    title = "#5d5d5dff"
+    title = "#5b5b5bff"
   }
 
   splash-image {
     logo = "#1b1b1b00"
     outline = "#747474ff"
     shadow-alpha = 1
+  }
+
+  drop-down {
+    item-list-background = "#1a1a1aff"
   }
 }
 
@@ -277,6 +281,34 @@ pane {
       normal = "#000000ff"
       hover = "#2b2b2bff"
     }
+  }
+
+  notes-list {
+    controls-background = "#1a1a1aff"
+    list-background = "#000000ff"
+
+    item {
+      background {
+        hover = "#171717ff"
+        active = "#4c4c4c7d"
+      }
+      text {
+        normal = "#808080ff"
+        hover = "#ffffffa5"
+        active = "#ffffffbb"
+      }
+    }
+    level-section {
+      background = "#1a1a1aff"
+      text = "#ffffffa5"
+    }
+    region-section {
+      background = "#1a1a1aff"
+      text = "#919191ff"
+    }
+
+    section-separator = "#000000ff"
+    scroll-bar = "#56565600"
   }
 }
 

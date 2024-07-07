@@ -130,6 +130,10 @@ ui {
     outline = "#e6e6e6ff"
     shadow-alpha = 0.7980769230769231
   }
+
+  drop-down {
+    item-list-background = "#2a2a2aff"
+  }
 }
 
 level {
@@ -189,7 +193,7 @@ level {
     fill-style = hatched
     color = "#353232ff"
     width-factor = 0.25
-    overscan = yes
+    overscan = no
   }
 
   shadow {
@@ -277,6 +281,34 @@ pane {
       normal = "#eeeeeeff"
       hover = "#dadadaff"
     }
+  }
+
+  notes-list {
+    controls-background = "#3f3f3fff"
+    list-background = "#505050ff"
+
+    item {
+      background {
+        hover = "#ffffff13"
+        active = "#ffffff2a"
+      }
+      text {
+        normal = "#ffffffb3"
+        hover = "#ffffffd0"
+        active = "#fffffffe"
+      }
+    }
+    level-section {
+      background = "#313131ff"
+      text = "#ffffffc2"
+    }
+    region-section {
+      background = "#252525ff"
+      text = "#ffffffc2"
+    }
+
+    section-separator = "#50505077"
+    scroll-bar = "#a3a3a3ff"
   }
 }
 
