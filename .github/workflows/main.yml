@@ -12,6 +12,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        nimversion:
+          - binary:2.0.6
         os:
           # - ubuntu-20.04
           # - windows-2019
@@ -19,21 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
-      - name: Cache nimble
-        id: cache-nimble
-        uses: actions/cache@v4.0.1
+      - uses: iffy/install-nim@v5
         with:
-          path: ~/.nimble
-          key: ${{ runner.os }}-nimble-${{ hashFiles('*.nimble') }}
-          restore-keys: |
-            ${{ runner.os }}-nimble-
-        if: runner.os != 'Windows'
-
-      - uses: jiro4989/setup-nim-action@v2
-        with:
-          nim-version: '2.0.6'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ matrix.nimversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Nim dependencies
         run: nimble -y install koi osdialog riff semver winim with
@@ -60,5 +52,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gridmonger-v${{ env.VERSION }}-macos
-          path: dist/macos/Gridmonger.app
+          path: dist/macos
           overwrite: true
