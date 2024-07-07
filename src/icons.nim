@@ -56,6 +56,8 @@ const
   IconShoePrints*     = "\uea98"
   IconText*           = "\ue914"
   IconThinArrowDown*  = "\ue91e"
+  IconThinArrowLeft*  = "\ue90f"
+  IconThinArrowRight* = "\ue904"
   IconThinArrowUp*    = "\ue91a"
   IconTiles*          = "\ue950"
   IconTrash*          = "\uf1f8"
