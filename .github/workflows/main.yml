@@ -52,5 +52,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gridmonger-v${{ env.VERSION }}-macos
-          path: dist/macos
+          path: dist/macos/gridmonger-${{ env.VERSION }}-macos.zip
           overwrite: true
