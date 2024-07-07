@@ -2,7 +2,8 @@
 
 SPHINXOPTS   ?=
 SPHINXBUILD  ?= sphinx-build
-SED          = gsed
+SED          ?= sed
+
 SOURCEDIR    = source
 BUILDDIR     = build
 SITEDIR      = ../docs
