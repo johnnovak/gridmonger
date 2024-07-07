@@ -52,6 +52,7 @@ jobs:
 
       - name: Build manual
         run: |
+          shopt -s expand_aliases
           alias sed=gsed
           which sed
           sed --version
