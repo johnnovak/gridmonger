@@ -51,11 +51,9 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build manual
+        env:
+          SED: gsed
         run: |
-          shopt -s expand_aliases
-          alias sed=gsed
-          which sed
-          sed --version
           nim manual
 
       - name: macOS arm64 release build
