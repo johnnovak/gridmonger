@@ -36,7 +36,8 @@ jobs:
           sass --version
 
       - name: Install sphinx
-        run: pip install sphinx
+        run: |
+          pip install sphinx
           sphinx-build --version
 
       - name: Inject version string
@@ -44,6 +45,9 @@ jobs:
           set -x
           VERSION=$(./scripts/get-version.sh version-and-hash)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build manual
+        run: nim manual
 
       - name: macOS arm64 release build
         run: nim -f releaseMacX64
