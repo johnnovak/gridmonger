@@ -78,8 +78,8 @@ const
   IconSpinner*        = "\ue910"
   IconStairsDown*     = "\ue90c"
   IconStairsUp*       = "\ue90d"
-  IconWriting*        = "\ue919"
   IconTeleport*       = "\ue915"
+  IconWriting*        = "\ue919"
 
   # Annotation icons
   IconAxe*            = "\ue917"
