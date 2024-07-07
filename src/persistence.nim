@@ -610,7 +610,7 @@ proc readLinks(
 
 # }}}
 # {{{ readLevelProperties()
-proc readLevelProperties(rr): Level =
+proc readLevelProperties(rr; levelId: Natural): Level =
   debug("Reading level properties...")
   pushDebugIndent()
 
@@ -636,7 +636,8 @@ proc readLevelProperties(rr): Level =
   let notes = rr.readWStr
   checkStringLength(notes, "lvl.prop.notes", NotesLimits)
 
-  result = newLevel(locationName, levelName, elevation, numRows, numColumns)
+  result = newLevel(locationName, levelName, elevation, numRows, numColumns,
+                    overrideId=levelId.some)
   result.overrideCoordOpts = overrideCoordOpts.bool
   result.notes = notes
 
@@ -916,9 +917,11 @@ proc readLevelRegions(rr; levelCols: Natural,
 
 # }}}
 # {{{ readLevel()
-proc readLevel(rr; version: Natural): Level =
+proc readLevel(rr; version: Natural, levelId: Natural): Level =
   debug("Reading level...")
   pushDebugIndent()
+
+  debug(fmt"levelId: {levelId}")
 
   let groupChunkId = FourCC_GRMM_lvls.some
   var
@@ -977,7 +980,7 @@ proc readLevel(rr; version: Natural): Level =
   if cellCursor.isNone: chunkNotFoundError(FourCC_GRMM_cell)
 
   rr.cursor = propCursor.get
-  var level = readLevelProperties(rr)
+  var level = readLevelProperties(rr, levelId)
 
   rr.cursor = coorCursor.get
   level.coordOpts = readCoordinateOptions(rr, groupChunkId.get)
@@ -1011,6 +1014,8 @@ proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
   if rr.hasSubChunks:
     var ci = rr.enterGroup
 
+    var levelId = 0
+
     while true:
       if ci.kind == ckGroup:
         case ci.formatTypeId
@@ -1022,8 +1027,9 @@ proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
 
           # The level IDs must be set to their indices in the map file to
           # ensure they are in sync with link (see writeLinks()).
-          let level = readLevel(rr, version)
+          let level = readLevel(rr, version, levelId)
           levels[level.id] = level
+          inc(levelId)
 
           rr.exitGroup
         else:
