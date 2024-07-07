@@ -263,7 +263,7 @@ Version 4
 
   - Remove redundant region coordinates from the 'regn' chunk.
   - Convert 'disp' chunk into a group chunk with multiple subchunks and
-    - add 'optWraparound' to the 'opts' subchunk.
+    - add 'pasteWraparound' to the 'opts' subchunk.
     - add 'notl' subchunk.
 
 
