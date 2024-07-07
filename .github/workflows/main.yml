@@ -53,4 +53,3 @@ jobs:
         with:
           name: gridmonger-v${{ env.VERSION }}-macos
           path: dist/macos/gridmonger-v${{ env.VERSION }}-macos.zip
-          overwrite: true
