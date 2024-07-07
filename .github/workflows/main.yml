@@ -30,15 +30,17 @@ jobs:
       - name: Install Nim dependencies
         run: nimble -y install koi osdialog riff semver winim with
 
-      - name: Install Sass
+      - name: Install manual generation dependencies
         run: |
           npm install -g sass
           sass --version
 
-      - name: Install sphinx
-        run: |
           pip install sphinx
           sphinx-build --version
+
+          brew install --default-names gnu-sed
+          which sed
+          sed --version
 
       - name: Inject version string
         run: |
