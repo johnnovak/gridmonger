@@ -245,7 +245,8 @@ type AppShortcut = enum
   scExcavateTunnel
   scEraseCell
   scDrawClearFloor
-  scToggleFloorOrientation
+  scRotateFloorOrientationCW
+  scRotateFloorOrientationACW
 
   scSetFloorColor
   scPickFloorColor
@@ -1055,7 +1056,12 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       scExcavateTunnel.sc,      "Excavate (draw) tunnel".desc,
       scEraseCell.sc,           "Erase cell (clear floor & walls)".desc,
       scDrawClearFloor.sc,      "Draw/clear floor".desc,
-      scToggleFloorOrientation.sc, "Toggle floor orientation".desc,
+
+      scRotateFloorOrientationCW.sc,
+      "Rotate floor orientation clockwise".desc,
+
+      scRotateFloorOrientationACW.sc,
+      "Rotate floor orientation anti-clockwise".desc,
       QuickRefSepa,
 
       scDrawWall.sc,            "Draw/clear wall".desc,
@@ -1365,7 +1371,8 @@ let DefaultAppShortcuts = {
   scExcavateTunnel:            @[mkKeyShortcut(keyD,      {})],
   scEraseCell:                 @[mkKeyShortcut(keyE,      {})],
   scDrawClearFloor:            @[mkKeyShortcut(keyF,      {})],
-  scToggleFloorOrientation:    @[mkKeyShortcut(keyO,      {})],
+  scRotateFloorOrientationCW:  @[mkKeyShortcut(keyO,      {})],
+  scRotateFloorOrientationACW: @[mkKeyShortcut(keyO,      {mkShift})],
 
   scSetFloorColor:             @[mkKeyShortcut(keyC,      {})],
   scPickFloorColor:            @[mkKeyShortcut(keyI,      {})],
@@ -6868,7 +6875,7 @@ proc handleGlobalKeyEvents(a) =
         actions.drawClearFloor(map, loc=cur, undoLoc=cur,
                                ui.currFloorColor, um, groupWithPrev=false)
 
-      elif ke.isShortcutDown(scToggleFloorOrientation, a):
+      elif ke.isShortcutDown(scRotateFloorOrientationCW, a):
         let floor = map.getFloor(cur)
 
         if floor != fEmpty:
