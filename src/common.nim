@@ -48,10 +48,10 @@ type
     row*, col*: Natural
 
   CardinalDir* = enum
-    dirN = "North"
-    dirE = "East"
-    dirS = "South"
-    dirW = "West"
+    dirN = (0, "North")
+    dirE = (1, "East")
+    dirS = (2, "South")
+    dirW = (3, "West")
 
   Direction* = set[CardinalDir]
 
