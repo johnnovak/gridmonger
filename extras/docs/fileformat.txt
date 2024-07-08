@@ -99,6 +99,11 @@ Level chunks  (in 'lvl ' group chunk)
 
 
 'cell'      Cell data
+	Each level consists of (numRows+1 * numColums+1) number of cells. The
+	extra row and column is needed to store the walls of the south and east
+	borders, respectively (because each cell can only store its north and
+	west walls).
+
     Cells are stored in row-major order; (0,0) is the top-left cell,
     (0,1) the cell right to it, etc.
 
@@ -108,18 +113,19 @@ Level chunks  (in 'lvl ' group chunk)
     The data stored per layer and their order are as follows:
 
       floor             UINT8   (see Floor enum in common.nim for mappings)
-      floorOrientation  UINT8   (0=horiz, 1=vert)
-      floorColor        UINT8   (max=9)
+      floorOrientation  UINT8   (0=north, 1=east, 2=south, 3=west)
+      floorColor        UINT8   (max=9, actual colours are theme-dependent)
       wallNorth         UINT8   (see Wall enum in common.nim for mappings)
       wallWest          UINT8   (see Wall enum in common.nim for mappings)
       trail             UINT8   (0=off, 1=on)
+
 
     Layer format:
 
       UINT8   compressionType
 
       if compressionType == 0   (uncompressed)
-        (UINT8 * numRows * numColums)    uncompressed data
+        (UINT8 * (numRows+1 * numColums+1))   uncompressed data
 
       if compressionType == 1   (run-length encoded)
         UINT32   length     length of compressed data in bytes
@@ -135,6 +141,32 @@ Level chunks  (in 'lvl ' group chunk)
 
       if compressionType == 2   (zeroes)
         no data; the whole layer should be filled with zeroes
+
+
+	Floor orientation:
+
+	  Floor orientation represents the direction of traversal. E.g., a
+	  north-oriented one-way door is drawn horizontally, with the arrow
+	  through the door pointing northwards.
+
+	  For some floor types, all four orientations are valid. Some other
+	  types only allow horizontal and vertical orientations (north is used
+	  for vertical, and east for horizontal for these).
+
+	  Floor types that cannot be oriented have their orientation always set to
+	  east.
+
+	  See HorizVertFloors and RotatableFloors in main.nim for the list of
+	  oriented floor types.
+
+
+	Wall types:
+
+	  Some special wall types have NE and SW variants. This controls on which
+	  side of the wall is the special item located. E.g., if the north wall is
+	  set to 'wLeverNE', the lever is on the north side of the north wall. If
+	  the north wall is set to 'wLeverSE', the lever is on the south side of
+	  the same north wall.
 
 
 'anno'      Annotations
@@ -262,16 +294,25 @@ Version 4
 [Gridmonger v1.2.0 - 2024-04-22]
 
   - Remove redundant region coordinates from the 'regn' chunk.
+
   - Convert 'disp' chunk into a group chunk with multiple subchunks and
     - add 'pasteWraparound' to the 'opts' subchunk.
     - add 'notl' subchunk.
+
+  - 'floorOrientation' stores now cardinal directions (north, east, south,
+	west) instead of just horizontal & vertical.
+
+  - Deprecate OneWayDoorSW (26) floor type (OneWayDoor replaces it with all
+    four orientations allowed).
+
+  - Add Arrow (91) floor type.
 
 
 Version 3
 ---------
 [Gridmonger v1.1.0 - 2023-02-02]
 
-  - Add Column (100) and Statue (110) 'floor' types to the 'cell' chunk.
+  - Add Column (100) and Statue (110) floor types to the 'cell' chunk.
 
 
 Version 2
