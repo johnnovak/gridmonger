@@ -76,7 +76,7 @@ proc getFloorColor*(l; r,c: Natural): byte {.inline.} =
 
 # }}}
 # {{{ setFloorColor*()
-proc setFloorColor*(l; r,c: Natural, col: byte) {.inline.} =
+proc setFloorColor*(l; r,c: Natural, col: byte) =
   l.cellGrid.setFloorColor(r,c, col)
 
 # }}}
@@ -86,7 +86,7 @@ proc getWall*(l; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
 
 # }}}
 # {{{ setWall*()
-proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
+proc setWall*(l; r,c: Natural, dir: CardinalDir, w: Wall) =
   l.cellGrid.setWall(r,c, dir, w)
 
 # }}}
@@ -253,7 +253,7 @@ proc hasTrail*(l; r,c: Natural): bool {.inline.} =
 
 # }}}
 # {{{ setTrail*()
-proc setTrail*(l; r,c: Natural, t: bool) {.inline.} =
+proc setTrail*(l; r,c: Natural, t: bool) =
   l.cellGrid.setTrail(r,c, t)
 
 # }}}

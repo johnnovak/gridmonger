@@ -296,7 +296,7 @@ proc getFloorColor*(m; loc: Location): Natural {.inline.} =
 # }}}
 # {{{ setFloorColor*()
 proc setFloorColor*(m; loc: Location,
-                    floorColor: Natural) {.inline.} =
+                    floorColor: Natural) =
   m.levels[loc.levelId].setFloorColor(loc.row, loc.col, floorColor.byte)
 
 # }}}

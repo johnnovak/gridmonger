@@ -75,7 +75,7 @@ proc getWall*(g; r,c: Natural, dir: CardinalDir): Wall {.inline.} =
 
 # }}}
 # {{{ setWall*()
-proc setWall*(g; r,c: Natural, dir: CardinalDir, w: Wall) {.inline.} =
+proc setWall*(g; r,c: Natural, dir: CardinalDir, w: Wall) =
   assert r < g.rows
   assert c < g.cols
 
@@ -95,7 +95,7 @@ proc getFloor*(g; r,c: Natural): Floor {.inline.} =
 
 # }}}
 # {{{ setFloor*()
-proc setFloor*(g; r,c: Natural, f: Floor) {.inline.} =
+proc setFloor*(g; r,c: Natural, f: Floor) =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floor = f
@@ -123,7 +123,7 @@ proc getFloorColor*(g; r,c: Natural): byte {.inline.} =
 
 # }}}
 # {{{ setFloorColor*()
-proc setFloorColor*(g; r,c: Natural, col: byte) {.inline.} =
+proc setFloorColor*(g; r,c: Natural, col: byte) =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorColor = col
@@ -138,7 +138,7 @@ proc hasTrail*(g; r,c: Natural): bool {.inline.} =
 
 # }}}
 # {{{ setTrail*()
-proc setTrail*(g; r,c: Natural, t: bool) {.inline.} =
+proc setTrail*(g; r,c: Natural, t: bool) =
   assert r < g.rows
   assert c < g.cols
   g[r,c].trail = t
