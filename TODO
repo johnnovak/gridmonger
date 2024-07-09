@@ -1,6 +1,9 @@
 BUGS
 ====
 
+- create new level, save map, restart GM: a different level will be shown at
+  startup
+
 - selecting single line text selects whole line
 
 - trail mode in combination with undo/redo acts a bit weird (enable trail
