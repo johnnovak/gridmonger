@@ -3141,11 +3141,6 @@ proc loadMap(path: string; a): bool =
       a.theme.nextThemeIndex = findThemeIndex(s.themeName, a)
       a.theme.hideThemeLoadedMessage = true
 
-      with a.layout:
-        showToolsPane       = s.showToolsPane
-        showCurrentNotePane = s.showCurrentNotePane
-        showNotesListPane   = s.showNotesListPane
-
       with a.ui.drawLevelParams:
         viewStartRow   = s.viewStartRow
         viewStartCol   = s.viewStartCol
@@ -3224,9 +3219,6 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     viewStartCol:           dp.viewStartCol,
 
     showCellCoords:         a.ui.showCellCoords,
-    showToolsPane:          a.layout.showToolsPane,
-    showCurrentNotePane:    a.layout.showCurrentNotePane,
-    showNotesListPane:      a.layout.showNotesListPane,
     wasdMode:               a.ui.wasdMode,
     walkMode:               a.ui.walkMode,
 

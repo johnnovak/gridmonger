@@ -255,9 +255,6 @@ App state chunks (in 'stat' group chunk, optional)
 
 'opts'      Options state (optional)
     UINT8   showCellCoords       (0=off, 1=on)
-    UINT8   showToolsPane        (0=off, 1=on)
-    UINT8   showCurrentNotePane  (0=off, 1=on)
-    UINT8   showNotesListPane    (0=off, 1=on)
     UINT8   wasdMode             (0=off, 1=on)
     UINT8   walkMode             (0=off, 1=on)
     UINT8   pasteWraparound      (0=off, 1=on) TODO
@@ -296,6 +293,9 @@ Version 4
   - Remove redundant region coordinates from the 'regn' chunk.
 
   - Convert 'disp' chunk into a group chunk with multiple subchunks and
+	- remove 'showToolsPane', 'showCurrentNotePane' and 'showNotesListPane'
+	  from the 'opts' subchunk (now these became layout parameters and layouts
+	  are stored in the config only).
     - add 'pasteWraparound' to the 'opts' subchunk.
     - add 'notl' subchunk.
 

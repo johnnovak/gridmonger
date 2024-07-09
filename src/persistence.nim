@@ -118,12 +118,9 @@ type
     viewStartRow*:           Natural
     viewStartCol*:           Natural
 
-    showCellCoords*:      bool
-    showToolsPane*:       bool
-    showCurrentNotePane*: bool
-    showNotesListPane*:   bool
-    wasdMode*:            bool
-    walkMode*:            bool
+    showCellCoords*:         bool
+    wasdMode*:               bool
+    walkMode*:               bool
     # TODO
     # optPasteWraparound*:            bool
 
@@ -313,10 +310,10 @@ proc readAppState_preV4(rr; map: Map): AppState =
   checkBool(showCellCoords, "stat.showCellCoords")
 
   let showToolsPane = rr.read(uint8)
-  checkBool(showToolsPane, "stat.showToolsPane")
+  # ignore
 
   let showCurrentNotePane = rr.read(uint8)
-  checkBool(showCurrentNotePane, "stat.showCurrentNotePane")
+  # ignore
 
   let wasdMode = rr.read(uint8)
   checkBool(wasdMode, "stat.wasdMode")
@@ -341,11 +338,9 @@ proc readAppState_preV4(rr; map: Map): AppState =
     viewStartRow:    viewStartRow,
     viewStartCol:    viewStartCol,
 
-    showCellCoords:      showCellCoords.bool,
-    showToolsPane:       showToolsPane.bool,
-    showCurrentNotePane: showCurrentNotePane.bool,
-    wasdMode:            wasdMode.bool,
-    walkMode:            walkMode.bool,
+    showCellCoords:  showCellCoords.bool,
+    wasdMode:        wasdMode.bool,
+    walkMode:        walkMode.bool,
 
     currFloorColor:  currFloorColor,
     currSpecialWall: currSpecialWall
@@ -517,14 +512,6 @@ proc readAppState_V4(rr; map: Map): AppState =
     let showCellCoords = rr.read(uint8)
     checkBool(showCellCoords, "stat.opts.showCellCoords")
     app.showCellCoords = showCellCoords.bool
-
-    let showToolsPane = rr.read(uint8)
-    checkBool(showToolsPane, "stat.opts.showToolsPane")
-    app.showToolsPane = showToolsPane.bool
-
-    let showCurrentNotePane = rr.read(uint8)
-    checkBool(showCurrentNotePane, "stat.opts.showCurrentNotePane")
-    app.showCurrentNotePane = showCurrentNotePane.bool
 
     let wasdMode = rr.read(uint8)
     checkBool(wasdMode, "stat.opts.wasdMode")
@@ -1328,8 +1315,6 @@ proc writeAppState(rw; map: Map, s: AppState) =
     # Options state
     rw.chunk(FourCC_GRMM_opts):
       rw.write(s.showCellCoords.uint8)
-      rw.write(s.showToolsPane.uint8)
-      rw.write(s.showCurrentNotePane.uint8)
       rw.write(s.wasdMode.uint8)
       rw.write(s.walkMode.uint8)
       # TODO
