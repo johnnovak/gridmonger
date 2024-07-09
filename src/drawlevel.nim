@@ -1255,16 +1255,16 @@ proc setWallStyle(isCursorActive, regionBorder: bool; ctx): (float, float,
 # }}}
 
 # {{{ regionBorderYAdjustment()
-func regionBorderYAdjustment(orientation: Orientation,
+func regionBorderYAdjustment(orientation: CardinalDir,
                              regionBorder: bool; ctx): float =
 
-  if orientation == Vert and regionBorder: ctx.dp.vertRegionBorderYOffs
+  if orientation.isVert and regionBorder: ctx.dp.vertRegionBorderYOffs
   else: 0
 
 # }}}
 
 # {{{ drawSolidWallHoriz*()
-proc drawSolidWallHoriz*(x, y: float; orientation: Orientation,
+proc drawSolidWallHoriz*(x, y: float; orientation: CardinalDir,
                          isCursorActive: bool = false,
                          regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
@@ -1284,7 +1284,7 @@ proc drawSolidWallHoriz*(x, y: float; orientation: Orientation,
 
 # }}}
 # {{{ drawIllusoryWallHoriz*()
-proc drawIllusoryWallHoriz*(x, y: float; orientation: Orientation;
+proc drawIllusoryWallHoriz*(x, y: float; orientation: CardinalDir;
                             isCursorActive: bool = false;
                             regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
@@ -1312,7 +1312,7 @@ proc drawIllusoryWallHoriz*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawInvisibleWallHoriz*()
-proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
+proc drawInvisibleWallHoriz*(x, y: float; orientation: CardinalDir;
                              isCursorActive: bool = false;
                              regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
@@ -1343,7 +1343,7 @@ proc drawInvisibleWallHoriz*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawDoorHoriz*()
-proc drawDoorHoriz*(x, y: float; orientation: Orientation;
+proc drawDoorHoriz*(x, y: float; orientation: CardinalDir;
                     isCursorActive: bool = false; regionBorder: bool = false;
                     fill: bool = false; ctx) =
   alias(dp, ctx.dp)
@@ -1398,7 +1398,7 @@ proc drawDoorHoriz*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawLockedDoorHoriz*()
-proc drawLockedDoorHoriz*(x, y: float; orientation: Orientation;
+proc drawLockedDoorHoriz*(x, y: float; orientation: CardinalDir;
                           isCursorActive: bool = false;
                           regionBorder: bool = false; ctx) =
   drawDoorHoriz(x, y, orientation, isCursorActive, regionBorder, fill=true,
@@ -1406,7 +1406,7 @@ proc drawLockedDoorHoriz*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawSecretDoorHoriz*()
-proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
+proc drawSecretDoorHoriz*(x, y: float; orientation: CardinalDir;
                           isCursorActive: bool = false;
                           regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
@@ -1442,7 +1442,7 @@ proc drawSecretDoorHoriz*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawArchwayHoriz*()
-proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
+proc drawArchwayHoriz*(x, y: float; orientation: CardinalDir;
                        isCursorActive: bool = false;
                        regionBorder: bool = false; ctx) =
   alias(dp, ctx.dp)
@@ -1492,7 +1492,7 @@ proc drawArchwayHoriz*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawOneWayDoorHoriz*()
-proc drawOneWayDoorHoriz*(x, y: float; orientation: Orientation;
+proc drawOneWayDoorHoriz*(x, y: float; orientation: CardinalDir;
                           isCursorActive, regionBorder, northEast: bool; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1538,21 +1538,29 @@ proc drawOneWayDoorHoriz*(x, y: float; orientation: Orientation;
            dp.gridSize, color, fontSizeFactor=0.46, ctx.vg)
 
 
-proc drawOneWayDoorHorizNE*(x, y: float; orientation: Orientation;
+proc drawOneWayDoorHorizNE*(x, y: float; orientation: CardinalDir;
                             isCursorActive: bool = false;
                             regionBorder: bool = false; ctx) =
   drawOneWayDoorHoriz(x, y, orientation, isCursorActive, regionBorder,
                       northEast=true, ctx)
 
-proc drawOneWayDoorHorizSW*(x, y: float; orientation: Orientation;
+proc drawOneWayDoorHorizSW*(x, y: float; orientation: CardinalDir;
                             isCursorActive: bool = false;
                             regionBorder: bool = false; ctx) =
   drawOneWayDoorHoriz(x, y, orientation, isCursorActive, regionBorder,
                       northEast=false, ctx)
 
+proc drawOneWayDoorHoriz*(x, y: float; orientation: CardinalDir;
+                          isCursorActive: bool = false;
+                          regionBorder: bool = false; ctx) =
+  let northEast = orientation in {dirN, dirE}
+
+  drawOneWayDoorHoriz(x, y, orientation, isCursorActive, regionBorder,
+                      northEast, ctx)
+
 # }}}
 # {{{ drawLeverHoriz*()
-proc drawLeverHoriz*(x, y: float; orientation: Orientation;
+proc drawLeverHoriz*(x, y: float; orientation: CardinalDir;
                      isCursorActive, regionBorder, northEast: bool; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1582,13 +1590,13 @@ proc drawLeverHoriz*(x, y: float; orientation: Orientation;
                      ctx)
 
 
-proc drawLeverHorizNE*(x, y: float; orientation: Orientation;
+proc drawLeverHorizNE*(x, y: float; orientation: CardinalDir;
                        isCursorActive: bool = false;
                        regionBorder: bool = false; ctx) =
   drawLeverHoriz(x, y, orientation, isCursorActive, regionBorder,
                  northEast=true, ctx)
 
-proc drawLeverHorizSW*(x, y: float; orientation: Orientation;
+proc drawLeverHorizSW*(x, y: float; orientation: CardinalDir;
                        isCursorActive: bool = false;
                        regionBorder: bool = false; ctx) =
   drawLeverHoriz(x, y, orientation, isCursorActive, regionBorder,
@@ -1596,7 +1604,7 @@ proc drawLeverHorizSW*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawNicheHoriz*()
-proc drawNicheHoriz*(x, y: float; orientation: Orientation;
+proc drawNicheHoriz*(x, y: float; orientation: CardinalDir;
                      regionBorder, northEast: bool; floorColor: Natural; ctx) =
   alias(lt, ctx.lt)
   alias(dp, ctx.dp)
@@ -1657,14 +1665,14 @@ proc drawNicheHoriz*(x, y: float; orientation: Orientation;
   vg.stroke
 
 
-proc drawNicheHorizNE*(x, y: float; orientation: Orientation;
+proc drawNicheHorizNE*(x, y: float; orientation: CardinalDir;
                        floorColor: Natural;
                        isCursorActive: bool = false;
                        regionBorder: bool = false; ctx) =
   drawNicheHoriz(x, y, orientation, regionBorder, northEast=true, floorColor,
                  ctx)
 
-proc drawNicheHorizSW*(x, y: float; orientation: Orientation;
+proc drawNicheHorizSW*(x, y: float; orientation: CardinalDir;
                        floorColor: Natural;
                        isCursorActive: bool = false;
                        regionBorder: bool = false; ctx) =
@@ -1673,7 +1681,7 @@ proc drawNicheHorizSW*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawStatueHoriz*()
-proc drawStatueHoriz*(x, y: float; orientation: Orientation;
+proc drawStatueHoriz*(x, y: float; orientation: CardinalDir;
                       isCursorActive, regionBorder, northEast: bool; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1703,13 +1711,13 @@ proc drawStatueHoriz*(x, y: float; orientation: Orientation;
                      ctx)
 
 
-proc drawStatueHorizNE*(x, y: float; orientation: Orientation;
+proc drawStatueHorizNE*(x, y: float; orientation: CardinalDir;
                         isCursorActive: bool = false;
                         regionBorder: bool = false; ctx) =
   drawStatueHoriz(x, y, orientation, isCursorActive, regionBorder,
                  northEast=true, ctx)
 
-proc drawStatueHorizSW*(x, y: float; orientation: Orientation;
+proc drawStatueHorizSW*(x, y: float; orientation: CardinalDir;
                         isCursorActive: bool = false;
                         regionBorder: bool = false; ctx) =
   drawStatueHoriz(x, y, orientation, isCursorActive, regionBorder,
@@ -1717,7 +1725,7 @@ proc drawStatueHorizSW*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawKeyholeHoriz*()
-proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
+proc drawKeyholeHoriz*(x, y: float; orientation: CardinalDir;
                        isCursorActive: bool = false;
                        regionBorder: bool = false; ctx) =
   alias(lt, ctx.lt)
@@ -1784,7 +1792,7 @@ proc drawKeyholeHoriz*(x, y: float; orientation: Orientation;
 
 # }}}
 # {{{ drawWritingHoriz*()
-proc drawWritingHoriz*(x, y: float; orientation: Orientation;
+proc drawWritingHoriz*(x, y: float; orientation: CardinalDir;
                        isCursorActive, regionBorder, northEast: bool; ctx) =
   alias(dp, ctx.dp)
   alias(vg, ctx.vg)
@@ -1799,13 +1807,13 @@ proc drawWritingHoriz*(x, y: float; orientation: Orientation;
   drawIcon(x, y, 0, oy, IconWriting, dp.gridSize, color,
            fontSizeFactor=0.7, vg)
 
-proc drawWritingHorizNE*(x, y: float; orientation: Orientation;
+proc drawWritingHorizNE*(x, y: float; orientation: CardinalDir;
                          isCursorActive: bool = false;
                          regionBorder: bool = false; ctx) =
   drawWritingHoriz(x, y, orientation, isCursorActive, regionBorder,
                    northEast=true, ctx)
 
-proc drawWritingHorizSW*(x, y: float; orientation: Orientation;
+proc drawWritingHorizSW*(x, y: float; orientation: CardinalDir;
                          isCursorActive: bool = false;
                          regionBorder: bool = false; ctx) =
   drawWritingHoriz(x, y, orientation, isCursorActive, regionBorder,
@@ -2111,7 +2119,7 @@ proc drawInvisibleBarrier(x, y: float; isCursorActive: bool; ctx) =
 
 # }}}
 # {{{ drawBridge()
-proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
+proc drawBridge(x, y: float; orientation: CardinalDir; isCursorActive: bool;
                 ctx) =
 
   alias(lt, ctx.lt)
@@ -2176,20 +2184,20 @@ proc drawBridge(x, y: float; orientation: Orientation; isCursorActive: bool;
   vg.stroke
 
 # }}}
-# {{{ drawArrowNE()
-proc drawArrowNE(x, y: float; orientation: Orientation; isCursorActive: bool;
+# {{{ drawArrow()
+proc drawArrow(x, y: float; orientation: CardinalDir; isCursorActive: bool;
                  ctx) =
-  drawIcon(x, y, 0, 0, IconThinArrowUp, ctx.dp.gridSize,
-           getForegroundNormalColor(isCursorActive, ctx),
-           fontSizeFactor=0.7, ctx.vg)
 
-# }}}
-# {{{ drawArrowSW()
-proc drawArrowSW(x, y: float; orientation: Orientation; isCursorActive: bool;
-                 ctx) =
-  drawIcon(x, y, 0, 0, IconThinArrowDown, ctx.dp.gridSize,
+  # TODO adjust offsets
+  let (ox, oy, icon) = case orientation
+                       of dirN: (-0.03, -0.025, IconArrowUp)
+                       of dirE: ( 0.03, -0.035, IconArrowUp)
+                       of dirS: ( 0.03, -0.025, IconArrowDown)
+                       of dirW: (-0.03, -0.035, IconArrowDown)
+
+  drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize,
            getForegroundNormalColor(isCursorActive, ctx),
-           fontSizeFactor=0.7, ctx.vg)
+           fontSizeFactor=0.5, ctx.vg)
 
 # }}}
 
@@ -2249,19 +2257,19 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   let
     bufRow = viewRow.toBufRow
     bufCol = viewCol.toBufCol
-    f = viewBuf.getFloor(bufRow, bufCol)
-    x = cellX(viewCol, dp)
-    y = cellY(viewRow, dp)
+    f      = viewBuf.getFloor(bufRow, bufCol)
+    x      = cellX(viewCol, dp)
+    y      = cellY(viewRow, dp)
     isCursorActive = isCursorActive(viewRow, viewCol, dp)
 
   template drawOriented(drawProc: untyped, offsetFactor = 0.5) =
     let orientation = viewBuf.getFloorOrientation(bufRow, bufCol)
 
-    case orientation
-    of Horiz:
+    # Orientation for floor types describes traversal direction.
+    if orientation.isVert:
       drawProc(x, y + floor(dp.gridSize * offsetFactor), orientation,
                isCursorActive=isCursorActive, ctx=ctx)
-    of Vert:
+    else: # horiz
       setVertTransform(x + floor(dp.gridSize*(1 - offsetFactor)), y, ctx)
       drawProc(0, 0, orientation, isCursorActive=isCursorActive, ctx=ctx)
       vg.resetTransform
@@ -2288,8 +2296,8 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
                              ctx
                            )
   of fSecretDoor:          drawOriented(drawSecretDoorHoriz)
-  of fOneWayDoorNE:        drawOriented(drawOneWayDoorHorizNE)
-  of fOneWayDoorSW:        drawOriented(drawOneWayDoorHorizSW)
+  of fOneWayDoor:          drawOriented(drawOneWayDoorHoriz)
+  of fOneWayDoorSW:        discard # only exists for loading pre-V4 maps
   of fPressurePlate:       draw(drawPressurePlate)
   of fHiddenPressurePlate: draw(drawHiddenPressurePlate)
   of fClosedPit:           draw(drawClosedPit)
@@ -2305,8 +2313,7 @@ proc drawCellFloor(viewBuf: Level, viewRow, viewCol: int; ctx) =
   of fTeleportDestination: draw(drawTeleportDestination)
   of fInvisibleBarrier:    draw(drawInvisibleBarrier)
   of fBridge:              drawOriented(drawBridge, offsetFactor=0)
-  of fArrowNE:             drawOriented(drawArrowNE, offsetFactor=0)
-  of fArrowSW:             drawOriented(drawArrowSW, offsetFactor=0)
+  of fArrow:               drawOriented(drawArrow, offsetFactor=0)
   of fColumn:              draw(drawColumn)
   of fStatue:              draw(drawStatue)
 
@@ -2426,7 +2433,7 @@ proc drawNotes(viewBuf: Level; ctx) =
 # }}}
 
 # {{{ drawWall()
-proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
+proc drawWall(x, y: float; wall: Wall, orientation: CardinalDir,
               viewBuf: Level; viewRow, viewCol: Natural;
               regionBorder: bool; ctx) =
 
@@ -2437,21 +2444,20 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
     bufRow = viewRow.toBufRow
     bufCol = viewCol.toBufCol
 
-  let (isCursorActiveNE, isCursorActiveSW) = case orientation
-  # TODO use clamp
-    of Horiz:
+  let (isCursorActiveNE, isCursorActiveSW) =
+    # TODO use clamp
+    if orientation.isHoriz:
       (isCursorActive(viewRow,           viewCol, dp),
        isCursorActive(max(viewRow-1, 0), viewCol, dp))
-    of Vert:
+    else: # vert
       (isCursorActive(viewRow, max(viewCol-1, 0), dp),
        isCursorActive(viewRow, viewCol,           dp))
 
   template drawOriented(drawProc: untyped, cursorActive: bool = false) =
-    case orientation
-    of Horiz:
+    if orientation.isHoriz:
       drawProc(x, y, orientation, isCursorActive=cursorActive,
                regionBorder=regionBorder, ctx=ctx)
-    of Vert:
+    else: # vert
       setVertTransform(x, y, ctx)
       drawProc(0, 0, orientation,
                isCursorActive=cursorActive, regionBorder=regionBorder,
@@ -2459,11 +2465,10 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
       vg.resetTransform
 
   template drawOrientedWithFloorColor(drawProc: untyped, floorColor: Natural) =
-    case orientation
-    of Horiz:
+    if orientation.isHoriz:
       drawProc(x, y, orientation, floorColor,
                isCursorActive=false, regionBorder=regionBorder, ctx=ctx)
-    of Vert:
+    else: # vert
       setVertTransform(x, y, ctx)
       drawProc(0, 0, orientation, floorColor,
                isCursorActive=false, regionBorder=regionBorder, ctx=ctx)
@@ -2490,15 +2495,17 @@ proc drawWall(x, y: float; wall: Wall, orientation: Orientation,
   of wKeyhole:       drawOriented(drawKeyholeHoriz)
 
   of wNicheNE:
-    let floorColor = case orientation
-    of Horiz: viewBuf.getFloorColor(bufRow, bufCol)
-    of Vert:  viewBuf.getFloorColor(bufRow, bufCol-1)
+    let
+      (r, c) = if orientation.isHoriz: (bufRow,  bufCol)
+               else:                   (bufRow, (bufCol-1).Natural)
+      floorColor = viewBuf.getFloorColor(r, c.Natural)
     drawOrientedWithFloorColor(drawNicheHorizNE, floorColor)
 
   of wNicheSW:
-    let floorColor = case orientation
-    of Horiz: viewBuf.getFloorColor(bufRow-1, bufCol)
-    of Vert:  viewBuf.getFloorColor(bufRow,   bufCol)
+    let
+      (r, c) = if orientation.isHoriz: (bufRow-1, bufCol)
+               else:                   (bufRow,   bufCol)
+      floorColor = viewBuf.getFloorColor(r, c)
     drawOrientedWithFloorColor(drawNicheHorizSW, floorColor)
 
 # }}}
@@ -2513,10 +2520,13 @@ proc drawCellWallsNorth(viewBuf: Level, viewRow: Natural,
     let bufCol = viewCol.toBufCol
 
     drawWall(
-      cellX(viewCol, dp),
-      cellY(viewRow, dp),
-      viewBuf.getWall(bufRow, bufCol, dirN), Horiz,
-      viewBuf, viewRow, viewCol,
+      x           = cellX(viewCol, dp),
+      y           = cellY(viewRow, dp),
+      wall        = viewBuf.getWall(bufRow, bufCol, dirN),
+      orientation = Horiz,
+      viewBuf,
+      viewRow,
+      viewCol,
       regionBorder,
       ctx
     )
@@ -2533,9 +2543,10 @@ proc drawCellWallsWest(viewBuf: Level, viewCol: Natural,
     let bufRow = viewRow.toBufRow
 
     drawWall(
-      cellX(viewCol, dp),
-      cellY(viewRow, dp),
-      viewBuf.getWall(bufRow, bufCol, dirW), Vert,
+      x           = cellX(viewCol, dp),
+      y           = cellY(viewRow, dp),
+      wall        = viewBuf.getWall(bufRow, bufCol, dirW),
+      orientation = Vert,
       viewBuf, viewRow, viewCol,
       regionBorder,
       ctx

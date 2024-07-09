@@ -102,17 +102,17 @@ proc setFloor*(g; r,c: Natural, f: Floor) =
 
 # }}}
 # {{{ getFloorOrientation*()
-proc getFloorOrientation*(g; r,c: Natural): Orientation {.inline.} =
+proc getFloorOrientation*(g; r,c: Natural): CardinalDir {.inline.} =
   assert r < g.rows
   assert c < g.cols
   g[r,c].floorOrientation
 
 # }}}
 # {{{ setFloorOrientation*()
-proc setFloorOrientation*(g; r,c: Natural, ot: Orientation) {.inline.} =
+proc setFloorOrientation*(g; r,c: Natural, dir: CardinalDir) =
   assert r < g.rows
   assert c < g.cols
-  g[r,c].floorOrientation = ot
+  g[r,c].floorOrientation = dir
 
 # }}}
 # {{{ getFloorColor*()

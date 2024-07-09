@@ -144,8 +144,7 @@ const
   FloorGroup2 = @[
     fSecretDoor,
     fSecretDoorBlock,
-    fOneWayDoorNE,
-    fOneWayDoorSW
+    fOneWayDoor
   ]
 
   FloorGroup3 = @[
@@ -176,8 +175,7 @@ const
 
   FloorGroup7 = @[
     fBridge,
-    fArrowNE,
-    fArrowSW
+    fArrow
   ]
 
   FloorGroup8 = @[
@@ -245,8 +243,8 @@ type AppShortcut = enum
   scExcavateTunnel
   scEraseCell
   scDrawClearFloor
-  scRotateFloorOrientationCW
-  scRotateFloorOrientationACW
+  scRotateFloorClockwise
+  scRotateFloorAntiClockwise
 
   scSetFloorColor
   scPickFloorColor
@@ -1057,11 +1055,11 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       scEraseCell.sc,           "Erase cell (clear floor & walls)".desc,
       scDrawClearFloor.sc,      "Draw/clear floor".desc,
 
-      scRotateFloorOrientationCW.sc,
-      "Rotate floor orientation clockwise".desc,
+      scRotateFloorClockwise.sc,
+      "Rotate floor clockwise".desc,
 
-      scRotateFloorOrientationACW.sc,
-      "Rotate floor orientation anti-clockwise".desc,
+      scRotateFloorAntiClockwise.sc,
+      "Rotate floor anti-clockwise".desc,
       QuickRefSepa,
 
       scDrawWall.sc,            "Draw/clear wall".desc,
@@ -1371,8 +1369,8 @@ let DefaultAppShortcuts = {
   scExcavateTunnel:            @[mkKeyShortcut(keyD,      {})],
   scEraseCell:                 @[mkKeyShortcut(keyE,      {})],
   scDrawClearFloor:            @[mkKeyShortcut(keyF,      {})],
-  scRotateFloorOrientationCW:  @[mkKeyShortcut(keyO,      {})],
-  scRotateFloorOrientationACW: @[mkKeyShortcut(keyO,      {mkShift})],
+  scRotateFloorClockwise:      @[mkKeyShortcut(keyO,      {})],
+  scRotateFloorAntiClockwise:  @[mkKeyShortcut(keyO,      {mkShift})],
 
   scSetFloorColor:             @[mkKeyShortcut(keyC,      {})],
   scPickFloorColor:            @[mkKeyShortcut(keyI,      {})],
@@ -6035,9 +6033,13 @@ proc redoAction(a) =
 
 # {{{ setFloorAction()
 proc setFloorAction(f: Floor; a) =
-  let ot = a.doc.map.guessFloorOrientation(a.ui.cursor)
-  actions.setOrientedFloor(a.doc.map, a.ui.cursor, f, ot, a.ui.currFloorColor,
-                           a.doc.undoManager)
+  let orientation = if f in RotatableFloors: dirN
+                    elif f in HorizVertFloors:
+                      a.doc.map.guessFloorOrientation(a.ui.cursor)
+                    else: Horiz
+
+  actions.setFloor(a.doc.map, a.ui.cursor, f, orientation, a.ui.currFloorColor,
+                   a.doc.undoManager)
 
   setStatusMessage(fmt"Set floor type – {f}", a)
 
@@ -6112,10 +6114,8 @@ proc setDrawWallActionMessage(a) =
 # }}}
 # {{{ setDrawWallActionRepeatMessage()
 proc doSetDrawWallActionRepeatMessage(name: string, a) =
-  let icon = if a.ui.drawWallRepeatDirection.orientation == Horiz:
-               IconArrowsVert
-             else:
-               IconArrowsHoriz
+  let icon = if a.ui.drawWallRepeatDirection.isHoriz: IconArrowsVert
+             else:                                    IconArrowsHoriz
 
   setStatusMessage(IconBorders, fmt"Draw {name} repeat",
                    @[icon, mkRepeatWallActionString(name, a)], a)
@@ -6613,11 +6613,8 @@ proc handleGlobalKeyEvents(a) =
 
   let yubnMode = a.prefs.yubnMovementKeys
 
-  proc turnLeft(dir: CardinalDir): CardinalDir =
-    CardinalDir(floorMod(ord(dir) - 1, ord(CardinalDir.high) + 1))
-
-  proc turnRight(dir: CardinalDir): CardinalDir =
-    CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
+  proc turnLeft(dir: CardinalDir): CardinalDir  = dir.rotateACW
+  proc turnRight(dir: CardinalDir): CardinalDir = dir.rotateCW
 
   template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
   template left:     auto = turnLeft(ui.cursorOrient)
@@ -6811,7 +6808,7 @@ proc handleGlobalKeyEvents(a) =
     let cur = ui.cursor
     let drawDir = ui.drawWallRepeatDirection
 
-    if dir.orientation == drawDir.orientation.opposite:
+    if dir.isHoriz == drawDir.isVert:
       let newCur = stepCursor(cur, dir, steps=1, a)
       if newCur != cur:
         if map.canSetWall(newCur, drawDir):
@@ -6824,8 +6821,11 @@ proc handleGlobalKeyEvents(a) =
           setWarningMessage("Cannot set wall of an empty cell",
                             keepStatusMessage=true, a=a)
     else:
+      let direction = if dir.isHoriz: "vertical"
+                      else:           "horizontal"
+
       setWarningMessage(
-        fmt"Can only repeat in {dir.orientation.opposite} direction",
+        fmt"Can only repeat in {direction} direction",
         keepStatusMessage=true, a=a
       )
 
@@ -6875,20 +6875,41 @@ proc handleGlobalKeyEvents(a) =
         actions.drawClearFloor(map, loc=cur, undoLoc=cur,
                                ui.currFloorColor, um, groupWithPrev=false)
 
-      elif ke.isShortcutDown(scRotateFloorOrientationCW, a):
+      elif ke.isShortcutDown({scRotateFloorClockwise,
+                              scRotateFloorAntiClockwise}, a):
+
         let floor = map.getFloor(cur)
 
-        if floor != fEmpty:
-          actions.toggleFloorOrientation(map, cur, um)
-          if map.getFloorOrientation(cur) == Horiz:
+        if floor in HorizVertFloors:
+          if map.getFloorOrientation(cur).isHoriz:
             setStatusMessage(IconArrowsHoriz,
                              "Floor orientation set to horizontal", a)
+            actions.setFloorOrientation(map, cur, dirN, um)
+
           else:
             setStatusMessage(IconArrowsVert,
                              "Floor orientation set to vertical", a)
-        else:
-          setWarningMessage("Cannot set floor orientation of an empty cell",
+            actions.setFloorOrientation(map, cur, dirE, um)
+
+
+        elif floor in RotatableFloors:
+          let
+            clockwise = ke.isShortcutDown(scRotateFloorClockwise, a)
+
+            dir = if clockwise: map.getFloorOrientation(cur).rotateCW
+                  else:         map.getFloorOrientation(cur).rotateACW
+
+            rotation = if clockwise: "clockwise" else: "anti-clockwise"
+
+          setStatusMessage(IconSpinner, fmt"Rotated floor {rotation}", a)
+          actions.setFloorOrientation(map, cur, dir, um)
+
+        elif floor == fEmpty:
+          setWarningMessage("Cannot change orientation of an empty cell",
                             a=a)
+        else:
+          setWarningMessage("Cannot rotate floor", a=a)
+
 
       elif ke.isShortcutDown(scSetFloorColor, a):
         ui.editMode = emColorFloor

@@ -1,4 +1,5 @@
 import std/hashes
+import std/math
 import std/sets
 import std/strformat
 import std/strutils
@@ -55,10 +56,6 @@ type
 
   Direction* = set[CardinalDir]
 
-  Orientation* = enum
-    Horiz = (0, "horizontal")
-    Vert  = (1, "vertical")
-
 const
   North*     = {dirN}
   NorthEast* = {dirN, dirE}
@@ -69,15 +66,28 @@ const
   West*      = {dirW}
   NorthWest* = {dirN, dirW}
 
-func orientation*(dir: CardinalDir): Orientation =
-  case dir
-  of dirE, dirW: Horiz
-  of dirN, dirS: Vert
+  # When CardinalDir is used to represent a horiz/vert direction
+  Horiz* = dirE
+  Vert*  = dirN
 
-func opposite*(o: Orientation): Orientation =
-  case o
-  of Horiz: Vert
-  of Vert:  Horiz
+func isHoriz*(dir: CardinalDir): bool =
+  dir in {dirE, dirW}
+
+func isVert*(dir: CardinalDir): bool =
+  dir in {dirN, dirS}
+
+func opposite*(dir: CardinalDir): CardinalDir =
+  case dir
+  of dirN: dirS
+  of dirE: dirW
+  of dirS: dirN
+  of dirW: dirE
+
+func rotateCW*(dir: CardinalDir): CardinalDir =
+  CardinalDir(floorMod(ord(dir) + 1, ord(CardinalDir.high) + 1))
+
+func rotateACW*(dir: CardinalDir): CardinalDir =
+  CardinalDir(floorMod(ord(dir) - 1, ord(CardinalDir.high) + 1))
 
 
 type
@@ -169,7 +179,7 @@ type
 
   Cell* = object
     floor*:            Floor
-    floorOrientation*: Orientation
+    floorOrientation*: CardinalDir
     floorColor*:       byte
     wallN*, wallW*:    Wall
     trail*:            bool
@@ -182,8 +192,11 @@ type
     fArchway             = (22,  "archway")
     fSecretDoorBlock     = (23,  "secret door (block)")
     fSecretDoor          = (24,  "secret door")
-    fOneWayDoorNE        = (25,  "one-way door")
+
+    fOneWayDoor          = (25,  "one-way door")
+    # for backward compatibility with pre-v4 maps
     fOneWayDoorSW        = (26,  "one-way door")
+
     fPressurePlate       = (30,  "pressure plate")
     fHiddenPressurePlate = (31,  "hidden pressure plate")
     fClosedPit           = (40,  "closed pit")
@@ -199,10 +212,10 @@ type
     fTeleportDestination = (71,  "teleport destination")
     fInvisibleBarrier    = (80,  "invisible barrier")
     fBridge              = (90,  "bridge")
-    fArrowNE             = (91,  "arrow")
-    fArrowSW             = (92,  "arrow")
+    fArrow               = (91,  "arrow")
     fColumn              = (100, "column")
     fStatue              = (110, "statue")
+
 
   Wall* = enum
     wNone          = ( 0, "none")
@@ -252,6 +265,19 @@ func isLabel*(a: Annotation): bool =
 func isNote*(a: Annotation): bool =
   not a.isLabel
 
+
+let
+  HorizVertFloors* = {
+    fArchway,
+    fDoor,
+    fLockedDoor,
+    fSecretDoor
+  }
+
+  RotatableFloors* = {
+    fArrow,
+    fOneWayDoor
+  }
 
 const
   SpecialWalls* = @[

@@ -104,28 +104,27 @@ proc setFloorColor*(map; loc, undoLoc: Location, floorColor: Natural;
     m.setFloorColor(loc, floorColor)
 
 # }}}
-# {{{ setOrientedFloor*()
-proc setOrientedFloor*(map; loc: Location, f: Floor, ot: Orientation,
-                       floorColor: Natural; um) =
+# {{{ setFloor*()
+proc setFloor*(map; loc: Location, f: Floor, orientation: CardinalDir,
+               floorColor: Natural; um) =
 
   singleCellAction(map, loc, loc, um, groupWithPrev=false,
                    fmt"Set floor {EnDash} {f}", m):
 
     m.setFloor(loc, f)
-    m.setFloorOrientation(loc, ot)
+    m.setFloorOrientation(loc, orientation)
 
     if m.isEmpty(loc):
       m.setFloorColor(loc, floorColor)
 
 # }}}
-# {{{ toggleFloorOrientation*()
-proc toggleFloorOrientation*(map; loc: Location; um) =
+# {{{ setFloorOrientatio*()
+proc setFloorOrientation*(map; loc: Location, orientation: CardinalDir; um) =
 
   singleCellAction(map, loc, loc, um, groupWithPrev=false,
-                   "Toggle floor orientation", m):
+                   "Set floor orientation", m):
 
-    let newOt = if m.getFloorOrientation(loc) == Horiz: Vert else: Horiz
-    m.setFloorOrientation(loc, newOt)
+    m.setFloorOrientation(loc, orientation)
 
 # }}}
 # {{{ eraseCell*()

@@ -61,13 +61,13 @@ proc clearFloor*(l; r,c: Natural) =
 
 # }}}
 # {{{ getFloorOrientation*()
-proc getFloorOrientation*(l; r,c: Natural): Orientation {.inline.} =
+proc getFloorOrientation*(l; r,c: Natural): CardinalDir {.inline.} =
   l.cellGrid.getFloorOrientation(r,c)
 
 # }}}
 # {{{ setFloorOrientation*()
-proc setFloorOrientation*(l; r,c: Natural, ot: Orientation) {.inline.} =
-  l.cellGrid.setFloorOrientation(r,c, ot)
+proc setFloorOrientation*(l; r,c: Natural, dir: CardinalDir) =
+  l.cellGrid.setFloorOrientation(r,c, dir)
 
 # }}}
 # {{{ getFloorColor*()
@@ -317,8 +317,8 @@ proc copyCell(destLevel: Level, destRow, destCol: Natural,
   let floorColor = srcLevel.getFloorColor(srcRow, srcCol)
   destLevel.setFloorColor(destRow, destCol, floorColor)
 
-  let ot = srcLevel.getFloorOrientation(srcRow, srcCol)
-  destLevel.setFloorOrientation(destRow, destCol, ot)
+  let dir = srcLevel.getFloorOrientation(srcRow, srcCol)
+  destLevel.setFloorOrientation(destRow, destCol, dir)
 
   if pasteTrail:
     destLevel.setTrail(destRow, destCol, srcLevel.hasTrail(srcRow, srcCol))
@@ -413,12 +413,12 @@ proc pasteWithWraparound*(l; destRow, destCol: int, srcLevel: Level,
 # }}}
 
 # {{{ guessFloorOrientation*()
-proc guessFloorOrientation*(l; r,c: Natural): Orientation =
+proc guessFloorOrientation*(l; r,c: Natural): CardinalDir =
   if l.getWall(r,c, dirN) != wNone and
      l.getWall(r,c, dirS) != wNone:
-    Vert
-  else:
     Horiz
+  else:
+    Vert
 
 # }}}
 # {{{ getSrcRectAlignedToDestRect*()

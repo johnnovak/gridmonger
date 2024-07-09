@@ -275,17 +275,17 @@ proc clearFloor*(m; loc: Location) =
 
 # }}}
 # {{{ getFloorOrientation*()
-proc getFloorOrientation*(m; loc: Location): Orientation {.inline.} =
+proc getFloorOrientation*(m; loc: Location): CardinalDir {.inline.} =
   m.levels[loc.levelId].getFloorOrientation(loc.row, loc.col)
 
 # }}}
 # {{{ setFloorOrientation*()
-proc setFloorOrientation*(m; loc: Location, ot: Orientation) =
-  m.levels[loc.levelId].setFloorOrientation(loc.row, loc.col, ot)
+proc setFloorOrientation*(m; loc: Location, dir: CardinalDir) =
+  m.levels[loc.levelId].setFloorOrientation(loc.row, loc.col, dir)
 
 # }}}
 # {{{ guessFloorOrientation*()
-proc guessFloorOrientation*(m; loc: Location): Orientation =
+proc guessFloorOrientation*(m; loc: Location): CardinalDir =
   m.levels[loc.levelId].guessFloorOrientation(loc.row, loc.col)
 
 # }}}
@@ -342,7 +342,7 @@ proc excavateTunnel*(m; loc: Location, floorColor: Natural,
   m.setFloorColor(loc, floorColor)
 
   if dir.isSome and prevDir.isSome and
-     dir.get.orientation != prevDir.get.orientation:
+     dir.get.isHoriz != prevDir.get.isHoriz:
     m.excavateTunnel(prevLoc.get, floorColor)
 
   var wallDirs = @[dirN, dirS, dirE, dirW]

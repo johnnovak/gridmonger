@@ -647,7 +647,7 @@ proc readLevelProperties(rr; levelId: Natural): Level =
 # {{{ readLevelCells()
 {.push warning[HoleEnumConv]:off.}
 
-proc readLevelCells(rr; numCells: Natural): seq[Cell] =
+proc readLevelCells(rr; numCells: Natural, version: Natural): seq[Cell] =
 
   template readLayer(name: string; fieldType: typedesc;
                      field, checkField: untyped) =
@@ -715,8 +715,20 @@ proc readLevelCells(rr; numCells: Natural): seq[Cell] =
   readLayer("floor", Floor): c.floor
   do: checkEnum(data, "lvl.cell.floor", Floor, debugLog=off)
 
-  readLayer("floorOrientation", Orientation): c.floorOrientation
-  do: checkEnum(data, "lvl.cell.floorOrientation", Orientation, debugLog=off)
+  readLayer("floorOrientation", CardinalDir): c.floorOrientation
+  do: checkEnum(data, "lvl.cell.floorOrientation", CardinalDir, debugLog=off)
+
+  if version < 4:
+    for c in cells.mitems:
+      # convert deprecated fOneWayDoorSW
+      if c.floor == fOneWayDoorSW:
+        c.floor = fOneWayDoor
+        c.floorOrientation = if cast[int](c.floorOrientation) == 1: dirW
+                             else: dirS
+
+      # normalise orientation of non-oriented floor types
+      elif not (c.floor in HorizVertFloors or c.floor in RotatableFloors):
+        c.floorOrientation = Horiz
 
   readLayer("floorColor", byte): c.floorColor
   do: checkValueRange(data, "lvl.cell.floorColor", CellFloorColorLimits, debugLog=off)
@@ -917,7 +929,7 @@ proc readLevelRegions(rr; levelCols: Natural,
 
 # }}}
 # {{{ readLevel()
-proc readLevel(rr; version: Natural, levelId: Natural): Level =
+proc readLevel(rr; levelId: Natural, version: Natural): Level =
   debug("Reading level...")
   pushDebugIndent()
 
@@ -993,7 +1005,7 @@ proc readLevel(rr; version: Natural, levelId: Natural): Level =
   # +1 is needed because of the south & east borders
   let numCells = (level.rows+1) * (level.cols+1)
 
-  level.cellGrid.cells = readLevelCells(rr, numCells)
+  level.cellGrid.cells = readLevelCells(rr, numCells, version)
 
   if annoCursor.isSome:
     rr.cursor = annoCursor.get
@@ -1027,7 +1039,7 @@ proc readLevelList(rr; version: Natural): OrderedTable[Natural, Level] =
 
           # The level IDs must be set to their indices in the map file to
           # ensure they are in sync with link (see writeLinks()).
-          let level = readLevel(rr, version, levelId)
+          let level = readLevel(rr, levelId, version)
           levels[level.id] = level
           inc(levelId)
 
