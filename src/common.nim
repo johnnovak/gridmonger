@@ -173,7 +173,8 @@ type
     cols*:  Natural
     rows*:  Natural
 
-    # Cells are stored in row-major order; (0,0) is the top-left cell
+    # Cells are stored in row-major order; (0,0) is the top-left cell.
+    # We store a cell grid one row & column larger internally.
     cells*: seq[Cell]
 
 

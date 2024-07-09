@@ -52,9 +52,12 @@ proc newCellGrid*(rows, cols: Natural): CellGrid =
   g.rows = rows
   g.cols = cols
 
-  # We're storing one extra row & column at the bottom-right edges ("edge"
-  # rows & columns) so we can store the South and East walls of the bottommost
-  # row and rightmost column, respectively.
+  # Internally, we store a cell grid one row & column larger (extended on the
+  # east and south sides) so we can store the south wall of the southmost row,
+  # and the east wall of the eastmost column.
+  #
+  # This is because a cell only contains information about its north and west
+  # walls.
   newSeq(g.cells, (rows+1) * (cols+1))
 
   g.fill(Cell.default)
