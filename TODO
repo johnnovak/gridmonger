@@ -14,6 +14,8 @@ TODO
 ====
 
   - add unlink command
+  - prefill level with empty floor (for wall style maps)
+  - option to use Cmd key on macOS (selectable at runtime)
 
   - finish diagonal movement (numpad, YUBN)
   - improve restoring the window's size on screen dimension changes
@@ -28,42 +30,42 @@ TODO
 
   ----
 
-  - option to use Cmd key on macOS (selectable at runtime)
-
-  - OS X:
-    - gridmonger document icon
-
 
 FEATURE & ENHANCEMENT IDEAS
 ===========================
+
+  - linux package
 
   - new features:
     - export map as PNG
     - export map as PDF
     - full screen borderless
+	- overlay mode for full screen games like Grimrock
+	- UI scaling
 
     - levels:
-      - change level size: add preserve coordinates option
+      - optionally preserve coordinates when changing the level size
+	  	(change size action, crop action should ask for confirmation?)
       - set coordinate origin action
       - infinite levels
       - align levels to each other based on coords
       - action for aligning two levels
 
     - onion skin?
-    - map selector dialog?
-    - clipping indicator when nudging / moving
+    - clipping indicator when nudging / moving?
 
   - enhancements:
     - double-clicking on title bar should toggle maximise window
     - log memory access crashes somehow? (also division by zero)
+	- macOS: gridmonger document icon
 
     - show current color / tool in statusbar when toolbar is not visible ?
 
     - level selector popup
     - theme selector popup/window
 
-	- should steps be moved with selection? 
-	- should steps be copied with selection? 
+	- should move steps with selection? (maybe)
+	- should copy steps with selection? (probably a bad idea)
 
   - selections:
     - wand selection?
@@ -77,20 +79,8 @@ FEATURE & ENHANCEMENT IDEAS
       - right-click cancel in triangle & hue circle
     - undo
 
-  - themes:
-    - thick wall style (for Companion style)
-
-    - more themes:
-        emerald-theme.psd
-        slate-theme.psd
-        overworld1.psd
-        overworld4.psd
-        golden-boxes themes
-
   - mouse:
     - hand tool, scroll wheel zoom
-
-  - linux package?
 
 
 LOW PRIORITY BUGS & ENHANCEMENTS
@@ -115,12 +105,12 @@ FONTS
 
 
 
-PNG writing
+PNG WRITING
 
-LodePNG is the best
-https://github.com/lvandeve/lodepng
+  LodePNG is the best
+  https://github.com/lvandeve/lodepng
 
-https://github.com/richgel999/miniz
+  https://github.com/richgel999/miniz
 
-stb_image_writer + miniz
-https://blog.gibson.sh/2015/07/18/comparing-png-compression-ratios-of-stb_image_write-lodepng-miniz-and-libpng/
+  stb_image_writer +   miniz
+  https://blog.gibson.sh/2015/07/18/comparing-png-compression-ratios-of-stb_image_write-lodepng-miniz-and-libpng/
