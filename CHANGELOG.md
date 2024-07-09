@@ -7,6 +7,7 @@
 - A new [notes list pane](TODO) to view all notes in one place and filter
   them by various criteria, including full-text search.
 - Up to four user-defined [window layouts](TODO).
+- Options to display [link lines](TODO) between linked cells.
 - Proper multi-monitor support.
 - Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
   and move or paste [selections](https://gridmonger.johnnovak.net/manual/advanced-editing.html#selections)
@@ -15,6 +16,7 @@
   via the numeric keypad or the YUBN keys (à la Rogue).
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
   option to aid in exploring tunnel-style dungeons.
+- New [Arrow floor type](TODO) to represent moving floors and conveyor belts.
 - Option to select whether the Left/Right cursor keys perform strafing or
   turning in [Walk Mode](https://gridmonger.johnnovak.net/manual/moving-around.html#walk-mode).
 - Support for panning the level with the mouse (middle-click + drag, or
@@ -39,6 +41,7 @@
 - The orientation of non-oriented floor types can no longer be changed.
 - Restoring the window size and position at startup is now more robust and
   handles multi-monitor scenarios better.
+- Increase the zoom range from 1–20 to 1–50.
 - Idle performance has been improved; CPU and GPU utilisation is now close to
   zero when there is no user input.
 - All sorted items now use [natural sort order](https://en.wikipedia.org/wiki/Natural_sort_order).
@@ -76,6 +79,7 @@
   auto-numbered and restored if the *Load last map* preference is enabled.
 - The notes pane now fills the window horizontally when the tools pane is
   hidden.
+- Draw outline line hatch pattern with outline colour.
 
 ---
 
