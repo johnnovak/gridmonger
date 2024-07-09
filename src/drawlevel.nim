@@ -2188,12 +2188,11 @@ proc drawBridge(x, y: float; orientation: CardinalDir; isCursorActive: bool;
 proc drawArrow(x, y: float; orientation: CardinalDir; isCursorActive: bool;
                  ctx) =
 
-  # TODO adjust offsets
   let (ox, oy, icon) = case orientation
-                       of dirN: (-0.03, -0.025, IconArrowUp)
-                       of dirE: ( 0.03, -0.035, IconArrowUp)
-                       of dirS: ( 0.03, -0.025, IconArrowDown)
-                       of dirW: (-0.03, -0.035, IconArrowDown)
+                       of dirN: (-0.005, -0.040, IconArrowUp)
+                       of dirE: ( 0.015, -0.075, IconArrowUp)
+                       of dirS: (-0.005,  0.020, IconArrowDown)
+                       of dirW: ( 0.015, -0.015, IconArrowDown)
 
   drawIcon(x, y, ox, oy, icon, ctx.dp.gridSize,
            getForegroundNormalColor(isCursorActive, ctx),
