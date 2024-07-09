@@ -3101,18 +3101,6 @@ proc saveAppConfig(a) =
     else:
       result = hoconNodeNull
 
-  p = "last-state."
-  cfg.set(p & "ui.current-level-id",  a.ui.cursor.levelId)
-  cfg.set(p & "ui.zoom-level",        a.ui.drawLevelParams.getZoomLevel)
-  cfg.set(p & "ui.cursor.row",        a.ui.cursor.row)
-  cfg.set(p & "ui.cursor.column",     a.ui.cursor.col)
-  cfg.set(p & "ui.view-start.row",    a.ui.drawLevelParams.viewStartRow)
-  cfg.set(p & "ui.view-start.column", a.ui.drawLevelParams.viewStartCol)
-  cfg.set(p & "ui.show-cell-coords",  a.ui.showCellCoords)
-  cfg.set(p & "ui.walk-mode",         a.ui.walkMode)
-  cfg.set(p & "ui.wasd-mode",         a.ui.wasdMode)
-  cfg.set(p & "ui.paste-wraparound",  a.ui.pasteWraparound)
-
   var currLayout = a.layout
   setLayoutWindowFields(currLayout, a)
   # The theme editor is always hidden at startup
@@ -10492,37 +10480,6 @@ proc initPreferences(cfg: HoconNode; a) =
                                             LinkLinesMode)
 
 # }}}
-# {{{ restoreUIStateFromConfig()
-proc restoreUIStateFromConfig(cfg: HoconNode; a) =
-  let uiCfg = cfg.getObjectOrEmpty("last-state.ui")
-
-  with a.ui.cursor:
-    let currLevelId = uiCfg.getNaturalOrDefault("current-level-id", 0)
-
-    if currLevelId >= a.doc.map.levels.len:
-      resetCursorAndViewStart(a)
-    else:
-      levelId = currLevelId
-      row     = uiCfg.getNaturalOrDefault("cursor.row",    0)
-      col     = uiCfg.getNaturalOrDefault("cursor.column", 0)
-
-  with a.ui.drawLevelParams:
-    viewStartRow = uiCfg.getNaturalOrDefault("view-start.row",    0)
-    viewStartCol = uiCfg.getNaturalOrDefault("view-start.column", 0)
-
-  a.ui.drawLevelParams.setZoomLevel(
-    a.theme.levelTheme,
-    uiCfg.getNaturalOrDefault("zoom-level", DefaultZoomLevel)
-      .limit(ZoomLevelLimits)
-  )
-
-  with a.ui:
-    showCellCoords  = uiCfg.getBoolOrDefault("show-cell-coords", true)
-    walkMode        = uiCfg.getBoolOrDefault("walk-mode",        false)
-    wasdMode        = uiCfg.getBoolOrDefault("wasd-mode",        false)
-    pasteWraparound = uiCfg.getBoolOrDefault("paste-wraparound", false)
-
-# }}}
 # {{{ restoreLayoutsFromConfog()
 proc restoreLayoutsFromConfig(cfg: HoconNode; a) =
   proc toLayout(cfg: HoconNode): Layout =
@@ -10640,8 +10597,6 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
     discard loadMap(mapFileName, a)
   else:
     setStatusMessage(IconMug, "Welcome to Gridmonger, adventurer!", a)
-
-  restoreUIStateFromConfig(cfg, a)
 
   updateWalkKeys(a)
   updateShortcuts(a)
