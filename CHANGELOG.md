@@ -4,7 +4,7 @@
 
 ### New features
 
-- A new [notes list pane](TODO) to view all your notes in one place and filter
+- A new [notes list pane](TODO) to view all notes in one place and filter
   them by various criteria, including full-text search.
 - Up to four user-defined [window layouts](TODO).
 - Proper multi-monitor support.
@@ -14,37 +14,39 @@
 - Support for [diagonal movement](https://gridmonger.johnnovak.net/manual/moving-around.html#diagonal-movement)
   via the numeric keypad or the YUBN keys (à la Rogue).
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
-  option to aid exploring tunnel style dungeons.
+  option to aid in exploring tunnel-style dungeons.
 - Option to select whether the Left/Right cursor keys perform strafing or
   turning in [Walk Mode](https://gridmonger.johnnovak.net/manual/moving-around.html#walk-mode).
 - Support for panning the level with the mouse (middle-click + drag, or
-  Ctrl + left-click + drag). Works in *Paste Preview Mode* and *WASD Mode* too.
+  Ctrl + left-click + drag). Works in *Paste Preview Mode* and *WASD Mode*, too.
 - The selection can now be moved with the mouse in *Paste Preview Mode*.
 - The [user manual](https://gridmonger.johnnovak.net/manual/contents.html) is
-  now searchable (works in the offline documentation too, but only page titles
-  are displayed in the search results).
-- You can now load map files by drag & dropping their icons onto the program
-  window or taskbar icon.
-- Option to get a notification when a new version is available.
-- macOS: Support for opening map files from the Finder.
+  now searchable (works in the offline documentation, too, but only page
+  titles are displayed in the search results).
+- Load map files by dragging & dropping their icons onto the program window or
+  the taskbar icon.
+- Check for updates on startup (can be disabled).
+- macOS: Opening map files from the Finder now works.
 
 ### Enhancements
 
-- Erase and clear floor actions don't erase labels now.
+- The erase and clear floor actions don't erase labels now.
 - Clear floor actions don't erase annotations now.
-- Setting the cursor position with the mouse has been improved; now the cursor
-  follows the mouse pointer when you move it outside of the level's bounds.
-- Turn off *Trail Mode* automatically in more scenarios that would result in
+- Setting the cursor position with the mouse has been improved; the cursor
+  follows the mouse pointer when you move it outside the level's bounds.
+- Turn off *Trail Mode* automatically in more scenarios that result in
   confusing or unwanted behaviour.
-- Restoring the window size and position on startup is now more robust.
-- Idle perfomance has been improved; CPU and GPU utilisation is now close to
-  zero if there is no user input.
-- All sorted items use [natural sort order](https://en.wikipedia.org/wiki/Natural_sort_order) now.
-- Maps are now saved to a temp file first then are renamed to minimise the
-  chance of data corruption.
+- The orientation of non-oriented floor types can no longer be changed.
+- Restoring the window size and position at startup is now more robust and
+  handles multi-monitor scenarios better.
+- Idle performance has been improved; CPU and GPU utilisation is now close to
+  zero when there is no user input.
+- All sorted items now use [natural sort order](https://en.wikipedia.org/wiki/Natural_sort_order).
+- Maps are now saved to a temporary file first and then renamed to minimise
+  the chance of data corruption.
 - The user manual has been overhauled for improved wording and clarity.
 - Improved status bar messages, dialogs, and more status icons.
-- Minor improvements to some of the bundled themes.
+- Theme improvements and updates.
 
 ### Fixes
 
@@ -53,7 +55,7 @@
 - Fix crash when nudging large levels zooomed in close to the maximum zoom
   factor.
 - Fix nudging non-square levels; previously, the maximum vertical nudge amount
-  was erroneously capped by the level's number of columns (instead of number
+  was erroneously capped to the level's number of columns (instead of number
   of rows).
 - Fix moving selections not moving links correctly (or at all).
 - Fix moving selections leaving copies of the original labels if they were on
@@ -61,7 +63,7 @@
 - Fix evil link corruption bug. Moving cells that contain
   links, then either cancelling the move operation or performing it and then
   undoing the move could generate extra "invisible links" that are invalid.
-  Saving the map would still succeed, but would result in a corrupted map
+  Saving the map would still succeed but would result in a corrupted map
   file that you could not load back in the previous version.
 - Such corrupted map files are now fixed on load (by removing invalid
   links) and a warning is displayed.
@@ -69,9 +71,9 @@
   exits and discards the map without saving.
 - If autosaving is enabled, the map no longer gets immediately autosaved
   right after adding the first level to an empty map.
-- The autosave timer now resets when the autosave preference is turned on.
+- The autosave timer now resets when the autosave preference is enabled.
 - Autosaved untitled maps that have never been manually saved are now
-  auto-numbered and are restored if the *Load last map* preference is enabled.
+  auto-numbered and restored if the *Load last map* preference is enabled.
 - The notes pane now fills the window horizontally when the tools pane is
   hidden.
 
