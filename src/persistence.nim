@@ -479,31 +479,32 @@ proc readAppState_V4(rr; map: Map): AppState =
     checkValueRange(zoomLevel, "stat.disp.zoomLevel", ZoomLevelLimits)
     app.zoomLevel = zoomLevel
 
-    let maxLevelIndex = NumLevelsLimits.maxInt-1
-    var currLevelIndex = rr.read(uint16).int
-    checkValueRange(currLevelIndex, "stat.disp.currLevelIndex",
-                    max=maxLevelIndex)
-    app.currLevelId = currLevelIndex
+    if map.levels.len > 1:
+      let maxLevelIndex = NumLevelsLimits.maxInt-1
+      var currLevelIndex = rr.read(uint16).int
+      checkValueRange(currLevelIndex, "stat.disp.currLevelIndex",
+                      max=maxLevelIndex)
+      app.currLevelId = currLevelIndex
 
-    let l = map.levels[currLevelIndex]
+      let l = map.levels[currLevelIndex]
 
-    let cursorRow = rr.read(uint16)
-    checkValueRange(cursorRow, "stat.disp.cursorRow", max=l.rows.uint16-1)
-    app.cursorRow = cursorRow
+      let cursorRow = rr.read(uint16)
+      checkValueRange(cursorRow, "stat.disp.cursorRow", max=l.rows.uint16-1)
+      app.cursorRow = cursorRow
 
-    let cursorCol = rr.read(uint16)
-    checkValueRange(cursorCol, "stat.disp.cursorCol", max=l.cols.uint16-1)
-    app.cursorCol = cursorCol
+      let cursorCol = rr.read(uint16)
+      checkValueRange(cursorCol, "stat.disp.cursorCol", max=l.cols.uint16-1)
+      app.cursorCol = cursorCol
 
-    let viewStartRow = rr.read(uint16)
-    checkValueRange(viewStartRow, "stat.disp.viewStartRow",
-                    max=l.rows.uint16-1)
-    app.viewStartRow = viewStartRow
+      let viewStartRow = rr.read(uint16)
+      checkValueRange(viewStartRow, "stat.disp.viewStartRow",
+                      max=l.rows.uint16-1)
+      app.viewStartRow = viewStartRow
 
-    let viewStartCol = rr.read(uint16)
-    checkValueRange(viewStartCol, "stat.disp.viewStartCol",
-                    max=l.cols.uint16-1)
-    app.viewStartCol = viewStartCol
+      let viewStartCol = rr.read(uint16)
+      checkValueRange(viewStartCol, "stat.disp.viewStartCol",
+                      max=l.cols.uint16-1)
+      app.viewStartCol = viewStartCol
 
   # Options state
   if optsCursor.isSome:
@@ -1301,16 +1302,17 @@ proc writeAppState(rw; map: Map, s: AppState) =
     # Display state
     rw.chunk(FourCC_GRMM_disp):
       rw.writeBStr(s.themeName)
-
-      let currLevelIndex = map.sortedLevelIds.find(s.currLevelId)
-      assert currLevelIndex > -1
-
       rw.write(s.zoomLevel.uint8)
-      rw.write(currLevelIndex.uint16)
-      rw.write(s.cursorRow.uint16)
-      rw.write(s.cursorCol.uint16)
-      rw.write(s.viewStartRow.uint16)
-      rw.write(s.viewStartCol.uint16)
+
+      if map.levels.len > 0:
+        let currLevelIndex = map.sortedLevelIds.find(s.currLevelId)
+        assert currLevelIndex > -1
+
+        rw.write(currLevelIndex.uint16)
+        rw.write(s.cursorRow.uint16)
+        rw.write(s.cursorCol.uint16)
+        rw.write(s.viewStartRow.uint16)
+        rw.write(s.viewStartCol.uint16)
 
     # Options state
     rw.chunk(FourCC_GRMM_opts):
