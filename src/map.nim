@@ -173,6 +173,8 @@ proc reallocateRegions*(m; levelId: Natural, oldCoordOpts: CoordinateOptions,
       let region = initRegion(name=l.regions.nextUntitledRegionName(index))
       l.regions[rc] = region
 
+  l.regions.sortRegions
+
 # }}}
 # {{{ calcRegionResizeOffsets*()
 proc calcRegionResizeOffsets*(

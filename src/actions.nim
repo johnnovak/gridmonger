@@ -1117,6 +1117,7 @@ proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
   let action = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.levelId]
     l.regions[rc] = region
+    l.regions.sortRegions
     result = usd
 
   # Undo action
@@ -1126,6 +1127,7 @@ proc setRegionProperties*(map; loc: Location, rc: RegionCoords,
   var undoAction = proc (m: var Map): UndoStateData =
     let l = m.levels[loc.levelId]
     l.regions[rc] = oldRegion
+    l.regions.sortRegions
     result = usd
 
   um.storeUndoState(action, undoAction)

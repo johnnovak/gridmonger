@@ -55,7 +55,6 @@ proc `[]`*(r; rc: RegionCoords): Option[Region] =
 # {{{ `[]=`*()
 proc `[]=`*(vr; rc: RegionCoords, region: Region) =
   vr.regionsByCoords[rc] = region
-  vr.sortRegions
 
 # }}}
 # {{{ numRegions*()

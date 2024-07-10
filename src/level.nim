@@ -228,6 +228,8 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
       let name = destLevel.regions.nextUntitledRegionName(index)
       destRegions[destRegionCoord] = initRegion(name=name)
 
+  destRegions.sortRegions
+
   result = destRegions
 
 # }}}
