@@ -2793,35 +2793,30 @@ proc drawLinkLines(map: Map, level: Level; ctx) =
   vg.strokeWidth(dp.linkLineStrokeWidth)
   vg.lineCap(lcjRound)
 
-  for srcRow in 0..<level.rows:
-    for srcCol in 0..<level.cols:
-      let srcLoc  = Location(levelId: level.id, row: srcRow, col: srcCol)
-      let destLoc = map.links.getBySrc(srcLoc)
+  for (srcLoc, destLoc) in map.links.pairs:
+    if destLoc.levelId == level.id and
+        not isSpecialLevelId(destLoc.levelId):
 
-      if (destLoc.isSome and destLoc.get.levelId == level.id and
-          not isSpecialLevelId(destLoc.get.levelId)):
-        let destLoc = destLoc.get
+      if not dp.drawAllLinkLines:
+        let cur = Location(levelId: level.id, row: dp.cursorRow,
+                                              col: dp.cursorCol)
+        if not (srcLoc == cur or destLoc == cur):
+          continue
 
-        if not dp.drawAllLinkLines:
-          let cur = Location(levelId: level.id, row: dp.cursorRow,
-                                                col: dp.cursorCol)
-          if not (srcLoc == cur or destLoc == cur):
-            continue
+      let
+        srcX  = cellX(srcLoc.col - dp.viewStartCol, dp)
+        srcY  = cellY(srcLoc.row - dp.viewStartRow, dp)
+        srcCx = srcX + dp.gridSize / 2
+        srcCy = srcY + dp.gridSize / 2
 
-        let
-          srcX  = cellX(srcCol - dp.viewStartCol, dp)
-          srcY  = cellY(srcRow - dp.viewStartRow, dp)
-          srcCx = srcX + dp.gridSize / 2
-          srcCy = srcY + dp.gridSize / 2
+        rowDiff = destLoc.row - srcLoc.row
+        colDiff = destLoc.col - srcLoc.col
 
-          rowDiff = destLoc.row - srcRow
-          colDiff = destLoc.col - srcCol
+        destCx = srcCx + colDiff * dp.gridSize
+        destCy = srcCy + rowDiff * dp.gridSize
 
-          destCx = srcCx + colDiff * dp.gridSize
-          destCy = srcCy + rowDiff * dp.gridSize
-
-        vg.moveTo(srcCx, srcCy)
-        vg.lineTo(destCx, destCy)
+      vg.moveTo(srcCx, srcCy)
+      vg.lineTo(destCx, destCy)
 
   vg.stroke()
 
