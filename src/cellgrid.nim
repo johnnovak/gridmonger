@@ -60,7 +60,9 @@ proc newCellGrid*(rows, cols: Natural): CellGrid =
   # walls.
   newSeq(g.cells, (rows+1) * (cols+1))
 
-  g.fill(Cell.default)
+  # The cell data is already filled with zeros which is our default empty
+  # cell, so there's no need for further initialisation.
+  #
   result = g
 
 # }}}
