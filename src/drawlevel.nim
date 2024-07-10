@@ -225,7 +225,10 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
                           elif zl <= 3:  10.0
                           elif zl <= 7:  11.0
                           elif zl <= 11: 12.0
-                          else:          13.0
+                          elif zl <= 20: 13.0
+                          elif zl <= 30: 14.0
+                          elif zl <= 40: 15.0
+                          else:          16.0
 
   dp.lineHatchSize = if   zl ==  1: 3
                      elif zl <=  5: 4
