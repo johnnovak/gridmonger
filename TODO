@@ -9,6 +9,9 @@ BUGS
 
 - floor type doors are slightly off-center
 
+- enable check for updates, start then immediately quit hangs the app if there
+  are network problems
+
 
 TODO
 ====
