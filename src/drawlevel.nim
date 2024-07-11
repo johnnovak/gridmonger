@@ -2394,21 +2394,20 @@ proc drawLabels(viewBuf: Level; ctx) =
 proc drawLinkMarkers(map: Map, levelId: Natural; ctx) =
   alias(dp, ctx.dp)
 
-  var loc: Location
-  loc.levelId = levelId
+  proc draw(loc: Location) =
+    let
+      x = cellX(loc.col - dp.viewStartCol, dp)
+      y = cellY(loc.row - dp.viewStartRow, dp)
 
-  forAllViewCells_CellCoords:
-    (loc.row, loc.col) = (row, col)
+    drawLinkMarker(x, y, ctx)
 
-    let srcLoc   = map.links.getBySrc(loc)
-    let destLocs = map.links.getByDest(loc)
+  for loc in map.links.srcToDest.keys:
+    if loc.levelId == levelId and not isSpecialLevelId(loc.levelId):
+      draw(loc)
 
-    if (srcLoc.isSome and not isSpecialLevelId(srcLoc.get.levelId)) or
-       (destLocs.isSome and destLocs.get.anyIt(not isSpecialLevelId(it.levelId))):
-
-      let x = cellX(viewCol, dp)
-      let y = cellY(viewRow, dp)
-      drawLinkMarker(x, y, ctx)
+  for loc in map.links.destToSrcs.keys:
+    if loc.levelId == levelId and not isSpecialLevelId(loc.levelId):
+      draw(loc)
 
 # }}}
 # {{{ drawNotes()
