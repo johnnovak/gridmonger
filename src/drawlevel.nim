@@ -2797,8 +2797,10 @@ proc drawLinkLines(map: Map, level: Level; ctx) =
   vg.lineCap(lcjRound)
 
   for (srcLoc, destLoc) in map.links.pairs:
-    if destLoc.levelId == level.id and
-        not isSpecialLevelId(destLoc.levelId):
+    if srcloc.levelId == level.id and
+      destLoc.levelId == level.id and
+      not (isSpecialLevelId( srcLoc.levelId) or
+           isSpecialLevelId(destLoc.levelId)):
 
       if not dp.drawAllLinkLines:
         let cur = Location(levelId: level.id, row: dp.cursorRow,
