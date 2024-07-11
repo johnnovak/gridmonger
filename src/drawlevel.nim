@@ -1,7 +1,6 @@
 import std/lenientops
 import std/math
 import std/options
-import std/sequtils
 import std/sets
 import std/tables
 
@@ -503,15 +502,6 @@ template getForegroundLightColor(isCursorActive: bool; ctx): Color =
   else: ctx.lt.foregroundLightNormalColor
 
 # }}}
-#
-# {{{ forAllViewCells_CellCoords()
-template forAllViewCells_CellCoords(body: untyped) =
-  for viewRow {.inject.} in 0..<dp.viewRows:
-    for viewCol {.inject.} in 0..<dp.viewCols:
-      let row {.inject.} = dp.viewStartRow + viewRow
-      let col {.inject.} = dp.viewStartCol + viewCol
-      body
-# }}}
 
 # {{{ drawBackground()
 proc drawBackground(ctx) =
@@ -656,12 +646,16 @@ proc drawCellOutlines(l: Level; ctx) =
   vg.strokeColor(lt.outlineColor)
   vg.beginPath
 
-  forAllViewCells_CellCoords:
-    if l.isEmpty(row, col) and isOutline(row, col):
-      let x = snap(cellX(viewCol, dp), sw)
-      let y = snap(cellY(viewRow, dp), sw)
+  for viewRow in 0..<dp.viewRows:
+    for viewCol in 0..<dp.viewCols:
+      let row = dp.viewStartRow + viewRow
+      let col = dp.viewStartCol + viewCol
 
-      vg.rect(x, y, dp.gridSize, dp.gridSize)
+      if l.isEmpty(row, col) and isOutline(row, col):
+        let x = snap(cellX(viewCol, dp), sw)
+        let y = snap(cellY(viewRow, dp), sw)
+
+        vg.rect(x, y, dp.gridSize, dp.gridSize)
 
   vg.fill
   vg.stroke
