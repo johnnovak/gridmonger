@@ -61,7 +61,6 @@ template cellAreaAction(map; loc, undoLoc: Location, rect: Rect[Natural];
     )
 
     m.links = oldLinks
-    m.links.debugSanitise
     result = usd
 
   um.storeUndoState(action, undoAction, groupWithPrev)
@@ -463,7 +462,7 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
 
   let levelId = loc.levelId
   var oldLinks = map.links.filterByInRect(levelId, bbox, sel.some)
-  map.links.debugSanitise
+  oldLinks.debugSanitise
 
   proc transformAndCollectLinks(origLinks: Links, selection: Selection,
                                 bbox: Rect[Natural]): Links =
@@ -505,7 +504,6 @@ proc cutSelection*(map; loc: Location, bbox: Rect[Natural], sel: Selection,
       m.links.delBySrc(s)
 
     m.links.addAll(newLinks)
-    m.links.debugSanitise()
 
     var l: Location
     l.levelId = levelId
@@ -611,10 +609,10 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
         # one go
         for src, dest in m.links:
           var
-            src = src
-            dest = dest
-            addLink = false
-            srcInside = true
+            src        = src
+            dest       = dest
+            addLink    = false
+            srcInside  = true
             destInside = true
 
           # Link starting from a paste buffer location (pointing to either
@@ -650,6 +648,7 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
 
         # Recreate links between real map locations
         m.links.addAll(linksToAdd)
+        m.links.debugSanitise
 
       m.normaliseLinkedStairs(levelId)
 
@@ -708,6 +707,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
   )
 
   let oldLinks = map.links.filterByLevel(loc.levelId)
+  oldLinks.debugSanitise
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
@@ -718,6 +718,7 @@ proc deleteLevel*(map; loc: Location; um): Location =
 
     for src in oldLinks.sources:
       m.links.delBySrc(src)
+    m.links.debugSanitise
 
     var usd = usd
     if m.levels.len == 0:
@@ -901,7 +902,7 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     oldLinks = map.links.filterByLevel(levelId)
     newLinks = oldLinks.shiftLinksInLevel(levelId, rowOffs, colOffs,
                                           levelRect, wraparound)
-  map.links.debugSanitise
+  oldLinks.debugSanitise
 
   # Do action
   let action = proc (m: var Map): UndoStateData =
