@@ -1,6 +1,7 @@
 import std/options
 
 import common
+import utils/misc
 import utils/rect
 
 
@@ -40,15 +41,13 @@ proc copyFrom*(dest: var Selection, destRow, destCol: Natural,
   let
     srcRow   = srcRect.r1
     srcCol   = srcRect.c1
-    # TODO use clamp
-    srcRows  = max(src.rows - srcRow, 0)
-    srcCols  = max(src.cols - srcCol, 0)
-    destRows = max(dest.rows - destRow, 0)
-    destCols = max(dest.cols - destCol, 0)
+    srcRows  = (src.rows - srcRow).clampMin(0)
+    srcCols  = (src.cols - srcCol).clampMin(0)
+    destRows = (dest.rows - destRow).clampMin(0)
+    destCols = (dest.cols - destCol).clampMin(0)
 
-    # TODO use clamp
-    rows = min(min(srcRows, destRows), srcRect.rows)
-    cols = min(min(srcCols, destCols), srcRect.cols)
+    rows = srcRows.clampMax(destRows).clampMax(srcRect.rows)
+    cols = srcCols.clampMax(destCols).clampMax(srcRect.cols)
 
   for r in 0..<rows:
     for c in 0..<cols:

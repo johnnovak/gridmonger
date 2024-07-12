@@ -50,4 +50,13 @@ proc findUniquePath*(dir: string, name: string, ext: string): string =
 
 # }}}
 
+# {{{ clampMin*()
+func clampMin*[T](x, minLimit: T): T = max(x, minLimit)
+
+# }}}
+# {{{ clampMax*()
+func clampMax*[T](x, maxLimit: T): T = min(x, maxLimit)
+
+# }}}
+
 # vim: et:ts=2:sw=2:fdm=marker

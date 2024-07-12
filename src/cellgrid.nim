@@ -1,6 +1,7 @@
 import std/options
 
 import common
+import utils/misc
 import utils/rect
 
 
@@ -62,7 +63,6 @@ proc newCellGrid*(rows, cols: Natural): CellGrid =
 
   # The cell data is already filled with zeros which is our default empty
   # cell, so there's no need for further initialisation.
-  #
   result = g
 
 # }}}
@@ -179,17 +179,15 @@ proc copyFrom*(g; destRow, destCol: Natural,
   # This function cannot fail as the copied area is clipped to the extents of
   # the destination area (so nothing gets copied in the worst case).
   let
-    srcCol = srcRect.c1
-    srcRow = srcRect.r1
-    # TODO use clamp
-    srcRows = max(src.rows - srcRow, 0)
-    srcCols = max(src.cols - srcCol, 0)
-    destRows = max(g.rows - destRow, 0)
-    destCols = max(g.cols - destCol, 0)
+    srcCol   = srcRect.c1
+    srcRow   = srcRect.r1
+    srcRows  = (src.rows - srcRow).clampMin(0)
+    srcCols  = (src.cols - srcCol).clampMin(0)
+    destRows = (g.rows - destRow).clampMin(0)
+    destCols = (g.cols - destCol).clampMin(0)
 
-    # TODO use clamp
-    rows = min(min(srcRows, destRows), srcRect.rows)
-    cols = min(min(srcCols, destCols), srcRect.cols)
+    rows = srcRows.clampMax(destRows).clampMax(srcRect.rows)
+    cols = srcCols.clampMax(destCols).clampMax(srcRect.cols)
 
   for r in 0..<rows:
     for c in 0..<cols:

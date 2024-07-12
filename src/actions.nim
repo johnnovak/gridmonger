@@ -801,8 +801,8 @@ proc resizeLevel*(map; loc: Location, newRows, newCols: Natural,
 
     var usd = usd
     let loc = usd.location
-    usd.location.col = (loc.col.int + colOffs).clamp(0, newCols-1).Natural
-    usd.location.row = (loc.row.int + rowOffs).clamp(0, newRows-1).Natural
+    usd.location.col = (loc.col.int + colOffs).clamp(0, newCols-1)
+    usd.location.row = (loc.row.int + rowOffs).clamp(0, newRows-1)
     result = usd
 
 
@@ -859,9 +859,8 @@ proc cropLevel*(map; loc: Location, cropRect: Rect[Natural]; um): Location =
     m.links.debugSanitise
 
     var usd = usd
-    # TODO use clamp
-    usd.location.col = max(usd.location.col.int + colOffs, 0).Natural
-    usd.location.row = max(usd.location.row.int + rowOffs, 0).Natural
+    usd.location.col = (usd.location.col.int + colOffs).clampMin(0)
+    usd.location.row = (usd.location.row.int + rowOffs).clampMin(0)
     result = usd
 
 
@@ -936,9 +935,8 @@ proc nudgeLevel*(map; loc: Location, rowOffs, colOffs: int,
     m.links.debugSanitise
 
     var usd = usd
-    # TODO use clamp
-    usd.location.row = max(usd.location.row + rowOffs, 0)
-    usd.location.col = max(usd.location.col + colOffs, 0)
+    usd.location.row = (usd.location.row + rowOffs).clampMin(0)
+    usd.location.col = (usd.location.col + colOffs).clampMin(0)
     result = usd
 
 

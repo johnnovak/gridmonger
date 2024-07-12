@@ -253,14 +253,12 @@ proc decZoomLevel*(lt; dp) =
 # }}}
 # {{{ numDisplayableRows*()
 proc numDisplayableRows*(dp; height: float): Natural =
-  # TODO use clamp
-  max(height / dp.gridSize, 0).int
+  (height / dp.gridSize).int.clampMin(0)
 
 # }}}
 # {{{ numDisplayableCols*()
 proc numDisplayableCols*(dp; width: float): Natural =
-  # TODO use clamp
-  max(width / dp.gridSize, 0).int
+  (width / dp.gridSize).int.clampMin(0)
 
 # }}}
 # {{{ gridSize*()
@@ -2440,13 +2438,12 @@ proc drawWall(x, y: float; wall: Wall, orientation: CardinalDir,
     bufCol = viewCol.toBufCol
 
   let (isCursorActiveNE, isCursorActiveSW) =
-    # TODO use clamp
     if orientation.isHoriz:
-      (isCursorActive(viewRow,           viewCol, dp),
-       isCursorActive(max(viewRow-1, 0), viewCol, dp))
+      (isCursorActive( viewRow,                viewCol, dp),
+       isCursorActive((viewRow-1).clampMin(0), viewCol, dp))
     else: # vert
-      (isCursorActive(viewRow, max(viewCol-1, 0), dp),
-       isCursorActive(viewRow, viewCol,           dp))
+      (isCursorActive(viewRow, (viewCol-1).clampMin(0), dp),
+       isCursorActive(viewRow,  viewCol,                dp))
 
   template drawOriented(drawProc: untyped, cursorActive: bool = false) =
     if orientation.isHoriz:
@@ -2493,7 +2490,7 @@ proc drawWall(x, y: float; wall: Wall, orientation: CardinalDir,
     let
       (r, c) = if orientation.isHoriz: (bufRow,  bufCol)
                else:                   (bufRow, (bufCol-1).Natural)
-      floorColor = viewBuf.getFloorColor(r, c.Natural)
+      floorColor = viewBuf.getFloorColor(r, c)
     drawOrientedWithFloorColor(drawNicheHorizNE, floorColor)
 
   of wNicheSW:
@@ -2747,12 +2744,11 @@ proc drawSelectionHighlight(levelRows, levelCols: Natural; ctx) =
     viewSelStartRow = dp.selStartRow - dp.viewStartRow
     viewSelStartCol = dp.selStartCol - dp.viewStartCol
 
-    # TODO use clamp
     (rows, cols) = if dp.selectionWraparound:
                      (sel.rows.int, sel.cols.int)
                    else:
-                     (min(sel.rows, dp.viewRows - viewSelStartRow),
-                      min(sel.cols, dp.viewCols - viewSelStartCol))
+                     (sel.rows.clampMax(dp.viewRows - viewSelStartRow),
+                      sel.cols.clampMax(dp.viewCols - viewSelStartCol))
 
   for r in 0..<rows:
     for c in 0..<cols:
@@ -2887,14 +2883,14 @@ proc mergeSelectionAndOutlineBuffers(level, viewBuf: Level,
                             dp.selectionBuffer.get.selection)
 
     if outlineBuf.isSome:
-      let ob = outlineBuf.get
-      # TODO use clamp
-      let endRow = min(startRow + selBufLevel.rows-1, ob.rows-1)
-      let endCol = min(startCol + selBufLevel.cols-1, ob.cols-1)
+      let
+        ob = outlineBuf.get
+        endRow = (startRow + selBufLevel.rows-1).clampMax(ob.rows-1)
+        endCol = (startCol + selBufLevel.cols-1).clampMax(ob.cols-1)
 
-      # TODO use clamp
-      let sr = max(startRow, 0)
-      let sc = max(startCol, 0)
+        sr = startRow.clampMin(0)
+        sc = startCol.clampMin(0)
+
       for r in sr..endRow:
         for c in sc..endCol:
           ob[r,c] = {}
