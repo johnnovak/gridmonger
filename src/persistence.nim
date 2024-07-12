@@ -121,8 +121,7 @@ type
     showCellCoords*:         bool
     wasdMode*:               bool
     walkMode*:               bool
-    # TODO
-    # optPasteWraparound*:            bool
+    pasteWraparound*:        bool
 
     currFloorColor*:         range[0..LevelTheme.floorBackgroundColor.high]
     currSpecialWall*:        range[0..SpecialWalls.high]
@@ -522,10 +521,9 @@ proc readAppState_V4(rr; map: Map): AppState =
     checkBool(walkMode, "stat.opts.walkMode")
     app.walkMode = walkMode.bool
 
-    # TODO
-#    let pasteWraparound = rr.read(uint8)
-#    checkBool(pasteWraparound, "stat.opts.pasteWraparound")
-#    app.pasteWraparound = pasteWraparound.bool
+    let pasteWraparound = rr.read(uint8)
+    checkBool(pasteWraparound, "stat.opts.pasteWraparound")
+    app.pasteWraparound = pasteWraparound.bool
 
   # Tools pane state
   if toolCursor.isSome:
@@ -1136,7 +1134,6 @@ proc readMap(rr): tuple[map: Map, version: Natural] =
 
 # }}}
 # # {{{ readMapFile*()
-# TODO return display related info and info chunk data as well
 proc readMapFile*(path: string): tuple[map: Map,
                                        appState: Option[AppState],
                                        warning: string] =
@@ -1319,8 +1316,7 @@ proc writeAppState(rw; map: Map, s: AppState) =
       rw.write(s.showCellCoords.uint8)
       rw.write(s.wasdMode.uint8)
       rw.write(s.walkMode.uint8)
-      # TODO
-#      rw.write(s.optPasteWraparound.uint8)
+      rw.write(s.pasteWraparound.uint8)
 
     # Tools pane state
     rw.chunk(FourCC_GRMM_tool):

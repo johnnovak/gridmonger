@@ -3156,6 +3156,7 @@ proc loadMap(path: string; a): bool =
         showCellCoords  = s.showCellCoords
         wasdMode        = s.wasdMode
         walkMode        = s.walkMode
+        pasteWraparound = s.pasteWraparound
         drawTrail       = false
 
       if s.notesListPaneState.isSome:
@@ -3221,6 +3222,7 @@ proc saveMap(path: string, autosave, createBackup: bool; a) =
     showCellCoords:         a.ui.showCellCoords,
     wasdMode:               a.ui.wasdMode,
     walkMode:               a.ui.walkMode,
+    pasteWraparound:        a.ui.pasteWraparound,
 
     currFloorColor:         a.ui.currFloorColor,
     currSpecialWall:        a.ui.currSpecialWall,

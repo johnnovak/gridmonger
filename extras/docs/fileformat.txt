@@ -260,7 +260,7 @@ App state chunks (in 'stat' group chunk, optional)
     UINT8   showCellCoords       (0=off, 1=on)
     UINT8   wasdMode             (0=off, 1=on)
     UINT8   walkMode             (0=off, 1=on)
-    UINT8   pasteWraparound      (0=off, 1=on) TODO
+    UINT8   pasteWraparound      (0=off, 1=on)
 
 
 'tool'      Tools pane state (optional)
