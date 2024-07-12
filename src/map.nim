@@ -103,17 +103,16 @@ proc getRegionRect(m; levelId: Natural, rc: RegionCoords): Rect[Natural] =
 
   with l.regionOpts:
     r.c1 = rc.col * colsPerRegion
-    r.c2 = min(r.c1 + colsPerRegion, l.cols)
+    r.c2 = (r.c1 + colsPerRegion).clampMax(l.cols)
 
     case m.coordOptsForLevel(levelId).origin
     of coNorthWest:
       r.r1 = rc.row * rowsPerRegion
-      r.r2 = min(r.r1 + rowsPerRegion, l.rows)
+      r.r2 = (r.r1 + rowsPerRegion).clampMax(l.rows)
 
-    # TODO use clamp
     of coSouthWest:
-      r.r2 = max(l.rows - rc.row*rowsPerRegion, 0)
-      r.r1 = max(r.r2.int - rowsPerRegion, 0)
+      r.r2 = (l.rows - rc.row*rowsPerRegion).clampMin(0)
+      r.r1 = (r.r2.int - rowsPerRegion).clampMin(0)
 
   result = r
 
@@ -123,10 +122,9 @@ proc getRegionCoords*(m; loc: Location): RegionCoords =
   let
     l = m.levels[loc.levelId]
 
-    # TODO use clamp
     row = case m.coordOptsForLevel(loc.levelId).origin
           of coNorthWest: loc.row
-          of coSouthWest: max((l.rows-1).int - loc.row, 0)
+          of coSouthWest: ((l.rows-1).int - loc.row).clampMin(0)
 
   result.row = row     div l.regionOpts.rowsPerRegion
   result.col = loc.col div l.regionOpts.colsPerRegion
@@ -140,8 +138,8 @@ proc getRegionCenterLocation*(m; levelId: Natural,
     r = m.getRegionRect(levelId, rc)
 
   let
-    centerRow = min(r.r1 + (r.r2-r.r1-1) div 2, l.rows-1)
-    centerCol = min(r.c1 + (r.c2-r.c1-1) div 2, l.cols-1)
+    centerRow = (r.r1 + (r.r2-r.r1-1) div 2).clampMax(l.rows-1)
+    centerCol = (r.c1 + (r.c2-r.c1-1) div 2).clampMax(l.cols-1)
 
   (centerRow.Natural, centerCol.Natural)
 

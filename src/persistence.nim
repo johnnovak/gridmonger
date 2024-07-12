@@ -38,7 +38,7 @@ proc pushDebugIndent() =
   currDebugIndent += DebugIndent
 
 proc popDebugIndent() =
-  currDebugIndent = max(currDebugIndent - DebugIndent, 0)
+  currDebugIndent = (currDebugIndent - DebugIndent).clampMin(0)
 
 template debug(s: string) =
   log.debug(" ".repeat(currDebugIndent) & s)

@@ -1952,7 +1952,7 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
       curPos = newPos.floorMod(maxPos + 1)
       moveCursorTo(cur, a)
     else:
-      curPos = min(newPos, maxPos)
+      curPos = newPos.clampMax(maxPos)
 
   template stepDec(curPos: Natural, maxPos: Natural) =
     let newPos = curPos - steps
@@ -1987,14 +1987,14 @@ proc stepCursor(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
 
     let viewCol = viewCol(cur.col, a)
     if viewCol < sm:
-      dp.viewStartCol = max(dp.viewStartCol - (sm - viewCol), 0)
+      dp.viewStartCol = (dp.viewStartCol - (sm - viewCol)).clampMin(0)
 
   of dirN:
     stepDec(cur.row, maxPos=(l.rows - 1))
 
     let viewRow = viewRow(cur.row, a)
     if viewRow < sm:
-      dp.viewStartRow = max(dp.viewStartRow - (sm - viewRow), 0)
+      dp.viewStartRow = (dp.viewStartRow - (sm - viewRow)).clampMin(0)
 
   result = cur
 
@@ -2097,17 +2097,17 @@ proc stepLevelView(dir: CardinalDir; a) =
   alias(dp, a.ui.drawLevelParams)
 
   let l = currLevel(a)
-  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
-  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
+  let maxViewStartRow = (l.rows - dp.viewRows).clampMin(0)
+  let maxViewStartCol = (l.cols - dp.viewCols).clampMin(0)
 
   var newViewStartCol = dp.viewStartCol
   var newViewStartRow = dp.viewStartRow
 
   case dir:
-  of dirE: newViewStartCol = min(dp.viewStartCol + 1, maxViewStartCol)
-  of dirW: newViewStartCol = max(dp.viewStartCol - 1, 0)
-  of dirS: newViewStartRow = min(dp.viewStartRow + 1, maxViewStartRow)
-  of dirN: newViewStartRow = max(dp.viewStartRow - 1, 0)
+  of dirE: newViewStartCol = (dp.viewStartCol + 1).clampMax(maxViewStartCol)
+  of dirW: newViewStartCol = (dp.viewStartCol - 1).clampMin(0)
+  of dirS: newViewStartRow = (dp.viewStartRow + 1).clampMax(maxViewStartRow)
+  of dirN: newViewStartRow = (dp.viewStartRow - 1).clampMin(0)
 
   var cur = a.ui.cursor
   cur.row = cur.row + viewRow(newViewStartRow, a)
@@ -2125,8 +2125,8 @@ proc moveLevelView(dir: Direction, steps: Natural = 1; a) =
   a.ui.drawTrail = false
 
   let l = currLevel(a)
-  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
-  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
+  let maxViewStartRow = (l.rows - dp.viewRows).clampMin(0)
+  let maxViewStartCol = (l.cols - dp.viewCols).clampMin(0)
 
   for i in 0..<steps:
     if (dirN in dir and dp.viewStartRow == 0) or
@@ -2166,11 +2166,11 @@ proc updateViewAndCursorPos(levelDrawWidth, levelDrawHeight: float; a) =
 
   let l = currLevel(a)
 
-  dp.viewRows = min(dp.numDisplayableRows(levelDrawHeight), l.rows)
-  dp.viewCols = min(dp.numDisplayableCols(levelDrawWidth), l.cols)
+  dp.viewRows = dp.numDisplayableRows(levelDrawHeight).clampMax(l.rows)
+  dp.viewCols = dp.numDisplayableCols(levelDrawWidth).clampMax(l.cols)
 
-  let maxViewStartRow = max(l.rows - dp.viewRows, 0)
-  let maxViewStartCol = max(l.cols - dp.viewCols, 0)
+  let maxViewStartRow = (l.rows - dp.viewRows).clampMin(0)
+  let maxViewStartCol = (l.cols - dp.viewCols).clampMin(0)
 
   if maxViewStartRow < dp.viewStartRow:
     dp.viewStartRow = maxViewStartRow
@@ -5923,7 +5923,7 @@ proc deleteThemeDialog(a) =
     if deleteTheme(a.currThemeName, a):
       buildThemeList(a)
       with a.theme:
-        nextThemeIndex = min(currThemeIndex, themeNames.high).Natural.some
+        nextThemeIndex = currThemeIndex.clampMax(themeNames.high).some
 
     closeDialog(a)
 
@@ -6265,8 +6265,8 @@ proc centerCursorAfterZoom(a) =
 
   let viewCol = round(a.ui.prevCursorViewX / dp.gridSize).int
   let viewRow = round(a.ui.prevCursorViewY / dp.gridSize).int
-  dp.viewStartCol = max(cur.col - viewCol, 0)
-  dp.viewStartRow = max(cur.row - viewRow, 0)
+  dp.viewStartCol = (cur.col - viewCol).clampMin(0)
+  dp.viewStartRow = (cur.row - viewRow).clampMin(0)
 
 # }}}
 # {{{ zoomIn()
@@ -7694,10 +7694,10 @@ proc handleGlobalKeyEvents(a) =
         let step = if mkCtrl in mods: CursorJump else: 1
 
         case dir:
-        of dirE: dp.selStartCol = min(dp.selStartCol + step,  cols-1)
-        of dirS: dp.selStartRow = min(dp.selStartRow + step,  rows-1)
-        of dirW: dp.selStartCol = max(dp.selStartCol - step, -cols+1)
-        of dirN: dp.selStartRow = max(dp.selStartRow - step, -rows+1)
+        of dirE: dp.selStartCol = (dp.selStartCol + step).clampMax( cols-1)
+        of dirS: dp.selStartRow = (dp.selStartRow + step).clampMax( rows-1)
+        of dirW: dp.selStartCol = (dp.selStartCol - step).clampMin(-cols+1)
+        of dirN: dp.selStartRow = (dp.selStartRow - step).clampMin(-rows+1)
 
 
       handleMoveKeys(ke, allowWasdKeys=false, allowRepeat=true,
@@ -9739,7 +9739,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
         y += SepaHeight
 
 
-  let yOffs = max((h - 840) * 0.5, 0)
+  let yOffs = ((h - 840) * 0.5).clampMin(0)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     vg.save

@@ -65,8 +65,8 @@ func area*[T: RectType](r: Rect[T]): T =
 # {{{ intersect*()
 proc intersect*[T: RectType](a, b: Rect[T]): Option[Rect[T]] =
   let
-    r = max(a.r1, b.r1)
-    c = max(a.c1, b.c1)
+    r  = max(a.r1, b.r1)
+    c  = max(a.c1, b.c1)
     nr = min(a.r1 + a.rows, b.r1 + b.rows)
     nc = min(a.c1 + a.cols, b.c1 + b.cols)
 
