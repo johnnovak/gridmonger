@@ -1450,49 +1450,49 @@ let DefaultAppShortcuts = {
   scShowLinkLines:             @[mkKeyShortcut(keyApostrophe, {})],
 
   # Select mode
-  scSelectionDraw:               @[mkKeyShortcut(keyD,        {})],
-  scSelectionErase:              @[mkKeyShortcut(keyE,        {})],
-  scSelectionAll:                @[mkKeyShortcut(keyA,        {})],
+  scSelectionDraw:               @[mkKeyShortcut(keyD,    {})],
+  scSelectionErase:              @[mkKeyShortcut(keyE,    {})],
+  scSelectionAll:                @[mkKeyShortcut(keyA,    {})],
 
-  scSelectionNone:               @[mkKeyShortcut(keyU,        {}),
-                                   mkKeyShortcut(keyX,        {})],
+  scSelectionNone:               @[mkKeyShortcut(keyU,    {}),
+                                   mkKeyShortcut(keyX,    {})],
 
-  scSelectionAddRect:            @[mkKeyShortcut(keyR,        {})],
-  scSelectionSubRect:            @[mkKeyShortcut(keyS,        {})],
+  scSelectionAddRect:            @[mkKeyShortcut(keyR,    {})],
+  scSelectionSubRect:            @[mkKeyShortcut(keyS,    {})],
 
-  scSelectionCopy:               @[mkKeyShortcut(keyC,        {}),
-                                   mkKeyShortcut(keyY,        {})],
+  scSelectionCopy:               @[mkKeyShortcut(keyC,    {}),
+                                   mkKeyShortcut(keyY,    {})],
 
-  scSelectionMove:               @[mkKeyShortcut(keyM,        {mkCtrl})],
-  scSelectionEraseArea:          @[mkKeyShortcut(keyE,        {mkCtrl})],
-  scSelectionFillArea:           @[mkKeyShortcut(keyF,        {mkCtrl})],
-  scSelectionSurroundArea:       @[mkKeyShortcut(keyS,        {mkCtrl})],
-  scSelectionSetFloorColorArea:  @[mkKeyShortcut(keyC,        {mkCtrl})],
-  scSelectionCropArea:           @[mkKeyShortcut(keyR,        {mkCtrl})],
+  scSelectionMove:               @[mkKeyShortcut(keyM,    {mkCtrl})],
+  scSelectionEraseArea:          @[mkKeyShortcut(keyE,    {mkCtrl})],
+  scSelectionFillArea:           @[mkKeyShortcut(keyF,    {mkCtrl})],
+  scSelectionSurroundArea:       @[mkKeyShortcut(keyS,    {mkCtrl})],
+  scSelectionSetFloorColorArea:  @[mkKeyShortcut(keyC,    {mkCtrl})],
+  scSelectionCropArea:           @[mkKeyShortcut(keyR,    {mkCtrl})],
 
   # Layout
-  scToggleCellCoords:      @[mkKeyShortcut(keyC,           {mkAlt})],
-  scToggleCurrentNotePane: @[mkKeyShortcut(keyN,           {mkAlt})],
-  scToggleNotesListPane:   @[mkKeyShortcut(keyL,           {mkAlt})],
-  scToggleToolsPane:       @[mkKeyShortcut(keyT,           {mkAlt})],
-  scToggleThemeEditor:     @[mkKeyShortcut(keyF12,         {})],
-  scToggleTitleBar:        @[mkKeyShortcut(keyT,           {mkAlt, mkShift})],
+  scToggleCellCoords:      @[mkKeyShortcut(keyC,          {mkAlt})],
+  scToggleCurrentNotePane: @[mkKeyShortcut(keyN,          {mkAlt})],
+  scToggleNotesListPane:   @[mkKeyShortcut(keyL,          {mkAlt})],
+  scToggleToolsPane:       @[mkKeyShortcut(keyT,          {mkAlt})],
+  scToggleThemeEditor:     @[mkKeyShortcut(keyF12,        {})],
+  scToggleTitleBar:        @[mkKeyShortcut(keyT,          {mkAlt, mkShift})],
 
-  scSaveLayout1:           @[mkKeyShortcut(keyF5,          {mkShift})],
-  scSaveLayout2:           @[mkKeyShortcut(keyF6,          {mkShift})],
-  scSaveLayout3:           @[mkKeyShortcut(keyF7,          {mkShift})],
-  scSaveLayout4:           @[mkKeyShortcut(keyF8,          {mkShift})],
+  scSaveLayout1:           @[mkKeyShortcut(keyF5,         {mkShift})],
+  scSaveLayout2:           @[mkKeyShortcut(keyF6,         {mkShift})],
+  scSaveLayout3:           @[mkKeyShortcut(keyF7,         {mkShift})],
+  scSaveLayout4:           @[mkKeyShortcut(keyF8,         {mkShift})],
 
-  scRestoreLayout1:        @[mkKeyShortcut(keyF5,          {})],
-  scRestoreLayout2:        @[mkKeyShortcut(keyF6,          {})],
-  scRestoreLayout3:        @[mkKeyShortcut(keyF7,          {})],
-  scRestoreLayout4:        @[mkKeyShortcut(keyF8,          {})],
+  scRestoreLayout1:        @[mkKeyShortcut(keyF5,         {})],
+  scRestoreLayout2:        @[mkKeyShortcut(keyF6,         {})],
+  scRestoreLayout3:        @[mkKeyShortcut(keyF7,         {})],
+  scRestoreLayout4:        @[mkKeyShortcut(keyF8,         {})],
 
   # Misc
-  scShowAboutDialog:       @[mkKeyShortcut(keyA,           {mkCtrl})],
-  scOpenUserManual:        @[mkKeyShortcut(keyF1,          {})],
-  scEditPreferences:       @[mkKeyShortcut(keyU,           {mkCtrl, mkAlt})],
-  scToggleQuickReference:  @[mkKeyShortcut(keySlash,       {mkShift})]
+  scShowAboutDialog:       @[mkKeyShortcut(keyA,          {mkCtrl})],
+  scOpenUserManual:        @[mkKeyShortcut(keyF1,         {})],
+  scEditPreferences:       @[mkKeyShortcut(keyU,          {mkCtrl, mkAlt})],
+  scToggleQuickReference:  @[mkKeyShortcut(keySlash,      {mkShift})]
 
 }.toTable
 
