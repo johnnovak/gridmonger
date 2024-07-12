@@ -2973,7 +2973,7 @@ proc drawLevel*(map: Map, levelId: Natural; ctx) =
   if drawSelectionBuffer: drawSelectionHighlight(l.rows, l.cols, ctx)
   if dp.drawCursorGuides: drawCursorGuides(ctx)
 
-  if dp.drawLinkLines:
+  if dp.drawLinkLines and not drawSelectionBuffer:
     drawLinkLines(map, l, ctx)
 
   vg.restore
