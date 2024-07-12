@@ -405,6 +405,8 @@ type
     autosaveFreqMins:   Natural
     vsync:              bool
     checkForUpdates:    bool
+    # macOS only
+    shortcutModifier:   ShortcutModifier
 
     # Editing tab
     movementWraparound: bool
@@ -432,11 +434,16 @@ type
     logFile:            string
 
 
+  ShortcutModifier = enum
+    smCommand        = (0, "Command")
+    smCtrl           = (1, "Control")
+
   Keys = object
     shortcuts:          Table[AppShortcut, seq[KeyShortcut]]
     quickRefShortcuts:  seq[seq[seq[QuickRefItem]]]
     walkKeysWasd:       WalkKeys
     walkKeysCursor:     WalkKeys
+    primaryModKey:      ModifierKey
 
   Document = object
     path:               string
@@ -756,6 +763,8 @@ type
     autosaveFreqMins:   string
     vsync:              bool
     checkForUpdates:    bool
+    # macOS only
+    shortcutModifier:   ShortcutModifier
 
     # Editing tab
     movementWraparound: bool
@@ -1297,12 +1306,9 @@ const
   DiagonalMoveLetterKeys = {keyY, keyU, keyB, keyN}
 
 
-# {{{ DefaultAppShortcuts
+# {{{ AppShortcuts_Windows_Linux
 
-# TODO Introduce Windows/Mac specific shorcuts, switchable at runtime via
-# prefs? (e.g. use Cmd instead of Ctrl in shortcuts on Mac; Mac specific text
-# box editing shortcuts, etc.)
-let DefaultAppShortcuts = {
+let AppShortcuts_Windows_Linux = {
   # General
   scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
 
@@ -1498,10 +1504,8 @@ let DefaultAppShortcuts = {
 
 # }}}
 
-# {{{ makeYubnAppShortcuts()
-proc mkYubnAppShortcuts: Table[AppShortcut, seq[KeyShortcut]] =
-  var sc = DefaultAppShortcuts
-
+# {{{ setYubnAppShortcuts()
+proc setYubnAppShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
   # remove keyY mappings
   sc[scSelectionCopy] = @[mkKeyShortcut(keyC, {})]
 
@@ -1515,7 +1519,17 @@ proc mkYubnAppShortcuts: Table[AppShortcut, seq[KeyShortcut]] =
   sc[scEditNote]      = @[mkKeyShortcut(keySemicolon, {})]
   sc[scEraseNote]     = @[mkKeyShortcut(keySemicolon, {mkShift})]
 
-  sc
+# }}}
+# {{{ mapCtrlToSuper()
+proc mapCtrlToSuper(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+  for appShortcut, keyShortcuts in sc.mpairs:
+    # We always leave this one alone for the Vim enthusiasts :)
+    if appShortcut == scCancel: continue
+
+    keyShortcuts = keyShortcuts.mapIt:
+      if mkCtrl in it.mods:
+        KeyShortcut(key: it.key, mods: it.mods - {mkCtrl} + {mkSuper})
+      else: it
 
 # }}}
 # {{{ toStr()
@@ -1592,11 +1606,15 @@ proc toStr(k: Key): string =
 
 proc toStr(k: KeyShortcut): string =
   var s: seq[string] = @[]
-  if mkCtrl  in k.mods: s.add("Ctrl")
+  if   mkSuper in k.mods: s.add("Cmd")
+  elif mkCtrl  in k.mods: s.add("Ctrl")
+
   if mkShift in k.mods: s.add("Shift")
   if mkAlt   in k.mods: s.add("Alt")
+
   s.add(k.key.toStr)
   s.join(fmt"{HairSp}+{HairSp}")
+
 
 proc toStr(sc: AppShortcut; a; idx = -1): string =
   if idx == -1:
@@ -1761,6 +1779,8 @@ proc setErrorMessage(msg: string; a) =
 # }}}
 # {{{ setSelectModeSelectMessage()
 proc setSelectModeSelectMessage(a) =
+  let special = if a.keys.primaryModKey == mkCtrl: "Ctrl" else: "Cmd"
+
   setStatusMessage(
     IconGrid, "Mark selection",
     @[scSelectionDraw.toStr(a),    "draw",
@@ -1770,7 +1790,7 @@ proc setSelectModeSelectMessage(a) =
       scSelectionAll.toStr(a),     "mark all",
       scSelectionNone.toStr(a),    "unmark all",
       scSelectionCopy.toStr(a),    "copy",
-      "Ctrl",                      "special"],
+      special,                      "special"],
     a
   )
 
@@ -2340,8 +2360,20 @@ proc setSwapInterval(a) =
 
 # {{{ updateShortcuts()
 proc updateShortcuts(a) =
-  a.keys.shortcuts = if a.prefs.yubnMovementKeys: mkYubnAppShortcuts()
-                     else: DefaultAppShortcuts
+  a.keys.shortcuts = AppShortcuts_Windows_Linux
+
+  if a.prefs.yubnMovementKeys:
+    setYubnAppShortcuts(a.keys.shortcuts)
+
+  when defined(macosx):
+    case a.prefs.shortcutModifier
+    of smCtrl:
+      a.keys.primaryModKey = mkCtrl
+      discard
+
+    of smCommand:
+      a.keys.primaryModKey = mkSuper
+      a.keys.shortcuts.mapCtrlToSuper
 
   a.keys.quickRefShortcuts = mkQuickRefShortcuts(a)
 
@@ -2404,7 +2436,13 @@ proc isShortcutUp(ev: Event, shortcut: AppShortcut; a): bool =
   isShortcutUp(ev, {shortcut}, a)
 
 # }}}
+# {{{ modKeyDown()
+proc modKeyDown(a): bool =
+  if   a.keys.primaryModKey == mkCtrl:  koi.ctrlDown()
+  elif a.keys.primaryModKey == mkSuper: koi.superDown()
+  else: false
 
+# }}}
 # }}}
 
 # {{{ Theme handling
@@ -3074,6 +3112,9 @@ proc saveAppConfig(a) =
 
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
+
+  when defined(macosx):
+    cfg.set(p & "shortcut-modifier", enumToDashCase($a.prefs.shortcutModifier))
 
   # Last state
   p = "last-state."
@@ -3881,6 +3922,7 @@ proc openPreferencesDialog(a) =
   dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
   dlg.vsync              = a.prefs.vsync
   dlg.checkForUpdates    = a.prefs.checkForUpdates
+  dlg.shortcutModifier   = a.prefs.shortcutModifier
 
   dlg.movementWraparound = a.prefs.movementWraparound
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
@@ -3893,8 +3935,8 @@ proc openPreferencesDialog(a) =
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
-    DlgWidth  = 420.0
-    DlgHeight = 345.0
+    DlgWidth  = 430.0
+    DlgHeight = 355.0
     TabWidth  = 360.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
@@ -3988,6 +4030,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         ).some,
         style = a.theme.textFieldStyle
       )
+
     group:
       koi.label("Vertical sync", style=a.theme.labelStyle)
 
@@ -3998,6 +4041,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.checkForUpdates, style = a.theme.checkBoxStyle)
+
+    when defined(macosx):
+      group:
+        koi.label("Keyboard shortcut modifier", style=a.theme.labelStyle)
+        koi.nextItemWidth(160)
+        koi.dropDown(dlg.shortcutModifier, style = a.theme.dropDownStyle)
 
   elif dlg.activeTab == 2:  # Editing
     group:
@@ -4056,6 +4105,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       appEvents.fetchLatestVersion()
 
     a.prefs.checkForUpdates    = dlg.checkForUpdates
+    a.prefs.shortcutModifier   = dlg.shortcutModifier
 
     # Editing
     a.prefs.movementWraparound = dlg.movementWraparound
@@ -7453,8 +7503,8 @@ proc handleGlobalKeyEvents(a) =
                                allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
 
-      if   koi.ctrlDown(): setSelectModeSpecialActionsMessage(a)
-      else:                setSelectModeSelectMessage(a)
+      if modKeyDown(a): setSelectModeSpecialActionsMessage(a)
+      else:             setSelectModeSelectMessage(a)
 
       if   ke.isShortcutDown(scSelectionDraw, a):
         ui.selection.get[cur.row, cur.col] = true
@@ -10453,6 +10503,9 @@ proc initPreferences(cfg: HoconNode; a) =
     vsync = prefs.getBoolOrDefault("video.vsync", true)
 
     checkForUpdates = prefs.getBoolOrDefault("check-for-updates", true)
+
+    shortcutModifier = prefs.getEnumOrDefault("shortcut-modifier",
+                                              ShortcutModifier)
 
     const MovementWraparoundKey = "editing.movement-wraparound"
     if prefs.getOpt(MovementWraparoundKey).isSome:
