@@ -6835,8 +6835,11 @@ proc handleGlobalKeyEvents(a) =
           # TODO what's this?
           setStatusMessage("moved", a)
 
-      if   ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true, a=a):
+        selectPrevLevel(a)
+
+      elif ke.isShortcutDown(scNextLevel, repeat=true, a=a):
+        selectNextLevel(a)
 
       let cur = ui.cursor
 
@@ -7082,8 +7085,9 @@ proc handleGlobalKeyEvents(a) =
           # Try to continue selecting sources from the last source we left at.
           let oldIdx = ui.jumpToSrcLocations.find(ui.lastJumpToSrcLocation)
           if oldIdx == -1:
-            # The source we left at last time doesn't exist (e.g. the user deleted
-            # it or wasn't linked to this destination), so reset from beginning.
+            # The source we left at last time doesn't exist (e.g. the user
+            # deleted it or wasn't linked to this destination), so reset from
+            # beginning.
             ui.jumpToSrcLocationIdx = 0
           else:
             ui.jumpToSrcLocationIdx = oldIdx
@@ -7624,8 +7628,11 @@ proc handleGlobalKeyEvents(a) =
         ui.pasteWraparound = not ui.pasteWraparound
         setPastePreviewModeMessage(a)
 
-      elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
+      elif ke.isShortcutDown(scPreviousLevel, repeat=true, a=a):
+        selectPrevLevel(a)
+
+      elif ke.isShortcutDown(scNextLevel, repeat=true, a=a):
+        selectNextLevel(a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
@@ -7737,8 +7744,11 @@ proc handleGlobalKeyEvents(a) =
         discard handleMoveCursor(ke, allowPan=true, allowJump=true,
                                  allowWasdKeys=true, allowDiagonal=false, a)
 
-      if   ke.isShortcutDown(scPreviousLevel, repeat=true, a=a): selectPrevLevel(a)
-      elif ke.isShortcutDown(scNextLevel,     repeat=true, a=a): selectNextLevel(a)
+      if   ke.isShortcutDown(scPreviousLevel, repeat=true, a=a):
+        selectPrevLevel(a)
+
+      elif ke.isShortcutDown(scNextLevel, repeat=true, a=a):
+        selectNextLevel(a)
 
       let cur = ui.cursor
 
@@ -7761,9 +7771,8 @@ proc handleGlobalKeyEvents(a) =
           ui.editMode = emNormal
 
           let linkType = linkFloorToString(map.getFloor(cur))
-          setStatusMessage(IconLink,
-                           fmt"{capitalizeAscii(linkType)} link destination set",
-                           a)
+          setStatusMessage(
+            IconLink, fmt"{capitalizeAscii(linkType)} link destination set", a)
 
       elif ke.isShortcutDown(scZoomIn,  repeat=true, a=a): zoomIn(a)
       elif ke.isShortcutDown(scZoomOut, repeat=true, a=a): zoomOut(a)
@@ -8885,12 +8894,12 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   if currNote.isNone or not nls.linkCursor:
     nls.activeId = ItemId.none
 
-  # Syncing to cursor is only triggered a single time if we need to change
-  # the active list item and the scroll view's position
+  # Syncing to cursor is only triggered a single time if we need to change the
+  # active list item and the scroll view's position
   #
-  # Triggering on cache rebuilds takes care of weird edge such as like deleting
-  # a note then undoing it, without changing the cursor position (this works
-  # because undo sets the current level's dirty flag).
+  # Triggering on cache rebuilds takes care of weird edge such as like
+  # deleting a note then undoing it, without changing the cursor position
+  # (this works because undo sets the current level's dirty flag).
 
   let syncToCursor = nls.linkCursor and (
                        cacheRebuilt or
