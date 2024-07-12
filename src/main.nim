@@ -1203,10 +1203,10 @@ type MoveKeys = object
 
 const
   MoveKeysCursor = MoveKeys(
-    left:  {keyLeft,     keyH, keyKp4},
-    right: {keyRight,    keyL, keyKp6},
-    up:    {keyUp,       keyK, keyKp8},
-    down:  {Key.keyDown, keyJ, keyKp2, keyKp5}
+    left:  {keyLeft,  keyH, keyKp4},
+    right: {keyRight, keyL, keyKp6},
+    up:    {keyUp,    keyK, keyKp8},
+    down:  {keyDown,  keyJ, keyKp2, keyKp5}
   )
 
   MoveKeysWasd = MoveKeys(
@@ -1240,7 +1240,7 @@ func `+`(a: WalkKeys, b: WalkKeys): WalkKeys =
 const
   WalkKeysCursorStrafe = WalkKeys(
     forward:     {keyUp},
-    backward:    {Key.keyDown},
+    backward:    {keyDown},
     strafeLeft:  {keyLeft},
     strafeRight: {keyRight},
 
@@ -1251,7 +1251,7 @@ const
 
   WalkKeysCursorTurn = WalkKeys(
     forward:     {keyUp},
-    backward:    {Key.keyDown},
+    backward:    {keyDown},
     turnLeft:    {keyLeft},
     turnRight:   {keyRight},
 
@@ -1271,7 +1271,7 @@ const
 
   WalkKeysWasd = WalkKeys(
     forward:     {keyW},
-    backward:    {Key.keyS},
+    backward:    {keyS},
     strafeLeft:  {keyA},
     strafeRight: {keyD},
     turnLeft:    {keyQ},
@@ -1293,7 +1293,7 @@ proc updateWalkKeys(a) =
 
 
 const
-  AllWasdMoveKeys = {keyQ, keyW, keyE, keyA, Key.keyS, keyD}
+  AllWasdMoveKeys = {keyQ, keyW, keyE, keyA, keyS, keyD}
   DiagonalMoveLetterKeys = {keyY, keyU, keyB, keyN}
 
 
@@ -1324,8 +1324,8 @@ let DefaultAppShortcuts = {
   # Maps
   scNewMap:             @[mkKeyShortcut(keyN,             {mkCtrl, mkAlt})],
   scOpenMap:            @[mkKeyShortcut(keyO,             {mkCtrl})],
-  scSaveMap:            @[mkKeyShortcut(Key.keyS,         {mkCtrl})],
-  scSaveMapAs:          @[mkKeyShortcut(Key.keyS,         {mkCtrl, mkShift})],
+  scSaveMap:            @[mkKeyShortcut(keyS,             {mkCtrl})],
+  scSaveMapAs:          @[mkKeyShortcut(keyS,             {mkCtrl, mkShift})],
   scEditMapProps:       @[mkKeyShortcut(keyP,             {mkCtrl, mkAlt})],
 
   # Levels
@@ -1458,7 +1458,7 @@ let DefaultAppShortcuts = {
                                    mkKeyShortcut(keyX,        {})],
 
   scSelectionAddRect:            @[mkKeyShortcut(keyR,        {})],
-  scSelectionSubRect:            @[mkKeyShortcut(Key.keyS,    {})],
+  scSelectionSubRect:            @[mkKeyShortcut(keyS,        {})],
 
   scSelectionCopy:               @[mkKeyShortcut(keyC,        {}),
                                    mkKeyShortcut(keyY,        {})],
@@ -1466,7 +1466,7 @@ let DefaultAppShortcuts = {
   scSelectionMove:               @[mkKeyShortcut(keyM,        {mkCtrl})],
   scSelectionEraseArea:          @[mkKeyShortcut(keyE,        {mkCtrl})],
   scSelectionFillArea:           @[mkKeyShortcut(keyF,        {mkCtrl})],
-  scSelectionSurroundArea:       @[mkKeyShortcut(Key.keyS,    {mkCtrl})],
+  scSelectionSurroundArea:       @[mkKeyShortcut(keyS,        {mkCtrl})],
   scSelectionSetFloorColorArea:  @[mkKeyShortcut(keyC,        {mkCtrl})],
   scSelectionCropArea:           @[mkKeyShortcut(keyR,        {mkCtrl})],
 
