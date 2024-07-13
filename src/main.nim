@@ -405,8 +405,7 @@ type
     autosaveFreqMins:   Natural
     vsync:              bool
     checkForUpdates:    bool
-    # macOS only
-    shortcutModifier:   ShortcutModifier
+    modifierKeyMode:    ModifierKeyMode
 
     # Editing tab
     movementWraparound: bool
@@ -433,10 +432,11 @@ type
     configFile:         string
     logFile:            string
 
-
-  ShortcutModifier = enum
-    smCommand        = (0, "Command")
-    smCtrl           = (1, "Control")
+  ModifierKeyMode = enum
+    mkmControlAlt   = (0, "Control Alt")
+    mkmControlShift = (1, "Control Shift")
+    mkmCommandAlt   = (2, "Command Alt")
+    mkmCommandShift = (3, "Command Shift")
 
   Keys = object
     shortcuts:          Table[AppShortcut, seq[KeyShortcut]]
@@ -763,8 +763,7 @@ type
     autosaveFreqMins:   string
     vsync:              bool
     checkForUpdates:    bool
-    # macOS only
-    shortcutModifier:   ShortcutModifier
+    modifierKeyMode:    Natural
 
     # Editing tab
     movementWraparound: bool
@@ -1306,9 +1305,11 @@ const
   DiagonalMoveLetterKeys = {keyY, keyU, keyB, keyN}
 
 
-# {{{ AppShortcuts_Windows_Linux
+# {{{ DefaultAppShortcuts
 
-let AppShortcuts_Windows_Linux = {
+# The default shortcuts use Ctrl and Ctrl+Alt (suitable for Windows and Linux)
+
+let DefaultAppShortcuts = {
   # General
   scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
 
@@ -1521,6 +1522,17 @@ proc setYubnAppShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
   sc[scEraseNote]     = @[mkKeyShortcut(keySemicolon, {mkShift})]
 
 # }}}
+# {{{ mapCtrlAltToCtrlShift()
+proc mapCtrlAltToCtrlShift(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+  for appShortcut, keyShortcuts in sc.mpairs:
+    if appShortcut == scCancel: continue
+
+    keyShortcuts = keyShortcuts.mapIt:
+      if it.mods == {mkCtrl, mkAlt}:
+        KeyShortcut(key: it.key, mods: {mkCtrl, mkShift})
+      else: it
+
+# }}}
 # {{{ mapCtrlToSuper()
 proc mapCtrlToSuper(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
   for appShortcut, keyShortcuts in sc.mpairs:
@@ -1531,6 +1543,20 @@ proc mapCtrlToSuper(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
       if mkCtrl in it.mods:
         KeyShortcut(key: it.key, mods: it.mods - {mkCtrl} + {mkSuper})
       else: it
+
+# }}}
+# {{{ addMacOsShortcuts()
+proc addMacOsShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+
+  template addUniqueShortcut(appShortcut: AppShortcut, keyShortcut: KeyShortcut) =
+    if keyShortcut notin sc[appShortcut]:
+      sc[appShortcut].add(keyShortcut)
+
+  sc[scEditPreferences].add(mkKeyShortcut(keyComma, {mkSuper}))
+
+  addUniqueShortcut(scOpenMap,   mkKeyShortcut(keyO, {mkSuper}))
+  addUniqueShortcut(scSaveMap,   mkKeyShortcut(keyS, {mkSuper}))
+  addUniqueShortcut(scSaveMapAs, mkKeyShortcut(keyS, {mkSuper, mkShift}))
 
 # }}}
 # {{{ toStr()
@@ -1791,7 +1817,7 @@ proc setSelectModeSelectMessage(a) =
       scSelectionAll.toStr(a),     "mark all",
       scSelectionNone.toStr(a),    "unmark all",
       scSelectionCopy.toStr(a),    "copy",
-      special,                      "special"],
+      special,                     "special"],
     a
   )
 
@@ -2361,20 +2387,35 @@ proc setSwapInterval(a) =
 
 # {{{ updateShortcuts()
 proc updateShortcuts(a) =
-  a.keys.shortcuts = AppShortcuts_Windows_Linux
+  # The default shortcuts use Ctrl and Ctrl+Alt
+  a.keys.shortcuts     = DefaultAppShortcuts
+  a.keys.primaryModKey = mkCtrl
 
   if a.prefs.yubnMovementKeys:
-    setYubnAppShortcuts(a.keys.shortcuts)
+    a.keys.shortcuts.setYubnAppShortcuts
 
   when defined(macosx):
-    case a.prefs.shortcutModifier
-    of smCtrl:
-      a.keys.primaryModKey = mkCtrl
-      discard
+    case a.prefs.modifierKeyMode
+    of mkmControlAlt: discard
+    of mkmControlShift:
+      a.keys.shortcuts.mapCtrlAltToCtrlShift
 
-    of smCommand:
+    of mkmCommandAlt:
       a.keys.primaryModKey = mkSuper
       a.keys.shortcuts.mapCtrlToSuper
+
+    of mkmCommandShift:
+      a.keys.primaryModKey = mkSuper
+      a.keys.shortcuts.mapCtrlAltToCtrlShift
+      a.keys.shortcuts.mapCtrlToSuper
+
+    # The standard Open, Save, Save As, and Preferences shortcuts are always
+    # available with the Cmd modifier, regardless of the settings.
+    a.keys.shortcuts.addMacOsShortcuts
+
+  else: # Windows & Linux
+    if a.prefs.modifierKeyMode == mkmControlShift:
+      a.keys.shortcuts.mapCtrlAltToCtrlShift
 
   a.keys.quickRefShortcuts = mkQuickRefShortcuts(a)
 
@@ -2437,8 +2478,8 @@ proc isShortcutUp(ev: Event, shortcut: AppShortcut; a): bool =
   isShortcutUp(ev, {shortcut}, a)
 
 # }}}
-# {{{ modKeyDown()
-proc modKeyDown(a): bool =
+# {{{ primaryModDown()
+proc primaryModDown(a): bool =
   if   a.keys.primaryModKey == mkCtrl:  koi.ctrlDown()
   elif a.keys.primaryModKey == mkSuper: koi.superDown()
   else: false
@@ -3115,7 +3156,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
   when defined(macosx):
-    cfg.set(p & "shortcut-modifier", enumToDashCase($a.prefs.shortcutModifier))
+    cfg.set(p & "modifier-key-mode", enumToDashCase($a.prefs.modifierKeyMode))
 
   # Last state
   p = "last-state."
@@ -3923,7 +3964,7 @@ proc openPreferencesDialog(a) =
   dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
   dlg.vsync              = a.prefs.vsync
   dlg.checkForUpdates    = a.prefs.checkForUpdates
-  dlg.shortcutModifier   = a.prefs.shortcutModifier
+  dlg.modifierKeyMode    = ord(a.prefs.modifierKeyMode)
 
   dlg.movementWraparound = a.prefs.movementWraparound
   dlg.yubnMovementKeys   = a.prefs.yubnMovementKeys
@@ -4045,9 +4086,20 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
     when defined(macosx):
       group:
-        koi.label("Keyboard shortcut modifier", style=a.theme.labelStyle)
-        koi.nextItemWidth(160)
-        koi.dropDown(dlg.shortcutModifier, style = a.theme.dropDownStyle)
+        koi.label("Shortcut modifier keys", style=a.theme.labelStyle)
+        koi.nextItemWidth(135)
+
+        var items = @[
+          fmt"Ctrl, Ctrl{HairSp}+{HairSp}Alt",
+          fmt"Ctrl, Ctrl{HairSp}+{HairSp}Shift",
+        ]
+        when defined(macosx):
+          items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Alt")
+          items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Shift")
+
+        koi.dropDown(items, dlg.modifierKeyMode,
+                     style=a.theme.dropDownStyle)
+
 
   elif dlg.activeTab == 2:  # Editing
     group:
@@ -4106,7 +4158,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       appEvents.fetchLatestVersion()
 
     a.prefs.checkForUpdates    = dlg.checkForUpdates
-    a.prefs.shortcutModifier   = dlg.shortcutModifier
+    a.prefs.modifierKeyMode    = cast[ModifierKeyMode](dlg.modifierKeyMode)
 
     # Editing
     a.prefs.movementWraparound = dlg.movementWraparound
@@ -6766,7 +6818,7 @@ proc handleGlobalKeyEvents(a) =
         return
 
     var s = 1
-    if allowJump and mkCtrl in ke.mods:
+    if allowJump and a.keys.primaryModKey in ke.mods:
       if ke.key in AllWasdMoveKeys:
         # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with shorcuts
         return
@@ -6781,7 +6833,7 @@ proc handleGlobalKeyEvents(a) =
             else: MoveKeysCursor
 
     var ke = ke
-    ke.mods = ke.mods - {mkCtrl}
+    ke.mods = ke.mods - {a.keys.primaryModKey}
 
     result = true
 
@@ -7504,8 +7556,8 @@ proc handleGlobalKeyEvents(a) =
                                allowWasdKeys=false, allowDiagonal=true, a)
       let cur = ui.cursor
 
-      if modKeyDown(a): setSelectModeSpecialActionsMessage(a)
-      else:             setSelectModeSelectMessage(a)
+      if primaryModDown(a): setSelectModeSpecialActionsMessage(a)
+      else:                 setSelectModeSelectMessage(a)
 
       if   ke.isShortcutDown(scSelectionDraw, a):
         ui.selection.get[cur.row, cur.col] = true
@@ -9822,8 +9874,8 @@ proc renderQuickReference(x, y, w, h: float; a) =
 
   let
     t = invLerp(MinWindowWidth, 800.0, w).clamp(0.0, 1.0)
-    viewWidth = lerp(622.0, 680.0, t)
-    columnWidth = lerp(300.0, 330.0, t)
+    viewWidth = lerp(652.0, 720.0, t)
+    columnWidth = lerp(330.0, 350.0, t)
     tabWidth = 400.0
 
   let radioButtonX = x + (w - tabWidth)*0.5
@@ -9834,14 +9886,14 @@ proc renderQuickReference(x, y, w, h: float; a) =
     style = a.theme.radioButtonStyle
   )
 
-  koi.beginScrollView(x = x + (w - viewWidth)*0.5 + 4,
-                      y = y + 140+yOffs,
-                      w = viewWidth, h = (h - 176))
+  koi.beginScrollView(x = x + (w - viewWidth)*0.5 + 20,
+                      y = y + 130+yOffs,
+                      w = viewWidth, h = (h - 150))
 
   let a = a
   var (sx, sy) = addDrawOffset(10, 10)
 
-  const DefaultColWidth = 105.0
+  const DefaultColWidth = 120.0
 
   let (viewHeight, col1Width, col2Width) = case a.quickRef.activeTab
   of 0: (520.0, DefaultColWidth, DefaultColWidth)
@@ -10505,8 +10557,19 @@ proc initPreferences(cfg: HoconNode; a) =
 
     checkForUpdates = prefs.getBoolOrDefault("check-for-updates", true)
 
-    shortcutModifier = prefs.getEnumOrDefault("shortcut-modifier",
-                                              ShortcutModifier)
+    if prefs.getOpt("modifier-key-mode").isSome:
+      modifierKeyMode = prefs.getEnumOrDefault("modifier-key-mode",
+                                                ModifierKeyMode)
+    else:
+      modifierKeyMode = when defined(macosx): mkmCommandShift
+                        else: mkmControlAlt
+
+    when not defined(macosx):
+      if modifierKeyMode == mkmCommandAlt:
+        modifierKeyMode = mkmControlAlt
+      elif modifierKeyMode == mkmCommandShift:
+        modifierKeyMode = mkmControlShift
+
 
     const MovementWraparoundKey = "editing.movement-wraparound"
     if prefs.getOpt(MovementWraparoundKey).isSome:
