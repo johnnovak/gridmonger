@@ -1210,7 +1210,7 @@ type MoveKeys = object
   left, right, up, down: set[Key]
 
 const
-  MoveKeysCursor = MoveKeys(
+  MoveKeysStandard = MoveKeys(
     left:  {keyLeft,  keyH, keyKp4},
     right: {keyRight, keyL, keyKp6},
     up:    {keyUp,    keyK, keyKp8},
@@ -1218,10 +1218,10 @@ const
   )
 
   MoveKeysWasd = MoveKeys(
-    left:  MoveKeysCursor.left  + {keyA},
-    right: MoveKeysCursor.right + {keyD},
-    up:    MoveKeysCursor.up    + {keyW},
-    down:  MoveKeysCursor.down  + {Key.keyS}
+    left:  MoveKeysStandard.left  + {keyA},
+    right: MoveKeysStandard.right + {keyD},
+    up:    MoveKeysStandard.up    + {keyW},
+    down:  MoveKeysStandard.down  + {Key.keyS}
   )
 
 type DiagonalMoveKeys = object
@@ -3746,10 +3746,10 @@ func handleGridRadioButton(ke: Event, currButtonIdx: Natural,
     moveGridPositionWrapping(currButtonIdx, dc, dr, numButtons, buttonsPerRow)
 
   result =
-    if   ke.isKeyDown(MoveKeysCursor.left,  repeat=true): move(dc = -1)
-    elif ke.isKeyDown(MoveKeysCursor.right, repeat=true): move(dc =  1)
-    elif ke.isKeyDown(MoveKeysCursor.up,    repeat=true): move(dr = -1)
-    elif ke.isKeyDown(MoveKeysCursor.down,  repeat=true): move(dr =  1)
+    if   ke.isKeyDown(MoveKeysStandard.left,  repeat=true): move(dc = -1)
+    elif ke.isKeyDown(MoveKeysStandard.right, repeat=true): move(dc =  1)
+    elif ke.isKeyDown(MoveKeysStandard.up,    repeat=true): move(dr = -1)
+    elif ke.isKeyDown(MoveKeysStandard.down,  repeat=true): move(dr =  1)
     else: currButtonIdx
 
 # }}}
@@ -3758,11 +3758,11 @@ proc handleTabNavigation(ke: Event,
                          currTabIndex, maxTabIndex: Natural; a): Natural =
   result = currTabIndex
 
-  if ke.isKeyDown(MoveKeysCursor.left, {mkCtrl}):
+  if ke.isKeyDown(MoveKeysStandard.left, {mkCtrl}):
     if    currTabIndex > 0: result = currTabIndex - 1
     else: result = maxTabIndex
 
-  elif ke.isKeyDown(MoveKeysCursor.right, {mkCtrl}):
+  elif ke.isKeyDown(MoveKeysStandard.right, {mkCtrl}):
     if    currTabIndex < maxTabIndex: result = currTabIndex + 1
     else: result = 0
 
@@ -6761,7 +6761,7 @@ proc handleGlobalKeyEvents(a) =
                                 allowRepeat: bool): Option[CardinalDir] =
 
     let k = if allowWasdKeys and ui.wasdMode: MoveKeysWasd
-            else: MoveKeysCursor
+            else: MoveKeysStandard
 
     var kk = ke
     kk.mods = {}
@@ -6830,7 +6830,7 @@ proc handleGlobalKeyEvents(a) =
         s = CursorJump
 
     let k = if allowWasdKeys and ui.wasdMode: MoveKeysWasd
-            else: MoveKeysCursor
+            else: MoveKeysStandard
 
     var ke = ke
     ke.mods = ke.mods - {a.keys.primaryModKey}
