@@ -4036,12 +4036,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.label("Vertical sync", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.vsync, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.vsync, style=a.theme.checkBoxStyle)
 
       koi.label("Check for updates", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.checkForUpdates, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.checkForUpdates, style=a.theme.checkBoxStyle)
 
     when defined(macosx):
       group:
@@ -4053,26 +4053,26 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     group:
       koi.label("Movement wraparound", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.movementWraparound, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.movementWraparound, style=a.theme.checkBoxStyle)
 
       koi.label("YUBN diagonal movement",
                  style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.yubnMovementKeys, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.yubnMovementKeys, style=a.theme.checkBoxStyle)
 
       koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
       koi.nextItemWidth(70)
-      koi.dropDown(dlg.walkCursorMode, style = a.theme.dropDownStyle)
+      koi.dropDown(dlg.walkCursorMode, style=a.theme.dropDownStyle)
 
     group:
       koi.label("Display link lines", style=a.theme.labelStyle)
       koi.nextItemWidth(120)
-      koi.dropDown(dlg.linkLinesMode, style = a.theme.dropDownStyle)
+      koi.dropDown(dlg.linkLinesMode, style=a.theme.dropDownStyle)
 
     group:
       koi.label("Open-ended exacavate", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.openEndedExcavate, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.openEndedExcavate, style=a.theme.checkBoxStyle)
 
   koi.endView()
 
@@ -4129,12 +4129,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                style = a.theme.buttonStyle):
+                style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
-                style = a.theme.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(a)
 
   dlg.activateFirstTextField = false
@@ -4212,17 +4212,17 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} Save",
-                style = a.theme.buttonStyle):
+                style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconTrash} Discard",
-                style = a.theme.buttonStyle):
+                style=a.theme.buttonStyle):
     discardAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconClose} Cancel",
-                style = a.theme.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(a)
 
 
@@ -4284,7 +4284,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
-    style = a.theme.radioButtonStyle
+    style=a.theme.radioButtonStyle
   )
 
   y += DlgTabBottomPad
@@ -4352,12 +4352,12 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconCheck} OK",
-                disabled=validationError != "", style = a.theme.buttonStyle):
+                disabled=validationError != "", style=a.theme.buttonStyle):
     okAction(dlg, a)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, fmt"{IconClose} Cancel",
-                style = a.theme.buttonStyle):
+                style=a.theme.buttonStyle):
     cancelAction(a)
 
   dlg.activateFirstTextField = false
@@ -4423,7 +4423,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
-    style = a.theme.radioButtonStyle
+    style=a.theme.radioButtonStyle
   )
 
   y += DlgTabBottomPad
@@ -4580,7 +4580,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
-    style = a.theme.radioButtonStyle
+    style=a.theme.radioButtonStyle
   )
 
   y += DlgTabBottomPad
@@ -4599,7 +4599,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
       koi.label("Override map settings", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.overrideCoordOpts, style = a.theme.checkBoxStyle)
+      koi.checkBox(dlg.overrideCoordOpts, style=a.theme.checkBoxStyle)
 
       if dlg.overrideCoordOpts:
         coordinateFields()
@@ -4756,7 +4756,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
     tabLabels, dlg.activeTab,
-    style = a.theme.radioButtonStyle
+    style=a.theme.radioButtonStyle
   )
 
   y += DlgTabBottomPad
@@ -4774,7 +4774,7 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
     koi.label("Override map settings", style=a.theme.labelStyle)
 
     koi.nextItemHeight(DlgCheckBoxSize)
-    koi.checkBox(dlg.overrideCoordOpts, style = a.theme.checkBoxStyle)
+    koi.checkBox(dlg.overrideCoordOpts, style=a.theme.checkBoxStyle)
 
     if dlg.overrideCoordOpts:
       coordinateFields()
