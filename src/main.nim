@@ -1325,7 +1325,8 @@ let AppShortcuts_Windows_Linux = {
                           mkKeyShortcut(keyZ,             {mkCtrl})],
 
   scRedo:               @[mkKeyShortcut(keyR,             {mkCtrl}),
-                          mkKeyShortcut(keyY,             {mkCtrl})],
+                          mkKeyShortcut(keyY,             {mkCtrl}),
+                          mkKeyShortcut(keyZ,             {mkCtrl, mkShift})],
 
   # Maps
   scNewMap:             @[mkKeyShortcut(keyN,             {mkCtrl, mkAlt})],
