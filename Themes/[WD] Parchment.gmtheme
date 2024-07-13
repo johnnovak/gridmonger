@@ -286,31 +286,31 @@ pane {
   }
 
   notes-list {
-    controls-background = "#3c362aff"
-    list-background = "#4b4335ff"
+    controls-background = "#332e24ee"
+    list-background = "#211e1b98"
 
     item {
       background {
-        hover = "#595245ff"
-        active = "#665f53ff"
+        hover = "#99835c4a"
+        active = "#8f713eb4"
       }
       text {
-        normal = "#f2e4cfa9"
-        hover = "#f5e9d9ba"
-        active = "#f7efe2cb"
+        normal = "#f5e6d3c0"
+        hover = "#f5e9d9e1"
+        active = "#fff6e8f1"
       }
     }
     level-section {
-      background = "#352f25ff"
-      text = "#f5e9d9ba"
+      background = "#1d1b15c8"
+      text = "#e2c8a8d9"
     }
     region-section {
-      background = "#2d2820ff"
-      text = "#f5e9d9ba"
+      background = "#393229cb"
+      text = "#d0b89bff"
     }
 
-    section-separator = "#564e41ff"
-    scroll-bar = "#a5a19aff"
+    section-separator = "#67574796"
+    scroll-bar = "#e2c29bff"
   }
 }
 
