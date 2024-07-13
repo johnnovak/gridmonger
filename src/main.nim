@@ -1301,7 +1301,8 @@ proc updateWalkKeys(a) =
 
 
 const
-  AllWasdMoveKeys = {keyQ, keyW, keyE, keyA, keyS, keyD}
+  VimMoveKeys            = {keyH, keyJ, keyK, keyL}
+  AllWasdMoveKeys        = {keyQ, keyW, keyE, keyA, keyS, keyD}
   DiagonalMoveLetterKeys = {keyY, keyU, keyB, keyN}
 
 
@@ -6826,6 +6827,13 @@ proc handleGlobalKeyEvents(a) =
       elif ke.key in DiagonalMoveLetterKeys:
         # Disallow Ctrl+Y/U/B/N panning as it would interfere with shorcuts
         return
+
+      elif a.prefs.modifierKeyMode in {mkmCommandAlt, mkmCommandShift} and
+        ke.key in VimMoveKeys:
+        # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS hide
+        # window shortcut
+        return
+
       else:
         s = CursorJump
 
