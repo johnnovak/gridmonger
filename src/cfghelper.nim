@@ -147,8 +147,7 @@ proc getNaturalOrDefault*(cfg; path: string, limits: FieldLimits,
 # }}}
 
 # {{{ getEnumOrDefault*()
-proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum],
-                       default = T.low): T =
+proc getEnumOrDefault*(cfg; path: string, T: typedesc[enum]): T =
   try:
     let v = cfg.getString(path)
     if v != "":
