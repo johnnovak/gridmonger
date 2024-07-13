@@ -18,7 +18,6 @@ TODO
 
   - add unlink command
   - prefill level with empty floor (for wall style maps)
-  - option to use Cmd key on macOS (selectable at runtime)
 
   - finish diagonal movement (numpad, YUBN)
   - improve restoring the window's size on screen dimension changes
