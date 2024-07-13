@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         nimversion:
-          - binary:2.0.6
+          - binary:2.0.8
         os:
           # - ubuntu-20.04
           # - windows-2019
