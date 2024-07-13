@@ -28,6 +28,12 @@
 - Load map files by dragging & dropping their icons onto the program window or
   the taskbar icon.
 - Check for updates on startup (can be disabled).
+- Preferences setting to change the default Ctrl & Ctrl+Alt keyboard shortcut
+  modifiers to Ctrl & Ctrl+Shift.
+- macOS: The Command & Command+Shift modifiers are used for the keyboard
+  shorcuts by default.
+- macOS: Preferences setting to change the default Command & Command+Shift
+  keyboard shortcut modifiers to Command & Command+Alt.
 - macOS: Opening map files from the Finder now works.
 
 ### Enhancements
@@ -50,6 +56,7 @@
 - The user manual has been overhauled for improved wording and clarity.
 - Improved status bar messages, dialogs, and more status icons.
 - Theme improvements and updates.
+- Ctrl+Shift+Z can now also be use for "redo".
 
 ### Fixes
 
