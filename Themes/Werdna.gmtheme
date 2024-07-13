@@ -287,29 +287,29 @@ pane {
 
   notes-list {
     controls-background = "#232323ff"
-    list-background = "#2c2c2cff"
+    list-background = "#131313ff"
 
     item {
       background {
-        hover = "#3d3d3dff"
-        active = "#4c4c4cff"
+        hover = "#242424ff"
+        active = "#303030ff"
       }
       text {
         normal = "#ffffff8e"
         hover = "#ffffffa5"
-        active = "#ffffffbb"
+        active = "#ffffffdd"
       }
     }
     level-section {
-      background = "#1f1f1fff"
+      background = "#0d0d0dff"
       text = "#ffffffa5"
     }
     region-section {
-      background = "#1a1a1aff"
+      background = "#131313ff"
       text = "#ffffffa5"
     }
 
-    section-separator = "#393939ff"
+    section-separator = "#2c2c2cff"
     scroll-bar = "#969696ff"
   }
 }

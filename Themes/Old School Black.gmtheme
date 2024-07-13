@@ -301,7 +301,7 @@ pane {
       }
     }
     level-section {
-      background = "#2d2d2dff"
+      background = "#1f1f1fff"
       text = "#ffffffc2"
     }
     region-section {
@@ -309,7 +309,7 @@ pane {
       text = "#ffffffc2"
     }
 
-    section-separator = "#4b4b4bff"
+    section-separator = "#404040ff"
     scroll-bar = "#a0a0a0ff"
   }
 }

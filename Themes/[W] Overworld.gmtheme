@@ -301,11 +301,11 @@ pane {
       }
     }
     level-section {
-      background = "#2d2a27ff"
+      background = "#272522ff"
       text = "#fff5e4c5"
     }
     region-section {
-      background = "#262421ff"
+      background = "#34312dff"
       text = "#fff5e4c5"
     }
 

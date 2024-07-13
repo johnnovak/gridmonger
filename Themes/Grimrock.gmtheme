@@ -305,11 +305,11 @@ pane {
       text = "#c4b5a2ff"
     }
     region-section {
-      background = "#28221cff"
+      background = "#201b16ff"
       text = "#c4b5a2ff"
     }
 
-    section-separator = "#4d443bff"
+    section-separator = "#514539ff"
     scroll-bar = "#a19c97ff"
   }
 }

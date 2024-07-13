@@ -305,7 +305,7 @@ pane {
       text = "#fbfbfbd2"
     }
     region-section {
-      background = "#233555ff"
+      background = "#20314eff"
       text = "#fbfbfbd2"
     }
 

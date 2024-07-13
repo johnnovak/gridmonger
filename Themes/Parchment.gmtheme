@@ -310,7 +310,7 @@ pane {
       text = "#d0b89bff"
     }
 
-    section-separator = "#544c3bff"
+    section-separator = "#67574796"
     scroll-bar = "#e2c29bff"
   }
 }
