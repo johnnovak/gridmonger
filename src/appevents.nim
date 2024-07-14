@@ -1,3 +1,4 @@
+import std/exitprocs
 import std/httpclient
 import std/monotimes
 import std/math
@@ -13,30 +14,6 @@ import semver
 
 import common
 
-when defined(windows):
-  import platform/windows/ipc
-
-
-# {{{ Types
-type
-  AppEventKind* = enum
-    aeFocus, aeOpenFile, aeAutoSave, aeVersionUpdate
-
-  AppEvent* = object
-    case kind*: AppEventKind
-    of aeOpenFile:
-      path*: string
-    of aeVersionUpdate:
-      versionInfo*: Option[VersionInfo]
-      error*:        Option[CatchableError]
-    else: discard
-
-  VersionInfo* = object
-    version*: Version
-    message*: string
-
-# }}}
-
 var
   g_initialised = false
   g_appEventCh: Channel[AppEvent]
@@ -50,22 +27,47 @@ proc sendAppEvent(event: AppEvent) =
 
 # }}}
 
-# {{{ File opener
-type
-  OpenFileMsg = enum
-    fokShutdown
+# {{{ winIpcEventPoller()
+when defined(windows):
+  import platform/windows/appevents
 
-var
-  g_fileOpenerCh:  Channel[OpenFileMsg]
-  g_fileOpenerThr: Thread[void]
+  type
+    IpcEventPollerMsg = enum
+      ipmShutdown
 
-# {{{ fileOpener()
-when defined(macosx):
+  var
+    g_winIpcEventPollerCh:  Channel[IpcEventPollerMsg]
+    g_winIpcEventPollerThr: Thread[void]
 
-  proc fileOpener {.thread.} =
+  proc winIpcEventPoller() {.thread.} =
     while true:
-      let (dataAvailable, msg) = g_fileOpenerCh.tryRecv
-      if dataAvailable and msg == fokShutdown:
+      let (dataAvailable, msg) = g_winIpcEventPollerCh.tryRecv
+      if dataAvailable and msg == ipmShutdown:
+        break
+
+      let appEvent = winTryRecv()
+      if appEvent.isSome:
+        sendAppEvent(appEvent.get)
+
+      sleep(100)
+
+    winShutdown()
+
+# }}}
+# {{{ macFileOpener()
+when defined(macosx):
+  type
+    OpenFileMsg = enum
+      ofmShutdown
+
+  var
+    g_macFileOpenerCh:  Channel[OpenFileMsg]
+    g_macFileOpenerThr: Thread[void]
+
+  proc macFileOpener() {.thread.} =
+    while true:
+      let (dataAvailable, msg) = g_macFileOpenerCh.tryRecv
+      if dataAvailable and msg == ofmShutdown:
         break
 
       let filenames = glfw.getCocoaOpenedFilenames()
@@ -76,7 +78,6 @@ when defined(macosx):
 
 # }}}
 
-# }}}
 # {{{ Auto-saver
 type
   AutoSaverMsgKind = enum
@@ -93,7 +94,7 @@ var
   g_autoSaverThr: Thread[void]
 
 # {{{ autoSaver()
-proc autoSaver {.thread.} =
+proc autoSaver() {.thread.} =
   var
     t0 = getMonoTime()
     timeout = initDuration(minutes = 2)
@@ -117,6 +118,22 @@ proc autoSaver {.thread.} =
 
 # }}}
 
+# {{{ updateLastSavedTime*()
+proc updateLastSavedTime*() =
+  g_autoSaverCh.send(AutoSaverMsg(kind: askMapSaved))
+
+# }}}
+# {{{ setAutoSaveTimeout*()
+proc setAutoSaveTimeout*(timeout: Duration) =
+  g_autoSaverCh.send(AutoSaverMsg(kind: askSetTimeout, timeout: timeout))
+
+# }}}
+# {{{ disableAutoSave*()
+proc disableAutoSave*() =
+  g_autoSaverCh.send(AutoSaverMsg(kind: askSetTimeout, timeout: DurationZero))
+
+# }}}
+
 # }}}
 # {{{ Version fetcher
 type
@@ -128,7 +145,7 @@ var
   g_versionFetcherThr: Thread[void]
 
 # {{{ versionFetcher()
-proc versionFetcher {.thread.} =
+proc versionFetcher() {.thread.} =
   const
     LatestVersionUrl   = fmt"{ProjectHomeUrl}latest_version"
     NumTries           = 5
@@ -189,65 +206,69 @@ proc versionFetcher {.thread.} =
 
 # }}}
 
-# }}}
-
-# {{{ initOrQuit*()
-proc initOrQuit*: bool =
-  g_appEventCh.open
-
-  g_fileOpenerCh.open
-  createThread(g_fileOpenerThr, fileOpener)
-
-  g_autoSaverCh.open
-  createThread(g_autoSaverThr, autoSaver)
-
-  g_versionFetcherCh.open
-  createThread(g_versionFetcherThr, versionFetcher)
-  true
+# {{{ fetchLatestVersion*()
+proc fetchLatestVersion*() =
+  g_versionFetcherCh.send(vfkFetch)
 
 # }}}
-# {{{ shutdown*()
-proc shutdown* =
-  g_fileOpenerCh.send(fokShutdown)
+
+# }}}
+
+# {{{ shutdown()
+proc shutdown() =
+  # Send shutdown messages
+  when defined(windows): g_winIpcEventPollerCh.send(ipmShutdown)
+  elif defined(macosx):  g_macFileOpenerCh.send(ofmShutdown)
+
   g_autoSaverCh.send(AutoSaverMsg(kind: askShutdown))
   g_versionFetcherCh.send(vfkShutdown)
 
-  joinThreads(g_fileOpenerThr, g_autoSaverThr, g_versionFetcherThr)
+  # Join threads
+  when defined(windows): joinThread(g_winIpcEventPollerThr)
+  elif defined(macosx):  joinThread(g_macFileOpenerThr)
 
-  g_fileOpenerCh.close
+  joinThreads(g_autoSaverThr, g_versionFetcherThr)
+
+  # Close channels
+  when defined(windows): g_winIpcEventPollerCh.close
+  elif defined(macosx):  g_macFileOpenerCh.close
+
   g_autoSaverCh.close
   g_versionFetcherCh.close
 
   g_appEventCh.close
 
 # }}}
-# {{{ tryRecvAppEvent*()
-proc tryRecv*: Option[AppEvent] =
+
+# {{{ initOrQuit*()
+proc initOrQuit*() =
+  when defined(windows):
+    winInitOrQuit()
+
+  g_appEventCh.open
+
+  when defined(windows):
+    g_winIpcEventPollerCh.open
+    createThread(g_winIpcEventPollerThr, winIpcEventPoller)
+
+  elif defined(macosx):
+    g_macFileOpenerCh.open
+    createThread(g_macFileOpenerThr, macFileOpener)
+
+  g_autoSaverCh.open
+  createThread(g_autoSaverThr, autoSaver)
+
+  g_versionFetcherCh.open
+  createThread(g_versionFetcherThr, versionFetcher)
+
+  addExitProc(shutdown)
+
+# }}}
+# {{{ tryRecv*()
+proc tryRecv*(): Option[AppEvent] =
   let (dataAvailable, msg) = g_appEventCh.tryRecv
   if dataAvailable:
     result = msg.some
-
-# }}}
-
-# {{{ fetchLatestVersion*()
-proc fetchLatestVersion* =
-  g_versionFetcherCh.send(vfkFetch)
-
-# }}}
-
-# {{{ updateLastSavedTime*()
-proc updateLastSavedTime* =
-  g_autoSaverCh.send(AutoSaverMsg(kind: askMapSaved))
-
-# }}}
-# {{{ setAutoSaveTimeout*()
-proc setAutoSaveTimeout*(timeout: Duration) =
-  g_autoSaverCh.send(AutoSaverMsg(kind: askSetTimeout, timeout: timeout))
-
-# }}}
-# {{{ disableAutoSave*()
-proc disableAutoSave*() =
-  g_autoSaverCh.send(AutoSaverMsg(kind: askSetTimeout, timeout: DurationZero))
 
 # }}}
 

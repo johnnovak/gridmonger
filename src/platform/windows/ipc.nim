@@ -3,6 +3,8 @@ import std/strformat
 
 import winim/lean
 
+import ../../common
+
 # Adapted from
 # https://peter.bloomfield.online/introduction-to-win32-named-pipes-cpp/
 
@@ -16,6 +18,18 @@ var
 
 # Pipe names must start with "\\.\pipe\"
 const PipeName = "\\\\.\\pipe\\gridmonger"
+
+# {{{ displayError()
+when not defined(DEBUG):
+  import osdialog
+
+proc displayError(msg: string) =
+  when defined(DEBUG):
+    echo fmt"ERROR: msg"
+  else:
+    discard osdialog_message(mblError, mbbOk, msg.cstring)
+
+# }}}
 
 # {{{ sendMessage()
 proc sendMessage(numBytes: int32) =
@@ -39,8 +53,7 @@ proc commonInit(): bool =
     nil   # unnamed event object
   )
   if g_overlapped.hEvent == 0:
-    echo fmt"CreateEvent failed, error code: {GetLastError()}"
-    discard
+    displayError(fmt"CreateEvent failed, error code: {GetLastError()}")
   else:
     result = true
 
@@ -62,8 +75,7 @@ proc initClient*(): bool =
     0
   )
   if g_pipe == InvalidHandleValue:
-    echo fmt"Cannot open named pipe, error code: {GetLastError()}"
-    discard
+    displayError(fmt"Cannot open named pipe, error code: {GetLastError()}")
   else:
     result = true
 
@@ -103,14 +115,13 @@ proc initServer*(): bool =
     nil  # use default security attributes
   )
   if g_pipe == InvalidHandleValue:
-    echo fmt"Cannot create named pipe, error code: {GetLastError()}"
-    discard
+    displayError(fmt"Cannot create named pipe, error code: {GetLastError()}")
   else:
     result = true
 
 # }}}
-# {{{ tryReceiveMessage*()
-proc tryReceiveMessage*(): Option[AppEvent] =
+# {{{ tryRecv*()
+proc tryRecv*(): Option[AppEvent] =
   discard ConnectNamedPipe(g_pipe, g_overlapped.addr)
 
   if ReadFile(g_pipe, g_buffer[0].addr, g_buffer.len.int32, nil,
@@ -122,7 +133,7 @@ proc tryReceiveMessage*(): Option[AppEvent] =
       # connect
       discard DisconnectNamedPipe(g_pipe)
     else:
-      echo fmt"Cannot connect to named pipe, error code: {GetLastError()}"
+      # echo fmt"Cannot connect to named pipe, error code: {GetLastError()}"
       discard
 
   # Because the last `wait` arg is set to false, this will only succeed
@@ -131,7 +142,7 @@ proc tryReceiveMessage*(): Option[AppEvent] =
   if GetOverlappedResult(g_pipe, g_overlapped.addr,
                          numBytesTransferred.addr, false) == 0:
 
-    echo fmt"Error getting overlapped result, error code: {GetLastError()}"
+    # echo fmt"Error getting overlapped result, error code: {GetLastError()}"
     discard
   else:
     let eventKind = cast[AppEventKind](g_buffer[0])
@@ -143,6 +154,8 @@ proc tryReceiveMessage*(): Option[AppEvent] =
       let length = cast[ptr int16](g_buffer[1].addr)[]
       event.path = newString(length)
       copyMem(event.path[0].addr, g_buffer[3].addr, length)
+    else:
+      echo fmt"Unexpected event: {event}"
 
     result = event.some
 

@@ -1,5 +1,6 @@
 import std/hashes
 import std/math
+import std/options
 import std/sets
 import std/strformat
 import std/strutils
@@ -521,6 +522,24 @@ type
     noteTooltipShadowStyle*:       ShadowStyle
 
     labelTextColor*:               array[4, Color]
+
+
+type
+  AppEventKind* = enum
+    aeFocus, aeOpenFile, aeAutoSave, aeVersionUpdate
+
+  AppEvent* = object
+    case kind*: AppEventKind
+    of aeOpenFile:
+      path*: string
+    of aeVersionUpdate:
+      versionInfo*: Option[VersionInfo]
+      error*:       Option[CatchableError]
+    else: discard
+
+  VersionInfo* = object
+    version*: Version
+    message*: string
 
 
 # vim: et:ts=2:sw=2:fdm=marker

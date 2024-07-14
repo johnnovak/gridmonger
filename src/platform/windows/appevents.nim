@@ -1,6 +1,9 @@
 import std/cmdline
 import std/options
 
+import winim/lean
+
+import ../../common
 import ipc
 
 # {{{ isAppRunning()
@@ -10,8 +13,8 @@ proc isAppRunning(): bool =
 
 # }}}
 
-# {{{ initOrQuit*()
-proc initOrQuit*(): bool =
+# {{{ winInitOrQuit*()
+proc winInitOrQuit*() =
   if isAppRunning():
     if ipc.initClient():
       if paramCount() == 0:
@@ -20,16 +23,16 @@ proc initOrQuit*(): bool =
         ipc.sendOpenFileMessage(paramStr(1))
     quit()
   else:
-    ipc.initServer()
+    discard ipc.initServer()
 
 # }}}
-# {{{ tryReceiveEvent*()
-proc tryReceiveEvent*(): Option[AppEvent] =
-  ipc.tryReceiveMessage()
+# {{{ winTryRecv*()
+proc winTryRecv*(): Option[AppEvent] =
+  ipc.tryRecv()
 
 # }}}
-# {{{ shutdown*()
-proc shutdown*() =
+# {{{ winShutdown*()
+proc winShutdown*() =
   ipc.shutdown()
 
 # }}}
@@ -42,14 +45,14 @@ when isMainModule:
   if isAppRunning():
     echo "*** CLIENT ***"
     if initClient():
-      sendOpenFileMessage("quixotic")
+      ipc.sendOpenFileMessage("quixotic")
       ipc.shutdown()
 
   else:
-    if initServer():
+    if ipc.initServer():
       echo "*** SERVER ***"
       while true:
-        let msg = tryReceiveMessage()
+        let msg = tryRecv()
         if msg.isSome:
           echo msg.get
         sleep(100)

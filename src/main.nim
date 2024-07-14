@@ -2,7 +2,6 @@
 
 import std/algorithm
 import std/browsers
-import std/exitprocs
 import std/httpclient
 import std/lenientops
 import std/logging as log except Level
@@ -10870,12 +10869,7 @@ proc dropCb(window: Window, paths: PathDropInfo) =
 # {{{ main()
 proc main() =
 
-  if not appEvents.initOrQuit():
-    # TODO error
-    discard
-    quit(QuitFailure)
-
-  addExitProc(appEvents.shutdown)
+  appEvents.initOrQuit()
 
   when defined(windows):
     discard attachOutputToConsole()
