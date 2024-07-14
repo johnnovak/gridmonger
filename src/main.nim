@@ -3155,8 +3155,7 @@ proc saveAppConfig(a) =
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
-  when defined(macosx):
-    cfg.set(p & "modifier-key-mode", enumToDashCase($a.prefs.modifierKeyMode))
+  cfg.set(p & "modifier-key-mode", enumToDashCase($a.prefs.modifierKeyMode))
 
   # Last state
   p = "last-state."
@@ -4084,21 +4083,20 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.checkForUpdates, style=a.theme.checkBoxStyle)
 
-    when defined(macosx):
-      group:
-        koi.label("Shortcut modifier keys", style=a.theme.labelStyle)
-        koi.nextItemWidth(135)
+    group:
+      koi.label("Shortcut modifier keys", style=a.theme.labelStyle)
+      koi.nextItemWidth(135)
 
-        var items = @[
-          fmt"Ctrl, Ctrl{HairSp}+{HairSp}Alt",
-          fmt"Ctrl, Ctrl{HairSp}+{HairSp}Shift",
-        ]
-        when defined(macosx):
-          items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Alt")
-          items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Shift")
+      var items = @[
+        fmt"Ctrl, Ctrl{HairSp}+{HairSp}Alt",
+        fmt"Ctrl, Ctrl{HairSp}+{HairSp}Shift",
+      ]
+      when defined(macosx):
+        items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Alt")
+        items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Shift")
 
-        koi.dropDown(items, dlg.modifierKeyMode,
-                     style=a.theme.dropDownStyle)
+      koi.dropDown(items, dlg.modifierKeyMode,
+                   style=a.theme.dropDownStyle)
 
 
   elif dlg.activeTab == 2:  # Editing
