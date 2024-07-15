@@ -1,5 +1,6 @@
 import std/options
 import std/strformat
+import std/typedthreads
 
 import winim/lean
 
@@ -31,6 +32,12 @@ proc displayError(msg: string) =
 
 # }}}
 
+# {{{ isAppRunning()
+proc isAppRunning(): bool =
+  discard CreateMutex(nil, true, "Global\\Gridmonger")
+  result = GetLastError() == ErrorAlreadyExists
+
+# }}}
 # {{{ sendMessage()
 proc sendMessage(numBytes: int32) =
   discard WriteFile(
@@ -59,6 +66,31 @@ proc commonInit(): bool =
 
 # }}}
 
+# {{{ eventPoller()
+import platform/windows/ipc
+
+type
+  IpcEventPollerMsg = enum
+    ipmShutdown
+
+var
+  g_eventPollerCh:  Channel[IpcEventPollerMsg]
+  g_eventPollerThr: Thread[void]
+
+proc eventPoller() {.thread.} =
+  while true:
+    let (dataAvailable, msg) = g_eventPollerCh.tryRecv
+    if dataAvailable and msg == ipmShutdown:
+      break
+
+    let appEvent = ipc.tryRecv()
+    if appEvent.isSome:
+      sendAppEvent(appEvent.get)
+
+    sleep(100)
+
+# }}}
+
 # {{{ initClient*()
 proc initClient*(): bool =
   if not commonInit():
@@ -76,8 +108,14 @@ proc initClient*(): bool =
   )
   if g_pipe == InvalidHandleValue:
     displayError(fmt"Cannot open named pipe, error code: {GetLastError()}")
+    return false
+
+  if paramCount() == 0:
+    ipc.sendFocusMessage()
   else:
-    result = true
+    ipc.sendOpenFileMessage(paramStr(1))
+
+  result = true
 
 # }}}
 # {{{ sendFocusMessage*()
@@ -116,8 +154,20 @@ proc initServer*(): bool =
   )
   if g_pipe == InvalidHandleValue:
     displayError(fmt"Cannot create named pipe, error code: {GetLastError()}")
-  else:
-    result = true
+    return false
+
+  g_winIpcEventPollerCh.open
+  createThread(g_winIpcEventPollerThr, winIpcEventPoller)
+  result = true
+
+# }}}
+# {{{ shutdownServer*()
+proc shutdownServer*() =
+  g_eventPollerCh.send(ipmShutdown)
+  joinThread(g_eventPollerThr)
+  g_eventPollerCh.close
+
+  discard CloseHandle(g_pipe)
 
 # }}}
 # {{{ tryRecv*()
@@ -161,9 +211,26 @@ proc tryRecv*(): Option[AppEvent] =
 
 # }}}
 
-# {{{ shutdown*()
-proc shutdown*() =
-  discard CloseHandle(g_pipe)
+# {{{ Test
+when isMainModule:
+  when defined(windows):
+    import std/os
+
+    echo "Starting..."
+    if ipc.isAppRunning():
+      echo "*** CLIENT ***"
+      if initClient():
+        ipc.sendOpenFileMessage("quixotic")
+        ipc.shutdown()
+
+    else:
+      if ipc.initServer():
+        echo "*** SERVER ***"
+        while true:
+          let msg = tryRecv()
+          if msg.isSome:
+            echo msg.get
+          sleep(100)
 
 # }}}
 

@@ -1,7 +1,7 @@
 import std/exitprocs
 import std/httpclient
-import std/monotimes
 import std/math
+import std/monotimes
 import std/options
 import std/os
 import std/strformat
@@ -14,46 +14,7 @@ import semver
 
 import common
 
-var
-  g_initialised = false
-  g_appEventCh: Channel[AppEvent]
 
-# {{{ sendAppEvent()
-proc sendAppEvent(event: AppEvent) =
-  g_appEventCh.send(event)
-
-  # Main event loop might be stuck at waitEvents(), so wake it up
-  glfw.postEmptyEvent()
-
-# }}}
-
-# {{{ winIpcEventPoller()
-when defined(windows):
-  import platform/windows/appevents
-
-  type
-    IpcEventPollerMsg = enum
-      ipmShutdown
-
-  var
-    g_winIpcEventPollerCh:  Channel[IpcEventPollerMsg]
-    g_winIpcEventPollerThr: Thread[void]
-
-  proc winIpcEventPoller() {.thread.} =
-    while true:
-      let (dataAvailable, msg) = g_winIpcEventPollerCh.tryRecv
-      if dataAvailable and msg == ipmShutdown:
-        break
-
-      let appEvent = winTryRecv()
-      if appEvent.isSome:
-        sendAppEvent(appEvent.get)
-
-      sleep(100)
-
-    winShutdown()
-
-# }}}
 # {{{ macFileOpener()
 when defined(macosx):
   type
@@ -216,22 +177,18 @@ proc fetchLatestVersion*() =
 
 # {{{ shutdown()
 proc shutdown() =
-  # Send shutdown messages
-  when defined(windows): g_winIpcEventPollerCh.send(ipmShutdown)
-  elif defined(macosx):  g_macFileOpenerCh.send(ofmShutdown)
+  when defined(windows):
+    ipc.shutdownServer()
+
+  elif defined(macosx):
+    g_macFileOpenerCh.send(ofmShutdown)
+    joinThread(g_macFileOpenerThr)
+    g_macFileOpenerCh.close
 
   g_autoSaverCh.send(AutoSaverMsg(kind: askShutdown))
   g_versionFetcherCh.send(vfkShutdown)
 
-  # Join threads
-  when defined(windows): joinThread(g_winIpcEventPollerThr)
-  elif defined(macosx):  joinThread(g_macFileOpenerThr)
-
   joinThreads(g_autoSaverThr, g_versionFetcherThr)
-
-  # Close channels
-  when defined(windows): g_winIpcEventPollerCh.close
-  elif defined(macosx):  g_macFileOpenerCh.close
 
   g_autoSaverCh.close
   g_versionFetcherCh.close
@@ -242,14 +199,14 @@ proc shutdown() =
 
 # {{{ initOrQuit*()
 proc initOrQuit*() =
-  when defined(windows):
-    winInitOrQuit()
-
   g_appEventCh.open
 
   when defined(windows):
-    g_winIpcEventPollerCh.open
-    createThread(g_winIpcEventPollerThr, winIpcEventPoller)
+    if ipc.isAppRunning():
+      discard ipc.initClient()
+      quit()
+    else:
+      discard ipc.initServer()
 
   elif defined(macosx):
     g_macFileOpenerCh.open

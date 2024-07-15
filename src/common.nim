@@ -6,6 +6,7 @@ import std/strformat
 import std/strutils
 import std/tables
 
+import glfw
 import koi
 import nanovg
 import semver
@@ -524,6 +525,8 @@ type
     labelTextColor*:               array[4, Color]
 
 
+# {{{ App events
+
 type
   AppEventKind* = enum
     aeFocus, aeOpenFile, aeAutoSave, aeVersionUpdate
@@ -540,6 +543,16 @@ type
   VersionInfo* = object
     version*: Version
     message*: string
+
+var
+  g_appEventCh*: Channel[AppEvent]
+
+proc sendAppEvent*(event: AppEvent) =
+  g_appEventCh.send(event)
+  # Main event loop might be stuck at waitEvents(), so wake it up
+  glfw.postEmptyEvent()
+
+# }}}
 
 
 # vim: et:ts=2:sw=2:fdm=marker
