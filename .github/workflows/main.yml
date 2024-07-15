@@ -137,11 +137,16 @@ jobs:
           $PORT_PACKAGE_NAME=nim winPortablePackageName
           "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
 
-      - name: Windows 64-bit build
+      - name: Windows 64-bit release build
         run: |
-          nim clean
-          nim -f release
+          nim release
+
+      - name: Windows 64-bit installer package
+        run: |
           nim packageWinInstaller
+
+      - name: Windows 64-bit portable package
+        run: |
           nim packageWinPortable
 
       - name: Upload 64-bit installer release artifact
