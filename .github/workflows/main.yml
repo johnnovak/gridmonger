@@ -42,16 +42,9 @@ jobs:
         run: |
           nim manual
 
-  build-release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        nimversion:
-          - binary:2.0.8
-        os:
-          # - ubuntu-20.04
-          - windows-2019
-          - macOS-12
+
+  build-release-mac:
+    runs-on: macOS-12
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -59,7 +52,7 @@ jobs:
       - name: Install Nim
         uses: iffy/install-nim@v5
         with:
-          version: ${{ matrix.nimversion }}
+          version: binary:2.0.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -89,3 +82,54 @@ jobs:
         with:
           name: gridmonger-v${{ env.VERSION }}-macos
           path: dist/macos/gridmonger-v${{ env.VERSION }}-macos.zip
+
+
+  build-release-windows:
+    runs-on: windows-2019
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nim
+        uses: iffy/install-nim@v5
+        with:
+          version: binary:2.0.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Nim dependencies
+        run: nimble -y install koi osdialog riff semver winim with
+
+# TODO
+#      - name: Inject version string
+#        run: |
+#          set -x
+#          VERSION=$(./scripts/get-version.sh version-and-hash)
+#          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Windows 32-bit build
+        run: |
+          nim -f --cpu:i386 release
+          nim --cpu:i386 packageWinInstaller
+          nim --cpu:i386 packageWinPortable
+          nim --cpu:i386 publishPackageWin
+
+      - name: macOS 64-bit build
+        run: |
+          nim clean
+          nim -f release
+          nim packageWinInstaller
+          nim packageWinPortable
+          nim publishPackageWin
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridmonger-v${{ env.VERSION }}-win32
+          path: dist/windows/gridmonger-v${{ env.VERSION }}-win32.zip
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridmonger-v${{ env.VERSION }}-macos
+          path: dist/windows/gridmonger-v${{ env.VERSION }}-macos.zip
