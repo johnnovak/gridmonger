@@ -131,6 +131,9 @@ jobs:
 #
       - name: Inject version strings (64-bit)
         run: |
+          $VERSION=nim versionAndGitHash
+          "VERSION=$VERSION" >> $GITHUB_ENV
+
           $INST_PACKAGE_NAME=nim winInstallerPackageName
           "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
 
