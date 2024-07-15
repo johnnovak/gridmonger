@@ -101,15 +101,14 @@ jobs:
 
       - name: Inject version strings (32-bit)
         run: |
-          INST_PACKAGE_NAME=$(nim --cpu:i386 winInstallerPackageName)
+          $VERSION=nim versionAndGitHash
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+          $INST_PACKAGE_NAME=nim --cpu:i386 winInstallerPackageName
           echo "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
 
-          PORT_PACKAGE_NAME=$(nim --cpu:i386 winPortablePackageName)
+          $PORT_PACKAGE_NAME=nim --cpu:i386 winPortablePackageName
           echo "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
-
-          VERSION=$(nim versionAndGitHash)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-        shell: cmd
 
       - name: Windows 32-bit build
         run: |
@@ -132,12 +131,11 @@ jobs:
 
       - name: Inject version strings (64-bit)
         run: |
-          INST_PACKAGE_NAME=$(nim winInstallerPackageName)
+          $INST_PACKAGE_NAME=nim winInstallerPackageName
           echo "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
 
-          PORT_PACKAGE_NAME=$(nim winPortablePackageName)
+          $PORT_PACKAGE_NAME=nim winPortablePackageName
           echo "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
-        shell: cmd
 
       - name: Windows 64-bit build
         run: |
