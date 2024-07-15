@@ -3908,7 +3908,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
       else:
         msg = "Error fetching version information"
 
-      st.color = a.theme.statusBarTheme.warningTextColor
+      st.color = a.theme.warningLabelStyle.color
       koi.label(0, y, w, h, msg, style=st)
 
   # Buttons
