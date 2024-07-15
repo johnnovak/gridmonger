@@ -80,6 +80,15 @@ proc getWinPortablePackageName(arch: Arch): string =
 
 # All tasks must be executed from the project root directory!
 
+task version, "get version number":
+  echo version
+
+task gitHash, "get Git hash":
+  echo gitHash
+
+task versionAndGitHash, "get version and Git hash":
+  echo fmt"{version}-{gitHash}"
+
 task debug, "debug build":
   --d:debug
   setCommonCompileParams()
@@ -117,6 +126,12 @@ task mergeMacUniversal, "create macOS universal binary":
   exec fmt"lipo {exeNameMacX64} {exeNameMacArm64} -create -output {exeName}"
 
 
+task winInstallerPackageName, "get Windows installer package name":
+  echo getWinInstallerPackageName(arch)
+
+task winPortablePackageName, "get Windows portable package name":
+  echo getWinPortablePackageName(arch)
+
 task packageWinInstaller, "create Windows installer package":
   mkdir distWinDir
   exec fmt"strip -S {exeName}"
@@ -149,6 +164,9 @@ task packageWinPortable, "create Windows portable package":
 
   rmDir packageDir
 
+
+task macPackageName, "get macOS package name":
+  echo macPackageName
 
 task packageMac, "create macOS app bundle package":
   let appBundleName = "Gridmonger.app"
