@@ -9,7 +9,8 @@ var exeName = "gridmonger".toExe
 var exeNameMacArm64 = exeName & "-arm64"
 var exeNameMacX64 = exeName & "-x64"
 
-const mingw32Dir = r"C:\dev\mingw32"
+#const mingw32Dir = r"C:\dev\mingw32"
+const mingw32Dir = r"C:\msys64\mingw32"
 
 const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
