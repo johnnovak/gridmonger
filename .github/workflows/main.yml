@@ -109,6 +109,7 @@ jobs:
 
           VERSION=$(nim versionAndGitHash)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+        shell: cmd
 
       - name: Windows 32-bit build
         run: |
@@ -136,6 +137,7 @@ jobs:
 
           PORT_PACKAGE_NAME=$(nim winPortablePackageName)
           echo "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
+        shell: cmd
 
       - name: Windows 64-bit build
         run: |
