@@ -8,22 +8,17 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        nimversion:
-          - binary:2.0.8
-        os:
-          # - ubuntu-20.04
-          # - windows-2019
-         - macOS-12
-    steps:
-      - uses: actions/checkout@v4
+  build-manual:
+    runs-on: ubuntu-latest
 
-      - uses: iffy/install-nim@v5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nim
+        uses: iffy/install-nim@v5
         with:
-          version: ${{ matrix.nimversion }}
+          version: binary:2.0.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -41,9 +36,6 @@ jobs:
           pip install sphinx
           sphinx-build --version
 
-      - name: Install Nim dependencies
-        run: nimble -y install koi osdialog riff semver winim with
-
       - name: Inject version string
         run: |
           set -x
@@ -55,6 +47,36 @@ jobs:
           SED: gsed
         run: |
           nim manual
+
+  build-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        nimversion:
+          - binary:2.0.8
+        os:
+          # - ubuntu-20.04
+          - windows-2019
+          - macOS-12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nim
+        uses: iffy/install-nim@v5
+        with:
+          version: ${{ matrix.nimversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Nim dependencies
+        run: nimble -y install koi osdialog riff semver winim with
+
+      - name: Inject version string
+        run: |
+          set -x
+          VERSION=$(./scripts/get-version.sh version-and-hash)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: macOS arm64 release build
         run: nim -f releaseMacX64
