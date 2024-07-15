@@ -58,7 +58,6 @@ jobs:
 
       - name: Inject version strings
         run: |
-          set -x
           PACKAGE_NAME=$(nim macPackageName)
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
 
@@ -102,7 +101,6 @@ jobs:
 
       - name: Inject version strings (32-bit)
         run: |
-          set -x
           INST_PACKAGE_NAME=$(nim --cpu:i386 winInstallerPackageName)
           echo "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
 
@@ -133,7 +131,6 @@ jobs:
 
       - name: Inject version strings (64-bit)
         run: |
-          set -x
           INST_PACKAGE_NAME=$(nim winInstallerPackageName)
           echo "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
 
