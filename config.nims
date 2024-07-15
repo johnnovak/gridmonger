@@ -160,10 +160,10 @@ task packageWinPortable, "create Windows portable package":
   cpDir themesDir, packageDir / themesDir
 
   let zipName = getWinPortablePackageName(arch)
-  withDir distWinDir:
-    createZip(zipName, srcPath=packageName)
-
-  rmDir packageDir
+#  withDir distWinDir:
+#    createZip(zipName, srcPath=packageName)
+#
+#  rmDir packageDir
 
 
 task macPackageName, "get macOS package name":
