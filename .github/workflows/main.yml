@@ -22,10 +22,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install GNU sed
-        run: |
-          brew install gnu-sed
-
       - name: Install Sass
         run: |
           npm install -g sass
@@ -43,8 +39,6 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build manual
-        env:
-          SED: gsed
         run: |
           nim manual
 
