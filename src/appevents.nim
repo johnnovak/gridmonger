@@ -18,6 +18,8 @@ when defined(windows):
 
 # {{{ macFileOpener()
 when defined(macosx):
+  import glfw
+
   type
     OpenFileMsg = enum
       ofmShutdown
