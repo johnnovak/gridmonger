@@ -99,36 +99,36 @@ jobs:
       - name: Install Nim dependencies
         run: nimble -y install koi osdialog riff semver winim with
 
-      - name: Inject version strings (32-bit)
-        run: |
-          $VERSION=nim versionAndGitHash
-          "VERSION=$VERSION" >> $GITHUB_ENV
-
-          $INST_PACKAGE_NAME=nim --cpu:i386 winInstallerPackageName
-          "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
-
-          $PORT_PACKAGE_NAME=nim --cpu:i386 winPortablePackageName
-          "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
-
-      - name: Windows 32-bit build
-        run: |
-          nim -f --cpu:i386 release
-          nim --cpu:i386 packageWinInstaller
-          nim --cpu:i386 packageWinPortable
-
-      - name: Upload 32-bit installer release artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gridmonger-v${{ env.VERSION }}-win32-setup
-          path: ${{ env.INST_PACKAGE_NAME }}
-
-      - name: Upload 32-bit portable release artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gridmonger-v${{ env.VERSION }}-win32-portable
-          path: ${{ env.PORT_PACKAGE_NAME }}
-
-
+#      - name: Inject version strings (32-bit)
+#        run: |
+#          $VERSION=nim versionAndGitHash
+#          "VERSION=$VERSION" >> $GITHUB_ENV
+#
+#          $INST_PACKAGE_NAME=nim --cpu:i386 winInstallerPackageName
+#          "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
+#
+#          $PORT_PACKAGE_NAME=nim --cpu:i386 winPortablePackageName
+#          "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
+#
+#      - name: Windows 32-bit build
+#        run: |
+#          nim -f --cpu:i386 release
+#          nim --cpu:i386 packageWinInstaller
+#          nim --cpu:i386 packageWinPortable
+#
+#      - name: Upload 32-bit installer release artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: gridmonger-v${{ env.VERSION }}-win32-setup
+#          path: ${{ env.INST_PACKAGE_NAME }}
+#
+#      - name: Upload 32-bit portable release artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: gridmonger-v${{ env.VERSION }}-win32-portable
+#          path: ${{ env.PORT_PACKAGE_NAME }}
+#
+#
       - name: Inject version strings (64-bit)
         run: |
           $INST_PACKAGE_NAME=nim winInstallerPackageName
