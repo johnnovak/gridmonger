@@ -4152,6 +4152,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       appEvents.disableAutoSave()
 
     if not a.prefs.checkForUpdates and dlg.checkForUpdates:
+      # Check for updates was just enabled
       initVersionChecking(a)
       appEvents.fetchLatestVersion()
 
@@ -10743,8 +10744,9 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   restoreLayoutsFromConfig(cfg, a)
 
-  initVersionChecking(a)
-  appEvents.fetchLatestVersion()
+  if a.prefs.checkForUpdates:
+    initVersionChecking(a)
+    appEvents.fetchLatestVersion()
 
 # }}}
 # {{{ cleanup()
