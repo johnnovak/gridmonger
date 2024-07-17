@@ -28,8 +28,6 @@
 - Load map files by dragging & dropping their icons onto the program window or
   the taskbar icon.
 - Check for updates on startup (can be disabled).
-- Preferences setting to change the default Ctrl & Ctrl+Alt keyboard shortcut
-  modifiers to Ctrl & Ctrl+Shift.
 - macOS: The Command & Command+Shift modifiers are used for the keyboard
   shorcuts by default.
 - macOS: Preferences setting to change the default Command & Command+Shift
