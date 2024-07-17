@@ -107,6 +107,9 @@ var
 
 # {{{ versionFetcher()
 proc versionFetcher() {.thread.} =
+  # TODO This could be probably simplified now that we no longer
+  # wait for the thread on exit, but it works for now.
+  #
   const
     LatestVersionUrl   = fmt"{ProjectHomeUrl}latest_version"
     NumTries           = 5
@@ -138,7 +141,7 @@ proc versionFetcher() {.thread.} =
             if dataAvailable:
               case msg
               of vfkShutdown: break topLoop
-              of vfkFetch:    discard # fetch already in progress
+              of vfkFetch:    discard  # fetch already in progress
 
             var client = newHttpClient()
             try:
@@ -180,20 +183,12 @@ proc shutdown() =
   when defined(windows):
     ipc.shutdownServer()
 
-  elif defined(macosx):
-    g_macFileOpenerCh.send(ofmShutdown)
-    joinThread(g_macFileOpenerThr)
-    g_macFileOpenerCh.close
-
-  g_autoSaverCh.send(AutoSaverMsg(kind: askShutdown))
-  g_versionFetcherCh.send(vfkShutdown)
-
-  joinThreads(g_autoSaverThr, g_versionFetcherThr)
-
-  g_autoSaverCh.close
-  g_versionFetcherCh.close
-
-  g_appEventCh.close
+  # All these background threads can be auto-killed by the OS on exit, there's
+  # no need to shut them down cleanly. All they do is send events to the main
+  # thread that then performs some action, so they can be safely interrupted.
+  #
+  # Moreover, not waiting for the version fetcher thread fixes weird edge
+  # cases when the thread hangs indefinitely on exit due to network timeouts.
 
 # }}}
 
