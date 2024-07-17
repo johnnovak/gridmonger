@@ -1,13 +1,11 @@
 import std/exitprocs
 import std/httpclient
-import std/math
 import std/monotimes
 import std/options
 import std/os
 import std/strformat
 import std/strutils
 import std/times
-import std/typedthreads
 
 import semver
 
@@ -16,21 +14,8 @@ import common
 when defined(windows):
   import platform/windows/ipc
 
-# {{{ macFileOpener()
-when defined(macosx):
-  import glfw
-
-  var g_macFileOpenerThr: Thread[void]
-
-  proc macFileOpener() {.thread.} =
-    while true:
-      let filenames = glfw.getCocoaOpenedFilenames()
-      if filenames.len > 0:
-        sendAppEvent(AppEvent(kind: aeOpenFile, path: filenames[0]))
-
-      sleep(100)
-
-# }}}
+elif defined(macosx):
+  import platform/macos/fileopener
 
 # {{{ Auto-saver
 type
@@ -172,7 +157,7 @@ proc initOrQuit*() =
       discard ipc.initServer()
 
   elif defined(macosx):
-    createThread(g_macFileOpenerThr, macFileOpener)
+    fileopener.init()
 
   g_autoSaverCh.open
   createThread(g_autoSaverThr, autoSaver)
