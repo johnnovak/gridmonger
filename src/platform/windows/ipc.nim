@@ -1,7 +1,6 @@
 import std/options
 import std/os
 import std/strformat
-import std/typedthreads
 
 import winim/lean
 
@@ -167,9 +166,9 @@ proc initClient*(): bool =
     return false
 
   if paramCount() == 0:
-    ipc.sendFocusMessage()
+    sendFocusMessage()
   else:
-    ipc.sendOpenFileMessage(paramStr(1))
+    sendOpenFileMessage(paramStr(1))
 
   result = true
 
@@ -212,24 +211,23 @@ proc shutdownServer*() =
 
 # {{{ Test
 when isMainModule:
-  when defined(windows):
-    import std/os
+  import std/os
 
-    echo "Starting..."
-    if ipc.isAppRunning():
-      echo "*** CLIENT ***"
-      if initClient():
-        ipc.sendOpenFileMessage("quixotic")
-        ipc.shutdown()
+  echo "Starting..."
+  if isAppRunning():
+    echo "*** CLIENT ***"
+    if initClient():
+      sendOpenFileMessage("quixotic")
+      shutdown()
 
-    else:
-      if ipc.initServer():
-        echo "*** SERVER ***"
-        while true:
-          let msg = tryRecv()
-          if msg.isSome:
-            echo msg.get
-          sleep(100)
+  else:
+    if initServer():
+      echo "*** SERVER ***"
+      while true:
+        let msg = tryRecv()
+        if msg.isSome:
+          echo msg.get
+        sleep(100)
 
 # }}}
 
