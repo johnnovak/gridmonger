@@ -20,20 +20,10 @@ when defined(windows):
 when defined(macosx):
   import glfw
 
-  type
-    OpenFileMsg = enum
-      ofmShutdown
-
-  var
-    g_macFileOpenerCh:  Channel[OpenFileMsg]
-    g_macFileOpenerThr: Thread[void]
+  var g_macFileOpenerThr: Thread[void]
 
   proc macFileOpener() {.thread.} =
     while true:
-      let (dataAvailable, msg) = g_macFileOpenerCh.tryRecv
-      if dataAvailable and msg == ofmShutdown:
-        break
-
       let filenames = glfw.getCocoaOpenedFilenames()
       if filenames.len > 0:
         sendAppEvent(AppEvent(kind: aeOpenFile, path: filenames[0]))
@@ -45,13 +35,12 @@ when defined(macosx):
 # {{{ Auto-saver
 type
   AutoSaverMsgKind = enum
-    askMapSaved, askSetTimeout, askShutdown
+    askMapSaved, askSetTimeout
 
   AutoSaverMsg* = object
     case kind*: AutoSaverMsgKind
     of askMapSaved:   discard
     of askSetTimeout: timeout*: Duration
-    of askShutdown:   discard
 
 var
   g_autoSaverCh:  Channel[AutoSaverMsg]
@@ -67,7 +56,6 @@ proc autoSaver() {.thread.} =
     let (dataAvailable, msg) = g_autoSaverCh.tryRecv
     if dataAvailable:
       case msg.kind
-      of askShutdown: break
       of askMapSaved: t0 = getMonoTime()
       of askSetTimeout:
         timeout = msg.timeout
@@ -102,7 +90,7 @@ proc disableAutoSave*() =
 # {{{ Version fetcher
 type
   VersionFetcherMsg = enum
-    vfkFetch, vfkShutdown
+    vfkFetch
 
 var
   g_versionFetcherCh:  Channel[VersionFetcherMsg]
@@ -110,66 +98,43 @@ var
 
 # {{{ versionFetcher()
 proc versionFetcher() {.thread.} =
-  # TODO This could be probably simplified now that we no longer
-  # wait for the thread on exit, but it works for now.
-  #
   const
-    LatestVersionUrl   = fmt"{ProjectHomeUrl}latest_version"
-    NumTries           = 5
-    TickDurationMs     = 100
-    RetryIntervalMs    = 2000
-    RetryIntervalTicks = ceil(RetryIntervalMs / TickDurationMs).int
+    LatestVersionUrl = fmt"{ProjectHomeUrl}latest_version"
+    NumTries         = 5
+    RetryIntervalMs  = 2000
 
-  block topLoop:
-    while true:
-      let msg = g_versionFetcherCh.recv
-      case msg
-      of vfkShutdown:
-        break topLoop
+  while true:
+    let msg = g_versionFetcherCh.recv
+    case msg
+    of vfkFetch:
+      var
+        event     = AppEvent(kind: aeVersionUpdate)
+        response  = ""
+        triesLeft = NumTries
 
-      of vfkFetch:
-        var
-          event    = AppEvent(kind: aeVersionUpdate)
-          response = ""
+      while triesLeft > 0:
+        var client = newHttpClient()
+        try:
+          response = client.getContent(LatestVersionUrl)
+          break
+        except CatchableError as e:
+          event.error = cast[CatchableError](e[]).some
+        finally:
+          client.close
 
-          numTry    = 1
-          triesLeft = NumTries
-          ticksLeft = RetryIntervalTicks
+        sleep(RetryIntervalMs)
+        dec(triesLeft)
 
-        while triesLeft > 0:
-          while ticksLeft > 0:
-            # We drain messages at the tick interval to avoid the process
-            # potentially hanging for the retry sleep duration at exit.
-            let (dataAvailable, msg) = g_versionFetcherCh.tryRecv
-            if dataAvailable:
-              case msg
-              of vfkShutdown: break topLoop
-              of vfkFetch:    discard  # fetch already in progress
+      if response != "":
+        try:
+          let parts = response.split("|")
+          event.versionInfo = VersionInfo(
+            version: parseVersion(parts[0]),
+            message: parts[1]
+          ).some
+        except: discard
 
-            var client = newHttpClient()
-            try:
-              response = client.getContent(LatestVersionUrl)
-              break
-            except CatchableError as e:
-              event.error = cast[CatchableError](e[]).some
-            finally:
-              client.close
-
-            sleep(TickDurationMs)
-            dec(ticksLeft)
-
-          dec(triesLeft)
-
-        if response != "":
-          try:
-            let parts = response.split("|")
-            event.versionInfo = VersionInfo(
-              version: parseVersion(parts[0]),
-              message: parts[1]
-            ).some
-          except: discard
-
-        sendAppEvent(event)
+      sendAppEvent(event)
 
 # }}}
 
@@ -207,7 +172,6 @@ proc initOrQuit*() =
       discard ipc.initServer()
 
   elif defined(macosx):
-    g_macFileOpenerCh.open
     createThread(g_macFileOpenerThr, macFileOpener)
 
   g_autoSaverCh.open
