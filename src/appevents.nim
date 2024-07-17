@@ -9,14 +9,17 @@ import std/strutils
 import std/times
 import std/typedthreads
 
-import glfw
 import semver
 
 import common
 
+when defined(windows):
+  import platform/windows/ipc
 
 # {{{ macFileOpener()
 when defined(macosx):
+  import glfw
+
   type
     OpenFileMsg = enum
       ofmShutdown

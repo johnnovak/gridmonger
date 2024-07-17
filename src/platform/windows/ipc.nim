@@ -1,4 +1,5 @@
 import std/options
+import std/os
 import std/strformat
 import std/typedthreads
 
@@ -32,25 +33,6 @@ proc displayError(msg: string) =
 
 # }}}
 
-# {{{ isAppRunning()
-proc isAppRunning(): bool =
-  discard CreateMutex(nil, true, "Global\\Gridmonger")
-  result = GetLastError() == ErrorAlreadyExists
-
-# }}}
-# {{{ sendMessage()
-proc sendMessage(numBytes: int32) =
-  discard WriteFile(
-    g_pipe,
-    g_buffer[0].addr,
-    numBytes,
-    nil,
-    g_overlapped.addr
-  )
-  # Wait until the message has been sent with a 2s timeout
-  WaitForSingleObject(g_overlapped.hEvent, 2000)
-
-# }}}
 # {{{ commonInit()
 proc commonInit(): bool =
   g_overlapped.hEvent = CreateEvent(
@@ -66,66 +48,27 @@ proc commonInit(): bool =
 
 # }}}
 
-# {{{ eventPoller()
-import platform/windows/ipc
-
-type
-  IpcEventPollerMsg = enum
-    ipmShutdown
-
-var
-  g_eventPollerCh:  Channel[IpcEventPollerMsg]
-  g_eventPollerThr: Thread[void]
-
-proc eventPoller() {.thread.} =
-  while true:
-    let (dataAvailable, msg) = g_eventPollerCh.tryRecv
-    if dataAvailable and msg == ipmShutdown:
-      break
-
-    let appEvent = ipc.tryRecv()
-    if appEvent.isSome:
-      sendAppEvent(appEvent.get)
-
-    sleep(100)
-
-# }}}
-
-# {{{ initClient*()
-proc initClient*(): bool =
-  if not commonInit():
-    return false
-
-  # Use async mode (FileFlagOverlapped)
-  g_pipe = CreateFile(
-    PipeName,
-    GenericWrite,
-    0,    # disallow sharing
-    nil,  # default security attribute
-    OpenExisting,
-    FileAttributeNormal or FileFlagOverlapped,
-    0
+# {{{ sendMessage()
+proc sendMessage(numBytes: int32) =
+  discard WriteFile(
+    g_pipe,
+    g_buffer[0].addr,
+    numBytes,
+    nil,
+    g_overlapped.addr
   )
-  if g_pipe == InvalidHandleValue:
-    displayError(fmt"Cannot open named pipe, error code: {GetLastError()}")
-    return false
-
-  if paramCount() == 0:
-    ipc.sendFocusMessage()
-  else:
-    ipc.sendOpenFileMessage(paramStr(1))
-
-  result = true
+  # Wait until the message has been sent with a 2s timeout
+  WaitForSingleObject(g_overlapped.hEvent, 2000)
 
 # }}}
-# {{{ sendFocusMessage*()
-proc sendFocusMessage*() =
+# {{{ sendFocusMessage()
+proc sendFocusMessage() =
   g_buffer[0] = aeFocus.byte
   sendMessage(numBytes=1)
 
 # }}}
-# {{{ sendOpenFileMessage*()
-proc sendOpenFileMessage*(path: string) =
+# {{{ sendOpenFileMessage()
+proc sendOpenFileMessage(path: string) =
   var path = path.substr(0, MaxPathLen-1)
   g_buffer[0] = aeOpenFile.byte
   cast[ptr int16](g_buffer[1].addr)[] = path.len.int16
@@ -135,43 +78,8 @@ proc sendOpenFileMessage*(path: string) =
 
 # }}}
 
-# {{{ initServer*()
-proc initServer*(): bool =
-  if not commonInit():
-    return false
-
-  # Use async mode (FileFlagOverlapped)
-  g_pipe = CreateNamedPipe(
-    PipeName,
-    FileFlagFirstPipeInstance or FileFlagOverlapped or PipeAccessInbound,
-    PipeTypeMessage,
-    1,   # only allow 1 instance of this pipe
-    0,   # no outbound buffer
-    1,   # inbound buffer size - the kernel sets this automatically to
-         # hold the largest unread data in the pipe at any given time
-    1,   # 1ms wait time
-    nil  # use default security attributes
-  )
-  if g_pipe == InvalidHandleValue:
-    displayError(fmt"Cannot create named pipe, error code: {GetLastError()}")
-    return false
-
-  g_winIpcEventPollerCh.open
-  createThread(g_winIpcEventPollerThr, winIpcEventPoller)
-  result = true
-
-# }}}
-# {{{ shutdownServer*()
-proc shutdownServer*() =
-  g_eventPollerCh.send(ipmShutdown)
-  joinThread(g_eventPollerThr)
-  g_eventPollerCh.close
-
-  discard CloseHandle(g_pipe)
-
-# }}}
-# {{{ tryRecv*()
-proc tryRecv*(): Option[AppEvent] =
+# {{{ tryRecv()
+proc tryRecv(): Option[AppEvent] =
   discard ConnectNamedPipe(g_pipe, g_overlapped.addr)
 
   if ReadFile(g_pipe, g_buffer[0].addr, g_buffer.len.int32, nil,
@@ -208,6 +116,97 @@ proc tryRecv*(): Option[AppEvent] =
       echo fmt"Unexpected event: {event}"
 
     result = event.some
+
+# }}}
+# {{{ eventPoller()
+type
+  IpcEventPollerMsg = enum
+    ipmShutdown
+
+var
+  g_eventPollerCh:  Channel[IpcEventPollerMsg]
+  g_eventPollerThr: Thread[void]
+
+proc eventPoller() {.thread.} =
+  while true:
+    let (dataAvailable, msg) = g_eventPollerCh.tryRecv
+    if dataAvailable and msg == ipmShutdown:
+      break
+
+    let appEvent = tryRecv()
+    if appEvent.isSome:
+      sendAppEvent(appEvent.get)
+
+    sleep(100)
+
+# }}}
+
+# {{{ isAppRunning*()
+proc isAppRunning*(): bool =
+  discard CreateMutex(nil, true, "Global\\Gridmonger")
+  result = GetLastError() == ErrorAlreadyExists
+
+# }}}
+# {{{ initClient*()
+proc initClient*(): bool =
+  if not commonInit():
+    return false
+
+  # Use async mode (FileFlagOverlapped)
+  g_pipe = CreateFile(
+    PipeName,
+    GenericWrite,
+    0,    # disallow sharing
+    nil,  # default security attribute
+    OpenExisting,
+    FileAttributeNormal or FileFlagOverlapped,
+    0
+  )
+  if g_pipe == InvalidHandleValue:
+    displayError(fmt"Cannot open named pipe, error code: {GetLastError()}")
+    return false
+
+  if paramCount() == 0:
+    ipc.sendFocusMessage()
+  else:
+    ipc.sendOpenFileMessage(paramStr(1))
+
+  result = true
+
+# }}}
+# {{{ initServer*()
+proc initServer*(): bool =
+  if not commonInit():
+    return false
+
+  # Use async mode (FileFlagOverlapped)
+  g_pipe = CreateNamedPipe(
+    PipeName,
+    FileFlagFirstPipeInstance or FileFlagOverlapped or PipeAccessInbound,
+    PipeTypeMessage,
+    1,   # only allow 1 instance of this pipe
+    0,   # no outbound buffer
+    1,   # inbound buffer size - the kernel sets this automatically to
+         # hold the largest unread data in the pipe at any given time
+    1,   # 1ms wait time
+    nil  # use default security attributes
+  )
+  if g_pipe == InvalidHandleValue:
+    displayError(fmt"Cannot create named pipe, error code: {GetLastError()}")
+    return false
+
+  g_eventPollerCh.open
+  createThread(g_eventPollerThr, eventPoller)
+  result = true
+
+# }}}
+# {{{ shutdownServer*()
+proc shutdownServer*() =
+  g_eventPollerCh.send(ipmShutdown)
+  joinThread(g_eventPollerThr)
+  g_eventPollerCh.close
+
+  discard CloseHandle(g_pipe)
 
 # }}}
 
