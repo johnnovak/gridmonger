@@ -433,9 +433,7 @@ type
 
   ModifierKeyMode = enum
     mkmControlAlt   = (0, "Control Alt")
-    mkmControlShift = (1, "Control Shift")
-    mkmCommandAlt   = (2, "Command Alt")
-    mkmCommandShift = (3, "Command Shift")
+    mkmCommandShift = (1, "Command Shift")
 
   Keys = object
     shortcuts:          Table[AppShortcut, seq[KeyShortcut]]
@@ -1508,12 +1506,20 @@ let DefaultAppShortcuts = {
 
 # {{{ setYubnAppShortcuts()
 proc setYubnAppShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+  # Shortcuts that conflicts with the YUBN keys must be removed. All the
+  # affected shortcuts have alternatives to they can be invoked even in YUBN
+  # mode.
+
+  # Ctrl/Cmd modifiers for jumps are not allowed in YUBN mode as that would
+  # conflict with too many shortcuts, but Shift modifiers for panning are
+  # allowed.
+
   # remove keyY mappings
   sc[scSelectionCopy] = @[mkKeyShortcut(keyC, {})]
 
   # remove keyU mappings
-  sc[scUndo]          = @[mkKeyShortcut(keyZ, {mkCtrl}),
-                          mkKeyShortcut(keyU, {mkCtrl})]
+  sc[scUndo]          = @[mkKeyShortcut(keyU, {mkCtrl}),
+                          mkKeyShortcut(keyZ, {mkCtrl})]
 
   sc[scSelectionNone] = @[mkKeyShortcut(keyX, {})]
 
@@ -1545,8 +1551,8 @@ proc mapCtrlToSuper(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
       else: it
 
 # }}}
-# {{{ addMacOsShortcuts()
-proc addMacOsShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+# {{{ addStandardMacShortcuts()
+proc addStandardMacShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
 
   template addUniqueShortcut(appShortcut: AppShortcut, keyShortcut: KeyShortcut) =
     if keyShortcut notin sc[appShortcut]:
@@ -2397,25 +2403,15 @@ proc updateShortcuts(a) =
   when defined(macosx):
     case a.prefs.modifierKeyMode
     of mkmControlAlt: discard
-    of mkmControlShift:
-      a.keys.shortcuts.mapCtrlAltToCtrlShift
-
-    of mkmCommandAlt:
-      a.keys.primaryModKey = mkSuper
-      a.keys.shortcuts.mapCtrlToSuper
 
     of mkmCommandShift:
       a.keys.primaryModKey = mkSuper
       a.keys.shortcuts.mapCtrlAltToCtrlShift
       a.keys.shortcuts.mapCtrlToSuper
 
-    # The standard Open, Save, Save As, and Preferences shortcuts are always
-    # available with the Cmd modifier, regardless of the settings.
-    a.keys.shortcuts.addMacOsShortcuts
-
-  else: # Windows & Linux
-    if a.prefs.modifierKeyMode == mkmControlShift:
-      a.keys.shortcuts.mapCtrlAltToCtrlShift
+    # Make the standard Cmd-based Open, Save, Save As, and Preferences
+    # shortcuts always available, even in Ctrl+Alt modifier mode.
+    a.keys.shortcuts.addStandardMacShortcuts
 
   a.keys.quickRefShortcuts = mkQuickRefShortcuts(a)
 
@@ -4083,20 +4079,18 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.checkForUpdates, style=a.theme.checkBoxStyle)
 
-    group:
-      koi.label("Shortcut modifier keys", style=a.theme.labelStyle)
-      koi.nextItemWidth(135)
+    when defined(macosx):
+      group:
+        koi.label("Shortcut modifier keys", style=a.theme.labelStyle)
+        koi.nextItemWidth(135)
 
-      var items = @[
-        fmt"Ctrl, Ctrl{HairSp}+{HairSp}Alt",
-        fmt"Ctrl, Ctrl{HairSp}+{HairSp}Shift",
-      ]
-      when defined(macosx):
-        items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Alt")
-        items.add(fmt"Cmd, Cmd{HairSp}+{HairSp}Shift")
+        var items = @[
+          fmt"Ctrl, Ctrl{HairSp}+{HairSp}Alt",
+          fmt"Cmd, Cmd{HairSp}+{HairSp}Shift"
+        ]
 
-      koi.dropDown(items, dlg.modifierKeyMode,
-                   style=a.theme.dropDownStyle)
+        koi.dropDown(items, dlg.modifierKeyMode,
+                     style=a.theme.dropDownStyle)
 
 
   elif dlg.activeTab == 2:  # Editing
@@ -6537,7 +6531,9 @@ proc handleLevelMouseEvents(a) =
   alias(ui, a.ui)
 
   # {{{ WASD mode
-
+  #
+  # Bit of a misnomer "WASD-mode" consists of the  Q/W/E/A/S/D keys.
+  #
   if a.ui.wasdMode:
     case ui.editMode
     of emNormal:
@@ -6826,7 +6822,7 @@ proc handleGlobalKeyEvents(a) =
         # Disallow Ctrl+Y/U/B/N panning as it would interfere with shorcuts
         return
 
-      elif a.prefs.modifierKeyMode in {mkmCommandAlt, mkmCommandShift} and
+      elif a.prefs.modifierKeyMode == mkmCommandShift and
         ke.key in VimMoveKeys:
         # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS hide
         # window shortcut
@@ -10566,16 +10562,12 @@ proc initPreferences(cfg: HoconNode; a) =
     if prefs.getOpt("modifier-key-mode").isSome:
       modifierKeyMode = prefs.getEnumOrDefault("modifier-key-mode",
                                                 ModifierKeyMode)
+      when not defined(macosx):
+        # Revert it to Ctrl+Alt if using a config copied from a Mac
+        modifierKeyMode = mkmControlAlt
     else:
       modifierKeyMode = when defined(macosx): mkmCommandShift
                         else: mkmControlAlt
-
-    when not defined(macosx):
-      if modifierKeyMode == mkmCommandAlt:
-        modifierKeyMode = mkmControlAlt
-      elif modifierKeyMode == mkmCommandShift:
-        modifierKeyMode = mkmControlShift
-
 
     const MovementWraparoundKey = "editing.movement-wraparound"
     if prefs.getOpt(MovementWraparoundKey).isSome:
