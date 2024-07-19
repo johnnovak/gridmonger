@@ -126,6 +126,7 @@ const
   AutosaveFreqMinsLimits*  = intLimits(min=1, max=30)
   WindowWidthLimits*       = intLimits(MinWindowWidth, max=20_000)
   WindowHeightLimits*      = intLimits(MinWindowHeight, max=20_000)
+  UIScaleFactorLimits*     = intLimits(min=100, max=500)
 
 const
   WarningMessageTimeout = initDuration(seconds = 3)
@@ -394,17 +395,18 @@ type
 
   Preferences = object
     # Startup tab
+    loadLastMap:        bool
+    autosave*:          bool
+    autosaveFreqMins:   Natural
+    checkForUpdates:    bool
+
+    # Interface tab
     showSplash:         bool
     autoCloseSplash:    bool
     splashTimeoutSecs:  Natural
-    loadLastMap:        bool
-
-    # General tab
-    autosave*:          bool
-    autosaveFreqMins:   Natural
     vsync:              bool
-    checkForUpdates:    bool
-    modifierKeyMode:    ModifierKeyMode
+    scaleFactor:        float
+    modifierKeyMode:    ModifierKeyMode   # macOS only
 
     # Editing tab
     movementWraparound: bool
@@ -749,17 +751,18 @@ type
     activeTab:          Natural
     activateFirstTextField: bool
 
-    # Startup tab
+    # General tab
+    loadLastMap:        bool
+    autosave:           bool
+    autosaveFreqMins:   string
+    checkForUpdates:    bool
+
+    # Interface tab
     showSplash:         bool
     autoCloseSplash:    bool
     splashTimeoutSecs:  string
-    loadLastMap:        bool
-
-    # General tab
-    autosave:           bool
-    autosaveFreqMins:   string
     vsync:              bool
-    checkForUpdates:    bool
+    scaleFactor:        float
     modifierKeyMode:    Natural
 
     # Editing tab
@@ -1897,7 +1900,7 @@ proc mainPaneRect(a): Rect[int] =
     y1 = a.win.titleBarHeight
     y2 = koi.winHeight() - StatusBarHeight
 
-  coordRect(x1.int, y1.int, x2.int, y2.int)
+  coordRect(x1.int, y1.int, x2.clampMin(x1+1).int, y2.clampMin(y1+1).int)
 
 # }}}
 # {{{ toolsPaneWidth()
@@ -2385,6 +2388,11 @@ proc loadImage(path: string; a): Option[Paint] =
 # {{{ setSwapInterval()
 proc setSwapInterval(a) =
   glfw.swapInterval(if a.prefs.vsync: 1 else: 0)
+
+# }}}
+# {{{ updateUIScaleFactor()
+proc updateUIScaleFactor(a) =
+  koi.setScale(a.prefs.scaleFactor)
 
 # }}}
 
@@ -3149,6 +3157,8 @@ proc saveAppConfig(a) =
           enumToDashCase($a.prefs.linkLinesMode))
 
   cfg.set(p & "video.vsync",                    a.prefs.vsync)
+  cfg.set(p & "video.scale-factor-percentage",  (a.prefs.scaleFactor * 100).int)
+
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
   cfg.set(p & "modifier-key-mode", enumToDashCase($a.prefs.modifierKeyMode))
@@ -3950,15 +3960,16 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 proc openPreferencesDialog(a) =
   alias(dlg, a.dialogs.preferencesDialog)
 
+  dlg.loadLastMap        = a.prefs.loadLastMap
+  dlg.autosave           = a.prefs.autosave
+  dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
+  dlg.checkForUpdates    = a.prefs.checkForUpdates
+
   dlg.showSplash         = a.prefs.showSplash
   dlg.autoCloseSplash    = a.prefs.autoCloseSplash
   dlg.splashTimeoutSecs  = $a.prefs.splashTimeoutSecs
-  dlg.loadLastMap        = a.prefs.loadLastMap
-
-  dlg.autosave           = a.prefs.autosave
-  dlg.autosaveFreqMins   = $a.prefs.autosaveFreqMins
   dlg.vsync              = a.prefs.vsync
-  dlg.checkForUpdates    = a.prefs.checkForUpdates
+  dlg.scaleFactor        = round(a.prefs.scaleFactor * 100)
   dlg.modifierKeyMode    = ord(a.prefs.modifierKeyMode)
 
   dlg.movementWraparound = a.prefs.movementWraparound
@@ -3973,7 +3984,7 @@ proc openPreferencesDialog(a) =
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
     DlgWidth  = 430.0
-    DlgHeight = 355.0
+    DlgHeight = 390.0
     TabWidth  = 360.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
@@ -3985,7 +3996,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  let tabLabels = @["Startup", "General", "Editing"]
+  let tabLabels = @["General", "Interface", "Editing"]
 
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
@@ -4001,7 +4012,46 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   lp.labelWidth = 220
   koi.initAutoLayout(lp)
 
-  if dlg.activeTab == 0:  # Startup
+  if dlg.activeTab == 0:  # General
+    group:
+      koi.label("Load last map", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.loadLastMap, style = a.theme.checkBoxStyle)
+
+    group:
+      let autosaveDisabled = not dlg.autosave
+
+      koi.label("Autosave", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.autosave, style = a.theme.checkBoxStyle)
+
+      koi.label("Autosave frequency (minutes)",
+                state = if autosaveDisabled: wsDisabled else: wsNormal,
+                style=a.theme.labelStyle)
+
+      koi.nextItemWidth(DlgNumberWidth)
+      koi.textField(
+        dlg.autosaveFreqMins,
+        activate = dlg.activateFirstTextField,
+        disabled = autosaveDisabled,
+        constraint = TextFieldConstraint(
+          kind:   tckInteger,
+          minInt: AutosaveFreqMinsLimits.minInt,
+          maxInt: AutosaveFreqMinsLimits.maxInt
+        ).some,
+        style = a.theme.textFieldStyle
+      )
+
+    group:
+      koi.label("Check for updates", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.checkForUpdates, style=a.theme.checkBoxStyle)
+
+
+  elif dlg.activeTab == 1:  # Interface
     group:
       koi.label("Show splash image", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
@@ -4036,51 +4086,26 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       )
 
     group:
-      koi.label("Load last map", style=a.theme.labelStyle)
+      koi.label("Scale factor (percentage)", style=a.theme.labelStyle)
 
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.loadLastMap, style = a.theme.checkBoxStyle)
+      var st = koi.getDefaultSliderStyle()
+      st.valuePrecision = 0
 
-
-  elif dlg.activeTab == 1:  # General
-    group:
-      let autosaveDisabled = not dlg.autosave
-
-      koi.label("Autosave", style=a.theme.labelStyle)
-
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.autosave, style = a.theme.checkBoxStyle)
-
-      koi.label("Autosave frequency (minutes)",
-                state = if autosaveDisabled: wsDisabled else: wsNormal,
-                style=a.theme.labelStyle)
-
-      koi.nextItemWidth(DlgNumberWidth)
-      koi.textField(
-        dlg.autosaveFreqMins,
-        activate = dlg.activateFirstTextField,
-        disabled = autosaveDisabled,
-        constraint = TextFieldConstraint(
-          kind:   tckInteger,
-          minInt: AutosaveFreqMinsLimits.minInt,
-          maxInt: AutosaveFreqMinsLimits.maxInt
-        ).some,
-        style = a.theme.textFieldStyle
+      koi.nextItemWidth(120)
+      koi.horizSlider(
+        startVal = UIScaleFactorLimits.minInt,
+        endVal   = UIScaleFactorLimits.maxInt,
+        dlg.scaleFactor,
+        style = st
       )
 
-    group:
       koi.label("Vertical sync", style=a.theme.labelStyle)
 
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.vsync, style=a.theme.checkBoxStyle)
 
-      koi.label("Check for updates", style=a.theme.labelStyle)
-
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.checkForUpdates, style=a.theme.checkBoxStyle)
-
-    when defined(macosx):
-      group:
+    group:
+      when defined(macosx):
         koi.label("Shortcut modifier keys", style=a.theme.labelStyle)
         koi.nextItemWidth(135)
 
@@ -4088,9 +4113,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
           fmt"Ctrl, Ctrl{HairSp}+{HairSp}Alt",
           fmt"Cmd, Cmd{HairSp}+{HairSp}Shift"
         ]
-
-        koi.dropDown(items, dlg.modifierKeyMode,
-                     style=a.theme.dropDownStyle)
+        koi.dropDown(items, dlg.modifierKeyMode, style=a.theme.dropDownStyle)
 
 
   elif dlg.activeTab == 2:  # Editing
@@ -4118,17 +4141,14 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.openEndedExcavate, style=a.theme.checkBoxStyle)
 
+
   koi.endView()
 
 
   proc okAction(dlg: PreferencesDialogParams; a) =
-    # Startup
-    a.prefs.showSplash         = dlg.showSplash
-    a.prefs.autoCloseSplash    = dlg.autoCloseSplash
-    a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
+    # General
     a.prefs.loadLastMap        = dlg.loadLastMap
 
-    # General
     let
       autosaveTurnedOn = not a.prefs.autosave and dlg.autosave
       oldFreqMins      = a.prefs.autosaveFreqMins
@@ -4136,7 +4156,6 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
     a.prefs.autosave           = dlg.autosave
     a.prefs.autosaveFreqMins   = newFreqMins
-    a.prefs.vsync              = dlg.vsync
 
     if a.prefs.autosave:
       if autosaveTurnedOn or oldFreqMins != newFreqMins:
@@ -4145,12 +4164,22 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     else:
       appEvents.disableAutoSave()
 
+    a.prefs.checkForUpdates    = dlg.checkForUpdates
+
     if not a.prefs.checkForUpdates and dlg.checkForUpdates:
       # Check for updates was just enabled
       initVersionChecking(a)
       appEvents.fetchLatestVersion()
 
-    a.prefs.checkForUpdates    = dlg.checkForUpdates
+
+    # Interface
+    a.prefs.showSplash         = dlg.showSplash
+    a.prefs.autoCloseSplash    = dlg.autoCloseSplash
+    a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
+
+    a.prefs.scaleFactor        = dlg.scaleFactor.float / 100
+    a.prefs.vsync              = dlg.vsync
+
     a.prefs.modifierKeyMode    = cast[ModifierKeyMode](dlg.modifierKeyMode)
 
     # Editing
@@ -4161,6 +4190,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.openEndedExcavate  = dlg.openEndedExcavate
 
     saveAppConfig(a)
+    updateUIScaleFactor(a)
     setSwapInterval(a)
     updateWalkKeys(a)
     updateShortcuts(a)
@@ -8011,8 +8041,8 @@ proc renderLevelDropdown(a) =
   alias(map, a.doc.map)
 
   let
-    cur        = a.ui.cursor
-    mainPane   = mainPaneRect(a)
+    cur      = a.ui.cursor
+    mainPane = mainPaneRect(a)
 
   var sortedLevelIdx = map.sortedLevelIds.find(cur.levelId)
   assert sortedLevelIdx > -1
@@ -10541,8 +10571,7 @@ proc initPreferences(cfg: HoconNode; a) =
   with a.prefs:
     showSplash = prefs.getBoolOrDefault("splash.show-at-startup", true)
 
-    autoCloseSplash = prefs.getBoolOrDefault("splash.auto-close.enabled",
-                                             false)
+    autoCloseSplash = prefs.getBoolOrDefault("splash.auto-close.enabled", false)
 
     splashTimeoutSecs = prefs.getNaturalOrDefault(
                           "splash.auto-close.timeout-secs", 3
@@ -10556,6 +10585,9 @@ proc initPreferences(cfg: HoconNode; a) =
                        ).limit(AutosaveFreqMinsLimits)
 
     vsync = prefs.getBoolOrDefault("video.vsync", true)
+
+    scaleFactor = prefs.getIntOrDefault("video.scale-factor-percentage", 100)
+                       .limit(UIScaleFactorLimits).float / 100
 
     checkForUpdates = prefs.getBoolOrDefault("check-for-updates", true)
 
@@ -10724,6 +10756,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   a.splash.show = not hideSplash and a.prefs.showSplash
   a.splash.t0 = getMonoTime()
+
+  updateUIScaleFactor(a)
   setSwapInterval(a)
 
   a.updateUI = true
@@ -10763,7 +10797,7 @@ proc cleanup(a) =
     a.logFile.close
 
 # }}}
-# {{{ crashHandler() =
+# {{{ crashHandler()
 
 when not defined(DEBUG):
 

@@ -95,7 +95,7 @@ proc title*(win): string =
 
 proc `title=`*(win; title: string) =
   if win.title != title:
-    win.title = title
+    win.title   = title
     win.w.title = title
 
 proc pos*(win): tuple[x, y: int32] =
@@ -106,6 +106,9 @@ proc `pos=`*(win; pos: tuple[x, y: int32]) =
 
 proc size*(win): tuple[w, h: int32] =
   win.w.size
+
+proc canvasSize*(win): tuple[w, h: float] =
+  (koi.winWidth(), koi.winHeight())
 
 proc `size=`*(win; size: tuple[w, h: int32]) =
   win.w.size = size
@@ -359,7 +362,7 @@ proc snapToRight*(win) =
 # }}}
 
 # {{{ renderTitleBar()
-proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
+proc renderTitleBar(win; vg: NVGContext, canvasWidth: float) =
   alias(s, win.theme)
 
   let (bgColor, textColor, modifiedFlagColor, buttonStyle) = if win.w.focused:
@@ -377,7 +380,7 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
 
   koi.addDrawLayer(layerWindowDecoration, vg):
     vg.beginPath
-    vg.rect(0, 0, winWidth.float, TitleBarHeight)
+    vg.rect(0, 0, canvasWidth, TitleBarHeight)
     vg.fillColor(bgColor)
     vg.fill
 
@@ -398,7 +401,7 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
   koi.setCurrentLayer(layerWindowDecoration)
 
   # Minimise/maximise/close window buttons
-  var x = (winWidth - TitleBarWindowButtonsTotalWidth).float
+  var x = (canvasWidth - TitleBarWindowButtonsTotalWidth).float
 
   if koi.button(x, by, bw.float, bh, IconWindowLeft, style=buttonStyle):
     win.snapToLeft
@@ -432,9 +435,12 @@ proc renderTitleBar(win; vg: NVGContext, winWidth: float) =
 # {{{ handleWindowDragEvents()
 proc handleWindowDragEvents(win) =
   let
-    (winWidth, winHeight) = (koi.winWidth(), koi.winHeight())
-    mx = koi.mx()
-    my = koi.my()
+    (winWidth, winHeight) = win.size
+
+    # It's simpler to do the resizing using unscaled mouse coordinates because
+    # we're dealing with the true unscaled window size here.
+    mx = koi.mx() * koi.getScale()
+    my = koi.my() * koi.getScale()
 
   case win.dragState
   of wdsNone:
@@ -605,16 +611,14 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   # For pre-rendering stuff into FBOs before the main frame starts
   g_renderFramePreProc(win)
 
-  # Main frame drawing starts
-  let (winWidth, winHeight) = win.size
-  let (fbWidth, fbHeight) = win.framebufferSize
+  koi.beginFrame()
 
-  koi.beginFrame(winWidth, winHeight, fbWidth, fbHeight)
+  let (canvasWidth, canvasHeight) = win.canvasSize
 
   # Render title bar must precede the window drag event handler because of
   # the overlapping button/resize handle areas
   if win.showTitleBar:
-    renderTitleBar(win, vg, winWidth.float)
+    renderTitleBar(win, vg, canvasWidth)
 
   handleWindowDragEvents(win)
 
@@ -629,7 +633,7 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   # Window border
   koi.addDrawLayer(layerWindowDecoration, vg):
     vg.beginPath
-    vg.rect(0.5, 0.5, winWidth.float-1, winHeight.float-1)
+    vg.rect(0.5, 0.5, canvasWidth-1, canvasHeight-1)
     vg.strokeColor(win.theme.borderColor)
     vg.strokeWidth(1.0)
     vg.stroke
