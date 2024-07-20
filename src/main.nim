@@ -2391,9 +2391,17 @@ proc setSwapInterval(a) =
   glfw.swapInterval(if a.prefs.vsync: 1 else: 0)
 
 # }}}
+# {{{ getFinalUIScaleFactor()
+proc getFinalUIScaleFactor(a): float =
+  when defined(macosx):
+    a.prefs.scaleFactor
+  else:
+    a.win.contentScale.xScale * a.prefs.scaleFactor
+
+# }}}
 # {{{ updateUIScaleFactor()
 proc updateUIScaleFactor(a) =
-  koi.setScale(a.prefs.scaleFactor)
+  koi.setScale(getFinalUIScaleFactor(a))
 
 # }}}
 
@@ -3044,9 +3052,11 @@ proc updateTheme(a) =
   a.theme.windowTheme = cfg.getObjectOrEmpty("ui.window").toWindowTheme
   a.win.theme = a.theme.windowTheme
 
-  a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelTheme, a.vg,
-                                           scaleFactor = a.prefs.scaleFactor,
-                                           pxRatio = koi.getPxRatio())
+  a.ui.drawLevelParams.initDrawLevelParams(
+    a.theme.levelTheme, a.vg,
+    scaleFactor = getFinalUIScaleFactor(a),
+    pxRatio = koi.getPxRatio()
+  )
 
 # }}}
 # {{{ switchTheme()
@@ -10159,6 +10169,12 @@ proc renderUI(a) =
 
 # }}}
 
+# {{{ windowContentScaleCb()
+proc windowContentScaleCb(window: Window, width, height: float) =
+  g_app.updateUIScaleFactor()
+  g_app.updateUI = true
+
+# }}}
 # {{{ renderFramePreCb()
 proc renderFramePreCb(a) =
 
@@ -10788,7 +10804,10 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   # Init window
   a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePreCb(g_app)
-  a.win.renderFrameCb = proc (win: CSDWindow) = renderFrameCb(g_app)
+  a.win.renderFrameCb    = proc (win: CSDWindow) = renderFrameCb(g_app)
+
+  when not defined(macosx):
+    a.win.contentScaleCb = windowContentScaleCb
 
   a.win.dropCb = dropCb
 

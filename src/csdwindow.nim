@@ -257,7 +257,7 @@ proc setTheme(win; s: WindowTheme) =
     label.colorDown  = s.buttonInactiveColor
 
 # }}}
-# # {{{ theme*
+# # {{{ theme=*
 proc `theme=`*(win; s: WindowTheme) =
   win.setTheme(s)
 
@@ -648,15 +648,20 @@ proc renderFrame*(win: CSDWindow, vg: NVGContext) =
   koi.endFrame()
 
 # }}}
-# {{{ renderFramePreCb*
+# {{{ renderFramePreCb=*
 proc `renderFramePreCb=`*(win; p: RenderFramePreProc) =
   g_renderFramePreProc = p
 
 # }}}
-# {{{ renderFrameCb*
+# {{{ renderFrameCb=*
 proc `renderFrameCb=`*(win; p: RenderFrameProc) =
   g_window = win
   g_renderFrameProc = p
+
+# }}}
+# {{{ contentScaleCb=*
+proc `contentScaleCb=`*(win; cb: WindowContentScaleCb) =
+  win.w.windowContentScaleCb = cb
 
 # }}}
 
