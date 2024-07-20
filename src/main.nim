@@ -651,6 +651,7 @@ type
     radioButtonStyle:         RadioButtonsStyle
     dropDownStyle:            DropDownStyle
     checkBoxStyle:            CheckboxStyle
+    sliderStyle:              SliderStyle
     textFieldStyle:           TextFieldStyle
     textAreaStyle:            TextAreaStyle
     dialogStyle:              DialogStyle
@@ -2851,6 +2852,26 @@ proc updateWidgetStyles(a) =
     iconActive            = IconCheck
     iconInactive          = NoIcon
 
+  # Slider
+  a.theme.sliderStyle = koi.getDefaultSliderStyle()
+
+  with a.theme.sliderStyle:
+    trackFillColor        = w.getColorOrDefault("background.normal")
+    trackFillColorHover   = w.getColorOrDefault("background.hover")
+    trackFillColorDown    = trackFillColor
+
+    sliderColor           = w.getColorOrDefault("background.active")
+    sliderColorHover      = sliderColor
+    sliderColorDown       = sliderColor
+
+    valuePrecision        = 0
+
+    label = labelStyle.deepCopy
+    label.align = haCenter
+
+    value = labelStyle.deepCopy
+    value.align = haCenter
+
   # Dialog style
   a.theme.dialogStyle = koi.getDefaultDialogStyle()
 
@@ -4088,15 +4109,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     group:
       koi.label("Scale factor (percentage)", style=a.theme.labelStyle)
 
-      var st = koi.getDefaultSliderStyle()
-      st.valuePrecision = 0
-
       koi.nextItemWidth(120)
       koi.horizSlider(
         startVal = UIScaleFactorLimits.minInt,
         endVal   = UIScaleFactorLimits.maxInt,
         dlg.scaleFactor,
-        style = st
+        style = a.theme.sliderStyle
       )
 
       koi.label("Vertical sync", style=a.theme.labelStyle)
