@@ -49,9 +49,9 @@ type
     resizeDir:           WindowResizeDir
     mx0, my0:            float
     posX0, posY0:        int
-    size0:               tuple[w, h: int32]
-    unmaximizedPos:      tuple[x, y: int32]
-    unmaximizedSize:     tuple[w, h: int32]
+    size0:               tuple[w, h: int]
+    unmaximizedPos:      tuple[x, y: int]
+    unmaximizedSize:     tuple[w, h: int]
 
     oldFocusCaptured, focusCaptured: bool
 
@@ -98,22 +98,25 @@ proc `title=`*(win; title: string) =
     win.title   = title
     win.w.title = title
 
-proc pos*(win): tuple[x, y: int32] =
+proc pos*(win): tuple[x, y: int] =
   win.w.pos
 
-proc `pos=`*(win; pos: tuple[x, y: int32]) =
+proc `pos=`*(win; pos: tuple[x, y: int]) =
   win.w.pos = pos
 
-proc size*(win): tuple[w, h: int32] =
+proc size*(win): tuple[w, h: int] =
   win.w.size
+
+proc contentScale*(win): tuple[xScale, yScale: float] =
+  win.w.contentScale
 
 proc canvasSize*(win): tuple[w, h: float] =
   (koi.winWidth(), koi.winHeight())
 
-proc `size=`*(win; size: tuple[w, h: int32]) =
+proc `size=`*(win; size: tuple[w, h: int]) =
   win.w.size = size
 
-proc framebufferSize*(win): tuple[w, h: int32] =
+proc framebufferSize*(win): tuple[w, h: int] =
   win.w.framebufferSize
 
 proc cursorPos*(win): tuple[x, y: float64] =
@@ -127,6 +130,9 @@ proc hide*(win) =
 
 proc focus*(win) =
   win.w.focus
+
+proc requestAttention*(win) =
+  win.w.requestAttention
 
 proc restore*(win) =
   win.w.restore
@@ -161,7 +167,7 @@ proc workAreaRect(m: Monitor): Rect[int] =
 
 # }}}
 # {{{ findMonitorByCoord()
-proc findMonitorByCoord(x, y: int32): Monitor =
+proc findMonitorByCoord(x, y: int): Monitor =
   for m in monitors():
     let r = m.workAreaRect
     if r.contains(x, y):
@@ -300,18 +306,18 @@ proc titleBarHeight*(win): float =
 
 # }}}
 # {{{ unmaximizedPos*
-proc unmaximizedPos*(win): tuple[x, y: int32] =
+proc unmaximizedPos*(win): tuple[x, y: int] =
   win.unmaximizedPos
 
-proc `unmaximizedPos=`*(win; pos: tuple[x, y: int32]) =
+proc `unmaximizedPos=`*(win; pos: tuple[x, y: int]) =
   win.unmaximizedPos = pos
 
 # }}}
 # {{{ unmaximizedSize*
-proc unmaximizedSize*(win): tuple[w, h: int32] =
+proc unmaximizedSize*(win): tuple[w, h: int] =
   win.unmaximizedSize
 
-proc `unmaximizedSize=`*(win; size: tuple[w, h: int32]) =
+proc `unmaximizedSize=`*(win; size: tuple[w, h: int]) =
   win.unmaximizedSize = size
 
 # }}}
@@ -505,7 +511,7 @@ proc handleWindowDragEvents(win) =
           let oldWidth = win.unmaximizedSize.w
 
           # The restored window is centered horizontally around the cursor.
-          (win.posX0, win.posY0) = ((mx - oldWidth * 0.5).int32, 0)
+          (win.posX0, win.posY0) = ((mx - oldWidth * 0.5).int, 0)
 
           # Fake the last horizontal cursor position to be at the middle of
           # the restored window's width. This is needed so when we're in the
@@ -540,8 +546,8 @@ proc handleWindowDragEvents(win) =
   of wdsResizing:
     if koi.mbLeftDown():
       let
-        dx = (mx - win.mx0).int32
-        dy = (my - win.my0).int32
+        dx = (mx - win.mx0).int
+        dy = (my - win.my0).int
 
       var
         (newX, newY) = (win.posX0, win.posY0)

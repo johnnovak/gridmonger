@@ -537,8 +537,8 @@ type
     showToolsPane:       bool
     showThemeEditor:     bool
 
-    windowPos:           tuple[x, y: int32]
-    windowSize:          tuple[w, h: int32]
+    windowPos:           tuple[x, y: int]
+    windowSize:          tuple[w, h: int]
     maximized:           bool
     showTitleBar:        bool
 
@@ -10252,7 +10252,7 @@ proc renderFrameSplash(a) =
     (fbWidth, fbHeight) = s.win.framebufferSize
     pxRatio = fbWidth.float / winWidth.float
 
-  glViewport(0, 0, fbWidth, fbHeight)
+  glViewport(0, 0, fbWidth.GLsizei, fbHeight.GLsizei)
 
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
@@ -10373,8 +10373,8 @@ proc showSplash(a) =
   alias(s, g_app.splash)
 
   let (_, _, maxWidth, maxHeight) = g_app.win.findCurrentMonitor().workArea
-  let w = (maxWidth * 0.6).int32
-  let h = (w/s.logo.width * s.logo.height).int32
+  let w = (maxWidth * 0.6).int
+  let h = (w/s.logo.width * s.logo.height).int
 
   s.win.size = (w, h)
   s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
@@ -10839,7 +10839,7 @@ when not defined(DEBUG):
 
 # {{{ handleFocusEvent()
 proc handleFocusEvent(event: AppEvent; a) =
-  a.win.focus
+  a.win.requestAttention
 
 # }}}
 # {{{ handleOpenFileEvent()
