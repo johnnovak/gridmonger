@@ -27,7 +27,7 @@ const
   UltraThinStrokeWidth = 1.0
 
   MinLineHatchSize = 3
-  MaxLineHatchSize = 8
+  MaxLineHatchSize = 13
 
   DefaultIconFontSizeFactor = 0.53
 
@@ -229,12 +229,20 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
                           elif zl <= 40: 15
                           else:          16
 
-  dp.lineHatchSize = if   zl ==  1: 3
-                     elif zl <=  5: 4
-                     elif zl <=  9: 5
-                     elif zl <= 12: 6
-                     elif zl <= 17: 7
-                     else:          8
+  dp.lineHatchSize = if   zl ==  1:  3
+                     elif zl <=  5:  4
+                     elif zl <=  9:  5
+                     elif zl <= 12:  6
+                     elif zl <= 17:  7
+                     elif zl <= 22:  8
+                     elif zl <= 27:  9
+                     elif zl <= 32: 10
+                     elif zl <= 37: 11
+                     elif zl <= 42: 12
+                     else:          13
+
+  assert dp.lineHatchSize >= MinLineHatchSize
+  assert dp.lineHatchSize <= MaxLineHatchSize
 
   dp.linkLineStrokeWidth = dp.gridsize / 8
 
@@ -369,7 +377,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, scaleFactor, pxRatio: float,
     var image = vg.renderToImage(
       width  = sp.int,
       height = sp.int,
-      koi.getPxRatio(),
+      pxRatio,
       {ifRepeatX, ifRepeatY}
     ):
       var sw: float
@@ -389,9 +397,10 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, scaleFactor, pxRatio: float,
       vg.strokeWidth(sw)
 
       vg.beginPath
-      for i in 0..10:
-        vg.moveTo(-2, i*sp + 2)
-        vg.lineTo(i*sp + 2, -2)
+      let offs = sp * 0.25
+      for i in 0..2:
+        vg.moveTo(-offs, i*sp + offs)
+        vg.lineTo(i*sp + offs, -offs)
       vg.stroke
 
       vg.shapeAntiAlias(true)
