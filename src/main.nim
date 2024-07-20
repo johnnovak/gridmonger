@@ -4018,7 +4018,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   var x = DlgLeftPad
   var y = DlgTopPad
 
-  let tabLabels = @["General", "Interface", "Editing"]
+  let tabLabels = @["General", "Editing", "Interface"]
 
   koi.radioButtons(
     (DlgWidth - TabWidth) * 0.5, y, TabWidth, DlgItemHeight,
@@ -4073,7 +4073,33 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.checkBox(dlg.checkForUpdates, style=a.theme.checkBoxStyle)
 
 
-  elif dlg.activeTab == 1:  # Interface
+  elif dlg.activeTab == 1:  # Editing
+    group:
+      koi.label("Movement wraparound", style=a.theme.labelStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.movementWraparound, style=a.theme.checkBoxStyle)
+
+      koi.label("YUBN diagonal movement",
+                 style=a.theme.labelStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.yubnMovementKeys, style=a.theme.checkBoxStyle)
+
+      koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
+      koi.nextItemWidth(70)
+      koi.dropDown(dlg.walkCursorMode, style=a.theme.dropDownStyle)
+
+    group:
+      koi.label("Display link lines", style=a.theme.labelStyle)
+      koi.nextItemWidth(120)
+      koi.dropDown(dlg.linkLinesMode, style=a.theme.dropDownStyle)
+
+    group:
+      koi.label("Open-ended exacavate", style=a.theme.labelStyle)
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.openEndedExcavate, style=a.theme.checkBoxStyle)
+
+
+  elif dlg.activeTab == 2:  # Interface
     group:
       koi.label("Show splash image", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
@@ -4110,7 +4136,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     group:
       koi.label("Scale factor (percentage)", style=a.theme.labelStyle)
 
-      koi.nextItemWidth(120)
+      koi.nextItemWidth(135)
       koi.horizSlider(
         startVal = UIScaleFactorLimits.minInt,
         endVal   = UIScaleFactorLimits.maxInt,
@@ -4133,32 +4159,6 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
           fmt"Cmd, Cmd{HairSp}+{HairSp}Shift"
         ]
         koi.dropDown(items, dlg.modifierKeyMode, style=a.theme.dropDownStyle)
-
-
-  elif dlg.activeTab == 2:  # Editing
-    group:
-      koi.label("Movement wraparound", style=a.theme.labelStyle)
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.movementWraparound, style=a.theme.checkBoxStyle)
-
-      koi.label("YUBN diagonal movement",
-                 style=a.theme.labelStyle)
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.yubnMovementKeys, style=a.theme.checkBoxStyle)
-
-      koi.label("Walk mode Left/Right keys", style=a.theme.labelStyle)
-      koi.nextItemWidth(70)
-      koi.dropDown(dlg.walkCursorMode, style=a.theme.dropDownStyle)
-
-    group:
-      koi.label("Display link lines", style=a.theme.labelStyle)
-      koi.nextItemWidth(120)
-      koi.dropDown(dlg.linkLinesMode, style=a.theme.dropDownStyle)
-
-    group:
-      koi.label("Open-ended exacavate", style=a.theme.labelStyle)
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.openEndedExcavate, style=a.theme.checkBoxStyle)
 
 
   koi.endView()
