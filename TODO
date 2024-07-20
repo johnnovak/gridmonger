@@ -9,6 +9,12 @@ BUGS
 
 - floor type doors are slightly off-center
 
+- cell hatch pattern has artifacts; should render an oversized image then use
+  a sub-image to create the pattern (but nanovg doesn't have a create
+  sub-image function)
+
+- about dialog image is blurred at higher scaling factors
+
 
 TODO
 ====
