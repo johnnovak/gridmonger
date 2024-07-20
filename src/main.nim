@@ -2756,7 +2756,7 @@ proc updateWidgetStyles(a) =
     buttonCornerRadius      = w.getFloatOrDefault("corner-radius")
     buttonFillColor         = w.getColorOrDefault("background.normal")
     buttonFillColorHover    = w.getColorOrDefault("background.hover")
-    buttonFillColorDown     = w.getColorOrDefault("background.active")
+    buttonFillColorDown     = buttonFillColor
     buttonFillColorDisabled = w.getColorOrDefault("background.disabled")
 
     label          = labelStyle.deepCopy
@@ -2921,7 +2921,7 @@ proc updateWidgetStyles(a) =
     color     = d.getColorOrDefault("error")
     multiLine = true
 
-  # Level drop-down
+  # Level drop down
   let ld = cfg.getObjectOrEmpty("level.level-drop-down")
 
   a.theme.levelDropDownStyle = koi.getDefaultDropDownStyle()
