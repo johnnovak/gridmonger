@@ -381,15 +381,17 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, scaleFactor, pxRatio: float,
       {ifRepeatX, ifRepeatY}
     ):
       var sw: float
-      # TODO refine
-      if pxRatio == 1.0:
+
+      if scaleFactor == 1.0 and pxRatio == 1.0:
+        # Make hatch patterns appear sharper on non-high-DPI displays
         if spacing <= 4:
           sw = 1.0
           vg.shapeAntiAlias(false)
         else:
           sw = 0.8
       else:
-        sw = 2.0
+        # On high-DPI displays, pxRatio is at least 2.0
+        sw = pxRatio
 
       sw *= scaleFactor
 
