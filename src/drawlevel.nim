@@ -356,7 +356,7 @@ proc formatRowCoord*(row: Natural, numRows: Natural,
 # }}}
 
 # {{{ renderLineHatchPatterns()
-proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
+proc renderLineHatchPatterns(dp; vg: NVGContext, scaleFactor, pxRatio: float,
                              strokeColor: Color,
                              lineHatchPatterns: var LineHatchPatterns) =
 
@@ -370,6 +370,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
       {ifRepeatX, ifRepeatY}
     ):
       var sw: float
+      # TODO refine
       if pxRatio == 1.0:
         if spacing <= 4:
           sw = 1.0
@@ -379,13 +380,15 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
       else:
         sw = 2.0
 
+      sw *= scaleFactor
+
       vg.strokeColor(strokeColor)
       vg.strokeWidth(sw)
 
       vg.beginPath
       for i in 0..10:
-        vg.moveTo(-2, i*sp + 2.0)
-        vg.lineTo(i*sp + 2.0, -2)
+        vg.moveTo(-2, i*sp + 2)
+        vg.lineTo(i*sp + 2, -2)
       vg.stroke
 
       vg.shapeAntiAlias(true)
@@ -398,7 +401,7 @@ proc renderLineHatchPatterns(dp; vg: NVGContext, pxRatio: float,
 
 # }}}
 # {{{ initDrawLevelParams
-proc initDrawLevelParams*(dp; lt; vg: NVGContext, pxRatio: float) =
+proc initDrawLevelParams*(dp; lt; vg: NVGContext, scaleFactor, pxRatio: float) =
   for paint in dp.cellLineHatchPatterns:
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
@@ -411,13 +414,16 @@ proc initDrawLevelParams*(dp; lt; vg: NVGContext, pxRatio: float) =
     if paint.image != NoImage:
       vg.deleteImage(paint.image)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, lt.foregroundNormalNormalColor,
+  renderLineHatchPatterns(dp, vg, scaleFactor, pxRatio,
+                          lt.foregroundNormalNormalColor,
                           dp.cellLineHatchPatterns)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, lt.foregroundNormalCursorColor,
+  renderLineHatchPatterns(dp, vg, scaleFactor, pxRatio,
+                          lt.foregroundNormalCursorColor,
                           dp.cursorLineHatchPatterns)
 
-  renderLineHatchPatterns(dp, vg, pxRatio, lt.outlineColor,
+  renderLineHatchPatterns(dp, vg, scaleFactor, pxRatio,
+                          lt.outlineColor,
                           dp.outlineLineHatchPatterns)
 
   dp.setZoomLevel(lt, dp.zoomLevel)

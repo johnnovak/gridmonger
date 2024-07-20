@@ -3045,7 +3045,8 @@ proc updateTheme(a) =
   a.win.theme = a.theme.windowTheme
 
   a.ui.drawLevelParams.initDrawLevelParams(a.theme.levelTheme, a.vg,
-                                           koi.getPxRatio())
+                                           scaleFactor = a.prefs.scaleFactor,
+                                           pxRatio = koi.getPxRatio())
 
 # }}}
 # {{{ switchTheme()
@@ -4195,7 +4196,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.autoCloseSplash    = dlg.autoCloseSplash
     a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
 
+    let lastScaleFactor = a.prefs.scaleFactor
     a.prefs.scaleFactor        = dlg.scaleFactor.float / 100
+
+    if a.prefs.scaleFactor != lastScaleFactor:
+      a.theme.updateTheme = true
+
     a.prefs.vsync              = dlg.vsync
 
     a.prefs.modifierKeyMode    = cast[ModifierKeyMode](dlg.modifierKeyMode)
