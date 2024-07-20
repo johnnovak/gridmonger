@@ -154,8 +154,6 @@ proc `[]`(b: OutlineBuf, r,c: Natural): OutlineCell =
   assert c < b.cols
   result = b.cells[r*b.cols + c]
 
-# }}}
-
 const
   ViewBufBorder = MaxLabelWidthInCells
 
@@ -163,6 +161,8 @@ using
   lt:  LevelTheme
   dp:  DrawLevelParams
   ctx: DrawLevelContext
+
+# }}}
 
 # {{{ newDrawLevelParams*()
 {.push warning[ProveInit]:off.}
@@ -209,25 +209,25 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
   dp.lineWidth = lt.lineWidth
 
   if dp.lineWidth == lwThin:
-    dp.thinStrokeWidth       = 1.0
-    dp.normalStrokeWidth     = 1.0
-    dp.vertTransformXOffs    = 1.0
-    dp.vertRegionBorderYOffs = 0.0
+    dp.thinStrokeWidth       = 1
+    dp.normalStrokeWidth     = 1
+    dp.vertTransformXOffs    = 1
+    dp.vertRegionBorderYOffs = 0
 
   elif zl < 3 or dp.lineWidth == lwNormal:
-    dp.thinStrokeWidth       =  2.0
-    dp.normalStrokeWidth     =  2.0
-    dp.vertTransformXOffs    =  0.0
-    dp.vertRegionBorderYOffs = -1.0
+    dp.thinStrokeWidth       =  2
+    dp.normalStrokeWidth     =  2
+    dp.vertTransformXOffs    =  0
+    dp.vertRegionBorderYOffs = -1
 
-  dp.cellCoordsFontSize = if   zl <= 2:   9.0
-                          elif zl <= 3:  10.0
-                          elif zl <= 7:  11.0
-                          elif zl <= 11: 12.0
-                          elif zl <= 20: 13.0
-                          elif zl <= 30: 14.0
-                          elif zl <= 40: 15.0
-                          else:          16.0
+  dp.cellCoordsFontSize = if   zl <= 2:   9
+                          elif zl <= 3:  10
+                          elif zl <= 7:  11
+                          elif zl <= 11: 12
+                          elif zl <= 20: 13
+                          elif zl <= 30: 14
+                          elif zl <= 40: 15
+                          else:          16
 
   dp.lineHatchSize = if   zl ==  1: 3
                      elif zl <=  5: 4
@@ -282,8 +282,8 @@ proc cellY(y: int, dp): float =
 
 proc isCursorActive(viewRow, viewCol: Natural, dp): bool =
   dp.selectionBuffer.isNone and
-  dp.viewStartRow + viewRow == dp.cursorRow and
-  dp.viewStartCol + viewCol == dp.cursorCol
+  (dp.viewStartRow + viewRow) == dp.cursorRow and
+  (dp.viewStartCol + viewCol) == dp.cursorCol
 
 proc setVertTransform(x, y: float; ctx) =
   let dp = ctx.dp
@@ -306,14 +306,17 @@ proc toLetterCoord*(x: int): string =
 
   if x < N:
     result = $x.toLetter
+
   elif x < N*N:
     result = (x div N - 1).toLetter & (x mod N).toLetter
+
   elif x < N*N*N:
     let d1 = x mod N
-    var x = x div N
+    var x  = x div N
     let d2 = x mod N
     let d3 = x div N - 1
     result = d3.toLetter & d2.toLetter & d1.toLetter
+
   else:
     result = ""
 
@@ -1241,13 +1244,13 @@ proc setWallStyle(isCursorActive, regionBorder: bool; ctx): (float, float,
 
   let xsOffs = if regionBorder:
                  case lt.lineWidth:
-                 of lwThin: 1.0
+                 of lwThin:   1.0
                  of lwNormal: 0.0
                else: 0.0
 
   let xeOffs = if regionBorder:
                  case lt.lineWidth:
-                 of lwThin: 0.0
+                 of lwThin:    0.0
                  of lwNormal: -1.0
                else: 0.0
 
@@ -1294,9 +1297,9 @@ proc drawIllusoryWallHoriz*(x, y: float; orientation: CardinalDir;
   let (sw, _, _, _) = setWallStyle(isCursorActive, regionBorder, ctx)
 
   let
-    xs = x
-    xe = x + dp.gridSize
-    y = snap(y + regionBorderYAdjustment(orientation, regionBorder, ctx), sw)
+    xs  = x
+    xe  = x + dp.gridSize
+    y   = snap(y + regionBorderYAdjustment(orientation, regionBorder, ctx), sw)
     # TODO make zoom dependent
     len = 2.0
     pad = 7.0
@@ -1324,9 +1327,9 @@ proc drawInvisibleWallHoriz*(x, y: float; orientation: CardinalDir;
   var sw = dp.normalStrokeWidth * 2
   if dp.lineWidth == lwThin: sw *= 2
   let
-    xs = x+sw
-    xe = x + dp.gridSize
-    y = snap(y, sw)
+    xs  = x+sw
+    xe  = x + dp.gridSize
+    y   = snap(y, sw)
     len = 1.0
     pad = sw*2
 
@@ -1533,7 +1536,7 @@ proc drawOneWayDoorHoriz*(x, y: float; orientation: CardinalDir;
     oy = -0.06
   else:
     icon = IconThinArrowDown
-    oy = 0.02
+    oy =  0.02
 
   drawIcon(x, y-dp.gridSize*0.5, ox, oy, icon,
            dp.gridSize, color, fontSizeFactor=0.46, ctx.vg)
