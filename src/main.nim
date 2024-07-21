@@ -2872,8 +2872,6 @@ proc updateWidgetStyles(a) =
     sliderColorHover      = sliderColor
     sliderColorDown       = sliderColor
 
-    valuePrecision        = 0
-
     label = labelStyle.deepCopy
     label.align = haCenter
 
@@ -4144,14 +4142,18 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       )
 
     group:
-      koi.label("Scale factor (percentage)", style=a.theme.labelStyle)
+      koi.label("Interface scaling", style=a.theme.labelStyle)
+
+      var st = a.theme.sliderStyle
+      st.valuePrecision = 0
+      st.valueSuffix    = "%"
 
       koi.nextItemWidth(135)
       koi.horizSlider(
         startVal = UIScaleFactorLimits.minInt,
         endVal   = UIScaleFactorLimits.maxInt,
         dlg.scaleFactor,
-        style = a.theme.sliderStyle
+        style = st
       )
 
       koi.label("Vertical sync", style=a.theme.labelStyle)
