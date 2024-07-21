@@ -4246,6 +4246,8 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 
     closeDialog(a)
 
+    setStatusMessage(IconCog, "Preferences updated", a)
+
 
   proc cancelAction(a) =
     closeDialog(a)
