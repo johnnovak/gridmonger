@@ -1083,12 +1083,19 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
 
       scSetFloorColor.sc,       "Set floor colour".desc,
       scPickFloorColor.sc,      "Pick floor colour".desc,
+
+      @[KeyShortcut(key: key1, mods: {a.keys.primaryModKey}),
+        KeyShortcut(key: key9, mods: {})].sc(sepa='-'),
+      "Set floor colour 1-9".desc,
+
+      scSelectFloorColor10.sc,  "Set floor colour 10".desc,
+
       QuickRefSepa,
 
+      scEraseTrail.sc,          "Erase trail".desc,
       scToggleDrawTrail.sc,     "Toggle trail mode".desc,
       scExcavateTrail.sc,       "Excavate trail in current level".desc,
       scClearTrail.sc,          "Clear trail in current level".desc,
-      scEraseTrail.sc,          "Erase trail".desc,
       QuickRefSepa,
 
       scMarkSelection.sc,       "Enter select (mark) mode".desc,
@@ -1098,12 +1105,12 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
 
       scEditNote.sc,            "Add or edit note".desc,
       scEraseNote.sc,           "Erase note".desc,
+    ],
+    @[
       scEditLabel.sc,           "Add or edit label".desc,
       scEraseLabel.sc,          "Erase label".desc,
       QuickRefSepa,
 
-    ],
-    @[
       scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
       scLinkCell.sc,            "Set link destination".desc,
       QuickRefSepa,
@@ -1150,7 +1157,6 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       scSelectSpecialWall10.sc, "Set special wall: Statue".desc,
       scSelectSpecialWall11.sc, "Set special wall: Keyhole".desc,
       scSelectSpecialWall12.sc, "Set special wall: Writing".desc,
-      QuickRefSepa,
     ]
   ]
 
@@ -1175,7 +1181,7 @@ func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
       "Move between tabs in dialog".desc,
 
       @[KeyShortcut(key: key1, mods: {mkCtrl}),
-        KeyShortcut(key: key9, mods: {mkCtrl})].sc(sepa='-'),
+        KeyShortcut(key: key9, mods: {})].sc(sepa='-'),
       "Select tab 1-9 in dialog".desc,
 
       QuickRefSepa,
@@ -9966,7 +9972,7 @@ proc renderQuickReference(x, y, w, h: float; a) =
   let (viewHeight, col1Width, col2Width) = case a.quickRef.activeTab
   of 0: (520.0, DefaultColWidth, DefaultColWidth)
   of 1: (655.0, DefaultColWidth, DefaultColWidth)
-  else: (300.0, DefaultColWidth, DefaultColWidth  + 20)
+  else: (300.0, DefaultColWidth, DefaultColWidth)
 
   koi.addDrawLayer(koi.currentLayer(), vg):
     let itemColumns = a.keys.quickRefShortcuts[a.quickRef.activeTab]
