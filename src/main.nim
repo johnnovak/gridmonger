@@ -4222,7 +4222,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
 
     let lastScaleFactor = a.prefs.scaleFactor
-    a.prefs.scaleFactor        = round(dlg.scalePercentage.float / 100)
+    a.prefs.scaleFactor        = round(dlg.scalePercentage) / 100
 
     if a.prefs.scaleFactor != lastScaleFactor:
       a.theme.updateTheme = true
