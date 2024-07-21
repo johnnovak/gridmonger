@@ -3192,8 +3192,8 @@ proc saveAppConfig(a) =
   cfg.set(p & "editing.link-lines-mode",
           enumToDashCase($a.prefs.linkLinesMode))
 
-  cfg.set(p & "video.vsync",                    a.prefs.vsync)
-  cfg.set(p & "video.scale-factor-percentage",  (a.prefs.scaleFactor * 100).int)
+  cfg.set(p & "interface.vsync",                a.prefs.vsync)
+  cfg.set(p & "interface.scale-percentage",    (a.prefs.scaleFactor * 100).int)
 
   cfg.set(p & "check-for-updates",              a.prefs.checkForUpdates)
 
@@ -10632,9 +10632,9 @@ proc initPreferences(cfg: HoconNode; a) =
                          "auto-save.frequency-mins", 2
                        ).limit(AutosaveFreqMinsLimits)
 
-    vsync = prefs.getBoolOrDefault("video.vsync", true)
+    vsync = prefs.getBoolOrDefault("interface.vsync", true)
 
-    scaleFactor = prefs.getIntOrDefault("video.scale-factor-percentage", 100)
+    scaleFactor = prefs.getIntOrDefault("interface.scale-percentage", 100)
                        .limit(UIScaleFactorLimits).float / 100
 
     checkForUpdates = prefs.getBoolOrDefault("check-for-updates", true)
