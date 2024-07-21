@@ -341,6 +341,8 @@ type AppShortcut = enum
   scRestoreLayout3
   scRestoreLayout4
 
+  scResetUIScaling
+
   # Misc
   scShowAboutDialog
   scOpenUserManual
@@ -1175,6 +1177,9 @@ func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
       scRestoreLayout2.sc, "Restore window layout 2".desc,
       scRestoreLayout3.sc, "Restore window layout 3".desc,
       scRestoreLayout4.sc, "Restore window layout 4".desc,
+      QuickRefSepa,
+
+      scResetUIScaling.sc, "Reset interface scaling".desc
     ],
     @[
       @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}"].csc,
@@ -1183,7 +1188,6 @@ func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
       @[KeyShortcut(key: key1, mods: {mkCtrl}),
         KeyShortcut(key: key9, mods: {})].sc(sepa='-'),
       "Select tab 1-9 in dialog".desc,
-
       QuickRefSepa,
 
       KeyShortcut(key: keyTab, mods: {mkShift}).sc,
@@ -1503,6 +1507,8 @@ let DefaultAppShortcuts = {
   scRestoreLayout2:        @[mkKeyShortcut(keyF6,         {})],
   scRestoreLayout3:        @[mkKeyShortcut(keyF7,         {})],
   scRestoreLayout4:        @[mkKeyShortcut(keyF8,         {})],
+
+  scResetUIScaling:        @[mkKeyShortcut(keyF11,        {mkCtrl})],
 
   # Misc
   scShowAboutDialog:       @[mkKeyShortcut(keyA,          {mkCtrl})],
@@ -2408,6 +2414,7 @@ proc getFinalUIScaleFactor(a): float =
 # {{{ updateUIScaleFactor()
 proc updateUIScaleFactor(a) =
   koi.setScale(getFinalUIScaleFactor(a))
+  a.theme.updateTheme = true
 
 # }}}
 
@@ -7434,6 +7441,11 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scRestoreLayout3, a): restoreLayout(2, a)
       elif ke.isShortcutDown(scRestoreLayout4, a): restoreLayout(3, a)
 
+      elif ke.isShortcutDown(scResetUIScaling, a):
+        a.prefs.scaleFactor = 1.0
+        updateUIScaleFactor(a)
+        setStatusMessage("Interface scaling reset to default", a)
+
     # }}}
     # {{{ emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor, emColorFloor
     of emExcavateTunnel, emEraseCell, emEraseTrail, emDrawClearFloor,
@@ -10178,7 +10190,7 @@ proc renderUI(a) =
 # }}}
 
 # {{{ windowContentScaleCb()
-proc windowContentScaleCb(window: Window, width, height: float) =
+proc windowContentScaleCb(window: Window, xscale, yscale: float) =
   g_app.updateUIScaleFactor()
   g_app.updateUI = true
 
@@ -10807,8 +10819,6 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
 
   updateUIScaleFactor(a)
   setSwapInterval(a)
-
-  a.updateUI = true
 
   # Init window
   a.win.renderFramePreCb = proc (win: CSDWindow) = renderFramePreCb(g_app)
