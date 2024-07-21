@@ -4026,9 +4026,9 @@ proc openPreferencesDialog(a) =
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
   const
-    DlgWidth  = 430.0
-    DlgHeight = 390.0
-    TabWidth  = 360.0
+    DlgWidth  = 440.0
+    DlgHeight = 420.0
+    TabWidth  = 380.0
 
   koi.beginDialog(DlgWidth, DlgHeight, fmt"{IconCog}  Preferences",
                   x = calcDialogX(DlgWidth, a).some,
@@ -4155,6 +4155,12 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       )
 
     group:
+      koi.label("Vertical sync", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.vsync, style=a.theme.checkBoxStyle)
+
+
       koi.label("Interface scaling", style=a.theme.labelStyle)
 
       var st = a.theme.sliderStyle
@@ -4169,10 +4175,10 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
         style = st
       )
 
-      koi.label("Vertical sync", style=a.theme.labelStyle)
-
-      koi.nextItemHeight(DlgCheckBoxSize)
-      koi.checkBox(dlg.vsync, style=a.theme.checkBoxStyle)
+      koi.label("")
+      koi.nextItemWidth(170)
+      koi.label(fmt"{scResetUIScaling.toStr(a)} resets scaling",
+                style=a.theme.labelStyle)
 
     group:
       when defined(macosx):
