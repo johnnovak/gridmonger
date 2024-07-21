@@ -763,7 +763,7 @@ type
     autoCloseSplash:    bool
     splashTimeoutSecs:  string
     vsync:              bool
-    scaleFactor:        float
+    scalePercentage:    float
     modifierKeyMode:    Natural
 
     # Editing tab
@@ -3999,7 +3999,7 @@ proc openPreferencesDialog(a) =
   dlg.autoCloseSplash    = a.prefs.autoCloseSplash
   dlg.splashTimeoutSecs  = $a.prefs.splashTimeoutSecs
   dlg.vsync              = a.prefs.vsync
-  dlg.scaleFactor        = round(a.prefs.scaleFactor * 100)
+  dlg.scalePercentage    = round(a.prefs.scaleFactor * 100)
   dlg.modifierKeyMode    = ord(a.prefs.modifierKeyMode)
 
   dlg.movementWraparound = a.prefs.movementWraparound
@@ -4152,7 +4152,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.horizSlider(
         startVal = UIScaleFactorLimits.minInt,
         endVal   = UIScaleFactorLimits.maxInt,
-        dlg.scaleFactor,
+        dlg.scalePercentage,
         style = st
       )
 
@@ -4209,7 +4209,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
     a.prefs.splashTimeoutSecs  = parseInt(dlg.splashTimeoutSecs).Natural
 
     let lastScaleFactor = a.prefs.scaleFactor
-    a.prefs.scaleFactor        = dlg.scaleFactor.float / 100
+    a.prefs.scaleFactor        = round(dlg.scalePercentage.float / 100)
 
     if a.prefs.scaleFactor != lastScaleFactor:
       a.theme.updateTheme = true
