@@ -813,32 +813,33 @@ type
 
 
   LevelPropertiesDialogParams = object
-    activeTab:         Natural
+    activeTab:           Natural
     activateFirstTextField: bool
 
     # General tab
-    locationName:      string
-    levelName:         string
-    elevation:         string
-    rows:              string
-    cols:              string
+    locationName:        string
+    levelName:           string
+    elevation:           string
+    rows:                string
+    cols:                string
+    fillWithEmptyFloors: bool
 
     # Coordinates tab
-    overrideCoordOpts: bool
-    origin:            Natural
-    rowStyle:          Natural
-    columnStyle:       Natural
-    rowStart:          string
-    columnStart:       string
+    overrideCoordOpts:   bool
+    origin:              Natural
+    rowStyle:            Natural
+    columnStyle:         Natural
+    rowStart:            string
+    columnStart:         string
 
     # Regions tab
-    enableRegions:     bool
-    colsPerRegion:     string
-    rowsPerRegion:     string
-    perRegionCoords:   bool
+    enableRegions:       bool
+    colsPerRegion:       string
+    rowsPerRegion:       string
+    perRegionCoords:     bool
 
     # Notes tab
-    notes:              string
+    notes:                string
 
 
   ResizeLevelDialogParams = object
@@ -4726,6 +4727,12 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
   if dlg.activeTab == 0:  # General
     commonLevelFields(dimensionsDisabled=false)
 
+    group:
+      koi.label("Fill with empty floors", style=a.theme.labelStyle)
+
+      koi.nextItemHeight(DlgCheckBoxSize)
+      koi.checkBox(dlg.fillWithEmptyFloors, style=a.theme.checkBoxStyle)
+
   elif dlg.activeTab == 1:  # Coordinates
     group:
       koi.label("Override map settings", style=a.theme.labelStyle)
@@ -4763,16 +4770,23 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
       rows = parseInt(dlg.rows)
       cols = parseInt(dlg.cols)
 
+    var fillFloorColor: Option[Natural]
+
     let cur = actions.addNewLevel(
       a.doc.map,
       a.ui.cursor,
-      locationName = dlg.locationName,
-      levelName = dlg.levelName,
-      elevation = parseInt(dlg.elevation),
-      rows = rows,
-      cols = cols,
-      dlg.overrideCoordOpts,
 
+      locationName = dlg.locationName,
+      levelName    = dlg.levelName,
+      elevation    = parseInt(dlg.elevation),
+
+      rows           = rows,
+      cols           = cols,
+      fillFloorColor = if dlg.fillWithEmptyFloors:
+                         a.ui.currFloorColor.Natural.some
+                       else: Natural.none,
+
+      dlg.overrideCoordOpts,
       coordOpts = CoordinateOptions(
         origin:      CoordinateOrigin(dlg.origin),
         rowStyle:    CoordinateStyle(dlg.rowStyle),
@@ -10776,7 +10790,6 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
     )
   else: appEvents.disableAutoSave()
 
-  # TODO init from config
   with a.ui.notesListState:
     currFilter.noteType = NoteTypeFilter.fullSet
     currFilter.orderBy  = noType

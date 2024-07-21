@@ -95,6 +95,14 @@ proc canSetWall*(l; r,c: Natural, dir: CardinalDir): bool {.inline.} =
   not l.isEmpty(r,c) or not l.isNeighbourCellEmpty(r,c, {dir})
 
 # }}}
+# {{{ fill*()
+proc fill*(l; rect: Rect[Natural], cell: Cell) =
+  l.cellGrid.fill(rect, cell)
+
+proc fill*(l; cell: Cell) =
+  l.cellGrid.fill(cell)
+
+# }}}
 
 # }}}
 # {{{ Annotations

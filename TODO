@@ -16,7 +16,6 @@ TODO
 ====
 
   - add unlink command
-  - prefill level with empty floor (for wall style maps)
 
   - finish diagonal movement (numpad, YUBN)
   - improve restoring the window's size on screen dimension changes

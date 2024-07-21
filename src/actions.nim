@@ -657,7 +657,7 @@ proc pasteSelection*(map; loc, undoLoc: Location, sb: SelectionBuffer,
 # {{{ addNewLevel*()
 proc addNewLevel*(map; loc: Location,
                   locationName, levelName: string, elevation: int,
-                  rows, cols: Natural,
+                  rows, cols: Natural, fillFloorColor: Option[Natural],
                   overrideCoordOpts: bool, coordOpts: CoordinateOptions,
                   regionOpts: RegionOptions,
                   notes: string;
@@ -677,6 +677,13 @@ proc addNewLevel*(map; loc: Location,
                             regionOpts,
                             notes)
     newLevelId = newLevel.id
+
+    if fillFloorColor.isSome:
+      var cell: Cell
+      cell.floor      = fBlank
+      cell.floorColor = fillFloorColor.get.uint8
+      newLevel.fill(cell)
+
     m.setLevel(newLevel)
 
     var usd = usd
