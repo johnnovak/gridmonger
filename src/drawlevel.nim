@@ -204,7 +204,7 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
                ZoomStep + x*x
 
   dp.zoomLevel = zl
-  dp.gridSize = MinGridSize + zl*step
+  dp.gridSize = round(MinGridSize + zl*step)
 
   dp.lineWidth = lt.lineWidth
 
