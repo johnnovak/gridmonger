@@ -2080,7 +2080,7 @@ proc drawStairsUp(x, y: float; isCursorActive: bool; ctx) =
 # }}}
 # {{{ drawDoorEnter()
 proc drawDoorEnter(x, y: float; isCursorActive: bool; ctx) =
-  drawIcon(x, y, 0.05, 0, IconDoorEnter, ctx.dp.gridSize,
+  drawIcon(x, y, -0.02, 0, IconDoorEnter, ctx.dp.gridSize,
            getForegroundNormalColor(isCursorActive, ctx),
            fontSizeFactor=0.6, ctx.vg)
 
