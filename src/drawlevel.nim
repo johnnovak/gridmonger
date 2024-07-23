@@ -226,13 +226,13 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
     dp.thinStrokeWidth       =  3
     dp.normalStrokeWidth     =  3
     dp.vertTransformXOffs    =  1
-    dp.vertRegionBorderYOffs = -1.5
+    dp.vertRegionBorderYOffs =  0
 
   proc setWidth4(dp) =
     dp.thinStrokeWidth       =  4
     dp.normalStrokeWidth     =  4
     dp.vertTransformXOffs    =  0
-    dp.vertRegionBorderYOffs = -2
+    dp.vertRegionBorderYOffs = -1
 
   case dp.lineWidth:
   of lwThin:
