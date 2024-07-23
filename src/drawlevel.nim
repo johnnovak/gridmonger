@@ -194,9 +194,10 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
   assert zl <= MaxZoomLevel
 
   const
-    MinGridSize = 13.0
-    ZoomStep = 2.0
-    LargeZoomLevelStart = 20
+    MinGridSize              = 13.0
+    ZoomStep                 =  2.0
+    LargeZoomLevelStart      = 20
+    UltraLargeZoomLevelStart = 40
 
   let step = if zl <= LargeZoomLevelStart: ZoomStep
              else:
@@ -208,17 +209,26 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
 
   dp.lineWidth = lt.lineWidth
 
-  if dp.lineWidth == lwThin:
+  let ultraLarge = zl >= UltraLargeZoomLevelStart
+
+  if dp.lineWidth == lwThin and not ultraLarge:
     dp.thinStrokeWidth       = 1
     dp.normalStrokeWidth     = 1
     dp.vertTransformXOffs    = 1
     dp.vertRegionBorderYOffs = 0
 
-  elif zl < 3 or dp.lineWidth == lwNormal:
+  if (dp.lineWidth == lwThin   and ultraLarge) or
+     (dp.lineWidth == lwNormal and not ultraLarge):
     dp.thinStrokeWidth       =  2
     dp.normalStrokeWidth     =  2
     dp.vertTransformXOffs    =  0
     dp.vertRegionBorderYOffs = -1
+
+  if dp.lineWidth == lwNormal and ultraLarge:
+    dp.thinStrokeWidth       =  4
+    dp.normalStrokeWidth     =  4
+    dp.vertTransformXOffs    =  0
+    dp.vertRegionBorderYOffs = -2
 
   dp.cellCoordsFontSize = if   zl <= 2:   9
                           elif zl <= 3:  10
