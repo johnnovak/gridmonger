@@ -194,14 +194,15 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
   assert zl <= MaxZoomLevel
 
   const
-    MinGridSize              = 13.0
-    ZoomStep                 =  2.0
-    LargeZoomLevelStart      = 20
-    UltraLargeZoomLevelStart = 40
+    MinGridSize          = 13.0
+    ZoomStep             =  2.0
+    MediumZoomLevelStart = 20
+    LargeZoomLevelStart  = 30
+    HugeZoomLevelStart   = 40
 
-  let step = if zl <= LargeZoomLevelStart: ZoomStep
+  let step = if zl <= MediumZoomLevelStart: ZoomStep
              else:
-               let x = (zl - LargeZoomLevelStart) / 30
+               let x = (zl - MediumZoomLevelStart) / 30
                ZoomStep + x*x
 
   dp.zoomLevel = zl
@@ -209,26 +210,41 @@ proc setZoomLevel*(dp; lt; zl: Natural) =
 
   dp.lineWidth = lt.lineWidth
 
-  let ultraLarge = zl >= UltraLargeZoomLevelStart
-
-  if dp.lineWidth == lwThin and not ultraLarge:
+  proc setWidth1(dp) =
     dp.thinStrokeWidth       = 1
     dp.normalStrokeWidth     = 1
     dp.vertTransformXOffs    = 1
     dp.vertRegionBorderYOffs = 0
 
-  if (dp.lineWidth == lwThin   and ultraLarge) or
-     (dp.lineWidth == lwNormal and not ultraLarge):
+  proc setWidth2(dp) =
     dp.thinStrokeWidth       =  2
     dp.normalStrokeWidth     =  2
     dp.vertTransformXOffs    =  0
     dp.vertRegionBorderYOffs = -1
 
-  if dp.lineWidth == lwNormal and ultraLarge:
+  proc setWidth3(dp) =
+    dp.thinStrokeWidth       =  3
+    dp.normalStrokeWidth     =  3
+    dp.vertTransformXOffs    =  1
+    dp.vertRegionBorderYOffs = -1.5
+
+  proc setWidth4(dp) =
     dp.thinStrokeWidth       =  4
     dp.normalStrokeWidth     =  4
     dp.vertTransformXOffs    =  0
     dp.vertRegionBorderYOffs = -2
+
+  case dp.lineWidth:
+  of lwThin:
+    if    zl < LargeZoomLevelStart:  setWidth1(dp)
+    elif  zl < HugeZoomLevelStart:   setWidth2(dp)
+    else:                            setWidth3(dp)
+
+  of lwNormal:
+    if    zl < LargeZoomLevelStart:  setWidth2(dp)
+    elif  zl < HugeZoomLevelStart:   setWidth3(dp)
+    else:                            setWidth4(dp)
+
 
   dp.cellCoordsFontSize = if   zl <= 2:   9
                           elif zl <= 3:  10
