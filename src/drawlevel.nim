@@ -2154,7 +2154,7 @@ proc drawStatue(x, y: float; isCursorActive: bool; ctx) =
 # }}}
 # {{{ drawInvisibleBarrier()
 proc drawInvisibleBarrier(x, y: float; isCursorActive: bool; ctx) =
-  drawIcon(x, y, 0, 0.015, IconBarrier, ctx.dp.gridSize,
+  drawIcon(x, y, -0.01, -0.015, IconBarrier, ctx.dp.gridSize,
            getForegroundLightColor(isCursorActive, ctx),
            fontSizeFactor=1.0, ctx.vg)
 
