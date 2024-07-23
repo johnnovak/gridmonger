@@ -11,6 +11,8 @@ BUGS
 
 - about dialog image is blurred at higher scaling factors
 
+- bridge cannot be rotated
+
 
 TODO
 ====
@@ -67,16 +69,17 @@ FEATURE & ENHANCEMENT IDEAS
 	- should copy steps with selection? (probably a bad idea)
 
   - selections:
-    - wand selection?
-    - fill selection?
-    - paint selection with mouse?
+    - wand tool
+    - fill selection
+    - paint selection with mouse
+	- invert selection
 
   - theme editor
     - hex color: only accept hex chars
     - colorpicker:
       - display floats in HSV mode
       - right-click cancel in triangle & hue circle
-    - undo
+    - undo/redo
 
   - mouse:
     - hand tool, scroll wheel zoom
