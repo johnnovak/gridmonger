@@ -17,8 +17,6 @@ BUGS
 TODO
 ====
 
-  - add unlink command
-
   - finish diagonal movement (numpad, YUBN)
   - improve restoring the window's size on screen dimension changes
   - test layout save/restore on multi-monitor setup
@@ -37,6 +35,8 @@ FEATURE & ENHANCEMENT IDEAS
 ===========================
 
   - linux package
+
+  - add unlink cell command
 
   - new features:
     - export map as PNG

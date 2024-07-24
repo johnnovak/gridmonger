@@ -287,6 +287,8 @@ type AppShortcut = enum
 
   scJumpToLinkedCell
   scLinkCell
+  # TODO
+#  scUnlinkCell
 
   scPreviousLevel
   scNextLevel
@@ -1116,6 +1118,8 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
 
       scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
       scLinkCell.sc,            "Set link destination".desc,
+      # TODO
+#      scUnlinkCell.sc,          "Unlink cell".desc,
       QuickRefSepa,
 
       scResizeLevel.sc,         "Resize level".desc,
@@ -1437,6 +1441,8 @@ let DefaultAppShortcuts = {
 
   scJumpToLinkedCell:          @[mkKeyShortcut(keyG,      {})],
   scLinkCell:                  @[mkKeyShortcut(keyG,      {mkShift})],
+  # TODO
+#  scUnlinkCell:                @[mkKeyShortcut(keyM,      {mkShift})],
 
   scPreviousLevel:             @[mkKeyShortcut(keyPageUp,     {}),
                                  mkKeyShortcut(keyKpSubtract, {}),
@@ -7317,6 +7323,14 @@ proc handleGlobalKeyEvents(a) =
           setSetLinkDestinationMessage(floor, a)
         else:
           setWarningMessage("Cannot link current cell", a=a)
+
+#      elif ke.isShortcutDown(scUnlinkCell, a):
+#        let otherLocs = map.getLinkedLocations(cur)
+#        if otherLocs.len >= 1:
+#          actions.unlinkCell(map, cur, um)
+#          setStatusMessage(IconEraser, "Cell unlinked", a)
+#        else:
+#          setWarningMessage("Not a linked cell", a=a)
 
       elif ke.isShortcutDown(scZoomIn, repeat=true, a=a):
         zoomIn(a)
