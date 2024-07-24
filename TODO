@@ -7,28 +7,23 @@ BUGS
   mode, move a few steps, disable trail mode, move a few steps, repeat a few
   times, then undo back to the beginning)
 
-- floor type doors are slightly off-center
+- door floor types are slightly off-center
 
 - about dialog image is blurred at higher scaling factors
-
-- bridge cannot be rotated
 
 
 TODO
 ====
 
-  - finish diagonal movement (numpad, YUBN)
-  - improve restoring the window's size on screen dimension changes
   - test layout save/restore on multi-monitor setup
   - test restore last layout on multi-monitor setup
   - test loading v1.1.0 configs, themes and maps
 
-  - window handling bugs:
-    - crash when dragging maximised window
+  - test/finalise diagonal movement (numpad, YUBN)
+
+  - crash when dragging maximised window (still a bug?)
 
   - test extensively & update manual
-
-  ----
 
 
 FEATURE & ENHANCEMENT IDEAS
