@@ -291,7 +291,7 @@ App state chunks (in 'stat' group chunk, optional)
 
 Version 4
 ---------
-[Gridmonger v1.2.0 - 2024-04-22]
+[Gridmonger v1.2.0 - 2024-08-12]
 
   - Remove redundant region coordinates from the 'regn' chunk.
 
@@ -302,11 +302,11 @@ Version 4
     - add 'pasteWraparound' to the 'opts' subchunk.
     - add 'notl' subchunk.
 
-  - 'floorOrientation' stores now cardinal directions (north, east, south,
+  - 'floorOrientation' now stores cardinal directions (north, east, south,
 	west) instead of just horizontal & vertical.
 
   - Deprecate OneWayDoorSW (26) floor type (OneWayDoor replaces it with all
-    four orientations allowed).
+    four cardinal directions allowed).
 
   - Fix the flipped orientation of the Bridge (90) floor type.
 
@@ -317,15 +317,15 @@ Version 3
 ---------
 [Gridmonger v1.1.0 - 2023-02-02]
 
-  - Add Column (100) and Statue (110) floor types to the 'cell' chunk.
+  - Add Column (100) and Statue (110) floor types.
 
 
 Version 2
 ---------
 [Gridmonger v1.0.0 – 2022-11-06]
 
-  - Allow multiple source links for teleporters (more than one 'src' location
-    pointing to the same 'dest' location).
+  - Allow multiple source links for teleporters (more than one source location
+    pointing to the same destination).
 
 
 Version 1
