@@ -7,7 +7,7 @@
 - A new [notes list pane](TODO) to view all notes in one place and filter
   them by various criteria, including full-text search.
 - Up to four user-defined [window layouts](TODO).
-- Scalable user interface.
+- Scalable & high-DPI aware user interface.
 - Proper multi-monitor support.
 - Options to display [link lines](TODO) between linked cells.
 - Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
@@ -87,6 +87,7 @@
 - The notes pane now fills the window horizontally when the tools pane is
   hidden.
 - Draw outline line hatch pattern with outline colour.
+- Fix the slightly off positioning of some map symbols.
 
 ---
 
