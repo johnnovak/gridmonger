@@ -274,7 +274,8 @@ let
     fArchway,
     fDoor,
     fLockedDoor,
-    fSecretDoor
+    fSecretDoor,
+    fBridge
   }
 
   RotatableFloors* = {

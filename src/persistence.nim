@@ -712,12 +712,18 @@ proc readLevelCells(rr; numCells: Natural, version: Natural): seq[Cell] =
         c.floorOrientation = if cast[int](c.floorOrientation) == 1: dirW
                              else: dirS
 
+      # the orientation of the bridge was flipped before
+      elif c.floor == fBridge:
+        c.floorOrientation = if c.floorOrientation.isHoriz: Vert
+                             else: Horiz
+
       # normalise orientation of non-oriented floor types
       elif not (c.floor in HorizVertFloors or c.floor in RotatableFloors):
         c.floorOrientation = Horiz
 
   readLayer("floorColor", byte): c.floorColor
-  do: checkValueRange(data, "lvl.cell.floorColor", CellFloorColorLimits, debugLog=off)
+  do: checkValueRange(data, "lvl.cell.floorColor", CellFloorColorLimits,
+                      debugLog=off)
 
   readLayer("wallNorth", Wall): c.wallN
   do: checkEnum(data, "lvl.cell.wallN", Wall, debugLog=off)

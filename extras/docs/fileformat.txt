@@ -308,6 +308,8 @@ Version 4
   - Deprecate OneWayDoorSW (26) floor type (OneWayDoor replaces it with all
     four orientations allowed).
 
+  - Fix the flipped orientation of the Bridge (90) floor type.
+
   - Add Arrow (91) floor type.
 
 

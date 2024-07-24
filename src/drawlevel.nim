@@ -2169,17 +2169,19 @@ proc drawBridge(x, y: float; orientation: CardinalDir; isCursorActive: bool;
 
   let
     wallLenOffs = (if dp.zoomLevel < 2: -1.0 else: 0)
-    wallLen = (dp.gridSize * 0.25).int + wallLenOffs
-    xs = x
-    x1 = xs + wallLen + 1
-    xe = xs + dp.gridSize
-    x2 = xe - wallLen - 1
-    yo = round(dp.gridSize * 0.1)
-    y1 = y - yo
-    y2 = y + dp.gridSize + yo
+    wallLen     = (dp.gridSize * 0.25).int + wallLenOffs
 
-  let w = x2 - x1
-  let h = dp.gridSize + 2*yo
+    xo = round(dp.gridSize * 0.1)
+    x1 = x - xo
+    x2 = x + dp.gridSize + xo
+
+    ys = y
+    y1 = ys + wallLen + 1
+    ye = ys + dp.gridSize
+    y2 = ye - wallLen - 1
+
+    w = dp.gridSize + 2*xo
+    h = y2 - y1
 
   var bgCol = if isCursorActive:
     lt.cursorColor
@@ -2203,24 +2205,24 @@ proc drawBridge(x, y: float; orientation: CardinalDir; isCursorActive: bool;
 
   vg.beginPath
   vg.moveTo(snap(x1, sw), snap(y1, sw))
-  vg.lineTo(snap(x1, sw), snap(y2, sw))
-  vg.moveTo(snap(x2, sw), snap(y1, sw))
+  vg.lineTo(snap(x2, sw), snap(y1, sw))
+  vg.moveTo(snap(x1, sw), snap(y2, sw))
   vg.lineTo(snap(x2, sw), snap(y2, sw))
   vg.stroke
 
   # Shading
   sw = 1.0
   let numLines = 6
-  let step = h / numLines
-  var yy = y1 + step/2
+  let step = w / numLines
+  var xx = x1 + step/2
 
   vg.strokeWidth(sw)
   vg.beginPath
 
   for i in 1..numLines:
-    vg.moveTo(snap(x1, sw), snap(yy, sw))
-    vg.lineTo(snap(x2, sw), snap(yy, sw))
-    yy += step
+    vg.moveTo(snap(xx, sw), snap(y1, sw))
+    vg.lineTo(snap(xx, sw), snap(y2, sw))
+    xx += step
 
   vg.stroke
 
