@@ -4662,9 +4662,8 @@ proc openNewLevelDialog(a) =
     let l = currLevel(a)
     dlg.locationName = l.locationName
     dlg.levelName = ""
-    dlg.elevation = if   l.elevation > 0: $(l.elevation + 1)
-                    elif l.elevation < 0: $(l.elevation - 1)
-                    else: "0"
+    dlg.elevation = if l.elevation > 0: $(l.elevation + 1)
+                    else:               $(l.elevation - 1)
     dlg.rows = $l.rows
     dlg.cols = $l.cols
     dlg.overrideCoordOpts = l.overrideCoordOpts
