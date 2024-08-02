@@ -1110,12 +1110,12 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
 
       scEditNote.sc,            "Add or edit note".desc,
       scEraseNote.sc,           "Erase note".desc,
-    ],
-    @[
-      scEditLabel.sc,           "Add or edit label".desc,
-      scEraseLabel.sc,          "Erase label".desc,
       QuickRefSepa,
 
+      scEditLabel.sc,           "Add or edit label".desc,
+      scEraseLabel.sc,          "Erase label".desc,
+    ],
+    @[
       scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
       scLinkCell.sc,            "Set link destination".desc,
       # TODO
@@ -1172,21 +1172,6 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
 func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
   @[
     @[
-      scSaveLayout1.sc, "Save window layout 1".desc,
-      scSaveLayout2.sc, "Save window layout 2".desc,
-      scSaveLayout3.sc, "Save window layout 3".desc,
-      scSaveLayout4.sc, "Save window layout 4".desc,
-      QuickRefSepa,
-
-      scRestoreLayout1.sc, "Restore window layout 1".desc,
-      scRestoreLayout2.sc, "Restore window layout 2".desc,
-      scRestoreLayout3.sc, "Restore window layout 3".desc,
-      scRestoreLayout4.sc, "Restore window layout 4".desc,
-      QuickRefSepa,
-
-      scResetUIScaling.sc, "Reset interface scaling".desc
-    ],
-    @[
       @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}"].csc,
       "Move between tabs in dialog".desc,
 
@@ -1207,6 +1192,21 @@ func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
       scAccept.sc,  "Confirm (OK, Save, etc.)".desc,
       scCancel.sc,  "Cancel".desc,
       scDiscard.sc, "Discard".desc,
+    ],
+    @[
+      scSaveLayout1.sc, "Save window layout 1".desc,
+      scSaveLayout2.sc, "Save window layout 2".desc,
+      scSaveLayout3.sc, "Save window layout 3".desc,
+      scSaveLayout4.sc, "Save window layout 4".desc,
+      QuickRefSepa,
+
+      scRestoreLayout1.sc, "Restore window layout 1".desc,
+      scRestoreLayout2.sc, "Restore window layout 2".desc,
+      scRestoreLayout3.sc, "Restore window layout 3".desc,
+      scRestoreLayout4.sc, "Restore window layout 4".desc,
+      QuickRefSepa,
+
+      scResetUIScaling.sc, "Reset interface scaling".desc
     ]
   ]
 
