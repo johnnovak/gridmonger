@@ -17,7 +17,7 @@
   via the numeric keypad or the YUBN keys (à la Rogue).
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
   option to aid in exploring tunnel-style dungeons.
-- Option to pre-fill new levels with empty floors (for wall-style maps).
+- Option to pre-fill new levels with empty floors (for wall style maps).
 - New [Arrow floor type](TODO) to represent moving floors and conveyor belts.
 - Option to select whether the Left/Right cursor keys perform strafing or
   turning in [Walk Mode](https://gridmonger.johnnovak.net/manual/moving-around.html#walk-mode).
@@ -57,6 +57,7 @@
 - Improved status bar messages, dialogs, and more status icons.
 - Theme improvements and updates.
 - Ctrl+Shift+Z can now also be use for "redo".
+- Auto-increment elevation from `G` to `-1` in the new level dialog
 
 ### Fixes
 
