@@ -22,11 +22,11 @@ The level-related navigational keys are the same in every mode.
 
 
 You can zoom the view in and out with the :kbd:`=` and :kbd:`-` keys,
-respectively. There are 20 zoom levels in total.
+respectively. There are 50 zoom levels in total.
 
-To change the current level of the map, you can use the drop-down above the
-level, or :kbd:`Ctrl+-`/:kbd:`Ctrl+=`, :kbd:`PgUp`/:kbd:`PgDn` or
-:kbd:`Kp-`/:kbd:`Kp+` to go to the previous or next level.
+To change the current level, you can use the drop-down above the level, or
+:kbd:`Ctrl+-`/:kbd:`Ctrl+=`, :kbd:`PgUp`/:kbd:`PgDn` or :kbd:`Kp-`/:kbd:`Kp+`
+to go to the previous or next level.
 
 .. note::
 
@@ -36,6 +36,12 @@ level, or :kbd:`Ctrl+-`/:kbd:`Ctrl+=`, :kbd:`PgUp`/:kbd:`PgDn` or
    a non-US keyboard indicate. This is very similar to how most games handle
    the keyboard. For the more technically inclined, the program only cares
    about *positional scancodes*.
+
+   To spell it out, if you're using a non-US keyboard, you'll need to find
+   the *location* of the key on the `US keyboard layout
+   <https://kbdlayout.info/KBDUS>`_ that manual asks you to press, then press
+   the key *at the same location* on your keyboard, regardless of the key's
+   label.
 
 
 Normal Mode
@@ -60,9 +66,9 @@ are in *Normal Mode*. This is indicated by a square shaped cursor.
 One of the defining features of Gridmonger is its `Vim
 <https://en.wikipedia.org/wiki/Vim_(text_editor)>`_-inspired keyboard
 interface. This means that in addition to the standard cursor keys, you can
-also use Vim-style `HJKL key
-<https://en.wikipedia.org/wiki/Arrow_keys#HJKL_keys>`_ navigation to move
-around. You might have already encountered this style of navigation in
+also use Vim-style `HJKL key navigation 
+<https://en.wikipedia.org/wiki/Arrow_keys#HJKL_keys>`_ to move
+around. You might have already encountered this navigation style in
 some text-based games originally developed on UNIX systems, such as the
 venerable `Rogue <https://en.wikipedia.org/wiki/Rogue_(video_game)>`_ and `NetHack
 <https://en.wikipedia.org/wiki/NetHack>`_.
@@ -119,6 +125,14 @@ The following table summarises the *standard movement keys* available in
 To move in 5-cell jumps, hold down :kbd:`Ctrl` while using the movement keys.
 Similarly, you can pan the level by holding down :kbd:`Shift`. This can be
 combined with :kbd:`Ctrl` to pan in 5-cell increments.
+
+.. admonition:: Note for macOS users
+
+   The 5-cell jump modifier is always :kbd:`Ctrl` on macOS regadless of your
+   keyboard :ref:`preferences:preferences` settings. This is because certain
+   :kbd:`Cmd` plus movement key combinations would clash with system
+   shortcuts.
+
 
 Observe how the current coordinates change in the bottom right corner of the
 window as you move the cursor. You can toggle the display of cell
@@ -193,7 +207,7 @@ You can use the keypad to move in the intercardinal directions too
 
 
 
-In addition to the numeric keypad, it's also possible to move the cursor
+In addition to the numeric keypad, there is an option to move the cursor
 diagonally with the YUBN keys. This might be familiar to some from the classic
 game `Rogue <https://en.wikipedia.org/wiki/Rogue_(video_game)>`_:
 
@@ -540,6 +554,15 @@ applicable.
    efficiency. The :kbd:`Ctrl+[` Vim alias for the :kbd:`Esc` key is supported
    by Gridmonger for these people (it's much more efficient to type than
    reaching out for :kbd:`Esc` with your left pinky!)
+
+   You can achieve the same thing on macOS by customising the modifier keys in
+   the System Settings, and Linux offers similar customisation options.
+
+.. admonition:: Note for macOS users
+
+   Because these :kbd:`Ctrl` based shortcuts exist to please Vim users for the
+   reasons outlined above, they're are never remapped to :kbd:`Cmd` on macOS.
+
 
 
 .. raw:: html

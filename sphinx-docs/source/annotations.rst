@@ -150,3 +150,10 @@ text) and press :kbd:`Ctrl+T`. To erase it, press :kbd:`Shift+T`.
 
    If you want to copy or move a label, make sure to include its starting cell
    in the :ref:`selection <advanced-editing:Selections>`.
+
+
+Notes list
+==========
+
+TODO
+

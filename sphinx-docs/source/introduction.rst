@@ -42,6 +42,7 @@ exceedingly well:
 I do hope you will have as much fun mongering grids with the program as I had
 developing it!
 
+TODO better image showing the notes list pane & tools
 
 .. raw:: html
 

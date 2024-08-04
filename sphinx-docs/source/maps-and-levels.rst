@@ -112,21 +112,24 @@ Managing maps &  levels
 =======================
 
 To add a new level, press :kbd:`Ctrl+N` to bring up the **New Level** dialog.
-This is almost exactly the same as the **Edit Level Properties** dialog, the
-only difference being that here you must specify the level's dimensions. The
-maximum allowed size is 6,666×6,666 --- hopefully, you'll never ever come
-across a level this big, but some kind of upper limit had to be introduced and
-this is as good as any! Don't worry if you don't get the level size quite
-right initially; you can always change it later with the resize and crop
-actions, as you'll see.
+This is almost exactly the same as the **Edit Level Properties** dialog, but
+here you must specify the level's dimensions. The maximum allowed size is
+6,666×6,666 --- hopefully, you'll never ever come across a level this big, but
+some kind of upper limit had to be introduced and this is as good as any!
+Don't worry if you don't get the level size quite right initially; you can
+always change it later with the resize and crop actions, as you'll see.
+
+You also have the option to pre-fill the level with empty floor cells (**Fill
+with empty floors**). This might come in handy for *wall style* maps---more on
+this in the :ref:`basic-editing:Basic editing` chapter.
 
 To delete the current level, press :kbd:`Ctrl+D`. If you accidentally deleted
 a level, no problem, you can always undo it by pressing :kbd:`U`,
 :kbd:`Ctrl+U`, or :kbd:`Ctrl+Z`.
 
-Similarly, you can create a new map with :kbd:`Ctrl+Alt+N`. Make sure to save
-your current map first if you don't want to lose it, because deleting the
-whole map is the one action that *cannot* be undone!
+To replace the current map with a new map, press :kbd:`Ctrl+Alt+N`. Make sure
+to save your current map first if you don't want to lose it because this
+action *cannot* be undone!
 
 .. note::
 

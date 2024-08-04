@@ -38,9 +38,8 @@ all likelihood, it will work fine on Windows XP and much earlier macOS
 versions.
 
 The program uses OpenGL for all its rendering; it works similarly to a game
-engine. You'll need a graphics card that supports OpenGL 3.2 core profile or
-later. In practice, any graphics card released in the last 10 years or so will
-do (including integrated ones).
+engine. Any graphics card released in the last 10 years should be sufficient,
+including laptops with integrated graphics.
 
 Installation
 ============
@@ -77,25 +76,51 @@ etc.)
 Linux
 -----
 
-No Linux builds are provided yet, but you can build the program yourself by
-following the `build instructions <https://github.com/johnnovak/gridmonger#build-instructions>`_.
-There might be some graphical glitches when resizing and moving the
-application window under certain window managers, but otherwise, the program
-should work perfectly.
+No Linux builds are provided yet, but you can try to build the program
+yourself by following the `build instructions
+<https://github.com/johnnovak/gridmonger#build-instructions>`_. There might be
+some graphical glitches when resizing and moving the application window under
+certain window managers, but otherwise, the program should work fine.
 
 
 .. rst-class:: style4 big
+
+
+Note for macOS users
+====================
+
+The manual only lists the Windows and Linux keyboard shorcuts for brevity, but
+Gridmonger uses macOS user interface conventions by default.
+
+So when the manual tells you to press the :kbd:`Ctrl` + ``Key`` shortcut, use
+:kbd:`Cmd` + ``Key`` instead.
+
+Similarly, :kbd:`Ctrl+Alt` + ``Key`` becomes :kbd:`Cmd+Shift` + ``Key``, and
+lastly, :kbd:`Alt` + ``Key`` becomes :kbd:`Opt` + ``Key``.
+
+The program always displays the correct modifier key labels in the user
+interface. You can also refer to the quick keyboard reference panel by
+pressing :kbd:`Shift+/` which shows the actual shortcuts.
+
+You can switch to :kbd:`Ctrl` & :kbd:`Alt` based shortcuts even on macOS in
+the :ref:`Preferences <shortcut modifiers>` dialog.
+
 
 Quickstart
 ==========
 
 For the impatient among you, here are a few notes to get you started.
 
-.. tip::
+.. important::
 
    Always keep an eye on the *status bar messages* at the bottom of the
    window, as they contain important context-dependent information about the
    tools you're trying to use.
+
+.. tip::
+
+   If the user interface text is too small for you, you can set a custom
+   scaling factor in the :ref:`Preferences <interface scaling>` dialog.
 
 
 **Help**

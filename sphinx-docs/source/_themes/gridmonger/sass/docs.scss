@@ -770,14 +770,15 @@ section.search {
       margin-top: 1.9em;
     }
 
-    //div.section {
     section {
-      &[id] {
-        scroll-margin-top: $header-nav-height + 20;
-      }
       &.big:after {
         margin: 5rem auto;
       }
+    }
+
+    section[id],
+    p[id] {
+      scroll-margin-top: $header-nav-height + 20;
     }
   }
 }

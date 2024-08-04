@@ -1008,11 +1008,12 @@ section.search {
   article h1 {
     margin-top: 1.9em;
   }
-  article section[id] {
-    scroll-margin-top: 112px;
-  }
   article section.big:after {
     margin: 5rem auto;
+  }
+  article section[id],
+  article p[id] {
+    scroll-margin-top: 112px;
   }
 }
 /*--------------------------------------------------------------------------*/

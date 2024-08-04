@@ -2,8 +2,8 @@
 Advanced editing
 ****************
 
-Links
-=====
+Linked cells
+============
 
 A handy advantage of Gridmonger over pencil-and-paper mapping is the
 ability to establish cell links. You can create links between the following
@@ -56,6 +56,12 @@ selection mode, where you can select between the source locations with the
 movement keys. Press :kbd:`Enter` or :kbd:`Esc` to exit from location
 selection mode, or press :kbd:`G` again to return to the destination cell. The
 included ``Wizardry`` example map contains such multi-source teleports.
+
+You can display lines connecting all linked cells in the level by holding down
+the :kbd:`'` key (apostrophe key, to the left of :kbd:`Enter`). There
+are also :ref:`Preferences options <display link lines>` to display these link lines automatically for the current cell, or to display all link lines all the time.
+
+TODO image?
 
 If you delete a linked cell, change its floor type, put a label on it or an
 annotation with a type other than **None**, the link will be severed. Again,
