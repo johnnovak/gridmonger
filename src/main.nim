@@ -1111,13 +1111,15 @@ func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
       scEditNote.sc,            "Add or edit note".desc,
       scEraseNote.sc,           "Erase note".desc,
       QuickRefSepa,
-
-      scEditLabel.sc,           "Add or edit label".desc,
-      scEraseLabel.sc,          "Erase label".desc,
     ],
     @[
+      scEditLabel.sc,           "Add or edit label".desc,
+      scEraseLabel.sc,          "Erase label".desc,
+      QuickRefSepa,
+
       scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
       scLinkCell.sc,            "Set link destination".desc,
+
       # TODO
 #      scUnlinkCell.sc,          "Unlink cell".desc,
       QuickRefSepa,
