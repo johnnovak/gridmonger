@@ -3106,6 +3106,9 @@ proc setLayoutWindowFields(l: var Layout; a) =
 
 # }}}
 # {{{ saveLayout()
+
+proc saveAppConfig(a);
+
 proc saveLayout(layoutIdx: Natural; a) =
   assert layoutIdx <= a.savedLayouts.high
 
@@ -3113,6 +3116,7 @@ proc saveLayout(layoutIdx: Natural; a) =
   setLayoutWindowFields(l, a)
   a.savedLayouts[layoutIdx] = l.some
 
+  saveAppConfig(a)
   setStatusMessage(IconTiles, fmt"Window layout {layoutIdx+1} saved", a)
 
 # }}}
