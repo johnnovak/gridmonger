@@ -8944,7 +8944,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   # Scope filter
   koi.radioButtons(
     wx, wy, w=w-LeftPad-RightPad - 30, wh,
-    nls.currFilter.scope, style = a.theme.radioButtonStyle
+    nls.currFilter.scope,
+    tooltips = @[
+      "All map levels, group by level",
+      "Current level only",
+      "Current level only, group by region"
+   ],
+   style = a.theme.radioButtonStyle
   )
 
   # Link cursor
@@ -8958,7 +8964,7 @@ proc renderNotesListPane(x, y, w, h: float; a) =
   koi.checkBox(
     wx+245, wy, w=ButtonWidth,
     nls.linkCursor,
-    tooltip = "Link cursor and note selection",
+    tooltip = "Link cursor and notes list",
     style = cbStyle
   )
 
@@ -9028,13 +9034,13 @@ proc renderNotesListPane(x, y, w, h: float; a) =
                                of nsfRegion: true
 
   if koi.button(wx+214, wy, w=ButtonWidth, wh, IconPlusSmall,
-                tooltip = "Expand all",
+                tooltip = "Expand all groups",
                 disabled = expandCollapseDisabled,
                 style = a.theme.buttonStyle):
     setExpandedStates(expanded=true, a)
 
   if koi.button(wx+245, wy, w=ButtonWidth, wh, IconMinusSmall,
-                tooltip = "Collapse all",
+                tooltip = "Collapse all groups",
                 disabled = expandCollapseDisabled,
                 style = a.theme.buttonStyle):
     setExpandedStates(expanded=false, a)
