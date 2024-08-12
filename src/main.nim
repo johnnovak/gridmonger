@@ -3336,6 +3336,9 @@ proc loadMap(path: string; a): bool =
     else:
       log.info(message)
       setStatusMessage(IconFloppy, message, a)
+
+    # So at least we can restore the last loaded map in case of a crash
+    saveAppConfig(a)
     result = true
 
   except CatchableError as e:
