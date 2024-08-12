@@ -6393,6 +6393,9 @@ proc saveMapAs(a) =
       saveMap(path, autosave=false, createBackup=false, a)
       a.doc.path = path
 
+      # So at least we can restore the same map file in case of a crash
+      saveAppConfig(a)
+
 # }}}
 # {{{ saveMap()
 proc saveMap(a) =
