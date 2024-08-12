@@ -133,7 +133,7 @@ const
   InfiniteDuration      = initDuration(seconds = int64.high)
 
 const
-  SpecialWallTooltips = SpecialWalls.mapIt(($it).title)
+  SpecialWallTooltips = SpecialWalls.mapIt(($it).capitalizeAscii)
 
   FloorGroup1 = @[
     fDoor,
