@@ -175,6 +175,18 @@ section .headerlink:before {
 section h2:hover .headerlink, section h3:hover .headerlink, section h4:hover .headerlink {
   display: inline;
 }
+section ul, section ol {
+  list-style: none;
+}
+section ul.multiline > li, section ol.multiline > li {
+  margin-bottom: 0.5em;
+}
+section ul p, section ol p {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  text-indent: 0;
+}
 section ul {
   padding-left: 2.4em;
 }
@@ -190,14 +202,17 @@ section ul > li:before {
   opacity: 0.45;
   content: "∑";
 }
-section ul > li p {
-  display: inline;
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
+section ol {
+  padding-left: 2.3em;
+  counter-reset: number;
 }
-section ul.multiline > li {
-  margin-bottom: 0.4em;
+section ol > li {
+  text-indent: -1.2em;
+  counter-increment: number;
+}
+section ol > li:before {
+  content: counter(number) ". ";
+  padding-right: 0.3em;
 }
 section dl {
   margin: 1.5em 0;

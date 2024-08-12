@@ -39,6 +39,10 @@ less common third *hybrid style* that combines elements from both.
     </div>
 
 
+The above maps are included in the example maps pack that comes with
+Gridmonger.
+
+
 Editing tools
 =============
 
@@ -84,7 +88,7 @@ well-designed dungeons?
 
 In tunnel style dungeons these contraptions take up an entire cell, so they
 are represented as different *floor types*. You can draw them with the number
-keys :kbd:`1` to :kbd:`7`. But there are more than 20 floor types in total, so
+keys :kbd:`1` to :kbd:`8`. But there are more than 20 floor types in total, so
 how does that exactly work?
 
 Each number key is assigned to up to four floor types. You can cycle forward
@@ -131,11 +135,7 @@ key multiple times repeatedly, and backward by pressing the key with the
         </tr>
         <tr>
           <td class="icon"><img src="_static/img/floor-one-way-door-1.png" alt="One-way door (N/E)"></td>
-          <td class="name">One-way door (N/E)</td>
-        </tr>
-        <tr>
-          <td class="icon"><img src="_static/img/floor-one-way-door-2.png" alt="One-way door (S/W)"></td>
-          <td class="name">One-way door (S/W)</td>
+          <td class="name">One-way door</td>
         </tr>
       </tbody>
 
@@ -213,9 +213,13 @@ key multiple times repeatedly, and backward by pressing the key with the
 
       <tbody>
         <tr>
-          <td class="key"><kbd>7</kbd></td>
+          <td class="key" rowspan="2"><kbd>7</kbd></td>
           <td class="icon"><img src="_static/img/floor-bridge.png" alt="Bridge"></td>
           <td class="name">Bridge</td>
+        </tr>
+        <tr>
+          <td class="icon"><img src="_static/img/floor-arrow.png" alt="Arrow"></td>
+          <td class="name">Arrow</td>
         </tr>
       </tbody>
 
@@ -239,18 +243,22 @@ placing them in tunnels (as you normally would), they are automatically
 oriented correctly. Should you need it, you can always change the floor
 orientation manually with the :kbd:`O` key.
 
-These two floor types are a bit special:
+These three floor types are a bit special:
 
 .. rst-class:: multiline
 
-- There are two *one-way doors types*: one for the north or east direction,
-  and another for south or west. Press the :kbd:`O` key to switch between
-  north-south or east-west orientation, then :kbd:`2`/:kbd:`Shift+2` to flip
-  the arrow direction.
+- The *one-way doors* can be oriented towards any of the four cardinal
+  directions. When you place a one-way door, it always points northwards.
+  You can then rotate it clockwise or anti-clockwise with :kbd:`O`
+  and :kbd:`Shift+O`, respectively. 
 
-- The *bridge type* has a small amount of "overhang" that extends into its two
-  adjacent cells. You can draw long continuous bridges by placing multiple
-  bridge cells next to each other.
+- You can similarly rotate the *arrow floor type* which can represent
+  conveyor belts or force-fields that push the party towards the indicated
+  direction.
+
+- The *bridge floor type* has a small amount of "overhang" that extends into
+  its two adjacent cells. You can draw long continuous bridges by placing
+  multiple bridge cells next to each other.
 
 These floor types should take care of most of your dungeoneering needs. The
 goal was to keep it simple and not overcomplicate matters by allowing
@@ -293,13 +301,15 @@ statues, keyholes, etc.
 Drawing special walls works similarly to the method described above --- hold
 down the :kbd:`R` modified key and press one of the movement keys. This will
 use the current special wall type, as indicated in the right-side tools pane.
-To change the current special wall type, use the :kbd:`[` and :kbd:`]` keys.
+To change the current special wall type, use the :kbd:`[` and :kbd:`]` keys or
+the :kbd:`Alt`-based shortcuts shown below:
 
 .. raw:: html
 
     <table class="walls">
       <thead>
         <tr>
+          <th class="key">Key</th>
           <th class="icon">Special wall</th>
           <th class="name">Name</th>
         </tr>
@@ -307,50 +317,110 @@ To change the current special wall type, use the :kbd:`[` and :kbd:`]` keys.
 
       <tbody>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>1</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-open-door.png" alt="open door"></td>
           <td class="name">Open door</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>2</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-locked-door.png" alt="locked door"></td>
           <td class="name">Locked door</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>3</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-archway.png" alt="archway"></td>
           <td class="name">Archway</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>4</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-secret-door.png" alt="secret door"></td>
           <td class="name">Secret door</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>5</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-one-way-door.png" alt="one-way door"></td>
           <td class="name">One-way door</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>6</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-illusory.png" alt="illusory wall"></td>
           <td class="name">Illusory wall</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>7</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-invisible.png" alt="invisible wall"></td>
           <td class="name">Invisible wall</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>8</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-lever.png" alt="lever"></td>
           <td class="name">Lever</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>9</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-niche.png" alt="niche"></td>
           <td class="name">Niche</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>0</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-statue.png" alt="statue"></td>
           <td class="name">Statue</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>-</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-keyhole.png" alt="keyhole"></td>
           <td class="name">Keyhole</td>
         </tr>
         <tr>
+          <td class="key">
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>=</kbd></kbd>
+            </kbd>
+          </td>
           <td class="icon"><img src="_static/img/wall-writing.png" alt="writing"></td>
           <td class="name">Writing</td>
         </tr>
@@ -445,6 +515,8 @@ Move the cursor to ``1``, hold down :kbd:`W` and keep it held down until you
 have reached ``6`` while carrying out the following (the arrow keys represent
 any of the :ref:`moving-around:Normal Mode` movement keys). Pay attention to
 the status bar messages after each keystroke!
+
+.. rst-class:: multiline
 
 1. Press :kbd:`←`, hold down :kbd:`Shift`, press :kbd:`↑` twice,
    release :kbd:`Shift`.
@@ -544,6 +616,8 @@ mode too.
 
 As the mouse buttons act as editing modifiers in *WASD Mode*, you need to hold
 :kbd:`Shift` to unlock the :ref:`moving-around:Mouse movement actions`:
+
+.. rst-class:: multiline
 
 - Hold :kbd:`Shift` and left-click somewhere inside the level to move the
   cursor there.

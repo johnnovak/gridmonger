@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en-AU">
-  
 
-  <title>Gridmonger</title>
+
+<html lang="en-AU">
+  <title>Getting started &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="_static/documentation_options.js?v=6efca38a"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Gridmonger manual">
 
+  <link rel="icon" href=""/>
+
   <link href="_static/css/docs.css" rel="stylesheet">
-  <link href="_static/css/glightbox.min.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet"> 
 </head>
 
 <body>
@@ -18,6 +24,15 @@
       <a href="https://gridmonger.johnnovak.net/"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
       <span>Manual</span>
     </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
     <nav class="toc-link">
       <a href="contents.html" >Table of contents</a>
@@ -51,7 +66,7 @@
     </nav>
   </header>
 
-  <article>
+  <article role="main">
     
       <nav class="top">
   <ul>
@@ -63,47 +78,46 @@
 
     
   <section id="getting-started">
-<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this heading">¶</a></h1>
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
 <p>Like most worthwhile things in life, Gridmonger is <em>not</em> instant
 gratification.  To paraphrase the famous quote about Linux:</p>
 <p class="quote"><em>Gridmonger is definitely user-friendly, but it’s perhaps a tad more
 selective about its friends than your average desktop application.</em></p>
 <p>But, alas, worry not — if you are a fan of old-school computer role-playing
-games, and you are able to set them up in emulators, you will get along with
+games and you are able to set them up in emulators, you will get along with
 Gridmonger just fine!</p>
-<p>The user interface is optimised for power users, and therefore is operable by
+<p>The user interface is optimised for power users and is therefore operable by
 keyboard shortcuts almost exclusively. While you could get quite far going by
 the list of <a class="reference internal" href="appendixes/keyboard-shortcuts.html#keyboard-shortcuts"><span class="std std-ref">Keyboard shortcuts</span></a> alone, the
-more complex features — and especially the reason behind them — would be
-not so trivial to figure out on your own.  I very much recommend reading
-through this manual at least once to familiarise yourself with the full list
-of program features. And don’t just read — create a test map, or load one of
-the included <a class="reference external" href="https://gridmonger.johnnovak.net/files/gridmonger-example-maps.zip">Example maps</a>, and try the
-features for yourself as you’re progressing through the chapters!</p>
-<p>Having said all that, some people are just impatient, or want to get a taste
+more complex features — especially the reason behind them — would not be
+so trivial to figure out on your own.  I very much recommend reading through
+this manual at least once to familiarise yourself with the complete list of
+program features. And don’t just read — create a test map, or load one of
+the included <a class="reference external" href="https://gridmonger.johnnovak.net/files/gridmonger-example-maps.zip">Example maps</a>, and
+try the features for yourself as you progress through the chapters!</p>
+<p>Having said all that, some people are just impatient or want to get a taste
 of the thing before committing to learning it. For them, I have included a few
 quick tips in the <a class="reference internal" href="#quickstart"><span class="std std-ref">Quickstart</span></a> section below.</p>
 <section id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading">¶</a></h2>
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
 <p>Gridmonger requires very little hard drive space, only around 6-8 megabytes.
-Windows 7 &amp; 10 and macOS Mojave or later (10.14+) are supported, although
-in all likelihood it will work just fine on Windows XP and much earlier macOS
+Windows 7 &amp; 10 and macOS Mojave or later (10.14+) are supported, although, in
+all likelihood, it will work fine on Windows XP and much earlier macOS
 versions.</p>
-<p>The program uses OpenGL for all its rendering; it works very similarly to a
-game engine. You’ll need a graphics card that supports OpenGL 3.2 core
-profile or later. In practice, this means that any graphics card released in
-the last 10 years or so will do (including integrated ones).</p>
+<p>The program uses OpenGL for all its rendering; it works similarly to a game
+engine. You’ll need a graphics card that supports OpenGL 3.2 core profile or
+later. In practice, any graphics card released in the last 10 years or so will
+do (including integrated ones).</p>
 </section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">¶</a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
 <section id="windows">
-<h3>Windows<a class="headerlink" href="#windows" title="Permalink to this heading">¶</a></h3>
+<h3>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h3>
 <p>To install Gridmonger on Windows, download either the Windows installer (for
 standard installations) or the ZIP file (for portable installations) from the
 <a class="reference external" href="https://gridmonger.johnnovak.net/#Downloads">Downloads</a> page. Then run the
-installer, or simply unpack the contents of the ZIP file somewhere. First-time
-users are encouraged to use the installer and accept the default install
-options.</p>
+installer or simply unpack the ZIP file’s contents somewhere. First-time
+users are encouraged to use the installer and accept the default options.</p>
 <p>The 64-bit version is strongly recommended as it’s more performant and more
 thoroughly tested; only use the 32-bit version if you’re still running a
 legacy 32-bit version of Windows.</p>
@@ -116,64 +130,70 @@ likely not work.</p>
 </div>
 </section>
 <section id="macos">
-<h3>macOS<a class="headerlink" href="#macos" title="Permalink to this heading">¶</a></h3>
+<h3>macOS<a class="headerlink" href="#macos" title="Link to this heading">¶</a></h3>
 <p>Just grab the program from the <a class="reference external" href="https://gridmonger.johnnovak.net/#Downloads">Downloads</a> page and move it into your
 <code class="docutils literal notranslate"><span class="pre">Applications</span></code> folder. This is an unsigned application, so the usual advice
 for running such apps applies (you’ll need to grant the necessary permissions,
 etc.)</p>
 </section>
 <section id="linux">
-<h3>Linux<a class="headerlink" href="#linux" title="Permalink to this heading">¶</a></h3>
-<p>No Linux builds are provided yet, but you can build it yourself by following
-the <a class="reference external" href="https://github.com/johnnovak/gridmonger#build-instructions">build instructions</a>.
-There are some graphical glitches when resizing and moving the application
-window, but otherwise the program works perfectly.</p>
+<h3>Linux<a class="headerlink" href="#linux" title="Link to this heading">¶</a></h3>
+<p>No Linux builds are provided yet, but you can build the program yourself by
+following the <a class="reference external" href="https://github.com/johnnovak/gridmonger#build-instructions">build instructions</a>.
+There might be some graphical glitches when resizing and moving the
+application window under certain window managers, but otherwise, the program
+should work perfectly.</p>
 </section>
 </section>
 <section class="style4 big" id="quickstart">
-<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading">¶</a></h2>
-<p>For the impatient among you, here’s a few notes to get you started.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>Always have an eye on the <em>status bar messages</em> at the bottom of the
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading">¶</a></h2>
+<p>For the impatient among you, here are a few notes to get you started.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Always keep an eye on the <em>status bar messages</em> at the bottom of the
 window, as they contain important context-dependent information about the
 tools you’re trying to use.</p>
 </div>
-<p><strong>Maps &amp; levels</strong></p>
-<ul class="multiline simple">
-<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">O</kbd></kbd> opens a map, <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd> saves the current map</p></li>
-<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> creates a new map; <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> opens the map
-properties</p></li>
-<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> creates a new level; <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> opens the level properties</p></li>
-<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">D</kbd></kbd> deletes the current level</p></li>
-<li><p>Cycle through levels with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">-</kbd></kbd>/<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">=</kbd></kbd> or
-<kbd class="kbd docutils literal notranslate">PgUp</kbd>/<kbd class="kbd docutils literal notranslate">PgDn</kbd></p></li>
-</ul>
-<p><strong>Themes</strong></p>
-<ul class="multiline simple">
-<li><p>Use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgUp</kbd></kbd>/<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgDn</kbd></kbd> to cycle through the themes</p></li>
-</ul>
-<p><strong>Editing</strong></p>
-<ul class="multiline simple">
-<li><p>Use the arrow keys or the <kbd class="kbd docutils literal notranslate">H</kbd><kbd class="kbd docutils literal notranslate">J</kbd><kbd class="kbd docutils literal notranslate">K</kbd><kbd class="kbd docutils literal notranslate">L</kbd> for movement</p></li>
-<li><p>Set the zoom level with <kbd class="kbd docutils literal notranslate">-</kbd>/<kbd class="kbd docutils literal notranslate">=</kbd></p></li>
-<li><p>Undo with <kbd class="kbd docutils literal notranslate">U</kbd> or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Z</kbd></kbd>; redo with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">R</kbd></kbd> or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Y</kbd></kbd></p></li>
-<li><p>Hold <kbd class="kbd docutils literal notranslate">D</kbd> and use the movement keys to draw (excavate)
-tunnels</p></li>
-<li><p>Hold <kbd class="kbd docutils literal notranslate">E</kbd> and use the movement keys to erase cells</p></li>
-<li><p>Hold <kbd class="kbd docutils literal notranslate">W</kbd> and use the movement keys to draw/clear walls in the current
-cell</p></li>
-<li><p>Hold <kbd class="kbd docutils literal notranslate">R</kbd> and use the movement keys to draw/clear special walls; change
-the current special wall with <kbd class="kbd docutils literal notranslate">[</kbd>/<kbd class="kbd docutils literal notranslate">]</kbd></p></li>
-<li><p>Use <kbd class="kbd docutils literal notranslate">1</kbd>-<kbd class="kbd docutils literal notranslate">7</kbd> to place various floor types; press a number key
-repeatedly to cycle through all floor types assigned to that key (hold
-<kbd class="kbd docutils literal notranslate">Shift</kbd> to cycle backwards)</p></li>
-<li><p>Press <kbd class="kbd docutils literal notranslate">N</kbd> to create or edit notes</p></li>
-</ul>
 <p><strong>Help</strong></p>
 <ul class="multiline simple">
 <li><p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">/</kbd></kbd> to display the quick keyboard reference</p></li>
-<li><p>Press <kbd class="kbd docutils literal notranslate">F1</kbd> to open the manual in your default browser</p></li>
+<li><p>Press <kbd class="kbd docutils literal notranslate">F1</kbd> to open this manual in your default browser</p></li>
+</ul>
+<p><strong>Maps &amp; levels</strong></p>
+<ul class="multiline simple">
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">O</kbd></kbd> opens a map, <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd> saves the map</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> creates a new map</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> opens the map properties</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> creates a new level</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> opens the level properties</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">D</kbd></kbd> deletes the current level</p></li>
+<li><p>Cycle through the levels of the map with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">-</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">=</kbd></kbd>,
+or <kbd class="kbd docutils literal notranslate">PgUp</kbd> and <kbd class="kbd docutils literal notranslate">PgDn</kbd></p></li>
+</ul>
+<p><strong>Themes</strong></p>
+<ul class="multiline simple">
+<li><p>Use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgUp</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgDn</kbd></kbd> to cycle through the themes
+(or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Fn</kbd>+<kbd class="kbd docutils literal notranslate">↑</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Fn</kbd>+<kbd class="kbd docutils literal notranslate">↓</kbd></kbd> on laptops).</p></li>
+</ul>
+<p><strong>Editing</strong></p>
+<ul class="multiline simple">
+<li><p>Use the arrow keys, the numeric keypad, or <kbd class="kbd docutils literal notranslate">H</kbd><kbd class="kbd docutils literal notranslate">J</kbd><kbd class="kbd docutils literal notranslate">K</kbd><kbd class="kbd docutils literal notranslate">L</kbd>
+to move the cursor (these are the <em>movement keys</em>)</p></li>
+<li><p>Adjust the zoom level with <kbd class="kbd docutils literal notranslate">-</kbd> and <kbd class="kbd docutils literal notranslate">=</kbd></p></li>
+<li><p>Undo with with <kbd class="kbd docutils literal notranslate">U</kbd>, <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">U</kbd></kbd>, or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Z</kbd></kbd></p></li>
+<li><p>Redo with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">R</kbd></kbd> or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Y</kbd></kbd></p></li>
+<li><p>Hold <kbd class="kbd docutils literal notranslate">D</kbd> and use the <em>movement keys</em> to draw (excavate)
+tunnels</p></li>
+<li><p>Hold <kbd class="kbd docutils literal notranslate">E</kbd> and use the <em>movement keys</em> to erase cells</p></li>
+<li><p>Hold <kbd class="kbd docutils literal notranslate">W</kbd> and use the <em>movement keys</em> to draw/clear walls around a cell</p></li>
+<li><p>Hold <kbd class="kbd docutils literal notranslate">R</kbd> and use the <em>movement keys</em> to draw/clear special walls; change
+the current special wall with <kbd class="kbd docutils literal notranslate">[</kbd> and <kbd class="kbd docutils literal notranslate">]</kbd></p></li>
+<li><p>Use <kbd class="kbd docutils literal notranslate">1</kbd>–<kbd class="kbd docutils literal notranslate">8</kbd> to place various floor types; press a number key
+repeatedly to cycle through all floor types assigned to that key (hold
+<kbd class="kbd docutils literal notranslate">Shift</kbd> to cycle backwards)</p></li>
+<li><p>Press <kbd class="kbd docutils literal notranslate">N</kbd> or <kbd class="kbd docutils literal notranslate">;</kbd> to add a note to a cell or to edit an existing
+note</p></li>
+<li><p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">;</kbd></kbd> to remove a note</p></li>
 </ul>
 </section>
 </section>
@@ -190,7 +210,7 @@ repeatedly to cycle through all floor types assigned to that key (hold
     
 
     <footer>
-      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2023. All wrongs reserved.</p>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
       <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
     </footer>
   </article>

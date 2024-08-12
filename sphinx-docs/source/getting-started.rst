@@ -83,8 +83,7 @@ some graphical glitches when resizing and moving the application window under
 certain window managers, but otherwise, the program should work fine.
 
 
-.. rst-class:: style4 big
-
+.. rst-class:: style8
 
 Note for macOS users
 ====================
@@ -105,6 +104,8 @@ pressing :kbd:`Shift+/` which shows the actual shortcuts.
 You can switch to :kbd:`Ctrl` & :kbd:`Alt` based shortcuts even on macOS in
 the :ref:`Preferences <shortcut modifiers>` dialog.
 
+
+.. rst-class:: style4 big
 
 Quickstart
 ==========

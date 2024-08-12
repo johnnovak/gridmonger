@@ -430,6 +430,7 @@ article a:hover {
 }
 article dl > dt > kbd {
   padding-left: 0.5em;
+  font-weight: normal;
 }
 article nav {
   margin: 1em 0 1em 0;
@@ -618,7 +619,6 @@ article table.shortcuts.std-move-keys > tbody > tr > td {
 }
 article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(1) {
   width: 25%;
-  padding: 0;
 }
 article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(2) {
   width: 25%;
@@ -671,9 +671,13 @@ article kbd:not(.compound).move {
   box-shadow: none;
 }
 article span.asterisk {
-  font-size: 1.2em;
+  font-family: serif;
+  font-size: 23px;
   font-style: normal;
   line-height: 1;
+}
+article .compound span.asterisk {
+  margin-left: -10px;
 }
 article span.dagger {
   position: relative;
@@ -692,6 +696,9 @@ article p.quote {
 article section.big:after {
   margin: 7rem auto 3rem auto;
 }
+article span.highlighted {
+  background-color: yellow;
+}
 
 #table-of-contents li:before {
   content: none;
@@ -699,7 +706,7 @@ article section.big:after {
 
 footer {
   clear: both;
-  margin: 2rem 0 1.3rem 0;
+  margin: 5rem 0 1.3rem 0;
 }
 
 .version {
@@ -707,10 +714,60 @@ footer {
   font-size: 120%;
 }
 
+#searchbox {
+  margin: 2em 0;
+  text-align: center;
+}
+
+form input {
+  border: none;
+  font: 500 16px "Alegreya", serif;
+  border-radius: 0.2em;
+}
+form input[type=text] {
+  padding: 0.1em 0.3em;
+  opacity: 0.6;
+  color: #4e4336;
+}
+form input[type=text]:hover {
+  opacity: 0.8;
+}
+form input[type=text]:focus {
+  opacity: 1;
+  outline: 0;
+}
+form input[type=submit] {
+  padding: 0.1em 0.5em;
+  margin-left: 0.2em;
+  background: #b86622;
+  color: #d8d0c5;
+}
+form input[type=submit]:hover {
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+section.search {
+  margin-top: 2em;
+}
+
+#search-results ul li {
+  padding: 1em 0;
+}
+#search-results ul li:not(:last-child) {
+  border-bottom: 1px dashed #938a7e;
+}
+#search-results ul li p {
+  display: block;
+}
+
 /*--------------------------------------------------------------------------*/
 @media (min-width: 400px) {
   html {
     font-size: 18px;
+  }
+  form input {
+    font-size: 17px;
   }
   article nav {
     font-size: 18px;
@@ -725,6 +782,9 @@ footer {
 @media (min-width: 500px) {
   html {
     font-size: 19px;
+  }
+  form input {
+    font-size: 18px;
   }
   article nav {
     font-size: 19px;
@@ -791,10 +851,12 @@ footer {
 }
 /*--------------------------------------------------------------------------*/
 @media (min-width: 800px) {
-  section > section {
+  section > section,
+  section.search {
     position: relative;
   }
-  section > section h2:before {
+  section > section h2:before,
+  section.search h2:before {
     position: absolute;
     left: -6px;
     font-family: "icons";
@@ -805,6 +867,13 @@ footer {
 }
 /*--------------------------------------------------------------------------*/
 @media (min-width: 1110px) {
+  #searchbox {
+    margin: 1em 0;
+    text-align: left;
+  }
+  form input[type=text] {
+    width: 10em;
+  }
   header {
     position: fixed;
     width: 320px;
@@ -896,6 +965,7 @@ footer {
   nav.toc-link {
     text-align: left;
     font-size: 20px;
+    margin-bottom: 1em;
   }
   nav.toc-link a {
     color: #4e4336;

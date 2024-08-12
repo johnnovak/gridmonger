@@ -21,6 +21,7 @@ Chapters
    preferences
    basic-editing
    annotations
+   window-layouts
    advanced-editing
    regions
    themes

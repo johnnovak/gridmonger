@@ -14,8 +14,8 @@ Please run ``gridmonger -h`` to see the full list of available options.
 
 .. note::
 
-  Options requiring a value need to be specified in ``option:VALUE`` format,
-  e.g. to set the window size to 1200×800, you would use ``--width:1200
+  Options requiring a value need to be specified in ``option:VALUE`` format;
+  for example, to set the window size to 1200×800, you would use ``--width:1200
   --height:800`` (or the shorthand ``-W:1200 -H:800``).
 
 

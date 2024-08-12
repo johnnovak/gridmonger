@@ -567,7 +567,7 @@ applicable.
 
 .. raw:: html
 
-   <div class="section style3"></div>
+   <section class="style6"></section>
 
 
 .. _about-vim:

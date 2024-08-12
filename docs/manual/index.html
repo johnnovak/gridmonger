@@ -28,6 +28,7 @@
         <li><a href="#Manual">Manual</a></li>
         <li><a href="#Downloads">Downloads</a></li>
         <li><a href="#GetInvolved">Get Involved</a></li>
+        <li><a href="#Donations">Donations</a></li>
         <li><a href="#Disclaimer">Disclaimer</a></li>
       </ul>
     </nav>
@@ -39,9 +40,10 @@
       <a class="headerlink" href="#About" title="Permalink to this headline">¶</a>
     </h2>
 
-    <p><strong>Gridmonger</strong> is a free and open-source dungeon mapping
-    tool to replace pencil-and-paper mapping when playing old-school computer
-    role-playing games (cRPGs). It aims to do one thing and do it well:</p>
+	<p><strong>Gridmonger</strong> is a free and open-source dungeon mapping
+	tool to replace pencil-and-paper mapping when playing old-school computer
+	role-playing games (cRPGs). It aims to do one thing and do it exceedingly
+	well:
 
     <p class="aim"><em>Be the ultimate keyboard-driven grid-based cRPG mapping companion!</em></p>
 
@@ -54,20 +56,22 @@
     </h3>
 
     <ul>
-      <li>(Mostly) keyboard-driven modal user interface (similar to
-        <a href="https://www.vim.org/" class="external">Vim</a> and
+      <li>(Mostly) keyboard-driven interface for maximum mapping efficiency (similar to <a href="https://www.vim.org/" class="external">Vim</a> and
         <a href="https://www.blender.org/" class="external">Blender</a>)</li>
-      <li>Elegant OpenGL rendered, vector-based UI with high-DPI support </li>
-      <li>Extensive theming options &amp; 32 themes included out-of-the-box</li>
-      <li>Create maps as large as 999 levels of varying dimensions,
-        up to 6,666 × 6,666 cells per level</li>
-      <li>Support for region-based maps and all common cRPG map styles</li>
+      <li>Elegant scalable user interface with high-DPI support </li>
+      <li>Extensive theming options &amp; 33 included themes
       <li>Four different navigational &amp; editing modes for the best
         map-making experience while playing the game</li>
-      <li>Handy map manipulation tools (cut/copy/paste, nudge, crop, resize,
-        move/fill/erase area, and many others)</li>
+      <li>Create maps as large as 999 levels, up to 6,666 × 6,666 cells per level</li>
+      <li>Support for all common map styles (wall style, tunnel style,
+	  single big world map with regions)</li>
       <li>Linked teleports, stairways, and doors for easy navigation</li>
-      <li>Various cell annotation options (e.g. numbers, icons, comments)</li>
+      <li>Various cell annotation options (e.g., numbers, icons, comments)</li>
+	  <li>Notes list pane to view all annotations in one place and filter them by various criteria, including full-text search</li>
+	  <li>Manipulate the whole map or a selection with handy tools
+	  (copy/paste, move, crop, resize, move/fill/erase area, etc.)</li>
+	  <li>Wraparound option when navigating or manipulating the map</li>
+	  <li>Diagonal movement support</li>
       <li>Unlimited undo &amp; redo history</li>
     </ul>
 
@@ -135,49 +139,54 @@
     </h2>
 
     <h3 id="Downloads-LatestStableVersion">
-      Latest stable version &ndash; v1.1.0
+      Latest stable version &ndash; v1.2.0
       <a class="headerlink" href="#Downloads-LatestStableVersion" title="Permalink to this headline">¶</a>
     </h3>
 
     <section class="style2 small">
-      <p>You can view the full changelog <a href="https://github.com/johnnovak/gridmonger/blob/master/CHANGELOG.md">here</a>.</p>
+      <p>You can view the full changelog <a href="https://github.com/johnnovak/gridmonger/blob/v1.2.0/CHANGELOG.md">here</a>.</p>
+
     </section>
 
     <section class="style2 small">
-      <h4>Windows</h4>
+      <h3>Windows</h3>
 
-      <p>All versions of Windows 7 &amp; 10 are supported.
+      <p>All versions of Windows 7, 10  &amp; 11 are supported.
 
-      <p>Most users on Windows 10 should use the 64-bit version.</p>
+      <p>Most users should get the 64-bit version.</p>
 
       <p>The 32-bit version is provided for people still on older legacy Windows
       systems &mdash; use it only if you really have to!</p>
 
       <ul>
         <li><span class="sc">Windows (64-bit)</span> &ndash;
-          <a href="files/releases/windows/gridmonger-v1.1.0-win64-setup.exe">Installer</a> |
-          <a href="files/releases/windows/gridmonger-v1.1.0-win64-portable.zip">Portable</a>
+          <a href="files/releases/windows/gridmonger-v1.2.0-win64-setup.exe">Installer</a> |
+          <a href="files/releases/windows/gridmonger-v1.2.0-win64-portable.zip">Portable</a>
         </li>
         <li><span class="sc">Windows (32-bit)</span> &ndash;
-          <a href="files/releases/windows/gridmonger-v1.1.0-win32-setup.exe">Installer</a> |
-          <a href="files/releases/windows/gridmonger-v1.1.0-win32-portable.zip">Portable</a>
+          <a href="files/releases/windows/gridmonger-v1.2.0-win32-setup.exe">Installer</a> |
+          <a href="files/releases/windows/gridmonger-v1.2.0-win32-portable.zip">Portable</a>
         </li>
       </ul>
     </section>
 
     <section class="style2 small">
-      <h4>macOS</h4>
+      <h3>macOS</h3>
       <p>macOS Mojave or later (10.14+) is required.</p>
       <ul>
-        <li><a href="files/releases/macos/gridmonger-v1.1.0-mac.zip">macOS Application Bundle</a></li>
+        <li><a href="files/releases/macos/gridmonger-v1.2.0-macos.zip">macOS Application Bundle</a></li>
       </ul>
+	  <p>
+	  First-time users might want to download the <a
+	  href="#Downloads-ExampleMapFiles">Example maps</a> too.
+	  </p>
     </section>
 
     <section class="style2 small">
-      <h4>Linux</h4>
-	  <p>No Linux builds are provided yet, but you can build it yourself by
+      <h3>Linux</h3>
+	  <p>No Linux packages are available yet, but you can try to build Gridmonger yourself by
 	  following the <a href="https://github.com/johnnovak/gridmonger#build-instructions">build
-		  instructions</a>. There are some graphical glitches when resizing
+		  instructions</a>. There might be some graphical glitches when resizing
 	  and moving the application window, but otherwise the program works
 	  perfectly.</p>
 	</section>
@@ -215,7 +224,7 @@
 
     <p>Found a bug? Spotted some typos in the manual? Have some bright
     improvement ideas? Feel an irresistable urge to tell me how much
-    you love or hate this fine piece of software?</p>
+    you love this fine piece of software?</p>
 
     <p>For any of the above (and more!), you can raise a new ticket in the
     project's issue tracker on <a
@@ -225,6 +234,19 @@
 
     <p>Please read the <a href="manual/appendixes/reporting-issues.html">Reporting
       issues</a> chapter of the manual carefully before submitting a report.</p>
+  </section>
+
+  <section class="style1">
+    <h2 id="Donations">
+      Donations
+      <a class="headerlink" href="#Donations" title="Permalink to this headline">¶</a>
+    </h2>
+
+	<p>Gridmonger is a hobby project; I develop the program entirely in my
+	free time.
+
+    <p>If you would like to show your appreciation in the form of monetary
+	donation, you can send some cash to my PayPal account.
   </section>
 
   <section class="style5 big">
@@ -264,7 +286,7 @@
   </section>
 
   <footer>
-    <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2023. All wrongs reserved.</p>
+    <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
     <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
   </footer>
 

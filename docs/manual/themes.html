@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en-AU">
-  
 
-  <title>Gridmonger</title>
+
+<html lang="en-AU">
+  <title>Themes &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="_static/documentation_options.js?v=6efca38a"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Gridmonger manual">
 
+  <link rel="icon" href=""/>
+
   <link href="_static/css/docs.css" rel="stylesheet">
-  <link href="_static/css/glightbox.min.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet"> 
 </head>
 
 <body>
@@ -18,6 +24,15 @@
       <a href="https://gridmonger.johnnovak.net/"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
       <span>Manual</span>
     </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
     <nav class="toc-link">
       <a href="contents.html" >Table of contents</a>
@@ -51,7 +66,7 @@
     </nav>
   </header>
 
-  <article>
+  <article role="main">
     
       <nav class="top">
   <ul>
@@ -63,16 +78,22 @@
 
     
   <section id="themes">
-<h1>Themes<a class="headerlink" href="#themes" title="Permalink to this heading">¶</a></h1>
+<h1>Themes<a class="headerlink" href="#themes" title="Link to this heading">¶</a></h1>
 <p>One of the best features of Gridmonger is that it comes with 32 high-quality
 themes out-of-the-box. Furthermore, the program also allows the modification
 of the built-in themes and the creation of entirely new ones.</p>
 <p>You can cycle through the themes in forward or reverse alphabetical order with
-<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgUp</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgDown</kbd></kbd> in <em>Edit Mode</em>. The name of the
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgUp</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">PgDn</kbd></kbd> in <em>Edit Mode</em>. The name of the
 theme in use is saved into your map file; when loading a map, the theme will
 be restored, or if it cannot be found, the <code class="docutils literal notranslate"><span class="pre">Default</span></code> theme will be used.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you’re on a laptop that doesn’t have <kbd class="kbd docutils literal notranslate">PgUp</kbd> and <kbd class="kbd docutils literal notranslate">PgDn</kbd> keys,
+you can use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Fn</kbd>+<kbd class="kbd docutils literal notranslate">↑</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Fn</kbd>+<kbd class="kbd docutils literal notranslate">↓</kbd></kbd> to switch between the
+themes.</p>
+</div>
 <section id="theme-conventions">
-<h2>Theme conventions<a class="headerlink" href="#theme-conventions" title="Permalink to this heading">¶</a></h2>
+<h2>Theme conventions<a class="headerlink" href="#theme-conventions" title="Link to this heading">¶</a></h2>
 <p>All built-in themes follow a few simple conventions: themes prefixed with
 <code class="docutils literal notranslate"><span class="pre">[W]</span></code> are designed for world maps, while the ones starting with <code class="docutils literal notranslate"><span class="pre">[WD]</span></code> are
 meant for mixed world &amp; dungeon maps. Unprefixed themes are best suited for
@@ -80,21 +101,21 @@ regular dungeons.</p>
 <p>The differences between them basically come down to the selection of floor
 colours: world map themes feature colours suited to represent different types
 of terrain, while in regular themes they are just different accent colours.
-Colours are generally consistent across themes belonging to the same type,
-e.g. in regular dungeon themes colour #2 is always a reddish colour, #3 a
+Colours are generally consistent across themes belonging to the same type;
+e.g., in regular dungeon themes, colour #2 is always a reddish colour, #3 a
 bright red/orange, #4 a yellowish one, and so on. This makes it a bit easier
 to switch themes in the middle of a mapping session. A few themes even include
-variations that don’t conform to these conventions (e.g. <code class="docutils literal notranslate"><span class="pre">Darkest</span>
-<span class="pre">Heart</span> <span class="pre">Alt</span></code>).</p>
+variations that don’t conform to these conventions (e.g., <code class="docutils literal notranslate"><span class="pre">Darkest</span> <span class="pre">Heart</span>
+<span class="pre">Alt</span></code>).</p>
 </section>
 <section id="theme-editor">
-<h2>Theme editor<a class="headerlink" href="#theme-editor" title="Permalink to this heading">¶</a></h2>
+<h2>Theme editor<a class="headerlink" href="#theme-editor" title="Link to this heading">¶</a></h2>
 <p>While it is certainly possible to edit or create theme files only with a text
 editor, Gridmonger features a fully-fledged theme editor that makes theme
 management a breeze.</p>
 <p>You can toggle the theme editor side panel with the <kbd class="kbd docutils literal notranslate">F12</kbd> key in <em>Edit
 Mode</em>. Note that it is not possible to toggle the editor while a dialog is
-open, or in any other modes (e.g. <em>Select Mode</em> or <em>Paste Preview Mode</em>). You
+open, or in any other modes (e.g., <em>Select Mode</em> or <em>Paste Preview Mode</em>). You
 can, however, enter any of these modes while the theme editor is <em>already</em>
 open, which makes editing aspects of the themes related to these modes a lot
 easier.</p>
@@ -131,11 +152,11 @@ theme, but the program will use the overridden user theme instead.</p>
 </dd>
 <dt>Copy</dt><dd><p>Creates a copy of an existing theme under a different name.</p>
 <p>This is the action to use if you don’t want to override a built-in theme
-(e.g. you want to create a new tweaked version under a different name), or
-if you want to design your own theme: just pick a theme you want to use as
-your starting point and hit <strong>Copy</strong>.</p>
+(e.g., if you want to create a new tweaked version under a different
+name), or if you want to design your own theme — just pick a theme you
+want to use as your starting point and press <strong>Copy</strong>.</p>
 <p>You’ll be asked for a new theme name, and you’ll get a warning if the name
-you’ve chosen would override (shadow) that of an existing built-in theme,
+you’ve chosen would override (<em>shadow</em>) that of an existing built-in theme,
 or would overwrite another user theme. Naturally, you can make copies of
 both built-in and user themes.</p>
 </dd>
@@ -177,7 +198,7 @@ it.</p>
 </div>
 </section>
 <section class="style3 big" id="theme-files">
-<h2>Theme files<a class="headerlink" href="#theme-files" title="Permalink to this heading">¶</a></h2>
+<h2>Theme files<a class="headerlink" href="#theme-files" title="Link to this heading">¶</a></h2>
 <p>Themes are text files with the <code class="docutils literal notranslate"><span class="pre">.gmtheme</span></code> extension. Built-in themes are
 stored in the <code class="docutils literal notranslate"><span class="pre">Themes</span></code> subfolder in the application folder. The
 <code class="docutils literal notranslate"><span class="pre">Themes/Images</span></code> subfolder contains the background images used by some themes
@@ -188,6 +209,18 @@ images are first attempted from here, then if that fails, from the
 <code class="docutils literal notranslate"><span class="pre">Themes/Images</span></code> folder. Because of this, when you make some adjustments to a
 built-in theme (creating an user theme that shadows the built-in theme in the
 process), the images files do not need to be copied.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Home</kbd></kbd> (or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Fn</kbd>+<kbd class="kbd docutils literal notranslate">←</kbd></kbd> on laptops) to refresh the
+theme if you have changed the image referenced by a theme, or if you’ve
+modified the theme file directly.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The list of available theme files is only looked up at startup. If
+you’ve modified the contents of the theme folders directly, you’ll
+need to restart Gridmonger to see the up-to-date theme list.</p>
+</div>
 </section>
 </section>
 
@@ -203,7 +236,7 @@ process), the images files do not need to be copied.</p>
     
 
     <footer>
-      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2023. All wrongs reserved.</p>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
       <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
     </footer>
   </article>

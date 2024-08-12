@@ -33,7 +33,6 @@ body {
 }
 
 section {
-//div.section {
   &:after {
     display: block;
     width: 100%;
@@ -105,6 +104,23 @@ section {
     }
   }
 
+  ul, ol {
+    list-style: none;
+
+    &.multiline {
+      > li {
+        margin-bottom: 0.5em;
+      }
+    }
+
+    p {
+      display: inline;
+      margin: 0;
+      padding: 0;
+      text-indent: 0;
+    }
+  }
+
   ul {
     padding-left: 2.4em;
     > li {
@@ -119,18 +135,20 @@ section {
         opacity: 0.45;
         content: '\2211';
       }
-
-      p {
-        display: inline;
-        margin: 0;
-        padding: 0;
-        text-indent: 0;
-      }
     }
+  }
 
-    &.multiline {
-      > li {
-        margin-bottom: 0.4em;
+  ol {
+    padding-left: 2.3em;
+    counter-reset: number;
+
+    > li {
+      text-indent: -1.2em;
+      counter-increment: number;
+
+      &:before {
+        content: counter(number) ". ";
+        padding-right: 0.3em;
       }
     }
   }

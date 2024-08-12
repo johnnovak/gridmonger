@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en-AU">
-  
 
-  <title>Gridmonger</title>
+
+<html lang="en-AU">
+  <title>User data folder &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="../_static/documentation_options.js?v=6efca38a"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Gridmonger manual">
 
+  <link rel="icon" href=""/>
+
   <link href="../_static/css/docs.css" rel="stylesheet">
-  <link href="../_static/css/glightbox.min.css" rel="stylesheet">
+  <link href="../_static/css/glightbox.min.css" rel="stylesheet"> 
 </head>
 
 <body>
@@ -18,6 +24,15 @@
       <a href="https://gridmonger.johnnovak.net/"><img src="../_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
       <span>Manual</span>
     </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
     <nav class="toc-link">
       <a href="../contents.html" >Table of contents</a>
@@ -46,7 +61,7 @@
     </nav>
   </header>
 
-  <article>
+  <article role="main">
     
       <nav class="top">
   <ul>
@@ -58,31 +73,38 @@
 
     
   <section class="style6 big" id="user-data-folder">
-<h1>User data folder<a class="headerlink" href="#user-data-folder" title="Permalink to this heading">¶</a></h1>
+<h1>User data folder<a class="headerlink" href="#user-data-folder" title="Link to this heading">¶</a></h1>
 <p>The <em>user data folder</em> stores data such as your program settings, user
-themes, auto saves, and the log file.</p>
-<p>The location of the <em>user data folder</em> is
-<code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;USERNAME&gt;\AppData\Roaming\Gridmonger</span></code> on Windows, and
-<code class="docutils literal notranslate"><span class="pre">/Users/&lt;USERNAME&gt;/Library/Application</span> <span class="pre">Support/Gridmonger</span></code> on macOS. For
-portable installations, it is the application folder where the executable
-is located.</p>
-<p>The user data folder contains a number of subfolders (they will be created by
-the program if they don’t exist):</p>
+themes, autosaves, and the log file.</p>
+<p>The location of the user data folder is in a standard system location for
+non-portable installations:</p>
 <dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">Autosaves</span></code></dt><dd><p>If autosaves are enabled, and the current map hasn’t been saved to a file
-yet, the autosave file <code class="docutils literal notranslate"><span class="pre">Untitled.gmm</span></code> will go into this folder. Also, in
-the rare event of a program crash, unsaved maps are automatically saved
-here too as <code class="docutils literal notranslate"><span class="pre">Crash</span> <span class="pre">Autosave.gmm</span></code>.</p>
+<dt>Windows</dt><dd><p><code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;USERNAME&gt;\AppData\Roaming\Gridmonger</span></code></p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">Config</span></code></dt><dd><p>The configuration file <code class="docutils literal notranslate"><span class="pre">gridmonger.cfg</span></code> that contains the application’s
-settings resides here.</p>
+<dt>macOS</dt><dd><p><code class="docutils literal notranslate"><span class="pre">/Users/&lt;USERNAME&gt;/Library/Application</span> <span class="pre">Support/Gridmonger</span></code></p>
+</dd>
+</dl>
+<p>For portable installations, it is inside the application folder where the
+Gridmonger executable resides.</p>
+<p>The user data folder contains a number of subfolders; these are created by
+the program at startup if they don’t exist:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Autosaves</span></code></dt><dd><p>If autosaves are enabled and the current map hasn’t been manually saved
+yet, the autosave file <code class="docutils literal notranslate"><span class="pre">Untitled</span> <span class="pre">1.gmm</span></code> will go into this folder. If
+<code class="docutils literal notranslate"><span class="pre">Untitled</span> <span class="pre">1.gmm</span></code> already exists, the name <code class="docutils literal notranslate"><span class="pre">Untitled</span>
+<span class="pre">2.gmm</span></code> will be chosen, and so on. In the rare event of a program crash,
+unsaved maps are automatically saved here too as <code class="docutils literal notranslate"><span class="pre">&lt;Map</span> <span class="pre">Name&gt;</span> <span class="pre">Crash</span>
+<span class="pre">Autosave.gmm</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Config</span></code></dt><dd><p>Location of the <code class="docutils literal notranslate"><span class="pre">gridmonger.cfg</span></code> configuration file that contains the
+application’s settings.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">Logs</span></code></dt><dd><p>The logs from the last run are written to the file <code class="docutils literal notranslate"><span class="pre">gridmonger.log</span></code> in
-this folder. Log files from the last three runs can be found under the
-names <code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak1</span></code>, <code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak2</span></code> and
+this folder. Log files from the last three runs are also preserved as
+<code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak1</span></code>, <code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak2</span></code> and
 <code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak3</span></code>.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">Manual</span></code></dt><dd><p>The included HTML user manual.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">Manual</span></code></dt><dd><p>The HTML user manual you’re reading now.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Themes</span></code></dt><dd><p>User themes are saved into this folder. This is where you should put
 themes shared by other users.</p>
@@ -95,11 +117,11 @@ themes shared by other users.</p>
 <p>If the application folder contains a subfolder named <code class="docutils literal notranslate"><span class="pre">Config</span></code>, Gridmonger
 will attempt to start in portable mode. Technically, you can convert a
 standard installation into a portable one by moving the contents of your
-user data folder into the application folder. You can also convert a
-portable installation into a standard one by doing the reverse, but in
-practice you’re better off just using the standard installer, as that also
-sets up default file associations for Gridmonger map files (<code class="docutils literal notranslate"><span class="pre">.gmm</span></code>), and
-provides a standard uninstaller script.</p>
+user data folder into <code class="docutils literal notranslate"><span class="pre">Config</span></code> in the Gridmonger folder.</p>
+<p>You can also do the reverse and convert a portable installation into a
+standard one, but on Windows you’re better off just using the standard
+installer. That will also set up default file associations for Gridmonger
+map files (<code class="docutils literal notranslate"><span class="pre">.gmm</span></code>) and provides a standard uninstaller script.</p>
 </div>
 </section>
 
@@ -115,7 +137,7 @@ provides a standard uninstaller script.</p>
     
 
     <footer>
-      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2023. All wrongs reserved.</p>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
       <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
     </footer>
   </article>

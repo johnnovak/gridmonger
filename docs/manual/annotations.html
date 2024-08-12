@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en-AU">
-  
 
-  <title>Gridmonger</title>
+
+<html lang="en-AU">
+  <title>Annotations &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="_static/documentation_options.js?v=6efca38a"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Gridmonger manual">
 
+  <link rel="icon" href=""/>
+
   <link href="_static/css/docs.css" rel="stylesheet">
-  <link href="_static/css/glightbox.min.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet"> 
 </head>
 
 <body>
@@ -18,6 +24,15 @@
       <a href="https://gridmonger.johnnovak.net/"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
       <span>Manual</span>
     </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
     <nav class="toc-link">
       <a href="contents.html" >Table of contents</a>
@@ -50,7 +65,7 @@
     </nav>
   </header>
 
-  <article>
+  <article role="main">
     
       <nav class="top">
   <ul>
@@ -62,15 +77,15 @@
 
     
   <section id="annotations">
-<h1>Annotations<a class="headerlink" href="#annotations" title="Permalink to this heading">¶</a></h1>
+<h1>Annotations<a class="headerlink" href="#annotations" title="Link to this heading">¶</a></h1>
 <p>One of the big benefits of creating your own maps — even for games featuring
-in-game auto-maps — is the ability to annotate them. There are two types of
+auto-maps — is the ability to annotate them. There are two types of
 annotations available: <em>notes</em> and <em>labels</em>.</p>
 <section id="notes">
-<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this heading">¶</a></h2>
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h2>
 <p>A <em>note</em> is a textual comment linked to a cell. Notes can optionally have a
-marker, which is some symbol that is displayed in the cell. There are four
-marker types to choose from:</p>
+marker, which is some symbol displayed in the cell. There are four marker
+types to choose from:</p>
 <div class="figure">
   <a href="_static/img/annotations-types.png" class="glightbox">
     <img alt="Examples of the four different marker types" src="_static/img/annotations-types.png" style="width: 67%;">
@@ -79,17 +94,15 @@ marker types to choose from:</p>
       <span>Examples of the four different marker types</span>
     </p>
 </div><dl>
-<dt>None</dt><dd><p>No marker; only a little triangle is displayed in the top-right corner of
-the cell.</p>
+<dt>None</dt><dd><p>No marker, only a little triangle in the top-right corner of the cell.</p>
 </dd>
 <dt>Number</dt><dd><p>An automatically incrementing number. The background colour can be chosen
 from four predefined colours.</p>
-<p>Numbers are assigned in left-to-right, top-to-bottom order (normal English
+<p>Numbers are assigned in left-to-right, top-to-bottom (normal English
 reading order). Numbering restarts from <code class="docutils literal notranslate"><span class="pre">1</span></code> in each level. Notes are
-renumbered automatically whenever a new numbered item is added, or an
-existing one is deleted.</p>
+renumbered automatically whenever a numbered note is added or deleted.</p>
 </dd>
-<dt>ID</dt><dd><p>An identifier of up to two characters in length consisting of English
+<dt>ID</dt><dd><p>An identifier of up to two characters in length, consisting of English
 letters and numbers.</p>
 </dd>
 <dt>Icon</dt><dd><p>An icon chosen from a predefined set of 40 icons.</p>
@@ -102,31 +115,37 @@ letters and numbers.</p>
     <p class="caption">
       <span>Annotation icon set</span>
     </p>
-</div><p>To create a note, press the <kbd class="kbd docutils literal notranslate">N</kbd> key in a non-empty cell. A cell cannot
-have more than one note; if you press <kbd class="kbd docutils literal notranslate">N</kbd> in a cell that already has one,
-you’ll be editing it. To erase a note, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd>.</p>
-<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Enter</kbd></kbd> to insert line breaks when editing the note text.</p>
-<p>If the cell’s floor is non-empty (e.g. it contains a pressure plate or a
-teleport), placing a note of type <strong>Number</strong>, <strong>ID</strong> or <strong>Icon</strong> will clear
+</div><p>To add a note, press <kbd class="kbd docutils literal notranslate">N</kbd> or <kbd class="kbd docutils literal notranslate">;</kbd> in a non-empty cell. A cell cannot
+have more than one note; if you use the shortcut in a cell that already has a
+note, you’ll be editing it. To erase a note, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> or
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">;</kbd></kbd>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only the <kbd class="kbd docutils literal notranslate">;</kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">;</kbd></kbd> shortcuts are available with
+<a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">YUBN keys</span></a> enabled.</p>
+</div>
+<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Enter</kbd></kbd> to insert line breaks into the note text.</p>
+<p>If the cell’s floor is non-empty (e.g., it contains a pressure plate or a
+teleport), placing a note of type <strong>Number</strong>, <strong>ID</strong>, or <strong>Icon</strong> will clear
 its content. If you want to preserve the cell’s content, use the <strong>None</strong>
 marker type, which will only display a little triangle in the top-right corner
 of the cell while keeping its content intact.</p>
-<p>Conversely, if you overwrite a note of type <strong>Number</strong>, <strong>ID</strong> or <strong>Icon</strong>
-with some cell content (e.g. a teleport), the note won’t be deleted, but it
-will be converted to the <strong>None</strong> marker type, so the new cell content and the
-note can coexist.</p>
+<p>Conversely, if you overwrite a note of type <strong>Number</strong>, <strong>ID</strong>, or <strong>Icon</strong>
+with some cell content (e.g., a teleport), the note won’t be deleted, but it
+will be converted to the <strong>None</strong> marker type. This will only display the
+little triangle in the top-right corner, so the new cell content and the note
+can coexist.</p>
 <p>The note under the cursor is displayed in the <em>notes pane</em> below the level,
 which can be toggled with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd>. You can also hover over a cell with
-the mouse pointer, and if it has a note, it will be displayed in a tooltip.
-This tooltip can also be toggled with <kbd class="kbd docutils literal notranslate">Space</kbd> for the cell under the
-cursor.</p>
+the mouse pointer; if it has a note, it will be displayed in a tooltip.
+This tooltip can also be toggled with <kbd class="kbd docutils literal notranslate">Space</kbd> for the current cell.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>As creating and editing notes are very frequently used actions, special
-care has been taken to make the note dialog fully keyboard operable.</p>
+<p>As creating and editing notes are frequently used actions, special care
+has been taken to make the note dialog fully keyboard operable.</p>
 <p>Hold down <kbd class="kbd docutils literal notranslate">Ctrl</kbd> and use the horizontal movement keys to navigate
-between the tabs, or press the number keys <kbd class="kbd docutils literal notranslate">1</kbd> to <kbd class="kbd docutils literal notranslate">4</kbd> to jump to
-a specific tab.</p>
+between the tabs, or press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">1</kbd>-<kbd class="kbd docutils literal notranslate">4</kbd></kbd> to jump to one of the
+four tabs.</p>
 <p>To cycle between text fields, use <kbd class="kbd docutils literal notranslate">Tab</kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Tab</kbd></kbd>. In the
 <strong>Number</strong> and <strong>Icon</strong> tabs, use the movement keys to select the colour or
 the icon image, respectively.</p>
@@ -138,30 +157,35 @@ note by its text in a busy map.</p>
 </div>
 </section>
 <section class="style5 big" id="labels">
-<h2>Labels<a class="headerlink" href="#labels" title="Permalink to this heading">¶</a></h2>
-<p>A <em>label</em> is just some text overlaid on top of the level. Placing a label in a
-cell overwrites its previous content, including notes (technically, a label is
-just another annotation type). In contrast with notes, you can attach labels
-to empty cells as well. This is useful when placing labels in empty areas
-around the level, rather than on top of it.</p>
+<h2>Labels<a class="headerlink" href="#labels" title="Link to this heading">¶</a></h2>
+<p>A <em>label</em> is just some text overlaid on top of the level. Labels are attached
+to a single cell; the text starts from this cell and potentially extends into
+neighbouring cells. Creating a label overwrites the contents of the starting
+cell, including any notes.</p>
+<p>In contrast with notes, you can attach labels to empty cells as well. This is
+useful when placing labels in empty areas.</p>
 <div class="figure">
   <a href="_static/img/annotations-labels.png" class="glightbox">
     <img alt="Example use of labels" src="_static/img/annotations-labels.png">
   </a>
     <p class="caption">
       <span>Example use of labels &mdash; note that all but one reside
-      in empty areas around the level</span>
+      in empty areas</span>
     </p>
-</div><p>To create a label starting from a cell, go to the cell and press
-<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd>. You can select the colour of the label from four predefined
-colours.</p>
-<p>To edit a label, go to the cell at the top-left corner of the label text, then
-press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd>. To erase it, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd>.</p>
+</div><p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd> to add a label starting from the current cell. You can
+select the colour of the label from four predefined colours.</p>
+<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Enter</kbd></kbd> to insert line breaks into the label text.</p>
+<p>To edit a label, go to its starting cell (the top-left corner of the label
+text) and press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd>. To erase it, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The <em>excavate (draw tunnel)</em> tool (<kbd class="kbd docutils literal notranslate">D</kbd> modifier) does not erase
-labels, but the <em>erase cell</em> (<kbd class="kbd docutils literal notranslate">E</kbd>) and <em>draw/clear floor</em> (<kbd class="kbd docutils literal notranslate">F</kbd>)
-tools do.</p>
+<p>The <em>excavate (draw tunnel)</em>, <em>erase cell</em>, and <em>draw/clear floor</em> tools
+leave labels intact. You need to use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd> to delete labels.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you want to copy or move a label, make sure to include its starting cell
+in the <a class="reference internal" href="advanced-editing.html#selections"><span class="std std-ref">selection</span></a>.</p>
 </div>
 </section>
 </section>
@@ -178,7 +202,7 @@ tools do.</p>
     
 
     <footer>
-      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2023. All wrongs reserved.</p>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
       <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
     </footer>
   </article>

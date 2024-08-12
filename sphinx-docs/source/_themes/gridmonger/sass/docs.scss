@@ -247,6 +247,15 @@ article {
         }
       }
     }
+    &.walls {
+      > tbody {
+        > tr {
+          > td {
+            padding-top: 0.3em;
+          }
+        }
+      }
+    }
 
     &.floors {
       > thead > tr > th,
@@ -265,7 +274,9 @@ article {
         &.name { padding-left: 1em }
       }
       > tbody > tr > td {
-        &.icon { width: 33% }
+        &.key  { width: 34% }
+        &.icon { width: 24% }
+        &.name { width: 42% }
       }
     }
 
@@ -513,7 +524,7 @@ section.search {
 
     table {
       &.floors { width: 85% }
-      &.walls  { width: 60% }
+      &.walls  { width: 85% }
     }
   }
 }
@@ -537,8 +548,7 @@ section.search {
     }
 
     table {
-      &.floors { width: 78% }
-      &.walls  { width: 52% }
+      &.walls  { width: 70% }
     }
   }
 }
@@ -558,8 +568,8 @@ section.search {
     }
 
     table {
-      &.floors { width: 70% }
-      &.walls  { width: 45% }
+      &.floors { width: 62% }
+      &.walls  { width: 55% }
     }
   }
 }
@@ -585,8 +595,8 @@ section.search {
     }
 
     table {
-      &.floors { width: 60% }
-      &.walls  { width: 40% }
+      &.floors { width: 62% }
+      &.walls  { width: 52% }
 
       &.shortcuts {
         width: 80%;

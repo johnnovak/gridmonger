@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en-AU">
-  
 
-  <title>Gridmonger</title>
+
+<html lang="en-AU">
+  <title>Map &amp; level basics &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="_static/documentation_options.js?v=6efca38a"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Gridmonger manual">
 
+  <link rel="icon" href=""/>
+
   <link href="_static/css/docs.css" rel="stylesheet">
-  <link href="_static/css/glightbox.min.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet"> 
 </head>
 
 <body>
@@ -18,6 +24,15 @@
       <a href="https://gridmonger.johnnovak.net/"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
       <span>Manual</span>
     </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
     <nav class="toc-link">
       <a href="contents.html" >Table of contents</a>
@@ -53,7 +68,7 @@
     </nav>
   </header>
 
-  <article>
+  <article role="main">
     
       <nav class="top">
   <ul>
@@ -65,9 +80,9 @@
 
     
   <section id="map-level-basics">
-<h1>Map &amp; level basics<a class="headerlink" href="#map-level-basics" title="Permalink to this heading">¶</a></h1>
+<h1>Map &amp; level basics<a class="headerlink" href="#map-level-basics" title="Link to this heading">¶</a></h1>
 <section id="general-concepts">
-<h2>General concepts<a class="headerlink" href="#general-concepts" title="Permalink to this heading">¶</a></h2>
+<h2>General concepts<a class="headerlink" href="#general-concepts" title="Link to this heading">¶</a></h2>
 <p>What you usually refer to as a map or an area in a cRPG (typically a 16×16 or
 32×32 cell grid) is called a <em>level</em> in Gridmonger. A set of levels is, in
 turn, called a <em>map</em>. The program always operates on a single map: when you
@@ -100,8 +115,8 @@ level, or multiple levels but with no unique characteristics. In either case,
 it would make little sense to name the level.</p>
 <p><strong>Elevation</strong> is the vertical position of the level in relation to the ground.
 An elevation of zero means ground level (displayed as <code class="docutils literal notranslate"><span class="pre">G</span></code> in the level
-name). Negative numbers are underground (e.g. the levels of a mine), and
-positive numbers are above the ground (e.g. the floors of a castle or a
+name). Negative numbers are underground (e.g., the levels of a mine), and
+positive numbers are above the ground (e.g., the floors of a castle or a
 tower). As this game takes place entirely in an underground dungeon, all
 numbers are negative.</p>
 <p>The benefit of this naming scheme is that the program can automatically
@@ -114,7 +129,7 @@ common in cRPGs).</p>
 unique within the map (the program enforces this).</p>
 </section>
 <section id="map-properties">
-<h2>Map properties<a class="headerlink" href="#map-properties" title="Permalink to this heading">¶</a></h2>
+<h2>Map properties<a class="headerlink" href="#map-properties" title="Link to this heading">¶</a></h2>
 <p>Apart from their name, levels have a few other properties too. Some of them can
 be inherited from the map, so let’s examine the map properties first. Bring up
 the <strong>Edit Map Properties</strong> dialog with the <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> shortcut!</p>
@@ -139,7 +154,7 @@ map related notes in. You can use <kbd class="kbd compound docutils literal notr
 when editing the note text.</p>
 </section>
 <section id="level-properties">
-<h2>Level properties<a class="headerlink" href="#level-properties" title="Permalink to this heading">¶</a></h2>
+<h2>Level properties<a class="headerlink" href="#level-properties" title="Link to this heading">¶</a></h2>
 <p>Now open the <strong>Edit Level Properties</strong> dialog with the <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> shortcut.</p>
 <p>The <strong>General</strong> tab contains the <strong>Location name</strong>, <strong>Level name</strong> and
 <strong>Elevation</strong> properties discussed previously. The dimensions of the level are
@@ -152,7 +167,7 @@ chapter.</p>
 <p>You can attach notes to individual levels as well under the <strong>Notes</strong> tab.</p>
 </section>
 <section id="managing-maps-levels">
-<h2>Managing maps &amp;  levels<a class="headerlink" href="#managing-maps-levels" title="Permalink to this heading">¶</a></h2>
+<h2>Managing maps &amp;  levels<a class="headerlink" href="#managing-maps-levels" title="Link to this heading">¶</a></h2>
 <p>To add a new level, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> to bring up the <strong>New Level</strong> dialog.
 This is almost exactly the same as the <strong>Edit Level Properties</strong> dialog, the
 only difference being that here you must specify the level’s dimensions. The
@@ -162,14 +177,19 @@ this is as good as any! Don’t worry if you don’t get the level size quite
 right initially; you can always change it later with the resize and crop
 actions, as you’ll see.</p>
 <p>To delete the current level, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">D</kbd></kbd>. If you accidentally deleted
-a level, no problem, you can always undo it by pressing <kbd class="kbd docutils literal notranslate">U</kbd> or
-<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Z</kbd></kbd>.</p>
+a level, no problem, you can always undo it by pressing <kbd class="kbd docutils literal notranslate">U</kbd>,
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">U</kbd></kbd>, or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Z</kbd></kbd>.</p>
 <p>Similarly, you can create a new map with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd>. Make sure to save
 your current map first if you don’t want to lose it, because deleting the
 whole map is the one action that <em>cannot</em> be undone!</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <kbd class="kbd docutils literal notranslate">U</kbd> undo shortcut is not available if <a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">YUBN keys</span></a> are enabled. You’ll learn about this
+special feature in the next chapter.</p>
+</div>
 </section>
 <section class="style1 big" id="saving-maps">
-<h2>Saving maps<a class="headerlink" href="#saving-maps" title="Permalink to this heading">¶</a></h2>
+<h2>Saving maps<a class="headerlink" href="#saving-maps" title="Link to this heading">¶</a></h2>
 <p>Whenever you save your map with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd>, Gridmonger appends the <code class="docutils literal notranslate"><span class="pre">.bak</span></code>
 suffix to the name of your current map file, then creates a new file with the
 normal map name. This is a safety measure — if saving the map fails for
@@ -193,7 +213,7 @@ learn more about this in the <a class="reference internal" href="preferences.htm
     
 
     <footer>
-      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2023. All wrongs reserved.</p>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
       <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
     </footer>
   </article>
