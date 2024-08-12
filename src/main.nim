@@ -10806,6 +10806,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   else: appEvents.disableAutoSave()
 
   with a.ui.notesListState:
+    currFilter.scope    = nsfLevel
     currFilter.noteType = NoteTypeFilter.fullSet
     currFilter.orderBy  = noType
 
