@@ -2,6 +2,7 @@ import std/lenientops
 import std/logging as log
 import std/options
 import std/strformat
+import std/sugar
 
 import glfw
 import icons
@@ -184,6 +185,14 @@ proc findCurrentMonitor*(win): Monitor =
 # }}}
 # {{{ snapWindowToVisibleArea*()
 proc snapWindowToVisibleArea*(win) =
+  let m = collect:
+    for m in  monitors(): m
+
+  # We can have "zero monitors" momentarily on laptops when an external screen
+  # is disconnected.
+  if m.len == 0:
+    return
+
   let currMonitor = win.findCurrentMonitor
   let workAreaRect = currMonitor.workAreaRect
 
