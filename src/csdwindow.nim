@@ -418,11 +418,13 @@ proc renderTitleBar(win; vg: NVGContext, canvasWidth: float) =
   # Minimise/maximise/close window buttons
   var x = (canvasWidth - TitleBarWindowButtonsTotalWidth).float
 
-  if koi.button(x, by, bw.float, bh, IconWindowLeft, style=buttonStyle):
+  if koi.button(x, by, bw.float, bh, IconWindowLeft, tooltip="Snap to left",
+                style=buttonStyle):
     win.snapToLeft
 
   x += bw
-  if koi.button(x, by, bw, bh, IconWindowRight, style=buttonStyle):
+  if koi.button(x, by, bw, bh, IconWindowRight, tooltip="Snap to right",
+                style=buttonStyle):
     win.snapToRight
 
   x += bw + TitleBarWindowStandardButtonsLeftPad
