@@ -4,9 +4,19 @@ import std/strformat
 import std/strutils
 
 import common
-import utils/hocon
 
+# {{{ WindowConfig*
+type
+  WindowConfig* = object
+    layout*:         Option[Natural]
+    x*, y*:          Option[int]
+    width*, height*: Option[int]
+    maximized*:      Option[bool]
+    showTitleBar*:   Option[bool]
 
+# }}}
+
+# {{{ printHelp()
 proc printHelp() =
   echo """
 Usage:
@@ -15,46 +25,52 @@ Usage:
 Options:
   -c, --configFile:PATH       Use this config file
 
+  -l, --layout:INT            Restore window layout N (from 1 to 4)
+
   -x, --xpos:INT              Override window X position
   -y, --ypos:INT              Override window Y position
-  -W, --width:INT             Override window width
-  -H, --height:INT            Override window height
-  -m, --maximized:on|off      Override window maximized state
-  -t, --showTitleBar:on|off   Override show window title bar state
+  -w, --width:INT             Override window width
+  -h, --height:INT            Override window height
+  -m, --maximized:on|off      Override maximized state
+  -t, --showTitleBar:on|off   Override show title bar state
 
-  -h, --help                  Print help
-  -v, --version               Print version information"""
+      --help                  Print help
+      --version               Print version information"""
 
+# }}}
+# {{{ printVersion()
 proc printVersion() =
   echo fmt"""
 {FullVersionString}
 {CompiledAt}
+
 {DevelopedBy}
 {ProjectHomeUrl}"""
 
-
+# }}}
+# {{{ quitWithError()
 proc quitWithError(msg: string) {.noReturn.} =
   when defined(windows):
     echo ""
   quit(fmt"Error: {msg}", QuitFailure)
 
-
+# }}}
+# {{{ checkOptArgumentProvided()
 proc checkOptArgumentProvided(opt, arg: string) =
   if arg == "":
     quitWithError(fmt"missing argument for option '{opt}'")
 
-
-proc parseNaturalOpt(opt, arg: string): Natural =
+# }}}
+# {{{ parseIntOpt()
+proc parseIntOpt(opt, arg: string): int =
   checkOptArgumentProvided(opt, arg)
   try:
-    let i = parseInt(arg)
-    if i < 0:
-      quitWithError(fmt"argument for option '{opt}' must be positive: {arg}")
-    i.Natural
+    parseInt(arg)
   except CatchableError:
     quitWithError(fmt"invalid integer argument for option '{opt}': {arg}")
 
-
+# }}}
+# {{{ parseBoolOpt()
 proc parseBoolOpt(opt, arg: string): bool =
   checkOptArgumentProvided(opt, arg)
   try:
@@ -62,13 +78,14 @@ proc parseBoolOpt(opt, arg: string): bool =
   except CatchableError:
     quitWithError(fmt"invalid boolean argument for option '{opt}': {arg}")
 
-
+# }}}
+# {{{ parseCommandLineParams*()
 proc parseCommandLineParams*(): tuple[configFile, mapFile: Option[string],
-                                      winCfg: HoconNode] =
+                                      winCfg: WindowConfig] =
   var
     configFile, mapFile: Option[string]
     numArgs = 0
-    winCfg = newHoconObject()
+    winCfg: WindowConfig
 
   for kind, opt, arg in getopt():
     case kind
@@ -80,20 +97,26 @@ proc parseCommandLineParams*(): tuple[configFile, mapFile: Option[string],
 
     of cmdLongOption, cmdShortOption:
       case opt
-      of "xpos", "x":   winCfg.set("x-position", parseNaturalOpt(opt, arg))
-      of "ypos", "y":   winCfg.set("y-postion",  parseNaturalOpt(opt, arg))
-      of "width", "W":  winCfg.set("width",      parseNaturalOpt(opt, arg))
-      of "height", "H": winCfg.set("height",     parseNaturalOpt(opt, arg))
+      of "layout", "l":
+        let layout = parseIntOpt(opt, arg)
+        if (layout < 0 or layout > 4):
+          quitWithError(fmt"invalid layout number: must be between 1 and 4")
+        winCfg.layout = (layout - 1).Natural.some
+
+      of "xpos",   "x": winCfg.x      = parseIntOpt(opt, arg).some
+      of "ypos",   "y": winCfg.y      = parseIntOpt(opt, arg).some
+      of "width",  "w": winCfg.width  = parseIntOpt(opt, arg).some
+      of "height", "h": winCfg.height = parseIntOpt(opt, arg).some
 
       of "maximized", "m":
-        winCfg.set("maximized", parseBoolOpt(opt, arg))
+        winCfg.maximized = parseBoolOpt(opt, arg).some
 
       of "showTitleBar", "t":
-        winCfg.set("show-title-bar", parseBoolOpt(opt, arg))
+        winCfg.showTitleBar = parseBoolOpt(opt, arg).some
 
       of "configFile", "c": configFile = arg.some
 
-      of "help", "h":
+      of "help":
         printHelp()
         quit()
 
@@ -109,11 +132,15 @@ proc parseCommandLineParams*(): tuple[configFile, mapFile: Option[string],
 
   result = (configFile, mapFile, winCfg)
 
+# }}}
 
+# {{{ Test
 when isMainModule:
   let (configFile, mapFile, winCfg) = parseCommandLineParams()
 
   echo fmt"configFile: {configFile}"
   echo fmt"mapFile: {mapFile}"
   echo fmt"winCfg: {winCfg}"
+# }}}
 
+# vim: et:ts=2:sw=2:fdm=marker

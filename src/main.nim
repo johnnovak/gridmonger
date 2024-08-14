@@ -10796,7 +10796,29 @@ proc restoreLayoutsFromConfig(cfg: HoconNode; a) =
     maybeSetSavedLayout(idx, a)
 
 # }}}
+# {{{ applyWindowConfigOverrides()
+proc applyWindowConfigOverrides(cfg: WindowConfig; a) =
+  if cfg.layout.isSome:
+    restoreLayout(cfg.layout.get, a)
 
+  let (x, y) = a.win.pos
+  if cfg.x.isSome: a.win.pos = (cfg.x.get, y)
+  if cfg.y.isSome: a.win.pos = (x, cfg.y.get)
+
+  let (width, height) = a.win.size
+  if cfg.width.isSome:  a.win.size = (cfg.width.get, height)
+  if cfg.height.isSome: a.win.size = (width, cfg.height.get)
+
+  if cfg.maximized.isSome:
+    if cfg.maximized.get: a.win.maximize
+    else:                 a.win.unmaximize
+
+  if cfg.showTitleBar.isSome:
+    a.win.showTitleBar = cfg.showTitleBar.get
+
+  a.win.snapWindowToVisibleArea
+
+# }}}
 # {{{ initVersionChecking()
 proc initVersionChecking(a) =
   a.latestVersion     = VersionInfo.none
@@ -10807,7 +10829,7 @@ proc initVersionChecking(a) =
 proc dropCb(window: Window, paths: PathDropInfo)
 
 proc initApp(configFile: Option[string], mapFile: Option[string],
-             winCfg: HoconNode, hideSplash = false; a) =
+             winCfg: WindowConfig, hideSplash = false; a) =
 
   if configFile.isSome:
     a.paths.configFile = configFile.get
@@ -10883,6 +10905,7 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   a.win.dropCb = dropCb
 
   restoreLayoutsFromConfig(cfg, a)
+  applyWindowConfigOverrides(winCfg, a)
 
   if a.prefs.checkForUpdates:
     initVersionChecking(a)
