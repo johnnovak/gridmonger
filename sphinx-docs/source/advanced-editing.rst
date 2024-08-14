@@ -58,10 +58,11 @@ selection mode, or press :kbd:`G` again to return to the destination cell. The
 included ``Wizardry`` example map contains such multi-source teleports.
 
 You can display lines connecting all linked cells in the level by holding down
-the :kbd:`'` key (apostrophe key, to the left of :kbd:`Enter`). There
-are also :ref:`Preferences options <display link lines>` to display these link lines automatically for the current cell, or to display all link lines all the time.
+the :kbd:`'` key (apostrophe key, to the left of :kbd:`Enter`). There are also
+:ref:`Preferences options <display link lines>` to display the link lines for
+the current cell only, or to always display all link lines.
 
-TODO image?
+    TODO image
 
 If you delete a linked cell, change its floor type, put a label on it or an
 annotation with a type other than **None**, the link will be severed. Again,

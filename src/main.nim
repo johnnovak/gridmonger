@@ -394,7 +394,7 @@ type
   LinkLinesMode = enum
     llmManual      = (0, "Manual toggle")
     llmCurrentCell = (1, "Current cell")
-    llmAll         = (2, "All")
+    llmAlways      = (2, "Always")
 
 
   Preferences = object
@@ -8371,7 +8371,7 @@ proc renderLevel(x, y, w, h: float,
     of llmManual: discard
     of llmCurrentCell:
       dp.drawLinkLines    = true
-    of llmAll:
+    of llmAlways:
       dp.drawLinkLines    = true
       dp.drawAllLinkLines = true
 
