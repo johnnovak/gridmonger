@@ -4126,7 +4126,7 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
       koi.dropDown(dlg.walkCursorMode, style=a.theme.dropDownStyle)
 
     group:
-      koi.label("Display link lines", style=a.theme.labelStyle)
+      koi.label("Show link lines", style=a.theme.labelStyle)
       koi.nextItemWidth(120)
       koi.dropDown(dlg.linkLinesMode, style=a.theme.dropDownStyle)
 
