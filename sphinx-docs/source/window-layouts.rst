@@ -30,7 +30,7 @@ That's all good and well, but when you display the notes list pane with
 
 .. rst-class:: multiline
 
-- Press the *snap to right* button---now the Gridmonger window occupies the
+- Press the *snap to right* button --- now the Gridmonger window occupies the
   right half of the screen.
 
 - Press :kbd:`Shift+F5` to save the current window layout in the first layout
@@ -45,23 +45,26 @@ That's all good and well, but when you display the notes list pane with
 - Now you can quickly switch between the two layouts with the :kbd:`F5` and
   :kbd:`F6` keys.
 
-The idea behind this is that you don't need to have the notes list pane open
-all the time, only when you're trying to find a particular note. So then you
-pause the game, switch to the "search note" layout, find the note, then switch
-back to your "default" layout.
+The idea behind this is that you don't need to always have the notes list pane
+open, only when you're searching for a particular note. So then you pause the
+game, switch to the "search note" layout, find the note, then switch back to
+your "default" layout and continue playing.
 
 There are four window layout slots available. :kbd:`Shift+F5`–:kbd:`F8` save
 the current window layout in slots 1–4, and :kbd:`F5`–:kbd:`F8` restore them.
-Layouts are saved into the configuration file, so they are global (they're not
-tied to the current map).
+Layouts are global, they're not tied to the current map (they are saved into
+the configuration file, like your preferences).
 
-Layouts store the size and position of the window, and the state of the four
-toggleable panes. To recap:
+Layouts store the size and position of the window, and the state of the
+following user interface elements:
 
-- :kbd:`Alt+N` — Toggle current note pane
-- :kbd:`Alt+L` — Toggle notes list pane
-- :kbd:`Alt+T` — Toggle tools pane
-- :kbd:`Shift+Alt+T` — Toggle title bar
+- Current note pane (toggled by :kbd:`Alt+N`)
+- Notes list pane (toggled by :kbd:`Alt+L`)
+- Tools pane (toggled by :kbd:`Alt+T`)
+- Title bar (toggled by :kbd:`Shift+Alt+T`)
 
-
+Any other setting is either stored in the preferences as a global setting
+(e.g., should the splash screen be shown at startup, is diagonal YUBN
+navigation is enabled, etc.), or is saved into the map file (e.g., map zoom
+level, whether WASD-mode is enabled, etc.)
 

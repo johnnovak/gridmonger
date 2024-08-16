@@ -184,7 +184,7 @@ illustrate this with a concrete example:
 
 1. Load the ``Eye of the Beholder I`` example map and go to the
    ``Undermountain – Lower Sewers (-3)`` level.
-2. Open the *notes list pane* with :kbd:`Alt+L`---you'll see all notes in 
+2. Open the *notes list pane* with :kbd:`Alt+L` --- you'll see all notes in 
    the current level. Click on a note to move the cursor to it.
 3. Enter ``gem`` in the **Search** field to only show notes that contain this
    word. Note the notes list is filtered dynamically as you type.

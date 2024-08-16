@@ -16,7 +16,7 @@ General tab
 The first setting in the **General** tab is **Load last map**. This
 allows you to continue from where you left off when you next start Gridmonger.
 
-The next settings controls the **Autosave** behaviour. By default, the map
+The next few settings control the **Autosave** behaviour. By default, the map
 gets automatically saved every two minutes. This is great in general, but you
 need to exercise some caution in order not to accidentally lose your work
 (e.g., if the autosave kicks in right after deleting some levels and you quit
@@ -40,8 +40,7 @@ dialog.
 Editing tab
 ===========
 
-The **Editing** tab contains settings that affect the workings of the editing
-operations.
+The **Editing** tab contains settings that affect the editing operations.
 
 **Movement wraparound** controls whether the cursor should appear on the
 opposite side when moved past the edges of the level (see
@@ -54,19 +53,23 @@ directions via the YUBN keys, in addition to the numeric keypad (see
 **Walk mode Left/Right keys** controls whether the left and right cursor keys
 perform strafing or turning in :ref:`moving-around:Walk mode`. This is
 especially useful on keyboards without a numeric keypad. This only controls
-the behaviour of the regular cursor keys---the cursor keys on the keypad are
+the behaviour of the regular cursor keys --- the cursor keys on the keypad are
 unaffected by this setting.
 
-.. _display link lines:
+.. _show link lines:
 
-**Display link lines** controls the display of lines that indicate
+**Show link lines** controls the display of lines that indicate
 :ref:`advanced-editing:Linked cells` in the current level:
 
 .. rst-class:: multiline
 
-- **Manual toggle** --- All link lines are displayed when you hold down the :kbd:`'` key, and only then (apostrophe key, to the left of :kbd:`Enter`).
-- **Current cell** --- Link lines are displayed for the current cell, holding the  :kbd:`'` key displays all link lines.
-- **All** -- All link lines are displayed all the time.
+- **Manual toggle** -- All link lines are shown when you hold down the
+  :kbd:`'` key, and only then (apostrophe key, to the left of :kbd:`Enter`).
+
+- **Current cell** -- Link lines are shown for the current cell, holding the
+  :kbd:`'` key shows all link lines.
+
+- **All** -- All link lines are shown all the time.
 
 **Open-ended excavate** controls whether the *excavate (draw tunnel)* tool
 should close the tunnels off with a wall in the excavation direction (see
@@ -79,7 +82,7 @@ Interface tab
 The **Interface** tab is the home of all user-interface related settings.
 
 **Show splash image** controls whether the nice Gridmonger logo should be
-displayed at startup, and the next two settings whether it should be
+displayed at startup, and the following two settings whether it should be
 auto-closed after a set number of seconds.
 
 Then you have the option to enable **Vertical sync**. The program does its
@@ -90,7 +93,7 @@ should leave this on.
 
 .. _interface scaling:
 
-**Interface scaling** lets you to set the scaling (zooming) of the entire user
+**Interface scaling** lets you set the scaling (zooming) of the entire user
 interface between 100% (no zoom) and 500% (5-fold zoom). Gridmonger takes your
 operating system's DPI and scaling settings into account, so this scaling is
 applied on top of that. The new scaling factor takes effect after closing the
@@ -100,8 +103,8 @@ preferences dialog with the **OK** button.
 
     You can reset 100% scaling with the :kbd:`Ctrl+F11` shortcut (or
     :kbd:`Cmd+F11` on macOS, depending on your settings.) This is handy if
-    you've accidentally set such a large scaling factor that you're no longer
-    able to navigate the preferences dialog to reset it.
+    you've accidentally set such a large scaling factor that you can no longer
+    navigate the preferences dialog to reset it.
 
 .. _shortcut modifiers:
 
@@ -109,8 +112,9 @@ preferences dialog with the **OK** button.
 Gridmonger uses macOS user interface conventions for most keyboard shortcuts,
 so the :kbd:`Cmd` and :kbd:`Cmd+Shift` modifiers are used.
 
-This user manual only lists the Windows and Linux keyboard shorcuts for brevity, so by default, when you're asked to press the :kbd:`Ctrl` + ``Key`` shortcut, you should press
-:kbd:`Cmd` + ``Key`` instead.
+This user manual only lists the Windows and Linux keyboard shortcuts for
+brevity, so by default, when you're asked to press the :kbd:`Ctrl` + ``Key``
+shortcut, you should press :kbd:`Cmd` + ``Key`` instead.
 
 Similarly, :kbd:`Ctrl+Alt` + ``Key`` becomes :kbd:`Cmd+Shift` + ``Key``, and
 lastly, :kbd:`Alt` + ``Key`` becomes :kbd:`Opt` + ``Key``.
@@ -134,5 +138,5 @@ also available in **Ctrl, Ctrl+Alt** mode:
 
     The program always displays the correct modifier key labels in the user
     interface. You can also refer to the quick keyboard reference panel by
-    pressing :kbd:`Shift+/` which shows the actual shortcuts.
+    pressing :kbd:`Shift+/`, which shows the actual shortcuts.
 

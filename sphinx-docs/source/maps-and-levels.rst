@@ -62,30 +62,30 @@ unique within the map (the program enforces this).
 Map properties
 ==============
 
-Apart from their name, levels have a few other properties too. Some of them can
-be inherited from the map, so let's examine the map properties first. Bring up
+Apart from their name, levels have a few other properties too. Some can be
+inherited from the map, so let's examine the map properties first. Bring up
 the **Edit Map Properties** dialog with the :kbd:`Ctrl+Alt+P` shortcut!
 
 Let's start with the **General** tab. Unsurprisingly, every map must have a
-**Title** --- this is what gets displayed in the title bar of the window. You
-can also optionally specify the name of the **Game** and the **Author** of the
-map. The local **Creation time** is also displayed as a non-editable property.
+**Title** --- this is displayed in the title bar of the window. You can also
+optionally specify the name of the **Game** and the **Author** of the map. The
+local **Creation time** is also displayed as a non-editable property.
 
 The **Coordinates** tab contains properties that govern how the cell
-coordinates are displayed. **Origin** specifies the corner where counting the
-grid coordinates should start from. There are two coordinate styles to choose
+coordinates are displayed. **Origin** specifies the corner the
+grid coordinate count starts from. There are two coordinate styles to choose
 from: *number* and *letter*. You can set the style separately for columns and
 rows with **Column style** and **Row style**, respectively. The letter style
 works as follows: ``A`` corresponds to ``0``, ``B`` to ``1``, and so on, right
 until ``Z`` (``25``), then it continues with ``AA``, ``AB``, ``AC``, etc. You
-can specify the starting values for the coordinates in the **Column start**
-and **Row start** fields. You need to enter the start values as numbers, even
-for letter style coordinates, in which case the program helpfully displays the
+can specify the coordinate start values in the **Column start** and **Row
+start** fields. You need to enter the start values as numbers, even for letter
+style coordinates, in which case the program helpfully displays the
 corresponding letter coordinates next to the input fields. Negative start
 values are allowed (``-1`` corresponds to ``-B`` when using the letter style).
 
 Finally, the **Notes** tab contains a nice large text field to store all your
-map related notes in. You can use :kbd:`Shift+Enter` to insert line breaks
+map-related notes in. You can use :kbd:`Shift+Enter` to insert line breaks
 when editing the note text.
 
 
@@ -98,9 +98,9 @@ The **General** tab contains the **Location name**, **Level name** and
 **Elevation** properties discussed previously. The dimensions of the level are
 also displayed (**Columns** and **Rows**), but you cannot edit those fields.
 
-By default, levels use the same coordinate settings as the map. You can
-customise them on an individual level basis by enabling **Override map
-settings** in the **Coordinates** tab.
+By default, levels inherit the coordinate settings from the map properties.
+You can customise them per level by enabling **Override map settings**
+in the **Coordinates** tab.
 
 The **Regions** properties will be discussed later in the :doc:`regions`
 chapter.
@@ -115,21 +115,21 @@ To add a new level, press :kbd:`Ctrl+N` to bring up the **New Level** dialog.
 This is almost exactly the same as the **Edit Level Properties** dialog, but
 here you must specify the level's dimensions. The maximum allowed size is
 6,666×6,666 --- hopefully, you'll never ever come across a level this big, but
-some kind of upper limit had to be introduced and this is as good as any!
+some upper limit had to be introduced and this is as good as any!
 Don't worry if you don't get the level size quite right initially; you can
-always change it later with the resize and crop actions, as you'll see.
+change it later with the resize and crop actions, as you'll see.
 
 You also have the option to pre-fill the level with empty floor cells (**Fill
-with empty floors**). This might come in handy for *wall style* maps---more on
+with empty floors**). This might come in handy for *wall style* maps --- more on
 this in the :ref:`basic-editing:Basic editing` chapter.
 
-To delete the current level, press :kbd:`Ctrl+D`. If you accidentally deleted
-a level, no problem, you can always undo it by pressing :kbd:`U`,
+To delete the current level, press :kbd:`Ctrl+D`. If you deleted the level
+accidentally, no problem; you can always undo it by pressing :kbd:`U`,
 :kbd:`Ctrl+U`, or :kbd:`Ctrl+Z`.
 
 To replace the current map with a new map, press :kbd:`Ctrl+Alt+N`. Make sure
-to save your current map first if you don't want to lose it because this
-action *cannot* be undone!
+to save the current map first if you don't want to lose it because this action
+*cannot* be undone!
 
 .. note::
 

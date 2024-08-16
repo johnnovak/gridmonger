@@ -21,10 +21,10 @@ maps are great demonstrations of this.
 
 To create a link, move the cursor to the source cell and press :kbd:`Shift+G`
 to enter *Set Link Destination Mode*. Now move the cursor to the target cell,
-then press :kbd:`Enter` to create the link or :kbd:`Esc` to cancel. All the
-common navigation shortcuts are available in this mode, so you can change the
-current level, zoom in and out, etc. The :ref:`moving-around:Mouse movement
-actions` can also be used.
+then press :kbd:`Enter` to create the link or :kbd:`Esc` to cancel. All common
+navigation shortcuts are available in this mode, so you can change the current
+level, zoom in and out, etc. The :ref:`moving-around:Mouse movement actions`
+can also be used.
 
 The destination cell will be overwritten (if it doesn't already contain the
 destination floor type), but any existing note will be preserved (and
@@ -57,12 +57,23 @@ movement keys. Press :kbd:`Enter` or :kbd:`Esc` to exit from location
 selection mode, or press :kbd:`G` again to return to the destination cell. The
 included ``Wizardry`` example map contains such multi-source teleports.
 
-You can display lines connecting all linked cells in the level by holding down
+To show lines connecting all linked cells in the level, hold down
 the :kbd:`'` key (apostrophe key, to the left of :kbd:`Enter`). There are also
-:ref:`Preferences options <display link lines>` to display the link lines for
-the current cell only, or to always display all link lines.
+:ref:`Preferences options <show link lines>` to show the link lines for
+the current cell, or to always display all link lines.
 
-    TODO image
+.. raw:: html
+
+    <div class="figure">
+      <a href="_static/img/cell-link-lines.png" class="glightbox">
+        <img alt="Show Link Lines in action — the blue lines indicate linked cells" src="_static/img/cell-link-lines.png"
+        style="width: 90%">
+      </a>
+        <p class="caption">
+          <span>Show Link Lines in action — the blue lines indicate linked cells</span>
+        </p>
+    </div>
+
 
 If you delete a linked cell, change its floor type, put a label on it or an
 annotation with a type other than **None**, the link will be severed. Again,
@@ -197,9 +208,6 @@ become clipped. By enabling *wraparound*, the cells shifted beyond one edge of
 the level will "wrap around" to the opposite side. You can toggle wraparound
 with the :kbd:`W` key while in *Paste Preview Mode*. The status bar indicates
 whether wraparound is enabled or not.
-
-TODO wraparound image
-
 
 .. tip::
 

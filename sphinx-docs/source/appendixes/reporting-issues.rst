@@ -15,13 +15,14 @@ relevant detail about the issue as you can; this will *greatly* increase the
 chances of me finding the root cause and coming up with a fix!
 
 Before submitting a report, please make sure you're using the latest version
-of the program, and that you've read the relevant sections of the manual
+of the program and that you've read the relevant sections of the manual
 carefully.
 
-If you still believe you've found a bug, you can report it in email at
-`gridmonger@johnnovak.net <gridmonger@johnnovak.net>`_, or if you're a GitHub
-user, raise a new ticket in the project's `issue tracker
-<https://github.com/johnnovak/gridmonger/issues>`_.
+If you still believe you've found a bug, please raise a new ticket in the
+project's `issue tracker <https://github.com/johnnovak/gridmonger/issues>`_
+(requires a GitHub account). Alternatively, you can send me an email to
+`gridmonger@johnnovak.net <gridmonger@johnnovak.net>`_.
+
 
 What to include
 ---------------
@@ -29,13 +30,13 @@ What to include
 At the very minimum, every report should contain the following information:
 
 - Type and version of your operating system (e.g. **Windows 10 Pro 64-bit**,
-  or **macOS Big Sur 11.6.2**)
+  or **macOS Sonoma 14.6**)
 - Gridmonger version as displayed in the about dialog (e.g. **Version 0.9**)
 - Whether you're using portable mode
 - Brief description of the problem, expected outcome, and actual results
 - Steps describing how to reproduce the issue (to make sure you're not leaving
-  out any important detail, imagine you're explaining this to someone who has
-  never used the program before)
+  out any important detail --- imagine you're explaining this to someone who
+  has never used the program before)
 
 
 Additionally, reports may include attached files to help clarify the problem
@@ -56,6 +57,6 @@ at hand (generally speaking, the more of these you include, the better):
 
 .. important::
 
-  If the program has crashed, *do not* start it again before having collected
+  If the program crashed, *do not* start it again before having collected
   all the files necessary for filing a report (some of these files might be
   overwritten when the program starts).
