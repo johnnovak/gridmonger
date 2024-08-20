@@ -301,7 +301,7 @@ option in the :ref:`preferences:Editing tab` of the
 :ref:`preferences:Preferences` dialog.
 
 Depending on whether :kbd:`←` and :kbd:`→` perform strafing or
-turning, you can still use the other action with the :kbd:`Alt` modifier:
+turning, you can still use the *other action* with the :kbd:`Alt` modifier:
 
 .. raw:: html
 
@@ -331,8 +331,8 @@ turning, you can still use the other action with the :kbd:`Alt` modifier:
         </tr>
         <tr>
           <td><kbd>Alt</kbd>+<kbd>&larr;</kbd></td>
-          <td>Turn left</td>
-          <td>Strafe left</td>
+          <td><em>Turn left</em></td>
+          <td><em>Strafe left</em></td>
         </tr>
         <tr>
           <td><kbd>&rarr;</kbd></td>
@@ -341,8 +341,8 @@ turning, you can still use the other action with the :kbd:`Alt` modifier:
         </tr>
         <tr>
           <td><kbd>Alt</kbd>+<kbd>&rarr;</kbd></td>
-          <td>Turn right</td>
-          <td>Strafe right</td>
+          <td><em>Turn right</em></td>
+          <td><em>Strafe right</em></td>
         </tr>
       </tbody>
     </table>
@@ -426,11 +426,12 @@ in the top-left corner of the window when *WASD Mode* is on.
 
 When it comes to navigation, this mode is the same as *Normal Mode*, with the
 addition that you can also use the WASD keys for cursor movement. All diagonal
-movement keys are available in *WASD mode*. Editing, however, is a little
-different --- as you'll learn in the :ref:`basic-editing:Editing in WASD Mode`
-section, the mouse buttons are repurposed for editing in this mode, so you
-need to hold the :kbd:`Shift` modifier to use the :ref:`moving-around:Mouse
-movement actions`.
+movement keys (keypad and YUBN keys, if enabled) are available in *WASD mode*.
+
+Editing, however, is a little different --- as you'll learn in the
+:ref:`basic-editing:Editing in WASD Mode` section, the mouse buttons are
+repurposed for editing in this mode, so you need to hold the :kbd:`Shift`
+modifier to use the :ref:`moving-around:Mouse movement actions`.
 
 
 
@@ -448,8 +449,23 @@ movement actions`.
 WASD + Walk Mode
 ================
 
-If you enable both *WASD Mode* and *Walk Mode* (yes, you can do that!), the
-movement keys become a bit more interesting:
+If you enable *WASD Mode* and *Walk Mode* at the same time (yes, you can do
+that!), the cursor will turn into a triangle and you'll see the WASD indicator
+in the top-left corner:
+
+.. raw:: html
+
+    <div class="figure">
+      <a href="_static/img/mode-wasd+walk.png" class="glightbox">
+        <img alt="WASD + Walk Mode (triangle cursor and WASD indicator)" src="_static/img/mode-wasd+walk.png" style="width: 25%;">
+      </a>
+        <p class="caption">
+          <span>WASD + Walk Mode (triangle cursor and WASD indicator)</span>
+        </p>
+    </div>
+
+
+The movement keys become a bit more interesting in *WASD + Walk Mode*:
 
 .. raw:: html
 
@@ -503,24 +519,13 @@ movement keys become a bit more interesting:
     </table>
 
 Strafe mode, turn mode, and the  :kbd:`Alt` modifiers for the arrow keys work
-exactly the same way as in :ref:`moving-around:Walk mode`; they have only been
-omitted for brevity.
+exactly the same way as in :ref:`moving-around:Walk mode`. Diagonal movement
+is not available in *WASD + Walk Mode* either. 
 
 Admittedly, this is the most complex mode, and while some people might find it
 really useful, if it doesn't click with you, don't feel compelled to use it.
-In fact, *yours truly* pretty much only use *Normal Mode*, even when playing
+In fact, *yours truly* pretty much only uses *Normal Mode*, even when playing
 real-time dungeon crawlers with WASD controls...
-
-.. raw:: html
-
-    <div class="figure">
-      <a href="_static/img/mode-wasd+walk.png" class="glightbox">
-        <img alt="WASD + Walk Mode (triangle cursor and WASD indicator)" src="_static/img/mode-wasd+walk.png" style="width: 25%;">
-      </a>
-        <p class="caption">
-          <span>WASD + Walk Mode (triangle cursor and WASD indicator)</span>
-        </p>
-    </div>
 
 
 .. rst-class:: style3 big

@@ -48,7 +48,7 @@ Movement/direction keys
               These keys are referred to as <span class="sc">&laquo;Std move&raquo;</span> from now on.
             </p>
             <p>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
+              Combine with: <kbd>Ctrl</kbd> for 5-cell jumps; <kbd>Shift</kbd> to pan.
             <p>
             <p>
               <span class="asterisk">*</span>
@@ -105,7 +105,7 @@ Movement/direction keys
             <p>
               <span class="asterisk">*</span>
               <span class="sc">NumLock</span> must be off to use the keypad for movement.<br>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
+              Combine with: <kbd>Ctrl</kbd> for 5-cell jumps; <kbd>Shift</kbd> to pan.
             <p>
             <p>
               <span class="dagger">†</span>
@@ -171,7 +171,7 @@ Movement/direction keys
           <td colspan="5">
             <p>
               <span class="asterisk">*</span>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
+              Combine with: <kbd>Ctrl</kbd> for 5-cell jumps; <kbd>Shift</kbd> to pan.
             </p>
             <p>
               <span class="dagger">†</span>
@@ -306,7 +306,7 @@ Movement/direction keys
           <td colspan="4">
             <p>
               <span class="asterisk">*</span>
-              Combine with <kbd>Ctrl</kbd> for 5-cell jumps, or <kbd>Shift</kbd> to pan.
+              Combine with: <kbd>Ctrl</kbd> for 5-cell jumps; <kbd>Shift</kbd> to pan.
             </p>
             <p>
               <span class="dagger">†</span>
