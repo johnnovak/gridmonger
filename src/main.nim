@@ -6940,18 +6940,20 @@ proc handleGlobalKeyEvents(a) =
 
     var s = 1
     if allowJump and a.keys.primaryModKey in ke.mods:
-      if ke.key in AllWasdMoveKeys:
-        # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with shorcuts
+      if ke.key in AllWasdLetterKeys:
+        # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with other
+        # shorcuts
         return
 
       elif ke.key in DiagonalMoveLetterKeys:
-        # Disallow Ctrl+Y/U/B/N panning as it would interfere with shorcuts
+        # Disallow Ctrl+Y/U/B/N panning as it would interfere with other
+        # shorcuts
         return
 
       elif a.prefs.modifierKeyMode == mkmCommandShift and
         ke.key in VimMoveKeys:
-        # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS hide
-        # window shortcut
+        # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS
+        # "hide window" shortcut
         return
 
       else:
@@ -6965,52 +6967,35 @@ proc handleGlobalKeyEvents(a) =
 
     result = true
 
-    if   ke.isKeyDown(k.left,  repeat=true): moveCursor(dirW, s, a)
-    elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, s, a)
-    elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, s, a)
-    elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, s, a)
+    proc down(key: set[Key]): bool =
+      ke.isKeyDown(key, repeat=true)
+
+    proc shiftDown(key: set[Key]): bool =
+      ke.isKeyDown(key, {mkShift}, repeat=true)
+
+    if   down(k.left):  moveCursor(dirW, s, a)
+    elif down(k.right): moveCursor(dirE, s, a)
+    elif down(k.up):    moveCursor(dirN, s, a)
+    elif down(k.down):  moveCursor(dirS, s, a)
 
     elif allowPan:
-      if   ke.isKeyDown(k.left, {mkShift}, repeat=true):
-        moveLevelView(West, s, a)
-
-      elif ke.isKeyDown(k.right, {mkShift}, repeat=true):
-        moveLevelView(East, s, a)
-
-      elif ke.isKeyDown(k.up, {mkShift}, repeat=true):
-        moveLevelView(North, s, a)
-
-      elif ke.isKeyDown(k.down, {mkShift}, repeat=true):
-        moveLevelView(South, s, a)
+      if   shiftDown(k.left):  moveLevelView(West, s, a)
+      elif shiftDown(k.right): moveLevelView(East, s, a)
+      elif shiftDown(k.up):    moveLevelView(North, s, a)
+      elif shiftDown(k.down):  moveLevelView(South, s, a)
 
     if allowDiagonal:
       let d = DiagonalMoveKeysCursor
 
-      # move cursor
-      if ke.isKeyDown(d.upLeft, repeat=true):
-        moveCursorDiagonal(NorthWest, s, a)
+      if   down(d.upLeft):    moveCursorDiagonal(NorthWest, s, a)
+      elif down(d.upRight):   moveCursorDiagonal(NorthEast, s, a)
+      elif down(d.downLeft):  moveCursorDiagonal(SouthWest, s, a)
+      elif down(d.downRight): moveCursorDiagonal(SouthEast, s, a)
 
-      elif ke.isKeyDown(d.upRight, repeat=true):
-        moveCursorDiagonal(NorthEast, s, a)
-
-      elif ke.isKeyDown(d.downLeft, repeat=true):
-        moveCursorDiagonal(SouthWest, s, a)
-
-      elif ke.isKeyDown(d.downRight, repeat=true):
-        moveCursorDiagonal(SouthEast, s, a)
-
-      # move level
-      elif ke.isKeyDown(d.upLeft, {mkShift}, repeat=true):
-        moveLevelView(NorthWest, s, a)
-
-      elif ke.isKeyDown(d.upRight, {mkShift}, repeat=true):
-        moveLevelView(NorthEast, s, a)
-
-      elif ke.isKeyDown(d.downLeft, {mkShift}, repeat=true):
-        moveLevelView(SouthWest, s, a)
-
-      elif ke.isKeyDown(d.downRight, {mkShift}, repeat=true):
-        moveLevelView(SouthEast, s, a)
+      elif shiftDown(d.upLeft):    moveLevelView(NorthWest, s, a)
+      elif shiftDown(d.upRight):   moveLevelView(NorthEast, s, a)
+      elif shiftDown(d.downLeft):  moveLevelView(SouthWest, s, a)
+      elif shiftDown(d.downRight): moveLevelView(SouthEast, s, a)
 
     result = false
 
