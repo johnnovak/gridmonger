@@ -6814,14 +6814,6 @@ proc handleGlobalKeyEvents(a) =
   # {{{ handleMoveWalk()
   proc handleMoveWalk(ke: Event; a) =
 
-    proc turnLeft( dir: CardinalDir): CardinalDir = dir.rotateACW
-    proc turnRight(dir: CardinalDir): CardinalDir = dir.rotateCW
-
-    template forward:  auto = ui.cursorOrient
-    template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
-    template left:     auto = turnLeft(ui.cursorOrient)
-    template right:    auto = turnRight(ui.cursorOrient)
-
     var s = 1
     if mkCtrl in ke.mods:
       if ke.key in AllWasdLetterKeys: return
@@ -6835,51 +6827,46 @@ proc handleGlobalKeyEvents(a) =
       isWasdKey = ke.key in AllWasdLetterKeys or
                   ke.key in AllWasdKeypadKeys
 
+      k = if ui.wasdMode: a.keys.walkKeysWasd
+          else:           a.keys.walkKeysCursor
+
+      altAction = altDown and not isWasdKey
+
     var ke = ke
     ke.mods = ke.mods - {mkAlt, mkCtrl, mkShift}
 
-    let k = if ui.wasdMode: a.keys.walkKeysWasd
-            else:           a.keys.walkKeysCursor
+    proc turnLeft( dir: CardinalDir): auto = dir.rotateACW
+    proc turnRight(dir: CardinalDir): auto = dir.rotateCW
+
+    template forward:  auto = ui.cursorOrient
+    template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
+    template left:     auto = turnLeft(ui.cursorOrient)
+    template right:    auto = turnRight(ui.cursorOrient)
+
+    template doAction(dir: CardinalDir, moveAction: bool) =
+      if moveAction:
+        if shiftDown: moveLevelView({dir}, s, a)
+        else:         moveCursor(    dir,  s, a)
+      else:
+        if not isRepeat: ui.cursorOrient = dir
 
     if   ke.isKeyDown(k.forward, repeat=true):
-      if shiftDown: moveLevelView({forward()}, s, a)
-      else:         moveCursor(    forward(),  s, a)
+      doAction(forward, moveAction = true)
 
     elif ke.isKeyDown(k.backward, repeat=true):
-      if shiftDown: moveLevelView({backward()}, s, a)
-      else:         moveCursor(    backward(),  s, a)
+      doAction(backward, moveAction = true)
 
     elif ke.isKeyDown(k.turnLeft, repeat=true):
-      if altDown and not isWasdKey:
-        if shiftDown: moveLevelView({left()}, s, a)
-        else:         moveCursor(    left(),  s, a)
-      else:
-        if not isRepeat:
-          ui.cursorOrient = left()
+      doAction(left, moveAction = altAction)
 
     elif ke.isKeyDown(k.turnRight, repeat=true):
-      if altDown and not isWasdKey:
-        if shiftDown: moveLevelView({right()}, s, a)
-        else:         moveCursor(    right(),  s, a)
-      else:
-        if not isRepeat:
-          ui.cursorOrient = right()
+      doAction(right, moveAction = altAction)
 
     elif ke.isKeyDown(k.strafeLeft, repeat=true):
-      if altDown and not isWasdKey:
-        if not isRepeat:
-          ui.cursorOrient = left()
-      else:
-        if shiftDown: moveLevelView({left()}, s, a)
-        else:         moveCursor(    left(),  s, a)
+      doAction(left, moveAction = not altAction)
 
     elif ke.isKeyDown(k.strafeRight, repeat=true):
-      if altDown and not isWasdKey:
-        if not isRepeat:
-          ui.cursorOrient = right()
-      else:
-        if shiftDown: moveLevelView({right()}, s, a)
-        else:         moveCursor(    right(),  s, a)
+      doAction(right, moveAction = not altAction)
 
   # }}}
   # {{{ moveKeyToCardinalDir()
