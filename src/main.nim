@@ -6801,26 +6801,27 @@ proc toggleTitleBar(a) =
 
 # TODO separate into level events and global events?
 proc handleGlobalKeyEvents(a) =
-  alias(ui, a.ui)
-  alias(map, a.doc.map)
-  alias(um, a.doc.undoManager)
+  alias(ui,   a.ui)
+  alias(map,  a.doc.map)
+  alias(um,   a.doc.undoManager)
   alias(opts, a.opts)
-  alias(dp, a.ui.drawLevelParams)
+  alias(dp,   a.ui.drawLevelParams)
 
   var l = currLevel(a)
 
   let yubnMode = a.prefs.yubnMovementKeys
 
-  proc turnLeft( dir: CardinalDir): CardinalDir = dir.rotateACW
-  proc turnRight(dir: CardinalDir): CardinalDir = dir.rotateCW
-
-  template forward:  auto = ui.cursorOrient
-  template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
-  template left:     auto = turnLeft(ui.cursorOrient)
-  template right:    auto = turnRight(ui.cursorOrient)
-
   # {{{ handleMoveWalk()
   proc handleMoveWalk(ke: Event; a) =
+
+    proc turnLeft( dir: CardinalDir): CardinalDir = dir.rotateACW
+    proc turnRight(dir: CardinalDir): CardinalDir = dir.rotateCW
+
+    template forward:  auto = ui.cursorOrient
+    template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
+    template left:     auto = turnLeft(ui.cursorOrient)
+    template right:    auto = turnRight(ui.cursorOrient)
+
     var s = 1
     if mkCtrl in ke.mods:
       if ke.key in AllWasdMoveKeys: return
