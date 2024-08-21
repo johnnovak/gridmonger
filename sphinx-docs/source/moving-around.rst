@@ -66,7 +66,7 @@ are in *Normal Mode*. This is indicated by a square shaped cursor.
 One of the defining features of Gridmonger is its `Vim
 <https://en.wikipedia.org/wiki/Vim_(text_editor)>`_-inspired keyboard
 interface. This means that in addition to the standard cursor keys, you can
-also use Vim-style `HJKL key navigation 
+also use Vim-style `HJKL key navigation
 <https://en.wikipedia.org/wiki/Arrow_keys#HJKL_keys>`_ to move
 around. You might have already encountered this navigation style in
 some text-based games originally developed on UNIX systems, such as the
@@ -518,9 +518,9 @@ The movement keys become a bit more interesting in *WASD + Walk Mode*:
       </tbody>
     </table>
 
-Strafe mode, turn mode, and the  :kbd:`Alt` modifiers for the arrow keys work
-exactly the same way as in :ref:`moving-around:Walk mode`. Diagonal movement
-is not available in *WASD + Walk Mode* either. 
+The :kbd:`Alt` modifiers for the arrow keys and strafe mode work exactly the
+same way as in :ref:`moving-around:Walk mode`. Diagonal movement is not
+available in *WASD + Walk Mode*.
 
 Admittedly, this is the most complex mode, and while some people might find it
 really useful, if it doesn't click with you, don't feel compelled to use it.
