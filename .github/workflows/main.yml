@@ -131,14 +131,17 @@ jobs:
 #
       - name: Inject version strings (64-bit)
         run: |
-          $VERSION=nim versionAndGitHash
-          "VERSION=$VERSION" >> $GITHUB_ENV
+          $env:VERSION=nim versionAndGitHash
+          "VERSION=$VERSION" >> $env:GITHUB_ENV
 
-          $INST_PACKAGE_NAME=nim winInstallerPackageName
-          "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
+          $env:INST_PACKAGE_NAME=nim winInstallerPackageName
+          "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $env:GITHUB_ENV
 
-          $PORT_PACKAGE_NAME=nim winPortablePackageName
-          "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
+          $env:PORT_PACKAGE_NAME=nim winPortablePackageName
+          "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $env:GITHUB_ENV
+
+          echo $env:INST_PACKAGE_NAME
+          echo $env:PORT_PACKAGE_NAME
 
       - name: Windows 64-bit release build
         run: |
@@ -151,6 +154,7 @@ jobs:
       - name: Windows 64-bit portable package
         run: |
           nim packageWinPortable
+          dir
 
       - name: Upload 64-bit installer release artifact
         uses: actions/upload-artifact@v4
@@ -162,4 +166,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gridmonger-v${{ env.VERSION }}-win64-portable
-          path: dist/windows
+          path: dist/windows/Gridmonger
