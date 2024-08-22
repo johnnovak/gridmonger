@@ -638,16 +638,17 @@ article table.shortcuts > tbody > tr > td:nth-child(2) {
 article table.shortcuts > tbody > tr:not(:last-child) > td {
   border-bottom: 1px dashed #9e9589;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td {
+article table.shortcuts.move-keys > tbody > tr > td {
+  padding-right: 0;
   text-align: center;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(1) {
+article table.shortcuts.move-keys > tbody > tr > td:nth-child(1) {
   width: 25%;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(2) {
+article table.shortcuts.move-keys > tbody > tr > td:nth-child(2) {
   width: 25%;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(3) {
+article table.shortcuts.move-keys > tbody > tr > td:nth-child(3) {
   width: 25%;
 }
 article .admonition {
@@ -835,6 +836,11 @@ section.search {
   }
   article table.walls {
     width: 55%;
+  }
+}
+@media (max-width: 600px) {
+  table {
+    width: 100% !important;
   }
 }
 /*--------------------------------------------------------------------------*/

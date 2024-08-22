@@ -83,7 +83,7 @@ The following table summarises the *standard movement keys* available in
 
 .. raw:: html
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys" style="width: 80%">
       <thead>
         <tr>
           <th>Arrow</th>
@@ -177,11 +177,11 @@ You can use the keypad to move in the intercardinal directions too
 
 .. raw:: html
 
-    <table class="shortcuts std-move-keys" style="width: 67%">
+    <table class="shortcuts move-keys" style="width: 52%">
       <thead>
         <tr>
           <th>Keypad</th>
-          <th width="45%"></th>
+          <th width="70%"></th>
         </tr>
       </thead>
 
@@ -213,12 +213,12 @@ game `Rogue <https://en.wikipedia.org/wiki/Rogue_(video_game)>`_:
 
 .. raw:: html
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys" style="width: 70%">
       <thead>
         <tr>
-          <th>Keypad</th>
-          <th>Vim</th>
-          <th width="45%"></th>
+          <th width="15%">Keypad</th>
+          <th width="15%">Vim</th>
+          <th width="70%"></th>
         </tr>
       </thead>
 
@@ -305,7 +305,7 @@ turning, you can still use the *other action* with the :kbd:`Alt` modifier:
 
 .. raw:: html
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys" style="width: 62%">
       <thead>
         <tr>
           <th>Arrow</th>
@@ -330,19 +330,19 @@ turning, you can still use the *other action* with the :kbd:`Alt` modifier:
           <td>Turn left</td>
         </tr>
         <tr>
-          <td><kbd>Alt</kbd>+<kbd>&larr;</kbd></td>
-          <td><em>Turn left</em></td>
-          <td><em>Strafe left</em></td>
-        </tr>
-        <tr>
           <td><kbd>&rarr;</kbd></td>
           <td>Strafe right</td>
           <td>Turn right</td>
         </tr>
         <tr>
+          <td><kbd>Alt</kbd>+<kbd>&larr;</kbd></td>
+          <td>Turn left</td>
+          <td>Strafe left</td>
+        </tr>
+        <tr>
           <td><kbd>Alt</kbd>+<kbd>&rarr;</kbd></td>
-          <td><em>Turn right</em></td>
-          <td><em>Strafe right</em></td>
+          <td>Turn right</td>
+          <td>Strafe right</td>
         </tr>
       </tbody>
     </table>
@@ -352,7 +352,7 @@ the need for the :kbd:`Alt` modifier:
 
 .. raw:: html
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys" style="width: 47%">
       <thead>
         <tr>
           <th>Keypad</th>
@@ -361,20 +361,20 @@ the need for the :kbd:`Alt` modifier:
       </thead>
       <tbody class="no-padding">
         <tr>
-          <td><kbd>kp 4</kbd></td>
-          <td>Strafe left</td>
-        </tr>
-        <tr>
-          <td><kbd>kp 6</kbd></td>
-          <td>Strafe right</td>
-        </tr>
-        <tr>
           <td><kbd>kp 8</kbd></td>
           <td>Forward</td>
         </tr>
         <tr>
           <td><kbd>kp 2</kbd><kbd>kp 5</kbd></td>
           <td>Backward</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 4</kbd></td>
+          <td>Strafe left</td>
+        </tr>
+        <tr>
+          <td><kbd>kp 6</kbd></td>
+          <td>Strafe right</td>
         </tr>
         <tr>
           <td><kbd>kp 7</kbd></td>
@@ -428,6 +428,37 @@ When it comes to navigation, this mode is the same as *Normal Mode*, with the
 addition that you can also use the WASD keys for cursor movement. All diagonal
 movement keys (keypad and YUBN keys, if enabled) are available in *WASD mode*.
 
+.. raw:: html
+
+  <table class="shortcuts move-keys" style="width: 35%">
+    <thead>
+      <tr>
+        <th width="40%">Key</th>
+        <th width="60%"></th>
+      </tr>
+    </thead>
+
+    <tbody class="no-padding">
+      <tr>
+        <td><kbd>W</kbd></td>
+        <td>Up (North)</td>
+      </tr>
+      <tr>
+        <td><kbd>A</kbd></td>
+        <td>Left (West)</td>
+      </tr>
+      <tr>
+        <td><kbd>S</kbd></td>
+        <td>Down (South)</td>
+      </tr>
+      <tr>
+        <td><kbd>D</kbd></td>
+        <td>Right (East)</td>
+      </tr>
+
+    </tbody>
+  </table>
+
 Editing, however, is a little different --- as you'll learn in the
 :ref:`basic-editing:Editing in WASD Mode` section, the mouse buttons are
 repurposed for editing in this mode, so you need to hold the :kbd:`Shift`
@@ -469,7 +500,7 @@ The movement keys become a bit more interesting in *WASD + Walk Mode*:
 
 .. raw:: html
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys" style="width: 75%">
       <thead>
         <tr>
           <th>Arrow<br>(Turn mode)</th>

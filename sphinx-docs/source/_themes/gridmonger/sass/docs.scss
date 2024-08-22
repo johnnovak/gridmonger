@@ -323,10 +323,11 @@ article {
         }
       }
 
-      &.std-move-keys {
+      &.move-keys {
         > tbody {
           > tr {
             > td {
+              padding-right: 0;
               text-align: center;
 
               &:nth-child(1) {
@@ -571,6 +572,13 @@ section.search {
       &.floors { width: 62% }
       &.walls  { width: 55% }
     }
+  }
+}
+
+// Override inline table width definitions on narrow screens
+@media (max-width: 600px) {
+  table {
+    width: 100% !important;
   }
 }
 

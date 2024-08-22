@@ -25,12 +25,12 @@ Keyboard shortcuts
 
 .. rst-class:: style3
 
-Movement/direction keys
-=======================
+Movement keys
+=============
 
 .. raw:: html
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys">
       <caption>Standard movement keys</caption>
       <thead>
         <tr>
@@ -86,7 +86,7 @@ Movement/direction keys
       </tbody>
     </table>
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys">
       <caption>Diagonal movement keys</caption>
       <thead>
         <tr>
@@ -155,7 +155,7 @@ Movement/direction keys
       </tfoot>
     </table>
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys">
       <caption>Walk Mode</caption>
       <thead>
         <tr>
@@ -245,7 +245,7 @@ Movement/direction keys
       </tbody>
     </table>
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys">
       <caption>WASD Mode</caption>
 
       <tfoot>
@@ -290,7 +290,7 @@ Movement/direction keys
       </tbody>
     </table>
 
-    <table class="shortcuts std-move-keys">
+    <table class="shortcuts move-keys">
       <caption>WASD + Walk Mode</caption>
       <thead>
         <tr>
@@ -363,98 +363,12 @@ Movement/direction keys
 
 .. rst-class:: style3
 
-Edit mode
-=========
+General
+=======
 
 .. raw:: html
 
     <table class="shortcuts">
-      <caption>Navigation</caption>
-      <tbody>
-        <tr>
-          <td>
-            <kbd class="move">Move keys</kbd>
-          </td>
-          <td>Move cursor (1 cell)</td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd class="move">Move keys</kbd>
-            </kbd>
-          </td>
-          <td>
-            Move cursor (5 cells)
-            <p>Except for <span class="sc">WASD &amp; YUBN keys</span></p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
-            </kbd>
-          </td>
-          <td>Pan level (1 cell)</td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
-            </kbd>
-          </td>
-          <td>
-            Pan level (5 cells)
-            <p>Except for <span class="sc">WASD &amp; YUBN keys</span></p>
-          </td>
-        </tr>
-      </tbody>
-
-      <tbody>
-        <tr>
-          <td>
-            <kbd>Tab</kbd>
-          </td>
-          <td>Toggle <em>WASD Mode</em></td>
-        </tr>
-        <tr>
-          <td>
-            <kbd>`</kbd><br>(<em>grave accent</em>, or <em>backtick</em> key)
-          </td>
-          <td>Toggle <em>Walk Mode</em></td>
-        </tr>
-        <tr>
-          <td>
-            <kbd>T</kbd>
-          </td>
-          <td>Toggle <em>Trail Mode</em></td>
-        </tr>
-        <tr>
-          <td>
-            <kbd>=</kbd> / <kbd>-</kbd>
-          </td>
-          <td>Zoom in/out</td>
-        </tr>
-        <tr>
-          <td>
-            <span class="group">
-              <kbd class="compound">
-                <kbd>Ctrl</kbd>+<kbd>-</kbd>
-              </kbd> / <kbd>=</kbd> or
-            </span>
-            <span class="group">
-              <kbd>PgUp</kbd> / <kbd>PgDn</kbd> or
-            </span>
-            <span class="group">
-              <kbd>kp -</kbd> / <kbd>kp +</kbd>
-            </span>
-          </td>
-          <td>Previous/next level</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <table class="shortcuts">
-      <caption>General</caption>
       <tbody>
         <tr>
           <td>
@@ -485,48 +399,6 @@ Edit mode
             </kbd>
           </td>
           <td>Preferences</td>
-        </tr>
-      </tbody>
-
-      <tbody>
-        <tr>
-          <td>
-            <span class="group">
-              <kbd>U</kbd><span class="asterisk">*</span> or
-            </span>
-            <span class="group">
-              <kbd class="compound">
-                <kbd>Ctrl</kbd>+<kbd>U</kbd>
-              </kbd> or
-            </span>
-            <span class="group">
-              <kbd class="compound">
-                <kbd>Ctrl</kbd>+<kbd>Z</kbd>
-              </kbd>
-            </span>
-          </td>
-          <td>
-            Undo last action
-            <p>
-              <span class="asterisk">*</span>
-              Except for <span class="sc">YUBN keys</span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <span class="group">
-              <kbd class="compound">
-                <kbd>Ctrl</kbd>+<kbd>R</kbd>
-              </kbd> or
-            </span>
-            <span class="group">
-              <kbd class="compound">
-                <kbd>Ctrl</kbd>+<kbd>Y</kbd>
-              </kbd>
-            </span>
-          </td>
-          <td>Redo last action</td>
         </tr>
       </tbody>
 
@@ -608,9 +480,89 @@ Edit mode
           </td>
           <td>Delete level</td>
         </tr>
+        <tr>
+          <td>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>-</kbd>
+              </kbd> / <kbd>=</kbd> or
+            </span>
+            <span class="group">
+              <kbd>PgUp</kbd> / <kbd>PgDn</kbd> or
+            </span>
+            <span class="group">
+              <kbd>kp -</kbd> / <kbd>kp +</kbd>
+            </span>
+          </td>
+          <td>Previous/next level</td>
+        </tr>
       </tbody>
 
       <tbody>
+        <tr>
+          <td>
+            <span class="group">
+              <kbd>U</kbd><span class="asterisk">*</span> or
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>U</kbd>
+              </kbd> or
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Z</kbd>
+              </kbd>
+            </span>
+          </td>
+          <td>
+            Undo last action
+            <p>
+              <span class="asterisk">*</span>
+              Except for <span class="sc">YUBN keys</span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>R</kbd>
+              </kbd> or
+            </span>
+            <span class="group">
+              <kbd class="compound">
+                <kbd>Ctrl</kbd>+<kbd>Y</kbd>
+              </kbd>
+            </span>
+          </td>
+          <td>Redo last action</td>
+        </tr>
+      </tbody>
+
+
+      <tbody>
+        <tr>
+          <td>
+            <kbd>=</kbd> / <kbd>-</kbd>
+          </td>
+          <td>Zoom in/out</td>
+        </tr>
+      </tbody>
+
+      <tbody>
+        <tr>
+          <td>
+            <kbd>Tab</kbd>
+          </td>
+          <td>Toggle <em>WASD Mode</em></td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>`</kbd><br>(<em>grave accent</em>, or <em>backtick</em> key)
+          </td>
+          <td>Toggle <em>Walk Mode</em></td>
+        </tr>
         <tr>
           <td>
             <kbd class="compound">
@@ -625,7 +577,15 @@ Edit mode
               <kbd>Alt</kbd>+<kbd>N</kbd>
             </kbd>
           </td>
-          <td>Toggle notes pane</td>
+          <td>Toggle current note pane</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Alt</kbd>+<kbd>L</kbd>
+            </kbd>
+          </td>
+          <td>Toggle notes list pane</td>
         </tr>
         <tr>
           <td>
@@ -643,15 +603,49 @@ Edit mode
           </td>
           <td>Toggle title bar</td>
         </tr>
+      </tbody>
+
+      <tbody>
         <tr>
           <td>
             <kbd>Space</kbd>
           </td>
-          <td>Toggle display note tooltip</td>
+          <td>Show note tooltip</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>'</kbd><br>(<em>apostrophe</em>, or <em>single-quote</em> key)
+          </td>
+          <td>Show all link lines</td>
         </tr>
       </tbody>
 
       <tbody>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>F5</kbd>–<kbd>F8</kbd>
+            </kbd>
+          </td>
+          <td>Save window layout 1–4</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>F5</kbd>–<kbd>F8</kbd>
+            </kbd>
+          </td>
+          <td>Restore window layout 1–4</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd>Ctrl</kbd>+<kbd>F11</kbd></kbd>
+          </td>
+          <td>Reset interface scaling</td>
+        </tr>
+      </tbody>
+
+      <tbody class="no-padding">
         <tr>
           <td>
             <span class="group">
@@ -706,8 +700,16 @@ Edit mode
       </tbody>
     </table>
 
+
+.. rst-class:: style3
+
+Edit mode
+=========
+
+.. raw:: html
+
     <table class="shortcuts">
-      <caption>Editing</caption>
+      <caption>Floor actions</caption>
       <tbody>
         <tr>
           <td>
@@ -745,7 +747,15 @@ Edit mode
           <td>
             <kbd>O</kbd>
           </td>
-          <td>Toggle floor orientation</td>
+          <td>Rotate floor clockwise</td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>Shift</kbd>+<kbd>O</kbd>
+            </kbd>
+          </td>
+          <td>Rotate floor anti-clockwise</td>
         </tr>
       </tbody>
 
@@ -810,7 +820,7 @@ Edit mode
               <kbd>Shift</kbd>+<kbd>7</kbd>
             </kbd>
           </td>
-          <td>Draw bridge</td>
+          <td>Cycle bridge/arrow</td>
         </tr>
         <tr>
           <td>
@@ -822,7 +832,10 @@ Edit mode
           <td>Cycle column/statue</td>
         </tr>
       </tbody>
+    </table>
 
+    <table class="shortcuts">
+      <caption>Wall actions</caption>
       <tbody>
         <tr>
           <td>
@@ -852,12 +865,18 @@ Edit mode
             (use Right+Left Mouse Button instead)</p>
           </td>
         </tr>
+      </tbody>
+
+      <tbody>
         <tr>
           <td>
             <kbd>[</kbd> / <kbd>]</kbd>
           </td>
           <td>Previous/next special wall</td>
         </tr>
+      </tbody>
+
+      <tbody>
         <tr>
           <td>
             <kbd>Alt</kbd>+<kbd>1</kbd></kbd>
@@ -931,7 +950,10 @@ Edit mode
           <td>Set special wall: Writing</td>
         </tr>
       </tbody>
+    </table>
 
+    <table class="shortcuts">
+      <caption>Colour actions</caption>
       <tbody>
         <tr>
           <td>
@@ -955,9 +977,9 @@ Edit mode
         </tr>
         <tr>
           <td>
-            <kbd>Ctrl</kbd>+<kbd>1</kbd>-<kbd>9</kbd>
+            <kbd>Ctrl</kbd>+<kbd>1</kbd>–<kbd>9</kbd>
           </td>
-          <td>Set floor colour 1-9</td>
+          <td>Set floor colour 1–9</td>
         </tr>
         <tr>
           <td>
@@ -966,8 +988,27 @@ Edit mode
           <td>Set floor colour 10</td>
         </tr>
       </tbody>
+    </table>
 
+    <table class="shortcuts">
+      <caption>Trail actions</caption>
       <tbody>
+        <tr>
+          <td>
+            <kbd>T</kbd>
+          </td>
+          <td>Toggle <em>Trail Mode</em></td>
+        </tr>
+        <tr>
+          <td>
+            <kbd class="compound">
+              <kbd>X</kbd>+<kbd class="move">Move keys</kbd>
+            </kbd>
+          </td>
+          <td>
+            Erase trail
+          </td>
+        </tr>
         <tr>
           <td>
             <kbd class="compound">
@@ -988,19 +1029,11 @@ Edit mode
             Clear trail in current level
           </td>
         </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>X</kbd>+<kbd class="move">Move keys</kbd>
-            </kbd>
-          </td>
-          <td>
-            Erase trail
-          </td>
-        </tr>
       </tbody>
+    </table>
 
-
+    <table class="shortcuts">
+      <caption>Selection actions</caption>
       <tbody>
         <tr>
           <td>
@@ -1023,7 +1056,10 @@ Edit mode
           <td>Enter <em>Paste Preview Mode</em></td>
         </tr>
       </tbody>
+    </table>
 
+    <table class="shortcuts">
+      <caption>Note &amp; label actions</caption>
       <tbody>
         <tr>
           <td>
@@ -1075,6 +1111,8 @@ Edit mode
         </tr>
       </tbody>
 
+    <table class="shortcuts">
+      <caption>Link actions</caption>
       <tbody>
         <tr>
           <td>
@@ -1091,7 +1129,10 @@ Edit mode
           <td>Enter <em>Set Link Destination Mode</em></td>
         </tr>
       </tbody>
+    </table>
 
+    <table class="shortcuts">
+      <caption>Level actions</caption>
       <tbody class="no-padding">
         <tr>
           <td>
@@ -1121,62 +1162,6 @@ Select (Mark) Mode
 .. raw:: html
 
     <table class="shortcuts">
-      <tbody>
-        <tr>
-          <td>
-            <kbd class="move">Move keys</kbd>
-          </td>
-          <td>Move cursor (1 cell)</td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd class="move">Move keys</kbd>
-            </kbd>
-          </td>
-          <td>
-            Move cursor (5 cells)
-            <p>Except for <span class="sc">YUBN keys</span></p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
-            </kbd>
-          </td>
-          <td>
-            Pan level (1 cell)
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
-            </kbd>
-          </td>
-          <td>
-            Pan level (5 cells)
-            <p>Except for <span class="sc">YUBN keys</span></p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <kbd>=</kbd> / <kbd>-</kbd>
-          </td>
-          <td>Zoom in/out</td>
-        </tr>
-        <tr>
-          <td>
-            <kbd>Esc</kbd> or
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>[</kbd>
-            </kbd>
-          </td>
-          <td>Cancel selection &amp;<br>return to <em>Edit Mode</em></td>
-        </tr>
-      </tbody>
-
       <tbody>
         <tr>
           <td>
@@ -1230,7 +1215,7 @@ Select (Mark) Mode
         </tr>
       </tbody>
 
-      <tbody class="no-padding">
+      <tbody>
         <tr>
           <td>
             <kbd>Y</kbd><span class="asterisk">*</span> or <kbd>C</kbd>
@@ -1293,94 +1278,20 @@ Select (Mark) Mode
           <td>Set floor colour of selection</td>
         </tr>
       </tbody>
-    </table>
 
-
-.. rst-class:: style3
-
-Paste & Nudge Preview Modes
-===========================
-
-.. raw:: html
-
-    <table class="shortcuts">
-
-      <tfoot>
-        <tr>
-          <td colspan="2">
-            <p>
-              <span class="asterisk">*</span>
-              Panning is not available in <span class="sc">Nudge Preview Mode</span>.
-            <p>
-          </td>
-        </tr>
-      </tfoot>
-
-      <tbody>
+      <tbody class="no-padding">
         <tr>
           <td>
-            <kbd class="move">Move keys</kbd>
-          </td>
-          <td>Move selection (1 cell)</td>
-        </tr>
-        <tr>
-          <td>
+            <kbd>Esc</kbd> or
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd class="move">Move keys</kbd>
+              <kbd>Ctrl</kbd>+<kbd>[</kbd>
             </kbd>
           </td>
-          <td>
-            Move selection (5 cells)
-            <p>Except for <span class="sc">YUBN keys</span></p>
-          </td>
+          <td>Cancel selection &amp;<br>return to <em>Edit Mode</em></td>
         </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
-              <span class="asterisk">*</span>
-            </kbd>
-          </td>
-          <td>
-            Pan level (1 cell)
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd class="move">Move keys</kbd>
-              <span class="asterisk">*</span>
-            </kbd>
-          </td>
-          <td>
-            Pan level (5 cells)
-            <p>Except for <span class="sc">YUBN keys</span></p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <kbd>W</kbd>
-          </td>
-          <td>Toggle wraparound</td>
-        </tr>
-        <tr>
-          <td>
-            <kbd>P</kbd> or <kbd>Enter</kbd> or <kbd>kp Enter</kbd>
-          </td>
-          <td>Paste</td>
-        </tr>
-        <td>
-          <kbd>Esc</kbd> or
-          <kbd class="compound">
-            <kbd>Ctrl</kbd>+<kbd>[</kbd>
-          </kbd>
-        </td>
-        <td>Cancel</td>
       </tbody>
     </table>
 
-
-.. rst-class:: style5 big
 
 Dialogs
 =======
@@ -1400,7 +1311,7 @@ Dialogs
         <tr>
           <td>
             <kbd class="compound">
-              <kbd>Ctrl</kbd>+<kbd>1</kbd>-<kbd>9</kbd>
+              <kbd>Ctrl</kbd>+<kbd>1</kbd>–<kbd>9</kbd>
             </kbd>
           </td>
           <td>Select tab 1–9</td>

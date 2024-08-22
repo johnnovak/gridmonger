@@ -277,7 +277,7 @@ Nudge level
 You can shift the contents of the level around without changing its dimensions
 with the *nudge level* action.
 
-Press :kbd:`Ctrl+E` to enter *Nudge Preview Mode*, then use the movement keys
+Press :kbd:`Ctrl+G` to enter *Nudge Preview Mode*, then use the movement keys
 to reposition the level's contents.
 
 Similarly to *Paste Preview Mode*, you can enable wraparound with the :kbd:`W`
