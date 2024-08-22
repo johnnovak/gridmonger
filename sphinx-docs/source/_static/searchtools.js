@@ -112,7 +112,7 @@ const _finishSearch = (resultCount) => {
   Search.title.innerText = _("Search Results");
   if (!resultCount)
     Search.status.innerText = Documentation.gettext(
-      "Your search did not match any documents. Please make sure that all words are spelled correctly and that you've selected enough categories."
+      "Your search did not result in any matches."
     );
   else
     Search.status.innerText = _(
