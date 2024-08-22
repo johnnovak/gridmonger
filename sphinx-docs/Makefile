@@ -36,18 +36,7 @@ build_site: gen_html
 build_manual: gen_html
 	rm -rf "$(MANUALDIR)"
 	mkdir -p "$(MANUALDIR)"
-	cp "$(BUILDDIR)/html/"*html "$(MANUALDIR)"
-	cp -R $(BUILDDIR)/html/appendixes "$(MANUALDIR)/appendixes"
-
-	mkdir -p "$(MANUALDIR)/_static/css"
-	cp -R "$(BUILDDIR)/html/_static/css/docs.css" "$(MANUALDIR)/_static/css"
-	cp -R "$(BUILDDIR)/html/_static/css/glightbox.min.css" "$(MANUALDIR)/_static/css"
-
-	cp -R "$(BUILDDIR)/html/_static/font" "$(MANUALDIR)/_static"
-	cp -R "$(BUILDDIR)/html/_static/js" "$(MANUALDIR)/_static"
-
-	mkdir "$(MANUALDIR)/_static/img"
-	cp "$(BUILDDIR)/html/_static/img/"*.png "$(MANUALDIR)/_static/img"
+	cp -R "$(BUILDDIR)/html/"* "$(MANUALDIR)"
 
 	rm "$(MANUALDIR)/index.html"
 	mv "$(MANUALDIR)/contents.html" "$(MANUALDIR)/index.html"
