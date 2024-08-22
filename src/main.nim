@@ -10854,6 +10854,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
   else:
     a.theme.config = DefaultThemeConfig
 
+  a.ui.drawLevelParams.setZoomLevel(a.theme.levelTheme, DefaultZoomLevel)
+
   a.ui.status.warning.overwrite = true
 
   # Init map & load last map, or map from command line
