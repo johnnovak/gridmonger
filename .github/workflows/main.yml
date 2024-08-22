@@ -140,9 +140,6 @@ jobs:
           INST_PACKAGE_NAME=$(nim winInstallerPackageName)
           echo "INST_PACKAGE_NAME=$INST_PACKAGE_NAME" >> $GITHUB_ENV
 
-          PORT_PACKAGE_NAME=$(nim winPortablePackageName)
-          echo "PORT_PACKAGE_NAME=$PORT_PACKAGE_NAME" >> $GITHUB_ENV
-
       - name: Windows 64-bit release build
         run: |
           nim release
@@ -154,7 +151,6 @@ jobs:
       - name: Windows 64-bit portable package
         run: |
           nim packageWinPortable
-          dir dist
 
       - name: Upload 64-bit installer release artifact
         uses: actions/upload-artifact@v4
@@ -166,4 +162,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gridmonger-v${{ env.VERSION }}-win64-portable
-          path: dist/windows/Gridmonger
+          path: dist/windows/portable

@@ -142,8 +142,7 @@ task packageWinInstaller, "create Windows installer package":
 task packageWinPortable, "create Windows portable package":
   mkdir distWinDir
   exec fmt"strip -S {exeName}"
-  let packageName = "Gridmonger"
-  let packageDir = distWinDir / packageName
+  let packageDir = distWinDir / "portable" / "Gridmonger"
   rmDir packageDir
   mkDir packageDir
 
