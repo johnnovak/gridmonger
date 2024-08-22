@@ -159,7 +159,7 @@ task packageWinPortable, "create Windows portable package":
   cpDir manualDir, packageDir / manualDir
   cpDir themesDir, packageDir / themesDir
 
-  let zipName = getWinPortablePackageName(arch)
+#  let zipName = getWinPortablePackageName(arch)
 #  withDir distWinDir:
 #    createZip(zipName, srcPath=packageName)
 #
