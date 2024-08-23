@@ -206,7 +206,7 @@ Section "Gridmonger (required)" Gridmonger
   File /r Data
   File /r Manual
   File /r Themes
-  File extras\windows-libs\*
+  File extras\windows-deps\*
   File ${APP_EXE}
 
   ; Write the installation path into the registry

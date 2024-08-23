@@ -156,8 +156,17 @@ task packageWinPortable, "create Windows portable package":
   # Create config dir
   mkDir packageDir / "Config"
 
+  # We need to put a dummy file into the Config dir, otherwise the GitHub
+  # uploader action will exclude it from the ZIP file
+  writeFile(packageDir / "portable", "dummy")
+
   # Copy main executable
   cpFile exeName, packageDir / exeName
+
+  # Copy extra Windows dependencies
+  for srcPath in listFiles("extras" / "windows-deps"):
+    let (_, srcFile) = splitPath(srcPath)
+    let outPath = packageDir / srcFile
 
   # Copy resources
   cpDir dataDir, packageDir / dataDir
@@ -170,7 +179,7 @@ task packageWinPortable, "create Windows portable package":
 #    createZip(zipName, srcPath=packageName)
 #
 #  rmDir packageDir
-
+#
 
 task macPackageName, "get macOS package name":
   echo macPackageName
