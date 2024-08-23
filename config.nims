@@ -158,7 +158,7 @@ task packageWinPortable, "create Windows portable package":
 
   # We need to put a dummy file into the Config dir, otherwise the GitHub
   # uploader action will exclude it from the ZIP file
-  writeFile(packageDir / "portable", "dummy")
+  writeFile(packageDir / "Config" / "portable", "dummy")
 
   # Copy main executable
   cpFile exeName, packageDir / exeName
@@ -167,6 +167,7 @@ task packageWinPortable, "create Windows portable package":
   for srcPath in listFiles("extras" / "windows-deps"):
     let (_, srcFile) = splitPath(srcPath)
     let outPath = packageDir / srcFile
+    cp srcPath, outpath
 
   # Copy resources
   cpDir dataDir, packageDir / dataDir
