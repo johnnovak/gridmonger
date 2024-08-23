@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+
+
+<html lang="en-AU">
+  <title>User data folder &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="../_static/documentation_options.js?v=6efca38a"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link rel="icon" href=""/>
+
+  <link href="../_static/css/docs.css" rel="stylesheet">
+  <link href="../_static/css/glightbox.min.css" rel="stylesheet"> 
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="https://gridmonger.johnnovak.net/"><img src="../_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+    <nav class="toc-link">
+      <a href="../contents.html" >Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../window-layouts.html">Window layouts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../themes.html">Themes</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User data folder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced-usage.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reporting-issues.html">Reporting issues</a></li>
+</ul>
+
+    </nav>
+  </header>
+
+  <article role="main">
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+    <li class="next"><a href="advanced-usage.html">Advanced usage</a></li>
+  </ul>
+</nav>
+    
+
+    
+  <section class="style6 big" id="user-data-folder">
+<h1>User data folder<a class="headerlink" href="#user-data-folder" title="Link to this heading">¶</a></h1>
+<p>The <em>user data folder</em> stores data such as your program settings, user
+themes, autosaves, and the log file.</p>
+<p>The location of the user data folder is in a standard system location for
+non-portable installations:</p>
+<dl class="simple">
+<dt>Windows</dt><dd><p><code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;USERNAME&gt;\AppData\Roaming\Gridmonger</span></code></p>
+</dd>
+<dt>macOS</dt><dd><p><code class="docutils literal notranslate"><span class="pre">/Users/&lt;USERNAME&gt;/Library/Application</span> <span class="pre">Support/Gridmonger</span></code></p>
+</dd>
+</dl>
+<p>For portable installations, it is inside the application folder where the
+Gridmonger executable resides.</p>
+<p>The user data folder contains a number of subfolders; these are created by
+the program at startup if they don’t exist:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Autosaves</span></code></dt><dd><p>If autosaves are enabled and the current map hasn’t been manually saved
+yet, the autosave file <code class="docutils literal notranslate"><span class="pre">Untitled</span> <span class="pre">1.gmm</span></code> will go into this folder. If
+<code class="docutils literal notranslate"><span class="pre">Untitled</span> <span class="pre">1.gmm</span></code> already exists, the name <code class="docutils literal notranslate"><span class="pre">Untitled</span>
+<span class="pre">2.gmm</span></code> will be chosen, and so on. In the rare event of a program crash,
+unsaved maps are automatically saved here too as <code class="docutils literal notranslate"><span class="pre">&lt;Map</span> <span class="pre">Name&gt;</span> <span class="pre">Crash</span>
+<span class="pre">Autosave.gmm</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Config</span></code></dt><dd><p>Location of the <code class="docutils literal notranslate"><span class="pre">gridmonger.cfg</span></code> configuration file that contains the
+application’s settings.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Logs</span></code></dt><dd><p>The logs from the last run are written to the file <code class="docutils literal notranslate"><span class="pre">gridmonger.log</span></code> in
+this folder. Log files from the last three runs are also preserved as
+<code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak1</span></code>, <code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">gridmonger.log.bak3</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Manual</span></code></dt><dd><p>The HTML user manual you’re reading now.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Themes</span></code></dt><dd><p>User themes are saved into this folder. This is where you should put
+themes shared by other users.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Themes/Images</span></code></dt><dd><p>Images used by the user themes go here.</p>
+</dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If the application folder contains a subfolder named <code class="docutils literal notranslate"><span class="pre">Config</span></code>, Gridmonger
+will attempt to start in portable mode. Technically, you can convert a
+standard installation into a portable one by moving the contents of your
+user data folder into <code class="docutils literal notranslate"><span class="pre">Config</span></code> in the Gridmonger folder.</p>
+<p>You can also do the reverse and convert a portable installation into a
+standard one, but on Windows you’re better off just using the standard
+installer. That will also set up default file associations for Gridmonger
+map files (<code class="docutils literal notranslate"><span class="pre">.gmm</span></code>) and provides a standard uninstaller script.</p>
+</div>
+</section>
+
+
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+    <li class="next"><a href="advanced-usage.html">Advanced usage</a></li>
+  </ul>
+</nav>
+    
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
+      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+    </footer>
+  </article>
+
+  <script src="../_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>

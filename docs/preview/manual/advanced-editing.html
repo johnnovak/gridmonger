@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+
+<html lang="en-AU">
+  <title>Advanced editing &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="_static/documentation_options.js?v=6efca38a"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link rel="icon" href=""/>
+
+  <link href="_static/css/docs.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet"> 
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="https://gridmonger.johnnovak.net/"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+    <nav class="toc-link">
+      <a href="contents.html" >Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Advanced editing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#linked-cells">Linked cells</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#selections">Selections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#special-level-actions">Special level actions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/user-data-folder.html">User data folder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/advanced-usage.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/reporting-issues.html">Reporting issues</a></li>
+</ul>
+
+    </nav>
+  </header>
+
+  <article role="main">
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="window-layouts.html">Window layouts</a></li>
+    <li class="next"><a href="regions.html">Regions</a></li>
+  </ul>
+</nav>
+    
+
+    
+  <section id="advanced-editing">
+<h1>Advanced editing<a class="headerlink" href="#advanced-editing" title="Link to this heading">¶</a></h1>
+<section id="linked-cells">
+<h2>Linked cells<a class="headerlink" href="#linked-cells" title="Link to this heading">¶</a></h2>
+<p>A handy advantage of Gridmonger over pencil-and-paper mapping is the
+ability to establish cell links. You can create links between the following
+floor types:</p>
+<ul class="simple">
+<li><p>Pits and ceiling pits</p></li>
+<li><p>Teleport sources and destinations</p></li>
+<li><p>Upward and downward stairs</p></li>
+<li><p>Entrance and exit doors</p></li>
+</ul>
+<p>You can jump between linked cells by pressing the <kbd class="kbd docutils literal notranslate">G</kbd> key, which is very
+useful when navigating complex, interlocking, multi-level dungeons. The
+included <code class="docutils literal notranslate"><span class="pre">Eye</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">Beholder</span> <span class="pre">I</span></code> and <code class="docutils literal notranslate"><span class="pre">The</span> <span class="pre">Dark</span> <span class="pre">Heart</span> <span class="pre">of</span> <span class="pre">Uukrul</span></code> example
+maps are great demonstrations of this.</p>
+<p>To create a link, move the cursor to the source cell and press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">G</kbd></kbd>
+to enter <em>Set Link Destination Mode</em>. Now move the cursor to the target cell,
+then press <kbd class="kbd docutils literal notranslate">Enter</kbd> to create the link or <kbd class="kbd docutils literal notranslate">Esc</kbd> to cancel. All common
+navigation shortcuts are available in this mode, so you can change the current
+level, zoom in and out, etc. The <a class="reference internal" href="moving-around.html#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a>
+can also be used.</p>
+<p>The destination cell will be overwritten (if it doesn’t already contain the
+destination floor type), but any existing note will be preserved (and
+potentially converted to a <strong>None</strong> marker type). Once a link has been
+created, small triangles will appear in the bottom-left corners of the
+linked cells.</p>
+<div class="figure">
+  <a href="_static/img/cell-links.png" class="glightbox">
+    <img alt="Examples of linked cells" src="_static/img/cell-links.png"
+    style="width: 35%">
+  </a>
+    <p class="caption">
+      <span>Examples of linked cells</span>
+    </p>
+</div><p>To jump back and forth between two linked cells, place the cursor at either
+end of the link, then press <kbd class="kbd docutils literal notranslate">G</kbd>.</p>
+<p>Some cells may have multiple linked locations; this is currently only possible
+by linking multiple teleport sources to a single destination. If you press
+<kbd class="kbd docutils literal notranslate">G</kbd> on such a teleport destination cell, you will enter location
+selection mode, where you can select between the source locations with the
+movement keys. Press <kbd class="kbd docutils literal notranslate">Enter</kbd> or <kbd class="kbd docutils literal notranslate">Esc</kbd> to exit from location
+selection mode, or press <kbd class="kbd docutils literal notranslate">G</kbd> again to return to the destination cell. The
+included <code class="docutils literal notranslate"><span class="pre">Wizardry</span></code> example map contains such multi-source teleports.</p>
+<p>To show lines connecting all linked cells in the level, hold down
+the <kbd class="kbd docutils literal notranslate">'</kbd> key (apostrophe key, to the left of <kbd class="kbd docutils literal notranslate">Enter</kbd>). There are also
+<a class="reference internal" href="preferences.html#show-link-lines"><span class="std std-ref">Preferences options</span></a> to show the link lines for
+the current cell, or to always display all link lines.</p>
+<div class="figure">
+  <a href="_static/img/cell-link-lines.png" class="glightbox">
+    <img alt="Show Link Lines in action — the blue lines indicate linked cells" src="_static/img/cell-link-lines.png"
+    style="width: 90%">
+  </a>
+    <p class="caption">
+      <span>Show Link Lines in action — the blue lines indicate linked cells</span>
+    </p>
+</div><p>If you delete a linked cell, change its floor type, put a label on it or an
+annotation with a type other than <strong>None</strong>, the link will be severed. Again,
+multi-source teleports are an exception — deleting a single source will
+leave the remaining source-destination links intact.</p>
+<p>The exact rules for creating links vary per linkable floor type:</p>
+<dl class="simple">
+<dt>Pits</dt><dd><p>The link source must be a closed, open or hidden pit. The link destination
+is always set to a ceiling pit.</p>
+</dd>
+<dt>Teleports</dt><dd><p>The link source can be either a teleport source or a teleport destination.
+The destination cell is automatically set to the other teleport type.
+Teleport destination is the only floor type that can be linked to multiple
+sources.</p>
+</dd>
+<dt>Stairs</dt><dd><p>The link source can be either a downward or an upward stairs cell. The
+direction of the stairs will be automatically adjusted based on the
+elevation of the levels at the two ends of the link.</p>
+</dd>
+<dt>Doors</dt><dd><p>The link source can be either an entrance or an exit door.  The
+destination cell is automatically set to the other door type.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A cell cannot simultaneously be a link source and a destination, so you
+cannot create chain-linked teleport cells or multi-level staircases.
+Furthermore, except for multiple teleport sources linking to the same
+destination, you can only create links between precisely two cells.</p>
+<p>All these constraints are enforced at link creation time: if the source or
+the destination cell is already part of a link, that link will be
+severed before creating a new one (except for multi-source teleports).</p>
+</div>
+</section>
+<section class="style3" id="selections">
+<h2>Selections<a class="headerlink" href="#selections" title="Link to this heading">¶</a></h2>
+<p>The idea behind selections is simple: you select some cells first, then
+perform an action on them.</p>
+<p>All editing actions presented so far have to be invoked from <em>Edit Mode</em>,
+which is the default operational mode of the program. To make a selection,
+you need to enter <em>Select (Mark) Mode</em> by pressing <kbd class="kbd docutils literal notranslate">M</kbd>. The cursor
+will turn into a crosshair, and you will see the list of available actions for
+manipulating the selection in the status bar.</p>
+<p>You always start with nothing selected when entering <em>Edit Mode</em>. To add a
+rectangular area to the selection, hold <kbd class="kbd docutils literal notranslate">R</kbd> and use the movement keys.
+For simplicity’s sake, you can only use <a class="reference internal" href="moving-around.html#normal-mode"><span class="std std-ref">Normal Mode</span></a>
+movement keys when working with selections, regardless of the currently active
+editing mode (<a class="reference internal" href="moving-around.html#wasd-mode"><span class="std std-ref">WASD Mode</span></a>, <a class="reference internal" href="moving-around.html#walk-mode"><span class="std std-ref">Walk Mode</span></a>,
+etc.) Selected cells are tinted pink (in most themes; the actual colour is
+theme-dependent).  To subtract a rectangular area from the current selection,
+hold <kbd class="kbd docutils literal notranslate">S</kbd> and use the movement keys.</p>
+<p>Similarly, you can “draw” the selection or “erase” from it by using the
+<kbd class="kbd docutils literal notranslate">D</kbd> and <kbd class="kbd docutils literal notranslate">E</kbd> modifier keys with the movement keys, respectively.
+<kbd class="kbd docutils literal notranslate">A</kbd> selects the whole level (<em>Select All</em>), and <kbd class="kbd docutils literal notranslate">U</kbd> or <kbd class="kbd docutils literal notranslate">X</kbd>
+clears the selection (<em>Unselect All</em>).</p>
+<p>Undo and redo are not available when working with selections, so exercise some
+caution.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <kbd class="kbd docutils literal notranslate">U</kbd> shortcut is not available with <a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">YUBN keys</span></a> enabled.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The <a class="reference internal" href="moving-around.html#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a> are available in <em>Select
+Mode</em>, too, to move the cursor or pan the level. This opens up some
+interesting possibilities; e.g., you can draw selections with the mouse when
+used together with the <kbd class="kbd docutils literal notranslate">D</kbd> and <kbd class="kbd docutils literal notranslate">E</kbd> modifiers.</p>
+</div>
+<div class="figure">
+  <a href="_static/img/selections.png" class="glightbox">
+    <img alt="Marking a non-contiguous area in Select Mode" src="_static/img/selections.png" style="width: 77%;">
+  </a>
+    <p class="caption">
+      <span>Marking a non-contiguous area in Select Mode</span>
+    </p>
+</div><p>When you’re happy with your selection, it’s time to perform an action on it.
+<kbd class="kbd docutils literal notranslate">C</kbd> or <kbd class="kbd docutils literal notranslate">Y</kbd> copies (yanks) the selected cells into the paste buffer
+and returns to <em>Edit Mode</em>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <kbd class="kbd docutils literal notranslate">Y</kbd> shortcut is not available with <a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">YUBN keys</span></a> enabled.</p>
+</div>
+<p>Press <kbd class="kbd docutils literal notranslate">P</kbd> to paste the buffer’s contents at the current cursor position.
+Links are not copied, but you can paste the copied content as many times as
+you wish. This restriction is necessary to maintain link integrity.</p>
+<p>If you press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd>, you’ll enter <em>Paste Preview Mode</em>, where you can
+position the selection interactively with the movement keys (usually shown in
+a light-blue overlay, which is, again, theme-dependent). Then, you can perform the
+paste action by pressing <kbd class="kbd docutils literal notranslate">Enter</kbd> or cancel it with <kbd class="kbd docutils literal notranslate">Esc</kbd>. Note that
+you can also switch the current level in <em>Paste Preview Mode</em>. Naturally, the
+<a class="reference internal" href="moving-around.html#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a> are available, too.</p>
+<div class="figure">
+  <a href="_static/img/paste-preview.png" class="glightbox">
+    <img alt="Positioning the selection in Paste Preview Mode" src="_static/img/paste-preview.png" style="width: 77%;">
+  </a>
+    <p class="caption">
+      <span>Positioning the selection in Paste Preview Mode</span>
+    </p>
+</div><p>If you move the selection beyond the level’s boundaries, parts of it will
+become clipped. By enabling <em>wraparound</em>, the cells shifted beyond one edge of
+the level will “wrap around” to the opposite side. You can toggle wraparound
+with the <kbd class="kbd docutils literal notranslate">W</kbd> key while in <em>Paste Preview Mode</em>. The status bar indicates
+whether wraparound is enabled or not.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The contents of the paste buffer are preserved when opening another map
+file. Although you can only edit a single map at a given time, this allows
+you to copy-paste whole or partial levels between two maps.</p>
+</div>
+<p>Holding <kbd class="kbd docutils literal notranslate">Ctrl</kbd> in <em>Select Mode</em> will reveal a list of further special
+actions in the status bar:</p>
+<dl class="simple">
+<dt>Move <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">M</kbd></kbd></dt><dd><p>The link-preserving alternative to the copy action: the selected cells
+will be cut first, then you will be automatically taken into <em>Paste
+Preview Mode</em>, where you can reposition the selection. Note that the move
+action will leave the contents of the paste buffer intact (it uses a
+dedicated move buffer under the hood). Wraparound is available when moving
+selections too; you can toggle it with the <kbd class="kbd docutils literal notranslate">W</kbd> key.</p>
+</dd>
+<dt>Erase <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd></dt><dd><p>Equivalent to using the <em>erase cell</em> action on the selected cells.</p>
+</dd>
+<dt>Fill <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">F</kbd></kbd></dt><dd><p>Equivalent to using the <em>draw/clear floor</em> action on the selected cells.</p>
+</dd>
+<dt>Set colour <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd></kbd></dt><dd><p>Set the floor colour of the selected cells to the current colour.</p>
+</dd>
+<dt>Surround <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd></dt><dd><p>Surround the selected cells with solid walls (you can use this with the
+<em>select rectangle</em> action to draw rectangular rooms quickly).</p>
+</dd>
+<dt>Crop <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">R</kbd></kbd></dt><dd><p>Crop the level to the bounding box of the selection.</p>
+</dd>
+</dl>
+</section>
+<section id="special-level-actions">
+<h2>Special level actions<a class="headerlink" href="#special-level-actions" title="Link to this heading">¶</a></h2>
+<p>There are a few special actions you can invoke from <em>Edit Mode</em> that operate
+on the whole level.</p>
+<section id="resize-level">
+<h3>Resize level<a class="headerlink" href="#resize-level" title="Link to this heading">¶</a></h3>
+<p>The <em>resize level</em> action, invoked with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd>, lets you shrink or
+expand the dimensions of the current level. You’ll need to select an anchor
+point for the action. It’s probably easiest to illustrate the role of the
+anchor point through a few examples:</p>
+<ul class="multiline simple">
+<li><p>Making the level 2 columns and 3 rows larger using the top-left anchor point
+will add 2 extra empty columns at the right side of the level and 3 extra
+empty rows at the bottom.</p></li>
+<li><p>Making the level 4 columns and 4 rows smaller using the centre anchor point
+will remove a 2-cell wide “stripe” from around the level.</p></li>
+</ul>
+</section>
+<section class="style1 big" id="nudge-level">
+<h3>Nudge level<a class="headerlink" href="#nudge-level" title="Link to this heading">¶</a></h3>
+<p>You can shift the contents of the level around without changing its dimensions
+with the <em>nudge level</em> action.</p>
+<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">G</kbd></kbd> to enter <em>Nudge Preview Mode</em>, then use the movement keys
+to reposition the level’s contents.</p>
+<p>Similarly to <em>Paste Preview Mode</em>, you can enable wraparound with the <kbd class="kbd docutils literal notranslate">W</kbd>
+key when nudging levels.</p>
+<p>Accept the changes by pressing <kbd class="kbd docutils literal notranslate">Enter</kbd> or discard them with <kbd class="kbd docutils literal notranslate">Esc</kbd>.</p>
+</section>
+</section>
+</section>
+
+
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="window-layouts.html">Window layouts</a></li>
+    <li class="next"><a href="regions.html">Regions</a></li>
+  </ul>
+</nav>
+    
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
+      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+    </footer>
+  </article>
+
+  <script src="_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>
