@@ -722,7 +722,9 @@ article section.big:after {
   margin: 7rem auto 3rem auto;
 }
 article span.highlighted {
-  background-color: yellow;
+  background-color: #ffe300;
+  padding: 0 0.25em;
+  border-radius: 4px;
 }
 
 #table-of-contents li:before {
@@ -742,6 +744,16 @@ footer {
 #searchbox {
   margin: 2em 0;
   text-align: center;
+}
+#searchbox a {
+  display: inline;
+  font-family: "Alegreya SC", serif;
+  text-decoration: none;
+  color: #b86622;
+}
+#searchbox a:hover {
+  text-decoration: underline;
+  color: #9d5111;
 }
 
 form input {
