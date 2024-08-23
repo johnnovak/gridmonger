@@ -406,6 +406,9 @@ section {
   max-width: 650px;
   margin: 0 auto;
 }
+section figure img {
+  width: 100%;
+}
 
 div.thumbnails {
   margin-top: 22px;
@@ -423,6 +426,30 @@ h3 {
 p.aim {
   margin: 1.4em 0;
   text-indent: 2em;
+}
+
+.video-wrap {
+  width: 100%;
+  max-width: 650px;
+}
+.video-wrap figcaption {
+  margin-top: 0.5em;
+}
+
+.video-container {
+  position: relative;
+  overflow: hidden;
+  height: 0;
+  padding-bottom: 56.25%;
+}
+.video-container iframe,
+.video-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -493,5 +520,12 @@ p.aim {
     font-size: 21px;
     opacity: 0.3;
     content: "❧";
+  }
+}
+/*--------------------------------------------------------------------------*/
+@media (min-width: 900px) {
+  section figure img {
+    width: 130%;
+    margin-left: -15%;
   }
 }
