@@ -58,6 +58,7 @@ proc setCommonCompileParams() =
   --threads:on
   --deepcopy:on
   --d:ssl
+  --dynlibOverride:ssl
   --d:nimPreviewFloatRoundtrip
   --d:nvgGL3
   --d:glfwStaticLib
