@@ -323,10 +323,11 @@ article {
         }
       }
 
-      &.std-move-keys {
+      &.move-keys {
         > tbody {
           > tr {
             > td {
+              padding-right: 0;
               text-align: center;
 
               &:nth-child(1) {
@@ -421,7 +422,6 @@ article {
     padding-left: 2em;
   }
 
-  //div.section {
   section {
     &.big:after {
       margin: 7rem auto 3rem auto;
@@ -429,7 +429,9 @@ article {
   }
 
   span.highlighted {
-    background-color: yellow;
+    background-color: #ffe300;
+    padding: 0 0.25em;
+    border-radius: 4px
   }
 }
 
@@ -452,6 +454,10 @@ footer {
 #searchbox {
   margin: 2em 0;
   text-align: center;
+
+  a {
+    @include link;
+  }
 }
 
 form {
@@ -571,6 +577,13 @@ section.search {
       &.floors { width: 62% }
       &.walls  { width: 55% }
     }
+  }
+}
+
+// Override inline table width definitions on narrow screens
+@media (max-width: 600px) {
+  table {
+    width: 100% !important;
   }
 }
 

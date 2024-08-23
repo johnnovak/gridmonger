@@ -48,6 +48,12 @@ header {
 section {
   max-width: 650px;
   margin: 0 auto;
+
+  figure {
+    img {
+      width: 100%;
+    }
+  }
 }
 
 div.thumbnails {
@@ -65,6 +71,33 @@ h3 {
 p.aim {
   margin: 1.4em 0;
   text-indent: 2em;
+}
+
+.video-wrap {
+  width: 100%;
+  max-width: 650px;
+
+  figcaption {
+    margin-top: 0.5em;
+  }
+}
+
+.video-container {
+  position: relative;
+  overflow: hidden;
+  height: 0;
+  // Creates a 16:9 aspect ratio
+  padding-bottom: 56.25%; 
+
+  iframe,
+  embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+  }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -140,3 +173,14 @@ p.aim {
   }
 }
 
+/*--------------------------------------------------------------------------*/
+@media (min-width: 900px) {
+  section {
+    figure {
+      img {
+        width: 130%;
+        margin-left: -15%;
+      }
+    }
+  }
+}

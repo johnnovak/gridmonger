@@ -1317,10 +1317,10 @@ proc updateWalkKeys(a) =
   a.keys.walkKeysCursor = mkWalkKeysCursor(a.prefs.walkCursorMode)
   a.keys.walkKeysWasd   = mkWalkKeysWasd(a.keys.walkKeysCursor)
 
-
 const
   VimMoveKeys            = {keyH, keyJ, keyK, keyL}
-  AllWasdMoveKeys        = {keyQ, keyW, keyE, keyA, keyS, keyD}
+  AllWasdLetterKeys      = {keyQ, keyW, keyE, keyA, keyS, keyD}
+  AllWasdKeypadKeys      = {keyKp2, keyKp4, keyKp5, keyKp6, keyKp7, keyKp8, keyKp9}
   DiagonalMoveLetterKeys = {keyY, keyU, keyB, keyN}
 
 
@@ -6801,72 +6801,72 @@ proc toggleTitleBar(a) =
 
 # TODO separate into level events and global events?
 proc handleGlobalKeyEvents(a) =
-  alias(ui, a.ui)
-  alias(map, a.doc.map)
-  alias(um, a.doc.undoManager)
+  alias(ui,   a.ui)
+  alias(map,  a.doc.map)
+  alias(um,   a.doc.undoManager)
   alias(opts, a.opts)
-  alias(dp, a.ui.drawLevelParams)
+  alias(dp,   a.ui.drawLevelParams)
 
   var l = currLevel(a)
 
   let yubnMode = a.prefs.yubnMovementKeys
 
-  proc turnLeft(dir: CardinalDir): CardinalDir  = dir.rotateACW
-  proc turnRight(dir: CardinalDir): CardinalDir = dir.rotateCW
-
-  template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
-  template left:     auto = turnLeft(ui.cursorOrient)
-  template right:    auto = turnRight(ui.cursorOrient)
-
   # {{{ handleMoveWalk()
   proc handleMoveWalk(ke: Event; a) =
+
     var s = 1
     if mkCtrl in ke.mods:
-      if ke.key in AllWasdMoveKeys: return
+      if ke.key in AllWasdLetterKeys: return
       else: s = CursorJump
 
-    let altDown = mkAlt in ke.mods
+    let
+      altDown   = mkAlt   in ke.mods
+      shiftDown = mkShift in ke.mods
+      isRepeat  = (ke.action == kaRepeat)
+
+      isWasdKey = ke.key in AllWasdLetterKeys or
+                  ke.key in AllWasdKeypadKeys
+
+      k = if ui.wasdMode: a.keys.walkKeysWasd
+          else:           a.keys.walkKeysCursor
+
+      altAction = altDown and not isWasdKey
 
     var ke = ke
-    ke.mods = ke.mods - {mkCtrl, mkAlt}
+    ke.mods = ke.mods - {mkAlt, mkCtrl, mkShift}
 
-    let k = if ui.wasdMode: a.keys.walkKeysWasd
-            else:           a.keys.walkKeysCursor
+    proc turnLeft( dir: CardinalDir): auto = dir.rotateACW
+    proc turnRight(dir: CardinalDir): auto = dir.rotateCW
 
-    if   ke.isKeyDown(k.forward,  repeat=true):
-      moveCursor(ui.cursorOrient, s, a)
+    template forward:  auto = ui.cursorOrient
+    template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
+    template left:     auto = turnLeft(ui.cursorOrient)
+    template right:    auto = turnRight(ui.cursorOrient)
+
+    template doAction(dir: CardinalDir, moveAction: bool) =
+      if moveAction:
+        if shiftDown: moveLevelView({dir}, s, a)
+        else:         moveCursor(    dir,  s, a)
+      else:
+        if not isRepeat: ui.cursorOrient = dir
+
+    if   ke.isKeyDown(k.forward, repeat=true):
+      doAction(forward, moveAction = true)
 
     elif ke.isKeyDown(k.backward, repeat=true):
-      moveCursor(backward(), s, a)
+      doAction(backward, moveAction = true)
 
-    elif ke.isKeyDown(k.forward,  {mkShift}, repeat=true):
-      moveLevelView({ui.cursorOrient}, s, a)
+    elif ke.isKeyDown(k.turnLeft, repeat=true):
+      doAction(left, moveAction = altAction)
 
-    elif ke.isKeyDown(k.backward, {mkShift}, repeat=true):
-      moveLevelView({backward()}, s, a)
+    elif ke.isKeyDown(k.turnRight, repeat=true):
+      doAction(right, moveAction = altAction)
 
-    case a.prefs.walkCursorMode:
-    of wcmStrafe:
-      if   ke.isKeyDown(k.strafeLeft,             repeat=true) or
-           ke.isKeyDown(k.strafeLeft,  {mkShift}, repeat=true):
-        if altDown: ui.cursorOrient = left()
-        else:       moveCursor(left(), s, a)
+    elif ke.isKeyDown(k.strafeLeft, repeat=true):
+      doAction(left, moveAction = not altAction)
 
-      elif ke.isKeyDown(k.strafeRight,            repeat=true) or
-           ke.isKeyDown(k.strafeRight, {mkShift}, repeat=true):
-        if altDown: ui.cursorOrient = right()
-        else:       moveCursor(right(), s, a)
-
-    of wcmTurn:
-      if   ke.isKeyDown(k.turnLeft) or
-           ke.isKeyDown(k.turnLeft, {mkShift}):
-        if altDown: moveCursor(left(), s, a)
-        else:       ui.cursorOrient = left()
-
-      elif ke.isKeyDown(k.turnRight) or
-           ke.isKeyDown(k.turnRight, {mkShift}):
-        if altDown: moveCursor(right(), s, a)
-        else:       ui.cursorOrient = right()
+    elif ke.isKeyDown(k.strafeRight, repeat=true):
+      doAction(right, moveAction = not altAction)
 
   # }}}
   # {{{ moveKeyToCardinalDir()
@@ -6932,18 +6932,20 @@ proc handleGlobalKeyEvents(a) =
 
     var s = 1
     if allowJump and a.keys.primaryModKey in ke.mods:
-      if ke.key in AllWasdMoveKeys:
-        # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with shorcuts
+      if ke.key in AllWasdLetterKeys:
+        # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with other
+        # shorcuts
         return
 
       elif ke.key in DiagonalMoveLetterKeys:
-        # Disallow Ctrl+Y/U/B/N panning as it would interfere with shorcuts
+        # Disallow Ctrl+Y/U/B/N panning as it would interfere with other
+        # shorcuts
         return
 
       elif a.prefs.modifierKeyMode == mkmCommandShift and
         ke.key in VimMoveKeys:
-        # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS hide
-        # window shortcut
+        # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS
+        # "hide window" shortcut
         return
 
       else:
@@ -6957,52 +6959,35 @@ proc handleGlobalKeyEvents(a) =
 
     result = true
 
-    if   ke.isKeyDown(k.left,  repeat=true): moveCursor(dirW, s, a)
-    elif ke.isKeyDown(k.right, repeat=true): moveCursor(dirE, s, a)
-    elif ke.isKeyDown(k.up,    repeat=true): moveCursor(dirN, s, a)
-    elif ke.isKeyDown(k.down,  repeat=true): moveCursor(dirS, s, a)
+    proc down(key: set[Key]): bool =
+      ke.isKeyDown(key, repeat=true)
+
+    proc shiftDown(key: set[Key]): bool =
+      ke.isKeyDown(key, {mkShift}, repeat=true)
+
+    if   down(k.left):  moveCursor(dirW, s, a)
+    elif down(k.right): moveCursor(dirE, s, a)
+    elif down(k.up):    moveCursor(dirN, s, a)
+    elif down(k.down):  moveCursor(dirS, s, a)
 
     elif allowPan:
-      if   ke.isKeyDown(k.left, {mkShift}, repeat=true):
-        moveLevelView(West, s, a)
-
-      elif ke.isKeyDown(k.right, {mkShift}, repeat=true):
-        moveLevelView(East, s, a)
-
-      elif ke.isKeyDown(k.up, {mkShift}, repeat=true):
-        moveLevelView(North, s, a)
-
-      elif ke.isKeyDown(k.down, {mkShift}, repeat=true):
-        moveLevelView(South, s, a)
+      if   shiftDown(k.left):  moveLevelView(West, s, a)
+      elif shiftDown(k.right): moveLevelView(East, s, a)
+      elif shiftDown(k.up):    moveLevelView(North, s, a)
+      elif shiftDown(k.down):  moveLevelView(South, s, a)
 
     if allowDiagonal:
       let d = DiagonalMoveKeysCursor
 
-      # move cursor
-      if ke.isKeyDown(d.upLeft, repeat=true):
-        moveCursorDiagonal(NorthWest, s, a)
+      if   down(d.upLeft):    moveCursorDiagonal(NorthWest, s, a)
+      elif down(d.upRight):   moveCursorDiagonal(NorthEast, s, a)
+      elif down(d.downLeft):  moveCursorDiagonal(SouthWest, s, a)
+      elif down(d.downRight): moveCursorDiagonal(SouthEast, s, a)
 
-      elif ke.isKeyDown(d.upRight, repeat=true):
-        moveCursorDiagonal(NorthEast, s, a)
-
-      elif ke.isKeyDown(d.downLeft, repeat=true):
-        moveCursorDiagonal(SouthWest, s, a)
-
-      elif ke.isKeyDown(d.downRight, repeat=true):
-        moveCursorDiagonal(SouthEast, s, a)
-
-      # move level
-      elif ke.isKeyDown(d.upLeft, {mkShift}, repeat=true):
-        moveLevelView(NorthWest, s, a)
-
-      elif ke.isKeyDown(d.upRight, {mkShift}, repeat=true):
-        moveLevelView(NorthEast, s, a)
-
-      elif ke.isKeyDown(d.downLeft, {mkShift}, repeat=true):
-        moveLevelView(SouthWest, s, a)
-
-      elif ke.isKeyDown(d.downRight, {mkShift}, repeat=true):
-        moveLevelView(SouthEast, s, a)
+      elif shiftDown(d.upLeft):    moveLevelView(NorthWest, s, a)
+      elif shiftDown(d.upRight):   moveLevelView(NorthEast, s, a)
+      elif shiftDown(d.downLeft):  moveLevelView(SouthWest, s, a)
+      elif shiftDown(d.downRight): moveLevelView(SouthEast, s, a)
 
     result = false
 
@@ -10868,6 +10853,8 @@ proc initApp(configFile: Option[string], mapFile: Option[string],
     switchTheme(themeIndex.get, a)
   else:
     a.theme.config = DefaultThemeConfig
+
+  a.ui.drawLevelParams.setZoomLevel(a.theme.levelTheme, DefaultZoomLevel)
 
   a.ui.status.warning.overwrite = true
 

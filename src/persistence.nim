@@ -478,7 +478,7 @@ proc readAppState_V4(rr; map: Map): AppState =
     checkValueRange(zoomLevel, "stat.disp.zoomLevel", ZoomLevelLimits)
     app.zoomLevel = zoomLevel
 
-    if map.levels.len > 1:
+    if map.levels.len > 0:
       let maxLevelIndex = NumLevelsLimits.maxInt-1
       var currLevelIndex = rr.read(uint16).int
       checkValueRange(currLevelIndex, "stat.disp.currLevelIndex",

@@ -31,12 +31,14 @@ const distWinDir = distDir / "windows"
 const distManualName = "gridmonger-manual.zip"
 const distMapsName = "gridmonger-example-maps.zip"
 
-const siteDir = "docs"
-const siteFilesDir = siteDir / "files"
-const siteReleasesDir = siteFilesDir / "releases"
-const siteReleasesMacDir = siteReleasesDir / "macos"
-const siteReleasesWinDir = siteReleasesDir / "windows"
-const siteExtrasDir = siteFilesDir / "extras"
+const websiteDir = "docs"
+const websiteFilesDir = websiteDir / "files"
+const websiteReleasesDir = websiteFilesDir / "releases"
+const websiteReleasesMacDir = websiteReleasesDir / "macos"
+const websiteReleasesWinDir = websiteReleasesDir / "windows"
+const websiteExtrasDir = websiteFilesDir / "extras"
+
+const previewWebsiteDir = "docs/preview"
 
 const sphinxDocsDir = "sphinx-docs"
 
@@ -142,8 +144,7 @@ task packageWinInstaller, "create Windows installer package":
 task packageWinPortable, "create Windows portable package":
   mkdir distWinDir
   exec fmt"strip -S {exeName}"
-  let packageName = "Gridmonger"
-  let packageDir = distWinDir / packageName
+  let packageDir = distWinDir / "portable" / "Gridmonger"
   rmDir packageDir
   mkDir packageDir
 
@@ -159,7 +160,7 @@ task packageWinPortable, "create Windows portable package":
   cpDir manualDir, packageDir / manualDir
   cpDir themesDir, packageDir / themesDir
 
-  let zipName = getWinPortablePackageName(arch)
+#  let zipName = getWinPortablePackageName(arch)
 #  withDir distWinDir:
 #    createZip(zipName, srcPath=packageName)
 #
@@ -225,19 +226,19 @@ task packageExampleMaps, "create zipped example maps package":
 
 task publishPackageWin, "publish Windows packages to website dir":
   let installerName = getWinInstallerPackageName(arch)
-  cpFile distWinDir / installerName, siteReleasesWinDir / installerName
+  cpFile distWinDir / installerName, websiteReleasesWinDir / installerName
 
   let portableName = getWinPortablePackageName(arch)
-  cpFile distWinDir / portableName, siteReleasesWinDir / portableName
+  cpFile distWinDir / portableName, websiteReleasesWinDir / portableName
 
 
 task publishPackageMac, "publish macOS package to website dir":
-  cpFile distMacDir / macPackageName, siteReleasesMacDir / macPackageName
+  cpFile distMacDir / macPackageName, websiteReleasesMacDir / macPackageName
 
 
 task publishExtras, "publish extra packages (manual, example maps) to website dir":
-  cpFile distDir / distManualName, siteExtrasDir / distManualName
-  cpFile distDir / distMapsName, siteExtrasDir / distMapsName
+  cpFile distDir / distManualName, websiteExtrasDir / distManualName
+  cpFile distDir / distMapsName, websiteExtrasDir / distMapsName
 
 
 task manual, "build manual":
@@ -245,20 +246,30 @@ task manual, "build manual":
     exec "make build_manual"
 
 
-task site, "build website":
+task website, "build website":
   withDir sphinxDocsDir:
-    exec "make build_site"
+    exec "make build_website"
 
-  withDir siteDir:
+  withDir websiteDir:
     exec "../scripts/indexer.py -r files"
+
+
+task previewWebsite, "build website":
+  withDir sphinxDocsDir:
+    exec "make build_website WEBSITE_DIR=../docs/preview"
+
+  withDir previewWebsiteDir:
+    exec "../../scripts/indexer.py -r files"
 
 
 task clean, "clean everything":
   rmFile exeName
   rmFile exeNameMacArm64
   rmFile exeNameMacX64
+
   rmDir distDir
   rmDir manualDir
+
   if fileExists(sphinxDocsDir):
     withDir sphinxDocsDir:
       exec "make clean"

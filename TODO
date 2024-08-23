@@ -11,6 +11,8 @@ BUGS
 
 - about dialog image is blurred at higher scaling factors
 
+- cursor orientation for walk mode is not stored in map file
+
 
 TODO
 ====

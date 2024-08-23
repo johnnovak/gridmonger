@@ -8,6 +8,9 @@
 
 !searchparse /file CURRENT_VERSION '' VERSION
 
+!system 'nim versionAndGitHash > versionFile'
+!searchparse /file versionFile '' VERSION_AND_HASH
+
 !define /date CURRENT_YEAR "%Y"
 
 !define APP_EXE       "gridmonger.exe"
@@ -42,7 +45,7 @@ FunctionEnd
 
 Name "${NAME}"
 Caption "${NAME} v${VERSION} Setup - ${ARCH}-bit"
-OutFile "${OUT_PATH}/gridmonger-v${VERSION}-win${ARCH}-setup.exe"
+OutFile "${OUT_PATH}/gridmonger-v${VERSION_AND_HASH}-win${ARCH}-setup.exe"
 
 !ifdef ARCH32
   InstallDir "$PROGRAMFILES32\${NAME}"

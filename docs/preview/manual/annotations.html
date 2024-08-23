@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+
+<html lang="en-AU">
+  <title>Annotations &#8212; Gridmonger 1.2.0 documentation</title>
+    <script src="_static/documentation_options.js?v=6efca38a"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gridmonger manual">
+
+  <link rel="icon" href=""/>
+
+  <link href="_static/css/docs.css" rel="stylesheet">
+  <link href="_static/css/glightbox.min.css" rel="stylesheet"> 
+</head>
+
+<body>
+
+  <header>
+    <h1>
+      <a href="https://gridmonger.johnnovak.net/"><img src="_static/img/gridmonger-logo.png" alt="Gridmonger"></a>
+      <span>Manual</span>
+    </h1>
+<div id="searchbox" style="display: none" role="search">
+  <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search...">
+      <input type="submit" value="Go">
+    </form>
+  </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+    <nav class="toc-link">
+      <a href="contents.html" >Table of contents</a>
+    </nav>
+
+    <nav class="table-of-contents">
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maps-and-levels.html">Map &amp; level basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moving-around.html">Moving around</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Annotations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#labels">Labels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notes-list">Notes list</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/user-data-folder.html">User data folder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/advanced-usage.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendixes/reporting-issues.html">Reporting issues</a></li>
+</ul>
+
+    </nav>
+  </header>
+
+  <article role="main">
+    
+      <nav class="top">
+  <ul>
+    <li class="prev"><a href="basic-editing.html">Basic editing</a></li>
+    <li class="next"><a href="window-layouts.html">Window layouts</a></li>
+  </ul>
+</nav>
+    
+
+    
+  <section id="annotations">
+<h1>Annotations<a class="headerlink" href="#annotations" title="Link to this heading">¶</a></h1>
+<p>One of the big benefits of creating your own maps — even for games featuring
+auto-maps — is the ability to annotate them. There are two types of
+annotations available: <em>notes</em> and <em>labels</em>.</p>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h2>
+<p>A <em>note</em> is a textual comment linked to a cell. Notes can optionally have a
+marker, which is some symbol displayed in the cell. There are four marker
+types to choose from:</p>
+<div class="figure">
+  <a href="_static/img/annotations-types.png" class="glightbox">
+    <img alt="Examples of the four different marker types" src="_static/img/annotations-types.png" style="width: 67%;">
+  </a>
+    <p class="caption">
+      <span>Examples of the four different marker types</span>
+    </p>
+</div><dl>
+<dt>None</dt><dd><p>No marker, only a little triangle in the top-right corner of the cell.</p>
+</dd>
+<dt>Number</dt><dd><p>An automatically incrementing number. The background colour can be chosen
+from four predefined colours.</p>
+<p>Numbers are assigned in left-to-right, top-to-bottom order (normal English
+reading order). Numbering restarts from <code class="docutils literal notranslate"><span class="pre">1</span></code> in each level. Notes are
+renumbered automatically whenever a numbered note is added or deleted
+as a result of any action (including <a class="reference internal" href="advanced-editing.html#special-level-actions"><span class="std std-ref">Special level actions</span></a> or actions that affect <a class="reference internal" href="advanced-editing.html#selections"><span class="std std-ref">Selections</span></a>.)</p>
+</dd>
+<dt>ID</dt><dd><p>An identifier of up to two characters in length, consisting of English
+letters and numbers.</p>
+</dd>
+<dt>Icon</dt><dd><p>An icon chosen from a predefined set of 40 icons.</p>
+</dd>
+</dl>
+<div class="figure">
+  <a href="_static/img/annotations-icons.png" class="glightbox">
+    <img alt="Annotation icon set" src="_static/img/annotations-icons.png" style="width: 65%;">
+  </a>
+    <p class="caption">
+      <span>Annotation icon set</span>
+    </p>
+</div><p>To add a note, press <kbd class="kbd docutils literal notranslate">N</kbd> or <kbd class="kbd docutils literal notranslate">;</kbd> in a non-empty cell. A cell cannot
+have more than one note; if you use the shortcut in a cell that already has a
+note, you’ll be editing it. To erase a note, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> or
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">;</kbd></kbd>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only the <kbd class="kbd docutils literal notranslate">;</kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">;</kbd></kbd> shortcuts are available with
+<a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">YUBN keys</span></a> enabled.</p>
+</div>
+<p>You can use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Enter</kbd></kbd> to insert line breaks into the note text.</p>
+<p>If the cell’s floor is non-empty (e.g., it contains a pressure plate or a
+teleport), placing a note of type <strong>Number</strong>, <strong>ID</strong>, or <strong>Icon</strong> will clear
+its content. If you want to preserve the cell’s content, use the <strong>None</strong>
+marker type, which will only display a little triangle in the top-right corner
+of the cell while keeping its content intact.</p>
+<p>Conversely, if you overwrite a note of type <strong>Number</strong>, <strong>ID</strong>, or <strong>Icon</strong>
+with some cell content (e.g., a teleport), the note won’t be deleted, but it
+will be converted to the <strong>None</strong> marker type. As this type only displays the
+little triangle in the top-right corner, the new cell content and the note can
+coexist.</p>
+<p>The note under the cursor is displayed in the <em>notes pane</em> below the level,
+which can be toggled with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd>. You can also hover over a cell with
+the mouse pointer; if it has a note, it will be displayed in a tooltip.
+This tooltip can also be toggled with <kbd class="kbd docutils literal notranslate">Space</kbd> for the current cell.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>As creating and editing notes are frequently used actions, special care
+has been taken to make the note dialog fully keyboard operable.</p>
+<p>Hold down <kbd class="kbd docutils literal notranslate">Ctrl</kbd> and use the horizontal movement keys to navigate
+between the tabs, or press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">1</kbd>-<kbd class="kbd docutils literal notranslate">4</kbd></kbd> to jump to one of the
+four tabs.</p>
+<p>To cycle between text fields, press <kbd class="kbd docutils literal notranslate">Tab</kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Tab</kbd></kbd>. You
+can use the movement keys to select the colour in the <strong>Number</strong> tab and
+the icon image in the <strong>Icon</strong> tab.</p>
+</div>
+</section>
+<section class="style8" id="labels">
+<h2>Labels<a class="headerlink" href="#labels" title="Link to this heading">¶</a></h2>
+<p>A <em>label</em> is just some text overlaid on top of the level. Labels are attached
+to a single cell; the text starts from this cell and potentially extends into
+neighbouring cells. Creating a label overwrites the contents of the starting
+cell, including any notes.</p>
+<p>In contrast with notes, you can attach labels to empty cells as well. This is
+useful when placing labels in empty areas.</p>
+<div class="figure">
+  <a href="_static/img/annotations-labels.png" class="glightbox">
+    <img alt="Example use of labels" src="_static/img/annotations-labels.png">
+  </a>
+    <p class="caption">
+      <span>Example use of labels &mdash; note that all but one label reside
+      in empty areas</span>
+    </p>
+</div><p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd> to add a label starting from the current cell. You can
+select the colour of the label from four predefined colours (you can change
+the colour with the movement keys when you’re not editing the table text).</p>
+<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Enter</kbd></kbd> to insert line breaks into the label text.</p>
+<p>To edit a label, go to its starting cell (the top-left corner of the label
+text) and press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd>. To erase it, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <em>excavate (draw tunnel)</em>, <em>erase cell</em>, and <em>draw/clear floor</em> tools
+leave labels intact. You need to use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">T</kbd></kbd> to delete labels.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you want to copy or move a label, make sure to include its starting cell
+in the <a class="reference internal" href="advanced-editing.html#selections"><span class="std std-ref">selection</span></a>.</p>
+</div>
+</section>
+<section class="style5 big" id="notes-list">
+<h2>Notes list<a class="headerlink" href="#notes-list" title="Link to this heading">¶</a></h2>
+<p>To find a note, you can hover over all the annotations with the mouse. But
+that gets tiresome quickly, especially in large multi-level dungeons.</p>
+<p>A much better way is to use the <em>notes list pane</em>, which can be toggled by
+pressing <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">L</kbd></kbd>.</p>
+<div class="figure">
+  <a href="_static/img/notes-list-pane.png" class="glightbox">
+    <img alt="Notes list pane" src="_static/img/notes-list-pane.png" style="width: 100%;">
+  </a>
+    <p class="caption">
+      <span>Notes list pane (on the left)</span>
+    </p>
+</div><p>By default, the notes list pane shows all notes in the current level. You can
+change the filter criteria with the controls at the top of the pane. Let’s
+illustrate this with a concrete example:</p>
+<ol class="arabic simple multiline">
+<li><p>Load the <code class="docutils literal notranslate"><span class="pre">Eye</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">Beholder</span> <span class="pre">I</span></code> example map and go to the
+<code class="docutils literal notranslate"><span class="pre">Undermountain</span> <span class="pre">–</span> <span class="pre">Lower</span> <span class="pre">Sewers</span> <span class="pre">(-3)</span></code> level.</p></li>
+<li><p>Open the <em>notes list pane</em> with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">L</kbd></kbd> — you’ll see all notes in
+the current level. Click on a note to move the cursor to it.</p></li>
+<li><p>Enter <code class="docutils literal notranslate"><span class="pre">gem</span></code> in the <strong>Search</strong> field to only show notes that contain this
+word. Note the notes list is filtered dynamically as you type.</p></li>
+<li><p>Now click on the <strong>Map</strong> button at the top of the pane to see notes
+containing <code class="docutils literal notranslate"><span class="pre">gem</span></code> in all levels of the map, not just the current one.</p></li>
+<li><p>The results are grouped by levels; you’ll see the names of four levels, all
+collapsed by default. Click on the little triangles to their left to
+expand them, or the big <code class="docutils literal notranslate"><span class="pre">+</span></code> button below the search field to expand all
+at once.</p></li>
+<li><p>Toggle the <strong>None</strong> button off by clicking on it (below the <strong>Map</strong>
+button); now notes of the <strong>None</strong> marker type are filtered out.</p></li>
+<li><p>Click on the <strong>Icon</strong> button while holding down the <kbd class="kbd docutils literal notranslate">Ctrl</kbd> key to only
+show notes of the <strong>Icon</strong> marker type.</p></li>
+<li><p>Click on the little trash can icon to the right of the <strong>Search</strong> text
+field to clear the text filter. Now you can see all icon type annotations
+in all levels. Use the mouse wheel to scroll through the list. A scroll bar
+will also appear if you move the mouse pointer close to the right edge of
+the pane.</p></li>
+</ol>
+<section class="style1" style="margin-bottom: 2em;"></section><p>Here’s a description of the note filtering options in detail:</p>
+<section id="scope-grouping">
+<h3>Scope &amp; grouping<a class="headerlink" href="#scope-grouping" title="Link to this heading">¶</a></h3>
+<p>In the first row, you can select to see notes</p>
+<ul class="simple">
+<li><p>from all levels of the <strong>Map</strong>, grouped by level;</p></li>
+<li><p>only notes from the current <strong>Level</strong>;</p></li>
+<li><p>or notes from the current level, grouped by <strong>Region</strong>.</p></li>
+</ul>
+<p>If the current level has no regions, the <strong>Region</strong> and <strong>Level</strong> options will
+yield identical results.</p>
+<p>To expand or collapse all level or region groups at once, press the <code class="docutils literal notranslate"><span class="pre">+</span></code> and
+<code class="docutils literal notranslate"><span class="pre">-</span></code> buttons in the bottom-right corner of the filtering options pane,
+respectively. If a level or region is empty (either because it contains no
+notes, or because all its notes have been filtered out), its group is not
+shown in the results.</p>
+<p>The little chain icon right to the <strong>Region</strong> button enables linking the
+cursor and the notes list pane. When enabled, moving the cursor to a cell that
+contains a note will cause the notes list pane to auto-scroll to the note and
+highlight it. <em>Beware, this will only happen if the note under the cursor is
+included by the filter criteria!</em></p>
+</section>
+<section id="marker-type-filters">
+<h3>Marker type filters<a class="headerlink" href="#marker-type-filters" title="Link to this heading">¶</a></h3>
+<p>In the second row, you can filter the notes by marker type: <strong>None</strong>,
+<strong>Number</strong>, <strong>ID</strong>, and <strong>Icon</strong>. Click on a button to toggle a type, or
+hold <kbd class="kbd docutils literal notranslate">Ctrl</kbd> while clicking to only enable a single type. Press the <code class="docutils literal notranslate"><span class="pre">A</span></code>
+button on the right to enable all marker types.</p>
+</section>
+<section id="full-text-search">
+<h3>Full-text search<a class="headerlink" href="#full-text-search" title="Link to this heading">¶</a></h3>
+<p>You can filter notes by full-text search by entering words in the <strong>Search</strong>
+text field. Searching is case insensitive. If you enter multiple words
+separated by spaces, notes that contain <em>either</em> of the words (fully or
+partially) will be included in the results. The notes list is updated in
+real-time as you type.</p>
+<p>For example, if you enter <code class="docutils literal notranslate"><span class="pre">gold</span> <span class="pre">gem</span></code>, all notes that contain either <code class="docutils literal notranslate"><span class="pre">gold</span></code> or
+<code class="docutils literal notranslate"><span class="pre">gem</span></code> will be shown (e.g., “gemstone”, “green gem”, and “golden
+necklace”).</p>
+<p>To quickly reset the full-text filter, click on the little trash can icon to
+the right of it.</p>
+</section>
+<section id="ordering">
+<h3>Ordering<a class="headerlink" href="#ordering" title="Link to this heading">¶</a></h3>
+<p>There are two ordering options: <strong>Type</strong> orders notes by
+marker type first, then alphabetically by their text, and <strong>Text</strong> orders them
+only by their text.</p>
+<p>If <strong>Map</strong> or <strong>Region</strong> scope is selected, each level or region group is
+ordered individually.</p>
+</section>
+</section>
+</section>
+
+
+
+    
+      <nav class="bottom">
+  <ul>
+    <li class="prev"><a href="basic-editing.html">Basic editing</a></li>
+    <li class="next"><a href="window-layouts.html">Window layouts</a></li>
+  </ul>
+</nav>
+    
+
+    <footer>
+      <p><a href="https://www.johnnovak.net/">John Novak</a>, 2020-2024. All wrongs reserved.</p>
+      <p>Hosted on <a href="https://pages.github.com/">GitHub Pages</a></p>
+    </footer>
+  </article>
+
+  <script src="_static/js/glightbox.min.js"></script>
+
+  <script type="text/javascript">
+    var lightbox = GLightbox();
+  </script>
+
+  </body>
+</html>
