@@ -167,7 +167,7 @@ task packageWinPortable, "create Windows portable package":
   for srcPath in listFiles("extras" / "windows-deps"):
     let (_, srcFile) = splitPath(srcPath)
     let outPath = packageDir / srcFile
-    cp srcPath, outpath
+    cpFile srcPath, outpath
 
   # Copy resources
   cpDir dataDir, packageDir / dataDir
