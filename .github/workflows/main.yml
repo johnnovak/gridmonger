@@ -40,49 +40,49 @@ jobs:
           nim manual
 
 
-#  build-release-mac:
-#    runs-on: macOS-12
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v4
-#
-#      - name: Install Nim
-#        uses: iffy/install-nim@v5
-#        with:
-#          version: ${{ env.NIM_VERSION }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Install Nim dependencies
-#        run: nimble -y install koi osdialog riff semver winim with
-#
-#      - name: Inject version strings
-#        run: |
-#          PACKAGE_NAME=$(nim macPackageName)
-#          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
-#
-#          VERSION=$(nim versionAndGitHash)
-#          echo "VERSION=$VERSION" >> $GITHUB_ENV
-#
-#      - name: macOS arm64 release build
-#        run: nim -f releaseMacX64
-#
-#      - name: macOS x86-64 release build
-#        run: nim -f releaseMacArm64
-#
-#      - name: Create macOS universal binary
-#        run: nim mergeMacUniversal
-#
-#      - name: Create macOS app bundle
-#        run: nim packageMac
-#
-#      - name: Upload release artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: gridmonger-v${{ env.VERSION }}-macos
-#          path: dist/macos/${{ env.PACKAGE_NAME }}
-#
-#
+  build-release-mac:
+    runs-on: macOS-12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nim
+        uses: iffy/install-nim@v5
+        with:
+          version: ${{ env.NIM_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Nim dependencies
+        run: nimble -y install koi osdialog riff semver winim with
+
+      - name: Inject version strings
+        run: |
+          PACKAGE_NAME=$(nim macPackageName)
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+
+          VERSION=$(nim versionAndGitHash)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: macOS arm64 release build
+        run: nim -f releaseMacX64
+
+      - name: macOS x86-64 release build
+        run: nim -f releaseMacArm64
+
+      - name: Create macOS universal binary
+        run: nim mergeMacUniversal
+
+      - name: Create macOS app bundle
+        run: nim packageMac
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridmonger-v${{ env.VERSION }}-macos
+          path: dist/macos/${{ env.PACKAGE_NAME }}
+
+
   build-release-windows:
     runs-on: windows-2019
     steps:
