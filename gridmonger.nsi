@@ -123,6 +123,8 @@ VIFileVersion ${VERSION}.0
     RMDir /r "$INSTDIR\Example Maps"
     RMDir /r $INSTDIR\Manual
     RMDir /r $INSTDIR\Themes
+    Delete $INSTDIR\*.dll
+    Delete $INSTDIR\cacert.pem
     Delete $INSTDIR\${APP_EXE}
     Delete $INSTDIR\${UNINSTALL_EXE}
   FunctionEnd
@@ -204,6 +206,7 @@ Section "Gridmonger (required)" Gridmonger
   File /r Data
   File /r Manual
   File /r Themes
+  File extras\windows-libs\*
   File ${APP_EXE}
 
   ; Write the installation path into the registry
