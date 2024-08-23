@@ -58,11 +58,15 @@ proc setCommonCompileParams() =
   --threads:on
   --deepcopy:on
   --d:ssl
-  --dynlibOverride:ssl
   --d:nimPreviewFloatRoundtrip
   --d:nvgGL3
   --d:glfwStaticLib
   --hint:"Name:off"
+
+  if hostOS == "windows":
+    --dynlibOverride:ssl
+    --dynlibOverride:crypto
+
   switch "out", exeName
   setCommand "c", "src/main"
 
