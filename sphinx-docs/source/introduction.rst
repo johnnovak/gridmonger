@@ -42,13 +42,11 @@ exceedingly well:
 I do hope you will have as much fun mongering grids with the program as I had
 developing it!
 
-TODO better image showing the notes list pane & tools
-
 .. raw:: html
 
     <div class="figure">
-      <a href="_static/img/eob-full.png" class="glightbox">
-        <img alt="Gridmonger in action &mdash; playing and mapping Eye of the Beholder I" src="_static/img/eob-full.png">
+      <a href="_static/img/eob-full.jpg" class="glightbox">
+        <img alt="Gridmonger in action &mdash; playing and mapping Eye of the Beholder I" src="_static/img/eob-full.jpg">
       </a>
         <p class="caption">
           <span>Gridmonger in action &mdash; playing and mapping <a class="reference external" href="https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)">Eye of the Beholder I</a></span>
