@@ -14,12 +14,12 @@
 
 ### New features
 
-- A new [notes list pane](TODO) to view all notes in one place and filter
+- A new [notes list pane](https://gridmonger.johnnovak.net/manual/annotations.html#notes-list) to view all notes in one place and filter
   them by various criteria, including full-text search.
-- Up to four user-defined [window layouts](TODO).
+- Up to four user-defined [window layouts](https://gridmonger.johnnovak.net/manual/window-layouts.html).
 - Scalable & high-DPI aware user interface.
 - Proper multi-monitor support.
-- Options to display [link lines](TODO) between linked cells.
+- Options to display [link lines](https://gridmonger.johnnovak.net/manual/preferences.html#editing-tab) between linked cells.
 - Option to [nudge levels](https://gridmonger.johnnovak.net/manual/advanced-editing.html#nudge-level)
   and move or paste [selections](https://gridmonger.johnnovak.net/manual/advanced-editing.html#selections)
   with wraparound.
@@ -28,8 +28,8 @@
 - [Open-ended excavate](https://gridmonger.johnnovak.net/manual/basic-editing.html#open-ended-excavate)
   option to aid in exploring tunnel-style dungeons.
 - Option to pre-fill new levels with empty floors (for wall style maps).
-- New [Arrow floor type](TODO) to represent moving floors and conveyor belts.
-- Option to select whether the Left/Right cursor keys perform strafing or
+- New [arrow floor type](https://gridmonger.johnnovak.net/manual/basic-editing.html#floor-types) to represent moving floors and conveyor belts.
+- Option to select whether the left/right cursor keys perform strafing or
   turning in [Walk Mode](https://gridmonger.johnnovak.net/manual/moving-around.html#walk-mode).
 - Support for panning the level with the mouse (middle-click + drag, or
   Ctrl + left-click + drag). Works in *Paste Preview Mode* and *WASD Mode*, too.
