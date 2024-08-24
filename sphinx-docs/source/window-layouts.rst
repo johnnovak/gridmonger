@@ -10,13 +10,11 @@ right* buttons in the title bar (the first two buttons in the top right
 corner), you can snap the Gridmonger window to the left or right half of
 the desktop, respectively.
 
-    TODO better image showing the notes list pane & tools
-
 .. raw:: html
 
     <div class="figure">
-      <a href="_static/img/eob-full.png" class="glightbox">
-        <img alt="Playing and mapping Eye of the Beholder I on a single screen" src="_static/img/eob-full.png">
+      <a href="_static/img/eob-full.jpg" class="glightbox">
+        <img alt="Playing and mapping Eye of the Beholder I on a single screen" src="_static/img/eob-full.jpg">
       </a>
         <p class="caption">
           <span>Playing and mapping <a class="reference external" href="https://en.wikipedia.org/wiki/Eye_of_the_Beholder_(video_game)">Eye of the Beholder I</a> on a single screen</span>
