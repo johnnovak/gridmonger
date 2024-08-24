@@ -4,7 +4,7 @@
 <html lang="en-AU">
   <title>Advanced editing &#8212; Gridmonger 1.2.0 documentation</title>
     <script src="_static/documentation_options.js?v=6efca38a"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
 
   <meta charset="utf-8" />
@@ -47,8 +47,9 @@
 <li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
 <li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Advanced editing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#links">Links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#linked-cells">Linked cells</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#selections">Selections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#special-level-actions">Special level actions</a></li>
 </ul>
@@ -70,7 +71,7 @@
     
       <nav class="top">
   <ul>
-    <li class="prev"><a href="annotations.html">Annotations</a></li>
+    <li class="prev"><a href="window-layouts.html">Window layouts</a></li>
     <li class="next"><a href="regions.html">Regions</a></li>
   </ul>
 </nav>
@@ -79,8 +80,8 @@
     
   <section id="advanced-editing">
 <h1>Advanced editing<a class="headerlink" href="#advanced-editing" title="Link to this heading">¶</a></h1>
-<section id="links">
-<h2>Links<a class="headerlink" href="#links" title="Link to this heading">¶</a></h2>
+<section id="linked-cells">
+<h2>Linked cells<a class="headerlink" href="#linked-cells" title="Link to this heading">¶</a></h2>
 <p>A handy advantage of Gridmonger over pencil-and-paper mapping is the
 ability to establish cell links. You can create links between the following
 floor types:</p>
@@ -96,9 +97,10 @@ included <code class="docutils literal notranslate"><span class="pre">Eye</span>
 maps are great demonstrations of this.</p>
 <p>To create a link, move the cursor to the source cell and press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">G</kbd></kbd>
 to enter <em>Set Link Destination Mode</em>. Now move the cursor to the target cell,
-then press <kbd class="kbd docutils literal notranslate">Enter</kbd> to create the link or <kbd class="kbd docutils literal notranslate">Esc</kbd> to cancel. All the
-common navigation shortcuts are available in this mode, so you can change the
-current level, zoom in and out, etc. The <a class="reference internal" href="moving-around.html#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a> can also be used.</p>
+then press <kbd class="kbd docutils literal notranslate">Enter</kbd> to create the link or <kbd class="kbd docutils literal notranslate">Esc</kbd> to cancel. All common
+navigation shortcuts are available in this mode, so you can change the current
+level, zoom in and out, etc. The <a class="reference internal" href="moving-around.html#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a>
+can also be used.</p>
 <p>The destination cell will be overwritten (if it doesn’t already contain the
 destination floor type), but any existing note will be preserved (and
 potentially converted to a <strong>None</strong> marker type). Once a link has been
@@ -121,7 +123,19 @@ selection mode, where you can select between the source locations with the
 movement keys. Press <kbd class="kbd docutils literal notranslate">Enter</kbd> or <kbd class="kbd docutils literal notranslate">Esc</kbd> to exit from location
 selection mode, or press <kbd class="kbd docutils literal notranslate">G</kbd> again to return to the destination cell. The
 included <code class="docutils literal notranslate"><span class="pre">Wizardry</span></code> example map contains such multi-source teleports.</p>
-<p>If you delete a linked cell, change its floor type, put a label on it or an
+<p>To show lines connecting all linked cells in the level, hold down
+the <kbd class="kbd docutils literal notranslate">'</kbd> key (apostrophe key, to the left of <kbd class="kbd docutils literal notranslate">Enter</kbd>). There are also
+<a class="reference internal" href="preferences.html#show-link-lines"><span class="std std-ref">Preferences options</span></a> to show the link lines for
+the current cell, or to always display all link lines.</p>
+<div class="figure">
+  <a href="_static/img/cell-link-lines.png" class="glightbox">
+    <img alt="Show Link Lines in action — the blue lines indicate linked cells" src="_static/img/cell-link-lines.png"
+    style="width: 90%">
+  </a>
+    <p class="caption">
+      <span>Show Link Lines in action — the blue lines indicate linked cells</span>
+    </p>
+</div><p>If you delete a linked cell, change its floor type, put a label on it or an
 annotation with a type other than <strong>None</strong>, the link will be severed. Again,
 multi-source teleports are an exception — deleting a single source will
 leave the remaining source-destination links intact.</p>
@@ -223,7 +237,6 @@ become clipped. By enabling <em>wraparound</em>, the cells shifted beyond one ed
 the level will “wrap around” to the opposite side. You can toggle wraparound
 with the <kbd class="kbd docutils literal notranslate">W</kbd> key while in <em>Paste Preview Mode</em>. The status bar indicates
 whether wraparound is enabled or not.</p>
-<p>TODO wraparound image</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>The contents of the paste buffer are preserved when opening another map
@@ -275,7 +288,7 @@ will remove a 2-cell wide “stripe” from around the level.</p></li>
 <h3>Nudge level<a class="headerlink" href="#nudge-level" title="Link to this heading">¶</a></h3>
 <p>You can shift the contents of the level around without changing its dimensions
 with the <em>nudge level</em> action.</p>
-<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">E</kbd></kbd> to enter <em>Nudge Preview Mode</em>, then use the movement keys
+<p>Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">G</kbd></kbd> to enter <em>Nudge Preview Mode</em>, then use the movement keys
 to reposition the level’s contents.</p>
 <p>Similarly to <em>Paste Preview Mode</em>, you can enable wraparound with the <kbd class="kbd docutils literal notranslate">W</kbd>
 key when nudging levels.</p>
@@ -289,7 +302,7 @@ key when nudging levels.</p>
     
       <nav class="bottom">
   <ul>
-    <li class="prev"><a href="annotations.html">Annotations</a></li>
+    <li class="prev"><a href="window-layouts.html">Window layouts</a></li>
     <li class="next"><a href="regions.html">Regions</a></li>
   </ul>
 </nav>

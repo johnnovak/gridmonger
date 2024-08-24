@@ -4,7 +4,7 @@
 <html lang="en-AU">
   <title>Preferences &#8212; Gridmonger 1.2.0 documentation</title>
     <script src="_static/documentation_options.js?v=6efca38a"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
 
   <meta charset="utf-8" />
@@ -45,13 +45,14 @@
 <li class="toctree-l1"><a class="reference internal" href="maps-and-levels.html">Map &amp; level basics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moving-around.html">Moving around</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Preferences</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#startup-tab">Startup tab</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#general-tab">General tab</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#editing-tab">Editing tab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#interface-tab">Interface tab</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
@@ -81,19 +82,14 @@
 <h1>Preferences<a class="headerlink" href="#preferences" title="Link to this heading">¶</a></h1>
 <p>Before continuing with editing, let’s quickly have a look at the preferences
 settings. Press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">U</kbd></kbd> to bring up the preferences dialog.</p>
-<section id="startup-tab">
-<h2>Startup tab<a class="headerlink" href="#startup-tab" title="Link to this heading">¶</a></h2>
-<p>On the <strong>Startup</strong> tab you have the option to toggle the display of the splash
-screen, and to have it auto-closed after a set number of seconds.</p>
-<p>Another important setting is the <strong>Load last map</strong> option. This is enabled by
-default, so you can continue from where you left off in your next Gridmonger
-session.</p>
-</section>
+<p>macOS users can always use the standard <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">,</kbd></kbd> shortcut as well.</p>
 <section id="general-tab">
 <h2>General tab<a class="headerlink" href="#general-tab" title="Link to this heading">¶</a></h2>
-<p>On the <strong>General</strong> tab you will find the autosave settings. By default, the
-map gets automatically saved every two minutes. This is great in general, but
-you need to exercise some caution in order not to accidentally lose your work
+<p>The first setting in the <strong>General</strong> tab is <strong>Load last map</strong>. This
+allows you to continue from where you left off when you next start Gridmonger.</p>
+<p>The next few settings control the <strong>Autosave</strong> behaviour. By default, the map
+gets automatically saved every two minutes. This is great in general, but you
+need to exercise some caution in order not to accidentally lose your work
 (e.g., if the autosave kicks in right after deleting some levels and you quit
 the program, you won’t get the save confirmation dialog as the changes have
 been already saved…) Also, if you’re going to experiment with the editing
@@ -105,29 +101,85 @@ or create backup copies of the example maps first.</p>
 yet, an autosave file <code class="docutils literal notranslate"><span class="pre">Untitled</span> <span class="pre">1.gmm</span></code> will be created in the special
 <code class="docutils literal notranslate"><span class="pre">Autosave</span></code> folder located in your <a class="reference internal" href="appendixes/user-data-folder.html#user-data-folder"><span class="std std-ref">User data folder</span></a>.</p>
 </div>
-<p>Below the autosave settings, you have the option to <strong>Enable vertical sync</strong>.
-The program does its drawing just like a game engine; it’s locked to your
-desktop refresh rate if vertical sync is on. Disabling it may increase the
-responsiveness of the UI, but at the cost of potentially much higher CPU
-consumption. Generally, you should leave it on.</p>
+<p>If <strong>Check for updates</strong> is enabled, Gridmonger displays a notification if a
+more recent version is available on program start or when you open the about
+dialog.</p>
 </section>
 <section id="editing-tab">
 <h2>Editing tab<a class="headerlink" href="#editing-tab" title="Link to this heading">¶</a></h2>
-<p>This tab contains options that affect the workings of the editing operations.</p>
+<p>The <strong>Editing</strong> tab contains settings that affect the editing operations.</p>
 <p><strong>Movement wraparound</strong> controls whether the cursor should appear on the
 opposite side when moved past the edges of the level (see
 <a class="reference internal" href="moving-around.html#movement-wraparound"><span class="std std-ref">Movement wraparound</span></a>).</p>
-<p><strong>Open-ended excavate</strong> controls whether the <em>excavate (draw tunnel)</em> tool
-should close the tunnels off with a wall in the excavation direction (see
-<a class="reference internal" href="basic-editing.html#open-ended-excavate"><span class="std std-ref">Open-ended excavate</span></a>).</p>
-<p><strong>YUBN diagonal movement</strong> enables moving the cursor in the intercardinal
-directions via the YUBN keys in addition to the numeric keypad (see
-<a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">Diagonal movement</span></a>).</p>
+<p><strong>YUBN diagonal movement</strong> enables the YUBN keys for
+<a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">Diagonal movement</span></a> in <a class="reference internal" href="moving-around.html#normal-mode"><span class="std std-ref">Normal Mode</span></a> and
+<a class="reference internal" href="moving-around.html#wasd-mode"><span class="std std-ref">WASD Mode</span></a> only, in addition to the numeric keypad.</p>
 <p><strong>Walk mode Left/Right keys</strong> controls whether the left and right cursor keys
 perform strafing or turning in <a class="reference internal" href="moving-around.html#walk-mode"><span class="std std-ref">Walk Mode</span></a>. This is
 especially useful on keyboards without a numeric keypad. This only controls
-the behaviour of the regular cursor keys—the cursor keys on the keypad are
+the behaviour of the regular cursor keys — the cursor keys on the keypad are
 unaffected by this setting.</p>
+<p id="show-link-lines"><strong>Show link lines</strong> controls the display of lines that indicate
+<a class="reference internal" href="advanced-editing.html#linked-cells"><span class="std std-ref">Linked cells</span></a> in the current level:</p>
+<ul class="multiline simple">
+<li><p><strong>Manual toggle</strong> – All link lines are shown when you hold down the
+<kbd class="kbd docutils literal notranslate">'</kbd> key, and only then (apostrophe key, to the left of <kbd class="kbd docutils literal notranslate">Enter</kbd>).</p></li>
+<li><p><strong>Current cell</strong> – Link lines are shown for the current cell, holding the
+<kbd class="kbd docutils literal notranslate">'</kbd> key shows all link lines.</p></li>
+<li><p><strong>All</strong> – All link lines are shown all the time.</p></li>
+</ul>
+<p><strong>Open-ended excavate</strong> controls whether the <em>excavate (draw tunnel)</em> tool
+should close the tunnels off with a wall in the excavation direction (see
+<a class="reference internal" href="basic-editing.html#open-ended-excavate"><span class="std std-ref">Open-ended excavate</span></a>).</p>
+</section>
+<section id="interface-tab">
+<h2>Interface tab<a class="headerlink" href="#interface-tab" title="Link to this heading">¶</a></h2>
+<p>The <strong>Interface</strong> tab is the home of all user-interface related settings.</p>
+<p><strong>Show splash image</strong> controls whether the nice Gridmonger logo should be
+displayed at startup, and the following two settings whether it should be
+auto-closed after a set number of seconds.</p>
+<p>Then you have the option to enable <strong>Vertical sync</strong>. The program does its
+drawing just like a game engine; it’s locked to your desktop’s refresh rate if
+vertical sync is on. Disabling it may increase the responsiveness of the UI,
+but at the cost of potentially much higher CPU consumption. Generally, you
+should leave this on.</p>
+<p id="interface-scaling"><strong>Interface scaling</strong> lets you set the scaling (zooming) of the entire user
+interface between 100% (no zoom) and 500% (5-fold zoom). Gridmonger takes your
+operating system’s DPI and scaling settings into account, so this scaling is
+applied on top of that. The new scaling factor takes effect after closing the
+preferences dialog with the <strong>OK</strong> button.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>You can reset 100% scaling with the <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">F11</kbd></kbd> shortcut (or
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">F11</kbd></kbd> on macOS, depending on your settings.) This is handy if
+you’ve accidentally set such a large scaling factor that you can no longer
+navigate the preferences dialog to reset it.</p>
+</div>
+<p id="shortcut-modifiers"><strong>Shortcut modifiers</strong> is a setting only available on macOS. By default,
+Gridmonger uses macOS user interface conventions for most keyboard shortcuts,
+so the <kbd class="kbd docutils literal notranslate">Cmd</kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">Shift</kbd></kbd> modifiers are used.</p>
+<p>This user manual only lists the Windows and Linux keyboard shortcuts for
+brevity, so by default, when you’re asked to press the <kbd class="kbd docutils literal notranslate">Ctrl</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code>
+shortcut, you should press <kbd class="kbd docutils literal notranslate">Cmd</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code> instead.</p>
+<p>Similarly, <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd></kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code> becomes <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">Shift</kbd></kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code>, and
+lastly, <kbd class="kbd docutils literal notranslate">Alt</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code> becomes <kbd class="kbd docutils literal notranslate">Opt</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code>.</p>
+<p>You can switch to <kbd class="kbd docutils literal notranslate">Ctrl</kbd> &amp; <kbd class="kbd docutils literal notranslate">Alt</kbd> based shortcuts even on macOS by
+selecting the <strong>Ctrl, Ctrl+Alt</strong> option in the <strong>Shortcut modifier keys</strong>
+dropdown.</p>
+<p>The below <kbd class="kbd docutils literal notranslate">Cmd</kbd>-based system level shorcuts are so pervasive that they’re
+also available in <strong>Ctrl, Ctrl+Alt</strong> mode:</p>
+<ul class="multiline simple">
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">O</kbd></kbd> to open a map</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd> and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd> to save the map</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">,</kbd></kbd> to open the preferences dialog</p></li>
+<li><p><kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">Q</kbd></kbd> to quit the program</p></li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The program always displays the correct modifier key labels in the user
+interface. You can also refer to the quick keyboard reference panel by
+pressing <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">/</kbd></kbd>, which shows the actual shortcuts.</p>
+</div>
 </section>
 </section>
 

@@ -4,7 +4,7 @@
 <html lang="en-AU">
   <title>Getting started &#8212; Gridmonger 1.2.0 documentation</title>
     <script src="_static/documentation_options.js?v=6efca38a"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
 
   <meta charset="utf-8" />
@@ -44,6 +44,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#note-for-macos-users">Note for macOS users</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#quickstart">Quickstart</a></li>
 </ul>
 </li>
@@ -52,6 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
 <li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
@@ -105,9 +107,8 @@ Windows 7 &amp; 10 and macOS Mojave or later (10.14+) are supported, although, i
 all likelihood, it will work fine on Windows XP and much earlier macOS
 versions.</p>
 <p>The program uses OpenGL for all its rendering; it works similarly to a game
-engine. You’ll need a graphics card that supports OpenGL 3.2 core profile or
-later. In practice, any graphics card released in the last 10 years or so will
-do (including integrated ones).</p>
+engine. Any graphics card released in the last 10 years should be sufficient,
+including laptops with integrated graphics.</p>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
@@ -138,21 +139,39 @@ etc.)</p>
 </section>
 <section id="linux">
 <h3>Linux<a class="headerlink" href="#linux" title="Link to this heading">¶</a></h3>
-<p>No Linux builds are provided yet, but you can build the program yourself by
-following the <a class="reference external" href="https://github.com/johnnovak/gridmonger#build-instructions">build instructions</a>.
-There might be some graphical glitches when resizing and moving the
-application window under certain window managers, but otherwise, the program
-should work perfectly.</p>
+<p>No Linux builds are provided yet, but you can try to build the program
+yourself by following the <a class="reference external" href="https://github.com/johnnovak/gridmonger#build-instructions">build instructions</a>. There might be
+some graphical glitches when resizing and moving the application window under
+certain window managers, but otherwise, the program should work fine.</p>
 </section>
+</section>
+<section class="style8" id="note-for-macos-users">
+<h2>Note for macOS users<a class="headerlink" href="#note-for-macos-users" title="Link to this heading">¶</a></h2>
+<p>The manual only lists the Windows and Linux keyboard shorcuts for brevity, but
+Gridmonger uses macOS user interface conventions by default.</p>
+<p>So when the manual tells you to press the <kbd class="kbd docutils literal notranslate">Ctrl</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code> shortcut, use
+<kbd class="kbd docutils literal notranslate">Cmd</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code> instead.</p>
+<p>Similarly, <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd></kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code> becomes <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Cmd</kbd>+<kbd class="kbd docutils literal notranslate">Shift</kbd></kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code>, and
+lastly, <kbd class="kbd docutils literal notranslate">Alt</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code> becomes <kbd class="kbd docutils literal notranslate">Opt</kbd> + <code class="docutils literal notranslate"><span class="pre">Key</span></code>.</p>
+<p>The program always displays the correct modifier key labels in the user
+interface. You can also refer to the quick keyboard reference panel by
+pressing <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">/</kbd></kbd> which shows the actual shortcuts.</p>
+<p>You can switch to <kbd class="kbd docutils literal notranslate">Ctrl</kbd> &amp; <kbd class="kbd docutils literal notranslate">Alt</kbd> based shortcuts even on macOS in
+the <a class="reference internal" href="preferences.html#shortcut-modifiers"><span class="std std-ref">Preferences</span></a> dialog.</p>
 </section>
 <section class="style4 big" id="quickstart">
 <h2>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading">¶</a></h2>
 <p>For the impatient among you, here are a few notes to get you started.</p>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
 <p>Always keep an eye on the <em>status bar messages</em> at the bottom of the
 window, as they contain important context-dependent information about the
 tools you’re trying to use.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If the user interface text is too small for you, you can set a custom
+scaling factor in the <a class="reference internal" href="preferences.html#interface-scaling"><span class="std std-ref">Preferences</span></a> dialog.</p>
 </div>
 <p><strong>Help</strong></p>
 <ul class="multiline simple">

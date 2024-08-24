@@ -4,7 +4,7 @@
 <html lang="en-AU">
   <title>Basic editing &#8212; Gridmonger 1.2.0 documentation</title>
     <script src="_static/documentation_options.js?v=6efca38a"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
 
   <meta charset="utf-8" />
@@ -56,6 +56,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
@@ -114,7 +115,9 @@ less common third <em>hybrid style</em> that combines elements from both.</p>
     <span>
       Hybrid style — <a class="reference external" href="https://en.wikipedia.org/wiki/The_Dark_Heart_of_Uukrul">The Dark Heart of Uukrul</a>
     </span>
-</div><section id="editing-tools">
+</div><p>The above maps are included in the example maps pack that comes with
+Gridmonger.</p>
+<section id="editing-tools">
 <h2>Editing tools<a class="headerlink" href="#editing-tools" title="Link to this heading">¶</a></h2>
 <p>Gridmonger has a number of handy map editing tools at your disposal.</p>
 <p>Tunnel style maps are easiest to create with the <em>excavate</em> (<em>draw tunnel</em>)
@@ -150,7 +153,7 @@ and all sorts of other paraphernalia brave adventurers frequently run into in
 well-designed dungeons?</p>
 <p>In tunnel style dungeons these contraptions take up an entire cell, so they
 are represented as different <em>floor types</em>. You can draw them with the number
-keys <kbd class="kbd docutils literal notranslate">1</kbd> to <kbd class="kbd docutils literal notranslate">7</kbd>. But there are more than 20 floor types in total, so
+keys <kbd class="kbd docutils literal notranslate">1</kbd> to <kbd class="kbd docutils literal notranslate">8</kbd>. But there are more than 20 floor types in total, so
 how does that exactly work?</p>
 <p>Each number key is assigned to up to four floor types. You can cycle forward
 between all floor types assigned to a particular number key by pressing the
@@ -193,11 +196,7 @@ key multiple times repeatedly, and backward by pressing the key with the
     </tr>
     <tr>
       <td class="icon"><img src="_static/img/floor-one-way-door-1.png" alt="One-way door (N/E)"></td>
-      <td class="name">One-way door (N/E)</td>
-    </tr>
-    <tr>
-      <td class="icon"><img src="_static/img/floor-one-way-door-2.png" alt="One-way door (S/W)"></td>
-      <td class="name">One-way door (S/W)</td>
+      <td class="name">One-way door</td>
     </tr>
   </tbody>
 
@@ -275,9 +274,13 @@ key multiple times repeatedly, and backward by pressing the key with the
 
   <tbody>
     <tr>
-      <td class="key"><kbd>7</kbd></td>
+      <td class="key" rowspan="2"><kbd>7</kbd></td>
       <td class="icon"><img src="_static/img/floor-bridge.png" alt="Bridge"></td>
       <td class="name">Bridge</td>
+    </tr>
+    <tr>
+      <td class="icon"><img src="_static/img/floor-arrow.png" alt="Arrow"></td>
+      <td class="name">Arrow</td>
     </tr>
   </tbody>
 
@@ -297,15 +300,18 @@ key multiple times repeatedly, and backward by pressing the key with the
 placing them in tunnels (as you normally would), they are automatically
 oriented correctly. Should you need it, you can always change the floor
 orientation manually with the <kbd class="kbd docutils literal notranslate">O</kbd> key.</p>
-<p>These two floor types are a bit special:</p>
+<p>These three floor types are a bit special:</p>
 <ul class="multiline simple">
-<li><p>There are two <em>one-way doors types</em>: one for the north or east direction,
-and another for south or west. Press the <kbd class="kbd docutils literal notranslate">O</kbd> key to switch between
-north-south or east-west orientation, then <kbd class="kbd docutils literal notranslate">2</kbd>/<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">2</kbd></kbd> to flip
-the arrow direction.</p></li>
-<li><p>The <em>bridge type</em> has a small amount of “overhang” that extends into its two
-adjacent cells. You can draw long continuous bridges by placing multiple
-bridge cells next to each other.</p></li>
+<li><p>The <em>one-way doors</em> can be oriented towards any of the four cardinal
+directions. When you place a one-way door, it always points northwards.
+You can then rotate it clockwise or anti-clockwise with <kbd class="kbd docutils literal notranslate">O</kbd>
+and <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">O</kbd></kbd>, respectively.</p></li>
+<li><p>You can similarly rotate the <em>arrow floor type</em> which can represent
+conveyor belts or force-fields that push the party towards the indicated
+direction.</p></li>
+<li><p>The <em>bridge floor type</em> has a small amount of “overhang” that extends into
+its two adjacent cells. You can draw long continuous bridges by placing
+multiple bridge cells next to each other.</p></li>
 </ul>
 <p>These floor types should take care of most of your dungeoneering needs. The
 goal was to keep it simple and not overcomplicate matters by allowing
@@ -341,10 +347,12 @@ statues, keyholes, etc.</p>
 <p>Drawing special walls works similarly to the method described above — hold
 down the <kbd class="kbd docutils literal notranslate">R</kbd> modified key and press one of the movement keys. This will
 use the current special wall type, as indicated in the right-side tools pane.
-To change the current special wall type, use the <kbd class="kbd docutils literal notranslate">[</kbd> and <kbd class="kbd docutils literal notranslate">]</kbd> keys.</p>
+To change the current special wall type, use the <kbd class="kbd docutils literal notranslate">[</kbd> and <kbd class="kbd docutils literal notranslate">]</kbd> keys or
+the <kbd class="kbd docutils literal notranslate">Alt</kbd>-based shortcuts shown below:</p>
 <table class="walls">
   <thead>
     <tr>
+      <th class="key">Key</th>
       <th class="icon">Special wall</th>
       <th class="name">Name</th>
     </tr>
@@ -352,50 +360,110 @@ To change the current special wall type, use the <kbd class="kbd docutils litera
 
   <tbody>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>1</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-open-door.png" alt="open door"></td>
       <td class="name">Open door</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>2</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-locked-door.png" alt="locked door"></td>
       <td class="name">Locked door</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>3</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-archway.png" alt="archway"></td>
       <td class="name">Archway</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>4</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-secret-door.png" alt="secret door"></td>
       <td class="name">Secret door</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>5</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-one-way-door.png" alt="one-way door"></td>
       <td class="name">One-way door</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>6</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-illusory.png" alt="illusory wall"></td>
       <td class="name">Illusory wall</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>7</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-invisible.png" alt="invisible wall"></td>
       <td class="name">Invisible wall</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>8</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-lever.png" alt="lever"></td>
       <td class="name">Lever</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>9</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-niche.png" alt="niche"></td>
       <td class="name">Niche</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>0</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-statue.png" alt="statue"></td>
       <td class="name">Statue</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>-</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-keyhole.png" alt="keyhole"></td>
       <td class="name">Keyhole</td>
     </tr>
     <tr>
+      <td class="key">
+        <kbd class="compound">
+          <kbd>Alt</kbd>+<kbd>=</kbd></kbd>
+        </kbd>
+      </td>
       <td class="icon"><img src="_static/img/wall-writing.png" alt="writing"></td>
       <td class="name">Writing</td>
     </tr>
@@ -468,7 +536,7 @@ Let’s see how to draw a spiral with it!</p>
 have reached <code class="docutils literal notranslate"><span class="pre">6</span></code> while carrying out the following (the arrow keys represent
 any of the <a class="reference internal" href="moving-around.html#normal-mode"><span class="std std-ref">Normal Mode</span></a> movement keys). Pay attention to
 the status bar messages after each keystroke!</p>
-<ol class="arabic simple">
+<ol class="arabic simple multiline">
 <li><p>Press <kbd class="kbd docutils literal notranslate">←</kbd>, hold down <kbd class="kbd docutils literal notranslate">Shift</kbd>, press <kbd class="kbd docutils literal notranslate">↑</kbd> twice,
 release <kbd class="kbd docutils literal notranslate">Shift</kbd>.</p></li>
 <li><p>Press <kbd class="kbd docutils literal notranslate">↑</kbd>, hold down <kbd class="kbd docutils literal notranslate">Shift</kbd>, press <kbd class="kbd docutils literal notranslate">→</kbd> twice,
@@ -539,7 +607,7 @@ WASD movement keys.</p>
 mode too.</p>
 <p>As the mouse buttons act as editing modifiers in <em>WASD Mode</em>, you need to hold
 <kbd class="kbd docutils literal notranslate">Shift</kbd> to unlock the <a class="reference internal" href="moving-around.html#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a>:</p>
-<ul class="simple">
+<ul class="multiline simple">
 <li><p>Hold <kbd class="kbd docutils literal notranslate">Shift</kbd> and left-click somewhere inside the level to move the
 cursor there.</p></li>
 <li><p>Hold <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Ctrl</kbd></kbd> and the left button, or <kbd class="kbd docutils literal notranslate">Shift</kbd> and the middle
