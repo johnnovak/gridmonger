@@ -175,6 +175,18 @@ section .headerlink:before {
 section h2:hover .headerlink, section h3:hover .headerlink, section h4:hover .headerlink {
   display: inline;
 }
+section ul, section ol {
+  list-style: none;
+}
+section ul.multiline > li, section ol.multiline > li {
+  margin-bottom: 0.5em;
+}
+section ul p, section ol p {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  text-indent: 0;
+}
 section ul {
   padding-left: 2.4em;
 }
@@ -190,14 +202,17 @@ section ul > li:before {
   opacity: 0.45;
   content: "∑";
 }
-section ul > li p {
-  display: inline;
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
+section ol {
+  padding-left: 2.3em;
+  counter-reset: number;
 }
-section ul.multiline > li {
-  margin-bottom: 0.4em;
+section ol > li {
+  text-indent: -1.2em;
+  counter-increment: number;
+}
+section ol > li:before {
+  content: counter(number) ". ";
+  padding-right: 0.3em;
 }
 section dl {
   margin: 1.5em 0;
@@ -570,6 +585,9 @@ article table.walls > tbody > tr > td.name, article table.floors > tbody > tr > 
   text-align: left;
   padding: 0;
 }
+article table.walls > tbody > tr > td {
+  padding-top: 0.3em;
+}
 article table.floors > thead > tr > th.name,
 article table.floors > tbody > tr > td.name {
   padding-left: 1em;
@@ -584,8 +602,14 @@ article table.walls > thead > tr > th.name,
 article table.walls > tbody > tr > td.name {
   padding-left: 1em;
 }
+article table.walls > tbody > tr > td.key {
+  width: 34%;
+}
 article table.walls > tbody > tr > td.icon {
-  width: 33%;
+  width: 24%;
+}
+article table.walls > tbody > tr > td.name {
+  width: 42%;
 }
 article table.shortcuts:first-child {
   margin-top: 5em;
@@ -614,16 +638,17 @@ article table.shortcuts > tbody > tr > td:nth-child(2) {
 article table.shortcuts > tbody > tr:not(:last-child) > td {
   border-bottom: 1px dashed #9e9589;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td {
+article table.shortcuts.move-keys > tbody > tr > td {
+  padding-right: 0;
   text-align: center;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(1) {
+article table.shortcuts.move-keys > tbody > tr > td:nth-child(1) {
   width: 25%;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(2) {
+article table.shortcuts.move-keys > tbody > tr > td:nth-child(2) {
   width: 25%;
 }
-article table.shortcuts.std-move-keys > tbody > tr > td:nth-child(3) {
+article table.shortcuts.move-keys > tbody > tr > td:nth-child(3) {
   width: 25%;
 }
 article .admonition {
@@ -697,7 +722,9 @@ article section.big:after {
   margin: 7rem auto 3rem auto;
 }
 article span.highlighted {
-  background-color: yellow;
+  background-color: #ffe300;
+  padding: 0 0.25em;
+  border-radius: 4px;
 }
 
 #table-of-contents li:before {
@@ -717,6 +744,16 @@ footer {
 #searchbox {
   margin: 2em 0;
   text-align: center;
+}
+#searchbox a {
+  display: inline;
+  font-family: "Alegreya SC", serif;
+  text-decoration: none;
+  color: #b86622;
+}
+#searchbox a:hover {
+  text-decoration: underline;
+  color: #9d5111;
 }
 
 form input {
@@ -776,7 +813,7 @@ section.search {
     width: 85%;
   }
   article table.walls {
-    width: 60%;
+    width: 85%;
   }
 }
 @media (min-width: 500px) {
@@ -792,11 +829,8 @@ section.search {
   article kbd {
     font-size: 16px;
   }
-  article table.floors {
-    width: 78%;
-  }
   article table.walls {
-    width: 52%;
+    width: 70%;
   }
 }
 @media (min-width: 600px) {
@@ -810,10 +844,15 @@ section.search {
     font-size: 20px;
   }
   article table.floors {
-    width: 70%;
+    width: 62%;
   }
   article table.walls {
-    width: 45%;
+    width: 55%;
+  }
+}
+@media (max-width: 600px) {
+  table {
+    width: 100% !important;
   }
 }
 /*--------------------------------------------------------------------------*/
@@ -840,10 +879,10 @@ section.search {
     font-size: 17px;
   }
   article table.floors {
-    width: 60%;
+    width: 62%;
   }
   article table.walls {
-    width: 40%;
+    width: 52%;
   }
   article table.shortcuts {
     width: 80%;
@@ -1008,11 +1047,12 @@ section.search {
   article h1 {
     margin-top: 1.9em;
   }
-  article section[id] {
-    scroll-margin-top: 112px;
-  }
   article section.big:after {
     margin: 5rem auto;
+  }
+  article section[id],
+  article p[id] {
+    scroll-margin-top: 112px;
   }
 }
 /*--------------------------------------------------------------------------*/

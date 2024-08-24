@@ -4,7 +4,7 @@
 <html lang="en-AU">
   <title>Moving around &#8212; Gridmonger 1.2.0 documentation</title>
     <script src="_static/documentation_options.js?v=6efca38a"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
 
   <meta charset="utf-8" />
@@ -55,6 +55,7 @@
 <li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
 <li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
@@ -95,10 +96,10 @@ have implications on other shortcuts as well. Then there are a few further
 <h2>Common navigation keys<a class="headerlink" href="#common-navigation-keys" title="Link to this heading">¶</a></h2>
 <p>The level-related navigational keys are the same in every mode.</p>
 <p>You can zoom the view in and out with the <kbd class="kbd docutils literal notranslate">=</kbd> and <kbd class="kbd docutils literal notranslate">-</kbd> keys,
-respectively. There are 20 zoom levels in total.</p>
-<p>To change the current level of the map, you can use the drop-down above the
-level, or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">-</kbd></kbd>/<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">=</kbd></kbd>, <kbd class="kbd docutils literal notranslate">PgUp</kbd>/<kbd class="kbd docutils literal notranslate">PgDn</kbd> or
-<kbd class="kbd docutils literal notranslate">Kp-</kbd>/<kbd class="kbd docutils literal notranslate">Kp+</kbd> to go to the previous or next level.</p>
+respectively. There are 50 zoom levels in total.</p>
+<p>To change the current level, you can use the drop-down above the level, or
+<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">-</kbd></kbd>/<kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">=</kbd></kbd>, <kbd class="kbd docutils literal notranslate">PgUp</kbd>/<kbd class="kbd docutils literal notranslate">PgDn</kbd> or <kbd class="kbd docutils literal notranslate">Kp-</kbd>/<kbd class="kbd docutils literal notranslate">Kp+</kbd>
+to go to the previous or next level.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>When it comes to keyboard shortcuts, Gridmonger uses the <a class="reference external" href="https://kbdlayout.info/KBDUS">US keyboard
@@ -107,6 +108,10 @@ and language settings of your operating system, or what the key labels on
 a non-US keyboard indicate. This is very similar to how most games handle
 the keyboard. For the more technically inclined, the program only cares
 about <em>positional scancodes</em>.</p>
+<p>To spell it out, if you’re using a non-US keyboard, you’ll need to find
+the <em>location</em> of the key on the <a class="reference external" href="https://kbdlayout.info/KBDUS">US keyboard layout</a> that manual asks you to press, then press
+the key <em>at the same location</em> on your keyboard, regardless of the key’s
+label.</p>
 </div>
 </section>
 <section id="normal-mode">
@@ -123,8 +128,8 @@ are in <em>Normal Mode</em>. This is indicated by a square shaped cursor.</p>
     </p>
 </div><p>One of the defining features of Gridmonger is its <a class="reference external" href="https://en.wikipedia.org/wiki/Vim_(text_editor)">Vim</a>-inspired keyboard
 interface. This means that in addition to the standard cursor keys, you can
-also use Vim-style <a class="reference external" href="https://en.wikipedia.org/wiki/Arrow_keys#HJKL_keys">HJKL key</a> navigation to move
-around. You might have already encountered this style of navigation in
+also use Vim-style <a class="reference external" href="https://en.wikipedia.org/wiki/Arrow_keys#HJKL_keys">HJKL key navigation</a> to move
+around. You might have already encountered this navigation style in
 some text-based games originally developed on UNIX systems, such as the
 venerable <a class="reference external" href="https://en.wikipedia.org/wiki/Rogue_(video_game)">Rogue</a> and <a class="reference external" href="https://en.wikipedia.org/wiki/NetHack">NetHack</a>.</p>
 <p>If this doesn’t mean anything to you, don’t worry! Just keep using the
@@ -133,7 +138,7 @@ standard cursor keys or the keypad for now. But I do recommend you to read the
 interesting enough to explore this topic further.</p>
 <p>The following table summarises the <em>standard movement keys</em> available in
 <em>Normal Mode</em>:</p>
-<table class="shortcuts std-move-keys">
+<table class="shortcuts move-keys" style="width: 80%">
   <thead>
     <tr>
       <th>Arrow</th>
@@ -172,6 +177,13 @@ interesting enough to explore this topic further.</p>
 </table><p>To move in 5-cell jumps, hold down <kbd class="kbd docutils literal notranslate">Ctrl</kbd> while using the movement keys.
 Similarly, you can pan the level by holding down <kbd class="kbd docutils literal notranslate">Shift</kbd>. This can be
 combined with <kbd class="kbd docutils literal notranslate">Ctrl</kbd> to pan in 5-cell increments.</p>
+<div class="admonition-note-for-macos-users admonition">
+<p class="admonition-title">Note for macOS users</p>
+<p>The 5-cell jump modifier is always <kbd class="kbd docutils literal notranslate">Ctrl</kbd> on macOS regadless of your
+keyboard <a class="reference internal" href="preferences.html#preferences"><span class="std std-ref">Preferences</span></a> settings. This is because certain
+<kbd class="kbd docutils literal notranslate">Cmd</kbd> plus movement key combinations would clash with system
+shortcuts.</p>
+</div>
 <p>Observe how the current coordinates change in the bottom right corner of the
 window as you move the cursor. You can toggle the display of cell
 coordinates around the level with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">C</kbd></kbd>. If you wish to change how the
@@ -202,11 +214,11 @@ For consistency, this enables wraparound cursor movement in all editing modes
 <h3>Diagonal movement<a class="headerlink" href="#diagonal-movement" title="Link to this heading">¶</a></h3>
 <p>You can use the keypad to move in the intercardinal directions too
 (diagonally, in 45-degree angle):</p>
-<table class="shortcuts std-move-keys" style="width: 67%">
+<table class="shortcuts move-keys" style="width: 52%">
   <thead>
     <tr>
       <th>Keypad</th>
-      <th width="45%"></th>
+      <th width="70%"></th>
     </tr>
   </thead>
 
@@ -228,15 +240,15 @@ For consistency, this enables wraparound cursor movement in all editing modes
       <td>Down &amp; right (Southeast)</td>
     </tr>
   </tbody>
-</table><p>In addition to the numeric keypad, it’s also possible to move the cursor
+</table><p>In addition to the numeric keypad, there is an option to move the cursor
 diagonally with the YUBN keys. This might be familiar to some from the classic
 game <a class="reference external" href="https://en.wikipedia.org/wiki/Rogue_(video_game)">Rogue</a>:</p>
-<table class="shortcuts std-move-keys">
+<table class="shortcuts move-keys" style="width: 70%">
   <thead>
     <tr>
-      <th>Keypad</th>
-      <th>Vim</th>
-      <th width="45%"></th>
+      <th width="15%">Keypad</th>
+      <th width="15%">Vim</th>
+      <th width="70%"></th>
     </tr>
   </thead>
 
@@ -303,8 +315,8 @@ You can change this to turning instead with the <strong>Walk mode Left/Right key
 option in the <a class="reference internal" href="preferences.html#editing-tab"><span class="std std-ref">Editing tab</span></a> of the
 <a class="reference internal" href="preferences.html#preferences"><span class="std std-ref">Preferences</span></a> dialog.</p>
 <p>Depending on whether <kbd class="kbd docutils literal notranslate">←</kbd> and <kbd class="kbd docutils literal notranslate">→</kbd> perform strafing or
-turning, you can still use the other action with the <kbd class="kbd docutils literal notranslate">Alt</kbd> modifier:</p>
-<table class="shortcuts std-move-keys">
+turning, you can still use the <em>other action</em> with the <kbd class="kbd docutils literal notranslate">Alt</kbd> modifier:</p>
+<table class="shortcuts move-keys" style="width: 62%">
   <thead>
     <tr>
       <th>Arrow</th>
@@ -329,14 +341,14 @@ turning, you can still use the other action with the <kbd class="kbd docutils li
       <td>Turn left</td>
     </tr>
     <tr>
-      <td><kbd>Alt</kbd>+<kbd>&larr;</kbd></td>
-      <td>Turn left</td>
-      <td>Strafe left</td>
-    </tr>
-    <tr>
       <td><kbd>&rarr;</kbd></td>
       <td>Strafe right</td>
       <td>Turn right</td>
+    </tr>
+    <tr>
+      <td><kbd>Alt</kbd>+<kbd>&larr;</kbd></td>
+      <td>Turn left</td>
+      <td>Strafe left</td>
     </tr>
     <tr>
       <td><kbd>Alt</kbd>+<kbd>&rarr;</kbd></td>
@@ -346,7 +358,7 @@ turning, you can still use the other action with the <kbd class="kbd docutils li
   </tbody>
 </table><p>The strafe and turn actions are always available on the keypad without
 the need for the <kbd class="kbd docutils literal notranslate">Alt</kbd> modifier:</p>
-<table class="shortcuts std-move-keys">
+<table class="shortcuts move-keys" style="width: 47%">
   <thead>
     <tr>
       <th>Keypad</th>
@@ -355,20 +367,20 @@ the need for the <kbd class="kbd docutils literal notranslate">Alt</kbd> modifie
   </thead>
   <tbody class="no-padding">
     <tr>
-      <td><kbd>kp 4</kbd></td>
-      <td>Strafe left</td>
-    </tr>
-    <tr>
-      <td><kbd>kp 6</kbd></td>
-      <td>Strafe right</td>
-    </tr>
-    <tr>
       <td><kbd>kp 8</kbd></td>
       <td>Forward</td>
     </tr>
     <tr>
       <td><kbd>kp 2</kbd><kbd>kp 5</kbd></td>
       <td>Backward</td>
+    </tr>
+    <tr>
+      <td><kbd>kp 4</kbd></td>
+      <td>Strafe left</td>
+    </tr>
+    <tr>
+      <td><kbd>kp 6</kbd></td>
+      <td>Strafe right</td>
     </tr>
     <tr>
       <td><kbd>kp 7</kbd></td>
@@ -406,10 +418,38 @@ in the top-left corner of the window when <em>WASD Mode</em> is on.</p>
     </p>
 </div><p>When it comes to navigation, this mode is the same as <em>Normal Mode</em>, with the
 addition that you can also use the WASD keys for cursor movement. All diagonal
-movement keys are available in <em>WASD mode</em>. Editing, however, is a little
-different — as you’ll learn in the <a class="reference internal" href="basic-editing.html#editing-in-wasd-mode"><span class="std std-ref">Editing in WASD Mode</span></a>
-section, the mouse buttons are repurposed for editing in this mode, so you
-need to hold the <kbd class="kbd docutils literal notranslate">Shift</kbd> modifier to use the <a class="reference internal" href="#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a>.</p>
+movement keys (keypad and YUBN keys, if enabled) are available in <em>WASD mode</em>.</p>
+<table class="shortcuts move-keys" style="width: 35%">
+  <thead>
+    <tr>
+      <th width="40%">Key</th>
+      <th width="60%"></th>
+    </tr>
+  </thead>
+
+  <tbody class="no-padding">
+    <tr>
+      <td><kbd>W</kbd></td>
+      <td>Up (North)</td>
+    </tr>
+    <tr>
+      <td><kbd>A</kbd></td>
+      <td>Left (West)</td>
+    </tr>
+    <tr>
+      <td><kbd>S</kbd></td>
+      <td>Down (South)</td>
+    </tr>
+    <tr>
+      <td><kbd>D</kbd></td>
+      <td>Right (East)</td>
+    </tr>
+
+  </tbody>
+</table><p>Editing, however, is a little different — as you’ll learn in the
+<a class="reference internal" href="basic-editing.html#editing-in-wasd-mode"><span class="std std-ref">Editing in WASD Mode</span></a> section, the mouse buttons are
+repurposed for editing in this mode, so you need to hold the <kbd class="kbd docutils literal notranslate">Shift</kbd>
+modifier to use the <a class="reference internal" href="#mouse-movement-actions"><span class="std std-ref">Mouse movement actions</span></a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>In <em>WASD Mode</em>, you cannot use the <kbd class="kbd docutils literal notranslate">Ctrl</kbd> movement modifier with the
@@ -421,9 +461,18 @@ available with the other movement keys.</p>
 </section>
 <section class="style2" id="wasd-walk-mode">
 <h2>WASD + Walk Mode<a class="headerlink" href="#wasd-walk-mode" title="Link to this heading">¶</a></h2>
-<p>If you enable both <em>WASD Mode</em> and <em>Walk Mode</em> (yes, you can do that!), the
-movement keys become a bit more interesting:</p>
-<table class="shortcuts std-move-keys">
+<p>If you enable <em>WASD Mode</em> and <em>Walk Mode</em> at the same time (yes, you can do
+that!), the cursor will turn into a triangle and you’ll see the WASD indicator
+in the top-left corner:</p>
+<div class="figure">
+  <a href="_static/img/mode-wasd+walk.png" class="glightbox">
+    <img alt="WASD + Walk Mode (triangle cursor and WASD indicator)" src="_static/img/mode-wasd+walk.png" style="width: 25%;">
+  </a>
+    <p class="caption">
+      <span>WASD + Walk Mode (triangle cursor and WASD indicator)</span>
+    </p>
+</div><p>The movement keys become a bit more interesting in <em>WASD + Walk Mode</em>:</p>
+<table class="shortcuts move-keys" style="width: 75%">
   <thead>
     <tr>
       <th>Arrow<br>(Turn mode)</th>
@@ -470,21 +519,14 @@ movement keys become a bit more interesting:</p>
       <td>Turn right</td>
     </tr>
   </tbody>
-</table><p>Strafe mode, turn mode, and the  <kbd class="kbd docutils literal notranslate">Alt</kbd> modifiers for the arrow keys work
-exactly the same way as in <a class="reference internal" href="#walk-mode"><span class="std std-ref">Walk Mode</span></a>; they have only been
-omitted for brevity.</p>
+</table><p>The <kbd class="kbd docutils literal notranslate">Alt</kbd> modifiers for the arrow keys and strafe mode work exactly the
+same way as in <a class="reference internal" href="#walk-mode"><span class="std std-ref">Walk Mode</span></a>. Diagonal movement is not
+available in <em>WASD + Walk Mode</em>.</p>
 <p>Admittedly, this is the most complex mode, and while some people might find it
 really useful, if it doesn’t click with you, don’t feel compelled to use it.
-In fact, <em>yours truly</em> pretty much only use <em>Normal Mode</em>, even when playing
+In fact, <em>yours truly</em> pretty much only uses <em>Normal Mode</em>, even when playing
 real-time dungeon crawlers with WASD controls…</p>
-<div class="figure">
-  <a href="_static/img/mode-wasd+walk.png" class="glightbox">
-    <img alt="WASD + Walk Mode (triangle cursor and WASD indicator)" src="_static/img/mode-wasd+walk.png" style="width: 25%;">
-  </a>
-    <p class="caption">
-      <span>WASD + Walk Mode (triangle cursor and WASD indicator)</span>
-    </p>
-</div></section>
+</section>
 <section class="style3 big" id="navigating-dialogs">
 <h2>Navigating dialogs<a class="headerlink" href="#navigating-dialogs" title="Link to this heading">¶</a></h2>
 <p>Apart from the usual <kbd class="kbd docutils literal notranslate">Enter</kbd> to accept and <kbd class="kbd docutils literal notranslate">Esc</kbd> to cancel, there
@@ -507,8 +549,15 @@ applicable.</p>
 efficiency. The <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">[</kbd></kbd> Vim alias for the <kbd class="kbd docutils literal notranslate">Esc</kbd> key is supported
 by Gridmonger for these people (it’s much more efficient to type than
 reaching out for <kbd class="kbd docutils literal notranslate">Esc</kbd> with your left pinky!)</p>
+<p>You can achieve the same thing on macOS by customising the modifier keys in
+the System Settings, and Linux offers similar customisation options.</p>
 </div>
-<div class="section style3"></div><div class="sidenote about-vim admonition" id="about-vim">
+<div class="admonition-note-for-macos-users admonition">
+<p class="admonition-title">Note for macOS users</p>
+<p>Because these <kbd class="kbd docutils literal notranslate">Ctrl</kbd> based shortcuts exist to please Vim users for the
+reasons outlined above, they’re are never remapped to <kbd class="kbd docutils literal notranslate">Cmd</kbd> on macOS.</p>
+</div>
+<section class="style6"></section><div class="sidenote about-vim admonition" id="about-vim">
 <p class="admonition-title">About Vim</p>
 <p>If you’re not a programmer, you’re probably wondering what the hell this
 Vim thing is about! In short, Vim is a programmer’s text-editor for people

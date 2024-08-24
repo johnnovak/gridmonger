@@ -4,7 +4,7 @@
 <html lang="en-AU">
   <title>Map &amp; level basics &#8212; Gridmonger 1.2.0 documentation</title>
     <script src="_static/documentation_options.js?v=6efca38a"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
 
   <meta charset="utf-8" />
@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
 <li class="toctree-l1"><a class="reference internal" href="basic-editing.html">Basic editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="window-layouts.html">Window layouts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced-editing.html">Advanced editing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regions.html">Regions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="themes.html">Themes</a></li>
@@ -130,27 +131,27 @@ unique within the map (the program enforces this).</p>
 </section>
 <section id="map-properties">
 <h2>Map properties<a class="headerlink" href="#map-properties" title="Link to this heading">¶</a></h2>
-<p>Apart from their name, levels have a few other properties too. Some of them can
-be inherited from the map, so let’s examine the map properties first. Bring up
+<p>Apart from their name, levels have a few other properties too. Some can be
+inherited from the map, so let’s examine the map properties first. Bring up
 the <strong>Edit Map Properties</strong> dialog with the <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">P</kbd></kbd> shortcut!</p>
 <p>Let’s start with the <strong>General</strong> tab. Unsurprisingly, every map must have a
-<strong>Title</strong> — this is what gets displayed in the title bar of the window. You
-can also optionally specify the name of the <strong>Game</strong> and the <strong>Author</strong> of the
-map. The local <strong>Creation time</strong> is also displayed as a non-editable property.</p>
+<strong>Title</strong> — this is displayed in the title bar of the window. You can also
+optionally specify the name of the <strong>Game</strong> and the <strong>Author</strong> of the map. The
+local <strong>Creation time</strong> is also displayed as a non-editable property.</p>
 <p>The <strong>Coordinates</strong> tab contains properties that govern how the cell
-coordinates are displayed. <strong>Origin</strong> specifies the corner where counting the
-grid coordinates should start from. There are two coordinate styles to choose
+coordinates are displayed. <strong>Origin</strong> specifies the corner the
+grid coordinate count starts from. There are two coordinate styles to choose
 from: <em>number</em> and <em>letter</em>. You can set the style separately for columns and
 rows with <strong>Column style</strong> and <strong>Row style</strong>, respectively. The letter style
 works as follows: <code class="docutils literal notranslate"><span class="pre">A</span></code> corresponds to <code class="docutils literal notranslate"><span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">B</span></code> to <code class="docutils literal notranslate"><span class="pre">1</span></code>, and so on, right
 until <code class="docutils literal notranslate"><span class="pre">Z</span></code> (<code class="docutils literal notranslate"><span class="pre">25</span></code>), then it continues with <code class="docutils literal notranslate"><span class="pre">AA</span></code>, <code class="docutils literal notranslate"><span class="pre">AB</span></code>, <code class="docutils literal notranslate"><span class="pre">AC</span></code>, etc. You
-can specify the starting values for the coordinates in the <strong>Column start</strong>
-and <strong>Row start</strong> fields. You need to enter the start values as numbers, even
-for letter style coordinates, in which case the program helpfully displays the
+can specify the coordinate start values in the <strong>Column start</strong> and <strong>Row
+start</strong> fields. You need to enter the start values as numbers, even for letter
+style coordinates, in which case the program helpfully displays the
 corresponding letter coordinates next to the input fields. Negative start
 values are allowed (<code class="docutils literal notranslate"><span class="pre">-1</span></code> corresponds to <code class="docutils literal notranslate"><span class="pre">-B</span></code> when using the letter style).</p>
 <p>Finally, the <strong>Notes</strong> tab contains a nice large text field to store all your
-map related notes in. You can use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Enter</kbd></kbd> to insert line breaks
+map-related notes in. You can use <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Shift</kbd>+<kbd class="kbd docutils literal notranslate">Enter</kbd></kbd> to insert line breaks
 when editing the note text.</p>
 </section>
 <section id="level-properties">
@@ -159,9 +160,9 @@ when editing the note text.</p>
 <p>The <strong>General</strong> tab contains the <strong>Location name</strong>, <strong>Level name</strong> and
 <strong>Elevation</strong> properties discussed previously. The dimensions of the level are
 also displayed (<strong>Columns</strong> and <strong>Rows</strong>), but you cannot edit those fields.</p>
-<p>By default, levels use the same coordinate settings as the map. You can
-customise them on an individual level basis by enabling <strong>Override map
-settings</strong> in the <strong>Coordinates</strong> tab.</p>
+<p>By default, levels inherit the coordinate settings from the map properties.
+You can customise them per level by enabling <strong>Override map settings</strong>
+in the <strong>Coordinates</strong> tab.</p>
 <p>The <strong>Regions</strong> properties will be discussed later in the <a class="reference internal" href="regions.html"><span class="doc">Regions</span></a>
 chapter.</p>
 <p>You can attach notes to individual levels as well under the <strong>Notes</strong> tab.</p>
@@ -169,19 +170,21 @@ chapter.</p>
 <section id="managing-maps-levels">
 <h2>Managing maps &amp;  levels<a class="headerlink" href="#managing-maps-levels" title="Link to this heading">¶</a></h2>
 <p>To add a new level, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd> to bring up the <strong>New Level</strong> dialog.
-This is almost exactly the same as the <strong>Edit Level Properties</strong> dialog, the
-only difference being that here you must specify the level’s dimensions. The
-maximum allowed size is 6,666×6,666 — hopefully, you’ll never ever come
-across a level this big, but some kind of upper limit had to be introduced and
-this is as good as any! Don’t worry if you don’t get the level size quite
-right initially; you can always change it later with the resize and crop
-actions, as you’ll see.</p>
-<p>To delete the current level, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">D</kbd></kbd>. If you accidentally deleted
-a level, no problem, you can always undo it by pressing <kbd class="kbd docutils literal notranslate">U</kbd>,
+This is almost exactly the same as the <strong>Edit Level Properties</strong> dialog, but
+here you must specify the level’s dimensions. The maximum allowed size is
+6,666×6,666 — hopefully, you’ll never ever come across a level this big, but
+some upper limit had to be introduced and this is as good as any!
+Don’t worry if you don’t get the level size quite right initially; you can
+change it later with the resize and crop actions, as you’ll see.</p>
+<p>You also have the option to pre-fill the level with empty floor cells (<strong>Fill
+with empty floors</strong>). This might come in handy for <em>wall style</em> maps — more on
+this in the <a class="reference internal" href="basic-editing.html#basic-editing"><span class="std std-ref">Basic editing</span></a> chapter.</p>
+<p>To delete the current level, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">D</kbd></kbd>. If you deleted the level
+accidentally, no problem; you can always undo it by pressing <kbd class="kbd docutils literal notranslate">U</kbd>,
 <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">U</kbd></kbd>, or <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Z</kbd></kbd>.</p>
-<p>Similarly, you can create a new map with <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd>. Make sure to save
-your current map first if you don’t want to lose it, because deleting the
-whole map is the one action that <em>cannot</em> be undone!</p>
+<p>To replace the current map with a new map, press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Alt</kbd>+<kbd class="kbd docutils literal notranslate">N</kbd></kbd>. Make sure
+to save the current map first if you don’t want to lose it because this action
+<em>cannot</em> be undone!</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The <kbd class="kbd docutils literal notranslate">U</kbd> undo shortcut is not available if <a class="reference internal" href="moving-around.html#diagonal-movement"><span class="std std-ref">YUBN keys</span></a> are enabled. You’ll learn about this

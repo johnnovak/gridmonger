@@ -175,6 +175,18 @@ section .headerlink:before {
 section h2:hover .headerlink, section h3:hover .headerlink, section h4:hover .headerlink {
   display: inline;
 }
+section ul, section ol {
+  list-style: none;
+}
+section ul.multiline > li, section ol.multiline > li {
+  margin-bottom: 0.5em;
+}
+section ul p, section ol p {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  text-indent: 0;
+}
 section ul {
   padding-left: 2.4em;
 }
@@ -190,14 +202,17 @@ section ul > li:before {
   opacity: 0.45;
   content: "∑";
 }
-section ul > li p {
-  display: inline;
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
+section ol {
+  padding-left: 2.3em;
+  counter-reset: number;
 }
-section ul.multiline > li {
-  margin-bottom: 0.4em;
+section ol > li {
+  text-indent: -1.2em;
+  counter-increment: number;
+}
+section ol > li:before {
+  content: counter(number) ". ";
+  padding-right: 0.3em;
 }
 section dl {
   margin: 1.5em 0;
@@ -391,6 +406,9 @@ section {
   max-width: 650px;
   margin: 0 auto;
 }
+section figure img {
+  width: 100%;
+}
 
 div.thumbnails {
   margin-top: 22px;
@@ -408,6 +426,30 @@ h3 {
 p.aim {
   margin: 1.4em 0;
   text-indent: 2em;
+}
+
+.video-wrap {
+  width: 100%;
+  max-width: 650px;
+}
+.video-wrap figcaption {
+  margin-top: 0.5em;
+}
+
+.video-container {
+  position: relative;
+  overflow: hidden;
+  height: 0;
+  padding-bottom: 56.25%;
+}
+.video-container iframe,
+.video-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -478,5 +520,12 @@ p.aim {
     font-size: 21px;
     opacity: 0.3;
     content: "❧";
+  }
+}
+/*--------------------------------------------------------------------------*/
+@media (min-width: 900px) {
+  section figure img {
+    width: 130%;
+    margin-left: -15%;
   }
 }
