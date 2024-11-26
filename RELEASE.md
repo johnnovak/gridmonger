@@ -107,7 +107,7 @@ Commit and push the changes in `docs/`.
 ### 5. Build and publish the website
 
 ```
-nim site
+nim website
 ```
 
 Commit and push the changes in `docs/`.
