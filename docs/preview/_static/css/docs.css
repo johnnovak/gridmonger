@@ -88,7 +88,7 @@ body {
   margin: 0;
   height: 100%;
   padding: 20px;
-  background-color: #d8d0c5;
+  background-color: #dacfc0;
   color: #4e4336;
 }
 
@@ -503,7 +503,7 @@ article table {
 }
 article table > caption {
   margin: 0 auto 0.5rem;
-  border: 3px #9e9589;
+  border: 3px #9f9486;
   border-style: double none;
   font-family: "Alegreya SC", serif;
   font-weight: 700;
@@ -526,7 +526,7 @@ article table > thead > tr > th {
   font-family: "Alegreya SC", serif;
   font-size: 85%;
   font-weight: 500;
-  border-bottom: 2px solid #bcb4a8;
+  border-bottom: 2px solid #beb3a4;
   line-height: 1.1em;
   padding-bottom: 0.5em;
 }
@@ -565,7 +565,7 @@ article table.walls > thead > tr > th.name, article table.floors > thead > tr > 
   text-align: left;
 }
 article table.walls > tbody, article table.floors > tbody {
-  border-top: 1px dashed #9e9589;
+  border-top: 1px dashed #9f9486;
 }
 article table.walls > tbody:after, article table.floors > tbody:after {
   display: block;
@@ -624,7 +624,7 @@ article table.shortcuts > tbody:not(.no-padding):after {
   height: 1.4rem;
 }
 article table.shortcuts > tbody > tr:hover {
-  background-color: #cdc5ba;
+  background-color: #cfc4b5;
 }
 article table.shortcuts > tbody > tr > td:nth-child(1) {
   line-height: 1.5em;
@@ -636,7 +636,7 @@ article table.shortcuts > tbody > tr > td:nth-child(2) {
   line-height: 1.15em;
 }
 article table.shortcuts > tbody > tr:not(:last-child) > td {
-  border-bottom: 1px dashed #9e9589;
+  border-bottom: 1px dashed #9f9486;
 }
 article table.shortcuts.move-keys > tbody > tr > td {
   padding-right: 0;
@@ -777,7 +777,7 @@ form input[type=submit] {
   padding: 0.1em 0.5em;
   margin-left: 0.2em;
   background: #b86622;
-  color: #d8d0c5;
+  color: #dacfc0;
 }
 form input[type=submit]:hover {
   opacity: 0.9;
@@ -792,7 +792,7 @@ section.search {
   padding: 1em 0;
 }
 #search-results ul li:not(:last-child) {
-  border-bottom: 1px dashed #938a7e;
+  border-bottom: 1px dashed #94897b;
 }
 #search-results ul li p {
   display: block;
@@ -1033,7 +1033,7 @@ section.search {
     position: fixed;
     top: 0;
     z-index: 10;
-    background: #d8d0c5;
+    background: #dacfc0;
   }
   article > nav.top {
     margin-top: 0em;
