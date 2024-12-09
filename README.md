@@ -35,8 +35,8 @@ nimble install koi osdialog riff semver winim with
 ### Compiling
 
 The `main` branch is usually in flux as it often contains work-in-progress
-changes intended go into the next release. Check out the latest tag instead to
-build the last stable version:
+changes intended go into the next release. To build the current stable version,
+check out the latest tag:
 
 ```bash
 git tag
@@ -60,7 +60,8 @@ Run `nim help` for the full list of build tasks.
 
 
 **NOTE:** Create an empty directory `Config` in the project root directory to
-enable portable mode (that's what you normally want during development).
+enable portable mode (that's what you normally want during development; more
+info about portable mode [here](https://gridmonger.johnnovak.net/manual/appendixes/user-data-folder.html)).
 
 
 ## Manual & website
