@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  NIM_VERSION: binary:2.0.8
+  NIM_VERSION: binary:2.2.0
 
 jobs:
   build-manual:
