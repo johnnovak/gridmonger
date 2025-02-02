@@ -691,55 +691,55 @@ type
   Dialog = enum
     dlgNone
 
-    dlgAboutDialog
-    dlgPreferencesDialog
+    dlgAbout
+    dlgPreferences
 
-    dlgSaveDiscardMapDialog
+    dlgSaveDiscardMap
 
-    dlgNewMapDialog
-    dlgEditMapPropsDialog
+    dlgNewMap
+    dlgEditMapProps
 
-    dlgNewLevelDialog
-    dlgEditLevelPropsDialog
-    dlgResizeLevelDialog
-    dlgDeleteLevelDialog
+    dlgNewLevel
+    dlgEditLevelProps
+    dlgResizeLevel
+    dlgDeleteLevel
 
-    dlgEditNoteDialog
-    dlgEditLabelDialog
+    dlgEditNote
+    dlgEditLabel
 
-    dlgEditRegionPropsDialog
+    dlgEditRegionProps
 
-    dlgSaveDiscardThemeDialog
-    dlgCopyThemeDialog
-    dlgRenameThemeDialog
-    dlgOverwriteThemeDialog
-    dlgDeleteThemeDialog
+    dlgSaveDiscardTheme
+    dlgCopyTheme
+    dlgRenameTheme
+    dlgOverwriteTheme
+    dlgDeleteTheme
 
 
   Dialogs = object
-    activeDialog:           Dialog
+    activeDialog:     Dialog
 
-    aboutDialog:            AboutDialogParams
-    preferencesDialog:      PreferencesDialogParams
+    about:            AboutDialogParams
+    preferences:      PreferencesDialogParams
 
-    saveDiscardMapDialog:   SaveDiscardMapDialogParams
+    saveDiscardMap:   SaveDiscardMapDialogParams
 
-    newMapDialog:           NewMapDialogParams
-    editMapPropsDialog:     EditMapPropsDialogParams
+    newMap:           NewMapDialogParams
+    editMapProps:     EditMapPropsDialogParams
 
-    newLevelDialog:         LevelPropertiesDialogParams
-    editLevelPropsDialog:   LevelPropertiesDialogParams
-    resizeLevelDialog:      ResizeLevelDialogParams
+    newLevel:         LevelPropertiesDialogParams
+    editLevelProps:   LevelPropertiesDialogParams
+    resizeLevel:      ResizeLevelDialogParams
 
-    editNoteDialog:         EditNoteDialogParams
-    editLabelDialog:        EditLabelDialogParams
+    editNote:         EditNoteDialogParams
+    editLabel:        EditLabelDialogParams
 
-    editRegionPropsDialog:  EditRegionPropsParams
+    editRegionProps:  EditRegionPropsParams
 
-    saveDiscardThemeDialog: SaveDiscardThemeDialogParams
-    copyThemeDialog:        CopyThemeDialogParams
-    renameThemeDialog:      RenameThemeDialogParams
-    overwriteThemeDialog:   OverwriteThemeDialogParams
+    saveDiscardTheme: SaveDiscardThemeDialogParams
+    copyTheme:        CopyThemeDialogParams
+    renameTheme:      RenameThemeDialogParams
+    overwriteTheme:   OverwriteThemeDialogParams
 
 
   AboutDialogParams = object
@@ -3900,7 +3900,7 @@ proc openAboutDialog(a) =
   if a.latestVersion.isNone:
     appEvents.fetchLatestVersion()
 
-  a.dialogs.activeDialog = dlgAboutDialog
+  a.dialogs.activeDialog = dlgAbout
 
 
 proc openUserManual(a)
@@ -3990,7 +3990,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 
 
   proc closeAction(a) =
-    a.dialogs.aboutDialog.aboutLogo.updateLogoImage = true
+    a.dialogs.about.aboutLogo.updateLogoImage = true
     closeDialog(a)
 
 
@@ -4017,7 +4017,7 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
 # {{{ Preferences dialog
 
 proc openPreferencesDialog(a) =
-  alias(dlg, a.dialogs.preferencesDialog)
+  alias(dlg, a.dialogs.preferences)
 
   dlg.loadLastMap        = a.prefs.loadLastMap
   dlg.autosave           = a.prefs.autosave
@@ -4037,7 +4037,7 @@ proc openPreferencesDialog(a) =
   dlg.linkLinesMode      = a.prefs.linkLinesMode
   dlg.openEndedExcavate  = a.prefs.openEndedExcavate
 
-  a.dialogs.activeDialog = dlgPreferencesDialog
+  a.dialogs.activeDialog = dlgPreferences
 
 
 proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
@@ -4309,9 +4309,9 @@ proc preferencesDialog(dlg: var PreferencesDialogParams; a) =
 # {{{ Save/discard map changes dialog
 
 proc openSaveDiscardMapDialog(nextAction: proc (a: var AppContext); a) =
-  alias(dlg, a.dialogs.saveDiscardMapDialog)
+  alias(dlg, a.dialogs.saveDiscardMap)
   dlg.nextAction = nextAction
-  a.dialogs.activeDialog = dlgSaveDiscardMapDialog
+  a.dialogs.activeDialog = dlgSaveDiscardMap
 
 
 proc saveMap(a)
@@ -4392,7 +4392,7 @@ proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
 # {{{ New map dialog
 
 proc openNewMapDialog(a) =
-  alias(dlg, a.dialogs.newMapDialog)
+  alias(dlg, a.dialogs.newMap)
 
   with a.doc.map.coordOpts:
     dlg.title        = "Untitled Map"
@@ -4409,7 +4409,7 @@ proc openNewMapDialog(a) =
 
   dlg.activeTab = 0
 
-  a.dialogs.activeDialog = dlgNewMapDialog
+  a.dialogs.activeDialog = dlgNewMap
 
 
 proc newMapDialog(dlg: var NewMapDialogParams; a) =
@@ -4532,7 +4532,7 @@ proc newMapDialog(dlg: var NewMapDialogParams; a) =
 # {{{ Edit map properties dialog
 
 proc openEditMapPropsDialog(a) =
-  alias(dlg, a.dialogs.editMapPropsDialog)
+  alias(dlg, a.dialogs.editMapProps)
   alias(map, a.doc.map)
 
   dlg.title        = map.title
@@ -4548,7 +4548,7 @@ proc openEditMapPropsDialog(a) =
 
   dlg.notes = map.notes
 
-  a.dialogs.activeDialog = dlgEditMapPropsDialog
+  a.dialogs.activeDialog = dlgEditMapProps
 
 
 proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
@@ -4662,7 +4662,7 @@ proc editMapPropsDialog(dlg: var EditMapPropsDialogParams; a) =
 # {{{ New level dialog
 
 proc openNewLevelDialog(a) =
-  alias(dlg, a.dialogs.newLevelDialog)
+  alias(dlg, a.dialogs.newLevel)
 
   let map = a.doc.map
   var co: CoordinateOptions
@@ -4702,7 +4702,7 @@ proc openNewLevelDialog(a) =
 
   dlg.activeTab = 0
 
-  a.dialogs.activeDialog = dlgNewLevelDialog
+  a.dialogs.activeDialog = dlgNewLevel
 
 
 proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
@@ -4864,7 +4864,7 @@ proc newLevelDialog(dlg: var LevelPropertiesDialogParams; a) =
 # {{{ Edit level properties dialog
 
 proc openEditLevelPropsDialog(a) =
-  alias(dlg, a.dialogs.editLevelPropsDialog)
+  alias(dlg, a.dialogs.editLevelProps)
 
   let l = currLevel(a)
 
@@ -4890,7 +4890,7 @@ proc openEditLevelPropsDialog(a) =
 
   dlg.notes = l.notes
 
-  a.dialogs.activeDialog = dlgEditLevelPropsDialog
+  a.dialogs.activeDialog = dlgEditLevelProps
 
 
 proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
@@ -5032,14 +5032,14 @@ proc editLevelPropsDialog(dlg: var LevelPropertiesDialogParams; a) =
 # {{{ Resize level dialog
 
 proc openResizeLevelDialog(a) =
-  alias(dlg, a.dialogs.resizeLevelDialog)
+  alias(dlg, a.dialogs.resizeLevel)
 
   let l = currLevel(a)
   dlg.rows = $l.rows
   dlg.cols = $l.cols
   dlg.anchor = raCenter
 
-  a.dialogs.activeDialog = dlgResizeLevelDialog
+  a.dialogs.activeDialog = dlgResizeLevel
 
 
 proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
@@ -5180,7 +5180,7 @@ proc resizeLevelDialog(dlg: var ResizeLevelDialogParams; a) =
 # {{{ Delete level dialog
 
 proc openDeleteLevelDialog(a) =
-  a.dialogs.activeDialog = dlgDeleteLevelDialog
+  a.dialogs.activeDialog = dlgDeleteLevel
 
 
 proc deleteLevelDialog(a) =
@@ -5248,7 +5248,7 @@ proc deleteLevelDialog(a) =
 # {{{ Edit note dialog
 
 proc openEditNoteDialog(a) =
-  alias(dlg, a.dialogs.editNoteDialog)
+  alias(dlg, a.dialogs.editNote)
 
   let cur = a.ui.cursor
   let l = currLevel(a)
@@ -5279,7 +5279,7 @@ proc openEditNoteDialog(a) =
     dlg.customId = ""
     dlg.text = ""
 
-  a.dialogs.activeDialog = dlgEditNoteDialog
+  a.dialogs.activeDialog = dlgEditNote
 
 
 proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
@@ -5469,7 +5469,7 @@ proc editNoteDialog(dlg: var EditNoteDialogParams; a) =
 # {{{ Edit label dialog
 
 proc openEditLabelDialog(a) =
-  alias(dlg, a.dialogs.editLabelDialog)
+  alias(dlg, a.dialogs.editLabel)
 
   let cur = a.ui.cursor
   let l   = currLevel(a)
@@ -5487,7 +5487,7 @@ proc openEditLabelDialog(a) =
     dlg.editMode = false
     dlg.text     = ""
 
-  a.dialogs.activeDialog = dlgEditLabelDialog
+  a.dialogs.activeDialog = dlgEditLabel
 
 
 proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
@@ -5605,13 +5605,13 @@ proc editLabelDialog(dlg: var EditLabelDialogParams; a) =
 # {{{ Edit region properties dialog
 
 proc openEditRegionPropertiesDialog(a) =
-  alias(dlg, a.dialogs.editRegionPropsDialog)
+  alias(dlg, a.dialogs.editRegionProps)
 
   let region = currRegion(a).get
   dlg.name  = region.name
   dlg.notes = region.notes
 
-  a.dialogs.activeDialog = dlgEditRegionPropsDialog
+  a.dialogs.activeDialog = dlgEditRegionProps
 
 
 proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
@@ -5732,9 +5732,9 @@ proc editRegionPropsDialog(dlg: var EditRegionPropsParams; a) =
 # {{{ Save/discard theme changes dialog
 
 proc openSaveDiscardThemeDialog(nextAction: proc (a: var AppContext); a) =
-  alias(dlg, a.dialogs.saveDiscardThemeDialog)
+  alias(dlg, a.dialogs.saveDiscardTheme)
   dlg.nextAction = nextAction
-  a.dialogs.activeDialog = dlgSaveDiscardThemeDialog
+  a.dialogs.activeDialog = dlgSaveDiscardTheme
 
 
 proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
@@ -5809,12 +5809,12 @@ proc saveDiscardThemeDialog(dlg: SaveDiscardThemeDialogParams; a) =
 
 proc openOverwriteThemeDialog(themeName: string,
                               nextAction: proc (a: var AppContext); a) =
-  alias(dlg, a.dialogs.overwriteThemeDialog)
+  alias(dlg, a.dialogs.overwriteTheme)
 
   dlg.themeName = themeName
   dlg.nextAction = nextAction
 
-  a.dialogs.activeDialog = dlgOverwriteThemeDialog
+  a.dialogs.activeDialog = dlgOverwriteTheme
 
 
 proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
@@ -5881,9 +5881,9 @@ proc overwriteThemeDialog(dlg: OverwriteThemeDialogParams; a) =
 # {{{ Copy theme dialog
 
 proc openCopyThemeDialog(a) =
-  alias(dlg, a.dialogs.copyThemeDialog)
+  alias(dlg, a.dialogs.copyTheme)
   dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
-  a.dialogs.activeDialog = dlgCopyThemeDialog
+  a.dialogs.activeDialog = dlgCopyTheme
 
 
 proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
@@ -5995,9 +5995,9 @@ proc copyThemeDialog(dlg: var CopyThemeDialogParams; a) =
 # {{{ Rename theme dialog
 
 proc openRenameThemeDialog(a) =
-  alias(dlg, a.dialogs.renameThemeDialog)
+  alias(dlg, a.dialogs.renameTheme)
   dlg.newThemeName = makeUniqueThemeName(a.currThemeName.name, a)
-  a.dialogs.activeDialog = dlgRenameThemeDialog
+  a.dialogs.activeDialog = dlgRenameTheme
 
 
 proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
@@ -6108,7 +6108,7 @@ proc renameThemeDialog(dlg: var RenameThemeDialogParams; a) =
 # {{{ Delete theme dialog
 
 proc openDeleteThemeDialog(a) =
-  a.dialogs.activeDialog = dlgDeleteThemeDialog
+  a.dialogs.activeDialog = dlgDeleteTheme
 
 
 proc deleteThemeDialog(a) =
@@ -9407,7 +9407,7 @@ proc renderThemeEditorProps(x, y, w, h: float; a) =
       let path = "ui.about-dialog.logo"
       colorProp("Logo", path)
       if cfg.getOpt(path) != a.theme.prevConfig.getOpt(path):
-        a.dialogs.aboutDialog.aboutLogo.updateLogoImage = true
+        a.dialogs.about.aboutLogo.updateLogoImage = true
 
     if koi.subSectionHeader("Quick Help", te.sectionQuickHelp):
       p = "ui.quick-help."
@@ -10044,55 +10044,55 @@ proc renderDialogs(a) =
   case dlg.activeDialog:
   of dlgNone: discard
 
-  of dlgAboutDialog:
-    aboutDialog(dlg.aboutDialog, a)
+  of dlgAbout:
+    aboutDialog(dlg.about, a)
 
-  of dlgPreferencesDialog:
-    preferencesDialog(dlg.preferencesDialog, a)
+  of dlgPreferences:
+    preferencesDialog(dlg.preferences, a)
 
-  of dlgSaveDiscardMapDialog:
-    saveDiscardMapDialog(dlg.saveDiscardMapDialog, a)
+  of dlgSaveDiscardMap:
+    saveDiscardMapDialog(dlg.saveDiscardMap, a)
 
-  of dlgNewMapDialog:
-    newMapDialog(dlg.newMapDialog, a)
+  of dlgNewMap:
+    newMapDialog(dlg.newMap, a)
 
-  of dlgEditMapPropsDialog:
-    editMapPropsDialog(dlg.editMapPropsDialog, a)
+  of dlgEditMapProps:
+    editMapPropsDialog(dlg.editMapProps, a)
 
-  of dlgNewLevelDialog:
-    newLevelDialog(dlg.newLevelDialog, a)
+  of dlgNewLevel:
+    newLevelDialog(dlg.newLevel, a)
 
-  of dlgDeleteLevelDialog:
+  of dlgDeleteLevel:
     deleteLevelDialog(a)
 
-  of dlgEditLevelPropsDialog:
-    editLevelPropsDialog(dlg.editLevelPropsDialog, a)
+  of dlgEditLevelProps:
+    editLevelPropsDialog(dlg.editLevelProps, a)
 
-  of dlgEditNoteDialog:
-    editNoteDialog(dlg.editNoteDialog, a)
+  of dlgEditNote:
+    editNoteDialog(dlg.editNote, a)
 
-  of dlgEditLabelDialog:
-    editLabelDialog(dlg.editLabelDialog, a)
+  of dlgEditLabel:
+    editLabelDialog(dlg.editLabel, a)
 
-  of dlgResizeLevelDialog:
-    resizeLevelDialog(dlg.resizeLevelDialog, a)
+  of dlgResizeLevel:
+    resizeLevelDialog(dlg.resizeLevel, a)
 
-  of dlgEditRegionPropsDialog:
-    editRegionPropsDialog(dlg.editRegionPropsDialog, a)
+  of dlgEditRegionProps:
+    editRegionPropsDialog(dlg.editRegionProps, a)
 
-  of dlgSaveDiscardThemeDialog:
-    saveDiscardThemeDialog(dlg.saveDiscardThemeDialog, a)
+  of dlgSaveDiscardTheme:
+    saveDiscardThemeDialog(dlg.saveDiscardTheme, a)
 
-  of dlgCopyThemeDialog:
-    copyThemeDialog(dlg.copyThemeDialog, a)
+  of dlgCopyTheme:
+    copyThemeDialog(dlg.copyTheme, a)
 
-  of dlgRenameThemeDialog:
-    renameThemeDialog(dlg.renameThemeDialog, a)
+  of dlgRenameTheme:
+    renameThemeDialog(dlg.renameTheme, a)
 
-  of dlgOverwriteThemeDialog:
-    overwriteThemeDialog(dlg.overwriteThemeDialog, a)
+  of dlgOverwriteTheme:
+    overwriteThemeDialog(dlg.overwriteTheme, a)
 
-  of dlgDeleteThemeDialog:
+  of dlgDeleteTheme:
     deleteThemeDialog(a)
 
 # }}}
@@ -10569,7 +10569,7 @@ proc loadSplashImages(a) =
 # }}}
 # {{{ loadAboutLogoImage()
 proc loadAboutLogoImage(a) =
-  alias(al, a.dialogs.aboutDialog.aboutLogo)
+  alias(al, a.dialogs.about.aboutLogo)
 
   al.logo = loadImage(a.paths.dataDir / "logo-small.png")
   createAlpha(al.logo)
@@ -10995,7 +10995,7 @@ proc handleVersionUpdateEvent(event: AppEvent; a) =
 
   if a.latestVersion.isSome:
     let v = a.latestVersion.get
-    if v.version > AppVersion and a.dialogs.activeDialog != dlgAboutDialog:
+    if v.version > AppVersion and a.dialogs.activeDialog != dlgAbout:
       setWarningMessage(
         "Good news! A more recent version of Gridmonger is available: " &
         fmt"v{v.version} — {v.message}",
@@ -11066,7 +11066,7 @@ proc main() =
       # Render app
       glfw.makeContextCurrent(a.win.glfwWin)
 
-      if a.dialogs.aboutDialog.aboutLogo.logo.data == nil:
+      if a.dialogs.about.aboutLogo.logo.data == nil:
         loadAboutLogoImage(a)
 
       csdwindow.renderFrame(a.win, a.vg)
