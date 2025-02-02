@@ -2989,7 +2989,7 @@ proc updateWidgetStyles(a) =
   a.theme.aboutButtonStyle = koi.getDefaultButtonStyle()
 
   with a.theme.aboutButtonStyle:
-    labelOnly        = true
+#    labelOnly        = true
     label.fontSize   = 20.0
     label.padHoriz   = 0
     label.color      = ab.getColorOrDefault("label.normal")

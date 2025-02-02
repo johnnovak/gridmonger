@@ -251,7 +251,7 @@ proc setTheme(win; s: WindowTheme) =
 
   win.buttonActiveStyle = koi.getDefaultButtonStyle()
   with win.buttonActiveStyle:
-    labelOnly        = true
+#    labelOnly        = true
     label.padHoriz   = 0
     label.color      = s.buttonColor
     label.colorHover = s.buttonHoverColor
@@ -259,7 +259,7 @@ proc setTheme(win; s: WindowTheme) =
 
   win.buttonInactiveStyle = koi.getDefaultButtonStyle()
   with win.buttonInactiveStyle:
-    labelOnly        = true
+#    labelOnly        = true
     label.padHoriz   = 0
     label.color      = s.buttonInactiveColor
     label.colorHover = s.buttonInactiveColor
