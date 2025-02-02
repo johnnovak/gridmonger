@@ -278,7 +278,11 @@ proc newCSDWindow*(): CSDWindow =
   var cfg = DefaultOpenglWindowConfig
   cfg.resizable     = false
   cfg.visible       = false
-  cfg.bits          = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
+
+  # TODO Nim 2.2.0 regression workaround
+  cfg.bits = (r: 8'i32.some, g: 8'i32.some, b: 8'i32.some, a: 8'i32.some,
+              stencil: 8'i32.some, depth: 16'i32.some)
+
   cfg.debugContext  = false
   cfg.nMultiSamples = 4
   cfg.decorated     = false
