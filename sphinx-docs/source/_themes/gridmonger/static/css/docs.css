@@ -356,7 +356,7 @@ div.section a:hover,
 section a:hover,
 footer a:hover {
   text-decoration: underline;
-  color: #9d5111;
+  color: rgb(156.96, 80.6890666667, 17.44);
 }
 
 footer {
@@ -410,7 +410,7 @@ nav.toc-link a {
 }
 nav.toc-link a:hover {
   text-decoration: underline;
-  color: #9d5111;
+  color: rgb(156.96, 80.6890666667, 17.44);
 }
 
 article {
@@ -441,7 +441,7 @@ article a {
 }
 article a:hover {
   text-decoration: underline;
-  color: #9d5111;
+  color: rgb(156.96, 80.6890666667, 17.44);
 }
 article dl > dt > kbd {
   padding-left: 0.5em;
@@ -466,7 +466,7 @@ article nav > ul > li > a {
 }
 article nav > ul > li > a:hover {
   text-decoration: underline;
-  color: #9d5111;
+  color: rgb(156.96, 80.6890666667, 17.44);
 }
 article nav > ul > li.prev {
   float: left;
@@ -503,7 +503,7 @@ article table {
 }
 article table > caption {
   margin: 0 auto 0.5rem;
-  border: 3px #9f9486;
+  border: 3px rgb(159.2, 148.2, 134.04);
   border-style: double none;
   font-family: "Alegreya SC", serif;
   font-weight: 700;
@@ -526,7 +526,7 @@ article table > thead > tr > th {
   font-family: "Alegreya SC", serif;
   font-size: 85%;
   font-weight: 500;
-  border-bottom: 2px solid #beb3a4;
+  border-bottom: 2px solid rgb(190, 179, 164.4);
   line-height: 1.1em;
   padding-bottom: 0.5em;
 }
@@ -565,7 +565,7 @@ article table.walls > thead > tr > th.name, article table.floors > thead > tr > 
   text-align: left;
 }
 article table.walls > tbody, article table.floors > tbody {
-  border-top: 1px dashed #9f9486;
+  border-top: 1px dashed rgb(159.2, 148.2, 134.04);
 }
 article table.walls > tbody:after, article table.floors > tbody:after {
   display: block;
@@ -624,7 +624,7 @@ article table.shortcuts > tbody:not(.no-padding):after {
   height: 1.4rem;
 }
 article table.shortcuts > tbody > tr:hover {
-  background-color: #cfc4b5;
+  background-color: rgb(206.8, 195.8, 180.96);
 }
 article table.shortcuts > tbody > tr > td:nth-child(1) {
   line-height: 1.5em;
@@ -636,7 +636,7 @@ article table.shortcuts > tbody > tr > td:nth-child(2) {
   line-height: 1.15em;
 }
 article table.shortcuts > tbody > tr:not(:last-child) > td {
-  border-bottom: 1px dashed #9f9486;
+  border-bottom: 1px dashed rgb(159.2, 148.2, 134.04);
 }
 article table.shortcuts.move-keys > tbody > tr > td {
   padding-right: 0;
@@ -753,7 +753,7 @@ footer {
 }
 #searchbox a:hover {
   text-decoration: underline;
-  color: #9d5111;
+  color: rgb(156.96, 80.6890666667, 17.44);
 }
 
 form input {
@@ -953,7 +953,7 @@ section.search {
   }
   header nav.table-of-contents li.current > a:hover,
   header div.toctree-wrapper li.current > a:hover {
-    color: #9d5111;
+    color: rgb(156.96, 80.6890666667, 17.44);
   }
   header nav.table-of-contents ul,
   header div.toctree-wrapper ul {
@@ -1020,7 +1020,7 @@ section.search {
     padding-left: 0.2em;
   }
   nav.toc-link a.current:hover {
-    color: #9d5111;
+    color: rgb(156.96, 80.6890666667, 17.44);
   }
   article {
     margin-left: 382px;

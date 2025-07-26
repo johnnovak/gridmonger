@@ -11,7 +11,7 @@ $fg-color:     #4e4336;
 $accent-color: #b86622;
 
 $accent-color-dark: color.change(
-  mix($accent-color, black, 80%),
+  color.mix($accent-color, black, 80%),
   $saturation: 80%
 );
 
