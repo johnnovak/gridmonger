@@ -9,15 +9,15 @@ var exeName = "gridmonger".toExe
 var exeNameMacArm64 = exeName & "-arm64"
 var exeNameMacX64 = exeName & "-x64"
 
-const mingw32Dir = r"C:\dev\mingw32"
-#const mingw32Dir = r"C:\msys64\mingw32"
-
 const rootDir = getCurrentDir()
 const version = staticRead("CURRENT_VERSION").strip
 const gitHash = strutils.strip(staticExec("git rev-parse --short=5 HEAD"))
 const currYear = CompileDate[0..3]
 
 const macPackageName = fmt"gridmonger-v{version}-{gitHash}-macos.zip"
+
+const winInstallerPackageName = fmt"gridmonger-v{version}-{gitHash}-windows-setup.exe"
+const winPortablePackageName  = fmt"gridmonger-v{version}-{gitHash}-windows-portable.zip"
 
 const dataDir = "Data"
 const exampleMapsDir = "Example Maps"
@@ -44,11 +44,6 @@ const sphinxDocsDir = "sphinx-docs"
 
 
 proc setCommonCompileParams() =
-  if hostOS == "windows" and hostCPU == "i386":
-    let mingw32BinDir = mingw32Dir / "bin"
-    put "gcc.path",     mingw32BinDir
-    put "gcc.cpp.path", mingw32BinDir
-
 #  --path:"../nim-riff"
 #  --path:"../nim-glfw"
 #  --path:"../nim-nanovg"
@@ -72,19 +67,6 @@ proc setCommonCompileParams() =
 
 proc createZip(zipName, srcPath: string, extraArgs = "") =
   exec fmt"zip -q -9 -r ""{zipName}"" ""{srcPath}"" {extraArgs}"
-
-type Arch = enum
-  Arch32 = "32"
-  Arch64 = "64"
-
-let arch = if hostCPU == "i386": Arch32 else: Arch64
-
-proc getWinInstallerPackageName(arch: Arch): string =
-  fmt"gridmonger-v{version}-{gitHash}-win{arch}-setup.exe"
-
-proc getWinPortablePackageName(arch: Arch): string =
-  fmt"gridmonger-v{version}-{gitHash}-win{arch}-portable.zip"
-
 
 # All tasks must be executed from the project root directory!
 
@@ -135,15 +117,15 @@ task mergeMacUniversal, "create macOS universal binary":
 
 
 task winInstallerPackageName, "get Windows installer package name":
-  echo getWinInstallerPackageName(arch)
+  echo winInstallerPackageName
 
 task winPortablePackageName, "get Windows portable package name":
-  echo getWinPortablePackageName(arch)
+  echo winPortablePackageName
 
 task packageWinInstaller, "create Windows installer package":
   mkdir distWinDir
   exec fmt"strip -S {exeName}"
-  exec fmt"makensis /DARCH{arch} gridmonger.nsi"
+  exec fmt"makensis gridmonger.nsi"
 
 
 task packageWinPortable, "create Windows portable package":
@@ -240,10 +222,10 @@ task packageExampleMaps, "create zipped example maps package":
 
 
 task publishPackageWin, "publish Windows packages to website dir":
-  let installerName = getWinInstallerPackageName(arch)
+  let installerName = winInstallerPackageName
   cpFile distWinDir / installerName, websiteReleasesWinDir / installerName
 
-  let portableName = getWinPortablePackageName(arch)
+  let portableName = winPortablePackageName
   cpFile distWinDir / portableName, websiteReleasesWinDir / portableName
 
 

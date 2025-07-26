@@ -23,35 +23,12 @@
 
 !define REGPATH_UNINSTSUBKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}"
 
-!ifdef ARCH32
-  !define ARCH "32"
-!else
-  !define ARCH "64"
-!endif
-
 Unicode True
 RequestExecutionLevel admin
 
-Function .onInit
-  ${If} ${RunningX64}
-    !ifdef ARCH32
-      MessageBox MB_YESNO "This will install the 32-bit version of Gridmonger.$\r$\n$\r$\nYou are running 64-bit Windows, therefore installing the 64-bit version is recommended.$\r$\n$\r$\nDo you still wish to continue?" IDYES go
-        Abort
-      go:
-    !endif
-    SetRegView 64
-  ${EndIf}
-FunctionEnd
-
 Name "${NAME}"
-Caption "${NAME} v${VERSION} Setup - ${ARCH}-bit"
-OutFile "${OUT_PATH}/gridmonger-v${VERSION_AND_HASH}-win${ARCH}-setup.exe"
-
-!ifdef ARCH32
-  InstallDir "$PROGRAMFILES32\${NAME}"
-!else
-  InstallDir "$PROGRAMFILES64\${NAME}"
-!endif
+Caption "${NAME} v${VERSION} Setup"
+OutFile "${OUT_PATH}/gridmonger-v${VERSION_AND_HASH}-windows-setup.exe"
 
 VIAddVersionKey "ProductName" "${NAME}"
 VIAddVersionKey "ProductVersion" "${VERSION}"

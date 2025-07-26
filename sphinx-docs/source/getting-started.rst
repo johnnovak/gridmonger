@@ -48,14 +48,10 @@ Windows
 -------
 
 To install Gridmonger on Windows, download either the Windows installer (for
-standard installations) or the ZIP file (for portable installations) from the
-`Downloads <https://gridmonger.johnnovak.net/#Downloads>`_ page. Then run the
-installer or simply unpack the ZIP file's contents somewhere. First-time
-users are encouraged to use the installer and accept the default options.
-
-The 64-bit version is strongly recommended as it's more performant and more
-thoroughly tested; only use the 32-bit version if you're still running a
-legacy 32-bit version of Windows.
+standard installations) or the portable ZIP package from the `Downloads
+<https://gridmonger.johnnovak.net/#Downloads>`_ page, then run the installer
+or simply unpack the ZIP file's contents somewhere. First-time users are
+encouraged to use the installer and accept the default options.
 
 .. important::
 
