@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.0 (work in progress) – 2025-??-??
+
+### New features
+
+### Enhancements
+
+### Fixes
+
+---
+
 ## v1.2.0 – 2024-08-18
 
 ### New features
