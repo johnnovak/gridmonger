@@ -17,15 +17,10 @@ BUGS
 TODO
 ====
 
-  - test layout save/restore on multi-monitor setup
-  - test restore last layout on multi-monitor setup
-  - test loading v1.1.0 configs, themes and maps
-
-  - test/finalise diagonal movement (numpad, YUBN)
-
-  - crash when dragging maximised window (still a bug?)
-
-  - test extensively & update manual
+- add unlink cell command
+- add erase floor command
+- set sRGB color space on macOS
+- wide-gamut support on Windows
 
 
 FEATURE & ENHANCEMENT IDEAS
@@ -33,7 +28,6 @@ FEATURE & ENHANCEMENT IDEAS
 
   - linux package
 
-  - add unlink cell command
 
   - new features:
     - export map as PNG
