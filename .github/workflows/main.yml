@@ -9,6 +9,7 @@ env:
 
 jobs:
   build-manual:
+    name:    Build manual
     runs-on: ubuntu-latest
 
     steps:
@@ -36,12 +37,32 @@ jobs:
         run: |
           nim manual
 
+      - name: Dump workspace contents
+        shell: bash
+        run: find $RUNNER_WORKSPACE
+
+      - name: Upload manual
+        uses: actions/upload-artifact@v4
+        with:
+          name: manual
+          path: Manual
+          overwrite: true
+
 
   build-release-mac:
+    name:    Build macOS release package
+    needs:   build-manual
     runs-on: macOS-13
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download manual
+        uses: actions/download-artifact@v4
+
+      - name: Dump workspace contents
+        shell: bash
+        run: find $RUNNER_WORKSPACE
 
       - name: Install Nim
         uses: iffy/install-nim@v5
@@ -73,6 +94,10 @@ jobs:
       - name: Create macOS app bundle
         run: nim packageMac
 
+      - name: Dump workspace contents
+        shell: bash
+        run: find $RUNNER_WORKSPACE
+
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
@@ -81,10 +106,19 @@ jobs:
 
 
   build-release-windows:
+    name:    Build Windows release packages
+    needs:   build-manual
     runs-on: windows-2022
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download manual
+        uses: actions/download-artifact@v4
+
+      - name: Dump workspace contents
+        shell: bash
+        run: find $RUNNER_WORKSPACE
 
       - name: Install Nim
         uses: iffy/install-nim@v5
@@ -118,6 +152,10 @@ jobs:
       - name: Windows portable package
         run: |
           nim packageWinPortable
+
+      - name: Dump workspace contents
+        shell: bash
+        run: find $RUNNER_WORKSPACE
 
       - name: Upload installer release artifact
         uses: actions/upload-artifact@v4
