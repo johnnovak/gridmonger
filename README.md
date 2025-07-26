@@ -12,7 +12,7 @@
 
 ## Build instructions
 
-Requires [Nim](https://nim-lang.org/) 2.0.2
+Requires [Nim](https://nim-lang.org/) 2.2.4
 
 ### Dependencies
 
@@ -58,10 +58,13 @@ nim release
 
 Run `nim help` for the full list of build tasks.
 
-
-**NOTE:** Create an empty directory `Config` in the project root directory to
-enable portable mode (that's what you normally want during development; more
-info about portable mode [here](https://gridmonger.johnnovak.net/manual/appendixes/user-data-folder.html)).
+> [!IMPORTANT]
+> Create an empty directory `Config` in the project root directory to enable
+> portable mode, this is what you normally want during development. The
+> program will crash if you try to run the compiled executable without
+> portable mode enabled!
+>
+> Read more about portable mode [here](https://gridmonger.johnnovak.net/manual/appendixes/user-data-folder.html).
 
 
 ## Manual & website
@@ -106,7 +109,8 @@ See [RELEASE.md](/RELEASE.md).
 The user interface uses the [Roboto](https://fonts.google.com/specimen/Roboto)
 font by Google for all text (Regular, Bold, and Black variants).
 
-The Gridmonger logo uses [Versal Gothic](https://www.dafont.com/versal.font) by [Juan Casco](https://juancascofonts.blogspot.com/).
+The Gridmonger logo uses [Versal Gothic](https://www.dafont.com/versal.font)
+by [Juan Casco](https://juancascofonts.blogspot.com/).
 
 The TTF icon font was created with the amazing [IcoMoon App](https://icomoon.io/).
 Most icons are from the below sources available through the app, some are my
@@ -125,6 +129,7 @@ online.
 Developed by John Novak <<john@johnnovak.net>>, 2020-2024
 
 This work is free. You can redistribute it and/or modify it under the terms of
-the [Do What The Fuck You Want To Public License, Version 2](http://www.wtfpl.net), as published
-by Sam Hocevar. See the [COPYING](./COPYING) file for more details.
+the [Do What The Fuck You Want To Public License, Version
+2](http://www.wtfpl.net), as published by Sam Hocevar. See the
+[COPYING](./COPYING) file for more details.
 
