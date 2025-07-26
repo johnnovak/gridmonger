@@ -17,11 +17,11 @@ proc attachOutputToConsole*(): bool =
 
   if AttachConsole(AttachParentProcess) != 0:
     if GetStdHandle(StdOutputHandle) != InvalidHandleValue:
-      stdout.reopen("CONOUT$", fmWrite)
+      discard stdout.reopen("CONOUT$", fmWrite)
     else: return
 
     if GetStdHandle(StdErrorHandle) != InvalidHandleValue:
-      stderr.reopen("CONOUT$", fmWrite)
+      discard stderr.reopen("CONOUT$", fmWrite)
     else: return
 
     setStdIoUnbuffered()
