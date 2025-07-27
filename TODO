@@ -17,6 +17,7 @@ BUGS
 TODO
 ====
 
+- use nim-chronos for https fetches (https://github.com/status-im/nim-chronos)
 - add unlink cell command
 - add erase floor command
 - set sRGB color space on macOS
