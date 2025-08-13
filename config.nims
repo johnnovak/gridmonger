@@ -49,9 +49,9 @@ proc setCommonCompileParams() =
     put "gcc.path",     mingw32BinDir
     put "gcc.cpp.path", mingw32BinDir
 
-  --path:"../nim-riff"
-  --path:"../nim-glfw"
-  --path:"../nim-nanovg"
+#  --path:"../nim-riff"
+#  --path:"../nim-glfw"
+#  --path:"../nim-nanovg"
   --path:"../koi"
 
   --gc:orc
