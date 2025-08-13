@@ -8,6 +8,7 @@ import std/unicode
 import nanovg
 
 import fieldlimits
+import utils/colorspace
 import utils/hocon
 
 
@@ -88,7 +89,7 @@ proc getColorOrDefault*(cfg; path: string, default: Color = black()): Color =
       if col.isNone:
         invalidValueError(path, "color", v)
       else:
-        result = col.get
+        result = transformSrgbColor(col.get, g_colorSpace)
   except CatchableError as e:
     log.error(e.msg)
 
