@@ -57,7 +57,6 @@ import regions
 import selection
 import theme
 import undomanager
-import utils/colorspace
 import utils/converters
 import utils/hocon
 import utils/misc as gmUtils
