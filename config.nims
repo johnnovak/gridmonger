@@ -52,7 +52,7 @@ proc setCommonCompileParams() =
 #  --path:"../nim-riff"
 #  --path:"../nim-glfw"
 #  --path:"../nim-nanovg"
-  --path:"../koi"
+#  --path:"../koi"
 
   --gc:orc
   --threads:on
