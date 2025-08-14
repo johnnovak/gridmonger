@@ -10,11 +10,15 @@ var
   g_colorSpace* = csDciP3
 
 # {{{ Transform matrices
-let profile0 = mat3(
-  vec3(0.412391,  0.212639,  0.019331),
-  vec3(0.357584,  0.715169,  0.119195),
-  vec3(0.180481,  0.072192,  0.950532)
-)
+
+# plain srgb to xyz without colour profile / transpose
+#vec3 sRGB_to_XYZ(vec3 RGB){
+#    const mat3x3 m = mat3x3(
+#    0.4124564,  0.3575761,  0.1804375,
+#    0.2126729,  0.7151522,  0.0721750,
+#    0.0193339,  0.1191920,  0.9503041);
+#    return RGB * m;
+#}
 
 let toSrgb = mat3(
   vec3( 3.240970, -0.969244,  0.055630),
@@ -43,16 +47,21 @@ let toDciP3 = mat3(
 # The transformation matrix for converting linear-light srgb colors to
 # linear-light display-p3.
 #
-let linearSrgbToLinearDisplayP3 = mat3(
-  vec3(0.82246196871436230, 0.17753803128563775, 0.00000000000000000),
-  vec3(0.03319419885096161, 0.96680580114903840, 0.00000000000000000),
-  vec3(0.01708263072112003, 0.07239744066396346, 0.91051992861491650)
+let srgb_to_display_p3 = mat3(
+  vec3(0.82246196871436230, 0.03319419885096161, 0.01708263072112003),
+  vec3(0.17753803128563775, 0.96680580114903840, 0.07239744066396346),
+  vec3(0.00000000000000000, 0.00000000000000000, 0.91051992861491650)
 )
 
+#let srgb_to_dci_p3 = mat3(
+#  vec3(0.868579739716132238,  0.128919138460847215,  0.0025011218230205465),
+#  vec3(0.0345404102543194492, 0.961811386361919974,  0.00364820338376057661),
+#  vec3(0.0167714290414502811, 0.0710399977868858444, 0.912188573171663874)
+#)
 let srgb_to_dci_p3 = mat3(
-  vec3(0.868579739716132238,  0.128919138460847215,  0.0025011218230205465),
-  vec3(0.0345404102543194492, 0.961811386361919974,  0.00364820338376057661),
-  vec3(0.0167714290414502811, 0.0710399977868858444, 0.912188573171663874)
+  vec3(0.868579739716132238,  0.0345404102543194492,  0.0167714290414502811),
+  vec3(0.128919138460847215, 0.961811386361919974,  0.0710399977868858444),
+  vec3(0.0025011218230205465, 0.00364820338376057661, 0.912188573171663874)
 )
 
 let srgb_to_dci_p3_d65 = mat3(
@@ -145,28 +154,14 @@ proc transformSrgbColor*(c: Color, destColorSpace: ColorSpace): Color =
   proc transform(m: Mat3[float], gamma: float): Color =
     var d = c.gammaDecode(2.2)
     d = m * d
-#    d = dci_to_d65 * d
     d.gammaEncode(gamma).withAlpha(c.a)
 
   case destColorSpace
   of csSrgb:    transform(toSrgb,    2.4)
-  of csDciP3:   transform(rec709_to_dci_p3, 2.6)
+  of csDciP3:   transform(srgb_to_dci_p3, 2.6)
+#  of csDciP3:   transform(srgb_to_display_p3, 2.2)
   of csAdobe:   transform(toAdobe,   2.2)
   of csRec2020: transform(toRec2020, 2.4)
 # }}}
-
-# { p = 2.4; m_out =  ToSRGB; } else
-# { p = 2.6; m_out =  ToDCI;  } else
-# { p = 2.2; m_out =  ToAdobe;} else
-# { p = 2.4; m_out =  ToREC;  }
-
-#	c = pow(c, vec3(p));
-
-#	mat3 m_in = Profile0;
-
-#	c = m_in * c;
-#	c = m_out * c;
-
-#	c = pow(c, vec3(1.0/p));
 
 # vim: et:ts=2:sw=2:fdm=marker
