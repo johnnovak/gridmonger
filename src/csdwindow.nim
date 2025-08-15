@@ -251,19 +251,28 @@ proc setTheme(win; s: WindowTheme) =
 
   win.buttonActiveStyle = koi.getDefaultButtonStyle()
   with win.buttonActiveStyle:
-#    labelOnly        = true
-    label.padHoriz   = 0
-    label.color      = s.buttonColor
-    label.colorHover = s.buttonHoverColor
-    label.colorDown  = s.buttonDownColor
+    strokeWidth       = 0
+    fillColor         = black().withAlpha(0)
+    fillColorHover    = black().withAlpha(0)
+    fillColorDown     = black().withAlpha(0)
+    fillColorDisabled = black().withAlpha(0)
+    label.padHoriz    = 0
+    label.color       = s.buttonColor
+    label.colorHover  = s.buttonHoverColor
+    label.colorDown   = s.buttonDownColor
 
   win.buttonInactiveStyle = koi.getDefaultButtonStyle()
   with win.buttonInactiveStyle:
-#    labelOnly        = true
-    label.padHoriz   = 0
-    label.color      = s.buttonInactiveColor
-    label.colorHover = s.buttonInactiveColor
-    label.colorDown  = s.buttonInactiveColor
+
+    strokeWidth       = 0
+    fillColor         = black().withAlpha(0)
+    fillColorHover    = black().withAlpha(0)
+    fillColorDown     = black().withAlpha(0)
+    fillColorDisabled = black().withAlpha(0)
+    label.padHoriz    = 0
+    label.color       = s.buttonInactiveColor
+    label.colorHover  = s.buttonInactiveColor
+    label.colorDown   = s.buttonInactiveColor
 
 # }}}
 # # {{{ theme=*

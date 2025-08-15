@@ -2989,12 +2989,16 @@ proc updateWidgetStyles(a) =
   a.theme.aboutButtonStyle = koi.getDefaultButtonStyle()
 
   with a.theme.aboutButtonStyle:
-#    labelOnly        = true
-    label.fontSize   = 20.0
-    label.padHoriz   = 0
-    label.color      = ab.getColorOrDefault("label.normal")
-    label.colorHover = ab.getColorOrDefault("label.hover")
-    label.colorDown  = ab.getColorOrDefault("label.down")
+    strokeWidth       = 0
+    fillColor         = black().withAlpha(0)
+    fillColorHover    = black().withAlpha(0)
+    fillColorDown     = black().withAlpha(0)
+    fillColorDisabled = black().withAlpha(0)
+    label.fontSize    = 20.0
+    label.padHoriz    = 0
+    label.color       = ab.getColorOrDefault("label.normal")
+    label.colorHover  = ab.getColorOrDefault("label.hover")
+    label.colorDown   = ab.getColorOrDefault("label.down")
 
   # Current note pane
   let pn = cfg.getObjectOrEmpty("pane.current-note")
