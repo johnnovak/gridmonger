@@ -8,6 +8,11 @@
 
 ### Fixes
 
+- Fix window movement handling on Linux (Jagholin).
+- Fix title bar drag handling when interface scaling is active.
+- Add workaround to avoid triggering exclusive fullscreen on Windows when the
+  window is maximised.
+
 ---
 
 ## v1.2.0 – 2024-08-24
