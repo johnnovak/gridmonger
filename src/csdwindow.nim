@@ -471,11 +471,14 @@ proc handleWindowDragEvents(win) =
   case win.dragState
   of wdsNone:
     if win.showTitleBar and koi.hasNoActiveItem() and koi.mbLeftDown():
-      if my < TitleBarHeight and
-         mx > 0 and mx < winWidth - TitleBarWindowButtonsTotalWidth:
+      if my < (TitleBarHeight * koi.getScale()) and
+         mx > 0 and
+         mx < (winWidth - TitleBarWindowButtonsTotalWidth * koi.getScale()):
+
         win.mx0 = mx
         win.my0 = my
         (win.posX0, win.posY0) = win.w.pos
+
         win.dragState = wdsMoving
 
     if not win.maximized:
