@@ -48,7 +48,15 @@ type
     showTitleBar:        bool
     dragState:           WindowDragState
     resizeDir:           WindowResizeDir
+
     mx0, my0:            float
+
+    # Mouse coordinate where the drag operation was started (coordinates in screen space)
+    startDragX, startDragY: float
+
+    # Original window position at the start of window dragging
+    startWinPosX, startWinPosY: int
+
     posX0, posY0:        int
     size0:               tuple[w, h: int]
     unmaximizedPos:      tuple[x, y: int]
@@ -470,6 +478,10 @@ proc handleWindowDragEvents(win) =
     mx = koi.mx() * koi.getScale()
     my = koi.my() * koi.getScale()
 
+    # Current global mouse coordinates
+    globalX = mx + win.w.pos.x
+    globalY = my + win.w.pos.y
+
   case win.dragState
   of wdsNone:
     if win.showTitleBar and koi.hasNoActiveItem() and koi.mbLeftDown():
@@ -480,6 +492,10 @@ proc handleWindowDragEvents(win) =
         win.mx0 = mx
         win.my0 = my
         (win.posX0, win.posY0) = win.w.pos
+
+        (win.startDragX, win.startDragY) = (globalX, globalY)
+        win.startWinPosX = win.w.pos.x
+        win.startWinPosY = win.w.pos.y
 
         win.dragState = wdsMoving
 
@@ -523,8 +539,8 @@ proc handleWindowDragEvents(win) =
   of wdsMoving:
     if koi.mbLeftDown():
       let
-        dx = (mx - win.mx0).int
-        dy = (my - win.my0).int
+        dx = (globalX - win.startDragX).int
+        dy = (globalY - win.startDragY).int
 
       # Only move or restore the window when we're actually
       # dragging the title bar while holding the LMB down.
@@ -563,7 +579,7 @@ proc handleWindowDragEvents(win) =
           win.maximized = false
 
         else:
-          win.w.pos = (win.posX0 + dx, win.posY0 + dy)
+          win.w.pos = (win.startWinPosX + dx, win.startWinPosY + dy)
           (win.posX0, win.posY0) = win.w.pos
     else:
       win.dragState = wdsNone
