@@ -359,7 +359,9 @@ proc maximize*(win) =
     win.maximizing = true
 
     win.w.pos = (x, y)
-    win.w.size = (w, h)
+
+    # Workaround to avoid triggering exclusive fullscreen on Windows
+    win.w.size = (w + 1, h)
 
     win.maximizing = false
 
