@@ -17,6 +17,7 @@ BUGS
 TODO
 ====
 
+- update website deploy automation to re-generate the file listing
 - use nim-chronos for https fetches (https://github.com/status-im/nim-chronos)
 - add unlink cell command
 - add erase floor command
