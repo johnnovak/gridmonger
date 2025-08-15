@@ -49,12 +49,13 @@ type
     dragState:           WindowDragState
     resizeDir:           WindowResizeDir
 
-    mx0, my0:            float
+    # Window-relative mouse coordinates when dragging started
+    mouseStartDragX, mouseStartDragY: float
 
-    # Mouse coordinate where the drag operation was started (coordinates in screen space)
-    startDragX, startDragY: float
+    # Mouse screen coordinates when dragging started
+    mouseStartDragScreenX, mouseStartDragScreenY: float
 
-    # Original window position at the start of window dragging
+    # Window position at the start of window dragging
     startWinPosX, startWinPosY: int
 
     posX0, posY0:        int
@@ -473,14 +474,12 @@ proc handleWindowDragEvents(win) =
   let
     (winWidth, winHeight) = win.size
 
-    # It's simpler to do the resizing using unscaled mouse coordinates because
-    # we're dealing with the true unscaled window size here.
+    # It's simpler to do the resizing using scaled mouse coordinates
     mx = koi.mx() * koi.getScale()
     my = koi.my() * koi.getScale()
 
-    # Current global mouse coordinates
-    globalX = mx + win.w.pos.x
-    globalY = my + win.w.pos.y
+    mouseScreenX = mx + win.w.pos.x
+    mouseScreenY = my + win.w.pos.y
 
   case win.dragState
   of wdsNone:
@@ -489,11 +488,14 @@ proc handleWindowDragEvents(win) =
          mx > 0 and
          mx < (winWidth - TitleBarWindowButtonsTotalWidth * koi.getScale()):
 
-        win.mx0 = mx
-        win.my0 = my
+        win.mouseStartDragX = mx
+        win.mouseStartDragY = my
+
         (win.posX0, win.posY0) = win.w.pos
 
-        (win.startDragX, win.startDragY) = (globalX, globalY)
+        win.mouseStartDragScreenX = mouseScreenX
+        win.mouseStartDragScreenY = mouseScreenY
+
         win.startWinPosX = win.w.pos.x
         win.startWinPosY = win.w.pos.y
 
@@ -525,10 +527,12 @@ proc handleWindowDragEvents(win) =
           else: setCursorShape(csArrow)
 
           if koi.mbLeftDown():
-            win.mx0 = mx
-            win.my0 = my
-            win.resizeDir = d
+            win.mouseStartDragX = mx
+            win.mouseStartDragY = my
+
             (win.posX0, win.posY0) = win.w.pos
+
+            win.resizeDir = d
             win.size0 = win.w.size
             win.dragState = wdsResizing
         else:
@@ -539,8 +543,8 @@ proc handleWindowDragEvents(win) =
   of wdsMoving:
     if koi.mbLeftDown():
       let
-        dx = (globalX - win.startDragX).int
-        dy = (globalY - win.startDragY).int
+        dx = (mouseScreenX - win.mouseStartDragScreenX).int
+        dy = (mouseScreenY - win.mouseStartDragScreenY).int
 
       # Only move or restore the window when we're actually
       # dragging the title bar while holding the LMB down.
@@ -558,21 +562,21 @@ proc handleWindowDragEvents(win) =
           # the restored window's width. This is needed so when we're in the
           # "else" branch on the next frame when dragging the restored window,
           # there won't be an unwanted window position jump.
-          win.mx0 = oldWidth * 0.5
-          win.my0 = my
+          win.mouseStartDragX = oldWidth * 0.5
+          win.mouseStartDragY = my
 
           # ...but we also want to clamp the window position to the visible
           # work area (and adjust the last cursor position accordingly to
           # avoid the position jump in drag mode on the next frame).
           if win.posX0 < 0:
-            win.mx0 += win.posX0.float
+            win.mouseStartDragX += win.posX0.float
             win.posX0 = 0
 
           let (_, _, workAreaWidth, _) = win.findCurrentMonitor.workArea
           let dx = win.posX0 + oldWidth - workAreaWidth
           if dx > 0:
             win.posX0 = workAreaWidth - oldWidth
-            win.mx0 += dx.float
+            win.mouseStartDragX += dx.float
 
           win.w.pos = (win.posX0, win.posY0)
           win.w.size = (oldWidth, win.unmaximizedSize.h)
@@ -587,8 +591,8 @@ proc handleWindowDragEvents(win) =
   of wdsResizing:
     if koi.mbLeftDown():
       let
-        dx = (mx - win.mx0).int
-        dy = (my - win.my0).int
+        dx = (mx - win.mouseStartDragX).int
+        dy = (my - win.mouseStartDragY).int
 
       var
         (newX, newY) = (win.posX0, win.posY0)
