@@ -52,7 +52,7 @@ jobs:
   build-release-mac:
     name:    Build macOS release package
     needs:   build-manual
-    runs-on: macOS-13
+    runs-on: macOS-15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
