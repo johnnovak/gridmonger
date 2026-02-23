@@ -168,3 +168,58 @@ jobs:
         with:
           name: gridmonger-v${{ env.VERSION }}-windows-portable
           path: dist/windows/portable
+
+
+  build-release-linux:
+    name:    Build Linux release package
+    needs:   build-manual
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install GTK2 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libgtk2.0-dev
+
+      - name: Download manual
+        uses: actions/download-artifact@v4
+
+      - name: Dump workspace contents
+        shell: bash
+        run: find $RUNNER_WORKSPACE
+
+      - name: Install Nim
+        uses: iffy/install-nim@v5
+        with:
+          version: ${{ env.NIM_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Nim dependencies
+        run: nimble -y install koi osdialog riff semver winim with
+
+      - name: Inject version strings
+        run: |
+          PACKAGE_NAME=$(nim macPackageName)
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+
+          VERSION=$(nim versionAndGitHash)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Linux release build
+        run: |
+          nim release -d:osdialogGtk2
+
+      - name: Dump workspace contents
+        shell: bash
+        run: find $RUNNER_WORKSPACE
+
+#      - name: Upload release artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: gridmonger-v${{ env.VERSION }}-macos
+#          path: dist/macos/${{ env.PACKAGE_NAME }}
+
+
