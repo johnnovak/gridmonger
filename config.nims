@@ -50,7 +50,7 @@ proc setCommonCompileParams() =
 #  --path:"../koi"
 
   --path:src
-  --gc:orc
+  --mm:orc
   --threads:on
   --deepcopy:on
   --d:ssl
@@ -87,7 +87,7 @@ task debug, "debug build":
 
 task test, "run unit tests":
   # Compile+run each test. Flags mirror setCommonCompileParams (minus
-  # GUI-only defines), since the tested code uses --gc:orc + --deepcopy:on.
+  # GUI-only defines), since the tested code uses --mm:orc + --deepcopy:on.
   # Binaries go in dist/test/ (gitignored).
   #
   # Most tests live in tests/. src/utils/hocon.nim stays inline because
@@ -100,7 +100,7 @@ task test, "run unit tests":
     "tests/rect.nim",
     "src/utils/hocon.nim",
   ]
-  const baseFlags = "--hint:Name:off --verbosity:0 --path:src --gc:orc " &
+  const baseFlags = "--hint:Name:off --verbosity:0 --path:src --mm:orc " &
                     "--deepcopy:on --threads:on --d:ssl " &
                     "--d:nimPreviewFloatRoundtrip"
   mkDir "dist/test"
