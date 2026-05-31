@@ -14,9 +14,9 @@ import riff
 
 import domain/annotations
 import common
-import drawlevel
+import ui/drawlevel
 import fieldlimits
-import icons
+import ui/icons
 import domain/level
 import domain/links
 import domain/map
