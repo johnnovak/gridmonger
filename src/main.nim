@@ -2310,54 +2310,6 @@ proc copySelection(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
 
 # }}}
 
-# {{{ exitMovePreviewMode()
-proc undoAction(a)
-
-proc exitMovePreviewMode(a) =
-  undoAction(a)
-  a.doc.undoManager.truncateUndoState()
-  a.ui.editMode = emNormal
-  clearStatusMessage(a)
-
-# }}}
-# {{{ exitNudgePreviewMode()
-proc exitNudgePreviewMode(a) =
-  alias(ui, a.ui)
-  alias(map, a.doc.map)
-
-  let cur = a.ui.cursor
-
-  ui.editMode = emNormal
-
-  # Reset the current level reference to the level in the nudge buffer
-  map.levels[cur.levelId] = ui.nudgeBuf.get.level
-  ui.nudgeBuf = SelectionBuffer.none
-
-  clearStatusMessage(a)
-
-# }}}
-# {{{ returnToNormalMode()
-proc returnToNormalMode(a) =
-  alias(ui, a.ui)
-
-  case ui.editMode
-  of emNormal: discard
-
-  of emMovePreview:
-    exitMovePreviewMode(a)
-
-  of emNudgePreview:
-    exitNudgePreviewMode(a)
-
-  of emSelect, emSelectDraw, emSelectErase, emSelectRect:
-    exitSelectMode(a)
-
-  else:
-    ui.editMode = emNormal
-    clearStatusMessage(a)
-
-# }}}
-
 # }}}
 # {{{ Graphics helpers
 
@@ -6251,6 +6203,51 @@ proc redoAction(a) =
                      fmt"Redid action: {undoStateData.actionName}", a)
   else:
     setWarningMessage("Nothing to redo", a=a)
+
+# }}}
+# {{{ exitMovePreviewMode()
+proc exitMovePreviewMode(a) =
+  undoAction(a)
+  a.doc.undoManager.truncateUndoState()
+  a.ui.editMode = emNormal
+  clearStatusMessage(a)
+
+# }}}
+# {{{ exitNudgePreviewMode()
+proc exitNudgePreviewMode(a) =
+  alias(ui, a.ui)
+  alias(map, a.doc.map)
+
+  let cur = a.ui.cursor
+
+  ui.editMode = emNormal
+
+  # Reset the current level reference to the level in the nudge buffer
+  map.levels[cur.levelId] = ui.nudgeBuf.get.level
+  ui.nudgeBuf = SelectionBuffer.none
+
+  clearStatusMessage(a)
+
+# }}}
+# {{{ returnToNormalMode()
+proc returnToNormalMode(a) =
+  alias(ui, a.ui)
+
+  case ui.editMode
+  of emNormal: discard
+
+  of emMovePreview:
+    exitMovePreviewMode(a)
+
+  of emNudgePreview:
+    exitNudgePreviewMode(a)
+
+  of emSelect, emSelectDraw, emSelectErase, emSelectRect:
+    exitSelectMode(a)
+
+  else:
+    ui.editMode = emNormal
+    clearStatusMessage(a)
 
 # }}}
 
