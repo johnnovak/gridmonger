@@ -86,16 +86,18 @@ task debug, "debug build":
 
 
 task test, "run unit tests":
-  # Compile+run each source file's `when isMainModule:` block. Flags mirror
-  # setCommonCompileParams (minus GUI-only defines), since the tested code
-  # uses --gc:orc + --deepcopy:on. Binaries go in dist/test/ (gitignored).
+  # Compile+run each test. Flags mirror setCommonCompileParams (minus
+  # GUI-only defines), since the tested code uses --gc:orc + --deepcopy:on.
+  # Binaries go in dist/test/ (gitignored).
+  #
+  # Most tests live in tests/. src/utils/hocon.nim stays inline because
+  # its tests reference internal types (Token, tkString) that aren't
+  # exported.
   const testFiles = [
-    "src/cmdline.nim",
-    "src/domain/selection.nim",
-    "src/domain/links.nim",
-    "src/utils/rle.nim",
-    "src/utils/naturalsort.nim",
-    "src/utils/rect.nim",
+    "tests/selection.nim",
+    "tests/links.nim",
+    "tests/rle.nim",
+    "tests/rect.nim",
     "src/utils/hocon.nim",
   ]
   const baseFlags = "--hint:Name:off --verbosity:0 --path:src --gc:orc " &

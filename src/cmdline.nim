@@ -135,12 +135,5 @@ proc parseCommandLineParams*(): tuple[configFile, mapFile: Option[string],
 # }}}
 
 # {{{ Test
-when isMainModule:
-  let (configFile, mapFile, winCfg) = parseCommandLineParams()
-
-  echo fmt"configFile: {configFile}"
-  echo fmt"mapFile: {mapFile}"
-  echo fmt"winCfg: {winCfg}"
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

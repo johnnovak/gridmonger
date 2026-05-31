@@ -121,22 +121,5 @@ proc shiftVert*[T: RectType](a: var Rect[T], d: int) =
 
 # {{{ Tests
 
-when isMainModule:
-  block:  # intersect
-    let a = rect(-5,2, -1,7)
-
-    # fully overlapping
-    assert a.intersect(a) == a.some
-
-    # partially overlapping
-    assert a.intersect(rect(-25,5, -2,20)) == rectI(-5,5, -2,7).some
-
-    # not overlapping
-    assert a.intersect(rect(-25,2, -21,7)) == Rect[int].none
-
-    # touching
-    assert a.intersect(rect(-5,7, -3,9)) == Rect[int].none
-
-#  }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

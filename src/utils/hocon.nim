@@ -995,7 +995,10 @@ proc del*(node: HoconNode, path: string) =
 
 # }}}
 
+
+
 # {{{ Tests
+
 when isMainModule:
 
   proc `==`*(a, b: Token): bool =
@@ -1432,3 +1435,4 @@ c = "d"
 # }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
+

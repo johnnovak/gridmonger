@@ -159,18 +159,5 @@ proc naturalSortIgnoreCaseUtf8*(l: openArray[string]): seq[string] =
 # }}}
 
 # {{{ Tests
-when isMainModule:
-  var a = @["d", "a", "cdrom1", "cdrom10", "cdrom102", "cdrom11", "cdrom2",
-            "cdrom20", "cdrom3", "cdrom30", "cdrom4", "cdrom40", "cdrom100",
-            "cdrom101", "cdrom103", "cdrom110"]
-
-
-  echo a.naturalSortIgnoreCaseUtf8
-
-  var b = @["!a", "[b"]
-
-  echo b.naturalSort
-
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
