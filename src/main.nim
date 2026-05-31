@@ -96,14 +96,6 @@ when defined(windows):
 # {{{ Dialogs
 # {{{ Event handling
 
-# {{{ resetManualNoteTooltip()
-proc resetManualNoteTooltip(a) =
-  with a.ui.manualNoteTooltipState:
-    show = false
-    mx = -1
-    my = -1
-
-# }}}
 
 # {{{ enterDrawWallMode()
 proc enterDrawWallMode(specialWall: bool; a) =

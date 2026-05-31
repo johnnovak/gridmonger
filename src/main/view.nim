@@ -9,6 +9,8 @@
 import std/options
 import std/tables
 
+import with               # `with` macro
+
 import common
 import domain/map           # getRegionCoords, coordOptsForLevel, hasLevels, Level type via transitive
 import domain/regions       # Region, []*
@@ -24,6 +26,14 @@ import utils/rect           # Rect, coordRect
 using a: var AppContext
 
 
+# {{{ resetManualNoteTooltip()
+proc resetManualNoteTooltip*(a) =
+  with a.ui.manualNoteTooltipState:
+    show = false
+    mx = -1
+    my = -1
+
+# }}}
 # {{{ viewRow()
 func viewRow*(row: Natural; a): int =
   row - a.ui.drawLevelParams.viewStartRow
