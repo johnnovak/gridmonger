@@ -16,7 +16,7 @@ import std/options
 import std/sequtils
 import std/setutils
 import std/strformat
-import std/strutils
+import std/strutils except splitWhitespace, strip
 import std/sugar
 import std/tables
 import std/times
@@ -24,6 +24,7 @@ import std/unicode
 
 import glfw
 import koi
+from koi/utils import lerp, invLerp, remap
 import nanovg
 import semver
 import with
@@ -38,12 +39,15 @@ import domain/links
 import domain/map
 import domain/regions
 import domain/selection
+import fieldlimits          # FieldLimits
+import io/persistence       # NotesListSearchTermLimits
 import main/actions_ui
 import main/appcontext
 import main/configio
 import main/constants
 import main/cursor
 import main/dialogs
+import main/events          # handleLevelMouseEvents
 import main/keyboard
 import main/mapio
 import main/modes
@@ -55,6 +59,7 @@ import ui/csdwindow
 import ui/drawlevel
 import ui/gfx
 import ui/icons
+import ui/theme             # DialogCornerRadiusLimits and other limits
 import undomanager
 import utils/converters
 import utils/hocon
