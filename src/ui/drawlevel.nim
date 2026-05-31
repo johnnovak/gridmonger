@@ -104,7 +104,7 @@ type
     # Internal
     # --------
     zoomLevel:           range[MinZoomLevel..MaxZoomLevel]
-    gridSize:            float
+    gridSize*:           float  # exposed for mouse↔cell coord conversion in main/cursor
     cellCoordsFontSize:  float
 
     thinStrokeWidth:     float
