@@ -14,6 +14,16 @@ import nanovg
 import utils/converters    # int↔float automatic conversion for createPattern
 
 
+# {{{ createImage()
+# Uses `vg` from caller scope (caller should `alias(vg, a.vg)` or have `vg`
+# locally bound).
+template createImage*(d: var ImageData): Image =
+  vg.createImageRGBA(
+    d.width, d.height,
+    data = toOpenArray(d.data, 0, d.size-1)
+  )
+
+# }}}
 # {{{ createPattern()
 proc createPattern*(vg: NVGContext, img: var Image, alpha: float = 1.0,
                     xoffs: float = 0, yoffs: float = 0,
