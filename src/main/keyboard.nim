@@ -23,7 +23,6 @@ import koi
 
 import common              # HairSp
 import main/appcontext
-import main/shortcuts
 import ui/icons             # IconArrowsHoriz, IconArrowsAll
 
 

@@ -38,7 +38,6 @@ import main/dialogs
 import main/keyboard
 import main/mapio
 import main/modes
-import main/shortcuts
 import main/status_msg
 import main/themeio
 import main/view

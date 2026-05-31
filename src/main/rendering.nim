@@ -43,7 +43,6 @@ import main/cursor
 import main/dialogs
 import main/events          # handleLevelMouseEvents
 import main/keyboard
-import main/shortcuts
 import main/status_msg
 import main/themeio
 import main/view

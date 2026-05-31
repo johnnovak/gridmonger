@@ -49,7 +49,6 @@ import main/constants
 import main/cursor          # centerCursorAt, moveCursorTo, updateLastCursorViewCoords, resetCursorAndViewStart
 import main/keyboard        # updateShortcuts, primaryModDown, isShortcutDown, toStr
 import main/mapio           # saveMap, loadMap
-import main/shortcuts
 import main/status_msg
 import main/themeio
 import main/versioncheck    # initVersionChecking
