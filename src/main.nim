@@ -3445,6 +3445,28 @@ when not defined(DEBUG):
     result = path
 
 # }}}
+# {{{ saveMapAs()
+proc saveMapAs(a) =
+  when not defined(DEBUG):
+    var path = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
+    if path != "":
+      path = addFileExt(path, MapFileExt)
+
+      saveMap(path, autosave=false, createBackup=false, a)
+      a.doc.path = path
+
+      # So at least we can restore the same map file in case of a crash
+      saveAppConfig(a)
+
+# }}}
+# {{{ saveMap()
+proc saveMap(a) =
+  if a.doc.path == "":
+    saveMapAs(a)
+  else:
+    saveMap(a.doc.path, autosave=false, createBackup=true, a)
+
+# }}}
 
 # }}}
 # {{{ Version checking
@@ -4323,8 +4345,6 @@ proc openSaveDiscardMapDialog(nextAction: proc (a: var AppContext); a) =
   dlg.nextAction = nextAction
   a.dialogs.activeDialog = dlgSaveDiscardMap
 
-
-proc saveMap(a)
 
 proc saveDiscardMapDialog(dlg: var SaveDiscardMapDialogParams; a) =
   const
@@ -6380,28 +6400,6 @@ proc openMap(path: string; a) =
     openSaveDiscardMapDialog(nextAction = doOpenMap, a)
   else:
     doOpenMap(a)
-
-# }}}
-# {{{ saveMapAs()
-proc saveMapAs(a) =
-  when not defined(DEBUG):
-    var path = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
-    if path != "":
-      path = addFileExt(path, MapFileExt)
-
-      saveMap(path, autosave=false, createBackup=false, a)
-      a.doc.path = path
-
-      # So at least we can restore the same map file in case of a crash
-      saveAppConfig(a)
-
-# }}}
-# {{{ saveMap()
-proc saveMap(a) =
-  if a.doc.path == "":
-    saveMapAs(a)
-  else:
-    saveMap(a.doc.path, autosave=false, createBackup=true, a)
 
 # }}}
 
