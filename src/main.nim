@@ -62,6 +62,7 @@ import utils/hocon
 import utils/misc as gmUtils
 import utils/naturalsort
 import utils/rect
+import utils/webbrowser
 
 # }}}
 
@@ -3907,9 +3908,6 @@ proc openAboutDialog(a) =
   a.dialogs.activeDialog = dlgAbout
 
 
-proc openUserManual(a)
-proc openWebsite(a)
-
 proc aboutDialog(dlg: var AboutDialogParams; a) =
   alias(al, dlg.aboutLogo)
   alias(vg, a.vg)
@@ -3985,12 +3983,12 @@ proc aboutDialog(dlg: var AboutDialogParams; a) =
   y += 40
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Manual",
                 style=a.theme.buttonStyle):
-    openUserManual(a)
+    openUserManual(a.paths.manualDir)
 
   x += DlgButtonWidth + DlgButtonPad
   if koi.button(x, y, DlgButtonWidth, DlgItemHeight, "Website",
                 style=a.theme.buttonStyle):
-    openWebsite(a)
+    openDefaultBrowser(ProjectHomeUrl)
 
 
   proc closeAction(a) =
@@ -6336,17 +6334,6 @@ proc setDrawSpecialWallActionRepeatMessage(a) =
 # }}}
 # {{{ Non-undoable actions
 
-# {{{ openUserManual()
-proc openUserManual(a) =
-  openDefaultBrowser(a.paths.manualDir / "index.html")
-
-# }}}
-# {{{ openWebsite()
-proc openWebsite(a) =
-  openDefaultBrowser(ProjectHomeUrl)
-
-# }}}
-
 # {{{ newMap()
 proc newMap(a) =
   if a.doc.undoManager.isModified:
@@ -7423,7 +7410,7 @@ proc handleGlobalKeyEvents(a) =
       elif ke.isShortcutDown(scNextTheme, a):     selectNextTheme(a)
 
       elif ke.isShortcutDown(scOpenUserManual, a):
-        openUserManual(a)
+        openUserManual(a.paths.manualDir)
 
       elif ke.isShortcutDown(scShowAboutDialog, a):
         openAboutDialog(a)
@@ -7797,7 +7784,7 @@ proc handleGlobalKeyEvents(a) =
         a.clearStatusMessage
 
       elif ke.isShortcutDown(scOpenUserManual, a):
-        openUserManual(a)
+        openUserManual(a.paths.manualDir)
 
     # }}}
     # {{{ emSelectDraw, emSelectErase
@@ -7875,7 +7862,7 @@ proc handleGlobalKeyEvents(a) =
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scOpenUserManual, a):
-        openUserManual(a)
+        openUserManual(a.paths.manualDir)
 
     # }}}
     # {{{ emMovePreview
@@ -7914,7 +7901,7 @@ proc handleGlobalKeyEvents(a) =
         exitMovePreviewMode(a)
 
       elif ke.isShortcutDown(scOpenUserManual, a):
-        openUserManual(a)
+        openUserManual(a.paths.manualDir)
 
     # }}}
     # {{{ emNudgePreview
@@ -7959,7 +7946,7 @@ proc handleGlobalKeyEvents(a) =
         exitNudgePreviewMode(a)
 
       elif ke.isShortcutDown(scOpenUserManual, a):
-        openUserManual(a)
+        openUserManual(a.paths.manualDir)
 
     # }}}
     # {{{ emSetCellLink
@@ -8007,7 +7994,7 @@ proc handleGlobalKeyEvents(a) =
         clearStatusMessage(a)
 
       elif ke.isShortcutDown(scOpenUserManual, a):
-        openUserManual(a)
+        openUserManual(a.paths.manualDir)
 
     # }}}
     # {{{ emSelectJumpToLinkSrc
@@ -8076,7 +8063,7 @@ proc handleGlobalKeyEvents_NoLevels(a) =
     elif ke.isShortcutDown(scUndo, repeat=true, a=a): undoAction(a)
     elif ke.isShortcutDown(scRedo, repeat=true, a=a): redoAction(a)
 
-    elif ke.isShortcutDown(scOpenUserManual, a):    openUserManual(a)
+    elif ke.isShortcutDown(scOpenUserManual, a):    openUserManual(a.paths.manualDir)
     elif ke.isShortcutDown(scShowAboutDialog, a):   openAboutDialog(a)
 
     elif ke.isShortcutDown(scToggleThemeEditor, a):
@@ -8105,7 +8092,7 @@ proc handleQuickRefKeyEvents(a) =
     elif ke.isShortcutDown(scPreviousTheme, a): selectPrevTheme(a)
     elif ke.isShortcutDown(scNextTheme, a):     selectNextTheme(a)
 
-    elif ke.isShortcutDown(scOpenUserManual, a):    openUserManual(a)
+    elif ke.isShortcutDown(scOpenUserManual, a):    openUserManual(a.paths.manualDir)
     elif ke.isShortcutDown(scToggleThemeEditor, a): toggleThemeEditor(a)
 
     elif ke.isShortcutDown(scToggleQuickReference, a) or
