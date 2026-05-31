@@ -52,7 +52,7 @@ import fieldlimits
 import ui/icons
 import domain/level
 import domain/map
-import persistence
+import io/persistence
 import domain/regions
 import domain/selection
 import ui/theme
