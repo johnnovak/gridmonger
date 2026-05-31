@@ -5,11 +5,11 @@ import std/strformat
 import std/tables
 
 import common
-import level
-import links
-import map
-import regions
-import selection
+import domain/level
+import domain/links
+import domain/map
+import domain/regions
+import domain/selection
 import undomanager
 import utils/misc
 import utils/rect

@@ -8,13 +8,13 @@ import glad/gl
 import koi
 import nanovg
 
-import annotations
-import cellgrid
+import domain/annotations
+import domain/cellgrid
 import common
 import icons
-import level
-import links
-import selection
+import domain/level
+import domain/links
+import domain/selection
 import utils/misc
 import utils/rect
 

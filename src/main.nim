@@ -50,11 +50,11 @@ import csdwindow
 import drawlevel
 import fieldlimits
 import icons
-import level
-import map
+import domain/level
+import domain/map
 import persistence
-import regions
-import selection
+import domain/regions
+import domain/selection
 import theme
 import undomanager
 import utils/converters

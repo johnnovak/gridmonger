@@ -49,6 +49,7 @@ proc setCommonCompileParams() =
 #  --path:"../nim-nanovg"
 #  --path:"../koi"
 
+  --path:src
   --gc:orc
   --threads:on
   --deepcopy:on
@@ -90,14 +91,14 @@ task test, "run unit tests":
   # uses --gc:orc + --deepcopy:on. Binaries go in dist/test/ (gitignored).
   const testFiles = [
     "src/cmdline.nim",
-    "src/selection.nim",
-    "src/links.nim",
+    "src/domain/selection.nim",
+    "src/domain/links.nim",
     "src/utils/rle.nim",
     "src/utils/naturalsort.nim",
     "src/utils/rect.nim",
     "src/utils/hocon.nim",
   ]
-  const baseFlags = "--hint:Name:off --verbosity:0 --gc:orc " &
+  const baseFlags = "--hint:Name:off --verbosity:0 --path:src --gc:orc " &
                     "--deepcopy:on --threads:on --d:ssl " &
                     "--d:nimPreviewFloatRoundtrip"
   mkDir "dist/test"

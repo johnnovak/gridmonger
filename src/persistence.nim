@@ -12,15 +12,15 @@ import std/tables
 
 import riff
 
-import annotations
+import domain/annotations
 import common
 import drawlevel
 import fieldlimits
 import icons
-import level
-import links
-import map
-import regions
+import domain/level
+import domain/links
+import domain/map
+import domain/regions
 import utils/misc
 import utils/rle
 
