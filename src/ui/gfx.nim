@@ -7,6 +7,8 @@
 # Side effects: GL/nanovg state mutation via the NVGContext when calling
 # createPattern.
 
+import std/options
+
 import nanovg
 
 import utils/converters    # int↔float automatic conversion for createPattern
@@ -21,6 +23,16 @@ proc createPattern*(vg: NVGContext, img: var Image, alpha: float = 1.0,
   vg.imagePattern(
     ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, img, alpha
   )
+
+# }}}
+# {{{ loadImage()
+proc loadImage*(vg: NVGContext, path: string): Option[Paint] =
+  try:
+    var img = vg.createImage(path, {ifRepeatX, ifRepeatY})
+    let paint = vg.createPattern(img, scale=0.5)
+    result = paint.some
+  except NVGError:
+    result = Paint.none
 
 # }}}
 # {{{ createAlpha()
