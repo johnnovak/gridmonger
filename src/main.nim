@@ -48,6 +48,7 @@ import cmdline
 import common
 import ui/csdwindow
 import ui/drawlevel
+import ui/gfx
 import fieldlimits
 import ui/icons
 import domain/level
@@ -95,32 +96,6 @@ template createImage(d: var ImageData): Image =
     d.width, d.height,
     data = toOpenArray(d.data, 0, d.size-1)
   )
-
-# }}}
-# {{{ createPattern()
-proc createPattern(vg: NVGContext, img: var Image, alpha: float = 1.0,
-                   xoffs: float = 0, yoffs: float = 0,
-                   scale: float = 1.0): Paint =
-
-  let (w, h) = vg.imageSize(img)
-  vg.imagePattern(
-    ox=xoffs, oy=yoffs, ex=w*scale, ey=h*scale, angle=0, img, alpha
-  )
-
-# }}}
-# {{{ createAlpha()
-proc createAlpha(d: var ImageData) =
-  for i in 0..<(d.width * d.height):
-    # copy the R component to the alpha channel
-    d.data[i*4+3] = d.data[i*4]
-
-# }}}
-# {{{ colorImage()
-func colorImage(d: var ImageData, color: Color) =
-  for i in 0..<(d.width * d.height):
-    d.data[i*4]   = (color.r * 255).byte
-    d.data[i*4+1] = (color.g * 255).byte
-    d.data[i*4+2] = (color.b * 255).byte
 
 # }}}
 # {{{ loadImage()
