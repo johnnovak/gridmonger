@@ -3447,6 +3447,16 @@ when not defined(DEBUG):
 # }}}
 
 # }}}
+# {{{ Version checking
+
+# {{{ initVersionChecking()
+proc initVersionChecking(a) =
+  a.latestVersion     = VersionInfo.none
+  a.versionFetchError = CatchableError.none
+
+# }}}
+
+# }}}
 # {{{ Dialogs
 
 # {{{ Constants
@@ -3899,8 +3909,6 @@ proc closeDialog(a) =
 # }}}
 
 # {{{ About dialog
-proc initVersionChecking(a)
-
 proc openAboutDialog(a) =
   if a.latestVersion.isNone:
     appEvents.fetchLatestVersion()
@@ -10793,12 +10801,6 @@ proc applyWindowConfigOverrides(cfg: WindowConfig; a) =
     a.win.showTitleBar = cfg.showTitleBar.get
 
   a.win.snapWindowToVisibleArea
-
-# }}}
-# {{{ initVersionChecking()
-proc initVersionChecking(a) =
-  a.latestVersion     = VersionInfo.none
-  a.versionFetchError = CatchableError.none
 
 # }}}
 # {{{ initApp()
