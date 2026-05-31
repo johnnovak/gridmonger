@@ -84,6 +84,29 @@ task debug, "debug build":
   setCommonCompileParams()
 
 
+task test, "run unit tests":
+  # Compile+run each source file's `when isMainModule:` block. Flags mirror
+  # setCommonCompileParams (minus GUI-only defines), since the tested code
+  # uses --gc:orc + --deepcopy:on. Binaries go in dist/test/ (gitignored).
+  const testFiles = [
+    "src/cmdline.nim",
+    "src/selection.nim",
+    "src/links.nim",
+    "src/utils/rle.nim",
+    "src/utils/naturalsort.nim",
+    "src/utils/rect.nim",
+    "src/utils/hocon.nim",
+  ]
+  const baseFlags = "--hint:Name:off --verbosity:0 --gc:orc " &
+                    "--deepcopy:on --threads:on --d:ssl " &
+                    "--d:nimPreviewFloatRoundtrip"
+  mkDir "dist/test"
+  for f in testFiles:
+    let (_, name, _) = splitFile(f)
+    echo "=== ", f, " ==="
+    exec "nim c -r " & baseFlags & " -o:dist/test/" & name & " " & f
+
+
 task releaseNoStacktrace, "release build (no stacktrace)":
   --d:release
   --app:gui
