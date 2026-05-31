@@ -29,38 +29,28 @@ import nanovg
 import semver
 import with
 
-import actions
-import appevents
 import cfghelper
 import common
 import domain/annotations
 import domain/level
-import domain/links
 import domain/map
 import domain/regions
-import domain/selection
 import fieldlimits          # FieldLimits
 import io/persistence       # NotesListSearchTermLimits
-import main/actions_ui
 import main/appcontext
-import main/configio
 import main/constants
 import main/cursor
 import main/dialogs
 import main/events          # handleLevelMouseEvents
 import main/keyboard
-import main/mapio
-import main/modes
 import main/shortcuts
 import main/status_msg
 import main/themeio
 import main/view
 import ui/csdwindow
 import ui/drawlevel
-import ui/gfx
 import ui/icons
 import ui/theme             # DialogCornerRadiusLimits and other limits
-import undomanager
 import utils/converters
 import utils/hocon
 import utils/misc as gmUtils

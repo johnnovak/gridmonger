@@ -6,16 +6,14 @@
 # Side effects: GL/glfw window creation, file system reads, config writes
 # (in crashHandler), AppContext setup.
 
-import std/lenientops
+import std/lenientops          # float*int arithmetic
 import std/logging as log except Level
-import std/macros
 import std/monotimes
 import std/options
 import std/os
 import std/sequtils          # toSeq
 import std/setutils          # fullSet
 import std/strformat
-import std/tables
 import std/times             # initDuration
 
 import glad/gl
@@ -33,7 +31,6 @@ import cmdline
 import common
 import domain/map           # Map
 import fieldlimits
-import io/persistence
 import main/appcontext
 import main/configio
 import main/constants

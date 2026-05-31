@@ -1,85 +1,28 @@
 # {{{ Imports
 
-import std/algorithm
-import std/httpclient
-import std/lenientops
 import std/logging as log except Level
-import std/macros
-import std/math
-import std/monotimes
 import std/options
-import std/os
-import std/sequtils
-import std/sets
-import std/setutils
+import std/os                  # sleep
 import std/strformat
-import std/strutils except strip, splitWhitespace
-import std/sugar
-import std/tables
-import std/times
-import std/unicode
 
 # Libraries
 import glad/gl
 import glfw
-
 import koi
-from koi/utils import lerp, invLerp, remap
-
-import nanovg
-
-when not defined(DEBUG):
-  import osdialog
 
 when defined(windows):
   import platform/windows/console
 
-import semver
-import with
-
 # Internal
-import actions
 import appevents
-import cfghelper
 import cmdline
 import common
 import ui/csdwindow
-import ui/drawlevel
-import ui/gfx
-import fieldlimits
-import ui/icons
-import domain/level
-import domain/map
-import io/persistence
-import domain/regions
-import domain/selection
-import ui/theme
-import undomanager
-import utils/converters
-import utils/hocon
 import utils/misc as gmUtils
-import utils/naturalsort
-import utils/rect
-import utils/webbrowser
 
-import main/actions_ui
 import main/appcontext
-import main/configio
-import main/constants
-import main/cursor
-import main/dialogs
-import main/events
 import main/init
-import main/keyboard
 import main/logging
-import main/mapio
-import main/modes
-import main/rendering
-import main/shortcuts
-import main/status_msg
-import main/themeio
-import main/versioncheck
-import main/view
 
 using a: var AppContext
 

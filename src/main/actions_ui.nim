@@ -9,33 +9,20 @@
 # undoAction.
 # Side effects: AppContext state mutation, status-bar messages, dialog opens.
 
-import std/lenientops
 import std/math
 import std/options
 import std/strformat
-import std/strutils
 import std/tables
-
-import koi
 
 import actions
 import common
-import domain/level
 import domain/map
-import domain/regions
-import domain/selection
 import main/appcontext
-import main/configio        # saveAppConfig
-import main/constants
-import main/cursor          # moveCursorTo, setCursor, updateLastCursorViewCoords
-import main/dialogs         # openSaveDiscardMapDialog, openSaveDiscardThemeDialog, etc.
-import main/keyboard        # toStr(AppShortcut, a)
+import main/cursor          # moveCursorTo, setCursor
+import main/dialogs         # openSaveDiscardMapDialog, openSaveDiscardThemeDialog
 import main/mapio           # saveMap, saveMapAs, loadMap
-import main/modes           # exitSelectMode, copySelection, enterSelectMode
-import main/shortcuts
+import main/modes           # exitSelectMode, copySelection
 import main/status_msg
-import main/themeio         # switchTheme, currThemeName
-import main/view            # currLevel, currRegion
 import ui/drawlevel
 import ui/icons
 import undomanager

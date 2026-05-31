@@ -10,7 +10,6 @@
 # action wrappers (which trigger domain mutations).
 
 import std/algorithm      # sort
-import std/lenientops
 import std/math
 import std/options
 import std/sequtils       # toSeq
@@ -25,13 +24,10 @@ from koi/utils import lerp, invLerp, remap
 import with
 
 import actions
-import appevents
 import io/persistence       # NumLevelsLimits
 import common
 import domain/level
-import domain/links
 import domain/map
-import domain/regions
 import domain/selection
 import main/actions_ui
 import main/appcontext
@@ -49,7 +45,6 @@ import main/view
 import ui/csdwindow
 import ui/drawlevel
 import ui/icons
-import undomanager
 import utils/misc
 import utils/rect           # rectN
 import utils/webbrowser
