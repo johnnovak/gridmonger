@@ -25,7 +25,7 @@ import common
 import main/appcontext
 import main/constants       # ThemeExt
 import main/logging         # logError
-import main/status_msg      # setStatusMessage, setWarningMessage
+import main/panes/statusbar      # setStatusMessage, setWarningMessage
 import ui/all
 import ui/theme as themelib # renamed to avoid clash with `a.win.theme=`
 import utils/all

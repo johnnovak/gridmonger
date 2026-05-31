@@ -44,7 +44,7 @@ import main/panes/currentnotepane
 import main/panes/levelview
 import main/panes/noteslistpane
 import main/panes/toolspane
-import main/status_msg
+import main/panes/statusbar
 import main/themeio
 import main/view
 import ui/all
@@ -618,121 +618,6 @@ proc renderThemeEditorPane*(x, y, w, h: float; a) =
 # }}}
 
 # }}}
-
-# {{{ renderCommand()
-proc renderCommand*(x, y: float; command: string; bgColor, textColor: Color;
-                   a: AppContext): float =
-  alias(vg, a.vg)
-
-  let w = vg.textWidth(command)
-  let (x, y) = (round(x), round(y))
-
-  vg.beginPath
-  vg.roundedRect(x, y-10, w+10, 18, 3)
-  vg.fillColor(bgColor)
-  vg.fill
-
-  vg.fillColor(textColor)
-  discard vg.text(x+5, y, command)
-
-  result = w
-
-
-proc renderCommand*(x, y: float; command: string; a): float =
-  let s = a.theme.statusBarTheme
-
-  renderCommand(x, y, command,
-                bgColor=s.commandBackgroundColor,
-                textColor=s.commandTextColor, a)
-
-# }}}
-# {{{ renderStatusBar()
-proc renderStatusBar*(x, y, w, h: float; a) =
-  alias(vg, a.vg)
-  alias(status, a.ui.status)
-
-  let s = a.theme.statusBarTheme
-
-  let ty = h * TextVertAlignFactor
-
-  # Bar background
-  vg.save
-  vg.translate(x, y)
-
-  vg.beginPath
-  vg.rect(0, 0, w, h)
-  vg.fillColor(s.backgroundColor)
-  vg.fill
-
-  # Display cursor coordinates
-  vg.setFont(14, "sans-bold")
-
-  if a.doc.map.hasLevels:
-    let
-      l = currLevel(a)
-      coordOpts = coordOptsForCurrLevel(a)
-
-      cur = a.ui.cursor
-      row = formatRowCoord(cur.row, l.rows, coordOpts, l.regionOpts)
-      col = formatColumnCoord(cur.col, l.cols, coordOpts, l.regionOpts)
-
-      cursorPos = fmt"({col}, {row})"
-      tw = vg.textWidth(cursorPos)
-
-    vg.fillColor(s.coordinatesColor)
-    vg.textAlign(haLeft, vaMiddle)
-    discard vg.text(w - tw - 7, ty, cursorPos)
-
-    vg.intersectScissor(0, 0, w - tw - 15, h)
-
-  # Display status message or warning
-  const
-    IconPosX = 10
-    MessagePosX = 30
-    MessagePadX = 20
-    CommandLabelPadX = 14
-    CommandTextPadX = 10
-
-  var x = 10.0
-
-  # Clear expired warning messages
-  if status.warning.message != "":
-    let dt = getMonoTime() - status.warning.t0
-    if dt > status.warning.timeout:
-      status.warning.message = ""
-      status.warning.overwrite = true
-
-      if not status.warning.keepMessage:
-        clearStatusMessage(a)
-    else:
-      koi.setFramesLeft()
-
-  # Display message
-  if status.warning.message == "":
-    vg.fillColor(s.textColor)
-    discard vg.text(IconPosX, ty, status.icon)
-
-    let tx = vg.text(MessagePosX, ty, status.message)
-    x = tx + MessagePadX
-
-    # Display commands, if present
-    for i, cmd in status.commands:
-      if i mod 2 == 0:
-        let w = renderCommand(x, ty, cmd, a)
-        x += w + CommandLabelPadX
-      else:
-        let text = cmd
-        vg.fillColor(s.textColor)
-        let tw = vg.text(round(x), round(ty), text)
-        x = tw + CommandTextPadX
-
-  # Display warning
-  else:
-    vg.fillColor(status.warning.color)
-    discard vg.text(IconPosX, ty, status.warning.icon)
-    discard vg.text(MessagePosX, ty, status.warning.message)
-
-  vg.restore
 
 # }}}
 # {{{ renderQuickReference()

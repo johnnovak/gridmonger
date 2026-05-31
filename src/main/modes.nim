@@ -11,7 +11,7 @@ import std/options
 import common               # newSelection, EditMode (emSelect, emNormal)
 import domain/all
 import main/appcontext
-import main/status_msg      # setSelectModeSelectMessage, clearStatusMessage
+import main/panes/statusbar      # setSelectModeSelectMessage, clearStatusMessage
 import main/view            # currLevel
 import utils/all
 

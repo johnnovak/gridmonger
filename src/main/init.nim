@@ -41,7 +41,7 @@ import main/keyboard
 import main/logging
 import main/mapio
 import main/rendering        # renderUI, renderFrame etc.
-import main/status_msg
+import main/panes/statusbar
 import main/themeio
 import main/versioncheck
 import ui/all

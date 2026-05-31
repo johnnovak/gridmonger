@@ -47,7 +47,7 @@ import main/constants
 import main/cursor          # centerCursorAt, moveCursorTo, resetCursorAndViewStart
 import main/keyboard        # updateShortcuts, primaryModDown, isShortcutDown, toStr
 import main/mapio           # saveMap, loadMap
-import main/status_msg
+import main/panes/statusbar
 import main/themeio
 import main/versioncheck    # initVersionChecking
 import main/view            # currLevel, currRegion, coordOptsForCurrLevel, calculateLevelDrawArea, mainPaneRect

@@ -38,7 +38,7 @@ import main/dialogs
 import main/keyboard
 import main/mapio
 import main/modes
-import main/status_msg
+import main/panes/statusbar
 import main/themeio
 import main/view
 import ui/csdwindow

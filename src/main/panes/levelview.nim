@@ -23,7 +23,7 @@ import main/constants
 import main/cursor
 import main/events          # handleLevelMouseEvents
 import main/keyboard
-import main/status_msg
+import main/panes/statusbar
 import main/themeio
 import main/view
 import ui/all
