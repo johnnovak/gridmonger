@@ -29,248 +29,6 @@ import ui/all
 using a: var AppContext
 
 
-# {{{ Quick keyboard reference definitions
-
-proc sc(sc: AppShortcut): QuickRefItem =
-  QuickRefItem(kind: qkShortcut, shortcut: sc)
-
-proc sc(sc: seq[AppShortcut], sepa = '/'; a): QuickRefItem =
-  let shortcuts = collect:
-    for s in sc: a.keys.shortcuts[s][0]
-
-  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: shortcuts, sepa: sepa)
-
-proc sc(sc: KeyShortcut): QuickRefItem =
-  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: @[sc])
-
-proc sc(sc: seq[KeyShortcut], sepa = '/'): QuickRefItem =
-  QuickRefItem(kind: qkKeyShortcuts, keyShortcuts: sc, sepa: sepa)
-
-proc csc(s: seq[string]): QuickRefItem =
-  QuickRefItem(kind: qkCustomShortcuts, customShortcuts: s)
-
-proc desc(s: string): QuickRefItem =
-  QuickRefItem(kind: qkDescription, description: s)
-
-const QuickRefSepa = QuickRefItem(kind: qkSeparator)
-
-# {{{ mkQuickRefGeneral()
-func mkQuickRefGeneral*(a): seq[seq[QuickRefItem]] =
-  @[
-    @[
-      scShowAboutDialog.sc,      "Show about dialog".desc,
-      scToggleQuickReference.sc, "Toggle quick keyboard reference".desc,
-      scOpenUserManual.sc,       "Open user manual in browser".desc,
-      scEditPreferences.sc,      "Preferences".desc,
-      QuickRefSepa,
-
-      scNewMap.sc,            "New map".desc,
-      scOpenMap.sc,           "Open map".desc,
-      scSaveMap.sc,           "Save map".desc,
-      scSaveMapAs.sc,         "Save map as".desc,
-      scEditMapProps.sc,      "Edit map properties".desc,
-      QuickRefSepa,
-
-      scNewLevel.sc,          "New level".desc,
-      scEditLevelProps.sc,    "Edit level properties".desc,
-      scEditRegionProps.sc,   "Edit region properties".desc,
-      scDeleteLevel.sc,       "Delete level".desc,
-      QuickRefSepa,
-
-      scPreviousLevel.sc,     "Previous level".desc,
-      scNextLevel.sc,         "Next level".desc,
-    ],
-    @[
-      scUndo.sc,              "Undo last action".desc,
-      scRedo.sc,              "Redo last action".desc,
-
-      @[scZoomIn,
-        scZoomOut].sc(a=a),   "Zoom in/out".desc,
-      QuickRefSepa,
-
-      scToggleWalkMode.sc,        "Toggle walk mode".desc,
-      scToggleWasdMode.sc,        "Toggle WASD mode".desc,
-      scToggleCellCoords.sc,      "Toggle cell coordinates".desc,
-      scToggleCurrentNotePane.sc, "Toggle current note pane".desc,
-      scToggleNotesListPane.sc,   "Toggle notes list pane".desc,
-      scToggleToolsPane.sc,       "Toggle tools pane".desc,
-      scToggleTitleBar.sc,        "Toggle title bar".desc,
-      QuickRefSepa,
-
-      scShowNoteTooltip.sc,       "Show note tooltip".desc,
-      scShowLinkLines.sc,         "Show all link lines".desc,
-      QuickRefSepa,
-
-      scPreviousTheme.sc,     "Previous theme".desc,
-      scNextTheme.sc,         "Next theme".desc,
-      scReloadTheme.sc,       "Reload current theme".desc,
-      scToggleThemeEditor.sc, "Toggle theme editor".desc,
-    ]
-  ]
-
-# }}}
-# {{{ mkQuickRefEditing()
-func mkQuickRefEditing*(a): seq[seq[QuickRefItem]] =
-  @[
-    @[
-      scExcavateTunnel.sc,      "Excavate (draw) tunnel".desc,
-      scEraseCell.sc,           "Erase cell (clear floor & walls)".desc,
-      scDrawClearFloor.sc,      "Draw/clear floor".desc,
-
-      scRotateFloorClockwise.sc,
-      "Rotate floor clockwise".desc,
-
-      scRotateFloorAntiClockwise.sc,
-      "Rotate floor anti-clockwise".desc,
-      QuickRefSepa,
-
-      scDrawWall.sc,            "Draw/clear wall".desc,
-      scDrawSpecialWall.sc,     "Draw/clear special wall".desc,
-
-      @[scPreviousSpecialWall,
-        scNextSpecialWall].sc(a=a), "Previous/next special wall".desc,
-      QuickRefSepa,
-
-      @[scPreviousFloorColor,
-        scNextFloorColor].sc(a=a), "Previous/next floor colour".desc,
-
-      scSetFloorColor.sc,       "Set floor colour".desc,
-      scPickFloorColor.sc,      "Pick floor colour".desc,
-
-      @[KeyShortcut(key: key1, mods: {a.keys.primaryModKey}),
-        KeyShortcut(key: key9, mods: {})].sc(sepa='-'),
-      "Set floor colour 1-9".desc,
-
-      scSelectFloorColor10.sc,  "Set floor colour 10".desc,
-
-      QuickRefSepa,
-
-      scEraseTrail.sc,          "Erase trail".desc,
-      scToggleDrawTrail.sc,     "Toggle trail mode".desc,
-      scExcavateTrail.sc,       "Excavate trail in current level".desc,
-      scClearTrail.sc,          "Clear trail in current level".desc,
-      QuickRefSepa,
-
-      scMarkSelection.sc,       "Enter select (mark) mode".desc,
-      scPaste.sc,               "Paste copy buffer contents".desc,
-      scPastePreview.sc,        "Enter paste preview mode".desc,
-      QuickRefSepa,
-
-      scEditNote.sc,            "Add or edit note".desc,
-      scEraseNote.sc,           "Erase note".desc,
-      QuickRefSepa,
-    ],
-    @[
-      scEditLabel.sc,           "Add or edit label".desc,
-      scEraseLabel.sc,          "Erase label".desc,
-      QuickRefSepa,
-
-      scJumpToLinkedCell.sc,    "Jump to other side of link".desc,
-      scLinkCell.sc,            "Set link destination".desc,
-
-      # TODO
-#      scUnlinkCell.sc,          "Unlink cell".desc,
-      QuickRefSepa,
-
-      scResizeLevel.sc,         "Resize level".desc,
-      scNudgePreview.sc,        "Nudge level".desc,
-      QuickRefSepa,
-
-      @[scCycleFloorGroup1Forward,
-        scCycleFloorGroup1Backward].sc(a=a), "Cycle door".desc,
-
-      @[scCycleFloorGroup2Forward,
-        scCycleFloorGroup2Backward].sc(a=a), "Cycle special door".desc,
-
-      @[scCycleFloorGroup3Forward,
-        scCycleFloorGroup3Backward].sc(a=a), "Cycle pressure plate".desc,
-
-      @[scCycleFloorGroup4Forward,
-        scCycleFloorGroup4Backward].sc(a=a), "Cycle pit".desc,
-
-      @[scCycleFloorGroup5Forward,
-        scCycleFloorGroup5Backward].sc(a=a), "Cycle special".desc,
-
-      @[scCycleFloorGroup6Forward,
-        scCycleFloorGroup6Backward].sc(a=a), "Cycle entry/exit".desc,
-
-      @[scCycleFloorGroup7Forward,
-        scCycleFloorGroup7Backward].sc(a=a), "Cycle bridge/arrow".desc,
-
-      @[scCycleFloorGroup8Forward,
-        scCycleFloorGroup8Backward].sc(a=a), "Cycle column/statue".desc,
-
-      QuickRefSepa,
-
-      scSelectSpecialWall1.sc,  "Set special wall: Open door".desc,
-      scSelectSpecialWall2.sc,  "Set special wall: Locked door".desc,
-      scSelectSpecialWall3.sc,  "Set special wall: Archway".desc,
-      scSelectSpecialWall4.sc,  "Set special wall: Secret door".desc,
-      scSelectSpecialWall5.sc,  "Set special wall: One-way door".desc,
-      scSelectSpecialWall6.sc,  "Set special wall: Illusory wall".desc,
-      scSelectSpecialWall7.sc,  "Set special wall: Invisible wall".desc,
-      scSelectSpecialWall8.sc,  "Set special wall: Lever".desc,
-      scSelectSpecialWall9.sc,  "Set special wall: Niche".desc,
-      scSelectSpecialWall10.sc, "Set special wall: Statue".desc,
-      scSelectSpecialWall11.sc, "Set special wall: Keyhole".desc,
-      scSelectSpecialWall12.sc, "Set special wall: Writing".desc,
-    ]
-  ]
-
-# }}}
-# {{{ mkQuickRefInterface()
-func mkQuickRefInterface*(a): seq[seq[QuickRefItem]] =
-  @[
-    @[
-      @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}"].csc,
-      "Move between tabs in dialog".desc,
-
-      @[KeyShortcut(key: key1, mods: {mkCtrl}),
-        KeyShortcut(key: key9, mods: {})].sc(sepa='-'),
-      "Select tab 1-9 in dialog".desc,
-      QuickRefSepa,
-
-      KeyShortcut(key: keyTab, mods: {mkShift}).sc,
-      "Previous text input field".desc,
-
-      scNextTextField.sc, "Next text input field".desc,
-      QuickRefSepa,
-
-      @[fmt"{IconArrowsAll}"].csc, "Change radio button selection".desc,
-      QuickRefSepa,
-
-      scAccept.sc,  "Confirm (OK, Save, etc.)".desc,
-      scCancel.sc,  "Cancel".desc,
-      scDiscard.sc, "Discard".desc,
-    ],
-    @[
-      scSaveLayout1.sc, "Save window layout 1".desc,
-      scSaveLayout2.sc, "Save window layout 2".desc,
-      scSaveLayout3.sc, "Save window layout 3".desc,
-      scSaveLayout4.sc, "Save window layout 4".desc,
-      QuickRefSepa,
-
-      scRestoreLayout1.sc, "Restore window layout 1".desc,
-      scRestoreLayout2.sc, "Restore window layout 2".desc,
-      scRestoreLayout3.sc, "Restore window layout 3".desc,
-      scRestoreLayout4.sc, "Restore window layout 4".desc,
-      QuickRefSepa,
-
-      scResetUIScaling.sc, "Reset interface scaling".desc
-    ]
-  ]
-
-# }}}
-
-func mkQuickRefShortcuts*(a): seq[seq[seq[QuickRefItem]]] =
-  @[
-    mkQuickRefGeneral(a),
-    mkQuickRefEditing(a),
-    mkQuickRefInterface(a)
-  ]
-
-# }}}
-
 # {{{ Keyboard shortcuts
 
 type MoveKeys* = object
@@ -758,7 +516,9 @@ proc updateShortcuts*(a) =
     # shortcuts always available, even in Ctrl+Alt modifier mode.
     a.keys.shortcuts.addStandardMacShortcuts
 
-  a.keys.quickRefShortcuts = mkQuickRefShortcuts(a)
+  # NOTE: callers must follow this with `updateQuickRefShortcuts(a)` from
+  # panes/quickref. We can't call it here because that would be a cycle
+  # (quickref.nim imports keyboard.nim).
 
 # }}}
 # {{{ hasKeyEvent()
@@ -824,6 +584,26 @@ proc primaryModDown*(a): bool =
   if   a.keys.primaryModKey == mkCtrl:  koi.ctrlDown()
   elif a.keys.primaryModKey == mkSuper: koi.superDown()
   else: false
+
+# }}}
+# {{{ handleTabNavigation()
+proc handleTabNavigation*(ke: Event,
+                         currTabIndex, maxTabIndex: Natural; a): Natural =
+  result = currTabIndex
+
+  if ke.isKeyDown(MoveKeysStandard.left, {mkCtrl}):
+    if    currTabIndex > 0: result = currTabIndex - 1
+    else: result = maxTabIndex
+
+  elif ke.isKeyDown(MoveKeysStandard.right, {mkCtrl}):
+    if    currTabIndex < maxTabIndex: result = currTabIndex + 1
+    else: result = 0
+
+  else:
+    let i = ord(ke.key) - ord(key1)
+    if ke.action == kaDown and mkCtrl in ke.mods and
+      i >= 0 and i <= maxTabIndex:
+      result = i
 
 # }}}
 # }}}

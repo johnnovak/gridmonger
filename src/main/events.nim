@@ -1591,33 +1591,6 @@ proc handleGlobalKeyEvents_NoLevels*(a) =
       toggleTitleBar(a)
 
 # }}}
-# {{{ handleQuickRefKeyEvents()
-
-let QuickRefTabLabels* = @["General", "Editing", "Interface"]
-
-proc handleQuickRefKeyEvents*(a) =
-  if hasKeyEvent():
-    let ke = koi.currEvent()
-
-    a.quickRef.activeTab = handleTabNavigation(ke, a.quickRef.activeTab,
-                                               QuickRefTabLabels.high, a)
-
-    if   ke.isShortcutDown(scReloadTheme, a):   reloadTheme(a)
-    elif ke.isShortcutDown(scPreviousTheme, a): selectPrevTheme(a)
-    elif ke.isShortcutDown(scNextTheme, a):     selectNextTheme(a)
-
-    elif ke.isShortcutDown(scOpenUserManual, a):    openUserManual(a.paths.manualDir)
-    elif ke.isShortcutDown(scToggleThemeEditor, a): toggleThemeEditor(a)
-
-    elif ke.isShortcutDown(scToggleQuickReference, a) or
-         ke.isShortcutDown(scAccept, a) or
-         ke.isShortcutDown(scCancel, a) or
-         isKeyDown(keySpace):
-
-      a.ui.showQuickReference = false
-      clearStatusMessage(a)
-
-# }}}
 
 
 # vim: et:ts=2:sw=2:fdm=marker

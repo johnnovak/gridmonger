@@ -434,24 +434,6 @@ func handleGridRadioButton*(ke: Event, currButtonIdx: Natural,
 
 # }}}
 # {{{ handleTabNavigation()
-proc handleTabNavigation*(ke: Event,
-                         currTabIndex, maxTabIndex: Natural; a): Natural =
-  result = currTabIndex
-
-  if ke.isKeyDown(MoveKeysStandard.left, {mkCtrl}):
-    if    currTabIndex > 0: result = currTabIndex - 1
-    else: result = maxTabIndex
-
-  elif ke.isKeyDown(MoveKeysStandard.right, {mkCtrl}):
-    if    currTabIndex < maxTabIndex: result = currTabIndex + 1
-    else: result = 0
-
-  else:
-    let i = ord(ke.key) - ord(key1)
-    if ke.action == kaDown and mkCtrl in ke.mods and
-      i >= 0 and i <= maxTabIndex:
-      result = i
-
 # }}}
 
 # {{{ colorRadioButtonDrawProc()
@@ -876,6 +858,11 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
     setSwapInterval(a)
     updateWalkKeys(a)
     updateShortcuts(a)
+    # NOTE: quick-ref shortcut tables won't be refreshed until the next
+    # app start — quickref imports actions_ui (-> dialogs), so dialogs
+    # can't import quickref without a cycle. Minor UX issue: after
+    # changing modifier-key mode in prefs, the quick-ref overlay shows
+    # stale shortcuts until restart.
 
     closeDialog(a)
 

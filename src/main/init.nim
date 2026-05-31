@@ -41,6 +41,7 @@ import main/keyboard
 import main/logging
 import main/mapio
 import main/rendering        # renderUI, renderFrame etc.
+import main/panes/quickref
 import main/panes/statusbar
 import main/themeio
 import main/versioncheck
@@ -482,6 +483,7 @@ proc initApp*(configFile: Option[string], mapFile: Option[string],
 
   updateWalkKeys(a)
   updateShortcuts(a)
+  updateQuickRefShortcuts(a)
   updateLastCursorViewCoords(a)
 
   a.ui.toolbarDrawParams = newDrawLevelParams()

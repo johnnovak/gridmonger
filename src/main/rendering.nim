@@ -43,8 +43,9 @@ import main/keyboard
 import main/panes/currentnotepane
 import main/panes/levelview
 import main/panes/noteslistpane
-import main/panes/toolspane
+import main/panes/quickref
 import main/panes/statusbar
+import main/panes/toolspane
 import main/themeio
 import main/view
 import ui/all
@@ -618,149 +619,6 @@ proc renderThemeEditorPane*(x, y, w, h: float; a) =
 # }}}
 
 # }}}
-
-# }}}
-# {{{ renderQuickReference()
-
-proc renderQuickReference*(x, y, w, h: float; a) =
-  alias(vg, a.vg)
-  let cfg = a.theme.config
-
-  let
-    p = "ui.quick-help."
-    bgColor          = cfg.getColorOrDefault(p & "background")
-    textColor        = cfg.getColorOrDefault(p & "text")
-    titleColor       = cfg.getColorOrDefault(p & "title")
-    commandBgColor   = cfg.getColorOrDefault(p & "command.background")
-    commandTextColor = cfg.getColorOrDefault(p & "command.text")
-
-
-  proc renderSection(x, y: float; items: seq[QuickRefItem];
-                     colWidth: float; a: AppContext) =
-
-    const
-      RowHeight  = 24.0
-      SepaHeight = 14.0
-
-    var
-      x0 = x
-      x  = x
-      y  = y
-      heightInc = RowHeight
-
-    vg.setFont(14, "sans-bold")
-
-    for item in items:
-      case item.kind
-      of qkShortcut:
-        let shortcuts = a.keys.shortcuts[item.shortcut]
-        heightInc = 0.0
-        var ys = y
-        for sc in shortcuts:
-          let shortcut = sc.toStr
-          discard renderCommand(x, ys, shortcut,
-                                commandBgColor, commandTextColor, a)
-          ys += RowHeight
-          heightInc += RowHeight
-        if shortcuts.len > 1: heightInc += SepaHeight
-        x += colWidth
-
-      of qkKeyShortcuts:
-        var sx = x
-        for idx, sc in item.keyShortcuts:
-          let shortcut = sc.toStr
-          var xa = renderCommand(sx, y, shortcut,
-                                 commandBgColor, commandTextColor, a)
-          if idx < item.keyShortcuts.high:
-            sx += xa + 13
-            vg.fillColor(textColor)
-            xa = vg.text(round(sx), round(y), $item.sepa)
-            sx += 9
-        x += colWidth
-        heightInc = RowHeight
-
-      of qkCustomShortcuts:
-        var sx = x
-        for idx, shortcut in item.customShortcuts:
-          var xa = renderCommand(sx, y, shortcut,
-                                 commandBgColor, commandTextColor, a)
-          if idx < item.customShortcuts.high:
-            sx += xa + 13
-            vg.fillColor(textColor)
-            xa = vg.text(round(sx), round(y), $item.sepa)
-            sx += 9
-        x += colWidth
-        heightInc = RowHeight
-
-
-      of qkDescription:
-        vg.fillColor(textColor)
-        discard vg.text(round(x), round(y), item.description)
-        x = x0
-        y += heightInc
-
-      of qkSeparator:
-        y += SepaHeight
-
-
-  let yOffs = ((h - 840) * 0.5).clampMin(0)
-
-  koi.addDrawLayer(koi.currentLayer(), vg):
-    vg.save
-    vg.intersectScissor(x, y, w, h)
-
-  koi.addDrawLayer(koi.currentLayer(), vg):
-    # Background
-    vg.beginPath
-    vg.rect(x, y, w, h)
-    vg.fillColor(bgColor)
-    vg.fill
-
-    # Title
-    vg.setFont(20, "sans-bold")
-    vg.fillColor(titleColor)
-    vg.textAlign(haCenter, vaMiddle)
-    discard vg.text(round(x + w*0.5), 60+yOffs, "Quick Keyboard Reference")
-
-  let
-    t = invLerp(MinWindowWidth, 800.0, w).clamp(0.0, 1.0)
-    viewWidth = lerp(652.0, 720.0, t)
-    columnWidth = lerp(330.0, 350.0, t)
-    tabWidth = 400.0
-
-  let radioButtonX = x + (w - tabWidth)*0.5
-
-  koi.radioButtons(
-    radioButtonX, 92+yOffs, tabWidth, 24,
-    QuickRefTabLabels, a.quickRef.activeTab,
-    style = a.theme.radioButtonStyle
-  )
-
-  koi.beginScrollView(x = x + (w - viewWidth)*0.5 + 20,
-                      y = y + 130+yOffs,
-                      w = viewWidth, h = (h - 150))
-
-  let a = a
-  var (sx, sy) = addDrawOffset(10, 10)
-
-  const DefaultColWidth = 120.0
-
-  let (viewHeight, col1Width, col2Width) = case a.quickRef.activeTab
-  of 0: (520.0, DefaultColWidth, DefaultColWidth)
-  of 1: (655.0, DefaultColWidth, DefaultColWidth)
-  else: (300.0, DefaultColWidth, DefaultColWidth)
-
-  koi.addDrawLayer(koi.currentLayer(), vg):
-    let itemColumns = a.keys.quickRefShortcuts[a.quickRef.activeTab]
-    assert(itemColumns.len == 2)
-    renderSection(sx, sy, itemColumns[0], col1Width, a)
-    sx += columnWidth
-    renderSection(sx, sy, itemColumns[1], col2Width, a)
-
-  koi.endScrollView(viewHeight)
-
-  koi.addDrawLayer(koi.currentLayer(), vg):
-    vg.restore
 
 # }}}
 # {{{ renderDialogs()
