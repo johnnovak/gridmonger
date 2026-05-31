@@ -68,6 +68,7 @@ import main/appcontext
 import main/constants
 import main/logging
 import main/shortcuts
+import main/versioncheck
 
 using a: var AppContext
 
@@ -2467,16 +2468,6 @@ proc saveMap(a) =
     saveMapAs(a)
   else:
     saveMap(a.doc.path, autosave=false, createBackup=true, a)
-
-# }}}
-
-# }}}
-# {{{ Version checking
-
-# {{{ initVersionChecking()
-proc initVersionChecking(a) =
-  a.latestVersion     = VersionInfo.none
-  a.versionFetchError = CatchableError.none
 
 # }}}
 
