@@ -9,6 +9,8 @@
 
 import nanovg
 
+import utils/converters    # int↔float automatic conversion for createPattern
+
 
 # {{{ createPattern()
 proc createPattern*(vg: NVGContext, img: var Image, alpha: float = 1.0,
