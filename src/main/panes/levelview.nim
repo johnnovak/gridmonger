@@ -9,23 +9,16 @@
 import std/math               # round
 import std/options
 import std/strformat
-import std/strutils except splitWhitespace, strip
-import std/tables
 
 import koi
 import nanovg
 
 import common
 import domain/all
-import main/actions_ui      # toggleOption/toggleShowOption helpers? actually not — but keep for now
 import main/appcontext
-import main/constants
-import main/cursor
+import main/cursor          # setCursor, centerCursorAt
 import main/events          # handleLevelMouseEvents
-import main/keyboard
-import main/panes/statusbar
-import main/themeio
-import main/view
+import main/view            # currLevel, currRegion, coordOptsForCurrLevel
 import ui/all
 import utils/all
 import utils/misc as gmUtils

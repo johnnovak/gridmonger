@@ -9,7 +9,6 @@ import std/options
 import std/sugar           # `collect:` macro
 
 import koi
-from koi/utils import lerp, invLerp, remap
 import nanovg
 
 import common

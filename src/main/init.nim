@@ -40,7 +40,7 @@ import main/events         # handleQuickRefKeyEvents, handleGlobalKeyEvents
 import main/keyboard
 import main/logging
 import main/mapio
-import main/rendering        # renderUI, renderFrame etc.
+import main/frame        # renderUI, renderFrame etc.
 import main/panes/quickref
 import main/panes/statusbar
 import main/themeio

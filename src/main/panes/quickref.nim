@@ -8,7 +8,6 @@
 import std/math               # round
 import std/options
 import std/strformat
-import std/strutils
 import std/sugar               # collect
 import std/tables
 
@@ -24,7 +23,6 @@ import main/appcontext
 import main/events             # toggleThemeEditor
 import main/keyboard           # handleTabNavigation
 import main/panes/statusbar    # clearStatusMessage
-import main/themeio
 import ui/all
 import utils/all
 

@@ -5,12 +5,7 @@
 # Side effects: koi + nanovg drawing, AppContext.theme.config and
 # .themeEditor.modified mutation.
 
-import std/algorithm
-import std/lenientops
-import std/math
 import std/options
-import std/strformat
-import std/strutils except splitWhitespace, strip
 import std/sugar
 import std/tables
 
@@ -21,7 +16,6 @@ import with
 import cfghelper
 import common
 import fieldlimits          # FieldLimits
-import io/persistence       # NotesListSearchTermLimits
 import main/appcontext
 import main/dialogs           # openSaveDiscardThemeDialog
 import main/themeio

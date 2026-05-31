@@ -1,57 +1,33 @@
-# rendering
+# frame
 #
-# All AppContext-aware rendering procs: level + tools pane + note panes +
-# theme editor + status bar + quick reference + dialog dispatcher +
-# top-level UI orchestrator. ui/drawlevel and ui/csdwindow are the
-# AppContext-unaware visual primitives this layer sits on top of.
-#
-# Side effects: koi + nanovg drawing calls. Reads heavily from AppContext;
-# writes back layout/scroll/note-cache state.
+# Top-level UI orchestrator. renderUI walks the visible layout — level view,
+# pane panes, status bar, theme editor, dialog overlay — and dispatches to
+# the per-pane render procs in main/panes/. renderDialogs dispatches to the
+# active dialog handler in main/dialogs.
+# Side effects: koi + nanovg drawing calls.
 
-import std/algorithm
 import std/lenientops
-import std/math
-import std/monotimes
 import std/options
-import std/sequtils
-import std/setutils
-import std/strformat
-import std/strutils except splitWhitespace, strip
-import std/sugar
-import std/tables
-import std/times
-import std/unicode
 
-import glfw
 import koi
-from koi/utils import lerp, invLerp, remap
 import nanovg
-import semver
-import with
 
-import cfghelper
 import common
 import domain/all
-import fieldlimits          # FieldLimits
-import io/persistence       # NotesListSearchTermLimits
 import main/appcontext
 import main/constants
-import main/cursor
-import main/dialogs
-import main/events          # handleLevelMouseEvents
-import main/keyboard
-import main/panes/currentnotepane
-import main/panes/levelview
-import main/panes/noteslistpane
-import main/panes/quickref
-import main/panes/statusbar
-import main/panes/themepanel
-import main/panes/toolspane
-import main/themeio
-import main/view
+import main/cursor                  # updateLastCursorViewCoords
+import main/dialogs                 # the per-dialog procs
+import main/panes/currentnotepane   # renderCurrentNotePane
+import main/panes/levelview         # renderLevel, renderLevelDropdown, renderRegionDropDown, renderEmptyMap, renderModeAndOptionIndicators
+import main/panes/noteslistpane    # renderNotesListPane
+import main/panes/quickref          # renderQuickReference
+import main/panes/statusbar         # renderStatusBar
+import main/panes/themepanel        # renderThemeEditorPane
+import main/panes/toolspane         # renderToolsPane
+import main/view                    # mainPaneRect, currLevel, calculateLevelDrawArea, toolsPane*, updateViewAndCursorPos
 import ui/all
-import utils/all
-import utils/misc as gmUtils
+import utils/all                    # rect.h/w accessors, alias
 
 
 using a: var AppContext
