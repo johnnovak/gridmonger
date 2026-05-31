@@ -8,15 +8,10 @@ import glad/gl
 import koi
 import nanovg
 
-import domain/annotations
-import domain/cellgrid
 import common
+import domain/all
 import icons
-import domain/level
-import domain/links
-import domain/selection
-import utils/misc
-import utils/rect
+import utils/all
 
 
 const

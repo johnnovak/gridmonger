@@ -15,9 +15,8 @@ import common               # AppVersion
 import main/appcontext
 import main/status_msg      # setStatusMessage, setWarningMessage
 import main/themeio         # currThemeName
-import ui/csdwindow         # maximize, unmaximize, snapWindowToVisibleArea
-import ui/icons             # IconTiles
-import utils/hocon
+import ui/all
+import utils/all
 
 
 using a: var AppContext

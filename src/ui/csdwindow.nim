@@ -1,4 +1,3 @@
-import std/lenientops
 import std/logging as log
 import std/options
 import std/strformat
@@ -11,8 +10,7 @@ import nanovg
 import with
 
 import common
-import utils/misc
-import utils/rect
+import utils/all
 
 
 # {{{ Constants

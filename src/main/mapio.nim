@@ -18,16 +18,15 @@ import appevents            # appEvents.fetchLatestVersion etc.
 import common
 import io/persistence
 import main/appcontext
-import undomanager          # initUndoManager
 import main/configio        # saveAppConfig
 import main/constants       # MapFileExt, BackupFileExt, CrashAutosaveName, UntitledName, GridmongerMapFileFilter
 import main/cursor          # moveCursorTo
 import main/logging         # logError
 import main/status_msg      # setStatusMessage, setWarningMessage, setErrorMessage
 import main/themeio         # findThemeIndex
-import ui/drawlevel         # setZoomLevel
-import ui/icons
-import utils/misc
+import ui/all
+import undomanager          # initUndoManager
+import utils/all
 
 when not defined(DEBUG):
   import osdialog           # fileDialog

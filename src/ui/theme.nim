@@ -9,8 +9,7 @@ import nanovg
 import cfghelper
 import common
 import fieldlimits
-import utils/hocon
-import utils/misc
+import utils/all
 
 
 # {{{ DefaultThemeConfig

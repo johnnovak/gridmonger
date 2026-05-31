@@ -16,17 +16,16 @@ import std/tables
 
 import actions
 import common
-import domain/map
+import domain/all
 import main/appcontext
 import main/cursor          # moveCursorTo, setCursor
 import main/dialogs         # openSaveDiscardMapDialog, openSaveDiscardThemeDialog
 import main/mapio           # saveMap, saveMapAs, loadMap
 import main/modes           # exitSelectMode, copySelection
 import main/status_msg
-import ui/drawlevel
-import ui/icons
+import ui/all
 import undomanager
-import utils/misc
+import utils/all
 
 
 using a: var AppContext

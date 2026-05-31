@@ -3,7 +3,6 @@ import std/os
 import std/strformat
 import std/strutils
 import std/times
-import std/typetraits
 
 # {{{ alias*()
 template alias*(newName: untyped, call: untyped) =

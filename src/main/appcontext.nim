@@ -17,11 +17,9 @@ import nanovg
 
 import actions             # UndoStateData, Map (via re-export)
 import common
-import ui/csdwindow
-import ui/drawlevel         # DrawLevelParams; also transitively brings domain types
-import ui/icons             # NoteIcons
+import ui/all
 import undomanager
-import utils/hocon
+import utils/all
 
 
 # {{{ AppShortcut

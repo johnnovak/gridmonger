@@ -39,29 +39,22 @@ import actions
 import appevents
 import cfghelper
 import common
-import domain/level
-import domain/map
-import domain/regions
+import domain/all
 import io/persistence
 import main/appcontext
 import main/configio        # saveAppConfig
 import main/constants
-import main/cursor          # centerCursorAt, moveCursorTo, updateLastCursorViewCoords, resetCursorAndViewStart
+import main/cursor          # centerCursorAt, moveCursorTo, resetCursorAndViewStart
 import main/keyboard        # updateShortcuts, primaryModDown, isShortcutDown, toStr
 import main/mapio           # saveMap, loadMap
 import main/status_msg
 import main/themeio
 import main/versioncheck    # initVersionChecking
 import main/view            # currLevel, currRegion, coordOptsForCurrLevel, calculateLevelDrawArea, mainPaneRect
-import ui/csdwindow
-import ui/drawlevel
-import ui/gfx               # colorImage, createPattern, createAlpha
-import ui/icons
+import ui/all
 import undomanager
-import utils/converters
-import utils/hocon
+import utils/all
 import utils/misc as gmUtils
-import utils/webbrowser     # openUserManual
 
 
 using a: var AppContext

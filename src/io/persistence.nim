@@ -12,17 +12,11 @@ import std/tables
 
 import riff
 
-import domain/annotations
 import common
-import ui/drawlevel
+import domain/all
 import fieldlimits
-import ui/icons
-import domain/level
-import domain/links
-import domain/map
-import domain/regions
-import utils/misc
-import utils/rle
+import ui/all
+import utils/all
 
 
 const CurrentMapVersion = 4

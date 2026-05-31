@@ -23,7 +23,7 @@ import koi
 
 import common              # HairSp
 import main/appcontext
-import ui/icons             # IconArrowsHoriz, IconArrowsAll
+import ui/all
 
 
 using a: var AppContext

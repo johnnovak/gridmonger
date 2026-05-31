@@ -11,9 +11,7 @@ import common
 import level
 import links
 import regions
-import utils/misc
-import utils/naturalsort
-import utils/rect
+import utils/all
 
 
 using m: Map

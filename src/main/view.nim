@@ -12,15 +12,12 @@ import std/tables
 import with               # `with` macro
 
 import common
-import domain/map           # getRegionCoords, coordOptsForLevel, hasLevels, Level type via transitive
-import domain/regions       # Region, []*
+import domain/all
 import koi                  # winWidth, winHeight
 import main/appcontext
-import main/constants       # NotesListPaneWidth, ThemePaneWidth, StatusBarHeight, ToolsPane*, Level{Top,Right,Bottom,Left}Pad*, CurrentNotePane*
-import ui/csdwindow         # titleBarHeight
-import utils/converters     # int↔float for clampMin
-import utils/misc           # alias, clampMin
-import utils/rect           # Rect, coordRect
+import main/constants       # NotesListPaneWidth, ThemePaneWidth, StatusBarHeight, ToolsPane*, Level*, CurrentNotePane*
+import ui/all
+import utils/all
 
 
 using a: var AppContext

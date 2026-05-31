@@ -26,13 +26,9 @@ import main/appcontext
 import main/constants       # ThemeExt
 import main/logging         # logError
 import main/status_msg      # setStatusMessage, setWarningMessage
-import ui/csdwindow         # `theme=` setter on CSDWindow
-import ui/drawlevel         # initDrawLevelParams
-import ui/gfx               # createPattern, colorImage, createAlpha
-import ui/icons             # IconFloppy, IconWarning, etc.
-import ui/theme as themelib # toLevelTheme/toWindowTheme/etc. (renamed to avoid clash with `a.win.theme=`)
-import utils/misc           # alias
-import utils/naturalsort
+import ui/all
+import ui/theme as themelib # renamed to avoid clash with `a.win.theme=`
+import utils/all
 
 
 using a: var AppContext

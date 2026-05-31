@@ -25,12 +25,12 @@ import with
 
 import actions             # UndoStateData
 import appevents
-import main/actions_ui     # returnToNormalMode etc.
 import cfghelper
 import cmdline
 import common
-import domain/map           # Map
+import domain/all
 import fieldlimits
+import main/actions_ui     # returnToNormalMode etc.
 import main/appcontext
 import main/configio
 import main/constants
@@ -44,14 +44,10 @@ import main/rendering        # renderUI, renderFrame etc.
 import main/status_msg
 import main/themeio
 import main/versioncheck
-import ui/csdwindow
-import ui/drawlevel
-import ui/gfx
-import ui/icons
+import ui/all
 import ui/theme as themelib
 import undomanager           # newUndoManager
-import utils/hocon
-import utils/misc
+import utils/all
 
 
 

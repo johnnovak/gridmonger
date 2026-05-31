@@ -5,14 +5,9 @@ import std/strformat
 import std/tables
 
 import common
-import domain/level
-import domain/links
-import domain/map
-import domain/regions
-import domain/selection
+import domain/all
 import undomanager
-import utils/misc
-import utils/rect
+import utils/all
 
 
 type UndoStateData* = object

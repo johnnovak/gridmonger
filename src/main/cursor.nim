@@ -16,15 +16,13 @@ import with                  # `with` macro
 
 import actions               # drawTrail
 import common
-import domain/level
-import domain/map
+import domain/all
 import koi                   # mx, my
 import main/appcontext
 import main/constants        # ScrollMargin
 import main/view             # viewRow, viewCol, currLevel
-import ui/drawlevel          # numDisplayableRows/Cols, gridSize
-import utils/converters
-import utils/misc            # alias, clampMin, clampMax
+import ui/all
+import utils/all
 
 
 using a: var AppContext

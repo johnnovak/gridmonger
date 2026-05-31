@@ -14,8 +14,8 @@ import koi                  # setFramesLeft
 import main/appcontext
 import main/constants       # WarningMessageTimeout, InfiniteDuration
 import main/keyboard        # toStr(AppShortcut)
-import ui/icons             # IconWarning, IconGrid, IconLink, IconArrowsAll, IconPaste
-import utils/misc           # alias
+import ui/all
+import utils/all
 
 
 using a: var AppContext

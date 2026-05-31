@@ -9,13 +9,11 @@
 import std/options
 
 import common               # newSelection, EditMode (emSelect, emNormal)
-import domain/selection     # Selection, SelectionBuffer, newSelectionFrom, boundingBox
-import domain/level         # newLevelFrom
+import domain/all
 import main/appcontext
 import main/status_msg      # setSelectModeSelectMessage, clearStatusMessage
 import main/view            # currLevel
-import utils/misc           # alias
-import utils/rect           # Rect
+import utils/all
 
 
 using a: var AppContext
