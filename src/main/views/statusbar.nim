@@ -1,36 +1,23 @@
-# statusbar pane
-#
-# The status bar at the bottom of the window. Owns *both* the renderer
-# (renderStatusBar, renderCommand) AND every status-message setter
-# (setStatusMessage / setWarningMessage / setErrorMessage and the
-# mode-specific setSelectMode*Message, setNudgePreviewModeMessage etc.).
-# Co-location is intentional: the writers and the reader both touch
-# AppContext.ui.status; splitting them artificially separated two halves
-# of the same concern.
-# Side effects: koi + nanovg drawing; AppContext.ui.status mutation;
-# koi.setFramesLeft().
-
-import std/math               # round
+import std/math
 import std/monotimes
 import std/strformat
-import std/times               # Duration comparison
+import std/times
 
 import koi
 import nanovg
 
 import common
-import domain/all            # Map.hasLevels
-import glfw                 # mkCtrl
+import domain/all
+import glfw
 import main/appcontext
-import main/constants       # WarningMessageTimeout, InfiniteDuration, StatusBarHeight
-import main/keyboard        # toStr(AppShortcut)
-import main/view            # currLevel
+import main/constants
+import main/keyboard
+import main/view
 import ui/all
 import utils/all
 
 
 using a: var AppContext
-
 
 # {{{ setStatusMessage()
 proc setStatusMessage*(icon, msg: string, commands: seq[string]; a) =
@@ -94,6 +81,21 @@ proc setErrorMessage*(msg: string; a) =
   koi.setFramesLeft()
 
 # }}}
+
+# {{{ toggleShowOption / toggleOnOffOption
+template toggleOption(opt: untyped, icon, msg, on, off: string; a) =
+  opt = not opt
+  let state = if opt: on else: off
+  setStatusMessage(icon, msg & " " & state, a)
+
+template toggleShowOption*(opt: untyped, icon, msg: string; a) =
+  toggleOption(opt, icon, msg, on="shown", off="hidden", a)
+
+template toggleOnOffOption*(opt: untyped, icon, msg: string; a) =
+  toggleOption(opt, icon, msg, on="on", off="off", a)
+
+# }}}
+
 # {{{ setSelectModeSelectMessage()
 proc setSelectModeSelectMessage*(a) =
   let special = if a.keys.primaryModKey == mkCtrl: "Ctrl" else: "Cmd"
@@ -136,19 +138,6 @@ proc setSelectJumpToLinkSrcActionMessage*(a) =
                    fmt"Select {linkFloorToString(floor)} " &
                    fmt"source ({currIdx} of {count})",
                    @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"], a)
-
-# }}}
-# {{{ toggleOption / toggleShowOption / toggleOnOffOption templates
-template toggleOption*(opt: untyped, icon, msg, on, off: string; a) =
-  opt = not opt
-  let state = if opt: on else: off
-  setStatusMessage(icon, msg & " " & state, a)
-
-template toggleShowOption*(opt: untyped, icon, msg: string; a) =
-  toggleOption(opt, icon, msg, on="shown", off="hidden", a)
-
-template toggleOnOffOption*(opt: untyped, icon, msg: string; a) =
-  toggleOption(opt, icon, msg, on="on", off="off", a)
 
 # }}}
 # {{{ setSetLinkDestinationMessage()
@@ -306,5 +295,6 @@ proc renderStatusBar*(x, y, w, h: float; a) =
 
   vg.restore
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

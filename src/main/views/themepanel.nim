@@ -1,10 +1,3 @@
-# themepanel pane
-#
-# The Theme Editor pane on the right side of the window. Lets the user edit
-# the current theme's HOCON properties live and see the changes immediately.
-# Side effects: koi + nanovg drawing, AppContext.theme.config and
-# .themeEditor.modified mutation.
-
 import std/options
 import std/sugar
 import std/tables
@@ -15,14 +8,14 @@ import with
 
 import cfghelper
 import common
-import fieldlimits          # FieldLimits
+import fieldlimits          
 import main/appcontext
-import main/dialogs           # openSaveDiscardThemeDialog
-import main/themeio
+import main/dialogs         
+import main/theme
 import ui/all
-import ui/theme as themelib  # DialogCornerRadiusLimits and other style limits
+import ui/theme as themelib 
 import utils/all
-import utils/misc as gmUtils  # alias is in misc; some procs disambiguate via gmUtils
+import utils/misc as gmUtils
 
 
 using a: var AppContext

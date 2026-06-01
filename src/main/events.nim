@@ -1,18 +1,7 @@
-# events
-#
-# Mouse + keyboard event dispatchers — handleLevelMouseEvents,
-# handleGlobalKeyEvents (+ NoLevels variant), handleQuickRefKeyEvents.
-# Plus enterDrawWallMode and the action-message helpers that the
-# event handlers fire. The 1245-line handleGlobalKeyEvents is one
-# giant edit-mode dispatch; sub-splitting that proc by edit mode is
-# a planned follow-up.
-# Side effects: reads koi event, mutates AppContext.ui state, calls
-# action wrappers (which trigger domain mutations).
-
-import std/algorithm      # sort
+import std/algorithm
 import std/math
 import std/options
-import std/sequtils       # toSeq
+import std/sequtils
 import std/sets
 import std/strformat
 import std/strutils
@@ -24,7 +13,7 @@ from koi/utils import lerp, invLerp, remap
 import with
 
 import actions
-import io/persistence       # NumLevelsLimits
+import io/persistence
 import common
 import domain/level
 import domain/map
@@ -34,21 +23,20 @@ import main/appcontext
 import main/configio
 import main/constants
 import main/cursor
-import main/dialogs   # shim — re-exports all per-dialog modules + dialogs/common
+import main/dialogs
 import main/keyboard
 import main/mapio
 import main/views/statusbar
-import main/themeio
+import main/theme
 import main/view
 import ui/csdwindow
 import ui/drawlevel
 import ui/icons
 import utils/misc
-import utils/rect           # rectN
+import utils/rect
 
 
 using a: var AppContext
-
 
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents*(a) =
@@ -1507,6 +1495,7 @@ proc handleGlobalKeyEvents*(a) =
       discard
 
 # }}}
+
 # {{{ handleGlobalKeyEvents_NoLevels()
 proc handleGlobalKeyEvents_NoLevels*(a) =
   let yubnMode = a.prefs.yubnMovementKeys
@@ -1547,6 +1536,5 @@ proc handleGlobalKeyEvents_NoLevels*(a) =
       toggleTitleBar(a)
 
 # }}}
-
 
 # vim: et:ts=2:sw=2:fdm=marker

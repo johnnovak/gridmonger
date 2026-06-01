@@ -1,11 +1,3 @@
-# appcontext
-#
-# AppContext (the global app-state god-object) and every companion type it
-# references: Preferences, Paths, Keys, Document, UIState, Layout, Theme,
-# ThemeEditor, Dialogs and all per-dialog state types, Splash, QuickRef, etc.
-# Plus the `using a: var AppContext` declaration shared by every consumer.
-# Side effects: none (pure type definitions + one global var).
-
 import std/monotimes
 import std/options
 import std/tables
@@ -15,7 +7,7 @@ import glfw
 import koi
 import nanovg
 
-import actions             # UndoStateData, Map (via re-export)
+import actions
 import common
 import ui/all
 import undomanager
@@ -205,6 +197,7 @@ type
 
 # }}}
 
+# {{{ AppContext
 type
   AppContext* = ref object
     win*:          CSDWindow
@@ -813,10 +806,8 @@ type
     updateOutlineImage*:  bool
     updateShadowImage*:   bool
 
-
-
 var g_app*: AppContext
 
-using a: var AppContext
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

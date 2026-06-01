@@ -1,9 +1,3 @@
-# edit_region dialog
-#
-# Extracted from main/dialogs.nim. Imports main/dialogs/common for the
-# shared 7 field templates, dialog constants, and helpers.
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
-
 import main/dialogs/common
 
 import actions
@@ -11,7 +5,6 @@ import actions
 
 using a: var AppContext
 
-# {{{ Edit region properties dialog
 
 proc openEditRegionPropertiesDialog*(a) =
   alias(dlg, a.dialogs.editRegionProps)
@@ -136,6 +129,5 @@ proc editRegionPropsDialog*(dlg: var EditRegionPropsParams; a) =
 
   koi.endDialog()
 
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

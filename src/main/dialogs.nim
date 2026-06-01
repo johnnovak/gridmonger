@@ -1,12 +1,3 @@
-# dialogs
-#
-# Re-export shim. The actual dialog procs live in main/dialogs/<name>.nim
-# files (mostly one per dialog; theme.nim holds all 5 theme dialogs which
-# share a tightly-coupled workflow). Shared infrastructure is in
-# main/dialogs/common. Consumers can `import main/dialogs` and get the full
-# set of openXxxDialog + XxxDialog procs without naming each per-dialog
-# module.
-
 import ./dialogs/common
 import ./dialogs/about
 import ./dialogs/preferences
@@ -27,5 +18,3 @@ export common, about, preferences,
        new_level, edit_level_props, resize_level, delete_level,
        edit_note, edit_label, edit_region,
        theme
-
-# vim: et:ts=2:sw=2:fdm=marker

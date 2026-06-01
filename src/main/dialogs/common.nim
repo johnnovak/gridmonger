@@ -1,24 +1,9 @@
-# dialogs/common
-#
-# Shared infrastructure for per-dialog files:
-#   - Dialog constants (DlgItemHeight, DlgButtonWidth, DialogLayoutParams, etc.)
-#   - 7 shared field templates (coordinateFields, regionFields, noteFields,
-#     commonLevelFields, validateLevelFields, commonGeneralMapFields,
-#     validateCommonGeneralMapFields) — implicitly capture `a` and `dlg`
-#     from the caller's lexical scope, so per-dialog files MUST import this
-#     to use them.
-#   - Layout/validation helpers (calcDialogX, dialogButtonsStartPos,
-#     mkValidation*, moveGridPositionWrapping, handleGridRadioButton,
-#     colorRadioButtonDrawProc, closeDialog).
-#
-# Re-exports the heavyweights every dialog needs (appcontext, keyboard,
-# statusbar etc.) so per-dialog files don't need 15+ import lines each.
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
+# Constants, field templates, helpers shared by all dialogs
 
 import std/lenientops
 import std/math
 import std/options
-import std/sequtils         # toSeq
+import std/sequtils
 import std/strformat
 import std/strutils
 import std/tables
@@ -30,14 +15,14 @@ import nanovg
 import with
 
 import cfghelper
-import ../../common as gmcommon  # disambiguate from this file (src/main/dialogs/common)
+import ../../common as gmcommon
 import domain/all as gmdomain
 import io/persistence as gmpersist
 import main/appcontext
-import main/constants          # ThemePaneWidth
-import main/keyboard          # isShortcutDown, isKeyDown, toStr, handleTabNavigation
-import main/views/statusbar   # setStatusMessage, clearStatusMessage
-import main/view              # mainPaneRect, currLevel, etc.
+import main/constants
+import main/keyboard
+import main/views/statusbar
+import main/view
 import ui/all as gmui
 import utils/all as gmutilsall
 import utils/misc as gmUtils

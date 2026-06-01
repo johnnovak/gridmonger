@@ -1,9 +1,3 @@
-# constants
-#
-# Project-wide compile-time constants for the gridmonger app: file extensions,
-# UI sizing/padding, validation limits, floor groupings, message timeouts.
-# Side effects: none (compile-time data only).
-
 import std/sequtils
 import std/strutils
 import std/times

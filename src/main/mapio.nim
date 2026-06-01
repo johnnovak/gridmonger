@@ -1,10 +1,3 @@
-# mapio
-#
-# Map file (.gmm) load/save with backup rotation and crash-time autosave
-# helpers. Also wraps the file-dialog-driven Save As workflow.
-# Side effects: file system reads/writes (the actual RIFF serialization
-# lives in io/persistence), AppContext.doc mutation.
-
 import std/logging as log except Level
 import std/monotimes
 import std/options
@@ -14,27 +7,27 @@ import std/tempfiles
 
 import with
 
-import appevents            # appEvents.fetchLatestVersion etc.
+import appevents
 import common
 import io/persistence
 import main/appcontext
-import main/configio        # saveAppConfig
-import main/constants       # MapFileExt, BackupFileExt, CrashAutosaveName, UntitledName, GridmongerMapFileFilter
-import main/cursor          # moveCursorTo
-import main/logging         # logError
-import main/views/statusbar      # setStatusMessage, setWarningMessage, setErrorMessage
-import main/themeio         # findThemeIndex
+import main/configio
+import main/constants
+import main/cursor
+import main/logging
+import main/views/statusbar
+import main/theme
 import ui/all
-import undomanager          # initUndoManager
+import undomanager
 import utils/all
 
 when not defined(DEBUG):
-  import osdialog           # fileDialog
+  import osdialog
 
 
 using a: var AppContext
 
-# {{{ loadMap()
+# {{{ loadMap*()
 proc loadMap*(path: string; a): bool =
   log.info(fmt"Loading map '{path}'...")
 
@@ -118,7 +111,7 @@ proc loadMap*(path: string; a): bool =
     a.logFile.flushFile
 
 # }}}
-# {{{ saveMap()
+# {{{ saveMap*()
 proc saveMap*(path: string, autosave, createBackup: bool; a) =
   alias(dp, a.ui.drawLevelParams)
   alias(nls, a.ui.notesListState)
@@ -190,7 +183,7 @@ proc saveMap*(path: string, autosave, createBackup: bool; a) =
     a.logFile.flushFile
 
 # }}}
-# {{{ autoSaveMapOnCrash()
+# {{{ autoSaveMapOnCrash*()
 
 when not defined(DEBUG):
 
@@ -209,7 +202,7 @@ when not defined(DEBUG):
     result = path
 
 # }}}
-# {{{ saveMapAs()
+# {{{ saveMapAs*()
 proc saveMapAs*(a) =
   when not defined(DEBUG):
     var path = fileDialog(fdSaveFile, filters=GridmongerMapFileFilter)
@@ -223,7 +216,7 @@ proc saveMapAs*(a) =
       saveAppConfig(a)
 
 # }}}
-# {{{ saveMap()
+# {{{ saveMap*()
 proc saveMap*(a) =
   if a.doc.path == "":
     saveMapAs(a)
@@ -231,6 +224,5 @@ proc saveMap*(a) =
     saveMap(a.doc.path, autosave=false, createBackup=true, a)
 
 # }}}
-
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -1,22 +1,14 @@
-# about dialog
-#
-# Extracted from main/dialogs.nim. Imports main/dialogs/common for the
-# shared 7 field templates, dialog constants, and helpers (calcDialogX,
-# closeDialog, etc.).
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
-
 import main/dialogs/common
 
-import std/browsers              # openDefaultBrowser
+import std/browsers
 import std/strformat
 import semver
-import appevents                 # appEvents.fetchLatestVersion
-
+import appevents
 
 
 using a: var AppContext
 
-# {{{ About dialog
+
 proc openAboutDialog*(a) =
   if a.latestVersion.isNone:
     appEvents.fetchLatestVersion()
@@ -130,7 +122,5 @@ proc aboutDialog*(dlg: var AboutDialogParams; a) =
     if eventHandled: setEventHandled()
 
   koi.endDialog()
-
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -1,18 +1,10 @@
-# save_discard_map dialog
-#
-# Extracted from main/dialogs.nim. Imports main/dialogs/common for the
-# shared 7 field templates, dialog constants, and helpers.
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
-
 import main/dialogs/common
 
-import main/mapio                # saveMap
-
+import main/mapio
 
 
 using a: var AppContext
 
-# {{{ Save/discard map changes dialog
 
 proc openSaveDiscardMapDialog*(nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.saveDiscardMap)
@@ -91,6 +83,5 @@ proc saveDiscardMapDialog*(dlg: var SaveDiscardMapDialogParams; a) =
 
   koi.endDialog()
 
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

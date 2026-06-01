@@ -1,26 +1,16 @@
-# cursor
-#
-# Cursor and view-scroll movement. setCursor / stepCursor (with wraparound),
-# moveCursor / moveCursorDiagonal / moveCursorTo, centerCursorAt,
-# locationAtMouse, stepLevelView / moveLevelView, plus reset / update
-# helpers. Mutates AppContext.ui.cursor, drawLevelParams, drawTrail,
-# prevMoveDir, prevCursorViewXY.
-# Side effects: AppContext field mutation; drawTrail action triggers a domain
-# write via actions.drawTrail.
-
-import std/math               # floorMod
+import std/math
 import std/options
 import std/tables
 
-import with                  # `with` macro
+import with
 
-import actions               # drawTrail
+import actions
 import common
 import domain/all
-import koi                   # mx, my
+import koi
 import main/appcontext
-import main/constants        # ScrollMargin
-import main/view             # viewRow, viewCol, currLevel
+import main/constants
+import main/view
 import ui/all
 import utils/all
 
@@ -28,7 +18,7 @@ import utils/all
 using a: var AppContext
 
 
-# {{{ setCursor()
+# {{{ setCursor*()
 proc setCursor*(newCur: Location; a) =
   with a:
     if not doc.map.hasLevels:
@@ -50,7 +40,7 @@ proc setCursor*(newCur: Location; a) =
     )
 
 # }}}
-# {{{ stepCursor()
+# {{{ stepCursor*()
 proc moveCursorTo*(loc: Location; a)
 
 proc stepCursor*(cur: Location, dir: CardinalDir, steps: Natural; a): Location =

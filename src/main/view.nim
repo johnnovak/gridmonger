@@ -1,29 +1,20 @@
-# view
-#
-# Read-only view accessors (currLevel, currRegion, coordOptsForCurrLevel)
-# and pane/draw-area dimension calculations (mainPaneRect, toolsPane*,
-# calculateLevelDrawArea). Pure mutation of one DrawLevelParams field
-# inside calculateLevelDrawArea is the only side effect.
-# Side effects: minor AppContext field mutation (start XY in drawLevelParams).
-
 import std/options
 import std/tables
 
-import with               # `with` macro
+import with
 
 import common
 import domain/all
-import koi                  # winWidth, winHeight
+import koi
 import main/appcontext
-import main/constants       # NotesListPaneWidth, ThemePaneWidth, StatusBarHeight, ToolsPane*, Level*, CurrentNotePane*
+import main/constants
 import ui/all
 import utils/all
 
 
 using a: var AppContext
 
-
-# {{{ resetManualNoteTooltip()
+# {{{ resetManualNoteTooltip*()
 proc resetManualNoteTooltip*(a) =
   with a.ui.manualNoteTooltipState:
     show = false
@@ -31,7 +22,7 @@ proc resetManualNoteTooltip*(a) =
     my = -1
 
 # }}}
-# {{{ viewRow()
+# {{{ viewRow*()
 func viewRow*(row: Natural; a): int =
   row - a.ui.drawLevelParams.viewStartRow
 
@@ -39,7 +30,7 @@ func viewRow*(a): int =
   viewRow(a.ui.cursor.row, a)
 
 # }}}
-# {{{ viewCol()
+# {{{ viewCol*()
 proc viewCol*(col: Natural; a): int =
   col - a.ui.drawLevelParams.viewStartCol
 
@@ -47,12 +38,12 @@ func viewCol*(a): int =
   viewCol(a.ui.cursor.col, a)
 
 # }}}
-# {{{ currLevel()
+# {{{ currLevel*()
 func currLevel*(a): Level =
   a.doc.map.levels[a.ui.cursor.levelId]
 
 # }}}
-# {{{ currRegion()
+# {{{ currRegion*()
 func currRegion*(a): Option[Region] =
   let l = currLevel(a)
   if l.regionOpts.enabled:
@@ -68,7 +59,7 @@ func coordOptsForCurrLevel*(a): CoordinateOptions =
 
 # }}}
 
-# {{{ mainPaneRect()
+# {{{ mainPaneRect*()
 proc mainPaneRect*(a): Rect[int] =
   var
     x1 = 0
@@ -87,7 +78,7 @@ proc mainPaneRect*(a): Rect[int] =
   coordRect(x1.int, y1.int, x2.clampMin(x1+1).int, y2.clampMin(y1+1).int)
 
 # }}}
-# {{{ toolsPaneWidth()
+# {{{ toolsPaneWidth*()
 proc toolsPaneWidth*(a): float =
   let mainPane = mainPaneRect(a)
   if a.layout.showToolsPane:
@@ -97,54 +88,11 @@ proc toolsPaneWidth*(a): float =
     0.0
 
 # }}}
-# {{{ toolsPaneHeight()
+# {{{ toolsPaneHeight*()
 proc toolsPaneHeight*(mainPaneHeight: float): float =
   if   mainPaneHeight < ToolsPaneYBreakpoint1: 420.0
   elif mainPaneHeight < ToolsPaneYBreakpoint2: 630.0
   else:                                        780.0
-
-# }}}
-
-# {{{ calculateLevelDrawArea()
-proc calculateLevelDrawArea*(a): tuple[w, h: float] =
-  alias(dp, a.ui.drawLevelParams)
-  alias(ui, a.ui)
-
-  let l = currLevel(a)
-
-  var topPad, rightPad, bottomPad, leftPad: float
-
-  if a.ui.showCellCoords:
-    topPad    = LevelTopPad_Coords
-    rightPad  = LevelRightPad_Coords
-    bottomPad = LevelBottomPad_Coords
-    leftPad   = LevelLeftPad_Coords
-  else:
-    topPad    = LevelTopPad_NoCoords
-    rightPad  = LevelRightPad_NoCoords
-    bottomPad = LevelBottomPad_NoCoords
-    leftPad   = LevelLeftPad_NoCoords
-
-  if l.regionOpts.enabled:
-    topPad += LevelTopPad_Regions
-
-  let mainPane = mainPaneRect(a)
-
-  dp.startX = mainPane.x1 + leftPad
-  dp.startY = mainPane.y1 + topPad
-
-  var
-    w = mainPane.w - leftPad - rightPad
-    h = mainPane.h - topPad  - bottomPad
-
-  if a.layout.showCurrentNotePane:
-   h -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
-                                CurrentNotePaneBottomPad
-
-  if a.layout.showToolsPane:
-    w -= toolsPaneWidth(a)
-
-  (w, h)
 
 # }}}
 

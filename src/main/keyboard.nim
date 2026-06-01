@@ -1,17 +1,3 @@
-# keyboard
-#
-# Keyboard shortcut definitions, Quick Reference data construction, and the
-# event-matching helpers (checkShortcut, isShortcutDown/Up, primaryModDown).
-# Two flavours of code live here together:
-#   - Pure data: DefaultAppShortcuts table, MoveKeys/WalkKeys structures and
-#     constants, setYubn/mapCtrl/addStandardMac variants, toStr overloads
-#     without AppContext.
-#   - AppContext-aware: updateShortcuts, updateWalkKeys, mkQuickRef*, the
-#     sc/toStr overloads taking `a`, event-matching helpers.
-# Side effects: none beyond mutating AppContext fields. The event-matching
-# procs read from koi events that are passed in as values, so they're
-# testable without live input devices.
-
 import std/sequtils
 import std/strformat
 import std/strutils
@@ -21,7 +7,7 @@ import std/tables
 import glfw
 import koi
 
-import common              # HairSp
+import common
 import main/appcontext
 
 

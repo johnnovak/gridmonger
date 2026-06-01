@@ -1,10 +1,3 @@
-# quickref pane
-#
-# The Quick Reference overlay (`?` keyboard shortcut). Owns the data tables
-# (mkQuickRef* + sc/csc/desc helpers), the renderer (renderQuickReference),
-# and the keyboard handler (handleQuickRefKeyEvents).
-# Side effects: koi + nanovg drawing, AppContext.ui mutation, theme switch.
-
 import std/math
 import std/options
 import std/strformat
@@ -27,7 +20,6 @@ import utils/all
 
 
 using a: var AppContext
-
 
 let QuickRefTabLabels* = @["General", "Editing", "Interface"]
 
@@ -279,7 +271,6 @@ proc updateQuickRefShortcuts*(a) =
 
 # }}}
 
-
 # {{{ renderQuickReference()
 
 proc renderQuickReference*(x, y, w, h: float; a) =
@@ -423,7 +414,6 @@ proc renderQuickReference*(x, y, w, h: float; a) =
     vg.restore
 
 # }}}
-
 # {{{ handleQuickRefKeyEvents()
 
 proc handleQuickRefKeyEvents*(a) =

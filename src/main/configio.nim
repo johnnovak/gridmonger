@@ -1,9 +1,3 @@
-# configio
-#
-# App-config (preferences + last-state + window layouts) load/save and the
-# in-memory window-layout snapshot helpers (saveLayout / restoreLayout).
-# Side effects: file system reads/writes, AppContext mutation.
-
 import std/logging as log except Level
 import std/options
 import std/strformat
@@ -11,16 +5,15 @@ import std/streams
 import std/sugar
 
 import cfghelper
-import common               # AppVersion
+import common
 import main/appcontext
-import main/views/statusbar      # setStatusMessage, setWarningMessage
-import main/themeio         # currThemeName
+import main/views/statusbar
+import main/theme
 import ui/all
 import utils/all
 
 
 using a: var AppContext
-
 
 # {{{ setLayoutWindowFields()
 proc setLayoutWindowFields*(l: var Layout; a) =

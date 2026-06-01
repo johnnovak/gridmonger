@@ -1,9 +1,3 @@
-# logging
-#
-# File-based logger init, log-file rotation, and a small wrapper for
-# logging an exception with a stack trace.
-# Side effects: file I/O (creates and rolls log files).
-
 import std/logging as log except Level
 import std/os
 
@@ -13,9 +7,8 @@ import utils/misc
 
 using a: var AppContext
 
-
-# {{{ rollLogFile(a)
-proc rollLogFile*(a) =
+# {{{ rollLogFile()
+proc rollLogFile(a) =
   alias(p, a.paths)
 
   let fileNames = @[
@@ -36,7 +29,8 @@ proc rollLogFile*(a) =
           discard
 
 # }}}
-# {{{ initLogger(a)
+
+# {{{ initLogger*()
 proc initLogger*(a) =
   rollLogFile(a)
   a.logFile = open(a.paths.logFile, fmWrite)
@@ -50,7 +44,7 @@ proc initLogger*(a) =
   addHandler(fileLog)
 
 # }}}
-# {{{ logError()
+# {{{ logError*()
 proc logError*(e: ref Exception, msgPrefix: string = "") =
   var msg = "Error message: " & e.msg & "\n\nStack trace:\n" & getStackTrace(e)
   if msgPrefix != "":

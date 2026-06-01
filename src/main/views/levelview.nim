@@ -1,12 +1,4 @@
-# levelview pane
-#
-# Everything that renders directly into the central level view: the level
-# itself, the level/region dropdowns above it, the mode/option indicators
-# at the top, the manual note tooltip overlay, and the empty-map fallback.
-# Side effects: koi + nanovg drawing; reads + minor writes to AppContext.ui
-# (drawLevelParams, drawTrail, etc.).
-
-import std/math               # round
+import std/math
 import std/options
 import std/strformat
 
@@ -16,9 +8,9 @@ import nanovg
 import common
 import domain/all
 import main/appcontext
-import main/cursor          # setCursor, centerCursorAt
-import main/events          # handleLevelMouseEvents
-import main/view            # currLevel, currRegion, coordOptsForCurrLevel
+import main/cursor
+import main/events
+import main/view
 import ui/all
 import utils/all
 import utils/misc as gmUtils

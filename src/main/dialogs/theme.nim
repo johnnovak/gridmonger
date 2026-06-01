@@ -1,30 +1,10 @@
-# theme dialogs
-#
-# All five theme dialogs in one file. They share a tightly-coupled workflow:
-# copying or renaming a theme can trigger an overwrite-confirmation dialog;
-# the save/discard dialog feeds into the various theme switch paths; deletion
-# refreshes the theme list. Any theme-system change typically touches several
-# of these together.
-#
-# Dialogs covered:
-#   - openSaveDiscardThemeDialog / saveDiscardThemeDialog
-#   - openOverwriteThemeDialog   / overwriteThemeDialog
-#   - openCopyThemeDialog        / copyThemeDialog
-#   - openRenameThemeDialog      / renameThemeDialog
-#   - openDeleteThemeDialog      / deleteThemeDialog
-#
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation,
-# theme load/save (via main/themeio).
-
-import std/os                    # /, addFileExt
+import std/os
 
 import main/dialogs/common
-import main/themeio              # saveTheme, copyTheme, renameTheme, deleteTheme,
-                                 # makeUniqueThemeName, themePath, buildThemeList
+import main/theme
 
 
 using a: var AppContext
-
 
 # {{{ Save/discard theme changes dialog
 
@@ -101,8 +81,7 @@ proc saveDiscardThemeDialog*(dlg: SaveDiscardThemeDialogParams; a) =
 
   koi.endDialog()
 
-
-
+# }}}
 # {{{ Overwrite theme dialog
 
 proc openOverwriteThemeDialog*(themeName: string,
@@ -175,8 +154,7 @@ proc overwriteThemeDialog*(dlg: OverwriteThemeDialogParams; a) =
 
   koi.endDialog()
 
-
-
+# }}}
 # {{{ Copy theme dialog
 
 proc openCopyThemeDialog*(a) =
@@ -290,8 +268,7 @@ proc copyThemeDialog*(dlg: var CopyThemeDialogParams; a) =
 
   koi.endDialog()
 
-
-
+# }}}
 # {{{ Rename theme dialog
 
 proc openRenameThemeDialog*(a) =
@@ -404,8 +381,7 @@ proc renameThemeDialog*(dlg: var RenameThemeDialogParams; a) =
 
   koi.endDialog()
 
-
-
+# }}}
 # {{{ Delete theme dialog
 
 proc openDeleteThemeDialog*(a) =
@@ -471,7 +447,5 @@ proc deleteThemeDialog*(a) =
   koi.endDialog()
 
 # }}}
-
-
 
 # vim: et:ts=2:sw=2:fdm=marker

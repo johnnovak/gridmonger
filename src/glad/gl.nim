@@ -6,7 +6,7 @@
     APIs: gl=3.2
     Profile: core
     Extensions:
-        
+
     Loader: False
     Local files: True
     Omit khrplatform: False

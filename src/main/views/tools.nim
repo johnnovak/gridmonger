@@ -1,21 +1,14 @@
-# toolspane
-#
-# The right-side tools pane: special-wall picker + floor-color picker.
-# Includes specialWallDrawProc, the custom radio-button draw proc that
-# renders mini wall previews in the picker buttons.
-# Side effects: koi + nanovg drawing.
-
 import std/options
-import std/sugar           # `collect:` macro
+import std/sugar
 
 import koi
 import nanovg
 
 import common
 import main/appcontext
-import main/constants       # SpecialWallTooltips, ToolsPaneYBreakpoint1/2
-import main/dialogs/common  # colorRadioButtonDrawProc
-import main/view            # mainPaneRect
+import main/constants
+import main/dialogs/common
+import main/view
 import ui/all
 import utils/all
 

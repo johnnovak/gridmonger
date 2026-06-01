@@ -1,11 +1,3 @@
-# currentnotepane
-#
-# The "current note" pane below the level view. Shows the note (if any) at
-# the cell under the cursor. Also home of renderIndexedNote and
-# renderNoteMarker, which are shared note-cell helpers — they're used here
-# AND by noteslistpane.nim, which imports this module.
-# Side effects: koi + nanovg drawing.
-
 import std/options
 
 import koi

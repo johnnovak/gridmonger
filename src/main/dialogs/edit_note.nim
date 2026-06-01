@@ -1,9 +1,3 @@
-# edit_note dialog
-#
-# Extracted from main/dialogs.nim. Imports main/dialogs/common for the
-# shared 7 field templates, dialog constants, and helpers.
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
-
 import main/dialogs/common
 
 import actions
@@ -12,7 +6,6 @@ import io/persistence
 
 using a: var AppContext
 
-# {{{ Edit note dialog
 
 proc openEditNoteDialog*(a) =
   alias(dlg, a.dialogs.editNote)

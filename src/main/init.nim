@@ -1,20 +1,12 @@
-# init
-#
-# App initialization and shutdown: splash window, fonts, icons, image
-# loaders, graphics context, paths setup, preferences/layout restore from
-# config, initApp, cleanup, crashHandler.
-# Side effects: GL/glfw window creation, file system reads, config writes
-# (in crashHandler), AppContext setup.
-
-import std/lenientops          # float*int arithmetic
+import std/lenientops
 import std/logging as log except Level
 import std/monotimes
 import std/options
 import std/os
-import std/sequtils          # toSeq
-import std/setutils          # fullSet
+import std/sequtils
+import std/setutils
 import std/strformat
-import std/times             # initDuration
+import std/times
 
 import glad/gl
 import glfw
@@ -23,30 +15,30 @@ import nanovg
 import semver
 import with
 
-import actions             # UndoStateData
+import actions
 import appevents
 import cfghelper
 import cmdline
 import common
 import domain/all
 import fieldlimits
-import main/actions_ui     # returnToNormalMode etc.
+import main/actions_ui
 import main/appcontext
 import main/configio
 import main/constants
 import main/cursor
-import main/dialogs        # shim — re-exports all per-dialog modules + common
-import main/events         # handleQuickRefKeyEvents, handleGlobalKeyEvents
+import main/dialogs
+import main/events
 import main/keyboard
 import main/logging
 import main/mapio
-import main/frame        # renderUI, renderFrame etc.
+import main/frame
 import main/views/quickref
 import main/views/statusbar
-import main/themeio
+import main/theme
 import ui/all
 import ui/theme as themelib
-import undomanager           # newUndoManager
+import undomanager
 import utils/all
 
 when not defined(DEBUG):
@@ -54,76 +46,6 @@ when not defined(DEBUG):
 
 
 using a: var AppContext
-
-proc renderFramePreCb*(a)
-proc renderFrameCb*(a)
-
-# {{{ createSplashWindow()
-proc createSplashWindow*(mousePassthrough: bool = false; a) =
-  alias(s, a.splash)
-
-  var cfg = DefaultOpenglWindowConfig
-  cfg.visible = false
-  cfg.resizable = false
-  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
-  cfg.nMultiSamples = 4
-  cfg.transparentFramebuffer = true
-  cfg.decorated = false
-  cfg.floating = true
-  cfg.mousePassthrough = mousePassthrough
-
-  when defined(windows):
-    cfg.hideFromTaskbar = true
-  else:
-    cfg.version = glv32
-    cfg.forwardCompat = true
-    cfg.profile = opCoreProfile
-
-  s.win = newWindow(cfg)
-  s.win.title = "Gridmonger Splash Image"
-  s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
-
-# }}}
-# {{{ showSplash()
-proc showSplash*(a) =
-  alias(s, g_app.splash)
-
-  let (_, _, maxWidth, maxHeight) = g_app.win.findCurrentMonitor().workArea
-  let w = (maxWidth * 0.6).int
-  let h = (w/s.logo.width * s.logo.height).int
-
-  s.win.size = (w, h)
-  s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
-  s.win.show
-
-  if not a.layout.showThemeEditor:
-    koi.setFocusCaptured(true)
-
-# }}}
-# {{{ closeSplash()
-proc closeSplash*(a) =
-  alias(s, a.splash)
-
-  s.win.destroy
-  s.win = nil
-
-  s.vg.deleteImage(s.logoImage)
-  s.vg.deleteImage(s.outlineImage)
-  s.vg.deleteImage(s.shadowImage)
-
-  s.logoImage = NoImage
-  s.outlineImage = NoImage
-  s.shadowImage = NoImage
-
-  nvgDeleteContext(s.vg)
-  s.vg = nil
-
-  s.show = false
-
-  if not a.layout.showThemeEditor:
-    koi.setFocusCaptured(false)
-
-# }}}
 
 # {{{ loadAndSetIcon()
 proc loadAndSetIcon*(a) =
@@ -191,6 +113,335 @@ proc loadAboutLogoImage*(a) =
 
   al.logo = loadImage(a.paths.dataDir / "logo-small.png")
   createAlpha(al.logo)
+
+# }}}
+
+# {{{ createSplashWindow()
+proc createSplashWindow*(mousePassthrough: bool = false; a) =
+  alias(s, a.splash)
+
+  var cfg = DefaultOpenglWindowConfig
+  cfg.visible = false
+  cfg.resizable = false
+  cfg.bits = (r: 8, g: 8, b: 8, a: 8, stencil: 8, depth: 16)
+  cfg.nMultiSamples = 4
+  cfg.transparentFramebuffer = true
+  cfg.decorated = false
+  cfg.floating = true
+  cfg.mousePassthrough = mousePassthrough
+
+  when defined(windows):
+    cfg.hideFromTaskbar = true
+  else:
+    cfg.version = glv32
+    cfg.forwardCompat = true
+    cfg.profile = opCoreProfile
+
+  s.win = newWindow(cfg)
+  s.win.title = "Gridmonger Splash Image"
+  s.vg = nvgCreateContext({nifStencilStrokes, nifAntialias})
+
+# }}}
+# {{{ showSplash()
+proc showSplash*(a) =
+  alias(s, g_app.splash)
+
+  let (_, _, maxWidth, maxHeight) = g_app.win.findCurrentMonitor().workArea
+  let w = (maxWidth * 0.6).int
+  let h = (w/s.logo.width * s.logo.height).int
+
+  s.win.size = (w, h)
+  s.win.pos = ((maxWidth - w) div 2, (maxHeight - h) div 2)
+  s.win.show
+
+  if not a.layout.showThemeEditor:
+    koi.setFocusCaptured(true)
+
+# }}}
+# {{{ closeSplash()
+proc closeSplash*(a) =
+  alias(s, a.splash)
+
+  s.win.destroy
+  s.win = nil
+
+  s.vg.deleteImage(s.logoImage)
+  s.vg.deleteImage(s.outlineImage)
+  s.vg.deleteImage(s.shadowImage)
+
+  s.logoImage = NoImage
+  s.outlineImage = NoImage
+  s.shadowImage = NoImage
+
+  nvgDeleteContext(s.vg)
+  s.vg = nil
+
+  s.show = false
+
+  if not a.layout.showThemeEditor:
+    koi.setFocusCaptured(false)
+
+# }}}
+# {{{ renderFrameSplash()
+proc renderFrameSplash*(a) =
+  alias(s, a.splash)
+  alias(vg, s.vg)
+
+  let cfg = a.theme.config
+
+  let
+    (winWidth, winHeight) = s.win.size
+    (fbWidth, fbHeight) = s.win.framebufferSize
+    pxRatio = fbWidth.float / winWidth.float
+
+  glViewport(0, 0, fbWidth.GLsizei, fbHeight.GLsizei)
+
+  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+
+  vg.beginFrame(winWidth, winHeight, pxRatio)
+
+  if s.logoImage == NoImage or s.updateLogoImage:
+    colorImage(s.logo, cfg.getColorOrDefault("ui.splash-image.logo"))
+    if s.logoImage == NoImage:
+      s.logoImage = createImage(s.logo)
+    else:
+      vg.updateImage(s.logoImage, cast[ptr byte](s.logo.data))
+    s.updateLogoImage = false
+
+  if s.outlineImage == NoImage or s.updateOutlineImage:
+    colorImage(s.outline, cfg.getColorOrDefault("ui.splash-image.outline"))
+    if s.outlineImage == NoImage:
+      s.outlineImage = createImage(s.outline)
+    else:
+      vg.updateImage(s.outlineImage, cast[ptr byte](s.outline.data))
+    s.updateOutlineImage = false
+
+  if s.shadowImage == NoImage or s.updateShadowImage:
+    colorImage(s.shadow, black())
+    if s.shadowImage == NoImage:
+      s.shadowImage = createImage(s.shadow)
+    else:
+      vg.updateImage(s.shadowImage, cast[ptr byte](s.shadow.data))
+    s.updateShadowImage = false
+
+
+  let scale = winWidth / s.logo.width
+
+  s.logoPaint = createPattern(vg, s.logoImage, scale=scale)
+
+  s.outlinePaint = createPattern(vg, s.outlineImage, scale=scale)
+
+  s.shadowPaint = createPattern(
+    vg, s.shadowImage,
+    alpha=cfg.getFloatOrDefault("ui.splash-image.shadow-alpha"),
+    scale=scale
+  )
+
+  vg.beginPath
+  vg.rect(0, 0, winWidth, winHeight)
+
+  vg.fillPaint(s.shadowPaint)
+  vg.fill
+
+  vg.fillPaint(s.outlinePaint)
+  vg.fill
+
+  vg.fillPaint(s.logoPaint)
+  vg.fill
+
+  vg.endFrame
+
+
+  if not a.layout.showThemeEditor and a.splash.win.shouldClose:
+    a.shouldClose = true
+
+  proc shouldCloseSplash(a): bool =
+    alias(w, a.splash.win)
+
+    if a.layout.showThemeEditor:
+      not a.splash.show
+    else:
+      let autoClose =
+        if not a.layout.showThemeEditor and a.prefs.autoCloseSplash:
+          let dt = getMonoTime() - a.splash.t0
+          koi.setFramesLeft()
+          dt > initDuration(seconds = a.prefs.splashTimeoutSecs)
+        else: false
+
+      w.isKeyDown(keyEscape) or
+      w.isKeyDown(keySpace) or
+      w.isKeyDown(keyEnter) or
+      w.isKeyDown(keyKpEnter) or
+      w.mouseButtonDown(mbLeft) or
+      w.mouseButtonDown(mbRight) or
+      w.mouseButtonDown(mbMiddle) or autoClose
+
+  if shouldCloseSplash(a):
+    closeSplash(a)
+    a.win.focus
+
+# }}}
+
+# {{{ handleFocusEvent()
+proc handleFocusEvent*(event: AppEvent; a) =
+  a.win.requestAttention
+
+# }}}
+# {{{ handleOpenFileEvent()
+proc handleOpenFileEvent*(event: AppEvent; a) =
+  closeDialog(a)
+  returnToNormalMode(a)
+  openMap(event.path, a)
+  # TODO not needed on macOS at least
+#  a.win.restore
+  a.win.focus
+
+# }}}
+# {{{ handleAutoSaveEvent()
+proc handleAutoSaveEvent*(event: AppEvent; a) =
+  if a.doc.undoManager.isModified:
+    var path = if a.doc.path == "": a.doc.lastSavePath
+               else: a.doc.path
+    if path == "":
+      path = findUniquePath(dir=a.paths.autosaveDir, name=UntitledName,
+                            ext=MapFileExt)
+
+    saveMap(path, autosave=true, createBackup=true, a)
+
+# }}}
+# {{{ handleVersionUpdateEvent()
+proc handleVersionUpdateEvent*(event: AppEvent; a) =
+  a.latestVersion     = event.versionInfo
+  a.versionFetchError = event.error
+
+  if a.latestVersion.isSome:
+    let v = a.latestVersion.get
+    if v.version > AppVersion and a.dialogs.activeDialog != dlgAbout:
+      setWarningMessage(
+        "Good news! A more recent version of Gridmonger is available: " &
+        fmt"v{v.version} — {v.message}",
+        icon=IconMug,
+        keepStatusMessage=true, timeout=initDuration(seconds = 7),
+        overwrite=false, a=a
+      )
+
+# }}}
+
+# {{{ windowContentScaleCb()
+proc windowContentScaleCb*(window: Window, xscale, yscale: float) =
+  g_app.updateUIScaleFactor()
+  g_app.updateUI = true
+
+# }}}
+# {{{ renderFramePreCb()
+proc renderFramePreCb*(a) =
+
+  proc loadPendingTheme(themeIndex: Natural, a) =
+    try:
+      a.theme.themeReloaded = (themeIndex == a.theme.currThemeIndex)
+      switchTheme(themeIndex, a)
+
+    except CatchableError as e:
+      logError(e, "Error loading theme when switching theme")
+      a.logfile.flushFile
+
+      let name = a.theme.themeNames[themeIndex].name
+
+      setErrorMessage(fmt"Cannot load theme '{name}': {e.msg}", a)
+
+      a.theme.nextThemeIndex = Natural.none
+
+    # nextThemeIndex will be reset at the start of the current frame after
+    # displaying the status message
+
+  if a.theme.nextThemeIndex.isSome:
+    loadPendingTheme(a.theme.nextThemeIndex.get, a)
+
+  a.win.title = a.doc.map.title
+  a.win.modified = a.doc.undoManager.isModified
+
+  if a.theme.updateTheme:
+    a.theme.updateTheme = false
+    updateTheme(a)
+
+  if a.theme.loadBackgroundImage:
+    a.theme.loadBackgroundImage = false
+    loadBackgroundImage(a.currThemeName, a)
+
+  a.updateUI = true
+
+# }}}
+# {{{ renderFrameCb()
+
+
+proc renderFrameCb*(a) =
+
+  proc displayThemeLoadedMessage(a) =
+    let themeName = a.currThemeName.name
+    if a.theme.themeReloaded:
+      setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
+      a.theme.themeReloaded = false
+    else:
+      setStatusMessage(fmt"Theme '{themeName}' loaded", a)
+
+  if a.theme.nextThemeIndex.isSome:
+    if a.theme.hideThemeLoadedMessage:
+      a.theme.hideThemeLoadedMessage = false
+    else:
+      displayThemeLoadedMessage(a)
+    a.theme.nextThemeIndex = Natural.none
+
+  proc handleWindowClose(a) =
+    proc saveConfigAndExit(a) =
+      saveAppConfig(a)
+      a.shouldClose = true
+
+    proc handleMapModified(a) =
+      if a.doc.undoManager.isModified:
+        openSaveDiscardMapDialog(nextAction = saveConfigAndExit, a)
+      else:
+        saveConfigAndExit(a)
+
+    when defined(NO_QUIT_DIALOG):
+      saveConfigAndExit(a)
+    else:
+      if a.themeEditor.modified:
+        openSaveDiscardThemeDialog(nextAction = handleMapModified, a)
+      else:
+        handleMapModified(a)
+
+  # XXX HACK: If the theme pane is shown, widgets are handled first, then
+  # the global shortcuts, so widget-specific shorcuts can take precedence
+  var uiRendered = false
+  if a.layout.showThemeEditor:
+    renderUI(a)
+    uiRendered = true
+
+  if a.splash.win == nil:
+    if a.ui.showQuickReference: handleQuickRefKeyEvents(a)
+    elif a.doc.map.hasLevels:     handleGlobalKeyEvents(a)
+    else:                         handleGlobalKeyEvents_NoLevels(a)
+
+  else:
+    if not a.layout.showThemeEditor and a.win.glfwWin.focused:
+      glfw.makeContextCurrent(a.splash.win)
+      closeSplash(a)
+      glfw.makeContextCurrent(a.win.glfwWin)
+      a.win.focus
+
+  if not a.layout.showThemeEditor or not uiRendered:
+    renderUI(a)
+
+  if a.win.shouldClose:
+    a.win.shouldClose = false
+    handleWindowClose(a)
+
+# }}}
+# {{{ dropCb()
+proc dropCb*(window: Window, paths: PathDropInfo) =
+  if paths.len > 0:
+    let path = paths.items.toSeq[0]
+    handleOpenFileEvent(AppEvent(kind: aeOpenFile, path: $path), g_app)
 
 # }}}
 
@@ -423,7 +674,6 @@ proc applyWindowConfigOverrides*(cfg: WindowConfig; a) =
 
 # }}}
 # {{{ initApp()
-proc dropCb*(window: Window, paths: PathDropInfo)
 
 proc initApp*(configFile: Option[string], mapFile: Option[string],
              winCfg: WindowConfig, hideSplash = false; a) =
@@ -571,273 +821,6 @@ when not defined(DEBUG):
 
 # }}}
 
-
-# {{{ windowContentScaleCb()
-proc windowContentScaleCb*(window: Window, xscale, yscale: float) =
-  g_app.updateUIScaleFactor()
-  g_app.updateUI = true
-
 # }}}
-# {{{ renderFramePreCb()
-proc renderFramePreCb*(a) =
-
-  proc loadPendingTheme(themeIndex: Natural, a) =
-    try:
-      a.theme.themeReloaded = (themeIndex == a.theme.currThemeIndex)
-      switchTheme(themeIndex, a)
-
-    except CatchableError as e:
-      logError(e, "Error loading theme when switching theme")
-      a.logfile.flushFile
-
-      let name = a.theme.themeNames[themeIndex].name
-
-      setErrorMessage(fmt"Cannot load theme '{name}': {e.msg}", a)
-
-      a.theme.nextThemeIndex = Natural.none
-
-    # nextThemeIndex will be reset at the start of the current frame after
-    # displaying the status message
-
-  if a.theme.nextThemeIndex.isSome:
-    loadPendingTheme(a.theme.nextThemeIndex.get, a)
-
-  a.win.title = a.doc.map.title
-  a.win.modified = a.doc.undoManager.isModified
-
-  if a.theme.updateTheme:
-    a.theme.updateTheme = false
-    updateTheme(a)
-
-  if a.theme.loadBackgroundImage:
-    a.theme.loadBackgroundImage = false
-    loadBackgroundImage(a.currThemeName, a)
-
-  a.updateUI = true
-
-# }}}
-# {{{ renderFrameCb()
-
-
-proc renderFrameCb*(a) =
-
-  proc displayThemeLoadedMessage(a) =
-    let themeName = a.currThemeName.name
-    if a.theme.themeReloaded:
-      setStatusMessage(fmt"Theme '{themeName}' reloaded", a)
-      a.theme.themeReloaded = false
-    else:
-      setStatusMessage(fmt"Theme '{themeName}' loaded", a)
-
-  if a.theme.nextThemeIndex.isSome:
-    if a.theme.hideThemeLoadedMessage:
-      a.theme.hideThemeLoadedMessage = false
-    else:
-      displayThemeLoadedMessage(a)
-    a.theme.nextThemeIndex = Natural.none
-
-  proc handleWindowClose(a) =
-    proc saveConfigAndExit(a) =
-      saveAppConfig(a)
-      a.shouldClose = true
-
-    proc handleMapModified(a) =
-      if a.doc.undoManager.isModified:
-        openSaveDiscardMapDialog(nextAction = saveConfigAndExit, a)
-      else:
-        saveConfigAndExit(a)
-
-    when defined(NO_QUIT_DIALOG):
-      saveConfigAndExit(a)
-    else:
-      if a.themeEditor.modified:
-        openSaveDiscardThemeDialog(nextAction = handleMapModified, a)
-      else:
-        handleMapModified(a)
-
-  # XXX HACK: If the theme pane is shown, widgets are handled first, then
-  # the global shortcuts, so widget-specific shorcuts can take precedence
-  var uiRendered = false
-  if a.layout.showThemeEditor:
-    renderUI(a)
-    uiRendered = true
-
-  if a.splash.win == nil:
-    if a.ui.showQuickReference: handleQuickRefKeyEvents(a)
-    elif a.doc.map.hasLevels:     handleGlobalKeyEvents(a)
-    else:                         handleGlobalKeyEvents_NoLevels(a)
-
-  else:
-    if not a.layout.showThemeEditor and a.win.glfwWin.focused:
-      glfw.makeContextCurrent(a.splash.win)
-      closeSplash(a)
-      glfw.makeContextCurrent(a.win.glfwWin)
-      a.win.focus
-
-  if not a.layout.showThemeEditor or not uiRendered:
-    renderUI(a)
-
-  if a.win.shouldClose:
-    a.win.shouldClose = false
-    handleWindowClose(a)
-
-# }}}
-# {{{ renderFrameSplash()
-proc renderFrameSplash*(a) =
-  alias(s, a.splash)
-  alias(vg, s.vg)
-
-  let cfg = a.theme.config
-
-  let
-    (winWidth, winHeight) = s.win.size
-    (fbWidth, fbHeight) = s.win.framebufferSize
-    pxRatio = fbWidth.float / winWidth.float
-
-  glViewport(0, 0, fbWidth.GLsizei, fbHeight.GLsizei)
-
-  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
-
-  vg.beginFrame(winWidth, winHeight, pxRatio)
-
-  if s.logoImage == NoImage or s.updateLogoImage:
-    colorImage(s.logo, cfg.getColorOrDefault("ui.splash-image.logo"))
-    if s.logoImage == NoImage:
-      s.logoImage = createImage(s.logo)
-    else:
-      vg.updateImage(s.logoImage, cast[ptr byte](s.logo.data))
-    s.updateLogoImage = false
-
-  if s.outlineImage == NoImage or s.updateOutlineImage:
-    colorImage(s.outline, cfg.getColorOrDefault("ui.splash-image.outline"))
-    if s.outlineImage == NoImage:
-      s.outlineImage = createImage(s.outline)
-    else:
-      vg.updateImage(s.outlineImage, cast[ptr byte](s.outline.data))
-    s.updateOutlineImage = false
-
-  if s.shadowImage == NoImage or s.updateShadowImage:
-    colorImage(s.shadow, black())
-    if s.shadowImage == NoImage:
-      s.shadowImage = createImage(s.shadow)
-    else:
-      vg.updateImage(s.shadowImage, cast[ptr byte](s.shadow.data))
-    s.updateShadowImage = false
-
-
-  let scale = winWidth / s.logo.width
-
-  s.logoPaint = createPattern(vg, s.logoImage, scale=scale)
-
-  s.outlinePaint = createPattern(vg, s.outlineImage, scale=scale)
-
-  s.shadowPaint = createPattern(
-    vg, s.shadowImage,
-    alpha=cfg.getFloatOrDefault("ui.splash-image.shadow-alpha"),
-    scale=scale
-  )
-
-  vg.beginPath
-  vg.rect(0, 0, winWidth, winHeight)
-
-  vg.fillPaint(s.shadowPaint)
-  vg.fill
-
-  vg.fillPaint(s.outlinePaint)
-  vg.fill
-
-  vg.fillPaint(s.logoPaint)
-  vg.fill
-
-  vg.endFrame
-
-
-  if not a.layout.showThemeEditor and a.splash.win.shouldClose:
-    a.shouldClose = true
-
-  proc shouldCloseSplash(a): bool =
-    alias(w, a.splash.win)
-
-    if a.layout.showThemeEditor:
-      not a.splash.show
-    else:
-      let autoClose =
-        if not a.layout.showThemeEditor and a.prefs.autoCloseSplash:
-          let dt = getMonoTime() - a.splash.t0
-          koi.setFramesLeft()
-          dt > initDuration(seconds = a.prefs.splashTimeoutSecs)
-        else: false
-
-      w.isKeyDown(keyEscape) or
-      w.isKeyDown(keySpace) or
-      w.isKeyDown(keyEnter) or
-      w.isKeyDown(keyKpEnter) or
-      w.mouseButtonDown(mbLeft) or
-      w.mouseButtonDown(mbRight) or
-      w.mouseButtonDown(mbMiddle) or autoClose
-
-  if shouldCloseSplash(a):
-    closeSplash(a)
-    a.win.focus
-
-# }}}
-
-
-# {{{ handleFocusEvent()
-proc handleFocusEvent*(event: AppEvent; a) =
-  a.win.requestAttention
-
-# }}}
-# {{{ handleOpenFileEvent()
-proc handleOpenFileEvent*(event: AppEvent; a) =
-  closeDialog(a)
-  returnToNormalMode(a)
-  openMap(event.path, a)
-  # TODO not needed on macOS at least
-#  a.win.restore
-  a.win.focus
-
-# }}}
-# {{{ handleAutoSaveEvent()
-proc handleAutoSaveEvent*(event: AppEvent; a) =
-  if a.doc.undoManager.isModified:
-    var path = if a.doc.path == "": a.doc.lastSavePath
-               else: a.doc.path
-    if path == "":
-      path = findUniquePath(dir=a.paths.autosaveDir, name=UntitledName,
-                            ext=MapFileExt)
-
-    saveMap(path, autosave=true, createBackup=true, a)
-
-# }}}
-# {{{ handleVersionUpdateEvent()
-proc handleVersionUpdateEvent*(event: AppEvent; a) =
-  a.latestVersion     = event.versionInfo
-  a.versionFetchError = event.error
-
-  if a.latestVersion.isSome:
-    let v = a.latestVersion.get
-    if v.version > AppVersion and a.dialogs.activeDialog != dlgAbout:
-      setWarningMessage(
-        "Good news! A more recent version of Gridmonger is available: " &
-        fmt"v{v.version} — {v.message}",
-        icon=IconMug,
-        keepStatusMessage=true, timeout=initDuration(seconds = 7),
-        overwrite=false, a=a
-      )
-
-# }}}
-
-# {{{ dropCb()
-proc dropCb*(window: Window, paths: PathDropInfo) =
-  if paths.len > 0:
-    let path = paths.items.toSeq[0]
-    handleOpenFileEvent(AppEvent(kind: aeOpenFile, path: $path), g_app)
-
-# }}}
-
-# }}}
-
-
 
 # vim: et:ts=2:sw=2:fdm=marker

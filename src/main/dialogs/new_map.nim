@@ -1,20 +1,12 @@
-# new_map dialog
-#
-# Extracted from main/dialogs.nim. Imports main/dialogs/common for the
-# shared 7 field templates, dialog constants, and helpers.
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
-
 import main/dialogs/common
 
 import appevents
-import undomanager               # initUndoManager
-import main/cursor               # resetCursorAndViewStart
-
+import undomanager
+import main/cursor
 
 
 using a: var AppContext
 
-# {{{ New map dialog
 
 proc openNewMapDialog*(a) =
   alias(dlg, a.dialogs.newMap)

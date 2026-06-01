@@ -1,13 +1,6 @@
-# noteslistpane
-#
-# The notes list pane on the left. Cache rebuild + sort comparators +
-# rendering. Imports panes/currentnotepane for the shared renderIndexedNote /
-# renderNoteMarker note-cell helpers.
-# Side effects: koi + nanovg drawing; rebuilds AppContext.ui.notesListState.cache.
-
 import std/algorithm
 import std/options
-import std/sequtils         # toSeq, mapIt
+import std/sequtils
 import std/strformat
 import std/strutils except splitWhitespace, strip
 import std/tables
@@ -18,9 +11,9 @@ import nanovg
 
 import common
 import domain/all
-import io/persistence         # NotesListSearchTermLimits
+import io/persistence
 import main/appcontext
-import main/cursor            # centerCursorAt, moveCursorTo
+import main/cursor
 import main/views/currentnote
 import main/view
 import ui/all

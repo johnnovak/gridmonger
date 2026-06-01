@@ -1,14 +1,3 @@
-# actions_ui
-#
-# Undoable + non-undoable action wrappers (the UI-side wrappers around the
-# domain action procs in actions.nim). undoAction, redoAction, setFloorAction,
-# cycleFloorGroupAction, startExcavateTunnelAction, reloadTheme, selectPrev/
-# NextTheme, etc. Also picks up the mode-exit/return-to-normal procs that
-# call undoAction (exitMovePreviewMode, exitNudgePreviewMode,
-# returnToNormalMode) — they were relocated in Phase 2 to live next to
-# undoAction.
-# Side effects: AppContext state mutation, status-bar messages, dialog opens.
-
 import std/math
 import std/options
 import std/strformat
@@ -18,17 +7,17 @@ import actions
 import common
 import domain/all
 import main/appcontext
-import main/cursor          # moveCursorTo, setCursor
-import main/dialogs         # openSaveDiscardMapDialog, openSaveDiscardThemeDialog
-import main/mapio           # saveMap, saveMapAs, loadMap
-import main/view            # currLevel
+import main/cursor
+import main/dialogs
+import main/mapio
+import main/view
 import main/views/statusbar
 import ui/all
 import undomanager
 import utils/all
 
 when not defined(DEBUG):
-  import osdialog           # fileDialog
+  import osdialog
 
 
 using a: var AppContext
@@ -163,6 +152,8 @@ proc returnToNormalMode*(a) =
     clearStatusMessage(a)
 
 # }}}
+
+# {{{ Undoable actions
 
 # {{{ setFloorAction()
 proc setFloorAction*(f: Floor; a) =
@@ -475,5 +466,6 @@ proc toggleTitleBar*(a) =
 
 # }}}
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

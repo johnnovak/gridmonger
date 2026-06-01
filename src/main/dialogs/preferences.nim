@@ -1,21 +1,12 @@
-# preferences dialog
-#
-# Extracted from main/dialogs.nim. Imports main/dialogs/common for the
-# shared 7 field templates, dialog constants, and helpers (calcDialogX,
-# closeDialog, etc.).
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
-
 import main/dialogs/common
 
 import appevents
-import main/configio             # saveAppConfig
-import main/themeio              # updateUIScaleFactor, setSwapInterval
-
+import main/configio
+import main/theme
 
 
 using a: var AppContext
 
-# {{{ Preferences dialog
 
 proc openPreferencesDialog*(a) =
   alias(dlg, a.dialogs.preferences)
@@ -311,6 +302,5 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
 
   koi.endDialog()
 
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

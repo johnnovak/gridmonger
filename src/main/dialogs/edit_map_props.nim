@@ -1,9 +1,3 @@
-# edit_map_props dialog
-#
-# Extracted from main/dialogs.nim. Imports main/dialogs/common for the
-# shared 7 field templates, dialog constants, and helpers.
-# Side effects: koi + nanovg drawing, AppContext.dialogs mutation.
-
 import main/dialogs/common
 
 import actions
@@ -11,7 +5,6 @@ import actions
 
 using a: var AppContext
 
-# {{{ Edit map properties dialog
 
 proc openEditMapPropsDialog*(a) =
   alias(dlg, a.dialogs.editMapProps)
@@ -139,6 +132,5 @@ proc editMapPropsDialog*(dlg: var EditMapPropsDialogParams; a) =
 
   koi.endDialog()
 
-# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

@@ -1,11 +1,3 @@
-# frame
-#
-# Top-level UI orchestrator. renderUI walks the visible layout — level view,
-# pane panes, status bar, theme editor, dialog overlay — and dispatches to
-# the per-pane render procs in main/views/. renderDialogs dispatches to the
-# active dialog handler in main/dialogs.
-# Side effects: koi + nanovg drawing calls.
-
 import std/lenientops
 import std/options
 
@@ -16,24 +8,67 @@ import common
 import domain/all
 import main/appcontext
 import main/constants
-import main/cursor                  # updateLastCursorViewCoords
-import main/dialogs                 # shim — re-exports all per-dialog modules
-                                    # + dialogs/common (DlgItemHeight, etc.)
-import main/views/currentnote   # renderCurrentNotePane
-import main/views/levelview         # renderLevel, renderLevelDropdown, renderRegionDropDown, renderEmptyMap, renderModeAndOptionIndicators
-import main/views/noteslist    # renderNotesListPane
-import main/views/quickref          # renderQuickReference
-import main/views/statusbar         # renderStatusBar
-import main/views/themepanel        # renderThemeEditorPane
-import main/views/tools         # renderToolsPane
-import main/view                    # mainPaneRect, currLevel, calculateLevelDrawArea, toolsPane*, updateViewAndCursorPos
+import main/cursor
+import main/dialogs
+
+import main/views/currentnote
+import main/views/levelview
+import main/views/noteslist
+import main/views/quickref
+import main/views/statusbar
+import main/views/themepanel
+import main/views/tools
+import main/view
 import ui/all
-import utils/all                    # rect.h/w accessors, alias
+import utils/all
 
 
 using a: var AppContext
 
-# {{{ renderDialogs()
+# {{{ calculateLevelDrawArea()
+proc calculateLevelDrawArea(a): tuple[w, h: float] =
+  alias(dp, a.ui.drawLevelParams)
+  alias(ui, a.ui)
+
+  let l = currLevel(a)
+
+  var topPad, rightPad, bottomPad, leftPad: float
+
+  if a.ui.showCellCoords:
+    topPad    = LevelTopPad_Coords
+    rightPad  = LevelRightPad_Coords
+    bottomPad = LevelBottomPad_Coords
+    leftPad   = LevelLeftPad_Coords
+  else:
+    topPad    = LevelTopPad_NoCoords
+    rightPad  = LevelRightPad_NoCoords
+    bottomPad = LevelBottomPad_NoCoords
+    leftPad   = LevelLeftPad_NoCoords
+
+  if l.regionOpts.enabled:
+    topPad += LevelTopPad_Regions
+
+  let mainPane = mainPaneRect(a)
+
+  dp.startX = mainPane.x1 + leftPad
+  dp.startY = mainPane.y1 + topPad
+
+  var
+    w = mainPane.w - leftPad - rightPad
+    h = mainPane.h - topPad  - bottomPad
+
+  if a.layout.showCurrentNotePane:
+   h -= CurrentNotePaneTopPad + CurrentNotePaneHeight +
+                                CurrentNotePaneBottomPad
+
+  if a.layout.showToolsPane:
+    w -= toolsPaneWidth(a)
+
+  (w, h)
+
+# }}}
+
+# {{{ renderDialogs*()
 proc renderDialogs*(a) =
   alias(dlg, a.dialogs)
 
@@ -92,8 +127,7 @@ proc renderDialogs*(a) =
     deleteThemeDialog(a)
 
 # }}}
-
-# {{{ renderUI()
+# {{{ renderUI*()
 proc renderUI*(a) =
   alias(ui, a.ui)
   alias(vg, a.vg)
@@ -221,5 +255,6 @@ proc renderUI*(a) =
 
   a.ui.prevCursor = a.ui.cursor
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker
