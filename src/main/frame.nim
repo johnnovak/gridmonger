@@ -18,6 +18,7 @@ import main/appcontext
 import main/constants
 import main/cursor                  # updateLastCursorViewCoords
 import main/dialogs                 # the per-dialog procs
+import main/dialogs/common          # DlgItemHeight
 import main/panes/currentnotepane   # renderCurrentNotePane
 import main/panes/levelview         # renderLevel, renderLevelDropdown, renderRegionDropDown, renderEmptyMap, renderModeAndOptionIndicators
 import main/panes/noteslistpane    # renderNotesListPane

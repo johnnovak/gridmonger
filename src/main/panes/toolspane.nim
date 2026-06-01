@@ -14,7 +14,7 @@ import nanovg
 import common
 import main/appcontext
 import main/constants       # SpecialWallTooltips, ToolsPaneYBreakpoint1/2
-import main/dialogs         # colorRadioButtonDrawProc
+import main/dialogs/common  # colorRadioButtonDrawProc
 import main/view            # mainPaneRect
 import ui/all
 import utils/all

@@ -36,6 +36,7 @@ import main/configio
 import main/constants
 import main/cursor
 import main/dialogs        # not strictly needed but easier to keep
+import main/dialogs/common # closeDialog
 import main/events         # handleQuickRefKeyEvents, handleGlobalKeyEvents
 import main/keyboard
 import main/logging
