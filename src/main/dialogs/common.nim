@@ -21,7 +21,9 @@ import std/options
 import std/strformat
 import std/strutils
 import std/tables
+import std/times
 
+import glfw
 import koi
 import nanovg
 
@@ -34,13 +36,20 @@ import main/constants          # ThemePaneWidth
 import main/keyboard          # isShortcutDown, isKeyDown, toStr, handleTabNavigation
 import main/panes/statusbar   # setStatusMessage, clearStatusMessage
 import main/view              # mainPaneRect, currLevel, etc.
-import ui/all
-import utils/all
+import ui/all as gmui
+import utils/all as gmutilsall
 import utils/misc as gmUtils
 
 # Per-dialog files just `import main/dialogs/common` to get the dialog
-# constants, templates, and helpers. They still import their other deps
-# explicitly (themeio for theme dialogs, mapio for save dialogs, etc.).
+# constants, templates, helpers, AND the workhorse modules they all need
+# (AppContext, koi, the standard library bits, nanovg, etc.). They still
+# import dialog-specific extras explicitly (themeio for theme dialogs,
+# mapio for save dialogs, etc.).
+
+export options, math, strformat, strutils, tables, times, lenientops
+export glfw, koi, nanovg
+export cfghelper, gmcommon, gmUtils, gmui, gmutilsall
+export appcontext, constants, keyboard, statusbar, view
 
 
 using a: var AppContext

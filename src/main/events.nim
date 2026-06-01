@@ -35,6 +35,8 @@ import main/configio
 import main/constants
 import main/cursor
 import main/dialogs
+import main/dialogs/about        # openAboutDialog
+import main/dialogs/preferences  # openPreferencesDialog
 import main/keyboard
 import main/mapio
 import main/modes
