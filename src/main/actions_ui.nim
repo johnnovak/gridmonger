@@ -21,7 +21,7 @@ import main/appcontext
 import main/cursor          # moveCursorTo, setCursor
 import main/dialogs         # openSaveDiscardMapDialog, openSaveDiscardThemeDialog
 import main/mapio           # saveMap, saveMapAs, loadMap
-import main/modes           # exitSelectMode, copySelection
+import main/view            # currLevel
 import main/views/statusbar
 import ui/all
 import undomanager
@@ -76,6 +76,43 @@ proc redoAction*(a) =
                      fmt"Redid action: {undoStateData.actionName}", a)
   else:
     setWarningMessage("Nothing to redo", a=a)
+
+# }}}
+# {{{ enterSelectMode()
+proc enterSelectMode*(a) =
+  let l = currLevel(a)
+
+  a.ui.drawTrail = false
+  a.ui.editMode = emSelect
+  a.ui.selection = some(newSelection(l.rows, l.cols))
+  a.ui.drawLevelParams.drawCursorGuides = true
+  setSelectModeSelectMessage(a)
+
+# }}}
+# {{{ exitSelectMode()
+proc exitSelectMode*(a) =
+  a.ui.editMode = emNormal
+  a.ui.selection = Selection.none
+  a.ui.drawLevelParams.drawCursorGuides = false
+  clearStatusMessage(a)
+
+# }}}
+# {{{ copySelection()
+proc copySelection*(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
+  alias(ui, a.ui)
+
+  let sel = ui.selection.get
+  let bbox = sel.boundingBox
+
+  if bbox.isSome:
+    let bbox = bbox.get
+
+    buf = some(SelectionBuffer(
+      selection: newSelectionFrom(sel, bbox),
+      level: newLevelFrom(currLevel(a), bbox)
+    ))
+
+  result = bbox
 
 # }}}
 # {{{ exitMovePreviewMode()

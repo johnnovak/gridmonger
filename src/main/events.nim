@@ -39,7 +39,6 @@ import main/dialogs/about        # openAboutDialog
 import main/dialogs/preferences  # openPreferencesDialog
 import main/keyboard
 import main/mapio
-import main/modes
 import main/views/statusbar
 import main/themeio
 import main/view
