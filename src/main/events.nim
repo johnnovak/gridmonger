@@ -258,6 +258,170 @@ proc handleLevelMouseEvents*(a) =
 # {{{ handleGlobalKeyEvents()
 
 # TODO separate into level events and global events?
+# {{{ handleMoveWalk()
+proc handleMoveWalk(ke: Event; a) =
+  alias(ui, a.ui)
+
+  var s = 1
+  if mkCtrl in ke.mods:
+    if ke.key in AllWasdLetterKeys: return
+    else: s = CursorJump
+
+  let
+    altDown   = mkAlt   in ke.mods
+    shiftDown = mkShift in ke.mods
+    isRepeat  = (ke.action == kaRepeat)
+
+    isWasdKey = ke.key in AllWasdLetterKeys or
+                ke.key in AllWasdKeypadKeys
+
+    k = if ui.wasdMode: a.keys.walkKeysWasd
+        else:           a.keys.walkKeysCursor
+
+    altAction = altDown and not isWasdKey
+
+  var ke = ke
+  ke.mods = ke.mods - {mkAlt, mkCtrl, mkShift}
+
+  proc turnLeft( dir: CardinalDir): auto = dir.rotateACW
+  proc turnRight(dir: CardinalDir): auto = dir.rotateCW
+
+  template forward:  auto = ui.cursorOrient
+  template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
+  template left:     auto = turnLeft(ui.cursorOrient)
+  template right:    auto = turnRight(ui.cursorOrient)
+
+  template doAction(dir: CardinalDir, moveAction: bool) =
+    if moveAction:
+      if shiftDown: moveLevelView({dir}, s, a)
+      else:         moveCursor(    dir,  s, a)
+    else:
+      if not isRepeat: ui.cursorOrient = dir
+
+  if   ke.isKeyDown(k.forward, repeat=true):
+    doAction(forward, moveAction = true)
+
+  elif ke.isKeyDown(k.backward, repeat=true):
+    doAction(backward, moveAction = true)
+
+  elif ke.isKeyDown(k.turnLeft, repeat=true):
+    doAction(left, moveAction = altAction)
+
+  elif ke.isKeyDown(k.turnRight, repeat=true):
+    doAction(right, moveAction = altAction)
+
+  elif ke.isKeyDown(k.strafeLeft, repeat=true):
+    doAction(left, moveAction = not altAction)
+
+  elif ke.isKeyDown(k.strafeRight, repeat=true):
+    doAction(right, moveAction = not altAction)
+
+# }}}
+# {{{ handleMoveCursor()
+proc handleMoveCursor(ke: Event; allowPan, allowJump, allowWasdKeys: bool,
+                      allowDiagonal: bool; a): bool =
+  alias(ui, a.ui)
+
+  if allowDiagonal:
+    # Ignore Y/U/B/N keys if YUBN movement is not enabled in the prefs
+    if not a.prefs.yubnMovementKeys and ke.key in DiagonalMoveLetterKeys:
+      return
+
+  var s = 1
+  if allowJump and a.keys.primaryModKey in ke.mods:
+    if ke.key in AllWasdLetterKeys:
+      # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with other
+      # shorcuts
+      return
+
+    elif ke.key in DiagonalMoveLetterKeys:
+      # Disallow Ctrl+Y/U/B/N panning as it would interfere with other
+      # shorcuts
+      return
+
+    elif a.prefs.modifierKeyMode == mkmCommandShift and
+      ke.key in VimMoveKeys:
+      # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS
+      # "hide window" shortcut
+      return
+
+    else:
+      s = CursorJump
+
+  let k = if allowWasdKeys and ui.wasdMode: MoveKeysWasd
+          else: MoveKeysStandard
+
+  var ke = ke
+  ke.mods = ke.mods - {a.keys.primaryModKey}
+
+  result = true
+
+  proc down(key: set[Key]): bool =
+    ke.isKeyDown(key, repeat=true)
+
+  proc shiftDown(key: set[Key]): bool =
+    ke.isKeyDown(key, {mkShift}, repeat=true)
+
+  if   down(k.left):  moveCursor(dirW, s, a)
+  elif down(k.right): moveCursor(dirE, s, a)
+  elif down(k.up):    moveCursor(dirN, s, a)
+  elif down(k.down):  moveCursor(dirS, s, a)
+
+  elif allowPan:
+    if   shiftDown(k.left):  moveLevelView(West, s, a)
+    elif shiftDown(k.right): moveLevelView(East, s, a)
+    elif shiftDown(k.up):    moveLevelView(North, s, a)
+    elif shiftDown(k.down):  moveLevelView(South, s, a)
+
+  if allowDiagonal:
+    let d = DiagonalMoveKeysCursor
+
+    if   down(d.upLeft):    moveCursorDiagonal(NorthWest, s, a)
+    elif down(d.upRight):   moveCursorDiagonal(NorthEast, s, a)
+    elif down(d.downLeft):  moveCursorDiagonal(SouthWest, s, a)
+    elif down(d.downRight): moveCursorDiagonal(SouthEast, s, a)
+
+    elif shiftDown(d.upLeft):    moveLevelView(NorthWest, s, a)
+    elif shiftDown(d.upRight):   moveLevelView(NorthEast, s, a)
+    elif shiftDown(d.downLeft):  moveLevelView(SouthWest, s, a)
+    elif shiftDown(d.downRight): moveLevelView(SouthEast, s, a)
+
+  result = false
+
+# }}}
+# {{{ drawWallRepeatMoveKeyHandler()
+proc drawWallRepeatMoveKeyHandler(dir: CardinalDir, mods: set[ModifierKey];
+                                  a) =
+  alias(ui,  a.ui)
+  alias(map, a.doc.map)
+  alias(um,  a.doc.undoManager)
+
+  let cur = ui.cursor
+  let drawDir = ui.drawWallRepeatDirection
+
+  if dir.isHoriz == drawDir.isVert:
+    let newCur = stepCursor(cur, dir, steps=1, a)
+    if newCur != cur:
+      if map.canSetWall(newCur, drawDir):
+        setCursor(newCur, a)
+        actions.setWall(map, loc=newCur, undoLoc=cur, drawDir,
+                        ui.drawWallRepeatWall, um,
+                        groupWithPrev=ui.drawTrail)
+        setDrawWallActionMessage(a)
+      else:
+        setWarningMessage("Cannot set wall of an empty cell",
+                          keepStatusMessage=true, a=a)
+  else:
+    let direction = if dir.isHoriz: "vertical"
+                    else:           "horizontal"
+
+    setWarningMessage(
+      fmt"Can only repeat in {direction} direction",
+      keepStatusMessage=true, a=a
+    )
+
+# }}}
+
 proc handleGlobalKeyEvents*(a) =
   alias(ui,   a.ui)
   alias(map,  a.doc.map)
@@ -269,64 +433,6 @@ proc handleGlobalKeyEvents*(a) =
 
   let yubnMode = a.prefs.yubnMovementKeys
 
-  # {{{ handleMoveWalk()
-  proc handleMoveWalk(ke: Event; a) =
-
-    var s = 1
-    if mkCtrl in ke.mods:
-      if ke.key in AllWasdLetterKeys: return
-      else: s = CursorJump
-
-    let
-      altDown   = mkAlt   in ke.mods
-      shiftDown = mkShift in ke.mods
-      isRepeat  = (ke.action == kaRepeat)
-
-      isWasdKey = ke.key in AllWasdLetterKeys or
-                  ke.key in AllWasdKeypadKeys
-
-      k = if ui.wasdMode: a.keys.walkKeysWasd
-          else:           a.keys.walkKeysCursor
-
-      altAction = altDown and not isWasdKey
-
-    var ke = ke
-    ke.mods = ke.mods - {mkAlt, mkCtrl, mkShift}
-
-    proc turnLeft( dir: CardinalDir): auto = dir.rotateACW
-    proc turnRight(dir: CardinalDir): auto = dir.rotateCW
-
-    template forward:  auto = ui.cursorOrient
-    template backward: auto = turnLeft(turnLeft(ui.cursorOrient))
-    template left:     auto = turnLeft(ui.cursorOrient)
-    template right:    auto = turnRight(ui.cursorOrient)
-
-    template doAction(dir: CardinalDir, moveAction: bool) =
-      if moveAction:
-        if shiftDown: moveLevelView({dir}, s, a)
-        else:         moveCursor(    dir,  s, a)
-      else:
-        if not isRepeat: ui.cursorOrient = dir
-
-    if   ke.isKeyDown(k.forward, repeat=true):
-      doAction(forward, moveAction = true)
-
-    elif ke.isKeyDown(k.backward, repeat=true):
-      doAction(backward, moveAction = true)
-
-    elif ke.isKeyDown(k.turnLeft, repeat=true):
-      doAction(left, moveAction = altAction)
-
-    elif ke.isKeyDown(k.turnRight, repeat=true):
-      doAction(right, moveAction = altAction)
-
-    elif ke.isKeyDown(k.strafeLeft, repeat=true):
-      doAction(left, moveAction = not altAction)
-
-    elif ke.isKeyDown(k.strafeRight, repeat=true):
-      doAction(right, moveAction = not altAction)
-
-  # }}}
   # {{{ moveKeyToCardinalDir()
   template moveKeyToCardinalDir(ke: Event, allowWasdKeys: bool,
                                 allowRepeat: bool): Option[CardinalDir] =
@@ -377,105 +483,6 @@ proc handleGlobalKeyEvents*(a) =
       elif ke.isKeyDown(d.downRight, repeat=allowRepeat):
         moveHandler(dirS, mods, a)
         moveHandler(dirE, mods, a)
-
-  # }}}
-  # {{{ handleMoveCursor()
-  proc handleMoveCursor(ke: Event; allowPan, allowJump, allowWasdKeys: bool,
-                        allowDiagonal: bool; a): bool =
-
-    if allowDiagonal:
-      # Ignore Y/U/B/N keys if YUBN movement is not enabled in the prefs
-      if not yubnMode and ke.key in DiagonalMoveLetterKeys:
-        return
-
-    var s = 1
-    if allowJump and a.keys.primaryModKey in ke.mods:
-      if ke.key in AllWasdLetterKeys:
-        # Disallow Ctrl+Q/W/E/A/S/D jump as it would interfere with other
-        # shorcuts
-        return
-
-      elif ke.key in DiagonalMoveLetterKeys:
-        # Disallow Ctrl+Y/U/B/N panning as it would interfere with other
-        # shorcuts
-        return
-
-      elif a.prefs.modifierKeyMode == mkmCommandShift and
-        ke.key in VimMoveKeys:
-        # Disallow Cmd+H/J/K/L jump as Cmd+H conflicts with the macOS
-        # "hide window" shortcut
-        return
-
-      else:
-        s = CursorJump
-
-    let k = if allowWasdKeys and ui.wasdMode: MoveKeysWasd
-            else: MoveKeysStandard
-
-    var ke = ke
-    ke.mods = ke.mods - {a.keys.primaryModKey}
-
-    result = true
-
-    proc down(key: set[Key]): bool =
-      ke.isKeyDown(key, repeat=true)
-
-    proc shiftDown(key: set[Key]): bool =
-      ke.isKeyDown(key, {mkShift}, repeat=true)
-
-    if   down(k.left):  moveCursor(dirW, s, a)
-    elif down(k.right): moveCursor(dirE, s, a)
-    elif down(k.up):    moveCursor(dirN, s, a)
-    elif down(k.down):  moveCursor(dirS, s, a)
-
-    elif allowPan:
-      if   shiftDown(k.left):  moveLevelView(West, s, a)
-      elif shiftDown(k.right): moveLevelView(East, s, a)
-      elif shiftDown(k.up):    moveLevelView(North, s, a)
-      elif shiftDown(k.down):  moveLevelView(South, s, a)
-
-    if allowDiagonal:
-      let d = DiagonalMoveKeysCursor
-
-      if   down(d.upLeft):    moveCursorDiagonal(NorthWest, s, a)
-      elif down(d.upRight):   moveCursorDiagonal(NorthEast, s, a)
-      elif down(d.downLeft):  moveCursorDiagonal(SouthWest, s, a)
-      elif down(d.downRight): moveCursorDiagonal(SouthEast, s, a)
-
-      elif shiftDown(d.upLeft):    moveLevelView(NorthWest, s, a)
-      elif shiftDown(d.upRight):   moveLevelView(NorthEast, s, a)
-      elif shiftDown(d.downLeft):  moveLevelView(SouthWest, s, a)
-      elif shiftDown(d.downRight): moveLevelView(SouthEast, s, a)
-
-    result = false
-
-  # }}}
-  # {{{ drawWallRepeatMoveKeyHandler()
-  proc drawWallRepeatMoveKeyHandler(dir: CardinalDir, mods: set[ModifierKey];
-                                    a) =
-    let cur = ui.cursor
-    let drawDir = ui.drawWallRepeatDirection
-
-    if dir.isHoriz == drawDir.isVert:
-      let newCur = stepCursor(cur, dir, steps=1, a)
-      if newCur != cur:
-        if map.canSetWall(newCur, drawDir):
-          setCursor(newCur, a)
-          actions.setWall(map, loc=newCur, undoLoc=cur, drawDir,
-                          ui.drawWallRepeatWall, um,
-                          groupWithPrev=ui.drawTrail)
-          setDrawWallActionMessage(a)
-        else:
-          setWarningMessage("Cannot set wall of an empty cell",
-                            keepStatusMessage=true, a=a)
-    else:
-      let direction = if dir.isHoriz: "vertical"
-                      else:           "horizontal"
-
-      setWarningMessage(
-        fmt"Can only repeat in {direction} direction",
-        keepStatusMessage=true, a=a
-      )
 
   # }}}
 
