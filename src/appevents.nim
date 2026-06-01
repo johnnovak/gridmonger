@@ -10,6 +10,7 @@ import std/times
 import semver
 
 import common
+import main/appcontext
 
 when defined(windows):
   import platform/windows/ipc
@@ -173,6 +174,12 @@ proc tryRecv*(): Option[AppEvent] =
   let (dataAvailable, msg) = g_appEventCh.tryRecv
   if dataAvailable:
     result = msg.some
+
+# }}}
+# {{{ initVersionChecking*()
+proc initVersionChecking*(a: var AppContext) =
+  a.latestVersion     = VersionInfo.none
+  a.versionFetchError = CatchableError.none
 
 # }}}
 

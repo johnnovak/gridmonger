@@ -45,7 +45,6 @@ import main/frame        # renderUI, renderFrame etc.
 import main/views/quickref
 import main/views/statusbar
 import main/themeio
-import main/versioncheck
 import ui/all
 import ui/theme as themelib
 import undomanager           # newUndoManager
