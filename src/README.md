@@ -20,30 +20,31 @@ src/
 │   ├── logging.nim         #   Log file rotation + init
 │   ├── view.nim            #   Read-only view accessors (currLevel, viewRow, ...)
 │   ├── cursor.nim          #   Cursor + view-scroll movement
-│   ├── modes.nim           #   Pure UI-state mode transitions
-│   ├── versioncheck.nim    #   AppContext reset for latest-version polling
 │   ├── themeio.nim         #   Theme load/save/switch + scale-factor helpers
 │   ├── configio.nim        #   App config + window-layout persistence (HOCON)
 │   ├── mapio.nim           #   Map file (.gmm) load/save/autosave
-│   ├── actions_ui.nim      #   UI-side wrappers around domain actions
+│   ├── actions_ui.nim      #   UI-side wrappers around domain actions, plus
+│   │                       #   every mode entry/exit proc
 │   ├── events.nim          #   Mouse + keyboard event dispatchers
 │   ├── frame.nim           #   Top-level frame orchestrator (renderUI +
 │   │                       #   renderDialogs)
 │   ├── init.nim            #   App init/cleanup/splash + window callbacks
 │   │
-│   ├── panes/              #   Per-pane modules — each file owns *everything*
-│   │   │                   #   about that pane (rendering + state mutators +
-│   │   │                   #   sort/cache helpers + keyboard handler if
-│   │   │                   #   pane-specific)
-│   │   ├── levelview.nim      #     The central level view + level/region
-│   │   │                      #     dropdowns + mode indicators + tooltip
-│   │   ├── currentnotepane.nim   # Below the level view (current cell's note)
-│   │   ├── noteslistpane.nim     # Left side (all notes, with filters)
-│   │   ├── toolspane.nim         # Right side (special-wall + floor-color)
-│   │   ├── statusbar.nim         # Bottom + ALL message setters
-│   │   ├── quickref.nim          # `?` keyboard reference overlay
-│   │   └── themepanel.nim        # Right-side theme editor
+│   ├── views/              #   Per-region UI modules — each file owns
+│   │   │                   #   *everything* about that view (render, state
+│   │   │                   #   mutators, cache/sort helpers, pane-specific
+│   │   │                   #   keyboard handler)
+│   │   ├── levelview.nim       # The central level view + level/region
+│   │   │                       # dropdowns + mode indicators + tooltip
+│   │   ├── currentnote.nim     # Below the level view (current cell's note)
+│   │   ├── noteslist.nim       # Left side (all notes, with filters)
+│   │   ├── tools.nim           # Right side (special-wall + floor-color)
+│   │   ├── statusbar.nim       # Bottom + ALL message setters
+│   │   ├── quickref.nim        # `?` keyboard reference overlay
+│   │   └── themepanel.nim      # Right-side theme editor
 │   │
+│   ├── dialogs.nim         #   Re-export shim: `import main/dialogs` gives
+│   │                       #   you every openXxxDialog + dialogs/common
 │   └── dialogs/            #   One file per dialog + shared infrastructure
 │       ├── common.nim      #     The 7 shared field templates, dialog
 │       │                   #     constants, layout helpers. Heavy re-exports
@@ -61,16 +62,16 @@ src/
 │       ├── edit_note.nim
 │       ├── edit_label.nim
 │       ├── edit_region.nim
-│       ├── save_discard_theme.nim
-│       ├── overwrite_theme.nim
-│       ├── copy_theme.nim
-│       ├── rename_theme.nim
-│       └── delete_theme.nim
+│       └── theme.nim       #     All 5 theme dialogs together (save_discard,
+│                           #     overwrite, copy, rename, delete). They share
+│                           #     a tightly-coupled workflow so they live as
+│                           #     one file.
 │
 ├── common.nim              # Domain types and constants (Location, Floor, ...)
 ├── actions.nim             # High-level domain actions on Map/Level
 ├── undomanager.nim         # Generic undo/redo
-├── appevents.nim           # Background threads (autosave, version check, IPC)
+├── appevents.nim           # Background threads (autosave, version check,
+│                           # platform IPC) + initVersionChecking
 ├── cfghelper.nim           # HOCON reader helpers
 ├── cmdline.nim             # argv parsing
 ├── fieldlimits.nim         # Validation primitives
@@ -104,13 +105,12 @@ src/
 │
 └── utils/                  # Reusable utilities (no project-specific types)
     ├── all.nim             #   Aggregator (re-exports all of utils/*)
-    ├── converters.nim      #     Implicit int↔float converters
     ├── hocon.nim           #     HOCON parser
-    ├── misc.nim            #     `alias` template, `clampMin`, ...
+    ├── misc.nim            #     `alias` template, `clampMin`, int↔float
+    │                       #     converters, `openUserManual`, ...
     ├── naturalsort.nim     #     Alphanumeric ("Level10" after "Level2")
     ├── rect.nim            #     Generic Rect[T] + intersect, contains, ...
-    ├── rle.nim             #     Run-length encoding for the .gmm format
-    └── webbrowser.nim      #     openUserManual(manualDir)
+    └── rle.nim             #     Run-length encoding for the .gmm format
 ```
 
 ## Aggregators
@@ -147,9 +147,9 @@ buckets, from cleanest to dirtiest:
 | Class | Where it lives |
 |---|---|
 | **Pure data / types** | `utils/*`, `common.nim`, `domain/*`, `ui/icons`, `ui/theme`, `fieldlimits.nim`, `cfghelper.nim`, `undomanager.nim`, `actions.nim`, `main/{appcontext, constants, keyboard}.nim` |
-| **State mutation only** (touches AppContext, no I/O / draw / input) | `main/{view, cursor, modes, versioncheck, actions_ui}.nim` |
+| **State mutation only** (touches AppContext, no I/O / draw / input) | `main/{view, cursor, actions_ui}.nim` |
 | **File I/O** | `io/persistence.nim`, `main/{themeio, configio, mapio, logging}.nim`, `appevents.nim` |
-| **OS / browser** | `utils/webbrowser.nim`, `platform/*` |
+| **OS / browser** | `utils/misc.nim` (openUserManual), `platform/*` |
 | **Drawing** (koi + nanovg) | `ui/{drawlevel, csdwindow, gfx}.nim`, `main/views/*.nim`, `main/dialogs/*.nim`, `main/frame.nim` |
 | **Input** (GLFW events) | `main/events.nim`, `main/init.nim` (window callbacks), `cmdline.nim` |
 
@@ -160,11 +160,11 @@ A few specific observations:
 - **`main/init.nim` mixes init and the per-frame window callbacks.** They
   share so much of the same dependency surface (splash window, theme load,
   render dispatch) that splitting them creates a cycle.
-- **Per-pane principle**: each file under `main/views/` owns *everything*
-  about that pane — render proc, state mutators, sort/cache helpers, even
-  keyboard handlers when they're pane-specific (e.g. `quickref.nim` owns
+- **Per-view principle**: each file under `main/views/` owns *everything*
+  about that view — render proc, state mutators, sort/cache helpers, even
+  keyboard handlers when they're view-specific (e.g. `quickref.nim` owns
   `handleQuickRefKeyEvents`).
-- **`panes/statusbar.nim`** is the textbook case for that principle. The
+- **`views/statusbar.nim`** is the textbook case for that principle. The
   message setters (`setStatusMessage` etc.) and the renderer
   (`renderStatusBar`) both touch `AppContext.ui.status`; splitting them
   by file was artificial. Co-located.
@@ -180,12 +180,12 @@ Tier 0 — pure roots:
     undomanager, actions, main/{appcontext, constants}, ui/gfx
         ↓
 Tier 1 — state helpers (AppContext-aware, pure logic):
-    main/{view, cursor, modes, keyboard, logging, versioncheck}
+    main/{view, cursor, keyboard, logging}
         ↓
 Tier 2 — I/O:
     io/persistence, main/{themeio, configio, mapio}, appevents
         ↓
-Tier 3 — panes/statusbar (depended on by many):
+Tier 3 — views/statusbar (depended on by many):
     main/views/statusbar
         ↓
 Tier 4 — actions_ui (depends on statusbar + I/O + dialogs):
@@ -194,8 +194,8 @@ Tier 4 — actions_ui (depends on statusbar + I/O + dialogs):
 Tier 4.5 — dialogs:
     main/dialogs/common  →  main/dialogs/*  →  main/dialogs (shim)
         ↓
-Tier 5 — other panes:
-    main/views/{levelview, currentnotepane, noteslistpane, toolspane,
+Tier 5 — other views:
+    main/views/{levelview, currentnote, noteslist, tools,
                 quickref, themepanel}
         ↓
 Tier 6 — input dispatch:
@@ -231,17 +231,24 @@ tests reference private types (`Token`, `tkString`) and stay inline as
 
 ## History
 
-This source tree is the result of two refactors:
+This source tree is the result of three refactoring rounds:
 
 1. **The first split** broke up an 11,130-line `main.nim` into ~18 modules
    under `main/`, alongside light folder grouping of the other 19 source
-   files into `domain/`, `ui/`, `io/`. (Plan archived in git history.)
-2. **The second round** introduced the per-pane principle (status_msg got
-   merged into statusbar, the rendering module got split per pane into
-   `main/views/`, quickref and themepanel got their own files), added the
-   `domain/all` / `ui/all` / `utils/all` aggregator files to cut import
-   noise, merged the `shortcuts.nim` type-only file into `appcontext.nim`,
-   and split the 2700-line `dialogs.nim` into per-dialog files.
+   files into `domain/`, `ui/`, `io/`. (Plans archived in git history.)
+2. **The second round** introduced the per-view principle (status_msg got
+   merged into statusbar, the rendering module got split per view into
+   `main/views/`, quickref and themepanel got their own files), added
+   `domain/all` / `ui/all` / `utils/all` aggregators to cut import noise,
+   merged `shortcuts.nim` into `appcontext.nim`, and split `dialogs.nim`
+   into per-dialog files under `main/dialogs/`.
+3. **The third round** ("dev-experience pass") consolidated over-split
+   files where the boundary wasn't earning its keep: 5 theme dialogs
+   merged into one `dialogs/theme.nim`, tiny `utils/converters` +
+   `utils/webbrowser` + `main/versioncheck` + `main/modes` files folded
+   into their natural homes, the `panes/` folder renamed to `views/` to
+   match what's actually in it, and the `pane` suffix dropped from
+   filenames in there.
 
 The original 11,130-line `main.nim` is now ~140 lines of imports + main
 loop.
