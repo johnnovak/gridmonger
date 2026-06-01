@@ -17,10 +17,8 @@ import domain/all
 import main/appcontext
 import main/constants
 import main/cursor                  # updateLastCursorViewCoords
-import main/dialogs                 # the per-dialog procs
-import main/dialogs/about
-import main/dialogs/common          # DlgItemHeight
-import main/dialogs/preferences
+import main/dialogs                 # shim — re-exports all per-dialog modules
+                                    # + dialogs/common (DlgItemHeight, etc.)
 import main/views/currentnote   # renderCurrentNotePane
 import main/views/levelview         # renderLevel, renderLevelDropdown, renderRegionDropDown, renderEmptyMap, renderModeAndOptionIndicators
 import main/views/noteslist    # renderNotesListPane

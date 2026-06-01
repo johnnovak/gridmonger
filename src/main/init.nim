@@ -35,8 +35,7 @@ import main/appcontext
 import main/configio
 import main/constants
 import main/cursor
-import main/dialogs        # not strictly needed but easier to keep
-import main/dialogs/common # closeDialog
+import main/dialogs        # shim — re-exports all per-dialog modules + common
 import main/events         # handleQuickRefKeyEvents, handleGlobalKeyEvents
 import main/keyboard
 import main/logging
