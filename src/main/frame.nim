@@ -2,7 +2,7 @@
 #
 # Top-level UI orchestrator. renderUI walks the visible layout — level view,
 # pane panes, status bar, theme editor, dialog overlay — and dispatches to
-# the per-pane render procs in main/panes/. renderDialogs dispatches to the
+# the per-pane render procs in main/views/. renderDialogs dispatches to the
 # active dialog handler in main/dialogs.
 # Side effects: koi + nanovg drawing calls.
 
@@ -21,13 +21,13 @@ import main/dialogs                 # the per-dialog procs
 import main/dialogs/about
 import main/dialogs/common          # DlgItemHeight
 import main/dialogs/preferences
-import main/panes/currentnotepane   # renderCurrentNotePane
-import main/panes/levelview         # renderLevel, renderLevelDropdown, renderRegionDropDown, renderEmptyMap, renderModeAndOptionIndicators
-import main/panes/noteslistpane    # renderNotesListPane
-import main/panes/quickref          # renderQuickReference
-import main/panes/statusbar         # renderStatusBar
-import main/panes/themepanel        # renderThemeEditorPane
-import main/panes/toolspane         # renderToolsPane
+import main/views/currentnote   # renderCurrentNotePane
+import main/views/levelview         # renderLevel, renderLevelDropdown, renderRegionDropDown, renderEmptyMap, renderModeAndOptionIndicators
+import main/views/noteslist    # renderNotesListPane
+import main/views/quickref          # renderQuickReference
+import main/views/statusbar         # renderStatusBar
+import main/views/themepanel        # renderThemeEditorPane
+import main/views/tools         # renderToolsPane
 import main/view                    # mainPaneRect, currLevel, calculateLevelDrawArea, toolsPane*, updateViewAndCursorPos
 import ui/all
 import utils/all                    # rect.h/w accessors, alias

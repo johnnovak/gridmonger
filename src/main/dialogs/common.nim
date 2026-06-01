@@ -36,7 +36,7 @@ import io/persistence as gmpersist
 import main/appcontext
 import main/constants          # ThemePaneWidth
 import main/keyboard          # isShortcutDown, isKeyDown, toStr, handleTabNavigation
-import main/panes/statusbar   # setStatusMessage, clearStatusMessage
+import main/views/statusbar   # setStatusMessage, clearStatusMessage
 import main/view              # mainPaneRect, currLevel, etc.
 import ui/all as gmui
 import utils/all as gmutilsall

@@ -22,7 +22,7 @@ import main/configio        # saveAppConfig
 import main/constants       # MapFileExt, BackupFileExt, CrashAutosaveName, UntitledName, GridmongerMapFileFilter
 import main/cursor          # moveCursorTo
 import main/logging         # logError
-import main/panes/statusbar      # setStatusMessage, setWarningMessage, setErrorMessage
+import main/views/statusbar      # setStatusMessage, setWarningMessage, setErrorMessage
 import main/themeio         # findThemeIndex
 import ui/all
 import undomanager          # initUndoManager

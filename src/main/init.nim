@@ -42,8 +42,8 @@ import main/keyboard
 import main/logging
 import main/mapio
 import main/frame        # renderUI, renderFrame etc.
-import main/panes/quickref
-import main/panes/statusbar
+import main/views/quickref
+import main/views/statusbar
 import main/themeio
 import main/versioncheck
 import ui/all

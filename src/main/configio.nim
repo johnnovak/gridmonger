@@ -13,7 +13,7 @@ import std/sugar
 import cfghelper
 import common               # AppVersion
 import main/appcontext
-import main/panes/statusbar      # setStatusMessage, setWarningMessage
+import main/views/statusbar      # setStatusMessage, setWarningMessage
 import main/themeio         # currThemeName
 import ui/all
 import utils/all

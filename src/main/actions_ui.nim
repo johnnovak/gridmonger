@@ -22,7 +22,7 @@ import main/cursor          # moveCursorTo, setCursor
 import main/dialogs         # openSaveDiscardMapDialog, openSaveDiscardThemeDialog
 import main/mapio           # saveMap, saveMapAs, loadMap
 import main/modes           # exitSelectMode, copySelection
-import main/panes/statusbar
+import main/views/statusbar
 import ui/all
 import undomanager
 import utils/all

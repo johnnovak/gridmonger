@@ -21,7 +21,7 @@ import domain/all
 import io/persistence         # NotesListSearchTermLimits
 import main/appcontext
 import main/cursor            # centerCursorAt, moveCursorTo
-import main/panes/currentnotepane
+import main/views/currentnote
 import main/view
 import ui/all
 import utils/all

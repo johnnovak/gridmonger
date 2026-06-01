@@ -22,7 +22,7 @@ import main/actions_ui         # reloadTheme, selectPrev/NextTheme
 import main/appcontext
 import main/events             # toggleThemeEditor
 import main/keyboard           # handleTabNavigation
-import main/panes/statusbar    # clearStatusMessage
+import main/views/statusbar    # clearStatusMessage
 import ui/all
 import utils/all
 

@@ -40,7 +40,7 @@ import main/dialogs/preferences  # openPreferencesDialog
 import main/keyboard
 import main/mapio
 import main/modes
-import main/panes/statusbar
+import main/views/statusbar
 import main/themeio
 import main/view
 import ui/csdwindow

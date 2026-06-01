@@ -150,7 +150,7 @@ buckets, from cleanest to dirtiest:
 | **State mutation only** (touches AppContext, no I/O / draw / input) | `main/{view, cursor, modes, versioncheck, actions_ui}.nim` |
 | **File I/O** | `io/persistence.nim`, `main/{themeio, configio, mapio, logging}.nim`, `appevents.nim` |
 | **OS / browser** | `utils/webbrowser.nim`, `platform/*` |
-| **Drawing** (koi + nanovg) | `ui/{drawlevel, csdwindow, gfx}.nim`, `main/panes/*.nim`, `main/dialogs/*.nim`, `main/frame.nim` |
+| **Drawing** (koi + nanovg) | `ui/{drawlevel, csdwindow, gfx}.nim`, `main/views/*.nim`, `main/dialogs/*.nim`, `main/frame.nim` |
 | **Input** (GLFW events) | `main/events.nim`, `main/init.nim` (window callbacks), `cmdline.nim` |
 
 A few specific observations:
@@ -160,7 +160,7 @@ A few specific observations:
 - **`main/init.nim` mixes init and the per-frame window callbacks.** They
   share so much of the same dependency surface (splash window, theme load,
   render dispatch) that splitting them creates a cycle.
-- **Per-pane principle**: each file under `main/panes/` owns *everything*
+- **Per-pane principle**: each file under `main/views/` owns *everything*
   about that pane — render proc, state mutators, sort/cache helpers, even
   keyboard handlers when they're pane-specific (e.g. `quickref.nim` owns
   `handleQuickRefKeyEvents`).
@@ -186,7 +186,7 @@ Tier 2 — I/O:
     io/persistence, main/{themeio, configio, mapio}, appevents
         ↓
 Tier 3 — panes/statusbar (depended on by many):
-    main/panes/statusbar
+    main/views/statusbar
         ↓
 Tier 4 — actions_ui (depends on statusbar + I/O + dialogs):
     main/actions_ui  (NOTE: imports dialogs — see Tier 4.5 below)
@@ -195,7 +195,7 @@ Tier 4.5 — dialogs:
     main/dialogs/common  →  main/dialogs/*  →  main/dialogs (shim)
         ↓
 Tier 5 — other panes:
-    main/panes/{levelview, currentnotepane, noteslistpane, toolspane,
+    main/views/{levelview, currentnotepane, noteslistpane, toolspane,
                 quickref, themepanel}
         ↓
 Tier 6 — input dispatch:
@@ -238,7 +238,7 @@ This source tree is the result of two refactors:
    files into `domain/`, `ui/`, `io/`. (Plan archived in git history.)
 2. **The second round** introduced the per-pane principle (status_msg got
    merged into statusbar, the rendering module got split per pane into
-   `main/panes/`, quickref and themepanel got their own files), added the
+   `main/views/`, quickref and themepanel got their own files), added the
    `domain/all` / `ui/all` / `utils/all` aggregator files to cut import
    noise, merged the `shortcuts.nim` type-only file into `appcontext.nim`,
    and split the 2700-line `dialogs.nim` into per-dialog files.
