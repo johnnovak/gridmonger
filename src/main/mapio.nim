@@ -194,7 +194,7 @@ proc saveMap*(path: string, autosave, createBackup: bool; a) =
 
 when not defined(DEBUG):
 
-  proc autoSaveMapOnCrash(a): string =
+  proc autoSaveMapOnCrash*(a): string =
     let (dir, name) = if a.doc.path == "":
       (a.paths.autosaveDir, UntitledName)
     else:

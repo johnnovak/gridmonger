@@ -49,6 +49,8 @@ import ui/theme as themelib
 import undomanager           # newUndoManager
 import utils/all
 
+when not defined(DEBUG):
+  import osdialog
 
 
 using a: var AppContext
@@ -536,7 +538,7 @@ proc cleanup*(a) =
 
 when not defined(DEBUG):
 
-  proc crashHandler(e: ref Exception, a) =
+  proc crashHandler*(e: ref Exception, a) =
     let doAutosave = a.doc.path != ""
     var crashAutosavePath = ""
 

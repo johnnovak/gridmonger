@@ -27,6 +27,9 @@ import ui/all
 import undomanager
 import utils/all
 
+when not defined(DEBUG):
+  import osdialog           # fileDialog
+
 
 using a: var AppContext
 
