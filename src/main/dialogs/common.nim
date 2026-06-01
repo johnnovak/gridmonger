@@ -18,6 +18,7 @@
 import std/lenientops
 import std/math
 import std/options
+import std/sequtils         # toSeq
 import std/strformat
 import std/strutils
 import std/tables
@@ -26,11 +27,12 @@ import std/times
 import glfw
 import koi
 import nanovg
+import with
 
 import cfghelper
 import ../../common as gmcommon  # disambiguate from this file (src/main/dialogs/common)
-import domain/all
-import io/persistence
+import domain/all as gmdomain
+import io/persistence as gmpersist
 import main/appcontext
 import main/constants          # ThemePaneWidth
 import main/keyboard          # isShortcutDown, isKeyDown, toStr, handleTabNavigation
@@ -46,9 +48,9 @@ import utils/misc as gmUtils
 # import dialog-specific extras explicitly (themeio for theme dialogs,
 # mapio for save dialogs, etc.).
 
-export options, math, strformat, strutils, tables, times, lenientops
-export glfw, koi, nanovg
-export cfghelper, gmcommon, gmUtils, gmui, gmutilsall
+export options, math, sequtils, strformat, strutils, tables, times, lenientops
+export glfw, koi, nanovg, with
+export cfghelper, gmcommon, gmdomain, gmpersist, gmUtils, gmui, gmutilsall
 export appcontext, constants, keyboard, statusbar, view
 
 
