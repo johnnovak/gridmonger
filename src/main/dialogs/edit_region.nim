@@ -7,9 +7,6 @@
 import main/dialogs/common
 
 import actions
-import main/cursor                # centerCursorAt
-import undomanager
-
 
 
 using a: var AppContext

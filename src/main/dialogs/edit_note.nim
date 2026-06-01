@@ -7,9 +7,7 @@
 import main/dialogs/common
 
 import actions
-import io/persistence             # NoteIconLimits etc.
-import undomanager
-
+import io/persistence
 
 
 using a: var AppContext

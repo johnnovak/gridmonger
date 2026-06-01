@@ -6,9 +6,7 @@
 
 import main/dialogs/common
 
-import actions                    # via undomanager
-import undomanager
-
+import actions
 
 
 using a: var AppContext

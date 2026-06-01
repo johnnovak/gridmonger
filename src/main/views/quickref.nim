@@ -5,24 +5,23 @@
 # and the keyboard handler (handleQuickRefKeyEvents).
 # Side effects: koi + nanovg drawing, AppContext.ui mutation, theme switch.
 
-import std/math               # round
+import std/math
 import std/options
 import std/strformat
-import std/sugar               # collect
+import std/sugar
 import std/tables
 
-import glfw                    # key1, mkCtrl
+import glfw
 import koi
 from koi/utils import lerp, invLerp, remap
 import nanovg
 
-import cfghelper               # getColorOrDefault
-import common                  # HairSp, IconArrowsHoriz, IconArrowsAll
-import main/actions_ui         # reloadTheme, selectPrev/NextTheme
+import cfghelper
+import common
+import main/actions_ui
 import main/appcontext
-import main/events             # toggleThemeEditor
-import main/keyboard           # handleTabNavigation
-import main/views/statusbar    # clearStatusMessage
+import main/keyboard
+import main/views/statusbar
 import ui/all
 import utils/all
 
