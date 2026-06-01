@@ -11,7 +11,8 @@ import std/options
 
 import nanovg
 
-import utils/converters    # int↔float automatic conversion for createPattern
+import utils/misc            # int↔float converters needed for createPattern
+
 
 
 # {{{ createImage()

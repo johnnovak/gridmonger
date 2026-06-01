@@ -5,20 +5,16 @@
 # modules.
 # Side effects: none (the underlying modules vary).
 
-import ./converters
 import ./hocon
 import ./misc
 import ./naturalsort
 import ./rect
 import ./rle
-import ./webbrowser
 
-export converters
 export hocon
 export misc
 export naturalsort
 export rect
 export rle
-export webbrowser
 
 # vim: et:ts=2:sw=2:fdm=marker

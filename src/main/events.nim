@@ -48,7 +48,6 @@ import ui/drawlevel
 import ui/icons
 import utils/misc
 import utils/rect           # rectN
-import utils/webbrowser
 
 
 using a: var AppContext

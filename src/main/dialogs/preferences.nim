@@ -11,7 +11,6 @@ import appevents
 import main/configio             # saveAppConfig
 import main/themeio              # updateUIScaleFactor, setSwapInterval
 import main/versioncheck         # initVersionChecking
-import utils/webbrowser
 
 
 

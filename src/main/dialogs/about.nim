@@ -12,7 +12,6 @@ import std/strformat
 import semver
 import appevents                 # appEvents.fetchLatestVersion
 import main/versioncheck         # initVersionChecking
-import utils/webbrowser          # openUserManual
 
 
 
