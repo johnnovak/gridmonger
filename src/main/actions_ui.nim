@@ -402,5 +402,38 @@ proc selectFloorColor*(index: Natural; a) =
 
 # }}}
 
+# {{{ enterDrawWallMode()
+proc enterDrawWallMode*(specialWall: bool; a) =
+  a.ui.editMode = if specialWall: emDrawSpecialWall else: emDrawWall
+  a.ui.drawWallRepeatAction = dwaNone
+
+  if specialWall:
+    setDrawSpecialWallActionMessage(a)
+  else:
+    setDrawWallActionMessage(a)
+
+# }}}
+# {{{ toggleThemeEditor()
+proc toggleThemeEditor*(a) =
+  toggleShowOption(a.layout.showThemeEditor, NoIcon, "Theme editor pane", a)
+
+# }}}
+# {{{ showQuickReference()
+proc showQuickReference*(a) =
+  a.ui.showQuickReference = true
+  setStatusMessage(
+    IconQuestion, "Quick keyboard reference",
+    @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}",          "switch tab",
+      fmt"Esc{HairSp}/{HairSp}Space{HairSp}/{HairSp}Enter", "exit",
+      "F1", "open user manual"], a)
+
+# }}}
+# {{{ toggleTitleBar()
+proc toggleTitleBar*(a) =
+  toggleShowOption(a.layout.showTitleBar, NoIcon, "Title bar", a)
+  a.win.showTitleBar = a.layout.showTitleBar
+
+# }}}
+
 
 # vim: et:ts=2:sw=2:fdm=marker

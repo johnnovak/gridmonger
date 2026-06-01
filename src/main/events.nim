@@ -54,17 +54,6 @@ import utils/webbrowser
 using a: var AppContext
 
 
-# {{{ enterDrawWallMode()
-proc enterDrawWallMode*(specialWall: bool; a) =
-  a.ui.editMode = if specialWall: emDrawSpecialWall else: emDrawWall
-  a.ui.drawWallRepeatAction = dwaNone
-
-  if specialWall:
-    setDrawSpecialWallActionMessage(a)
-  else:
-    setDrawWallActionMessage(a)
-
-# }}}
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents*(a) =
 
@@ -266,45 +255,7 @@ proc handleLevelMouseEvents*(a) =
 
 # }}}
 
-# {{{ setSelectJumpToLinkActionMessage()
-proc setSelectJumpToLinkSrcActionMessage*(a) =
-  let currIdx = a.ui.jumpToSrcLocationIdx + 1
-  let count = a.ui.jumpToSrcLocations.len
-  let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
-
-  setStatusMessage(IconLink,
-                   fmt"Select {linkFloorToString(floor)} " &
-                   fmt"source ({currIdx} of {count})",
-                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"], a)
-
-# }}}
 # {{{ handleGlobalKeyEvents()
-
-template toggleOption*(opt: untyped, icon, msg, on, off: string; a) =
-  opt = not opt
-  let state = if opt: on else: off
-  setStatusMessage(icon, msg & " " & state, a)
-
-template toggleShowOption*(opt: untyped, icon, msg: string; a) =
-  toggleOption(opt, icon, msg, on="shown", off="hidden", a)
-
-template toggleOnOffOption*(opt: untyped, icon, msg: string; a) =
-  toggleOption(opt, icon, msg, on="on", off="off", a)
-
-proc toggleThemeEditor*(a) =
-  toggleShowOption(a.layout.showThemeEditor, NoIcon, "Theme editor pane", a)
-
-proc showQuickReference*(a) =
-  a.ui.showQuickReference = true
-  setStatusMessage(
-    IconQuestion, "Quick keyboard reference",
-    @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}",          "switch tab",
-      fmt"Esc{HairSp}/{HairSp}Space{HairSp}/{HairSp}Enter", "exit",
-      "F1", "open user manual"], a)
-
-proc toggleTitleBar*(a) =
-  toggleShowOption(a.layout.showTitleBar, NoIcon, "Title bar", a)
-  a.win.showTitleBar = a.layout.showTitleBar
 
 # TODO separate into level events and global events?
 proc handleGlobalKeyEvents*(a) =

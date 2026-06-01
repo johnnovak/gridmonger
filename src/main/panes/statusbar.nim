@@ -126,6 +126,31 @@ proc setSelectModeSpecialActionsMessage*(a) =
   )
 
 # }}}
+# {{{ setSelectJumpToLinkSrcActionMessage()
+proc setSelectJumpToLinkSrcActionMessage*(a) =
+  let currIdx = a.ui.jumpToSrcLocationIdx + 1
+  let count = a.ui.jumpToSrcLocations.len
+  let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
+
+  setStatusMessage(IconLink,
+                   fmt"Select {linkFloorToString(floor)} " &
+                   fmt"source ({currIdx} of {count})",
+                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"], a)
+
+# }}}
+# {{{ toggleOption / toggleShowOption / toggleOnOffOption templates
+template toggleOption*(opt: untyped, icon, msg, on, off: string; a) =
+  opt = not opt
+  let state = if opt: on else: off
+  setStatusMessage(icon, msg & " " & state, a)
+
+template toggleShowOption*(opt: untyped, icon, msg: string; a) =
+  toggleOption(opt, icon, msg, on="shown", off="hidden", a)
+
+template toggleOnOffOption*(opt: untyped, icon, msg: string; a) =
+  toggleOption(opt, icon, msg, on="on", off="off", a)
+
+# }}}
 # {{{ setSetLinkDestinationMessage()
 proc setSetLinkDestinationMessage*(floor: Floor; a) =
   setStatusMessage(IconLink,
