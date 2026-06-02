@@ -14,7 +14,6 @@ import riff
 
 import common
 import domain/all
-import fieldlimits
 import ui/all
 import utils/all
 

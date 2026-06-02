@@ -8,12 +8,11 @@ import with
 
 import cfghelper
 import common
-import fieldlimits          
 import main/appcontext
-import main/dialogs         
+import main/dialogs
 import main/theme
 import ui/all
-import ui/theme as themelib 
+import ui/theme as themelib
 import utils/all
 import utils/misc as gmUtils
 

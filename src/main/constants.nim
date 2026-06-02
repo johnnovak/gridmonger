@@ -6,7 +6,7 @@ when not defined(DEBUG):
   import std/strformat
 
 import common
-import fieldlimits
+import utils/fieldlimits
 
 
 # {{{ Constants

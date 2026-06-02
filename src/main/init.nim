@@ -21,7 +21,6 @@ import cfghelper
 import cmdline
 import common
 import domain/all
-import fieldlimits
 import main/actions_ui
 import main/appcontext
 import main/configio

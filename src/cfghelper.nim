@@ -7,7 +7,7 @@ import std/unicode
 
 import nanovg
 
-import fieldlimits
+import utils/fieldlimits
 import utils/hocon
 
 
