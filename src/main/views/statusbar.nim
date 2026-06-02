@@ -19,7 +19,7 @@ import utils/all
 
 using a: var AppContext
 
-# {{{ setStatusMessage()
+# {{{ setStatusMessage*()
 proc setStatusMessage*(icon, msg: string, commands: seq[string]; a) =
   alias(s, a.ui.status)
 
@@ -40,12 +40,12 @@ proc setStatusMessage*(msg: string; a) =
   setStatusMessage(NoIcon, msg, commands = @[], a=a)
 
 # }}}
-# {{{ clearStatusMessage()
+# {{{ clearStatusMessage*()
 proc clearStatusMessage*(a) =
   setStatusMessage(msg = "", a=a)
 
 # }}}
-# {{{ setWarningMessage()
+# {{{ setWarningMessage*()
 proc setWarningMessage*(msg: string, icon = IconWarning,
                        timeout = WarningMessageTimeout, overwrite = true,
                        keepStatusMessage = false; a) =
@@ -65,7 +65,7 @@ proc setWarningMessage*(msg: string, icon = IconWarning,
   koi.setFramesLeft()
 
 # }}}
-# {{{ setErrorMessage()
+# {{{ setErrorMessage*()
 proc setErrorMessage*(msg: string; a) =
   alias(s, a.ui.status)
 
@@ -96,7 +96,7 @@ template toggleOnOffOption*(opt: untyped, icon, msg: string; a) =
 
 # }}}
 
-# {{{ setSelectModeSelectMessage()
+# {{{ setSelectModeSelectMessage*()
 proc setSelectModeSelectMessage*(a) =
   let special = if a.keys.primaryModKey == mkCtrl: "Ctrl" else: "Cmd"
 
@@ -114,73 +114,8 @@ proc setSelectModeSelectMessage*(a) =
   )
 
 # }}}
-# {{{ setSelectModeSpecialActionsMessage()
-proc setSelectModeSpecialActionsMessage*(a) =
-  setStatusMessage(
-    IconGrid, "Mark selection",
-    @[scSelectionEraseArea.toStr(a),         "erase",
-      scSelectionFillArea.toStr(a),          "fill",
-      scSelectionSurroundArea.toStr(a),      "surround",
-      scSelectionCropArea.toStr(a),          "crop",
-      scSelectionMove.toStr(a),              "move",
-      scSelectionSetFloorColorArea.toStr(a), "set colour"],
-    a
-  )
 
-# }}}
-# {{{ setSelectJumpToLinkSrcActionMessage()
-proc setSelectJumpToLinkSrcActionMessage*(a) =
-  let currIdx = a.ui.jumpToSrcLocationIdx + 1
-  let count = a.ui.jumpToSrcLocations.len
-  let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
-
-  setStatusMessage(IconLink,
-                   fmt"Select {linkFloorToString(floor)} " &
-                   fmt"source ({currIdx} of {count})",
-                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"], a)
-
-# }}}
-# {{{ setSetLinkDestinationMessage()
-proc setSetLinkDestinationMessage*(floor: Floor; a) =
-  setStatusMessage(IconLink,
-                   fmt"Set {linkFloorToString(floor)} destination",
-                   @[IconArrowsAll, "select cell",
-                   scAccept.toStr(a, idx=0), "set",
-                   scCancel.toStr(a, idx=0), "cancel"], a)
-# }}}
-# {{{ mkWraparoundMessage()
-proc mkWraparoundMessage*(a): string =
-  "wraparound: " & (if a.ui.pasteWraparound: "on" else: "off")
-
-# }}}
-# {{{ setNudgePreviewModeMessage()
-proc setNudgePreviewModeMessage*(a) =
-  setStatusMessage(IconArrowsAll, "Nudge level",
-                   @[IconArrowsAll, "nudge",
-                   scTogglePasteWraparound.toStr(a), mkWraparoundMessage(a),
-                   "Enter", "confirm", "Esc", "cancel"], a)
-
-# }}}
-# {{{ setPastePreviewModeMessage()
-proc setPastePreviewModeMessage*(a) =
-  setStatusMessage(IconPaste, "Paste selection",
-                   @[IconArrowsAll, "placement",
-                   scTogglePasteWraparound.toStr(a),
-                   mkWraparoundMessage(a),
-                   "Enter/P", "paste", "Esc", "cancel"], a)
-
-# }}}
-# {{{ setMovePreviewModeMessage()
-proc setMovePreviewModeMessage*(a) =
-  setStatusMessage(IconArrowsAll, "Move selection",
-                   @[IconArrowsAll, "placement",
-                   scTogglePasteWraparound.toStr(a),
-                   mkWraparoundMessage(a),
-                   "Enter/P", "confirm", "Esc", "cancel"], a)
-
-# }}}
-
-# {{{ renderCommand()
+# {{{ renderCommand*()
 proc renderCommand*(x, y: float; command: string; bgColor, textColor: Color;
                    a: AppContext): float =
   alias(vg, a.vg)
@@ -207,7 +142,7 @@ proc renderCommand*(x, y: float; command: string; a): float =
                 textColor=s.commandTextColor, a)
 
 # }}}
-# {{{ renderStatusBar()
+# {{{ renderStatusBar*()
 proc renderStatusBar*(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(status, a.ui.status)

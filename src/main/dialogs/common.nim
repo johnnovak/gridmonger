@@ -1,5 +1,3 @@
-# Constants, field templates, helpers shared by all dialogs
-
 import std/lenientops
 import std/math
 import std/options
@@ -26,12 +24,6 @@ import main/view
 import ui/all as gmui
 import utils/all as gmutilsall
 import utils/misc as gmUtils
-
-# Per-dialog files just `import main/dialogs/common` to get the dialog
-# constants, templates, helpers, AND the workhorse modules they all need
-# (AppContext, koi, the standard library bits, nanovg, etc.). They still
-# import dialog-specific extras explicitly (themeio for theme dialogs,
-# mapio for save dialogs, etc.).
 
 export options, math, sequtils, strformat, strutils, tables, times, lenientops
 export glfw, koi, nanovg, with
@@ -70,9 +62,8 @@ const
   )
 
 # }}}
-# {{{ Helpers
 
-# {{{ coordinateFields()
+# {{{ coordinateFields*()
 template coordinateFields*() =
   const LetterLabelWidth = 100
 
@@ -147,7 +138,7 @@ template coordinateFields*() =
         discard
 
 # }}}
-# {{{ regionFields()
+# {{{ regionFields*()
 template regionFields*() =
   group:
     koi.label("Enable regions", style=a.theme.labelStyle)
@@ -191,7 +182,7 @@ template regionFields*() =
         koi.checkBox(dlg.perRegionCoords, style = a.theme.checkBoxStyle)
 
 # }}}
-# {{{ noteFields()
+# {{{ noteFields*()
 template noteFields*(dlgWidth: float) =
   koi.label("Notes", style=a.theme.labelStyle)
 
@@ -206,7 +197,7 @@ template noteFields*(dlgWidth: float) =
   )
 
 # }}}
-# {{{ commonLevelFields()
+# {{{ commonLevelFields*()
 template commonLevelFields*(dimensionsDisabled: bool) =
   group:
     koi.label("Location name", style=a.theme.labelStyle)
@@ -278,7 +269,7 @@ template commonLevelFields*(dimensionsDisabled: bool) =
     )
 
 # }}}
-# {{{ validateLevelFields()
+# {{{ validateLevelFields*()
 template validateLevelFields*(dlg, map, validationError: untyped) =
   if dlg.locationName == "":
     validationError = mkValidationError("Location name is mandatory")
@@ -295,7 +286,7 @@ template validateLevelFields*(dlg, map, validationError: untyped) =
         break
 
 # }}}
-# {{{ commonGeneralMapFields()
+# {{{ commonGeneralMapFields*()
 template commonGeneralMapFields*(map: Map, displayCreationTime: bool) =
   group:
     koi.label("Title", style=a.theme.labelStyle)
@@ -345,7 +336,7 @@ template commonGeneralMapFields*(map: Map, displayCreationTime: bool) =
       )
 
 # }}}
-# {{{ validateCommonGeneralMapFields()
+# {{{ validateCommonGeneralMapFields*()
 template validateCommonGeneralMapFields*(dlg: untyped): string =
   if dlg.title == "":
     mkValidationError("Title is mandatory")
@@ -353,7 +344,7 @@ template validateCommonGeneralMapFields*(dlg: untyped): string =
 
 # }}}
 
-# {{{ calcDialogX()
+# {{{ calcDialogX*()
 proc calcDialogX*(dlgWidth: float; a): float =
   var w = koi.winWidth()
 
@@ -363,7 +354,7 @@ proc calcDialogX*(dlgWidth: float; a): float =
   w.float*0.5 - dlgWidth*0.5
 
 # }}}
-# {{{ dialogButtonsStartPos()
+# {{{ dialogButtonsStartPos*()
 func dialogButtonsStartPos*(dlgWidth, dlgHeight: float,
                            numButtons: Natural): tuple[x, y: float] =
   const BorderPad = 15.0
@@ -376,17 +367,17 @@ func dialogButtonsStartPos*(dlgWidth, dlgHeight: float,
   result = (x, y)
 
 # }}}
-# {{{ mkValidationError()
+# {{{ mkValidationError*()
 func mkValidationError*(msg: string): string =
   fmt"{IconWarning}   {msg}"
 
 # }}}
-# {{{ mkValidationWarning()
+# {{{ mkValidationWarning*()
 func mkValidationWarning*(msg: string): string =
   fmt"{IconInfo}   {msg}"
 
 # }}}
-# {{{ moveGridPositionWrapping()
+# {{{ moveGridPositionWrapping*()
 func moveGridPositionWrapping*(currIdx: int, dc: int = 0, dr: int = 0,
                               numItems, itemsPerRow: Natural): Natural =
   assert numItems mod itemsPerRow == 0
@@ -399,7 +390,7 @@ func moveGridPositionWrapping*(currIdx: int, dc: int = 0, dr: int = 0,
   result = row * itemsPerRow + col
 
 # }}}
-# {{{ handleGridRadioButton()
+# {{{ handleGridRadioButton*()
 func handleGridRadioButton*(ke: Event, currButtonIdx: Natural,
                            numButtons, buttonsPerRow: Natural): Natural =
 
@@ -414,10 +405,8 @@ func handleGridRadioButton*(ke: Event, currButtonIdx: Natural,
     else: currButtonIdx
 
 # }}}
-# {{{ handleTabNavigation()
-# }}}
 
-# {{{ colorRadioButtonDrawProc()
+# {{{ colorRadioButtonDrawProc*()
 proc colorRadioButtonDrawProc*(colors: seq[Color],
                               cursorColor: Color): RadioButtonsDrawProc =
 
@@ -463,12 +452,10 @@ proc colorRadioButtonDrawProc*(colors: seq[Color],
 
 # }}}
 
-# {{{ closeDialog()
+# {{{ closeDialog*()
 proc closeDialog*(a) =
   koi.closeDialog()
   a.dialogs.activeDialog = dlgNone
-
-# }}}
 
 # }}}
 

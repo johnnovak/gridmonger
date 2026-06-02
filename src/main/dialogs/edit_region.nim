@@ -5,7 +5,7 @@ import actions
 
 using a: var AppContext
 
-
+# {{{ openEditRegionPropertiesDialog*()
 proc openEditRegionPropertiesDialog*(a) =
   alias(dlg, a.dialogs.editRegionProps)
 
@@ -15,7 +15,8 @@ proc openEditRegionPropertiesDialog*(a) =
 
   a.dialogs.activeDialog = dlgEditRegionProps
 
-
+# }}}
+# {{{ editRegionPropsDialog*()
 proc editRegionPropsDialog*(dlg: var EditRegionPropsParams; a) =
   const
     DlgWidth = 486.0
@@ -83,7 +84,7 @@ proc editRegionPropsDialog*(dlg: var EditRegionPropsParams; a) =
               style=a.theme.errorLabelStyle)
     y += h
 
-
+# {{{ okAction()
   proc okAction(dlg: EditRegionPropsParams; a) =
     alias(map, a.doc.map)
     let cur = a.ui.cursor
@@ -97,10 +98,12 @@ proc editRegionPropsDialog*(dlg: var EditRegionPropsParams; a) =
     setStatusMessage(IconFile, "Region properties updated", a)
     closeDialog(a)
 
-
+# }}}
+# {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
 
+# }}}
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -129,5 +132,6 @@ proc editRegionPropsDialog*(dlg: var EditRegionPropsParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

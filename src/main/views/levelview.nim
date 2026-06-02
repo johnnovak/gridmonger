@@ -18,114 +18,8 @@ import utils/misc as gmUtils
 
 using a: var AppContext
 
-# {{{ renderLevelDropdown()
-proc renderLevelDropdown*(a) =
-  alias(ui, a.ui)
-  alias(vg, a.vg)
-  alias(map, a.doc.map)
-
-  let
-    cur      = a.ui.cursor
-    mainPane = mainPaneRect(a)
-
-  var sortedLevelIdx = map.sortedLevelIds.find(cur.levelId)
-  assert sortedLevelIdx > -1
-  let prevSortedLevelIdx = sortedLevelIdx
-
-  # Set width dynamically
-  vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
-
-  let levelDropDownWidth = round(
-    vg.textWidth(map.sortedLevelNames[sortedLevelIdx]) +
-    a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
-  )
-
-  koi.dropDown(
-    x = round(mainPane.w - levelDropDownWidth) * 0.5,
-    y = 19.0,
-    w = levelDropDownWidth,
-    h = 24.0,
-    map.sortedLevelNames,
-    sortedLevelIdx,
-    tooltip = "",
-    disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-    style = a.theme.levelDropDownStyle
-  )
-
-  if sortedLevelIdx != prevSortedLevelIdx:
-    var cur = cur
-    cur.levelId = map.sortedLevelIds[sortedLevelIdx]
-    setCursor(cur, a)
-
-# }}}
-# {{{ renderRegionDropDown()
-proc renderRegionDropDown*(a) =
-  alias(ui, a.ui)
-
-  let
-    l = currLevel(a)
-    currRegion = currRegion(a)
-    mainPane = mainPaneRect(a)
-
-  if currRegion.isSome:
-    let currRegionName = currRegion.get.name
-    var sortedRegionIdx = l.regions.sortedRegionNames.find(currRegionName)
-    let prevSortedRegionIdx = sortedRegionIdx
-
-    let regionDropDownWidth = round(
-      a.vg.textWidth(currRegionName) +
-      a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
-    )
-
-    koi.dropDown(
-      x = round(mainPane.w - regionDropDownWidth) * 0.5,
-      y = 49.0,
-      w = regionDropDownWidth,
-      h = 24.0,
-      l.regions.sortedRegionNames,
-      sortedRegionIdx,
-      tooltip = "",
-      disabled = not (ui.editMode in {emNormal, emSetCellLink}),
-      style = a.theme.levelDropDownStyle
-    )
-
-    if sortedRegionIdx != prevSortedRegionIdx :
-      let currRegionName = l.regions.sortedRegionNames[sortedRegionIdx]
-      let (regionCoords, _) = l.regions.findFirstByName(currRegionName).get
-
-      let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.levelId,
-                                                     regionCoords)
-
-      centerCursorAt(Location(levelId: ui.cursor.levelId, row: r, col: c), a)
-
-# }}}
-# {{{ renderModeAndOptionIndicators()
-proc renderModeAndOptionIndicators*(x, y: float; a) =
-  alias(vg, a.vg)
-  alias(ui, a.ui)
-
-  let lt = a.theme.levelTheme
-
-  vg.save
-
-  vg.fillColor(lt.coordinatesHighlightColor)
-
-  var x = x
-
-  if a.ui.wasdMode:
-    vg.setFont(15, "sans-bold")
-    discard vg.text(x, y, fmt"WASD+{IconMouse}")
-    x += 80
-
-  if a.ui.drawTrail:
-    vg.setFont(19, "sans-bold")
-    discard vg.text(x, y+1, IconShoePrints)
-
-  vg.restore
-
-# }}}
 # {{{ renderNoteTooltip()
-proc renderNoteTooltip*(x, y: float, levelDrawWidth, levelDrawHeight: float,
+proc renderNoteTooltip(x, y: float, levelDrawWidth, levelDrawHeight: float,
                        note: Annotation, a) =
   alias(vg, a.vg)
   alias(ui, a.ui)
@@ -183,7 +77,114 @@ proc renderNoteTooltip*(x, y: float, levelDrawWidth, levelDrawHeight: float,
 
 # }}}
 
-# {{{ renderLevel()
+# {{{ renderLevelDropdown*()
+proc renderLevelDropdown*(a) =
+  alias(ui, a.ui)
+  alias(vg, a.vg)
+  alias(map, a.doc.map)
+
+  let
+    cur      = a.ui.cursor
+    mainPane = mainPaneRect(a)
+
+  var sortedLevelIdx = map.sortedLevelIds.find(cur.levelId)
+  assert sortedLevelIdx > -1
+  let prevSortedLevelIdx = sortedLevelIdx
+
+  # Set width dynamically
+  vg.fontSize(a.theme.levelDropDownStyle.label.fontSize)
+
+  let levelDropDownWidth = round(
+    vg.textWidth(map.sortedLevelNames[sortedLevelIdx]) +
+    a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
+  )
+
+  koi.dropDown(
+    x = round(mainPane.w - levelDropDownWidth) * 0.5,
+    y = 19.0,
+    w = levelDropDownWidth,
+    h = 24.0,
+    map.sortedLevelNames,
+    sortedLevelIdx,
+    tooltip = "",
+    disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+    style = a.theme.levelDropDownStyle
+  )
+
+  if sortedLevelIdx != prevSortedLevelIdx:
+    var cur = cur
+    cur.levelId = map.sortedLevelIds[sortedLevelIdx]
+    setCursor(cur, a)
+
+# }}}
+# {{{ renderRegionDropDown*()
+proc renderRegionDropDown*(a) =
+  alias(ui, a.ui)
+
+  let
+    l = currLevel(a)
+    currRegion = currRegion(a)
+    mainPane = mainPaneRect(a)
+
+  if currRegion.isSome:
+    let currRegionName = currRegion.get.name
+    var sortedRegionIdx = l.regions.sortedRegionNames.find(currRegionName)
+    let prevSortedRegionIdx = sortedRegionIdx
+
+    let regionDropDownWidth = round(
+      a.vg.textWidth(currRegionName) +
+      a.theme.levelDropDownStyle.label.padHoriz*2 + 8.0
+    )
+
+    koi.dropDown(
+      x = round(mainPane.w - regionDropDownWidth) * 0.5,
+      y = 49.0,
+      w = regionDropDownWidth,
+      h = 24.0,
+      l.regions.sortedRegionNames,
+      sortedRegionIdx,
+      tooltip = "",
+      disabled = not (ui.editMode in {emNormal, emSetCellLink}),
+      style = a.theme.levelDropDownStyle
+    )
+
+    if sortedRegionIdx != prevSortedRegionIdx :
+      let currRegionName = l.regions.sortedRegionNames[sortedRegionIdx]
+      let (regionCoords, _) = l.regions.findFirstByName(currRegionName).get
+
+      let (r, c) = a.doc.map.getRegionCenterLocation(ui.cursor.levelId,
+                                                     regionCoords)
+
+      centerCursorAt(Location(levelId: ui.cursor.levelId, row: r, col: c), a)
+
+# }}}
+# {{{ renderModeAndOptionIndicators*()
+proc renderModeAndOptionIndicators*(x, y: float; a) =
+  alias(vg, a.vg)
+  alias(ui, a.ui)
+
+  let lt = a.theme.levelTheme
+
+  vg.save
+
+  vg.fillColor(lt.coordinatesHighlightColor)
+
+  var x = x
+
+  if a.ui.wasdMode:
+    vg.setFont(15, "sans-bold")
+    discard vg.text(x, y, fmt"WASD+{IconMouse}")
+    x += 80
+
+  if a.ui.drawTrail:
+    vg.setFont(19, "sans-bold")
+    discard vg.text(x, y+1, IconShoePrints)
+
+  vg.restore
+
+# }}}
+
+# {{{ renderLevel*()
 proc renderLevel*(x, y, w, h: float,
                  levelDrawWidth, levelDrawHeight: float; a) =
 
@@ -311,7 +312,7 @@ proc renderLevel*(x, y, w, h: float,
     renderNoteTooltip(x, y, levelDrawWidth, levelDrawHeight, note.get, a)
 
 # }}}
-# {{{ renderEmptyMap()
+# {{{ renderEmptyMap*()
 proc renderEmptyMap*(a) =
   alias(vg, a.vg)
 

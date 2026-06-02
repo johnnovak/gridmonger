@@ -134,6 +134,4 @@ proc parseCommandLineParams*(): tuple[configFile, mapFile: Option[string],
 
 # }}}
 
-# {{{ Test
-
 # vim: et:ts=2:sw=2:fdm=marker

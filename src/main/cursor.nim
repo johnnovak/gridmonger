@@ -109,7 +109,7 @@ proc stepCursor*(cur: Location, dir: CardinalDir, steps: Natural; a): Location =
   result = cur
 
 # }}}
-# {{{ moveCursor()
+# {{{ moveCursor*()
 proc moveCursor*(dir: CardinalDir, steps: Natural = 1; a) =
   let cur = stepCursor(a.ui.cursor, dir, steps, a)
   if cur != a.ui.cursor:

@@ -6,7 +6,7 @@ import main/cursor
 
 using a: var AppContext
 
-
+# {{{ openResizeLevelDialog*()
 proc openResizeLevelDialog*(a) =
   alias(dlg, a.dialogs.resizeLevel)
 
@@ -17,7 +17,8 @@ proc openResizeLevelDialog*(a) =
 
   a.dialogs.activeDialog = dlgResizeLevel
 
-
+# }}}
+# {{{ resizeLevelDialog*()
 proc resizeLevelDialog*(dlg: var ResizeLevelDialogParams; a) =
   const
     DlgWidth = 270.0
@@ -86,7 +87,7 @@ proc resizeLevelDialog*(dlg: var ResizeLevelDialogParams; a) =
 
   dlg.activateFirstTextField = false
 
-
+  # {{{ okAction()
   proc okAction(dlg: ResizeLevelDialogParams; a) =
     let newRows = parseInt(dlg.rows)
     let newCols = parseInt(dlg.cols)
@@ -111,9 +112,11 @@ proc resizeLevelDialog*(dlg: var ResizeLevelDialogParams; a) =
     setStatusMessage(IconEnlarge, "Level resized", a)
     closeDialog(a)
 
-
+  # }}}
+  # {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
+  # }}}
 
   let l = currLevel(a)
   var sizeChanged = false
@@ -152,5 +155,6 @@ proc resizeLevelDialog*(dlg: var ResizeLevelDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

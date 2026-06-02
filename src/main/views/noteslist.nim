@@ -22,8 +22,8 @@ import utils/all
 
 using a: var AppContext
 
-# {{{ Note sort functions
-func toSortOrder*(ak: AnnotationKind): int =
+# {{{ toSortOrder()
+func toSortOrder(ak: AnnotationKind): int =
   case ak
   of akIndexed:  0
   of akCustomId: 1
@@ -31,7 +31,9 @@ func toSortOrder*(ak: AnnotationKind): int =
   of akComment:  3
   of akLabel:    4
 
-func sortByNoteType*(x, y: Annotation): int =
+# }}}
+# {{{ sortByNoteType()
+func sortByNoteType(x, y: Annotation): int =
   var c = 0
   if x.kind == y.kind:
     case x.kind:
@@ -46,8 +48,9 @@ func sortByNoteType*(x, y: Annotation): int =
   else:
     cmp(x.kind.toSortOrder, y.kind.toSortOrder)
 
-
-func sortByTextAndLocation*(locX: Location, x: Annotation,
+# }}}
+# {{{ sortByTextAndLocation()
+func sortByTextAndLocation(locX: Location, x: Annotation,
                            locY: Location, y: Annotation): int =
   var c = cmpNaturalIgnoreCase(x.text.toRunes,
                                y.text.toRunes); if c != 0: return c
@@ -56,8 +59,9 @@ func sortByTextAndLocation*(locX: Location, x: Annotation,
   return  cmp(locX.col,     locY.col)
 
 # }}}
+
 # {{{ rebuildNotesListCache()
-proc rebuildNotesListCache*(textW: float; a) =
+proc rebuildNotesListCache(textW: float; a) =
   alias(vg, a.vg)
   alias(nls, a.ui.notesListState)
 
@@ -177,7 +181,7 @@ proc rebuildNotesListCache*(textW: float; a) =
 
 # }}}
 # {{{ noteButton()
-proc noteButton*(id: ItemId; textX, textY, textW, markerX: float;
+proc noteButton(id: ItemId; textX, textY, textW, markerX: float;
                 note: Annotation, active: bool): bool =
   alias(ui, g_app.ui)
   alias(nt, g_app.theme.notesListPaneTheme)
@@ -235,7 +239,7 @@ proc noteButton*(id: ItemId; textX, textY, textW, markerX: float;
   koi.autoLayoutPost()
 
 # }}}
-# {{{ renderNotesListPane()
+# {{{ renderNotesListPane*()
 proc renderNotesListPane*(x, y, w, h: float; a) =
   alias(vg, a.vg)
   alias(ui, a.ui)

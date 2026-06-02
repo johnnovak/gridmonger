@@ -38,6 +38,73 @@ import utils/rect
 
 using a: var AppContext
 
+# {{{ setSelectModeSpecialActionsMessage()
+proc setSelectModeSpecialActionsMessage(a) =
+  setStatusMessage(
+    IconGrid, "Mark selection",
+    @[scSelectionEraseArea.toStr(a),         "erase",
+      scSelectionFillArea.toStr(a),          "fill",
+      scSelectionSurroundArea.toStr(a),      "surround",
+      scSelectionCropArea.toStr(a),          "crop",
+      scSelectionMove.toStr(a),              "move",
+      scSelectionSetFloorColorArea.toStr(a), "set colour"],
+    a
+  )
+
+# }}}
+# {{{ setSelectJumpToLinkSrcActionMessage()
+proc setSelectJumpToLinkSrcActionMessage(a) =
+  let currIdx = a.ui.jumpToSrcLocationIdx + 1
+  let count = a.ui.jumpToSrcLocations.len
+  let floor = a.doc.map.getFloor(a.ui.jumpToDestLocation)
+
+  setStatusMessage(IconLink,
+                   fmt"Select {linkFloorToString(floor)} " &
+                   fmt"source ({currIdx} of {count})",
+                   @[IconArrowsAll, "next/prev", "Enter/Esc", "exit"], a)
+
+# }}}
+# {{{ setSetLinkDestinationMessage()
+proc setSetLinkDestinationMessage(floor: Floor; a) =
+  setStatusMessage(IconLink,
+                   fmt"Set {linkFloorToString(floor)} destination",
+                   @[IconArrowsAll, "select cell",
+                   scAccept.toStr(a, idx=0), "set",
+                   scCancel.toStr(a, idx=0), "cancel"], a)
+# }}}
+
+# {{{ mkWraparoundMessage()
+proc mkWraparoundMessage(a): string =
+  "wraparound: " & (if a.ui.pasteWraparound: "on" else: "off")
+
+# }}}
+# {{{ setNudgePreviewModeMessage()
+proc setNudgePreviewModeMessage(a) =
+  setStatusMessage(IconArrowsAll, "Nudge level",
+                   @[IconArrowsAll, "nudge",
+                   scTogglePasteWraparound.toStr(a), mkWraparoundMessage(a),
+                   "Enter", "confirm", "Esc", "cancel"], a)
+
+# }}}
+# {{{ setPastePreviewModeMessage()
+proc setPastePreviewModeMessage(a) =
+  setStatusMessage(IconPaste, "Paste selection",
+                   @[IconArrowsAll, "placement",
+                   scTogglePasteWraparound.toStr(a),
+                   mkWraparoundMessage(a),
+                   "Enter/P", "paste", "Esc", "cancel"], a)
+
+# }}}
+# {{{ setMovePreviewModeMessage()
+proc setMovePreviewModeMessage(a) =
+  setStatusMessage(IconArrowsAll, "Move selection",
+                   @[IconArrowsAll, "placement",
+                   scTogglePasteWraparound.toStr(a),
+                   mkWraparoundMessage(a),
+                   "Enter/P", "confirm", "Esc", "cancel"], a)
+
+# }}}
+
 # {{{ handleLevelMouseEvents()
 proc handleLevelMouseEvents*(a) =
 
@@ -1495,7 +1562,6 @@ proc handleGlobalKeyEvents*(a) =
       discard
 
 # }}}
-
 # {{{ handleGlobalKeyEvents_NoLevels()
 proc handleGlobalKeyEvents_NoLevels*(a) =
   let yubnMode = a.prefs.yubnMovementKeys

@@ -16,5 +16,3 @@ proc macFileOpener() {.thread.} =
 proc init*() =
   createThread(g_macFileOpenerThr, macFileOpener)
 
-
-# vim: et:ts=2:sw=2:fdm=marker

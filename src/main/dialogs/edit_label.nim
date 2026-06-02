@@ -5,7 +5,7 @@ import actions
 
 using a: var AppContext
 
-
+# {{{ openEditLabelDialog*()
 proc openEditLabelDialog*(a) =
   alias(dlg, a.dialogs.editLabel)
 
@@ -27,7 +27,8 @@ proc openEditLabelDialog*(a) =
 
   a.dialogs.activeDialog = dlgEditLabel
 
-
+# }}}
+# {{{ editLabelDialog*()
 proc editLabelDialog*(dlg: var EditLabelDialogParams; a) =
   let lt = a.theme.levelTheme
 
@@ -94,6 +95,7 @@ proc editLabelDialog*(dlg: var EditLabelDialogParams; a) =
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
+# {{{ okAction()
   proc okAction(dlg: EditLabelDialogParams; a) =
     if validationError != "": return
 
@@ -104,10 +106,12 @@ proc editLabelDialog*(dlg: var EditLabelDialogParams; a) =
     setStatusMessage(IconText, msg, a)
     closeDialog(a)
 
-
+# }}}
+# {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
 
+# }}}
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
                 disabled=(validationError != ""), style=a.theme.buttonStyle):
@@ -138,5 +142,6 @@ proc editLabelDialog*(dlg: var EditLabelDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

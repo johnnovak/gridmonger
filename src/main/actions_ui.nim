@@ -22,7 +22,7 @@ when not defined(DEBUG):
 
 using a: var AppContext
 
-# {{{ undoAction()
+# {{{ undoAction*()
 proc undoAction*(a) =
   alias(um, a.doc.undoManager)
 
@@ -46,7 +46,7 @@ proc undoAction*(a) =
     setWarningMessage("Nothing to undo", a=a)
 
 # }}}
-# {{{ redoAction()
+# {{{ redoAction*()
 proc redoAction*(a) =
   alias(um, a.doc.undoManager)
 
@@ -70,7 +70,8 @@ proc redoAction*(a) =
     setWarningMessage("Nothing to redo", a=a)
 
 # }}}
-# {{{ enterSelectMode()
+
+# {{{ enterSelectMode*()
 proc enterSelectMode*(a) =
   let l = currLevel(a)
 
@@ -81,7 +82,7 @@ proc enterSelectMode*(a) =
   setSelectModeSelectMessage(a)
 
 # }}}
-# {{{ exitSelectMode()
+# {{{ exitSelectMode*()
 proc exitSelectMode*(a) =
   a.ui.editMode = emNormal
   a.ui.selection = Selection.none
@@ -89,7 +90,7 @@ proc exitSelectMode*(a) =
   clearStatusMessage(a)
 
 # }}}
-# {{{ copySelection()
+# {{{ copySelection*()
 proc copySelection*(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] =
   alias(ui, a.ui)
 
@@ -107,7 +108,7 @@ proc copySelection*(buf: var Option[SelectionBuffer]; a): Option[Rect[Natural]] 
   result = bbox
 
 # }}}
-# {{{ exitMovePreviewMode()
+# {{{ exitMovePreviewMode*()
 proc exitMovePreviewMode*(a) =
   undoAction(a)
   a.doc.undoManager.truncateUndoState()
@@ -115,7 +116,7 @@ proc exitMovePreviewMode*(a) =
   clearStatusMessage(a)
 
 # }}}
-# {{{ exitNudgePreviewMode()
+# {{{ exitNudgePreviewMode*()
 proc exitNudgePreviewMode*(a) =
   alias(ui, a.ui)
   alias(map, a.doc.map)
@@ -131,7 +132,7 @@ proc exitNudgePreviewMode*(a) =
   clearStatusMessage(a)
 
 # }}}
-# {{{ returnToNormalMode()
+# {{{ returnToNormalMode*()
 proc returnToNormalMode*(a) =
   alias(ui, a.ui)
 
@@ -156,7 +157,7 @@ proc returnToNormalMode*(a) =
 # {{{ Undoable actions
 
 # {{{ setFloorAction()
-proc setFloorAction*(f: Floor; a) =
+proc setFloorAction(f: Floor; a) =
   let orientation = if f in RotatableFloors: dirN
                     elif f in HorizVertFloors:
                       a.doc.map.guessFloorOrientation(a.ui.cursor)
@@ -168,7 +169,8 @@ proc setFloorAction*(f: Floor; a) =
   setStatusMessage(fmt"Set floor type – {f}", a)
 
 # }}}
-# {{{ cycleFloorGroupAction()
+
+# {{{ cycleFloorGroupAction*()
 proc cycleFloorGroupAction*(floors: seq[Floor], forward: bool; a) =
   var floor = a.doc.map.getFloor(a.ui.cursor)
 
@@ -185,7 +187,7 @@ proc cycleFloorGroupAction*(floors: seq[Floor], forward: bool; a) =
     setWarningMessage("Cannot set floor type of an empty cell", a=a)
 
 # }}}
-# {{{ startExcavateTunnelAction()
+# {{{ startExcavateTunnelAction*()
 proc startExcavateTunnelAction*(a) =
   let cur = a.ui.cursor
   a.ui.prevMoveDir = CardinalDir.none
@@ -197,7 +199,7 @@ proc startExcavateTunnelAction*(a) =
                    "excavate"], a)
 
 # }}}
-# {{{ startEraseCellsAction()
+# {{{ startEraseCellsAction*()
 proc startEraseCellsAction*(a) =
   let cur = a.ui.cursor
   actions.eraseCell(a.doc.map, loc=cur, undoLoc=cur,
@@ -206,7 +208,7 @@ proc startEraseCellsAction*(a) =
   setStatusMessage(IconEraser, "Erase cell", @[IconArrowsAll, "erase"], a)
 
 # }}}
-# {{{ startEraseTrailAction()
+# {{{ startEraseTrailAction*()
 proc startEraseTrailAction*(a) =
   let cur = a.ui.cursor
   actions.eraseTrail(a.doc.map, loc=cur, undoLoc=cur, a.doc.undoManager)
@@ -215,14 +217,14 @@ proc startEraseTrailAction*(a) =
 
 # }}}
 
-# {{{ setDrawWallActionMessage()
+# {{{ setDrawWallActionMessage*()
 
-proc mkRepeatWallActionString*(name: string; a): string =
+proc mkRepeatWallActionString(name: string; a): string =
   let action = $a.ui.drawWallRepeatAction
   fmt"repeat {action} {name}"
 
 
-proc doSetDrawWallActionMessage*(name: string; a) =
+proc doSetDrawWallActionMessage(name: string; a) =
   var commands = @[IconArrowsAll, "set/clear"]
 
   if a.ui.drawWallRepeatAction != dwaNone:
@@ -236,8 +238,8 @@ proc setDrawWallActionMessage*(a) =
   doSetDrawWallActionMessage(name = "wall", a)
 
 # }}}
-# {{{ setDrawWallActionRepeatMessage()
-proc doSetDrawWallActionRepeatMessage*(name: string, a) =
+# {{{ setDrawWallActionRepeatMessage*()
+proc doSetDrawWallActionRepeatMessage(name: string, a) =
   let icon = if a.ui.drawWallRepeatDirection.isHoriz: IconArrowsVert
              else:                                    IconArrowsHoriz
 
@@ -249,12 +251,12 @@ proc setDrawWallActionRepeatMessage*(a) =
   doSetDrawWallActionRepeatMessage(name = "wall", a)
 
 # }}}
-# {{{ setDrawSpecialWallActionMessage()
+# {{{ setDrawSpecialWallActionMessage*()
 proc setDrawSpecialWallActionMessage*(a) =
   doSetDrawWallActionMessage(name = "special wall", a)
 
 # }}}
-# {{{ setDrawSpecialWallActionRepeatMessage()
+# {{{ setDrawSpecialWallActionRepeatMessage*()
 proc setDrawSpecialWallActionRepeatMessage*(a) =
   doSetDrawWallActionRepeatMessage(name = "special wall", a)
 
@@ -263,7 +265,7 @@ proc setDrawSpecialWallActionRepeatMessage*(a) =
 # }}}
 # {{{ Non-undoable actions
 
-# {{{ newMap()
+# {{{ newMap*()
 proc newMap*(a) =
   if a.doc.undoManager.isModified:
     openSaveDiscardMapDialog(nextAction = openNewMapDialog, a)
@@ -271,7 +273,7 @@ proc newMap*(a) =
     openNewMapDialog(a)
 
 # }}}
-# {{{ openMap()
+# {{{ openMap*()
 proc openMap*(a) =
 
   proc requestOpenMap(a) =
@@ -304,7 +306,7 @@ proc openMap*(path: string; a) =
 
 # }}}
 
-# {{{ reloadTheme()
+# {{{ reloadTheme*()
 proc reloadTheme*(a) =
 
   proc doReloadTheme(a) =
@@ -316,7 +318,7 @@ proc reloadTheme*(a) =
     doReloadTheme(a)
 
 # }}}
-# {{{ selectPrevTheme()
+# {{{ selectPrevTheme*()
 proc selectPrevTheme*(a) =
 
   proc prevTheme(a) =
@@ -330,7 +332,7 @@ proc selectPrevTheme*(a) =
     prevTheme(a)
 
 # }}}
-# {{{ selectNextTheme()
+# {{{ selectNextTheme*()
 proc selectNextTheme*(a) =
 
   proc nextTheme(a) =
@@ -346,7 +348,7 @@ proc selectNextTheme*(a) =
 
 # }}}
 
-# {{{ selectPrevLevel()
+# {{{ selectPrevLevel*()
 proc selectPrevLevel*(a) =
   alias(map, a.doc.map)
 
@@ -359,7 +361,7 @@ proc selectPrevLevel*(a) =
     setCursor(cur, a)
 
 # }}}
-# {{{ selectNextLevel()
+# {{{ selectNextLevel*()
 proc selectNextLevel*(a) =
   alias(map, a.doc.map)
 
@@ -372,7 +374,8 @@ proc selectNextLevel*(a) =
     setCursor(cur, a)
 
 # }}}
-# {{{ centerCursorAfterZoom()
+
+# {{{ centerCursorAfterZoom*()
 proc centerCursorAfterZoom*(a) =
   alias(dp, a.ui.drawLevelParams)
   let cur = a.ui.cursor
@@ -383,39 +386,40 @@ proc centerCursorAfterZoom*(a) =
   dp.viewStartRow = (cur.row - viewRow).clampMin(0)
 
 # }}}
-# {{{ zoomIn()
+# {{{ zoomIn*()
 proc zoomIn*(a) =
   incZoomLevel(a.theme.levelTheme, a.ui.drawLevelParams)
   centerCursorAfterZoom(a)
 
 # }}}
-# {{{ zoomOut()
+# {{{ zoomOut*()
 proc zoomOut*(a) =
   decZoomLevel(a.theme.levelTheme, a.ui.drawLevelParams)
   centerCursorAfterZoom(a)
 
 # }}}
 
-# {{{ selectSpecialWall()
+# {{{ selectSpecialWall*()
 proc selectSpecialWall*(index: Natural; a) =
   assert index <= SpecialWalls.high
   a.ui.currSpecialWall = index
 
 # }}}
-# {{{ selectPrevFloorColor()
+
+# {{{ selectPrevFloorColor*()
 proc selectPrevFloorColor*(a) =
   if a.ui.currFloorColor > 0: dec(a.ui.currFloorColor)
   else: a.ui.currFloorColor = a.theme.levelTheme.floorBackgroundColor.high
 
 # }}}
-# {{{ selectNextFloorColor()
+# {{{ selectNextFloorColor*()
 proc selectNextFloorColor*(a) =
   if a.ui.currFloorColor < a.theme.levelTheme.floorBackgroundColor.high:
     inc(a.ui.currFloorColor)
   else: a.ui.currFloorColor = 0
 
 # }}}
-# {{{ pickFloorColor()
+# {{{ pickFloorColor*()
 proc pickFloorColor*(a) =
   var floor = a.doc.map.getFloor(a.ui.cursor)
 
@@ -426,7 +430,7 @@ proc pickFloorColor*(a) =
     setWarningMessage("Cannot pick floor colour of an empty cell", a=a)
 
 # }}}
-# {{{ selectFloorColor()
+# {{{ selectFloorColor*()
 proc selectFloorColor*(index: Natural; a) =
   assert index <= LevelTheme.floorBackgroundColor.high
   a.ui.currFloorColor = index
@@ -444,12 +448,14 @@ proc enterDrawWallMode*(specialWall: bool; a) =
     setDrawWallActionMessage(a)
 
 # }}}
-# {{{ toggleThemeEditor()
+
+# {{{ toggleThemeEditor*()
 proc toggleThemeEditor*(a) =
   toggleShowOption(a.layout.showThemeEditor, NoIcon, "Theme editor pane", a)
 
 # }}}
-# {{{ showQuickReference()
+
+# {{{ showQuickReference*()
 proc showQuickReference*(a) =
   a.ui.showQuickReference = true
   setStatusMessage(
@@ -459,7 +465,8 @@ proc showQuickReference*(a) =
       "F1", "open user manual"], a)
 
 # }}}
-# {{{ toggleTitleBar()
+
+# {{{ toggleTitleBar*()
 proc toggleTitleBar*(a) =
   toggleShowOption(a.layout.showTitleBar, NoIcon, "Title bar", a)
   a.win.showTitleBar = a.layout.showTitleBar

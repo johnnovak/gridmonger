@@ -7,7 +7,7 @@ import main/cursor
 
 using a: var AppContext
 
-
+# {{{ openNewMapDialog*()
 proc openNewMapDialog*(a) =
   alias(dlg, a.dialogs.newMap)
 
@@ -28,7 +28,8 @@ proc openNewMapDialog*(a) =
 
   a.dialogs.activeDialog = dlgNewMap
 
-
+# }}}
+# {{{ newMapDialog*()
 proc newMapDialog*(dlg: var NewMapDialogParams; a) =
   const
     DlgWidth = 430.0
@@ -80,7 +81,7 @@ proc newMapDialog*(dlg: var NewMapDialogParams; a) =
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
               style=a.theme.errorLabelStyle)
 
-
+# {{{ okAction()
   proc okAction(dlg: NewMapDialogParams; a) =
     if validationError != "": return
 
@@ -109,10 +110,12 @@ proc newMapDialog*(dlg: var NewMapDialogParams; a) =
     setStatusMessage(IconFile, "New map created", a)
     closeDialog(a)
 
-
+# }}}
+# {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
 
+# }}}
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -145,5 +148,6 @@ proc newMapDialog*(dlg: var NewMapDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

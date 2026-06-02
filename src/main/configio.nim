@@ -16,14 +16,14 @@ import utils/all
 using a: var AppContext
 
 # {{{ setLayoutWindowFields()
-proc setLayoutWindowFields*(l: var Layout; a) =
+proc setLayoutWindowFields(l: var Layout; a) =
   l.windowPos    = if a.win.maximized: a.win.unmaximizedPos  else: a.win.pos
   l.windowSize   = if a.win.maximized: a.win.unmaximizedSize else: a.win.size
   l.maximized    = a.win.maximized
   l.showTitleBar = a.win.showTitleBar
 
 # }}}
-# {{{ saveLayout()
+# {{{ saveLayout*()
 
 proc saveAppConfig*(a)
 
@@ -38,7 +38,7 @@ proc saveLayout*(layoutIdx: Natural; a) =
   setStatusMessage(IconTiles, fmt"Window layout {layoutIdx+1} saved", a)
 
 # }}}
-# {{{ restoreLayout()
+# {{{ restoreLayout*()
 proc restoreLayout*(layout: Layout; a) =
   a.layout = layout
 
@@ -69,7 +69,7 @@ proc restoreLayout*(layoutIdx: Natural; a) =
 
 # }}}
 
-# {{{ loadAppConfigOrDefault()
+# {{{ loadAppConfigOrDefault*()
 proc loadAppConfigOrDefault*(path: string): HoconNode =
   var s: FileStream
   try:
@@ -86,7 +86,7 @@ proc loadAppConfigOrDefault*(path: string): HoconNode =
     if s != nil: s.close
 
 # }}}
-# {{{ saveAppConfig()
+# {{{ saveAppConfig*()
 proc saveAppConfig*(cfg: HoconNode, path: string; a) =
   var s: FileStream
   try:

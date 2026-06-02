@@ -1,11 +1,8 @@
-# {{{ Imports
-
 import std/logging as log except Level
 import std/options
-import std/os                  # sleep
+import std/os
 import std/strformat
 
-# Libraries
 import glad/gl
 import glfw
 import koi
@@ -13,7 +10,6 @@ import koi
 when defined(windows):
   import platform/windows/console
 
-# Internal
 import appevents
 import cmdline
 import common
@@ -26,8 +22,6 @@ import main/logging
 
 using a: var AppContext
 
-# }}}
-
 # {{{ Resources
 
 when defined(windows):
@@ -35,6 +29,7 @@ when defined(windows):
   {.link: fmt"extras/appicons/windows/gridmonger{arch}.res".}
 
 # }}}
+
 # {{{ main()
 proc main() =
 

@@ -21,9 +21,9 @@ import utils/all
 
 using a: var AppContext
 
-let QuickRefTabLabels* = @["General", "Editing", "Interface"]
-
 # {{{ Quick keyboard reference definitions
+
+let QuickRefTabLabels = @["General", "Editing", "Interface"]
 
 proc sc(sc: AppShortcut): QuickRefItem =
   QuickRefItem(kind: qkShortcut, shortcut: sc)
@@ -49,7 +49,7 @@ proc desc(s: string): QuickRefItem =
 const QuickRefSepa = QuickRefItem(kind: qkSeparator)
 
 # {{{ mkQuickRefGeneral()
-func mkQuickRefGeneral*(a): seq[seq[QuickRefItem]] =
+func mkQuickRefGeneral(a): seq[seq[QuickRefItem]] =
   @[
     @[
       scShowAboutDialog.sc,      "Show about dialog".desc,
@@ -104,7 +104,7 @@ func mkQuickRefGeneral*(a): seq[seq[QuickRefItem]] =
 
 # }}}
 # {{{ mkQuickRefEditing()
-func mkQuickRefEditing*(a): seq[seq[QuickRefItem]] =
+func mkQuickRefEditing(a): seq[seq[QuickRefItem]] =
   @[
     @[
       scExcavateTunnel.sc,      "Excavate (draw) tunnel".desc,
@@ -213,7 +213,7 @@ func mkQuickRefEditing*(a): seq[seq[QuickRefItem]] =
 
 # }}}
 # {{{ mkQuickRefInterface()
-func mkQuickRefInterface*(a): seq[seq[QuickRefItem]] =
+func mkQuickRefInterface(a): seq[seq[QuickRefItem]] =
   @[
     @[
       @[fmt"Ctrl{HairSp}+{HairSp}{IconArrowsHoriz}"].csc,
@@ -255,23 +255,25 @@ func mkQuickRefInterface*(a): seq[seq[QuickRefItem]] =
   ]
 
 # }}}
-
-func mkQuickRefShortcuts*(a): seq[seq[seq[QuickRefItem]]] =
+# {{{ mkQuickRefShortcuts()
+func mkQuickRefShortcuts(a): seq[seq[seq[QuickRefItem]]] =
   @[
     mkQuickRefGeneral(a),
     mkQuickRefEditing(a),
     mkQuickRefInterface(a)
   ]
 
+# }}}
+# }}}
 
+# {{{ updateQuickRefShortcuts*()
 proc updateQuickRefShortcuts*(a) =
   # Call this after main/keyboard.updateShortcuts(a). Can't be called from
   # there because quickref imports keyboard (would cycle).
   a.keys.quickRefShortcuts = mkQuickRefShortcuts(a)
 
 # }}}
-
-# {{{ renderQuickReference()
+# {{{ renderQuickReference*()
 
 proc renderQuickReference*(x, y, w, h: float; a) =
   alias(vg, a.vg)
@@ -414,7 +416,7 @@ proc renderQuickReference*(x, y, w, h: float; a) =
     vg.restore
 
 # }}}
-# {{{ handleQuickRefKeyEvents()
+# {{{ handleQuickRefKeyEvents*()
 
 proc handleQuickRefKeyEvents*(a) =
   if hasKeyEvent():

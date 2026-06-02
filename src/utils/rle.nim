@@ -92,6 +92,4 @@ proc decode*(d): Option[byte] =
 
 # }}}
 
-# {{{ Tests
-
 # vim: et:ts=2:sw=2:fdm=marker

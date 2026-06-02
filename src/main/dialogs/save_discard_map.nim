@@ -5,13 +5,14 @@ import main/mapio
 
 using a: var AppContext
 
-
+# {{{ openSaveDiscardMapDialog*()
 proc openSaveDiscardMapDialog*(nextAction: proc (a: var AppContext); a) =
   alias(dlg, a.dialogs.saveDiscardMap)
   dlg.nextAction = nextAction
   a.dialogs.activeDialog = dlgSaveDiscardMap
 
-
+# }}}
+# {{{ saveDiscardMapDialog*()
 proc saveDiscardMapDialog*(dlg: var SaveDiscardMapDialogParams; a) =
   const
     DlgWidth  = ConfirmDlgWidth
@@ -37,6 +38,7 @@ proc saveDiscardMapDialog*(dlg: var SaveDiscardMapDialogParams; a) =
     style=a.theme.labelStyle
   )
 
+  # {{{ okAction()
   proc okAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
     saveMap(a)
@@ -46,12 +48,18 @@ proc saveDiscardMapDialog*(dlg: var SaveDiscardMapDialogParams; a) =
     if a.doc.path != "":
       dlg.nextAction(a)
 
+  # }}}
+  # {{{ discardAction()
   proc discardAction(dlg: SaveDiscardMapDialogParams; a) =
     closeDialog(a)
     dlg.nextAction(a)
 
+  # }}}
+  # {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
+
+  # }}}
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 3)
 
@@ -83,5 +91,6 @@ proc saveDiscardMapDialog*(dlg: var SaveDiscardMapDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

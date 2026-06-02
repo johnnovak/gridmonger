@@ -5,7 +5,7 @@ import actions
 
 using a: var AppContext
 
-
+# {{{ openEditMapPropsDialog*()
 proc openEditMapPropsDialog*(a) =
   alias(dlg, a.dialogs.editMapProps)
   alias(map, a.doc.map)
@@ -25,7 +25,8 @@ proc openEditMapPropsDialog*(a) =
 
   a.dialogs.activeDialog = dlgEditMapProps
 
-
+# }}}
+# {{{ editMapPropsDialog*()
 proc editMapPropsDialog*(dlg: var EditMapPropsDialogParams; a) =
   const
     DlgWidth = 430.0
@@ -77,7 +78,7 @@ proc editMapPropsDialog*(dlg: var EditMapPropsDialogParams; a) =
     koi.label(x, DlgHeight-76, DlgWidth, DlgItemHeight, validationError,
               style=a.theme.errorLabelStyle)
 
-
+# {{{ okAction()
   proc okAction(dlg: EditMapPropsDialogParams; a) =
     if validationError != "": return
 
@@ -96,10 +97,12 @@ proc editMapPropsDialog*(dlg: var EditMapPropsDialogParams; a) =
     setStatusMessage(IconFile, "Map properties updated", a)
     closeDialog(a)
 
-
+# }}}
+# {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
 
+# }}}
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -132,5 +135,6 @@ proc editMapPropsDialog*(dlg: var EditMapPropsDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

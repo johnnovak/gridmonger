@@ -5,7 +5,7 @@ import actions
 
 using a: var AppContext
 
-
+# {{{ openEditLevelPropsDialog*()
 proc openEditLevelPropsDialog*(a) =
   alias(dlg, a.dialogs.editLevelProps)
 
@@ -35,7 +35,8 @@ proc openEditLevelPropsDialog*(a) =
 
   a.dialogs.activeDialog = dlgEditLevelProps
 
-
+# }}}
+# {{{ editLevelPropsDialog*()
 proc editLevelPropsDialog*(dlg: var LevelPropertiesDialogParams; a) =
   alias(map, a.doc.map)
 
@@ -107,7 +108,7 @@ proc editLevelPropsDialog*(dlg: var LevelPropertiesDialogParams; a) =
     koi.label(x, DlgHeight - 115, DlgWidth - 60, 60, validationError,
               style=a.theme.errorLabelStyle)
 
-
+# {{{ okAction()
   proc okAction(dlg: LevelPropertiesDialogParams; a) =
     if validationError != "": return
 
@@ -137,10 +138,12 @@ proc editLevelPropsDialog*(dlg: var LevelPropertiesDialogParams; a) =
     setStatusMessage(IconFile, fmt"Level properties updated", a)
     closeDialog(a)
 
-
+# }}}
+# {{{ cancelAction
   proc cancelAction(a) =
     closeDialog(a)
 
+# }}}
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -171,5 +174,6 @@ proc editLevelPropsDialog*(dlg: var LevelPropertiesDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

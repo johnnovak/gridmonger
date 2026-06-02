@@ -6,7 +6,7 @@ import io/persistence
 
 using a: var AppContext
 
-
+# {{{ openEditNoteDialog*()
 proc openEditNoteDialog*(a) =
   alias(dlg, a.dialogs.editNote)
 
@@ -41,7 +41,8 @@ proc openEditNoteDialog*(a) =
 
   a.dialogs.activeDialog = dlgEditNote
 
-
+# }}}
+# {{{ editNoteDialog*()
 proc editNoteDialog*(dlg: var EditNoteDialogParams; a) =
   let lt = a.theme.levelTheme
 
@@ -160,6 +161,7 @@ proc editNoteDialog*(dlg: var EditNoteDialogParams; a) =
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
+# {{{ okAction()
   proc okAction(dlg: EditNoteDialogParams; a) =
     if validationErrors.len > 0: return
 
@@ -179,10 +181,12 @@ proc editNoteDialog*(dlg: var EditNoteDialogParams; a) =
     setStatusMessage(IconComment, msg, a)
     closeDialog(a)
 
-
+# }}}
+# {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
 
+# }}}
 
   if koi.button(x, y, DlgButtonWidth, h, fmt"{IconCheck} OK",
                 disabled=validationErrors.len > 0,
@@ -225,5 +229,6 @@ proc editNoteDialog*(dlg: var EditNoteDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

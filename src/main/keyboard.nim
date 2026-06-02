@@ -13,114 +13,11 @@ import main/appcontext
 
 using a: var AppContext
 
-
-# {{{ Keyboard shortcuts
-
-type MoveKeys* = object
-  left*, right*, up*, down*: set[Key]
-
-const
-  MoveKeysStandard* = MoveKeys(
-    left:  {keyLeft,  keyH, keyKp4},
-    right: {keyRight, keyL, keyKp6},
-    up:    {keyUp,    keyK, keyKp8},
-    down:  {keyDown,  keyJ, keyKp2, keyKp5}
-  )
-
-  MoveKeysWasd* = MoveKeys(
-    left:  MoveKeysStandard.left  + {keyA},
-    right: MoveKeysStandard.right + {keyD},
-    up:    MoveKeysStandard.up    + {keyW},
-    down:  MoveKeysStandard.down  + {Key.keyS}
-  )
-
-type DiagonalMoveKeys* = object
-  upLeft*, upRight*, downLeft*, downRight*: set[Key]
-
-const
-  DiagonalMoveKeysCursor* = DiagonalMoveKeys(
-    upLeft:    {keyY, keyKp7},
-    upRight:   {keyU, keyKp9},
-    downLeft:  {keyB, keyKp1},
-    downRight: {keyN, keyKp3}
-  )
-
-func `+`(a: WalkKeys, b: WalkKeys): WalkKeys =
-  result = WalkKeys(
-    forward:     a.forward     + b.forward,
-    backward:    a.backward    + b.backward,
-    strafeLeft:  a.strafeLeft  + b.strafeLeft,
-    strafeRight: a.strafeRight + b.strafeRight,
-    turnLeft:    a.turnLeft    + b.turnLeft,
-    turnRight:   a.turnRight   + b.turnRight
-  )
-
-const
-  WalkKeysCursorStrafe* = WalkKeys(
-    forward:     {keyUp},
-    backward:    {keyDown},
-    strafeLeft:  {keyLeft},
-    strafeRight: {keyRight},
-
-    # Alt+Left/Right for turning is handled as a special case
-    turnLeft:    {},
-    turnRight:   {}
-  )
-
-  WalkKeysCursorTurn* = WalkKeys(
-    forward:     {keyUp},
-    backward:    {keyDown},
-    turnLeft:    {keyLeft},
-    turnRight:   {keyRight},
-
-    # Alt+Left/Right for strafing is handled as a special case
-    strafeLeft:  {},
-    strafeRight: {}
-  )
-
-  WalkKeysKeypad* = WalkKeys(
-    forward:     {keyKp8},
-    backward:    {keyKp2, keyKp5},
-    strafeLeft:  {keyKp4},
-    strafeRight: {keyKp6},
-    turnLeft:    {keyKp7},
-    turnRight:   {keyKp9}
-  )
-
-  WalkKeysWasd* = WalkKeys(
-    forward:     {keyW},
-    backward:    {keyS},
-    strafeLeft:  {keyA},
-    strafeRight: {keyD},
-    turnLeft:    {keyQ},
-    turnRight:   {keyE}
-  )
-
-func mkWalkKeysCursor*(mode: WalkCursorMode): WalkKeys =
-  if mode == wcmStrafe:
-    result = WalkKeysKeypad + WalkKeysCursorStrafe
-  elif mode == wcmTurn:
-    result = WalkKeysKeypad + WalkKeysCursorTurn
-
-func mkWalkKeysWasd*(walkKeysCursor: WalkKeys): WalkKeys =
-  walkKeysCursor + WalkKeysWasd
-
-proc updateWalkKeys*(a) =
-  a.keys.walkKeysCursor = mkWalkKeysCursor(a.prefs.walkCursorMode)
-  a.keys.walkKeysWasd   = mkWalkKeysWasd(a.keys.walkKeysCursor)
-
-const
-  VimMoveKeys*            = {keyH, keyJ, keyK, keyL}
-  AllWasdLetterKeys*      = {keyQ, keyW, keyE, keyA, keyS, keyD}
-  AllWasdKeypadKeys*      = {keyKp2, keyKp4, keyKp5, keyKp6, keyKp7, keyKp8, keyKp9}
-  DiagonalMoveLetterKeys* = {keyY, keyU, keyB, keyN}
-
-
 # {{{ DefaultAppShortcuts
 
 # The default shortcuts use Ctrl and Ctrl+Alt (suitable for Windows and Linux)
 
-let DefaultAppShortcuts* = {
+let DefaultAppShortcuts = {
   # General
   scNextTextField:      @[mkKeyShortcut(keyTab,           {})],
 
@@ -321,8 +218,121 @@ let DefaultAppShortcuts* = {
 
 # }}}
 
+# {{{ Move keys
+
+type MoveKeys* = object
+  left*, right*, up*, down*: set[Key]
+
+const
+  MoveKeysStandard* = MoveKeys(
+    left:  {keyLeft,  keyH, keyKp4},
+    right: {keyRight, keyL, keyKp6},
+    up:    {keyUp,    keyK, keyKp8},
+    down:  {keyDown,  keyJ, keyKp2, keyKp5}
+  )
+
+  MoveKeysWasd* = MoveKeys(
+    left:  MoveKeysStandard.left  + {keyA},
+    right: MoveKeysStandard.right + {keyD},
+    up:    MoveKeysStandard.up    + {keyW},
+    down:  MoveKeysStandard.down  + {Key.keyS}
+  )
+
+type DiagonalMoveKeys* = object
+  upLeft*, upRight*, downLeft*, downRight*: set[Key]
+
+const
+  DiagonalMoveKeysCursor* = DiagonalMoveKeys(
+    upLeft:    {keyY, keyKp7},
+    upRight:   {keyU, keyKp9},
+    downLeft:  {keyB, keyKp1},
+    downRight: {keyN, keyKp3}
+  )
+
+const
+  VimMoveKeys*            = {keyH, keyJ, keyK, keyL}
+  AllWasdLetterKeys*      = {keyQ, keyW, keyE, keyA, keyS, keyD}
+  AllWasdKeypadKeys*      = {keyKp2, keyKp4, keyKp5, keyKp6, keyKp7, keyKp8, keyKp9}
+  DiagonalMoveLetterKeys* = {keyY, keyU, keyB, keyN}
+
+# }}}
+
+# {{{ Walk keys
+
+func `+`(a: WalkKeys, b: WalkKeys): WalkKeys =
+  result = WalkKeys(
+    forward:     a.forward     + b.forward,
+    backward:    a.backward    + b.backward,
+    strafeLeft:  a.strafeLeft  + b.strafeLeft,
+    strafeRight: a.strafeRight + b.strafeRight,
+    turnLeft:    a.turnLeft    + b.turnLeft,
+    turnRight:   a.turnRight   + b.turnRight
+  )
+
+const
+  WalkKeysCursorStrafe = WalkKeys(
+    forward:     {keyUp},
+    backward:    {keyDown},
+    strafeLeft:  {keyLeft},
+    strafeRight: {keyRight},
+
+    # Alt+Left/Right for turning is handled as a special case
+    turnLeft:    {},
+    turnRight:   {}
+  )
+
+  WalkKeysCursorTurn = WalkKeys(
+    forward:     {keyUp},
+    backward:    {keyDown},
+    turnLeft:    {keyLeft},
+    turnRight:   {keyRight},
+
+    # Alt+Left/Right for strafing is handled as a special case
+    strafeLeft:  {},
+    strafeRight: {}
+  )
+
+  WalkKeysKeypad = WalkKeys(
+    forward:     {keyKp8},
+    backward:    {keyKp2, keyKp5},
+    strafeLeft:  {keyKp4},
+    strafeRight: {keyKp6},
+    turnLeft:    {keyKp7},
+    turnRight:   {keyKp9}
+  )
+
+  WalkKeysWasd = WalkKeys(
+    forward:     {keyW},
+    backward:    {keyS},
+    strafeLeft:  {keyA},
+    strafeRight: {keyD},
+    turnLeft:    {keyQ},
+    turnRight:   {keyE}
+  )
+
+# }}}
+# {{{ mkWalkKeysCursor()
+func mkWalkKeysCursor(mode: WalkCursorMode): WalkKeys =
+  if mode == wcmStrafe:
+    result = WalkKeysKeypad + WalkKeysCursorStrafe
+  elif mode == wcmTurn:
+    result = WalkKeysKeypad + WalkKeysCursorTurn
+
+# }}}
+# {{{ mkWalkKeysWasd()
+func mkWalkKeysWasd(walkKeysCursor: WalkKeys): WalkKeys =
+  walkKeysCursor + WalkKeysWasd
+
+# }}}
+# {{{ updateWalkKeys*()
+proc updateWalkKeys*(a) =
+  a.keys.walkKeysCursor = mkWalkKeysCursor(a.prefs.walkCursorMode)
+  a.keys.walkKeysWasd   = mkWalkKeysWasd(a.keys.walkKeysCursor)
+
+# }}}
+
 # {{{ setYubnAppShortcuts()
-proc setYubnAppShortcuts*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+proc setYubnAppShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
   # Shortcuts that conflicts with the YUBN keys must be removed. All the
   # affected shortcuts have alternatives to they can be invoked even in YUBN
   # mode.
@@ -346,7 +356,7 @@ proc setYubnAppShortcuts*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
 
 # }}}
 # {{{ mapCtrlAltToCtrlShift()
-proc mapCtrlAltToCtrlShift*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+proc mapCtrlAltToCtrlShift(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
   for appShortcut, keyShortcuts in sc.mpairs:
     if appShortcut == scCancel: continue
 
@@ -357,7 +367,7 @@ proc mapCtrlAltToCtrlShift*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
 
 # }}}
 # {{{ mapCtrlToSuper()
-proc mapCtrlToSuper*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+proc mapCtrlToSuper(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
   for appShortcut, keyShortcuts in sc.mpairs:
     # We always leave this one alone for the Vim enthusiasts :)
     if appShortcut == scCancel: continue
@@ -369,7 +379,7 @@ proc mapCtrlToSuper*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
 
 # }}}
 # {{{ addStandardMacShortcuts()
-proc addStandardMacShortcuts*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
+proc addStandardMacShortcuts(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
 
   template addUniqueShortcut(appShortcut: AppShortcut, keyShortcut: KeyShortcut) =
     if keyShortcut notin sc[appShortcut]:
@@ -382,7 +392,24 @@ proc addStandardMacShortcuts*(sc: var Table[AppShortcut, seq[KeyShortcut]]) =
   addUniqueShortcut(scSaveMapAs, mkKeyShortcut(keyS, {mkSuper, mkShift}))
 
 # }}}
-# {{{ toStr()
+# {{{ checkShortcut()
+proc checkShortcut(ev: Event, shortcuts: set[AppShortcut],
+                   actions: set[KeyAction], ignoreMods=false; a): bool =
+  if ev.kind == ekKey:
+    if ev.action in actions:
+      let currShortcut = mkKeyShortcut(ev.key, ev.mods)
+      for sc in shortcuts:
+        if ignoreMods:
+          for asc in a.keys.shortcuts[sc]:
+            if asc.key == ev.key:
+              return true
+        else:
+          if currShortcut in a.keys.shortcuts[sc]:
+            return true
+
+# }}}
+
+# {{{ toStr*()
 proc toStr*(k: Key): string =
   case k
   of key0..key9: $k
@@ -474,12 +501,7 @@ proc toStr*(sc: AppShortcut; a; idx = -1): string =
   else:
     result = a.keys.shortcuts[sc][idx].toStr
 # }}}
-
-# }}}
-
-# {{{ Key event helpers
-
-# {{{ updateShortcuts()
+# {{{ updateShortcuts*()
 proc updateShortcuts*(a) =
   # The default shortcuts use Ctrl and Ctrl+Alt
   a.keys.shortcuts     = DefaultAppShortcuts
@@ -506,12 +528,12 @@ proc updateShortcuts*(a) =
   # (quickref.nim imports keyboard.nim).
 
 # }}}
-# {{{ hasKeyEvent()
+# {{{ hasKeyEvent*()
 proc hasKeyEvent*: bool =
   koi.hasEvent() and koi.currEvent().kind == ekKey
 
 # }}}
-# {{{ isKeyDown()
+# {{{ isKeyDown*()
 proc isKeyDown*(ev: Event, keys: set[Key], mods: set[ModifierKey] = {},
                repeat=false): bool =
 
@@ -529,23 +551,7 @@ proc isKeyDown*(ev: Event, key: Key,
   isKeyDown(ev, {key}, mods, repeat)
 
 # }}}
-# {{{ checkShortcut()
-proc checkShortcut*(ev: Event, shortcuts: set[AppShortcut],
-                   actions: set[KeyAction], ignoreMods=false; a): bool =
-  if ev.kind == ekKey:
-    if ev.action in actions:
-      let currShortcut = mkKeyShortcut(ev.key, ev.mods)
-      for sc in shortcuts:
-        if ignoreMods:
-          for asc in a.keys.shortcuts[sc]:
-            if asc.key == ev.key:
-              return true
-        else:
-          if currShortcut in a.keys.shortcuts[sc]:
-            return true
-
-# }}}
-# {{{ isShortcutDown()
+# {{{ isShortcutDown*()
 proc isShortcutDown*(ev: Event, shortcuts: set[AppShortcut]; a;
                     repeat=false, ignoreMods=false): bool =
   let actions = if repeat: {kaDown, kaRepeat} else: {kaDown}
@@ -556,7 +562,7 @@ proc isShortcutDown*(ev: Event, shortcut: AppShortcut; a;
   isShortcutDown(ev, {shortcut}, a, repeat, ignoreMods)
 
 # }}}
-# {{{ isShortcutUp()
+# {{{ isShortcutUp*()
 proc isShortcutUp*(ev: Event, shortcuts: set[AppShortcut]; a): bool =
   checkShortcut(ev, shortcuts, actions={kaUp}, ignoreMods=true, a)
 
@@ -564,14 +570,14 @@ proc isShortcutUp*(ev: Event, shortcut: AppShortcut; a): bool =
   isShortcutUp(ev, {shortcut}, a)
 
 # }}}
-# {{{ primaryModDown()
+# {{{ primaryModDown*()
 proc primaryModDown*(a): bool =
   if   a.keys.primaryModKey == mkCtrl:  koi.ctrlDown()
   elif a.keys.primaryModKey == mkSuper: koi.superDown()
   else: false
 
 # }}}
-# {{{ handleTabNavigation()
+# {{{ handleTabNavigation*()
 proc handleTabNavigation*(ke: Event,
                          currTabIndex, maxTabIndex: Natural; a): Natural =
   result = currTabIndex
@@ -591,7 +597,5 @@ proc handleTabNavigation*(ke: Event,
       result = i
 
 # }}}
-# }}}
-
 
 # vim: et:ts=2:sw=2:fdm=marker

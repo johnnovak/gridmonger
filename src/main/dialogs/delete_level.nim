@@ -6,11 +6,12 @@ import main/cursor
 
 using a: var AppContext
 
-
+# {{{ openDeleteLevelDialog*()
 proc openDeleteLevelDialog*(a) =
   a.dialogs.activeDialog = dlgDeleteLevel
 
-
+# }}}
+# {{{ deleteLevelDialog*()
 proc deleteLevelDialog*(a) =
   alias(map, a.doc.map)
   alias(um, a.doc.undoManager)
@@ -33,6 +34,7 @@ proc deleteLevelDialog*(a) =
   koi.label(x, y, DlgWidth, h, "Do you want to delete the current level?",
             style=a.theme.labelStyle)
 
+# {{{ okAction()
   proc okAction(a) =
     a.ui.drawTrail = false
 
@@ -42,10 +44,12 @@ proc deleteLevelDialog*(a) =
     setStatusMessage(IconTrash, "Level deleted", a)
     closeDialog(a)
 
-
+# }}}
+# {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
 
+# }}}
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -71,5 +75,6 @@ proc deleteLevelDialog*(a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

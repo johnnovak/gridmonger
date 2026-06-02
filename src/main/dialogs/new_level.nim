@@ -6,7 +6,7 @@ import main/cursor
 
 using a: var AppContext
 
-
+# {{{ openNewLevelDialog*()
 proc openNewLevelDialog*(a) =
   alias(dlg, a.dialogs.newLevel)
 
@@ -50,7 +50,8 @@ proc openNewLevelDialog*(a) =
 
   a.dialogs.activeDialog = dlgNewLevel
 
-
+# }}}
+# {{{ newLevelDialog*()
 proc newLevelDialog*(dlg: var LevelPropertiesDialogParams; a) =
   alias(map, a.doc.map)
 
@@ -206,5 +207,6 @@ proc newLevelDialog*(dlg: var LevelPropertiesDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

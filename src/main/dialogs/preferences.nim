@@ -7,7 +7,7 @@ import main/theme
 
 using a: var AppContext
 
-
+# {{{ openPreferencesDialog*()
 proc openPreferencesDialog*(a) =
   alias(dlg, a.dialogs.preferences)
 
@@ -31,7 +31,8 @@ proc openPreferencesDialog*(a) =
 
   a.dialogs.activeDialog = dlgPreferences
 
-
+# }}}
+# {{{ openPreferencesDialog*()
 proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
   const
     DlgWidth  = 440.0
@@ -63,7 +64,8 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
   lp.labelWidth = 220
   koi.initAutoLayout(lp)
 
-  if dlg.activeTab == 0:  # General
+  # {{{ General
+  if dlg.activeTab == 0:
     group:
       koi.label("Load last map", style=a.theme.labelStyle)
 
@@ -101,8 +103,9 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.checkForUpdates, style=a.theme.checkBoxStyle)
 
-
-  elif dlg.activeTab == 1:  # Editing
+  # }}}
+  # {{{ Editing
+  elif dlg.activeTab == 1:
     group:
       koi.label("Movement wraparound", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
@@ -127,8 +130,9 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
       koi.nextItemHeight(DlgCheckBoxSize)
       koi.checkBox(dlg.openEndedExcavate, style=a.theme.checkBoxStyle)
 
-
-  elif dlg.activeTab == 2:  # Interface
+  # }}}
+  # {{{ Interface
+  elif dlg.activeTab == 2:
     group:
       koi.label("Show splash image", style=a.theme.labelStyle)
       koi.nextItemHeight(DlgCheckBoxSize)
@@ -199,10 +203,11 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
         ]
         koi.dropDown(items, dlg.modifierKeyMode, style=a.theme.dropDownStyle)
 
+    # }}}
 
   koi.endView()
 
-
+  # {{{ okAction()
   proc okAction(dlg: PreferencesDialogParams; a) =
     # General
     a.prefs.loadLastMap        = dlg.loadLastMap
@@ -267,9 +272,12 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
 
     setStatusMessage(IconCog, "Preferences updated", a)
 
-
+  # }}}
+  # {{{ cancelAction()
   proc cancelAction(a) =
     closeDialog(a)
+
+  # }}}
 
   (x, y) = dialogButtonsStartPos(DlgWidth, DlgHeight, 2)
 
@@ -302,5 +310,6 @@ proc preferencesDialog*(dlg: var PreferencesDialogParams; a) =
 
   koi.endDialog()
 
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

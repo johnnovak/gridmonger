@@ -16,7 +16,7 @@ import utils/all
 using a: var AppContext
 
 # {{{ specialWallDrawProc()
-proc specialWallDrawProc*(lt: LevelTheme,
+proc specialWallDrawProc(lt: LevelTheme,
                          tt: ToolbarPaneTheme,
                          dp: DrawLevelParams): RadioButtonsDrawProc =
 
@@ -111,6 +111,7 @@ proc specialWallDrawProc*(lt: LevelTheme,
     dp.backgroundImage = savedBackgroundImage
 
 # }}}
+
 # {{{ renderToolsPane()
 proc renderToolsPane*(x, y, w, h: float; a) =
   alias(ui, a.ui)
