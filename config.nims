@@ -86,19 +86,12 @@ task debug, "debug build":
 
 
 task test, "run unit tests":
-  # Compile+run each test. Flags mirror setCommonCompileParams (minus
-  # GUI-only defines), since the tested code uses --mm:orc + --deepcopy:on.
-  # Binaries go in dist/test/ (gitignored).
-  #
-  # Most tests live in tests/. src/utils/hocon.nim stays inline because
-  # its tests reference internal types (Token, tkString) that aren't
-  # exported.
   const testFiles = [
-    "tests/selection.nim",
+    "tests/hocon.nim",
     "tests/links.nim",
-    "tests/rle.nim",
     "tests/rect.nim",
-    "src/utils/hocon.nim",
+    "tests/rle.nim",
+    "tests/selection.nim",
   ]
   const baseFlags = "--hint:Name:off --verbosity:0 --path:src --mm:orc " &
                     "--deepcopy:on --threads:on --d:ssl " &

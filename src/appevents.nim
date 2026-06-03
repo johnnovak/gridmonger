@@ -10,7 +10,7 @@ import std/times
 import semver
 
 import common
-import main/appcontext
+import appcontext
 
 when defined(windows):
   import platform/windows/ipc

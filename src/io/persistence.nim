@@ -156,10 +156,12 @@ const
 
 # }}}
 
+# {{{ logError()
 proc logError(e: ref Exception) =
   var msg = "Map read/write error: " & e.msg &
             "\n\nStack trace:\n" & getStackTrace(e)
   log.error(msg)
+# }}}
 
 # {{{ Read
 

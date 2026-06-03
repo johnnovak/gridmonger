@@ -10,15 +10,14 @@ import koi
 when defined(windows):
   import platform/windows/console
 
+import appcontext
 import appevents
 import cmdline
 import common
+import init
+import logging
 import ui/csdwindow
 import utils/misc as gmUtils
-
-import main/appcontext
-import main/init
-import main/logging
 
 using a: var AppContext
 

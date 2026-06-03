@@ -1,5 +1,3 @@
-# links — migrated from src/domain/links.nim's when isMainModule block.
-
 import std/options
 import std/sets
 import std/unittest

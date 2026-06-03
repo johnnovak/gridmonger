@@ -13,7 +13,7 @@ import semver
 
 import utils/rect
 
-
+# {{{ Constants
 const
   ThinSp* = "\u2009"
   HairSp* = "\u200a"
@@ -44,12 +44,10 @@ const
   TextVertAlignFactor*  = 0.55
   MaxLabelWidthInCells* = 15
 
+# }}}
 
+# {{{ Directions
 type
-  Location* = object
-    levelId*:   Natural
-    row*, col*: Natural
-
   CardinalDir* = enum
     dirN = (0, "North")
     dirE = (1, "East")
@@ -91,8 +89,13 @@ func rotateCW*(dir: CardinalDir): CardinalDir =
 func rotateACW*(dir: CardinalDir): CardinalDir =
   CardinalDir(floorMod(ord(dir) - 1, ord(CardinalDir.high) + 1))
 
-
+# }}}
+# {{{ Global types
 type
+  Location* = object
+    levelId*:   Natural
+    row*, col*: Natural
+
   Map* = ref object
     title*:            string
     game*:             string
@@ -268,7 +271,31 @@ func isLabel*(a: Annotation): bool =
 func isNote*(a: Annotation): bool =
   not a.isLabel
 
+func hash*(rc: RegionCoords): Hash =
+  var h: Hash = 0
+  h = h !& hash(rc.row)
+  h = h !& hash(rc.col)
+  !$h
 
+func hash*(l: Location): Hash =
+  var h: Hash = 0
+  h = h !& hash(l.levelId)
+  h = h !& hash(l.row)
+  h = h !& hash(l.col)
+  !$h
+
+func `<`*(a, b: Location): bool =
+  if   a.levelId < b.levelId: true
+  elif a.levelId > b.levelId: false
+
+  elif a.row < b.row: true
+  elif a.row > b.row: false
+
+  elif a.col < b.col: true
+  else: false
+
+# }}}
+# {{{ Floors
 let
   HorizVertFloors* = {
     fArchway,
@@ -282,7 +309,8 @@ let
     fArrow,
     fOneWayDoor
   }
-
+# }}}
+# {{{ SpecialWalls
 const
   SpecialWalls* = @[
     wDoor,
@@ -298,8 +326,8 @@ const
     wKeyhole,
     wWritingSW
   ]
-
-
+# }}}
+# {{{ Selection
 type
   # Selections always have the same dimensions as the level the selection was
   # made in. The actual selection rectangle is then retrieved with the
@@ -320,7 +348,9 @@ type
     level*:       Level
     selection*:   Selection
 
+# }}}
 
+# {{{ Level draw styles
 type
   LineWidth* = enum
     lwThin   = (0, "Thin")
@@ -347,7 +377,8 @@ type
     nbsCircle    = (0, "Circle")
     nbsRectangle = (1, "Rectangle")
 
-
+# }}}
+# {{{ Links
 const
   LinkPitSources*      = {fClosedPit, fOpenPit, fHiddenPit}
   LinkPitDestinations* = {fCeilingPit}
@@ -365,30 +396,8 @@ func linkFloorToString*(f: Floor): string =
   elif f in LinkDoors:           return "door"
   elif f in LinkTeleports:       return "teleport"
 
-func hash*(rc: RegionCoords): Hash =
-  var h: Hash = 0
-  h = h !& hash(rc.row)
-  h = h !& hash(rc.col)
-  !$h
-
-func hash*(l: Location): Hash =
-  var h: Hash = 0
-  h = h !& hash(l.levelId)
-  h = h !& hash(l.row)
-  h = h !& hash(l.col)
-  !$h
-
-func `<`*(a, b: Location): bool =
-  if   a.levelId < b.levelId: true
-  elif a.levelId > b.levelId: false
-
-  elif a.row < b.row: true
-  elif a.row > b.row: false
-
-  elif a.col < b.col: true
-  else: false
-
-
+# }}}
+# {{{ Notes list filtes
 type
   NotesListFilter* = object
     scope*:      NoteScopeFilter
@@ -411,7 +420,8 @@ type
     noType    = "Type"
     noText    = "Text"
 
-
+# }}}
+# {{{ Themes
 type
   WindowTheme* = ref object
     borderColor*:                  Color
@@ -525,6 +535,7 @@ type
 
     labelTextColor*:               array[4, Color]
 
+# }}}
 
 # {{{ App events
 
@@ -555,5 +566,187 @@ proc sendAppEvent*(event: AppEvent) =
 
 # }}}
 
+# {{{ AppShortcut
+type AppShortcut* = enum
+  # General
+  scNextTextField
+  scAccept
+  scCancel
+  scDiscard
+  scUndo
+  scRedo
+
+  # Maps
+  scNewMap
+  scOpenMap
+  scSaveMap
+  scSaveMapAs
+  scEditMapProps
+
+  # Levels
+  scNewLevel
+  scDeleteLevel
+  scEditLevelProps
+  scResizeLevel
+
+  # Regions
+  scEditRegionProps
+
+  # Themes
+  scReloadTheme
+  scPreviousTheme
+  scNextTheme
+
+  # Editing
+  scToggleWalkMode
+  scToggleWasdMode
+  scToggleDrawTrail
+  scTogglePasteWraparound
+
+  scCycleFloorGroup1Forward
+  scCycleFloorGroup2Forward
+  scCycleFloorGroup3Forward
+  scCycleFloorGroup4Forward
+  scCycleFloorGroup5Forward
+  scCycleFloorGroup6Forward
+  scCycleFloorGroup7Forward
+  scCycleFloorGroup8Forward
+
+  scCycleFloorGroup1Backward
+  scCycleFloorGroup2Backward
+  scCycleFloorGroup3Backward
+  scCycleFloorGroup4Backward
+  scCycleFloorGroup5Backward
+  scCycleFloorGroup6Backward
+  scCycleFloorGroup7Backward
+  scCycleFloorGroup8Backward
+
+  scExcavateTunnel
+  scEraseCell
+  scDrawClearFloor
+  scRotateFloorClockwise
+  scRotateFloorAntiClockwise
+
+  scSetFloorColor
+  scPickFloorColor
+  scPreviousFloorColor
+  scNextFloorColor
+
+  scSelectFloorColor1
+  scSelectFloorColor2
+  scSelectFloorColor3
+  scSelectFloorColor4
+  scSelectFloorColor5
+  scSelectFloorColor6
+  scSelectFloorColor7
+  scSelectFloorColor8
+  scSelectFloorColor9
+  scSelectFloorColor10
+
+  scDrawWall
+  scDrawWallRepeat
+  scDrawSpecialWall
+  scPreviousSpecialWall
+  scNextSpecialWall
+
+  scSelectSpecialWall1
+  scSelectSpecialWall2
+  scSelectSpecialWall3
+  scSelectSpecialWall4
+  scSelectSpecialWall5
+  scSelectSpecialWall6
+  scSelectSpecialWall7
+  scSelectSpecialWall8
+  scSelectSpecialWall9
+  scSelectSpecialWall10
+  scSelectSpecialWall11
+  scSelectSpecialWall12
+
+  scEraseTrail
+  scExcavateTrail
+  scClearTrail
+
+  scJumpToLinkedCell
+  scLinkCell
+  # TODO
+#  scUnlinkCell
+
+  scPreviousLevel
+  scNextLevel
+
+  scZoomIn
+  scZoomOut
+
+  scMarkSelection
+  scPaste
+  scPastePreview
+  scNudgePreview
+  scPasteAccept
+
+  scEditNote
+  scEraseNote
+  scEditLabel
+  scEraseLabel
+
+  scShowNoteTooltip
+  scShowLinkLines
+
+  # Select mode
+  scSelectionDraw
+  scSelectionErase
+  scSelectionAll
+  scSelectionNone
+  scSelectionAddRect
+  scSelectionSubRect
+  scSelectionCopy
+  scSelectionMove
+  scSelectionEraseArea
+  scSelectionFillArea
+  scSelectionSurroundArea
+  scSelectionSetFloorColorArea
+  scSelectionCropArea
+
+  # Layout
+  scToggleCellCoords
+  scToggleCurrentNotePane
+  scToggleNotesListPane
+  scToggleToolsPane
+  scToggleThemeEditor
+  scToggleTitleBar
+
+  scSaveLayout1
+  scSaveLayout2
+  scSaveLayout3
+  scSaveLayout4
+
+  scRestoreLayout1
+  scRestoreLayout2
+  scRestoreLayout3
+  scRestoreLayout4
+
+  scResetUIScaling
+
+  # Misc
+  scShowAboutDialog
+  scOpenUserManual
+  scEditPreferences
+  scToggleQuickReference
+
+# }}}
+# {{{ QuickRefItem types
+type
+  QuickRefItemKind* = enum
+    qkShortcut, qkKeyShortcuts, qkCustomShortcuts, qkDescription, qkSeparator
+
+  QuickRefItem* = object
+    sepa*: char
+    case kind*: QuickRefItemKind
+    of qkShortcut:        shortcut*:        AppShortcut
+    of qkKeyShortcuts:    keyShortcuts*:    seq[KeyShortcut]
+    of qkCustomShortcuts: customShortcuts*: seq[string]
+    of qkDescription:     description*:     string
+    of qkSeparator:       discard
+
+# }}}
 
 # vim: et:ts=2:sw=2:fdm=marker

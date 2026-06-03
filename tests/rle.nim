@@ -1,4 +1,3 @@
-# rle — migrated from src/utils/rle.nim
 import std/options
 import std/strformat
 import std/unittest
@@ -155,7 +154,5 @@ suite "RunLengthEncoder/Decoder":
       verify(e, d, 4)
 
     # }}}
-
-
 
 # vim: et:ts=2:sw=2:fdm=marker

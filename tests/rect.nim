@@ -1,5 +1,3 @@
-# rect — migrated from src/utils/rect.nim
-
 import std/options
 import std/unittest
 

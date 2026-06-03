@@ -1,10 +1,6 @@
-# selection — migrated from src/domain/selection.nim's `when isMainModule:`
-# block. Test the selection bounding-box behavior.
-
 import std/options
 import std/unittest
 
-import common
 import domain/selection
 import utils/rect
 

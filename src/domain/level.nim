@@ -242,8 +242,6 @@ proc initRegionsFrom*(srcLevel: Option[Level] = Level.none, destLevel: Level,
 
 # }}}
 
-# }}}
-
 # {{{ getDetailedName*()
 proc getDetailedName*(l; short = false): string =
   let elevation = if l.elevation == 0: "G" else: $l.elevation

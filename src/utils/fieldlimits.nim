@@ -1,5 +1,6 @@
 import std/unicode
 
+# {{{ Types
 type
   FieldLimitsKind* = enum
     fkString, fkInt, fkFloat
@@ -13,21 +14,30 @@ type
     of fkFloat:
       minFloat*, maxFloat*: float
 
+# }}}
+
+# {{{ strLimits*()
 proc strLimits*(minRuneLen, maxRuneLen: Natural): FieldLimits =
   result.kind = fkString
   result.minRuneLen = minRuneLen
   result.maxRuneLen = maxRuneLen
 
+# }}}
+# {{{ intLimits*()
 proc intLimits*(min, max: int): FieldLimits =
   result.kind = fkInt
   result.minInt = min
   result.maxInt = max
 
+# }}}
+# {{{ floatLimits*()
 proc floatLimits*(min, max: float): FieldLimits =
   result.kind = fkFloat
   result.minFloat = min
   result.maxFloat = max
 
+# }}}
+# {{{ check*()
 proc check*(s: string, limit: FieldLimits): bool =
   s.runeLen >= limit.minRuneLen and
   s.runeLen <= limit.maxRuneLen
@@ -38,6 +48,8 @@ proc check*(i: SomeInteger, limit: FieldLimits): bool =
 proc check*(i: SomeFloat, limit: FieldLimits): bool =
   i >= limit.minFloat and i <= limit.maxFloat
 
+# }}}
+# {{{ limit*()
 proc limit*(s: string, limit: FieldLimits): string =
   if   s.runeLen > limit.maxRuneLen: s.runeSubStr(0, limit.maxRuneLen)
   elif s.runeLen < limit.minRuneLen: s.alignLeft(limit.minRuneLen)
@@ -49,3 +61,6 @@ proc limit*[T: SomeInteger](i: T, limit: FieldLimits): T =
 proc limit*[T: SomeFloat](i: T, limit: FieldLimits): T =
   i.clamp(limit.minFloat, limit.maxFloat)
 
+# }}}
+
+# vim: et:ts=2:sw=2:fdm=marker
