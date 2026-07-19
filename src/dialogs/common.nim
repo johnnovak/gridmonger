@@ -17,8 +17,8 @@ import appcontext
 import cfghelper
 import constants
 import domain/all as gmdomain
-import io/persistence as gmpersist
 import keyboard
+import persistence as gmpersist
 import ui/all as gmui
 import utils/all as gmutilsall
 import utils/misc as gmUtils

@@ -13,8 +13,8 @@ import common
 import configio
 import constants
 import cursor
-import io/persistence
 import logging
+import persistence
 import theme
 import ui/all
 import undomanager

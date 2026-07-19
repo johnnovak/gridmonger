@@ -23,9 +23,9 @@ import dialogs/all
 import domain/level
 import domain/map
 import domain/selection
-import io/persistence
 import keyboard
 import mapio
+import persistence
 import theme
 import ui/csdwindow
 import ui/drawlevel

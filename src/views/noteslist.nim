@@ -13,7 +13,7 @@ import appcontext
 import common
 import cursor
 import domain/all
-import io/persistence
+import persistence
 import ui/all
 import utils/all
 import view

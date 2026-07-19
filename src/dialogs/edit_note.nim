@@ -1,7 +1,7 @@
 import dialogs/common
 
 import actions
-import io/persistence
+import persistence
 
 
 using a: var AppContext
